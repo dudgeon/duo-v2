@@ -73,12 +73,12 @@ public enum ActionID: String, CaseIterable, Sendable {
     case docOpen = "doc open", docClose = "doc close", docTabs = "doc tabs", docStatus = "doc status", docRead = "doc read"
     case docSelection = "doc selection", docSelect = "doc select", docSave = "doc save", docFormat = "doc format", docTable = "doc table", docFind = "doc find"
     case docProp = "doc prop", docMode = "doc mode"
-    case docMarkup = "doc markup", docComments = "doc comments", docOutline = "doc outline", docLayout = "doc layout",docPick = "doc pick", docElement = "doc element"
+    case docMarkup = "doc markup", docComments = "doc comments", docOutline = "doc outline", docLayout = "doc layout", docScreenshot = "doc screenshot", docPick = "doc pick", docElement = "doc element"
     case docInsert = "doc insert", docReplace = "doc replace", docEdit = "doc edit", docResolve = "doc resolve", docHistory = "doc history", docRevert = "doc revert"
     // HTML pages
     case browserOpen = "browser open", browserAllow = "browser allow", browserSites = "browser sites"
     case browserTabs = "browser tabs", browserRead = "browser read", browserClick = "browser click", browserFill = "browser fill"
-    case browserWait = "browser wait", browserScreenshot = "browser screenshot", browserGo = "browser go", browserBack = "browser back"
+    case browserWait = "browser wait", browserScreenshot = "browser screenshot", browserScroll = "browser scroll",browserGo = "browser go", browserBack = "browser back"
     case browserForward = "browser forward", browserClose = "browser close"
     case browserZoom = "browser zoom", browserPrint = "browser print", browserUpload = "browser upload", browserDownloads = "browser downloads"
     case htmlReload = "html reload", htmlPick = "html pick", htmlStop = "html stop", htmlElement = "html element", htmlSelection = "html selection"
@@ -364,6 +364,8 @@ extension DuoAction {
               "A Word document's paragraphs, read from the file (no viewer needed): each with its w14:paraId (the id the viewer draws it under), style and heading level, its text with the tracked changes accepted, its tracked changes (kind, author, date, text) and the comments that end in it (thread, resolved). Then every comment thread. A picked paragraph's Send to Claude names the same ids."),
         .init(.docLayout, .docs, "<file.docx> [--json]",
               "A Word document's geometry, read from the file (no viewer, no renderer): each section's page size, orientation and margins, so its text width; each table's declared width and column widths against the room it has (the text width, or its cell's); each picture's size; and a warning for anything wider than its room, a percentage table width, or a width that disagrees with its columns. Sizes in points. No page numbers. Only a document open in a Duo tab or inside the session's project folder (C-115)."),
+        .init(.docScreenshot, .docs, "[<file>] [--all] [--width <px>]",
+              "Save PNGs of a document as Duo's viewer draws it and print their paths: the Word document named (or showing) at the pane's width, 460 px unless --width says otherwise (320–1600), tables at the document's own column widths. Without --all, the top of it (up to 1600 px); with --all, the whole document in 1600 px pieces, numbered. A Word document needn't be showing: Duo draws it out of sight, and the user's view doesn't change. A Markdown preview or a slide deck is captured only while it is showing. The PNGs go in .duo/screenshots/ in the session's folder. Only a document open in a Duo tab or inside the session's project folder (C-115).", timeout: 60),
         .init(.docPick, .docs, "[<paragraph id> | c:<comment id>]",
               "Start Select Text in the Word document showing, for the user to click a paragraph or a comment, or select the paragraph (its w14:paraId from `doc outline`) or comment (`c:<id>`) named.",
               ui: ["Select Text"]),
@@ -392,7 +394,8 @@ extension DuoAction {
         .init(.browserClick, .html, "<selector> [--synthetic] [--tab <id>]", "Click the element a CSS selector names, scrolled into view: real mouse events at its centre, which apps like Google Docs need (DL-124). --synthetic sends element.click() instead (also used when the tab isn't on screen)."),
         .init(.browserFill, .html, "<selector> <text…> [--tab <id>]", "Type into an input, text area or editable element, as a person would (input and change events)."),
         .init(.browserWait, .html, "<selector> [--timeout <s>] [--tab <id>]", "Wait for an element to appear (default 10 s)."),
-        .init(.browserScreenshot, .html, "[--tab <id>]", "Save a picture of the visible page as a PNG and print its path."),
+        .init(.browserScreenshot, .html, "[--full-page] [--tab <id>]", "Save a picture of the visible page as a PNG and print its path. --full-page takes the whole page top to bottom, scrolling and joining the pictures (up to 20000 px tall, then it says it stopped); the page is left where it was."),
+        .init(.browserScroll, .html, "<top|bottom|up|down|<pixels>|<selector>> [--tab <id>]", "Scroll the page: to the top or bottom, up or down by a screen, by a number of pixels (negative goes up), or to the element a selector names. Says where the page is now, out of how tall."),
         .init(.browserGo, .html, "<url> [--tab <id>]", "Go to an address in the tab; a site not on the allow list isn't loaded."),
         .init(.browserBack, .html, "[--tab <id>]", "Back in the tab's history.", ui: ["Back"]),
         .init(.browserForward, .html, "[--tab <id>]", "Forward in the tab's history.", ui: ["Forward"]),
@@ -523,7 +526,7 @@ public struct Invocation: Sendable {
     public var flags: [String: String] = [:]
 
     /// Flags that take no value.
-    public static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "keep-in-git", "use-folder", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open", "sessions", "keep-sessions", "synthetic", "resolved", "force", "session-only", "left", "right", "hidden", "anyway", "not-now", "no-interview", "cancel", "fetch", "background", "in-duo", "suggest", "take-over", "handed-back", "no-worker", "adopt", "clear", "refresh", "no-open", "log"]
+    public static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "keep-in-git", "use-folder", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "full-page", "session","open", "sessions", "keep-sessions", "synthetic", "resolved", "force", "session-only", "left", "right", "hidden", "anyway", "not-now", "no-interview", "cancel", "fetch", "background", "in-duo", "suggest", "take-over", "handed-back", "no-worker", "adopt", "clear", "refresh", "no-open", "log"]
 
     /// Flags whose value is optional: the next word is theirs unless it's another flag.
     public static let optionalValues: Set<String> = ["remote-control"]
@@ -610,7 +613,7 @@ extension DuoAction {
             + "\nDocuments the user has open in Duo (`duo2 status` shows them) are theirs to see change: edit them with "
             + "`duo2 doc edit --stdin`, piping the JSON your Edit tool takes ({\"file_path\",\"old_string\",\"new_string\"}, or {\"file_path\",\"content\"} to rewrite), "
             + "not with Edit, Write or shell redirection. Duo applies it in the editor the user is looking at, highlighted, and merges it with their unsaved typing."
-            + "\nTo check a Word document you made, fit the check to where it goes (for Google Docs, structure, not pixels): `duo2 doc outline` and `duo2 doc layout` (page and text width, tables and pictures against it); the duo2 skill's \"Checking documents\" says more. Don't start soffice in the sandbox."
+            + "\nTo check a Word document you made, fit the check to where it goes (for Google Docs, structure, not pixels): `duo2 doc outline` and `duo2 doc layout` (page and text width, tables and pictures against it), and `duo2 doc screenshot` to see it; the duo2 skill's \"Checking documents\" says more. Don't start soffice in the sandbox."
             + "\nTo track work, make Duo tasks (`duo2 task new`, one note each in the project's tasks/ folder) and set their status with `duo2 task status`; do not write a TASKS.md or a to-do list file."
             + "\nWhen you start substantial work, `duo2 session note \"<one line>\"`; when you hand back, `duo2 session next \"<one line>\"`."
     }

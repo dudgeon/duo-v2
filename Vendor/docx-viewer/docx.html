@@ -20,7 +20,9 @@
   /* The renderer sets 10.5 pt on the section; a line of smaller text would take its height from that. The document's own default size. */
   #host section.docx { font-size: var(--duo-base-size, 10.5pt) !important; hyphens: manual !important; }   /* and no hyphenating, as Google Docs doesn't */
   #host img, #host svg { max-width: 100%; height: auto; }
-  #host table { max-width: 100%; }
+  /* Tables keep the docx's own column widths (Q-258, option A): one wider than the sheet scrolls in its box. */
+  #host .duo-tablebox { max-width: 100%; overflow-x: auto; overflow-y: hidden; }
+  #host table { max-width: none; }
 
   /* Tracked changes, in each person's colour (--duo-author, set on each mark). All Markup only. */
   #host[data-docx-review-mode="all"] ins[data-docx-change-kind="insert"], #host[data-docx-review-mode="all"] ins[data-docx-change-kind="move-to"] {

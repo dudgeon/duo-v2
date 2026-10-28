@@ -339,7 +339,7 @@ extension AppModel {
             setArchived(p.name, on)
             done(.ok(on ? "Archived \(p.name): it's in the Archived rollup under the map. Undo: duo2 undo" : "\(p.name) is back in its column."))
         case .browserTabs, .browserRead, .browserClick, .browserFill, .browserWait, .browserScreenshot, .browserGo, .browserBack, .browserForward, .browserClose,
-             .browserZoom, .browserPrint, .browserUpload, .browserDownloads:
+             .browserZoom, .browserPrint, .browserUpload, .browserDownloads, .browserScroll:
             browserVerb(id, inv, cwd: req.cwd, done)
         case .browserOpen:
             let u = inv[0].flatMap { AllowedSites.url(from: $0) }
@@ -775,6 +775,7 @@ extension AppModel {
         case .slide, .slideGo, .slideShapes, .slideNotes, .slidePick, .slideElement:
             slideVerb(id, inv, req, done)
         case .docLayout: layoutVerb(inv, req, done)
+        case .docScreenshot: docScreenshotVerb(inv, req, done)
         case .docMarkup, .docComments, .docOutline, .docPick, .docElement:
             docxVerb(id, inv, req, done)
         case .htmlReload:

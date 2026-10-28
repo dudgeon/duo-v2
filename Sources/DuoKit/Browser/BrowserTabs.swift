@@ -897,7 +897,18 @@ extension AppModel {
             guard let sel = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
             tab.wait(selector: sel, seconds: inv.flags["timeout"].flatMap(Double.init) ?? 10) { ok in done(ok ? .ok("\(sel) is there.") : .fail("\(sel) didn't appear")) }
         case .browserScreenshot:
+            if inv.has("full-page") {
+                return tab.screenshotFullPage { path, note in
+                    done(path.map { .ok("Saved the whole page: \($0)" + (note.map { " (\($0))" } ?? ""), ["path": $0, "note": (note as Any?) ?? NSNull()] as [String: Any]) } ?? .fail("couldn't take a screenshot"))
+                }
+            }
             tab.screenshot(rect: nil, whole: true) { path in done(path.map { .ok("Saved the visible page: \($0)", ["path": $0]) } ?? .fail("couldn't take a screenshot")) }
+        case .browserScroll:
+            guard let to = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
+            tab.scroll(to: to) { d in
+                guard let d else { return done(.fail("nothing matches \(to)")) }
+                done(.ok("Scrolled to \(d["y"] ?? 0) of \(d["height"] ?? 0) px (the screen is \(d["screen"] ?? 0) px tall).", d))
+            }
         case .browserGo:
             guard let s = inv[0], let u = AllowedSites.url(from: s) else { return done(.fail("usage: \(id.action.usage)")) }
             tab.load(u)

@@ -56,6 +56,18 @@ function describeFormat(list) {
 
 // ---- the review layer ----------------------------------------------------------------------
 
+// Q-258 (option A): a table keeps its own column widths, so one wider than the sheet scrolls sideways
+// in a box of its own while the text around it flows at the pane's width. A table in a cell stays in its cell.
+function boxTables() {
+  for (const t of host.querySelectorAll('table')) {
+    if (t.parentElement?.closest('table') || t.parentElement?.classList.contains('duo-tablebox')) continue;
+    const box = document.createElement('div');
+    box.className = 'duo-tablebox';
+    t.before(box);
+    box.append(t);
+  }
+}
+
 function layer() {
   people = []; threads = [];
   // 1. People in the order they first appear in the document, then in the comments part.
@@ -227,6 +239,7 @@ window.__duo = {
         externalLinkPolicy: 'block', externalResourcePolicy: 'block',
       });
       changes = collectDocxReviewChanges(doc);
+      boxTables();
       layer();
       apply();
       if (y > 0) scrollTo(0, y);
