@@ -894,6 +894,7 @@ struct RightPane: View {
                     DocumentStateBar()
                     // A template (DL-146): what it's for, Preview and Reset over it.
                     if let info = model.templateInfo(forFile: file) { TemplateBar(info: info) }
+                    MarkdownReviewSlot(file: file)   // DL-237: marks, comments or Suggest Edits on
                     DocumentEditorView(editor: model.editor, file: file)
                 }
                 .modifier(NoticeMotion(key: DocumentStateBar.key(model)))
@@ -902,6 +903,7 @@ struct RightPane: View {
                 // The Project tab is the project's own file (DL-60).
                 VStack(spacing: 0) {
                     DocumentStateBar()
+                    MarkdownReviewSlot(file: file)
                     DocumentEditorView(editor: model.editor, file: file)
                 }
                 .modifier(NoticeMotion(key: DocumentStateBar.key(model)))

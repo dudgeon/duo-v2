@@ -746,6 +746,7 @@ extension AppModel {
             guard let e = editorIfLoaded, let open = e.url, open.resolvingSymlinksInPath().standardizedFileURL.path == target else {
                 return done(.fail("not open in Duo's editor"))
             }
+            reviewLastEditor[target] = req.session   // the session that last edited a document through Duo: an @claude comment's third guess (DL-236 9A)
             if let why = e.readOnlyReason { return done(.fail("open in Duo but read-only (\(why)); leave it, or ask the user")) }
             if e.conflict { return done(.fail("open in Duo with a conflict the user hasn't resolved; ask the user before changing it")) }
             let edits: Any = (j["edits"] as? [[String: Any]]) ?? (j["old_string"] != nil ? [j] : [])
@@ -774,6 +775,14 @@ extension AppModel {
         // MARK: HTML pages
         case .slide, .slideGo, .slideShapes, .slideNotes, .slidePick, .slideElement:
             slideVerb(id, inv, req, done)
+        case .commentAdd, .commentList, .commentReply, .commentSend, .commentClose, .commentDelete, .commentReopen, .commentStatus,
+             .suggestionList, .suggestionAccept, .suggestionReject:
+            reviewVerb(id, inv, req, done)
+        case .docReview:
+            docReviewVerb(inv, req, done)
+        case .docMarkup where showingMarkdownDocument, .docComments where showingMarkdownDocument:
+            markdownMarkupVerb(id, inv, req, done)
+        case .docLayout: layoutVerb(inv, req, done)
         case .docMarkup, .docComments, .docOutline, .docPick, .docElement:
             docxVerb(id, inv, req, done)
         case .htmlReload:

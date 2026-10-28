@@ -65,19 +65,18 @@ extension AppModel {
         SheetCenter.shared.ask(q)
     }
 
-    /// "Not everything comes over: its 12 tracked changes are accepted, its 4 comments become notes
-    /// at the end, and page layout, columns and text boxes are left out." Only what the document has.
+    /// "Its 12 tracked changes come over as suggestions and its 4 comments as threads. Page layout, columns and text
+    /// boxes are left out." Only what the document has (DL-236 12A).
     public static func lossNote(_ inv: Docx.Inventory) -> String {
-        var parts: [String] = []
-        if inv.changes > 0 { parts.append(inv.changes == 1 ? "its 1 tracked change is accepted" : "its \(inv.changes) tracked changes are accepted") }
-        if inv.comments > 0 { parts.append(inv.comments == 1 ? "its 1 comment becomes a note at the end" : "its \(inv.comments) comments become notes at the end") }
+        var kept: [String] = []
+        if inv.changes > 0 { kept.append(inv.changes == 1 ? "its 1 tracked change comes over as a suggestion" : "its \(inv.changes) tracked changes come over as suggestions") }
+        if inv.comments > 0 { kept.append(inv.comments == 1 ? "its 1 comment as a thread" : "its \(inv.comments) comments as threads") }
         var left = ["page layout"]
         if inv.columns > 0 { left.append("columns") }
         if inv.textBoxes > 0 { left.append("text boxes") }
         let list = left.count == 1 ? left[0] : left.dropLast().joined(separator: ", ") + " and " + left.last!
-        parts.append("\(list) \(left.count == 1 ? "is" : "are") left out")
-        let body = parts.count == 1 ? parts[0] : parts.dropLast().joined(separator: ", ") + (parts.count > 2 ? ", and " : " and ") + parts.last!
-        return "Not everything comes over: " + body + "."
+        let first = kept.isEmpty ? "" : kept.joined(separator: " and ").prefix(1).uppercased() + kept.joined(separator: " and ").dropFirst() + ". "
+        return first + list.prefix(1).uppercased() + list.dropFirst() + " \(left.count == 1 ? "is" : "are") left out."
     }
 
     /// The bar's Convert to Markdown (A). When `<name>.md` is taken, asks first (B). `beside` puts the

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="460x920">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-237">
+<!--
+2A CHOSEN. One Suggest Edits switch for everyone, kept as suggest-edits: true in the frontmatter.
+APPROVED BOARD. Geoff, 2026-10-28 (DL-237). Exported from the Design canvas
+https://claude.ai/artifact/SBKQ1sgYF12qaqP6YXcTUX (board Track-A.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and documents are illustrative.
+Blocks headed by a small capitals label under the pane (or on a grey ground) are the spec, not UI.
+-->
+<title>Duo · Markdown review · 2A One Suggest Edits switch</title>
+<style>
+body{margin:0}
+a{color:#1F2328}a:hover{color:#1F2328}
+button{font:inherit;font-size:12px;line-height:16px;padding:4px 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;color:#1F2328;white-space:nowrap}
+.pane{width:460px;height:920px;box-sizing:border-box;display:flex;flex-direction:column;border:1px solid #C9CDD3;overflow:hidden;background:#FFFFFF;color:#1F2328;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;font-size:13px;line-height:20px;position:relative}
+.tabs{display:flex;align-items:center;gap:18px;height:36px;flex:none;padding:0 20px;border-bottom:1px solid #C9CDD3;white-space:nowrap}
+.bar{display:flex;align-items:center;gap:6px;height:44px;flex:none;padding:0 20px;border-bottom:1px solid #C9CDD3;white-space:nowrap}
+.g{color:#5B636D}
+.lab{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em;color:#5B636D}
+.src{font-family:'SF Mono',ui-monospace,monospace;font-size:11px;line-height:17px;white-space:pre-wrap;color:#1F2328}
+.sw{display:inline-block;width:8px;height:8px;border-radius:5px;border:1.5px solid #8B939C;box-sizing:border-box;margin-right:5px;vertical-align:-0.5px}
+.swon{background:#1F2328;border-color:#1F2328}
+.ins1{color:#1D5FA8;text-decoration:underline #1D5FA8;text-underline-offset:3px}
+.del1{color:#1D5FA8;text-decoration:line-through #1D5FA8}
+.ins3{color:#2E7A3A;text-decoration:underline #2E7A3A;text-underline-offset:3px}
+.del3{color:#2E7A3A;text-decoration:line-through #2E7A3A}
+.P{font-size:10px;line-height:14px;color:#5B636D;border:1px dashed #8B939C;border-radius:4px;padding:0 3px;font-weight:400;letter-spacing:0}
+.who{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;font-size:12px;line-height:16px}
+</style>
+</head>
+<body>
+<div class="pane">
+<div class="tabs"><span class="g">Project</span><span style="font-weight: 600">offline.md</span><span class="g">+</span></div>
+<div style="padding: 10px 20px 4px" class="lab">OFF (DEFAULT) <span class="P">[P]</span></div>
+<div class="bar" style="border-top: 1px solid #C9CDD3"><button>Markup ⌄</button><button><span class="sw"></span>Suggest Edits</button><span style="flex: 1"></span><button>‹</button><button>›</button><button>Review All ⌄</button></div>
+<div style="padding: 10px 20px 4px" class="lab">ON: EVERYONE’S EDITS BECOME SUGGESTIONS</div>
+<div class="bar" style="border-top: 1px solid #C9CDD3"><button>Markup ⌄</button><button style="background: #E9ECEF"><span class="sw swon"></span>Suggest Edits</button><span style="flex: 1"></span><button>‹</button><button>›</button><button>Review All ⌄</button></div>
+<div style="padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; width: 300px">
+<div>The sync engine retries every <span class="del1">30</span><span class="ins1">10</span> seconds.</div>
+<div>Launch is <span class="del3">planned for</span> <span class="ins3">set for</span> early November.</div>
+<div style="font-size: 12px; line-height: 16px" class="g">Your typing in your colour (Geoff, blue); Claude’s edit in Claude’s green, written by Duo from the edit it already intercepts.</div>
+</div>
+<div style="border-top: 1px solid #C9CDD3; background: #F3F4F6; flex: 1; padding: 14px 20px; display: flex; flex-direction: column; gap: 10px">
+<div class="lab">WHERE IT’S KEPT: THE FILE’S FRONTMATTER</div>
+<div class="src" style="background: #FFFFFF; border: 1px solid #C9CDD3; border-radius: 6px; padding: 8px 10px">---
+title: Offline mode
+suggest-edits: true
+---</div>
+<div style="font-size: 12px; line-height: 16px" class="g">Written only while on; switching off takes the line out, so a document that never used it is never touched. It’s an Obsidian property and plain YAML (OKF), and it travels with git.</div>
+<div class="lab" style="margin-top: 4px">WHO IT COVERS</div>
+<div class="who">
+<span>You, in Duo</span><span>suggests</span>
+<span>Claude, editing through Duo’s hook</span><span>suggests</span>
+<span>A team-mate’s Duo, after a pull</span><span>suggests</span>
+<span>Claude outside Duo (convention paragraph)</span><span>suggests</span>
+<span class="g">Obsidian, a text editor</span><span class="g">edits plainly</span>
+</div>
+<div class="lab" style="margin-top: 4px">REACHED BY</div>
+<div style="font-size: 12px; line-height: 16px">The button; Edit › Suggest Edits <span class="g">⇧⌘E (Word’s Track Changes key, Q-264)</span>; <span class="src">duo2 doc review on|off</span>. Claude’s green highlight (DL-186) still marks edits that land while it’s off.</div>
+</div>
+</div>
+</body>
+</html>

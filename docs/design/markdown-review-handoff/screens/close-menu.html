@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="460x800">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-237">
+<!--
+1.3 CHOSEN. Markup menu with Show Closed Comments; the margin foot's '2 closed · Show'.
+APPROVED BOARD. Geoff, 2026-10-28 (DL-237). Exported from the Design canvas
+https://claude.ai/artifact/SBKQ1sgYF12qaqP6YXcTUX (board Close-Menu.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and documents are illustrative.
+Blocks headed by a small capitals label under the pane (or on a grey ground) are the spec, not UI.
+-->
+<title>Duo · Markdown review · Show Closed Comments</title>
+<style>
+body{margin:0}
+a{color:#1F2328}a:hover{color:#1F2328}
+button{font:inherit;font-size:12px;line-height:16px;padding:4px 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;color:#1F2328;white-space:nowrap}
+.pane{width:460px;height:800px;box-sizing:border-box;display:flex;flex-direction:column;border:1px solid #C9CDD3;overflow:hidden;background:#FFFFFF;color:#1F2328;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;font-size:13px;line-height:20px;position:relative}
+.tabs{display:flex;align-items:center;gap:18px;height:36px;flex:none;padding:0 20px;border-bottom:1px solid #C9CDD3;white-space:nowrap}
+.bar{display:flex;align-items:center;gap:6px;height:44px;flex:none;padding:0 20px;border-bottom:1px solid #C9CDD3;white-space:nowrap}
+.doc{flex:1;position:relative}
+.txt{position:absolute;left:20px;top:16px;width:228px;display:flex;flex-direction:column;gap:10px}
+.h1{font-size:18px;line-height:24px;font-weight:600}
+.card{position:absolute;left:260px;width:180px;box-sizing:border-box;border:1px solid #C9CDD3;border-radius:6px;padding:8px 10px;background:#FFFFFF;font-size:12px;line-height:16px;display:flex;flex-direction:column;gap:4px}
+.g{color:#5B636D}
+.hl{background:#FBE7A1}
+.menu{position:absolute;left:20px;top:76px;width:236px;background:#FFFFFF;border-radius:10px;box-shadow:0 8px 24px rgba(31,35,40,.18),0 0 0 1px rgba(31,35,40,.08);padding:5px;display:flex;flex-direction:column}
+.mi{display:grid;grid-template-columns:16px minmax(0,1fr) auto;align-items:center;padding:2px 8px;border-radius:6px}
+.sep{height:1px;background:#C9CDD3;margin:5px 8px}
+.dot{width:9px;height:9px;border-radius:5px}
+.P{font-size:10px;line-height:14px;color:#5B636D;border:1px dashed #8B939C;border-radius:4px;padding:0 3px}
+.sw{display:inline-block;width:8px;height:8px;border-radius:5px;border:1.5px solid #8B939C;box-sizing:border-box;margin-right:5px;vertical-align:-0.5px}
+</style>
+</head>
+<body>
+<div class="pane">
+<div class="tabs"><span class="g">Project</span><span style="font-weight: 600">offline.md</span><span class="g">+</span></div>
+<div class="bar"><button style="background: #E9ECEF">Markup ⌄</button><button><span class="sw"></span>Suggest Edits</button><span style="flex: 1"></span><button>‹</button><button>›</button><button>Review All ⌄</button></div>
+<div class="doc">
+<div class="txt" style="top: 300px">
+<div>Launch is planned for early November, with <span class="hl">release notes and a short video</span> for everyone on the beta list.</div>
+<div>Pricing stays as it is. Teams on the old plan move in January.</div>
+</div>
+<div class="card" style="top: 300px"><div><b style="color: #1D5FA8; font-weight: 600">Geoff</b> <span class="g">· 27 Oct</span></div><div>Can we link the video from here?</div></div>
+<div style="position: absolute; left: 260px; top: 420px; width: 180px; font-size: 12px; line-height: 16px; color: #5B636D">2 closed · <span style="color: #1F2328; text-decoration: underline">Show</span></div>
+</div>
+<div class="menu">
+<div class="mi" style="background: #E9ECEF"><span>✓</span><span>All Markup</span><span></span></div>
+<div class="mi"><span></span><span>Simple Markup</span><span></span></div>
+<div class="mi"><span></span><span>No Markup</span><span></span></div>
+<div class="mi"><span></span><span>Original</span><span></span></div>
+<div class="sep"></div>
+<div class="mi"><span>✓</span><span>Show Comments</span><span></span></div>
+<div class="mi"><span></span><span>Show Closed Comments</span><span class="g" style="font-size: 12px">2</span></div>
+<div class="sep"></div>
+<div class="mi" style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: .06em; color: #5B636D"><span></span><span>PEOPLE</span><span></span></div>
+<div class="mi"><span class="dot" style="background: #2E7A3A"></span><span>Claude</span><span class="g">3</span></div>
+<div class="mi"><span class="dot" style="background: #1D5FA8"></span><span>Geoff</span><span class="g">4</span></div>
+<div class="mi"><span class="dot" style="background: #B0244F"></span><span>Sam</span><span class="g">2</span></div>
+</div>
+<div style="position: absolute; left: 20px; right: 20px; top: 560px; display: flex; flex-direction: column; gap: 8px; font-size: 12px; line-height: 16px; color: #5B636D">
+<div style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: .06em">THE MODE <span class="P">[P]</span></div>
+<div>The Word viewer’s Markup menu (DL-162 W4), with <b style="color: #1F2328; font-weight: 600">Show Closed Comments</b> where Word documents say Show Resolved, and the count beside it. Off by default; kept per document while Duo runs, as Markup is.</div>
+<div>The margin’s foot, “2 closed · Show”, turns it on, so nobody has to know the menu. Also View › Show Closed Comments, and <span style="font-family: 'SF Mono', ui-monospace, monospace; font-size: 11px">duo2 doc comments --closed</span>.</div>
+</div>
+</div>
+</body>
+</html>

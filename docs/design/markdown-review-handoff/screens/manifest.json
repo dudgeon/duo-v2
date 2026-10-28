@@ -1,0 +1,19 @@
+{
+  "$note": "Review in Markdown, approved 2026-10-28 (DL-237). kind=board: the right pane (460 wide, 360 for the narrow cut) drawn on the Design canvas, exported as static HTML. Blocks under small-capitals labels are spec, not UI.",
+  "source": "https://claude.ai/artifact/SBKQ1sgYF12qaqP6YXcTUX",
+  "screens": [
+    {"file": "screens/research.html", "board": "Main.dc.html", "kind": "board", "width": 1240, "height": 1240, "decision": "DL-237", "chosen": true, "shows": "RESEARCH (F-379). Google Docs and claude.ai comment rendering compared, and what Duo takes."},
+    {"file": "screens/close-verbs.html", "board": "Close-Verbs.dc.html", "kind": "board", "width": 460, "height": 800, "decision": "DL-237", "chosen": true, "shows": "CHOSEN. Close and Keep, then Delete, on the active card; the file after each."},
+    {"file": "screens/close-leaves.html", "board": "Close-Leaves.dc.html", "kind": "board", "width": 460, "height": 800, "decision": "DL-237", "chosen": true, "shows": "A CHOSEN (nothing drawn; '2 closed · Show' at the margin's foot). B, a faint dotted marker, NOT CHOSEN."},
+    {"file": "screens/close-menu.html", "board": "Close-Menu.dc.html", "kind": "board", "width": 460, "height": 800, "decision": "DL-237", "chosen": true, "shows": "CHOSEN. Markup menu with Show Closed Comments and its count; people with colours and counts."},
+    {"file": "screens/close-shown.html", "board": "Close-Shown.dc.html", "kind": "board", "width": 460, "height": 800, "decision": "DL-237", "chosen": true, "shows": "CHOSEN. Closed threads shown: dotted anchors, a folded closed card, an opened closed thread with Reopen and Delete."},
+    {"file": "screens/track-a.html", "board": "Track-A.dc.html", "kind": "board", "width": 460, "height": 920, "decision": "DL-237", "chosen": true, "shows": "CHOSEN. Suggest Edits off and on, suggestions by Geoff and Claude, the frontmatter line, who it covers."},
+    {"file": "screens/track-b.html", "board": "Track-B.dc.html", "kind": "board", "width": 460, "height": 920, "decision": "DL-237", "chosen": false, "shows": "NOT CHOSEN. Suggest Edits for Me / Claude / Everyone."},
+    {"file": "screens/track-c.html", "board": "Track-C.dc.html", "kind": "board", "width": 460, "height": 920, "decision": "DL-237", "chosen": false, "shows": "NOT CHOSEN. Editing / Suggesting / Viewing chip."},
+    {"file": "screens/margin-crowded.html", "board": "Margin-Crowded.dc.html", "kind": "board", "width": 460, "height": 800, "decision": "DL-237", "chosen": true, "shows": "CHOSEN. Five comments close together: stacking, cards at rest, hover."},
+    {"file": "screens/margin-thread.html", "board": "Margin-Thread.dc.html", "kind": "board", "width": 460, "height": 800, "decision": "DL-237", "chosen": true, "shows": "CHOSEN. The active card with a long thread; cards making room."},
+    {"file": "screens/margin-claude.html", "board": "Margin-Claude.dc.html", "kind": "board", "width": 460, "height": 1180, "decision": "DL-237", "chosen": true, "shows": "CHOSEN. @claude: writing with the session pill, Queued, Sent, Replying, Replied, Not delivered, from the file."},
+    {"file": "screens/margin-suggest.html", "board": "Margin-Suggest.dc.html", "kind": "board", "width": 460, "height": 800, "decision": "DL-237", "chosen": true, "shows": "CHOSEN. Suggestions inline in each person's colour, Claude green, a hover label with Accept, Reject, Reply."},
+    {"file": "screens/margin-narrow.html", "board": "Margin-Narrow.dc.html", "kind": "board", "width": 360, "height": 800, "decision": "DL-237", "chosen": true, "shows": "CHOSEN. The 360 cut: count markers in a 24 gutter, a thread as a popover."}
+  ]
+}

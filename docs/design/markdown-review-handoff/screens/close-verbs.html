@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="460x800">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-237">
+<!--
+1.1 CHOSEN. Close and Keep, then Delete, on the open card; what each writes in the file.
+APPROVED BOARD. Geoff, 2026-10-28 (DL-237). Exported from the Design canvas
+https://claude.ai/artifact/SBKQ1sgYF12qaqP6YXcTUX (board Close-Verbs.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and documents are illustrative.
+Blocks headed by a small capitals label under the pane (or on a grey ground) are the spec, not UI.
+-->
+<title>Duo · Markdown review · Close verbs on a thread</title>
+<style>
+body{margin:0}
+a{color:#1F2328}a:hover{color:#1F2328}
+button{font:inherit;font-size:12px;line-height:16px;padding:4px 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;color:#1F2328;white-space:nowrap}
+.pane{width:460px;height:800px;box-sizing:border-box;display:flex;flex-direction:column;border:1px solid #C9CDD3;overflow:hidden;background:#FFFFFF;color:#1F2328;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;font-size:13px;line-height:20px;position:relative}
+.tabs{display:flex;align-items:center;gap:18px;height:36px;flex:none;padding:0 20px;border-bottom:1px solid #C9CDD3;white-space:nowrap}
+.bar{display:flex;align-items:center;gap:6px;height:44px;flex:none;padding:0 20px;border-bottom:1px solid #C9CDD3;white-space:nowrap}
+.doc{flex:1;position:relative}
+.txt{position:absolute;left:20px;top:16px;width:228px;display:flex;flex-direction:column;gap:10px}
+.h1{font-size:18px;line-height:24px;font-weight:600}
+.card{position:absolute;left:260px;width:180px;box-sizing:border-box;border:1px solid #C9CDD3;border-radius:6px;padding:8px 10px;background:#FFFFFF;font-size:12px;line-height:16px;display:flex;flex-direction:column;gap:4px}
+.card.act{left:248px;width:192px;border:1.5px solid #1F2328}
+.acts button{padding:4px 8px}
+.rep{padding-left:12px;display:flex;flex-direction:column;gap:2px;margin-top:4px}
+.field{border:1px solid #C9CDD3;border-radius:6px;padding:4px 8px;color:#5B636D;margin-top:4px}
+.acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.g{color:#5B636D}
+.hl{background:#FBE7A1}
+.hla{background:#F5D565}
+.lab{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em;color:#5B636D}
+.src{font-family:'SF Mono',ui-monospace,monospace;font-size:11px;line-height:17px;white-space:pre-wrap;overflow-wrap:anywhere;color:#1F2328}
+.P{font-size:10px;line-height:14px;color:#5B636D;border:1px dashed #8B939C;border-radius:4px;padding:0 3px}
+.sw{display:inline-block;width:8px;height:8px;border-radius:5px;border:1.5px solid #8B939C;box-sizing:border-box;margin-right:5px;vertical-align:-0.5px}
+</style>
+</head>
+<body>
+<div class="pane">
+<div class="tabs"><span class="g">Project</span><span style="font-weight: 600">offline.md</span><span class="g">+</span></div>
+<div class="bar"><button>Markup ⌄</button><button><span class="sw"></span>Suggest Edits</button><span style="flex: 1"></span><button>‹</button><button>›</button><button>Review All ⌄</button></div>
+<div class="doc">
+<div class="txt">
+<div class="h1">Offline mode: one-pager</div>
+<div>Duo keeps working when the network drops. Running sessions keep their place; new turns wait until you’re back online.</div>
+<div><span class="hla">We store nothing in the cloud except crash reports.</span> The sync engine retries every 10 seconds.</div>
+<div>Launch is planned for early November, with <span class="hl">release notes and a short video</span> for everyone on the beta list.</div>
+</div>
+<div class="card act" style="top: 126px">
+<div><b style="color: #1D5FA8; font-weight: 600">Geoff</b> <span class="g">· 27 Oct</span></div>
+<div>Is this true for crash reports?</div>
+<div class="rep"><div><b style="color: #B0244F; font-weight: 600">Sam</b> <span class="g">· 27 Oct</span></div><div>No, those go to Sentry. Worth saying so.</div></div>
+<div class="field">Reply…</div>
+<div class="acts"><button>Close and Keep</button><button>Delete</button></div>
+</div>
+<div class="card" style="top: 340px">
+<div><b style="color: #1D5FA8; font-weight: 600">Geoff</b> <span class="g">· 27 Oct</span></div>
+<div>Can we link the video from here?</div>
+</div>
+<div style="position: absolute; left: 20px; right: 20px; top: 436px; display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; background: #F3F4F6; border-radius: 6px">
+<div class="lab">IN THE FILE (SOURCE MODE) <span class="P">[P] Q-262</span></div>
+<div style="font-size: 12px; line-height: 16px; font-weight: 600">Close and Keep adds a closing line; the highlight stays</div>
+<div class="src">{==We store nothing in the cloud except crash reports.==}{&gt;&gt;@geoff 2026-10-27 #c1: Is this true for crash reports?&lt;&lt;}{&gt;&gt;@sam 2026-10-27 #c1.1: No, those go to Sentry. Worth saying so.&lt;&lt;}{&gt;&gt;@geoff 2026-10-28 #c1.2 closed&lt;&lt;}</div>
+<div style="font-size: 12px; line-height: 16px; font-weight: 600">Delete takes out the thread and the highlight; the text stays</div>
+<div class="src">We store nothing in the cloud except crash reports.</div>
+<div style="font-size: 12px; line-height: 16px; color: #5B636D">Both undo with ⌘Z, so neither asks. Only the open card shows the verbs. Delete on a thread with replies deletes them all.</div>
+</div>
+</div>
+</div>
+</body>
+</html>
