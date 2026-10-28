@@ -10,6 +10,7 @@ import { reviewField, markupField, reviewerField, signatureName, today, nextId, 
 
 const MARGIN_W = 180, MARGIN_RIGHT = 20, GAP_TEXT = 12, CARD_GAP = 10, ACTIVE_W = 192, NARROW = 420, GUTTER = 24, POPOVER_W = 280;
 const setActive = StateEffect.define();   // a thread id, or null
+export const setDeliveryEffect = StateEffect.define();   // { map: { threadId: {state, name, status, at, why} }, def: {name, status} }
 
 const day = (iso) => { if (!iso) return ""; const d = new Date(iso + "T12:00:00"); return isNaN(d) ? iso : d.getDate() + " " + d.toLocaleString("en", { month: "short" }); };
 const person = (a) => a ? a.charAt(0).toUpperCase() + a.slice(1) : "Someone";
@@ -78,14 +79,14 @@ class Margin {
     this.layer = el("div", "duo-mg");
     this.layer.addEventListener("mousedown", (e) => this.onMouse(e));
     view.scrollDOM.appendChild(this.layer);
-    this.active = null; this.hover = null; this.composer = null; this.cards = new Map(); this.sig = ""; this.width = 0;
+    this.delivery = { map: {}, def: null }; this.active = null; this.hover = null; this.composer = null; this.cards = new Map(); this.sig = ""; this.width = 0;
     view.dom.addEventListener("mouseover", (e) => this.anchorHover(e));
     view.contentDOM.addEventListener("mousedown", (e) => this.anchorClick(e), true);
     this.schedule();
   }
   destroy() { this.layer.remove(); }
   update(u) {
-    for (const t of u.transactions) for (const e of t.effects) if (e.is(setActive)) { this.active = e.value; this.sig = ""; }
+    for (const t of u.transactions) for (const e of t.effects) { if (e.is(setActive)) { this.active = e.value; this.sig = ""; } if (e.is(setDeliveryEffect)) { this.delivery = e.value; this.sig = ""; } }
     // Moving the caret out of the active thread puts it away (the card is "active" while you're in it).
     if (u.selectionSet && this.active && !u.docChanged) {
       const t = u.state.field(reviewField).parsed.threads.find((x) => x.id === this.active);
@@ -120,7 +121,7 @@ class Margin {
   // Build or reuse a card per thread; positions come from the anchors and the cards' own heights.
   read() {
     const m = this.mode();
-    const signature = JSON.stringify([m.W, m.show, m.mk, m.shown.map((t) => [t.id, t.closed, t.comments.map((c) => [c.author, c.date, c.text, c.closing])]), this.active, this.composer && this.composer.from, this.hover]);
+    const signature = JSON.stringify([m.W, m.show, m.mk, m.shown.map((t) => [t.id, t.closed, t.comments.map((c) => [c.author, c.date, c.text, c.closing])]), this.active, this.composer && this.composer.from, this.hover, this.delivery]);
     return { m, signature };
   }
   anchorY(t) {
@@ -193,6 +194,7 @@ class Margin {
     } else {
       if (t.closed && closing) dom.append(el("div", "duo-mg-closedby", `Closed by ${person(closing.author)} · ${day(closing.date)}`));
       dom.append(this.nameLine(root, n), this.body(root.text));
+      this.deliveryLines(dom, t);
       if (!open) {
         const text = dom.querySelector(".duo-mg-text"); text.classList.add("duo-mg-clamp");
         if (replies.length) dom.append(el("div", "duo-mg-replies", `${replies.length} ${replies.length === 1 ? "reply" : "replies"}`));
@@ -217,6 +219,38 @@ class Margin {
     dom.addEventListener("mouseleave", () => this.setHover(null));
     return { dom, t };
   }
+  // @claude (DL-236 9A, 10A; margin-claude): where it goes, and how far it got. Never auto-sent from the file (C-112).
+  deliveryLines(dom, t) {
+    if (!t.comments.some((c) => /@claude\b/i.test(c.text))) return;
+    if (t.comments.some((c) => c.author === "claude")) { dom.append(this.pill(this.delivery.map[t.id], t)); return; }   // answered: the status goes, the pill stays
+    const d = this.delivery.map[t.id];
+    const line = (txt, glyph) => { const l = el("div", "duo-mg-status"); if (glyph) l.append(glyph); l.append(document.createTextNode(txt)); return l; };
+    const glyph = (cls) => { const g = el("span", "duo-mg-glyph " + cls); return g; };
+    const btn = (label, op) => { const b = el("button", "duo-rv-btn", label); b.type = "button"; b.dataset.op = op; return b; };
+    if (!d) {
+      dom.append(line("Not sent"));
+      const row = el("div", "duo-mg-verbs"); row.append(btn("Send", "send")); dom.append(row);
+      dom.append(this.pill(null, t));
+      return;
+    }
+    if (d.state === "queued") dom.append(line("Queued: waits for its turn", glyph("duo-mg-dash")));
+    else if (d.state === "sent") dom.append(line(`Sent · ${d.at}`));
+    else if (d.state === "replying") dom.append(line("Claude is replying", glyph("duo-mg-ring")));
+    else if (d.state === "not-delivered") {
+      dom.append(line(`Not delivered: ${d.why || d.name + " ended"}`));
+      const row = el("div", "duo-mg-verbs"); row.append(btn("Retry", "retry"), btn("Send To…", "pillbtn")); dom.append(row);
+    }
+    dom.append(this.pill(d, t));
+  }
+  // `>_ name · at prompt ⌄`: height 20, radius 9; a click picks the session (Send To).
+  pill(d, t) {
+    const src = d || this.delivery.def || { name: "New Session", status: "" };
+    const p = el("button", "duo-mg-pill"); p.type = "button"; p.dataset.op = "pill"; p.dataset.id = t ? t.id : "";
+    p.append(el("span", "duo-mg-pill-mono", ">_"), el("span", "duo-mg-pill-name", src.name || "New Session"));
+    if (src.status) p.append(el("span", "duo-mg-pill-status", ` · ${src.status}`));
+    p.append(el("span", "duo-mg-pill-chev", "⌄"));
+    return p;
+  }
   marker(t, open) {
     const mk = el("div", "duo-mg-marker" + (open ? " duo-mg-marker-open" : ""), String(t.comments.filter((c) => !c.closing).length));
     mk.dataset.thread = t.id; mk.dataset.marker = "1";
@@ -226,6 +260,8 @@ class Margin {
     const dom = el("div", "duo-mg-card duo-mg-open duo-mg-composer");
     dom.append(el("div", "duo-mg-line", person(reviewer(this.view))));
     const field = el("textarea", "duo-mg-field"); field.rows = 2; field.placeholder = "Comment…";
+    const to = el("div", "duo-mg-to"); to.style.display = "none"; to.append(el("div", "duo-mg-to-label", "To"), this.pill(null, null));
+    field.addEventListener("input", () => { to.style.display = /@claude\b/i.test(field.value) ? "block" : "none"; this.place(this.mode()); });
     const verbs = el("div", "duo-mg-verbs");
     const post = el("button", "duo-rv-btn", "Post"); post.type = "button"; post.dataset.op = "post";
     const cancel = el("button", "duo-rv-btn", "Cancel"); cancel.type = "button"; cancel.dataset.op = "cancel";
@@ -234,7 +270,7 @@ class Margin {
       if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); this.post(field.value); }
       if (e.key === "Escape") { e.preventDefault(); this.cancelCompose(); }
     });
-    dom.append(field, verbs);
+    dom.append(field, to, verbs);
     dom.dataset.composer = "1";
     this.composerField = field; this.composerDom = dom;
     setTimeout(() => field.focus(), 0);
@@ -244,7 +280,8 @@ class Margin {
   fieldKey(e, t, field) {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
-      if (replyTo(this.view, t.id, field.value)) { this.sig = ""; }
+      const text = field.value;
+      if (replyTo(this.view, t.id, text)) { this.sig = ""; if (/@claude\b/i.test(text)) emitReviewAction({ op: "send", id: t.id }); }
     } else if (e.key === "Escape") { e.preventDefault(); this.setActive(null); this.view.focus(); }
   }
 
@@ -340,6 +377,12 @@ class Margin {
         case "reopen": reopenThread(this.view, id); break;
         case "delete": deleteThread(this.view, id); this.active = null; break;
         case "post": this.post(this.composerField.value); break;
+        case "send": case "retry": emitReviewAction({ op: btn.dataset.op, id }); break;
+        case "pill": case "pillbtn": {
+          const r = btn.getBoundingClientRect(), host = this.view.dom.getBoundingClientRect();
+          emitReviewAction({ op: "pill", id: id || btn.dataset.id, x: r.left - host.left, y: r.bottom - host.top + 2 });
+          break;
+        }
         case "cancel": this.cancelCompose(); break;
       }
       this.sig = ""; this.schedule();
@@ -362,6 +405,7 @@ class Margin {
     this.composer = null; this.composerDom = null;
     const id = addThread(this.view, text.trim(), c);
     if (id) this.active = id;
+    if (id && /@claude\b/i.test(text)) emitReviewAction({ op: "send", id });   // Post sends (DL-236 10A)
     this.sig = ""; this.schedule();
   }
   cancelCompose() { this.composer = null; this.composerDom = null; this.sig = ""; this.schedule(); this.view.focus(); }
@@ -369,6 +413,7 @@ class Margin {
 
 const margin = ViewPlugin.fromClass(Margin);
 export const marginExtensions = [margin];
+export const setDelivery = (view, map, def) => { view.dispatch({ effects: setDeliveryEffect.of({ map: map || {}, def: def || null }) }); return true; };
 export const activate = (view, id) => view.dispatch({ effects: setActive.of(id) });
 export const composeComment = (view) => { const p = view.plugin(margin); return p ? p.compose() : false; };
 export const activeThread = (view) => { const p = view.plugin(margin); return p ? p.active : null; };
@@ -398,5 +443,15 @@ export const marginTheme = EditorView.baseTheme({
   ".duo-mg-link": { textDecoration: "underline", color: "var(--duo-text)", cursor: "default" },
   ".duo-mg-marker": { position: "absolute", width: "20px", height: "16px", boxSizing: "border-box", border: "1px solid var(--duo-rule)", borderRadius: "4px", backgroundColor: "var(--duo-pane)", color: "var(--duo-text2)", font: "10px/14px -apple-system, sans-serif", textAlign: "center", cursor: "default" },
   ".duo-mg-marker-open": { backgroundColor: "var(--duo-selected)", border: "1.5px solid var(--duo-text)" },
+  ".duo-mg-status": { color: "var(--duo-text2)", font: "11px/16px -apple-system, sans-serif", marginTop: "4px", display: "flex", alignItems: "center", gap: "6px" },
+  ".duo-mg-glyph": { display: "inline-block", flex: "none", width: "10px", height: "10px", boxSizing: "border-box" },
+  ".duo-mg-dash": { height: "1.6px", backgroundColor: "var(--duo-text2)", borderRadius: "1px", alignSelf: "center" },
+  ".duo-mg-ring": { border: "1.5px solid var(--duo-text)", borderRadius: "50%" },
+  ".duo-mg-pill": { display: "inline-flex", alignItems: "center", maxWidth: "100%", boxSizing: "border-box", height: "20px", marginTop: "6px", padding: "0 6px", border: "1px solid var(--duo-control-edge)", borderRadius: "9px", backgroundColor: "var(--duo-pane)", color: "var(--duo-text)", font: "11px/16px -apple-system, sans-serif", cursor: "default", gap: "4px" },
+  ".duo-mg-pill-mono": { fontFamily: "'SF Mono', ui-monospace, monospace", fontSize: "10px", color: "var(--duo-text2)", flex: "none" },
+  ".duo-mg-pill-name": { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: "0" },
+  ".duo-mg-pill-status": { color: "var(--duo-text2)", whiteSpace: "nowrap", flex: "none" },
+  ".duo-mg-pill-chev": { flex: "none" },
+  ".duo-mg-to-label": { color: "var(--duo-text2)", font: "11px/16px -apple-system, sans-serif", marginTop: "6px" },
   ".duo-rv-hl-hot": { backgroundColor: "var(--duo-comment-highlight-active) !important" },
 });

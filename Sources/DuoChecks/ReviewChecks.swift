@@ -103,6 +103,19 @@ import Foundation
     let editorJS = (try? String(contentsOf: repoRoot().appending(path: "Vendor/codemirror/src/duo-editor.js"), encoding: .utf8)) ?? ""
     check(editorJS.contains("reviewCore,") && editorJS.contains("reviewDrawing"), "the editor loads the review module: parse always, drawing with the live preview")
 
+    // @claude comments (DL-236 9A, 10A): where one goes first, and what the turn says
+    check(Review.firstGuess(thread: "t", document: "d", lastEditor: "e", onScreen: "s") == "t", "the first guess is the thread's session")
+    check(Review.firstGuess(thread: nil, document: "d", lastEditor: "e", onScreen: "s") == "d", "then this document's last choice")
+    check(Review.firstGuess(thread: nil, document: nil, lastEditor: "e", onScreen: "s") == "e", "then the one that last edited it through Duo")
+    check(Review.firstGuess(thread: nil, document: nil, lastEditor: nil, onScreen: "s") == "s", "then the one on screen")
+    check(Review.firstGuess(thread: "", document: nil, lastEditor: nil, onScreen: nil) == nil, "else none: New Session")
+    let ct = Review.parse("Launch is {==planned for early November==}{>>@geoff 2026-10-28 #c2: @claude can you tighten this?<<}{>>@sam 2026-10-28 #c2.1: yes please<<}").thread("c2")!
+    let turn = Review.turn(path: "docs/offline.md", line: 9, thread: ct)
+    check(turn.hasPrefix("@claude comment in docs/offline.md, line 9 (thread c2), from geoff, 2026-10-28\n"), "the turn starts with where, which thread and from whom")
+    check(turn.contains("On: “planned for early November”\n> @geoff: @claude can you tighten this?\n> @sam: yes please\n"), "the turn names the anchor and quotes the thread as data")
+    check(turn.contains("duo2 comment reply c2 \"<text>\"") && turn.contains("--suggest") && !turn.contains("\u{1b}"), "the turn says how to reply, as plain text")
+    check(ct.comments.contains(where: \.mentionsClaude) && !Review.parse("{==a==}{>>@geoff 2026-10-28 #c3: just a note<<}").threads[0].comments.contains(where: \.mentionsClaude), "a comment names @claude or it doesn't")
+
     // The paragraph and the verbs
     let c = Review.convention
     for must in ["{++added++}", "never accept or reject", "signed @claude", "#id.n", "closed<<}", "never delete someone's comment", "names @claude", "suggest-edits: true", "duo2 comment reply"] {

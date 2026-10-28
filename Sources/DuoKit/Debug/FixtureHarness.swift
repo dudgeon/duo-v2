@@ -92,6 +92,7 @@ public enum FixtureHarness {
     }
 
     /// Runs one scripted action (`--then`), as a click or chord would.
+    nonisolated(unsafe) static var reviewScreen = AppModel.PromptRead(idle: true, input: "")
     static func perform(_ action: String, on model: AppModel) {
         let parts = action.split(separator: ":", maxSplits: 1).map(String.init)
         switch parts[0] {
@@ -365,6 +366,20 @@ public enum FixtureHarness {
                 FileHandle.standardError.write(Data("review-debug: \(v as? String ?? "nil")\n".utf8)) }
         case "review-width":   // review-width:<pt>: the editor page held to that width, as a pane that narrow (the boards are 460 and 360)
             model.editor.run("const e = document.getElementById('editor'); e.style.width = w + 'px'; e.style.borderRight = '1px solid #ccc'; return true", ["w": Int(parts.count > 1 ? parts[1] : "460") ?? 460]) { _ in }
+        case "review-io":   // review-io:idle|busy|draft: a scripted screen for the session an @claude comment goes to; what Duo types is printed
+            switch parts.count > 1 ? parts[1] : "idle" {
+            case "busy": Self.reviewScreen = AppModel.PromptRead(idle: false, input: "")
+            case "draft": Self.reviewScreen = AppModel.PromptRead(idle: true, input: "half a thought")
+            default: Self.reviewScreen = AppModel.PromptRead(idle: true, input: "")
+            }
+            model.submitHooks = AppModel.SubmitIO(read: { Self.reviewScreen }, beaconIdle: { Self.reviewScreen.idle }, type: { s in
+                FileHandle.standardError.write(Data("review-typed: \(s.replacingOccurrences(of: "\u{1b}[200~", with: "<paste>").replacingOccurrences(of: "\u{1b}[201~", with: "</paste>").replacingOccurrences(of: "\r", with: "<Return>").replacingOccurrences(of: "\n", with: " | "))\n".utf8))
+                if s != "\r" { Self.reviewScreen.input = String(SendFormat.clean(s.replacingOccurrences(of: "\u{1b}[200~", with: "").replacingOccurrences(of: "\u{1b}[201~", with: ""))) }
+            }, settle: 0.05)
+        case "review-send":   // review-send:<thread>: send that @claude comment to the project's first session, as the margin's Post does
+            if let id = parts.count > 1 ? parts[1] : nil, let url = model.editor.url, let s = model.fixture.sessions.first(where: { $0.project == model.currentProject?.name && $0.sessionId != nil }) {
+                model.sendReviewComment(url, thread: id, to: s) { r in FileHandle.standardError.write(Data("review-send: \(r.text)\n".utf8)) }
+            } else { FileHandle.standardError.write(Data("review-send: no session\n".utf8)) }
         case "review-menu": model.reviewMenu = parts.count > 1 ? parts[1] : nil   // review-menu:markup|all: the review bar's menu, open for a capture
         case "verb":   // verb:<duo2 words>[ --as name]: a duo2 verb through the control handler, as `duo2` sends it (from a Claude session); its reply to stderr
             let words = (parts.count > 1 ? parts[1] : "").split(separator: " ", omittingEmptySubsequences: true).map(String.init)
