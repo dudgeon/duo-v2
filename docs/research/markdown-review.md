@@ -10,7 +10,7 @@ records: [F-370, F-371, C-112, Q-240, Q-241, Q-242, Q-243, Q-244, Q-245, Q-246, 
 
 Research for Geoff's ask of 2026-10-27 (full words in `tasks/markdown-review-intent.md`): tracked changes in Markdown on a common convention, comments with authors that can be accepted or dismissed, no sidecar file, both Duo and Claude recognising them, and `@claude` in a comment reaching a Claude session as a turn that Claude answers in the thread.
 
-The intent and decision page built from this is published as an Artifact (link in the task note). Nothing here is decided: the decisions are Geoff's to lock after user feedback, and the director records them as DL-n.
+The intent and decision page built from this is https://claude.ai/artifact/Jd28RDwpRJEzUigtjUxb9q (source: `markdown-review-samples/intent-page.html`). Nothing here is decided: the decisions are Geoff's to lock after user feedback, and the director records them as DL-n.
 
 **In short.**
 - CriticMarkup is the only plain-text convention for tracked changes that more than one tool reads. Its spec is frozen (last commit 2021) and has no author, date, id, reply or resolved state, so every tool that needs those adds its own signature. There is no standard signature to adopt; we pick one.

@@ -1,0 +1,738 @@
+<title>Duo Markdown Review</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one reading column (~760px) of intent, stories and mockups, then decision cards; mock Duo panes drawn from Duo's tokens. */
+:root {
+  --ground:#f3f4f6; --pane:#ffffff; --text:#1f2328; --text2:#5b636d; --rule:#c9cdd3; --edge:#8b939c;
+  --sel:#e9ecef; --claudeEdit:#d6eddc; --hl:#fbe7a1; --chatYou:#dce6f7;
+  --a1:#b0244f; --a2:#1d5fa8; --a3:#2e7a3a; --a4:#7b3fb5;
+  --console:#15171b; --cRule:#2b2f36; --cText:#e6e8eb; --cText2:#9aa1ab; --needs:#c2410c;
+  --page:#eceef1; --codeBg:#f8f9fa;
+  --ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  --doc: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground:#131518; --pane:#181a1e; --text:#e6e8eb; --text2:#9aa1ab; --rule:#2b2f36; --edge:#6e7681;
+  --sel:#262a30; --claudeEdit:#1f3a28; --hl:#4f4112; --chatYou:#22344f;
+  --a1:#f38ba8; --a2:#7fb0ee; --a3:#7cc98a; --a4:#c39beb;
+  --console:#0c0d10; --cRule:#24272d; --needs:#f97316; --page:#0f1114; --codeBg:#131518; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --ground:#131518; --pane:#181a1e; --text:#e6e8eb; --text2:#9aa1ab; --rule:#2b2f36; --edge:#6e7681;
+  --sel:#262a30; --claudeEdit:#1f3a28; --hl:#4f4112; --chatYou:#22344f;
+  --a1:#f38ba8; --a2:#7fb0ee; --a3:#7cc98a; --a4:#c39beb;
+  --console:#0c0d10; --cRule:#24272d; --needs:#f97316; --page:#0f1114; --codeBg:#131518; color-scheme: dark }
+
+* { box-sizing: border-box }
+body { background: var(--page); color: var(--text); font: 15px/1.55 var(--ui); margin: 0 }
+.wrap { max-width: 820px; margin: 0 auto; padding-block: 40px 80px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em }
+h2 { font-size: 21px; line-height: 1.25; margin: 0; text-wrap: balance }
+h3 { font-size: 16px; line-height: 1.3; margin: 0; text-wrap: balance }
+p { margin: 0 }
+section { display: grid; gap: 16px; margin-top: 56px }
+.label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text2) }
+.lede { font-size: 17px; color: var(--text); max-width: 66ch }
+.muted { color: var(--text2) }
+.meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 14px }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; line-height: 16px; padding: 2px 8px; border: 1px solid var(--edge); border-radius: 9px; color: var(--text2); background: var(--pane) }
+.chip.p { border-style: dashed }
+.prose { display: grid; gap: 12px; max-width: 68ch }
+ul.plain { margin: 0; padding-left: 20px; display: grid; gap: 6px }
+a { color: var(--a2) }
+code, .mono { font-family: var(--mono); font-size: 0.86em }
+:focus-visible { outline: 2px solid var(--a2); outline-offset: 2px }
+
+/* intent */
+.intent { display: grid; gap: 10px; counter-reset: i }
+.intent li { list-style: none; display: grid; grid-template-columns: 22px 1fr; gap: 8px }
+.intent li::before { content: "✓"; color: var(--a3); font-weight: 700 }
+.intent { padding: 0; margin: 0 }
+
+/* stories */
+.stories { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px }
+.story { background: var(--pane); border: 1px solid var(--rule); border-radius: 8px; padding: 16px; display: grid; gap: 8px; align-content: start }
+.story .who { font-size: 12px; color: var(--text2) }
+.story ol { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px }
+@media (max-width: 640px) { .stories { grid-template-columns: 1fr } }
+
+/* figure */
+figure { margin: 0; display: grid; gap: 10px }
+figcaption { font-size: 13px; color: var(--text2); max-width: 70ch }
+figcaption b { color: var(--text) }
+.figrow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start }
+.figrow.three { grid-template-columns: repeat(3, minmax(0, 1fr)) }
+@media (max-width: 700px) { .figrow, .figrow.three { grid-template-columns: 1fr } }
+
+/* ---------- mock Duo pane ---------- */
+.duo { background: var(--pane); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; font-family: var(--ui); min-width: 0; position: relative }
+.duo .tabs { display: flex; gap: 22px; align-items: center; height: 36px; padding: 0 16px; border-bottom: 1px solid var(--rule); font-size: 13px; color: var(--text2) }
+.duo .tabs b { color: var(--text); font-weight: 600 }
+.duo .bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--rule); background: var(--pane) }
+.btn { display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 10px; font: 12px/16px var(--ui); color: var(--text); background: var(--pane); border: 1px solid var(--edge); border-radius: 6px; white-space: nowrap }
+.btn.prim { border-width: 1.5px; border-color: var(--text); font-weight: 600 }
+.btn.sm { height: 22px; padding: 0 8px; font-size: 11.5px }
+.btn .on { width: 8px; height: 8px; border-radius: 50%; background: var(--a3) }
+.btn .off { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--edge) }
+.bar .count { font-size: 12px; color: var(--text2); margin-left: 4px }
+.bar .sp { flex: 1 }
+.duo .body { padding: 18px 22px 22px; font: 14.5px/1.6 var(--doc); display: grid; gap: 12px }
+.duo .body h4 { font-size: 19px; font-weight: 600; margin: 0 }
+.notice { padding: 10px 16px; background: var(--ground); border-bottom: 1px solid var(--rule); font-size: 13px; display: grid; gap: 6px }
+.notice .row { display: flex; gap: 6px; flex-wrap: wrap }
+.pmark { position: absolute; top: 8px; right: 10px; font: 600 10.5px/16px var(--ui); color: var(--text2); border: 1px dashed var(--edge); border-radius: 9px; padding: 0 7px; background: var(--pane) }
+
+/* review marks */
+.ins { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px }
+.del { text-decoration: line-through; text-decoration-thickness: 1.5px }
+.c1 { color: var(--a1) } .c2 { color: var(--a2) } .c3 { color: var(--a3) } .c4 { color: var(--a4) }
+.hlx { background: var(--hl); border-radius: 2px; padding: 0 1px }
+.cedit { background: var(--claudeEdit); border-radius: 2px }
+.focus { outline: 1.5px solid currentColor; outline-offset: 1px; border-radius: 2px }
+.dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--hl); border: 1px solid var(--edge); vertical-align: 2px; margin-left: 2px }
+.ccard { border: 1px solid var(--rule); border-radius: 6px; padding: 10px 12px; display: grid; gap: 6px; font: 13px/20px var(--ui) }
+.ccard .h { display: flex; flex-wrap: wrap; gap: 4px; align-items: baseline }
+.ccard .h b { font-weight: 600 }
+.ccard .h .t { color: var(--text2) }
+.ccard .rep { padding-left: 14px; display: grid; gap: 2px }
+.ccard .acts { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px }
+.ccard .status { font-size: 12px; color: var(--text2); display: flex; gap: 6px; align-items: center }
+.ring { width: 9px; height: 9px; border: 1.5px solid var(--text); border-radius: 50%; display: inline-block }
+.diamond { width: 8px; height: 8px; background: var(--text); transform: rotate(45deg); display: inline-block }
+.ccard.folded { color: var(--text2); grid-template-columns: auto 1fr; align-items: center }
+.ccard.compose { border-color: var(--text); border-width: 1.5px }
+.field { border: 1px solid var(--rule); border-radius: 6px; padding: 6px 8px; min-height: 30px; background: var(--pane) }
+.field .caret { display: inline-block; width: 1px; height: 15px; background: var(--text); vertical-align: -3px }
+.mention { color: var(--a3); font-weight: 600 }
+.target { display: inline-flex; gap: 6px; align-items: center; font-size: 12px; border: 1px solid var(--edge); border-radius: 9px; padding: 1px 8px; background: var(--pane) }
+.idle { width: 9px; height: 1.6px; background: var(--text2); display: inline-block; border-radius: 1px }
+.pill { display: inline-flex; gap: 8px; align-items: center; font: 12.5px/20px var(--ui); background: var(--pane); border: 1px solid var(--rule); border-radius: 12px; padding: 3px 4px 3px 12px; box-shadow: 0 4px 14px rgba(0,0,0,.12) }
+.pill .x { display: inline-flex; gap: 4px }
+.popwrap { position: relative; padding-top: 6px }
+
+/* console */
+.console { background: var(--console); color: var(--cText); font: 12px/18px var(--mono); padding: 12px 14px; border-radius: 10px; min-width: 0; overflow-x: auto; position: relative }
+.console .dim { color: var(--cText2) }
+.console .tabs2 { display: flex; gap: 16px; font-size: 12px; color: var(--cText2); border-bottom: 1px solid var(--cRule); padding-bottom: 8px; margin-bottom: 10px; font-family: var(--mono) }
+.console .tabs2 b { color: var(--cText); font-weight: 500 }
+.console pre { margin: 0; white-space: pre-wrap; font: inherit }
+.console .box { border: 1px solid #4a4f57; border-radius: 6px; padding: 6px 8px; margin-top: 10px; color: var(--cText2) }
+
+/* raw markdown */
+.raw { background: var(--codeBg); border: 1px solid var(--rule); border-radius: 6px; padding: 10px 12px; font: 12.5px/1.6 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; min-width: 0 }
+.raw .d { color: var(--text2) }
+.raw .at { color: var(--a2); font-weight: 600 }
+.raw .id { color: var(--a4) }
+.raw .claude { color: var(--a3); font-weight: 600 }
+.ghview { background: var(--pane); border: 1px solid var(--rule); border-radius: 6px; padding: 12px 14px; font: 14px/1.5 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; display: grid; gap: 8px; min-width: 0; overflow-wrap: anywhere }
+.ghview .src { font-size: 11px; color: var(--text2); font-family: var(--ui); text-transform: uppercase; letter-spacing: .05em; font-weight: 600 }
+.ghview del { color: inherit }
+.ghview .fn { font-size: 12px; color: var(--text2); border-top: 1px solid var(--rule); padding-top: 6px }
+.obs mark { background: #fff3a3; color: #222 }
+
+/* decisions */
+.toc { display: flex; flex-wrap: wrap; gap: 6px }
+.toc a { font-size: 13px; text-decoration: none; color: var(--text); border: 1px solid var(--rule); background: var(--pane); padding: 3px 10px; border-radius: 9px }
+.toc a .n { color: var(--text2) }
+.toc a.done { border-color: var(--a3) }
+.decision { background: var(--pane); border: 1px solid var(--rule); border-radius: 10px; padding: 20px; display: grid; gap: 14px; scroll-margin-top: 16px }
+.decision .q { display: grid; gap: 6px }
+.decision .num { font: 600 12px/16px var(--ui); color: var(--text2); letter-spacing: .04em }
+.why { font-size: 14px; color: var(--text2); max-width: 70ch }
+.opts { display: grid; gap: 10px }
+.opt { border: 1px solid var(--rule); border-radius: 8px; padding: 14px; display: grid; gap: 10px; cursor: pointer; position: relative; background: var(--pane) }
+.opt:hover { border-color: var(--edge) }
+.opt.picked { border: 2px solid var(--text); padding: 13px }
+.opt .head { display: flex; gap: 10px; align-items: flex-start }
+.opt input { margin: 3px 0 0; accent-color: var(--text); width: 16px; height: 16px; flex: none }
+.opt .title { font-weight: 600; display: flex; gap: 8px; flex-wrap: wrap; align-items: center }
+.rec { font: 600 11px/16px var(--ui); letter-spacing: .04em; text-transform: uppercase; color: var(--pane); background: var(--text); border-radius: 9px; padding: 1px 8px }
+.tally { font: 12px/16px var(--ui); color: var(--text2); font-weight: 400 }
+.ex { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px }
+.ex.one { grid-template-columns: minmax(0, 1fr) }
+.ex .lab { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; font-weight: 600; margin-bottom: 4px }
+.ex .duo .body { padding: 12px 14px; font-size: 13.5px; gap: 8px }
+@media (max-width: 640px) { .ex { grid-template-columns: minmax(0, 1fr) } }
+.tradeoffs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; font-size: 13.5px }
+.tradeoffs ul { margin: 0; padding-left: 16px; display: grid; gap: 2px }
+.tradeoffs .k { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .05em }
+@media (max-width: 640px) { .tradeoffs { grid-template-columns: 1fr } }
+.foot { display: grid; gap: 8px; border-top: 1px solid var(--rule); padding-top: 14px }
+.foot textarea { width: 100%; min-height: 54px; font: 14px/1.4 var(--ui); padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--pane); color: var(--text); resize: vertical }
+.foot .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.foot .say { font-size: 13px; color: var(--text2) }
+button.btn { cursor: pointer }
+button.btn:disabled { opacity: .5; cursor: default }
+.sendall { position: sticky; bottom: 0; margin-top: 32px; background: var(--pane); border: 1px solid var(--rule); border-radius: 10px; padding: 12px 14px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) }
+.note { background: var(--pane); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; display: grid; gap: 6px; font-size: 14px }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px }
+@media (prefers-reduced-motion: no-preference) { .opt { transition: border-color .12s } }
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="label">Duo · proposal for feedback · nothing decided yet</div>
+  <h1 style="margin-top:8px">Review in Markdown: tracked changes, comments and @claude</h1>
+  <p class="lede" style="margin-top:12px">We want reviewing a Markdown document in Duo to feel like reviewing in Word or Google Docs, with Claude as one of the reviewers. Suggested edits you can accept or reject, comments with names on them, and a way to ask Claude something right where the question is. All of it kept in the Markdown file itself.</p>
+  <div class="meta">
+    <span class="chip p">[P] Drawn Duo screens are proposals, not approved design</span>
+    <span class="chip">Research: <span class="mono">docs/research/markdown-review.md</span></span>
+    <span class="chip">27 Oct 2026</span>
+  </div>
+</header>
+
+<section id="intent">
+  <div class="label">What people should be able to do</div>
+  <ul class="intent">
+    <li><span><b>See what changed and who changed it.</b> Suggested insertions and deletions show in each person's colour, with their name and when.</span></li>
+    <li><span><b>Accept or reject each suggestion</b>, one at a time or all at once, and get exactly the old or the new text back.</span></li>
+    <li><span><b>Comment on a passage</b>, reply in a thread, and resolve or dismiss the thread when it's dealt with.</span></li>
+    <li><span><b>Ask Claude from inside the document.</b> Write <span class="mention">@claude</span> in a comment; it reaches a Claude session as a message, and Claude answers in the thread, or proposes the change as a suggestion.</span></li>
+    <li><span><b>Have Claude's edits wait for you</b> when you want them to, instead of landing straight in the text.</span></li>
+    <li><span><b>Keep one plain file.</b> No hidden companion file. The document still opens in Obsidian, on GitHub and in any text editor, and the review is readable there.</span></li>
+    <li><span><b>Bring Word reviews across.</b> Converting a .docx keeps its comments and tracked changes instead of dropping them.</span></li>
+  </ul>
+</section>
+
+<section id="stories">
+  <div class="label">User stories</div>
+  <div class="stories">
+    <div class="story">
+      <h3>A PM reviews a doc Claude wrote</h3>
+      <div class="who">Geoff, product manager</div>
+      <ol>
+        <li>Claude drafts <span class="mono">offline.md</span> in a session.</li>
+        <li>Geoff reads it in Duo, highlights a claim and comments "Is this true for crash reports?"</li>
+        <li>He fixes a number himself, and leaves two more comments.</li>
+        <li>Next morning he sees which comments are open and which Claude has answered.</li>
+      </ol>
+    </div>
+    <div class="story">
+      <h3>Claude proposes changes for approval</h3>
+      <div class="who">Geoff and the session that wrote the doc</div>
+      <ol>
+        <li>Geoff turns on <b>Suggest Edits</b> for the document.</li>
+        <li>He asks Claude to tighten the intro. Claude's edits arrive as green suggestions, signed by Claude, and the text underneath is unchanged.</li>
+        <li>He accepts two, rejects one, and the doc is clean again.</li>
+      </ol>
+    </div>
+    <div class="story">
+      <h3>A team-mate's comments</h3>
+      <div class="who">Sam reviews the same file in Obsidian, pulled through git</div>
+      <ol>
+        <li>Sam adds comments and a suggestion in Obsidian (with or without a review plugin).</li>
+        <li>Geoff's Duo shows them in Sam's colour, with Sam's name.</li>
+        <li>One of Sam's comments says <span class="mention">@claude</span>; Duo shows it as <b>not sent</b> with a Send button, so nothing starts on its own.</li>
+      </ol>
+    </div>
+    <div class="story">
+      <h3>@claude, rewrite this</h3>
+      <div class="who">Geoff, mid-review</div>
+      <ol>
+        <li>Geoff comments "<span class="mention">@claude</span> can you tighten this paragraph?"</li>
+        <li>The comment shows which session will get it before he posts it.</li>
+        <li>Claude replies in the thread and proposes the rewrite as a suggestion.</li>
+        <li>Geoff accepts it and resolves the thread.</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section id="looks">
+  <div class="label">How it would look in Duo [P]</div>
+  <p class="prose muted">These follow the review look Duo already has for Word documents (DL-162): each person's colour, comment cards under their paragraph, a hover label, resolved threads folded. Colours and controls are Duo's tokens. Everything here is a proposal for the decisions below.</p>
+
+  <figure>
+    <div class="duo">
+      <span class="pmark">[P]</span>
+      <div class="tabs"><span>Project</span><b>offline.md</b><span>+</span></div>
+      <div class="bar">
+        <span class="btn">Markup ⌄</span>
+        <span class="btn"><span class="on"></span>Suggest Edits</span>
+        <span class="count">3 suggestions · 2 comments</span>
+        <span class="sp"></span>
+        <span class="btn">‹</span><span class="btn">›</span>
+        <span class="btn">Review All ⌄</span>
+      </div>
+      <div class="body">
+        <h4>Offline mode: one-pager</h4>
+        <p>Duo keeps working when the network drops. <span class="del c3">Sessions pause and resume automatically.</span> <span class="ins c3">Running sessions keep their place; new turns wait until you're back online.</span></p>
+        <div class="popwrap"><p>The sync engine retries every <span class="del c2">30</span><span class="ins c2 focus">10</span> seconds.</p>
+          <div style="margin-top:6px"><span class="pill"><span><b class="c2">Geoff</b> suggested · 9:41</span><span class="x"><span class="btn sm">✓ Accept</span><span class="btn sm">✕ Reject</span></span></span></div></div>
+        <p><span class="hlx">We store nothing in the cloud.</span></p>
+        <div class="ccard">
+          <div class="h"><b class="c2">Geoff</b><span class="t">· 27 Oct</span></div>
+          <div>Is this true for crash reports?</div>
+          <div class="rep"><div class="h"><b class="c1">Sam</b><span class="t">· 27 Oct</span></div><div>Crash reports go to Sentry, so no.</div></div>
+          <div class="acts"><span class="btn sm">Reply</span><span class="btn sm">Resolve</span><span class="btn sm">Dismiss</span></div>
+        </div>
+        <div class="ccard folded"><span>›</span><span>Resolved · Geoff: Spell out "turn" for new readers.</span></div>
+      </div>
+    </div>
+    <figcaption><b>1 · Reviewing.</b> The bar gains a review row: Markup (All Markup, Simple Markup, No Markup, Original, as on Word documents), the Suggest Edits switch, counts, previous and next, and Accept All or Reject All under Review All. Claude's suggestions are in Claude's green, people's in their own colours. Hovering a suggestion shows who and when with Accept and Reject.</figcaption>
+  </figure>
+
+  <div class="figrow">
+    <figure>
+      <div class="duo">
+        <span class="pmark">[P]</span>
+        <div class="body">
+          <p>Launch is planned for <span class="ins c2">early</span> November. <span class="hlx">It ships to every user on day one, with release notes, a short video and an email to everyone on the beta list.</span></p>
+          <div class="ccard compose">
+            <div class="h"><b class="c2">Geoff</b><span class="t">· now</span></div>
+            <div class="field"><span class="mention">@claude</span> can you tighten this? It reads long.<span class="caret"></span></div>
+            <div class="status">Goes to <span class="target"><span class="idle"></span>Offline one-pager · at prompt ⌄</span></div>
+            <div class="acts"><span class="btn sm">Cancel</span><span class="btn sm prim">Comment</span></div>
+          </div>
+        </div>
+      </div>
+      <figcaption><b>2 · Asking Claude.</b> Select text, Add Comment (right-click, or a shortcut, Q-245). Typing <span class="mention">@claude</span> shows where it will go: the session Duo picked, with its state. The menu lists every live session and New Session, as Send To does. Posting the comment sends it.</figcaption>
+    </figure>
+    <figure>
+      <div class="duo">
+        <span class="pmark">[P]</span>
+        <div class="body">
+          <p>Launch is planned for <span class="ins c2">early</span> November. <span class="hlx"><span class="del c3">It ships to every user on day one, with release notes, a short video and an email to everyone on the beta list.</span> <span class="ins c3">Everyone gets it on day one, with notes, a video and a beta email.</span></span></p>
+          <div class="ccard">
+            <div class="h"><b class="c2">Geoff</b><span class="t">· 14:02</span></div>
+            <div><span class="mention">@claude</span> can you tighten this? It reads long.</div>
+            <div class="rep"><div class="h"><b class="c3">Claude</b><span class="t">· Offline one-pager · 14:03</span></div><div>Cut it to one line; the suggestion is above. I kept all four items.</div></div>
+            <div class="acts"><span class="btn sm">Reply</span><span class="btn sm">Resolve</span><span class="btn sm">Dismiss</span></div>
+          </div>
+        </div>
+      </div>
+      <figcaption><b>3 · Claude answers in the thread.</b> The reply is signed with the session's name, and the rewrite arrives as a suggestion you accept or reject. The reply goes into the open document the way Claude's edits do today, so it never overwrites what you're typing.</figcaption>
+    </figure>
+  </div>
+
+  <div class="figrow">
+    <figure>
+      <div class="console">
+        <span class="pmark" style="background:var(--console);color:var(--cText2);border-color:#4a4f57">[P]</span>
+        <div class="tabs2"><b>Offline one-pager</b><span>Pricing study</span></div>
+<pre><span class="dim">❯</span> @claude comment in offline.md, line 9 (thread c2), from Geoff, 27 Oct 14:02
+  On: "It ships to every user on day one, with release notes…"
+  &gt; can you tighten this? It reads long.
+  Reply in the thread: duo2 comment reply c2 "&lt;text&gt;"   (--suggest to propose an edit)
+
+<span class="dim">⏺</span> Bash(duo2 comment reply c2 --suggest "Cut it to one line…")
+<span class="dim">  ⎿  Replied in offline.md (c2.1), with suggestion s6</span></pre>
+      </div>
+      <figcaption><b>4 · What Claude receives.</b> A plain message in the session's own terminal, as if you'd typed it: where the comment is, the text it's on, the comment itself, and how to reply. It only goes in when the session is at its prompt with nothing typed; otherwise the comment says it's queued.</figcaption>
+    </figure>
+    <figure>
+      <div class="duo">
+        <span class="pmark">[P]</span>
+        <div class="body" style="gap:10px">
+          <div class="ccard">
+            <div class="h"><b class="c1">Sam</b><span class="t">· 27 Oct · from the file</span></div>
+            <div><span class="mention">@claude</span> what does the competition charge for this?</div>
+            <div class="status">Not sent. Comments that arrive in the file don't go to Claude on their own.</div>
+            <div class="acts"><span class="btn sm">Send to Claude</span><span class="target"><span class="idle"></span>Offline one-pager ⌄</span></div>
+          </div>
+          <div class="ccard" style="gap:8px">
+            <div class="status"><span class="idle"></span>Queued: waits for <b>Offline one-pager</b> to finish its turn</div>
+            <div class="status"><span class="ring"></span>Sent to <b>Offline one-pager</b> · Claude is replying</div>
+            <div class="status"><span class="diamond"></span>Claude replied · 14:03</div>
+            <div class="status">Not delivered: <b>Pricing study</b> ended · <span class="btn sm">Send To…</span><span class="btn sm">Retry</span></div>
+          </div>
+        </div>
+      </div>
+      <figcaption><b>5 · A team-mate's @claude, and the states.</b> An <span class="mention">@claude</span> that came in with the file (git, Obsidian, another Claude) waits for your click. A comment you sent shows queued, sent, replying, replied, or not delivered, using Duo's session glyphs.</figcaption>
+    </figure>
+  </div>
+
+  <figure>
+    <div class="figrow three">
+      <div style="display:grid;gap:4px;min-width:0"><div class="label">The file itself (Source mode)</div>
+<pre class="raw">The sync engine retries every <span class="d">{~~</span>30<span class="d">~&gt;</span>10<span class="d">~~}{&gt;&gt;</span><span class="at">@geoff</span> 2026-10-27 <span class="id">#s2</span><span class="d">&lt;&lt;}</span> seconds.
+
+<span class="d">{==</span>We store nothing in the cloud.<span class="d">==}{&gt;&gt;</span><span class="at">@geoff</span> 2026-10-27 <span class="id">#c1</span>: Is this true for crash reports?<span class="d">&lt;&lt;}{&gt;&gt;</span><span class="at">@sam</span> 2026-10-27 <span class="id">#c1.1</span>: Crash reports go to Sentry, so no.<span class="d">&lt;&lt;}</span></pre></div>
+      <div style="display:grid;gap:4px;min-width:0"><div class="label">On GitHub (measured)</div>
+        <div class="ghview"><p>The sync engine retries every {~~30~&gt;10~~}{&gt;&gt;@geoff 2026-10-27 #s2&lt;&lt;} seconds.</p><p>{==We store nothing in the cloud.==}{&gt;&gt;@geoff 2026-10-27 #c1: Is this true for crash reports?&lt;&lt;}{&gt;&gt;@sam 2026-10-27 #c1.1: Crash reports go to Sentry, so no.&lt;&lt;}</p></div></div>
+      <div style="display:grid;gap:4px;min-width:0"><div class="label">Obsidian, no plugin (expected)</div>
+        <div class="ghview obs"><p>The sync engine retries every {~~30~&gt;10~~}{&gt;&gt;@geoff 2026-10-27 #s2&lt;&lt;} seconds.</p><p>{<mark>We store nothing in the cloud.</mark>}{&gt;&gt;@geoff 2026-10-27 #c1: Is this true for crash reports?&lt;&lt;}{&gt;&gt;@sam …&lt;&lt;}</p></div></div>
+    </div>
+    <figcaption><b>6 · The same file outside Duo.</b> It's CriticMarkup, the one convention other Markdown tools know, with a name, date and id at the start of each comment. On GitHub it's readable plain text. In Obsidian the highlight shows (Obsidian's own <span class="mono">==</span>); with a review plugin such as Commentator the marks render as marks (Obsidian check pending, Q-246).</figcaption>
+  </figure>
+
+  <div class="figrow">
+    <figure>
+      <div class="duo">
+        <span class="pmark">[P]</span>
+        <div class="tabs"><span>Project</span><b>Report.md</b><span>+</span></div>
+        <div class="notice">
+          <div>Converted from Report.docx. The Word document is unchanged.</div>
+          <div class="muted">4 headings inferred · 2 tracked changes kept as suggestions · 3 comments kept, with replies · 1 resolved comment left out</div>
+          <div class="row"><span class="btn">Undo Conversion</span><span class="btn">Open Original</span><span class="btn prim">OK</span></div>
+        </div>
+        <div class="body"><p>The volunteers planted <span class="del c1">forty</span><span class="ins c1">forty-two</span> rows of beans in April.</p></div>
+      </div>
+      <figcaption><b>7 · Word documents come across with their review.</b> Today Convert to Markdown accepts every change and turns comments into endnotes (DL-123). With a review syntax it can keep both, with the Word authors' names.</figcaption>
+    </figure>
+    <figure>
+      <div class="duo">
+        <span class="pmark">[P]</span>
+        <div class="body" style="gap:8px">
+          <div class="label" style="margin-bottom:2px">Markup ⌄</div>
+          <div class="ccard" style="gap:2px;padding:6px 0">
+            <div style="padding:2px 12px">✓ All Markup</div>
+            <div style="padding:2px 12px">Simple Markup <span class="muted">(final text, a bar where changed)</span></div>
+            <div style="padding:2px 12px">No Markup <span class="muted">(as if all accepted)</span></div>
+            <div style="padding:2px 12px">Original <span class="muted">(as if all rejected)</span></div>
+            <div style="border-top:1px solid var(--rule);margin:4px 0"></div>
+            <div style="padding:2px 12px">✓ Show Comments</div>
+            <div style="padding:2px 12px">Show Resolved Comments</div>
+            <div style="border-top:1px solid var(--rule);margin:4px 0"></div>
+            <div style="padding:2px 12px"><span class="c3">●</span> Claude · 3 &nbsp; <span class="c2">●</span> Geoff · 2 &nbsp; <span class="c1">●</span> Sam · 1</div>
+          </div>
+        </div>
+      </div>
+      <figcaption><b>8 · Views.</b> The same Markup menu as Word documents (DL-162), so a person can read the clean version, or the original, without touching the marks. Source mode (DL-167) shows the raw text.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="decisions">
+  <div class="label">Decisions</div>
+  <h2>Twelve choices to lock</h2>
+  <div class="note">
+    <div><b>How to answer.</b> Pick an option on each card; picks save as you go. Our recommendation is listed first on every card. Add a note if you like, then <b>Send</b> on the card, or <b>Send my picks</b> at the bottom. Send also passes your picks to Claude (for editors of this page). To leave any other feedback, use <b>Comment on this</b> or the page's comment mode.</div>
+    <div class="muted" id="whoami">Picks save for signed-in people who can contribute to this page.</div>
+  </div>
+  <nav class="toc" id="toc"></nav>
+  <div id="cards" style="display:grid;gap:18px"></div>
+</section>
+
+<section id="outside">
+  <div class="label">Not in this round</div>
+  <ul class="plain">
+    <li>Building any of it. Decisions first, then a design canvas for the surfaces, then the build.</li>
+    <li>Version history of a document beyond what Duo keeps today (DL-5's "next").</li>
+    <li>Exporting a clean copy for Google Docs (ENH-14 part 2).</li>
+    <li>Suggestions on tables and images; they start as whole-row or whole-image changes.</li>
+  </ul>
+</section>
+
+<div class="sendall" id="sendbar">
+  <span class="foot say" id="progress">0 of 12 picked</span>
+  <span style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="cmtPage" type="button">Comment on the page</button><button class="btn prim" id="sendAll" type="button">Send my picks</button></span>
+</div>
+</div>
+
+<script>
+(() => {
+const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+// raw Markdown with the review marks tinted
+function raw(src){
+  let h = esc(src);
+  h = h.replace(/(\{\+\+|\+\+\}|\{--|--\}|\{~~|~~\}|~&gt;|\{==|==\}|\{&gt;&gt;|&lt;&lt;\}|@@)/g,'<span class="d">$1</span>');
+  h = h.replace(/@claude\b/g,'<span class="claude">@claude</span>');
+  h = h.replace(/@(geoff|sam)\b/g,'<span class="at">@$1</span>');
+  h = h.replace(/(#[cs]\d+(?:\.\d+)?)/g,'<span class="id">$1</span>');
+  return `<pre class="raw">${h}</pre>`;
+}
+const duo = (inner, bar) => `<div class="duo"><span class="pmark">[P]</span>${bar?`<div class="bar">${bar}</div>`:""}<div class="body">${inner}</div></div>`;
+const gh = (inner, src) => `<div class="ghview"><div class="src">${src}</div>${inner}</div>`;
+const card = (who, cls, t, text, reps="", acts=true) => `<div class="ccard"><div class="h"><b class="${cls}">${who}</b><span class="t">· ${t}</span></div><div>${text}</div>${reps}${acts?'<div class="acts"><span class="btn sm">Reply</span><span class="btn sm">Resolve</span></div>':""}</div>`;
+const rep = (who, cls, t, text) => `<div class="rep"><div class="h"><b class="${cls}">${who}</b><span class="t">· ${t}</span></div><div>${text}</div></div>`;
+const ex = (a, al, b, bl) => `<div class="ex${b?"":" one"}"><div><div class="lab">${al}</div>${a}</div>${b?`<div><div class="lab">${bl}</div>${b}</div>`:""}</div>`;
+
+const D = [
+{ id:"syntax", title:"How tracked changes are written in the file",
+  why:"The marks have to be plain text in the .md file. CriticMarkup is the only convention more than one tool reads; its spec has been frozen since 2021.",
+  rec:"A", opts:[
+  {k:"A", t:"CriticMarkup", ex: ex(raw("Retries every {~~30~>10~~} seconds.\nLaunch in {++early++} November.{--Maybe.--}"),"In the file",
+     gh("<p>Retries every {~~30~&gt;10~~} seconds.</p><p>Launch in {++early++} November.{--Maybe.--}</p>","GitHub (measured)"),"Elsewhere"),
+   pro:["Read by Marked, MultiMarkdown, Obsidian review plugins, Python-Markdown","Readable as text on GitHub","Claude recognised it with no instructions (F-370)"],
+   con:["No names or dates of its own (next card)","A mark across paragraphs is hard to parse (Duo writes one per paragraph)"]},
+  {k:"B", t:"HTML <ins> and <del>", ex: ex(raw("Retries every <del>30</del><ins>10</ins> seconds."),"In the file",
+     gh('<p>Retries every <del>30</del><ins style="text-decoration:underline">10</ins> seconds.</p>',"GitHub"),"Elsewhere"),
+   pro:["GitHub draws strikethrough and underline","Every HTML renderer understands it"],
+   con:["Raw HTML is outside the Markdown Duo writes for Google Docs (DL-123)","No comments, no names","Noisy to type and read"]},
+  {k:"C", t:"Pandoc spans", ex: ex(raw('Retries every [30]{.deletion author="geoff"}[10]{.insertion author="geoff"} seconds.'),"In the file",
+     gh('<p>Retries every [30]{.deletion author="geoff"}[10]{.insertion author="geoff"} seconds.</p>',"GitHub"),"Elsewhere"),
+   pro:["Names and dates built in","What pandoc produces from Word"],
+   con:["Nobody writes it by hand","Literal brackets everywhere outside pandoc"]}]},
+
+{ id:"signature", title:"How a name, date and id are attached",
+  why:"CriticMarkup has no author, date or id; every tool that needs them adds its own, and none is standard. This is ours to choose.",
+  rec:"A", opts:[
+  {k:"A", t:"A readable signature at the start of the comment", ex: ex(raw("{==We store nothing.==}{>>@geoff 2026-10-27 #c1: True for crash reports?<<}{>>@sam 2026-10-27 #c1.1: No, Sentry.<<}"),"In the file",
+     duo(`<p><span class="hlx">We store nothing.</span></p>`+card("Geoff","c2","27 Oct","True for crash reports?",rep("Sam","c1","27 Oct","No, Sentry."))),"Duo"),
+   pro:["A person can read it anywhere","Claude replied in exactly this form once told (F-370)","Still valid CriticMarkup for every other tool"],
+   con:["Our own convention; Obsidian plugins show it as comment text, not as an author"]},
+  {k:"B", t:"Commentator's JSON (an Obsidian plugin)", ex: ex(raw('{==We store nothing.==}{>>{"author":"geoff","time":1793091600}@@True for crash reports?<<}'),"In the file"),
+   pro:["Commentator and Inkling show the author today"],
+   con:["Unreadable dates (seconds since 1970)","Noisy on GitHub and in plain Obsidian","Commentator is a beta plugin, not in Obsidian's directory"]},
+  {k:"C", t:"An attribute block after the comment", ex: ex(raw('{==We store nothing.==}{>>True for crash reports?<<}{author="geoff" date=2026-10-27 id=c1}'),"In the file"),
+   pro:["Looks like Pandoc attributes","Comment text stays clean"],
+   con:["The block sits outside the mark, so other tools show it as stray text","Easy to separate from its comment"]}]},
+
+{ id:"place", title:"Where comments sit in the file",
+  why:"Comments have to be in the file (no companion file). The question is whether they sit next to the text they're about, or somewhere else.",
+  rec:"A", opts:[
+  {k:"A", t:"Inline, right after the text they're about", ex: ex(raw("{==Launch is in November.==}{>>@geoff 2026-10-27 #c2: @claude tighten this?<<}"),"In the file",
+     gh("<p>{==Launch is in November.==}{&gt;&gt;@geoff 2026-10-27 #c2: @claude tighten this?&lt;&lt;}</p>","GitHub"),"Elsewhere"),
+   pro:["The comment travels with its text through any edit","Anchors a range, not just a point","Standard CriticMarkup"],
+   con:["Busy when read as plain text with many comments"]},
+  {k:"B", t:"As footnotes at the end", ex: ex(raw("Launch is in November.[^c2]\n\n[^c2]: **Geoff** (2026-10-27): @claude tighten this?"),"In the file",
+     gh('<p>Launch is in November.<sup style="color:var(--a2)">1</sup></p><div class="fn">1. <b>Geoff</b> (2026-10-27): @claude tighten this? ↩</div>',"GitHub (measured)"),"Elsewhere"),
+   pro:["Renders nicely on GitHub and in Obsidian","What Word comments become today (DL-123)"],
+   con:["Points at a spot, not a passage","A thread is one long line; resolving edits two places","Claude kept but couldn't thread them cleanly"]},
+  {k:"C", t:"Hidden HTML comments", ex: ex(raw("Launch is in November. <!-- c2 geoff 2026-10-27: @claude tighten this? -->"),"In the file",
+     gh("<p>Launch is in November.</p>","GitHub (measured)"),"Elsewhere"),
+   pro:["Invisible when the document is published"],
+   con:["Invisible to anyone reading it outside Duo","No suggestions, only notes"]}]},
+
+{ id:"resolve", title:"What happens when a thread is resolved or dismissed",
+  why:"Resolve means it's dealt with; Dismiss means we won't act on it. Either way the open review should shrink. The question is whether the old thread stays in the file.",
+  rec:"A", opts:[
+  {k:"A", t:"It leaves the file; Duo's history keeps it", ex: ex(duo(`<p>We store nothing in the cloud except crash reports.</p><div class="ccard folded"><span>›</span><span>Resolved · 1 · from this document's history</span></div>`),"Duo after Resolve", raw("We store nothing in the cloud except crash reports."),"The file"),
+   pro:["The file stays clean for readers, GitHub and Claude","Git and Duo's file history still have it; Undo brings it back"],
+   con:["A team-mate reading the file later doesn't see the old discussion","Duo's resolved list is only on the Mac that resolved it"]},
+  {k:"B", t:"It stays in the file, marked resolved, folded in Duo", ex: ex(raw("We store nothing in the cloud except crash reports.{>>@geoff 2026-10-28 #c1 resolved: True for crash reports? …<<}"),"The file",
+     duo(`<p>We store nothing in the cloud except crash reports.</p><div class="ccard folded"><span>›</span><span>Resolved · Geoff: True for crash reports?</span></div>`),"Duo"),
+   pro:["The discussion travels with the file","Like Word, which keeps resolved comments"],
+   con:["Files fill up with old threads","Claude and other readers have to skip them"]},
+  {k:"C", t:"It moves to a Review log at the end of the file", ex: ex(raw("…\n\n## Review log\n- c1 · Geoff, 27 Oct: True for crash reports? · Sam: No, Sentry. · resolved 28 Oct"),"The file"),
+   pro:["History stays readable, out of the way"],
+   con:["Adds a section people didn't write","The log grows forever"]}]},
+
+{ id:"claude-edits", title:"When Claude edits a document",
+  why:"Today Claude's edits land in the text with a green highlight that fades on your next keystroke (DL-186). Duo already sees every edit Claude makes to a document open in Duo, so it can turn them into suggestions itself.",
+  rec:"A", opts:[
+  {k:"A", t:"A Suggest Edits switch per document", ex: ex(duo(`<p>Launch is <span class="del c3">planned for</span> <span class="ins c3">set for</span> early November.</p>`,`<span class="btn"><span class="on"></span>Suggest Edits</span><span class="count">1 suggestion</span>`),"Switch on",
+     duo(`<p>Launch is <span class="cedit">set for</span> early November.</p>`,`<span class="btn"><span class="off"></span>Suggest Edits</span>`),"Switch off (today)"),
+   pro:["You choose per document: a draft can move fast, a reviewed doc waits for you","Works whatever Claude was told; Duo makes the marks","Switches on by itself when you add the first comment or suggestion"],
+   con:["One more control in the bar","Sessions outside Duo still edit directly (the convention asks them to suggest)"]},
+  {k:"B", t:"Always suggestions, in every document", ex: ex(duo(`<p>Launch is <span class="del c3">planned for</span> <span class="ins c3">set for</span> early November.</p>`),"Every document"),
+   pro:["Nothing Claude writes is ever silently final"],
+   con:["Drafting a new doc becomes a stream of accepts","Task notes and plans are edited by Claude all day"]},
+  {k:"C", t:"As today; suggestions only when you ask Claude for them", ex: ex(duo(`<p>Launch is <span class="cedit">set for</span> early November.</p>`),"Duo"),
+   pro:["No change to how Duo works now"],
+   con:["Relies on Claude following the convention","A review in progress can be overwritten"]}]},
+
+{ id:"your-edits", title:"When you edit a document",
+  why:"Word's Track Changes tracks everyone. Here the question is whether your own typing should become suggestions too.",
+  rec:"A", opts:[
+  {k:"A", t:"Your edits are just edits", ex: ex(duo(`<p>Retries every <span>10</span> seconds.</p>`),"You typed 10 over 30"),
+   pro:["It's your document; you don't approve yourself","Simplest to understand"],
+   con:["A team-mate can't see what you changed (git can)"]},
+  {k:"B", t:"Suggest Edits covers you and Claude alike", ex: ex(duo(`<p>Retries every <span class="del c2">30</span><span class="ins c2">10</span> seconds.</p>`,`<span class="btn"><span class="on"></span>Suggest Edits</span>`),"You typed 10 over 30"),
+   pro:["Like Word: everyone's changes show for others to accept","Good when you're reviewing someone else's doc"],
+   con:["You accept your own changes when you're the owner"]},
+  {k:"C", t:"Two switches: Track My Edits and Suggest Claude's Edits", ex: ex(duo(``,`<span class="btn"><span class="off"></span>Track My Edits</span><span class="btn"><span class="on"></span>Claude Suggests</span>`),"The bar"),
+   pro:["Covers both cases"],
+   con:["Two controls to understand"]}]},
+
+{ id:"teach", title:"How Claude learns the convention",
+  why:"Left alone, Claude asked to deal with a review accepted every change and deleted every comment. One short paragraph of instructions turned that around: it left marks pending, replied in the thread and proposed edits as marks (F-370).",
+  rec:"A", opts:[
+  {k:"A", t:"Duo gives every session it runs the paragraph, and duo2 verbs to reply", ex: ex(raw("Review marks in Markdown use CriticMarkup with a signature … Marks are suggestions awaiting a person's decision: never accept or reject one unless asked. Reply with: duo2 comment reply <id> \"<text>\""),"What the session is told"),
+   pro:["Nothing written to your project","Every Duo session knows it from the start","Duo writes the reply's name, date and id, so they're always right"],
+   con:["Sessions outside Duo, or with hooks turned off by IT, don't get it (Q-243)"]},
+  {k:"B", t:"A skill Duo installs", ex: ex(raw("~/.claude/skills/markdown-review/SKILL.md"),"Where it lives"),
+   pro:["Works in any Claude Code session on the Mac"],
+   con:["Loads only when Claude decides it's relevant","Installs into Claude's own settings"]},
+  {k:"C", t:"A line Duo offers to add to the project's CLAUDE.md", ex: ex(raw("Review marks use CriticMarkup with @name date #id signatures; see …"),"In CLAUDE.md"),
+   pro:["Team-mates' Claudes see it too, through git"],
+   con:["Writes into your project","Every project needs it"]}]},
+
+{ id:"draw", title:"How Duo draws comments",
+  why:"Duo's right pane is about 460 points wide. The Word viewer already puts comment cards under their paragraph (DL-162).",
+  rec:"A", opts:[
+  {k:"A", t:"Cards under the paragraph, like Word documents in Duo", ex: ex(duo(`<p><span class="hlx">We store nothing in the cloud.</span> Data stays on your Mac.</p>`+card("Geoff","c2","27 Oct","True for crash reports?")),"Duo"),
+   pro:["One review look across Word and Markdown","Fits a narrow pane","Thread reads in place"],
+   con:["Long threads push the text down (they fold)"]},
+  {k:"B", t:"A margin column beside the text", ex: ex(`<div class="duo"><span class="pmark">[P]</span><div class="body" style="grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);display:grid;gap:10px"><p><span class="hlx">We store nothing in the cloud.</span> Data stays on your Mac.</p><div class="ccard" style="font-size:12px;padding:6px 8px"><b class="c2">Geoff</b>True for crash reports?</div></div></div>`,"Duo"),
+   pro:["Text keeps its flow, like Google Docs"],
+   con:["Squeezes the text in a 460-point pane","Cards drift away from their text when crowded"]},
+  {k:"C", t:"A marker in the text; the thread opens in a popover", ex: ex(duo(`<p><span class="hlx">We store nothing in the cloud.</span><span class="dot"></span> Data stays on your Mac.</p>`),"Duo"),
+   pro:["Cleanest reading"],
+   con:["Comments are easy to miss","A click to read each one"]}]},
+
+{ id:"target", title:"Which Claude session gets an @claude comment",
+  why:"You may have six sessions running, or none. The session that wrote the doc has its context, the one on screen is the one you're talking to, and a new one is never busy.",
+  rec:"A", opts:[
+  {k:"A", t:"Duo picks, shows it on the comment, and remembers per document", ex: ex(duo(`<div class="ccard compose"><div class="field"><span class="mention">@claude</span> tighten this?</div><div class="status">Goes to <span class="target"><span class="idle"></span>Offline one-pager · at prompt ⌄</span></div></div>`),"Duo",
+     raw("Duo's first guess, in order:\n1. where this thread went before\n2. your last choice for this document\n3. the session that wrote the document\n4. the session on screen\n5. a new session"),"How it guesses"),
+   pro:["Usually right with no thought; never a surprise because it's shown","Change it with one click; the choice sticks for the document","A stopped session is resumed"],
+   con:["More to build than a fixed rule","The remembered choice lives in Duo, not in the file (Q-241)"]},
+  {k:"B", t:"Always the session on screen, like Send to Claude", ex: ex(duo(`<div class="status">Goes to the session showing in the console</div>`),"Duo"),
+   pro:["Same rule as ⌘D (DL-69)","Simple"],
+   con:["Arbitrary when you've been switching sessions","The session that wrote the doc may not be the one showing"]},
+  {k:"C", t:"A new session for each thread", ex: ex(duo(`<div class="status">Starts a session: "Comment c2 in offline.md"</div>`),"Duo"),
+   pro:["Never busy; a clean record per question"],
+   con:["Loses the document's context","Sessions pile up"]},
+  {k:"D", t:"The project's director routes it", ex: ex(duo(`<div class="status">Goes to <b>director-duo-v2</b>, which hands it on</div>`),"Duo"),
+   pro:["Fits projects run by a director"],
+   con:["Only some projects have one","An extra hop for a simple question"]}]},
+
+{ id:"timing", title:"When an @claude comment is sent",
+  why:"A comment typed in Duo is you asking. A comment that arrives in the file from someone else (git, Obsidian, another Claude) is text; letting it start a Claude turn would let anyone's text drive your session (C-112).",
+  rec:"A", opts:[
+  {k:"A", t:"When you post it; ones from the file wait for your click", ex: ex(duo(card("Sam","c1","from the file","<span class='mention'>@claude</span> what do rivals charge?",`<div class="status">Not sent · <span class="btn sm">Send to Claude</span></div>`,false)),"A team-mate's comment"),
+   pro:["Immediate for you; nothing runs on someone else's words","A Hold for Review option lets you send several as one message"],
+   con:["A team-mate can't trigger Claude on your Mac (on purpose)"]},
+  {k:"B", t:"Collected, then sent together with Send Review", ex: ex(duo(`<div class="status">3 @claude comments ready</div>`,`<span class="btn prim">Send Review</span>`),"The bar"),
+   pro:["Claude sees the whole review at once","Like sending a marked-up doc back"],
+   con:["Easy to forget to send","Slower for a single question"]},
+  {k:"C", t:"Any @claude in the file sends, whoever wrote it", ex: ex(duo(`<div class="status">Sent automatically when the file changed</div>`),"Duo"),
+   pro:["Team-mates can ask your Claude directly"],
+   con:["Anyone's text can start a turn with your session's permissions","Two Macs with the same file would both send","Not recommended"]}]},
+
+{ id:"name", title:"Whose name goes on your comments",
+  why:"The signature needs a short name. Team-mates see it on GitHub and in Obsidian.",
+  rec:"A", opts:[
+  {k:"A", t:"Your Mac account's short name, changeable in Settings", ex: ex(raw("{>>@geoff 2026-10-27 #c3: …<<}"),"In the file"),
+   pro:["Works with no setup","Short and readable"],
+   con:["May not match what your team calls you until you change it"]},
+  {k:"B", t:"Your git name", ex: ex(raw("{>>@Geoff Dudgeon 2026-10-27 #c3: …<<}"),"In the file"),
+   pro:["Matches your commits"],
+   con:["Not set for everyone","Spaces make the signature harder to read"]},
+  {k:"C", t:"Ask the first time you comment", ex: ex(duo(`<div class="ccard"><div>Name on your comments</div><div class="field">geoff<span class="caret"></span></div><div class="acts"><span class="btn sm prim">Save</span></div></div>`),"Duo"),
+   pro:["Right from the first comment"],
+   con:["A question before your first comment"]}]},
+
+{ id:"word", title:"What Convert to Markdown does with a Word review",
+  why:"Today it accepts every tracked change and turns comments into endnotes (DL-123); Q-62 asked to come back to this.",
+  rec:"A", opts:[
+  {k:"A", t:"Keep changes as suggestions and comments as threads", ex: ex(raw("The volunteers planted {~~forty~>forty-two~~}{>>@avery 2026-09-01 #s1<<} rows.\n{==Yields were up.==}{>>@blake 2026-09-02 #c1: Source?<<}"),"The new .md"),
+   pro:["Nothing lost; you review it in Duo","Word authors keep their names"],
+   con:["The converted file starts busy"]},
+  {k:"B", t:"As today: accept changes, comments become endnotes", ex: ex(raw("The volunteers planted forty-two rows.[^c1]\n\n[^c1]: Comment. Blake: Source?"),"The new .md"),
+   pro:["Clean file straight away","Already built"],
+   con:["The review is gone"]},
+  {k:"C", t:"Ask on each conversion", ex: ex(duo(`<div class="ccard"><div>Report.docx has 2 tracked changes and 3 comments.</div><div class="acts"><span class="btn sm prim">Keep the Review</span><span class="btn sm">Accept and Flatten</span></div></div>`),"Duo"),
+   pro:["Right for each document"],
+   con:["One more question every time"]}]}
+];
+
+const cards = document.getElementById("cards"), toc = document.getElementById("toc");
+D.forEach((d, i) => {
+  const el = document.createElement("article");
+  el.className = "decision"; el.id = "d-" + d.id;
+  el.innerHTML = `<div class="q"><div class="num">DECISION ${i+1} OF ${D.length}</div><h2>${d.title}</h2><p class="why">${d.why}</p></div>
+  <div class="opts">${d.opts.map(o => `<label class="opt" data-k="${o.k}"><div class="head"><input type="radio" name="pick-${d.id}" id="pick-${d.id}-${o.k}" value="${o.k}"><div class="title">${o.k}. ${esc(o.t)} ${o.k===d.rec?'<span class="rec">Recommended</span>':""}<span class="tally" data-tally="${d.id}-${o.k}"></span></div></div>${o.ex}
+   <div class="tradeoffs"><div><div class="k">For</div><ul>${o.pro.map(x=>`<li>${x}</li>`).join("")}</ul></div><div><div class="k">Against</div><ul>${o.con.map(x=>`<li>${x}</li>`).join("")}</ul></div></div></label>`).join("")}</div>
+  <div class="foot"><textarea id="note-${d.id}" placeholder="A note on this choice (optional)" maxlength="1500"></textarea>
+  <div class="row"><button class="btn prim" type="button" data-send="${d.id}">Send</button><button class="btn" type="button" data-comment="${d.id}">Comment on this</button><span class="say" id="say-${d.id}"></span></div></div>`;
+  cards.appendChild(el);
+  const a = document.createElement("a"); a.href = "#d-" + d.id; a.id = "toc-" + d.id;
+  a.innerHTML = `<span class="n">${i+1}</span> ${d.title.replace(/^(How|What|When|Where|Which|Whose) /,"").replace(/^./,c=>c.toUpperCase())}`;
+  toc.appendChild(a);
+});
+
+// state
+const picks = {}, notes = {};
+let db = null, me = null, comments = null;
+try { const s = JSON.parse(localStorage.getItem("mr-draft") || "{}"); Object.assign(picks, s.picks||{}); Object.assign(notes, s.notes||{}); } catch(e) {}
+function saveLocal(){ try { localStorage.setItem("mr-draft", JSON.stringify({picks, notes})) } catch(e) {} }
+function paint(){
+  D.forEach(d => {
+    document.querySelectorAll(`#d-${d.id} .opt`).forEach(o => {
+      const on = picks[d.id] === o.dataset.k; o.classList.toggle("picked", on);
+      o.querySelector("input").checked = on;
+    });
+    const n = document.getElementById("note-"+d.id); if (n && document.activeElement !== n) n.value = notes[d.id] || "";
+    document.getElementById("toc-"+d.id).classList.toggle("done", !!picks[d.id]);
+  });
+  document.getElementById("progress").textContent = `${Object.keys(picks).filter(k=>picks[k]).length} of ${D.length} picked`;
+}
+paint();
+
+let saveTimer = null;
+function persist(){
+  saveLocal();
+  if (!db || !me) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try { await db.doc("answers/" + me).set({ picks, notes, updated: new Date().toISOString() }); }
+    catch(e) { document.getElementById("whoami").textContent = "Your picks are kept in this browser only: this page couldn't save them (" + (e.code||"error") + ")."; }
+  }, 500);
+}
+cards.addEventListener("change", e => {
+  const t = e.target; if (t.type !== "radio") return;
+  picks[t.name.replace("pick-","")] = t.value; paint(); persist();
+});
+cards.addEventListener("input", e => {
+  const t = e.target; if (t.tagName !== "TEXTAREA") return;
+  notes[t.id.replace("note-","")] = t.value; persist();
+});
+
+function summary(ids){
+  return ids.map(id => { const d = D.find(x=>x.id===id); const o = d.opts.find(x=>x.k===picks[id]);
+    return `${D.indexOf(d)+1}. ${d.title}: ${o ? o.k + " (" + o.t + ")" + (o.k===d.rec?" [recommended]":"") : "no pick"}${notes[id] ? "\n   Note: " + notes[id] : ""}`; }).join("\n");
+}
+async function diag(row){ try { if (db) await db.collection("diag").add({ ...row, at: new Date().toISOString(), ua: navigator.userAgent.slice(0,120) }); } catch(e) {} }
+
+async function send(ids, anchorEl, sayEl){
+  const text = "Markdown review decisions, from the intent page:\n" + summary(ids);
+  persist();
+  if (!comments) { sayEl.textContent = db ? "Saved. Sending to Claude isn't available in this view." : "Kept in this browser. Sign in to save and send."; return; }
+  let can = "off";
+  try { can = await comments.canSendToClaude(); } catch(e) {}
+  if (can !== "available") {
+    sayEl.textContent = can === "writers_only" ? "Saved. Only editors of this page can send to Claude; your picks are visible to Geoff." :
+      can === "no_session" ? "Saved. No Claude session is listening right now; Geoff will read your picks." : "Saved.";
+    diag({ kind:"send-skip", can, ids }); return;
+  }
+  try {
+    const el = document.getElementById(anchorEl.id) || anchorEl;
+    const anchor = await comments.anchorFor(el);
+    await comments.sendToClaude({ anchor, text: text.slice(0, 3900) });
+    sayEl.textContent = "Sent to Claude. The reply will appear in the comment thread.";
+    diag({ kind:"sent", ids });
+  } catch(e) {
+    sayEl.textContent = e && e.code === "consent_required" ? "Not sent: allow comments from this page first, then Send again." :
+      e && e.code === "forbidden" ? "Saved. Commenting from this page is off for you." : "Saved, but not sent (" + (e && e.code || "error") + ").";
+    diag({ kind:"send-fail", code: e && e.code, ids });
+  }
+}
+cards.addEventListener("click", async e => {
+  const s = e.target.closest("[data-send]"), c = e.target.closest("[data-comment]");
+  if (s) { const id = s.dataset.send; s.disabled = true; await send([id], document.getElementById("d-"+id), document.getElementById("say-"+id)); s.disabled = false; }
+  if (c) { const id = c.dataset.comment; const say = document.getElementById("say-"+id);
+    if (!comments) { say.textContent = "Use the page's comment mode to leave a comment here."; return; }
+    try { const r = await comments.openComposer({ element: document.getElementById("d-"+id) }); if (!r.opened) say.textContent = "Finish the comment you have open first."; }
+    catch(err) { say.textContent = "Use the page's comment mode to leave a comment here."; } }
+});
+document.getElementById("sendAll").addEventListener("click", async e => {
+  const b = e.currentTarget; b.disabled = true;
+  await send(D.map(d=>d.id), document.getElementById("decisions"), document.getElementById("progress"));
+  b.disabled = false;
+});
+document.getElementById("cmtPage").addEventListener("click", async () => {
+  const say = document.getElementById("progress");
+  if (!comments) { say.textContent = "Use the page's comment mode to comment."; return; }
+  try { await comments.openComposer({ element: document.getElementById("intent") }); } catch(e) { say.textContent = "Use the page's comment mode to comment."; }
+});
+
+// capabilities, lit up when available
+(async () => {
+  if (!window.claude || !window.claude.use) return;
+  try { comments = await window.claude.use("comments"); } catch(e) {}
+  try {
+    const user = await window.claude.use("user");
+    db = await window.claude.use("db");
+    if (user && db) {
+      me = await user.id();
+      if (me) {
+        const snap = await db.doc("answers/" + me).get().catch(() => null);
+        const data = snap && (typeof snap.data === "function" ? snap.data() : snap.data);
+        if (data && data.picks) { Object.assign(picks, data.picks); Object.assign(notes, data.notes || {}); paint(); }
+        document.getElementById("whoami").textContent = "Your picks save to this page as you choose. Others' picks show as counts beside each option.";
+      }
+      db.collection("answers").onSnapshot(qs => {
+        const counts = {};
+        (qs.docs || []).forEach(doc => { const v = typeof doc.data === "function" ? doc.data() : doc.data; Object.entries((v && v.picks) || {}).forEach(([d,k]) => { counts[d+"-"+k] = (counts[d+"-"+k]||0) + 1; }); });
+        document.querySelectorAll("[data-tally]").forEach(t => { const n = counts[t.dataset.tally]; t.textContent = n ? `· ${n} ${n===1?"pick":"picks"}` : ""; });
+      }, () => {});
+    }
+  } catch(e) {}
+})();
+})();
+</script>
