@@ -271,17 +271,19 @@ final class ProcessWatcher: NSObject, LocalProcessTerminalViewDelegate {
     nonisolated func hostCurrentDirectoryUpdate(source: TerminalView, directory: String?) {}
 }
 
-/// The bytes Duo sends for the two chords SwiftTerm doesn't (see `GuardedTerminalView.keyDown`).
+/// The bytes Duo sends for the chords SwiftTerm doesn't (see `GuardedTerminalView.keyDown`).
 public enum TerminalKeys {
     /// ⇧↩ sends ESC CR (what iTerm and Terminal send for a soft newline) only while the program has
     /// not asked for the kitty keyboard protocol; with it on, SwiftTerm sends Shift+Enter and Claude
-    /// Code (2.1.288+) reads that itself. 2.1.219 doesn't ask, so ⇧↩ would otherwise send. ⌘⌫ sends ^U,
+    /// Code (2.1.288+) reads that itself. 2.1.219 doesn't ask, so ⇧↩ would otherwise send. ⌘↩ sends CR
+    /// without the protocol (SwiftTerm's `interpretKeyEvents` drops it), so it sends as DL-241 has it. ⌘⌫ sends ^U,
     /// delete to the line start, in both modes: SwiftTerm sends nothing without the protocol, and
     /// Claude Code doesn't read a Super+Backspace report with it.
     public static func bytes(keyCode: UInt16, modifiers: NSEvent.ModifierFlags, enhanced: Bool) -> [UInt8]? {
         let mods = modifiers.intersection([.shift, .control, .option, .command])
         switch (keyCode, mods) {
         case (36, [.shift]), (76, [.shift]): return enhanced ? nil : [0x1b, 0x0d]
+        case (36, [.command]), (76, [.command]): return enhanced ? nil : [0x0d]
         case (51, [.command]): return [0x15]
         default: return nil
         }
@@ -323,7 +325,7 @@ public final class GuardedTerminalView: LocalProcessTerminalView {
 
     // MARK: Keys SwiftTerm leaves unsent (ENH-67, GitHub #4)
 
-    /// ⇧↩ adds a line and ⌘⌫ deletes to the line start. Plain Return is never remapped (LR-16).
+    /// ⇧↩ adds a line, ⌘↩ sends (DL-241) and ⌘⌫ deletes to the line start. Plain Return is never remapped (LR-16).
     /// SwiftTerm's `keyDown` isn't open to override, so a local monitor sees the key first, while
     /// this terminal is the window's first responder.
     private var keyMonitor: Any?

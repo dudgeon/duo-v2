@@ -24,8 +24,8 @@ extension AppModel {
             let mods = e.modifierFlags.intersection([.command, .control, .option, .shift])
             let number = e.windowNumber
             let used = MainActor.assumeIsolated { () -> Bool in
-                // ⌘[ / ⌘]: your previous and next message, only while the chat has the keyboard (Q-54).
-                if mods == .command, chars == "[" || chars == "]" { return self?.chatStep(chars == "[" ? -1 : 1, window: number) == true }
+                // ⌥⌘↑ / ⌥⌘↓: your previous and next message, only while the chat has the keyboard (Q-54, DL-242).
+                if let by = ChatKeyMonitor.step(chars, mods) { return self?.chatStep(by, window: number) == true }
                 // ⌘V with a chat showing and nothing holding the keyboard: the composer takes it.
                 if mods == .command, chars == "v" { return self?.chatPaste(window: number) == true }
                 return mods.subtracting(.shift).isEmpty && self?.chatKey(chars, escape: escape, window: number) == true
@@ -34,7 +34,7 @@ extension AppModel {
         }
     }
 
-    /// ⌘[ / ⌘] while the chat pane has the keyboard: the composer, or no field at all.
+    /// ⌥⌘↑ / ⌥⌘↓ while the chat pane has the keyboard: the composer, or no field at all.
     func chatStep(_ by: Int, window number: Int) -> Bool {
         guard let chat = visibleChat, let w = NSApp.window(withWindowNumber: number), w.isKeyWindow else { return false }
         let fr = w.firstResponder
@@ -62,7 +62,15 @@ extension AppModel {
     }
 }
 
-@MainActor enum ChatKeyMonitor { static var installed = false }
+@MainActor public enum ChatKeyMonitor {
+    static var installed = false
+
+    /// ⌥⌘↑ is your previous message, ⌥⌘↓ the next (DL-242; ⌘[ ⌘] indent in the composer now).
+    public static func step(_ chars: String, _ mods: NSEvent.ModifierFlags) -> Int? {
+        guard mods == [.command, .option], let c = chars.unicodeScalars.first?.value else { return nil }
+        return c == UInt32(NSUpArrowFunctionKey) ? -1 : c == UInt32(NSDownArrowFunctionKey) ? 1 : nil
+    }
+}
 
 extension ChatSession {
     /// A picker card's keys (DL-143): a number or ↑↓ moves the TUI's cursor, ←/→ its marker; ⏎, s and
@@ -132,7 +140,7 @@ extension ChatSession {
         return true
     }
 
-    /// ⌘[ / ⌘]: scrolls to your previous or next message (DL-119 §4).
+    /// ⌥⌘↑ / ⌥⌘↓: scrolls to your previous or next message (DL-119 §4, DL-242).
     public func stepYourMessages(_ by: Int) {
         let ids = log.yourMessageIDs
         guard !ids.isEmpty else { return }

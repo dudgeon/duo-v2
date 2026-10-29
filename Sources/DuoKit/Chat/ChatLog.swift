@@ -555,6 +555,6 @@ public final class ChatLog: @unchecked Sendable {
         return t.segments.contains { if case .text(let x) = $0 { return x.streaming } else { return false } }
     }
 
-    /// Your messages, for ⌘[ / ⌘] (DL-119 §4).
+    /// Your messages, for ⌥⌘↑ / ⌥⌘↓ (DL-119 §4, DL-242).
     public var yourMessageIDs: [String] { items.compactMap { if case .you(let y) = $0 { return y.id } else { return nil } } }
 }

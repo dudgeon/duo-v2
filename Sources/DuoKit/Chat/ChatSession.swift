@@ -101,7 +101,7 @@ public protocol ChatTerminal: AnyObject {
 
 /// The keys chat mode sends, as the TUI reads them.
 public enum ChatKey: String, Sendable {
-    case enter, esc, up, down, left, right, tab, space, backspace, shiftTab, ctrlA, ctrlE, ctrlG, ctrlV, n
+    case enter, esc, up, down, left, right, tab, space, backspace, shiftTab, ctrlA, ctrlE, ctrlG, ctrlV, n, sendNow
 
     public var bytes: String {
         switch self {
@@ -120,6 +120,7 @@ public enum ChatKey: String, Sendable {
         case .ctrlG: "\u{07}"
         case .ctrlV: "\u{16}"
         case .n: "n"
+        case .sendNow: "\u{18}\u{13}"   // Ctrl+X Ctrl+S: Claude Code's chat:sendNow
         }
     }
 }
@@ -199,7 +200,7 @@ public final class ChatSession {
         for (i, l) in news.enumerated() { lines.append(ChatDiffLine(kind: .add, number: first + i, text: l)) }
         return lines
     }
-    /// A message to scroll to (⌘[ / ⌘]).
+    /// A message to scroll to (⌥⌘↑ / ⌥⌘↓).
     public var revealRequest: String?
     /// The feed is scrolled to its end, so new items keep it there (F-160).
     @ObservationIgnored public var followsBottom = true
