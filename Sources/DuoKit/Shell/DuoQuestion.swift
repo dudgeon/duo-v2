@@ -48,6 +48,8 @@ public struct DuoQuestion: Identifiable {
     public var paragraphs: [String] = []
     /// What it changes, each with its path, in a box (launch questions, merges, deletes).
     public var items: [Item] = []
+    /// The items' box scrolls past this height (Delete n Sessions…, DL-247: about five sessions).
+    public var itemsMaxHeight: CGFloat? = nil
     public var field: Field? = nil
     public var pick: Pick? = nil
     public var note: String? = nil
@@ -188,6 +190,7 @@ struct QuestionSheet: View {
                 let rowed = q.items.contains { !$0.what.isEmpty && !$0.path.isEmpty && $0.detail != nil }
                 // Name rows (the memory question's tabs, DL-192) are 20-high lines with no gap (park-handoff).
                 let named = q.items.contains { !$0.what.isEmpty && $0.path.isEmpty && $0.detail != nil }
+                ScrollIfTaller(maxHeight: q.itemsMaxHeight) {
                 VStack(alignment: .leading, spacing: rowed || named ? 0 : DuoSpace.gapGlyphToLabel) {
                     ForEach(Array(q.items.enumerated()), id: \.offset) { n, i in
                         if rowed && n > 0 { DuoColor.rule.frame(height: DuoMetric.borderHairline).padding(.horizontal, -DuoSpace.cardPadding.leading) }
@@ -234,6 +237,7 @@ struct QuestionSheet: View {
                 .padding(.horizontal, DuoSpace.cardPadding.leading)
                 .padding(.vertical, rowed ? 0 : named ? DuoSpace.gapGlyphToLabel : DuoSpace.gapRowItems)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                }
                 .background(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).fill(DuoColor.pane))
                 .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
             }
@@ -306,6 +310,24 @@ struct PickRow: View {
             }
             .labelsHidden().pickerStyle(.menu).fixedSize()
             Spacer(minLength: 0)
+        }
+    }
+}
+
+/// Its content as it is, or in a scroll view of `maxHeight` when it's taller (the items' box, DL-247).
+struct ScrollIfTaller<Content: View>: View {
+    let maxHeight: CGFloat?
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        if let maxHeight {
+            ViewThatFits(in: .vertical) {
+                content()
+                ScrollView(.vertical) { content() }.frame(height: maxHeight)
+            }
+            .frame(maxHeight: maxHeight)
+        } else {
+            content()
         }
     }
 }

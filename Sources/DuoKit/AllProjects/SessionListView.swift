@@ -11,6 +11,7 @@ struct SessionListPane: View {
     var body: some View {
         let list = model.sessionList
         let filtering = !model.listFilter.trimmingCharacters(in: .whitespaces).isEmpty
+        let _ = model.noteSelectionOrder("list", Self.order(list, model: model, filtering: filtering))   // what ⇧ ranges over (DL-247)
         GeometryReader { box in
             let twoLine = box.size.width < DuoMetric.sessionListTwoLineBelow
             ScrollView {
@@ -61,6 +62,7 @@ struct SessionListPane: View {
                 .padding(.bottom, DuoSpace.panePadding)
                 .frame(width: box.size.width, alignment: .leading)
             }
+            .background { Color.clear.contentShape(Rectangle()).onTapGesture { model.clearSessionSelection() } }   // DL-247
             .scrollIndicators(.automatic)
             .focusable()
             .focusEffectDisabled()
@@ -250,10 +252,15 @@ struct SessionListRow: View {
             }
         }
         .padding(.horizontal, DuoMetric.sessionListRowInset)
-        .background { if selected { RoundedRectangle(cornerRadius: DuoMetric.radiusSelection).fill(DuoColor.selected) } }
+        .background {
+            let run = model.selectionRun(row.session.tabKey, list: "list")
+            if run != .none { SelectionRunFill(run: run) }   // several selected (DL-247)
+            else if selected { RoundedRectangle(cornerRadius: DuoMetric.radiusSelection).fill(DuoColor.selected) }
+        }
         .padding(.horizontal, DuoMetric.sessionListRowInset)
         .contentShape(Rectangle())
-        .onActivate { model.openListRow(row.id) }  // action: open
+        // A plain click opens it; ⇧ and ⌘ select and never open or resume (DL-247).
+        .onActivate { model.sessionRowClicked(row.session.tabKey, list: "list") { model.openListRow(row.id) } }  // action: open, view select
         .modifier(SessionOrganizeMenu(sessionKey: row.session.tabKey))
         .help([row.session.name, model.fixture.projects.first { $0.name == row.session.project }?.path, row.task].compactMap { $0 }.joined(separator: " · "))
         .accessibilityElement(children: .combine)
@@ -345,5 +352,21 @@ struct HomeViewMark: View {
             ctx.stroke(p, with: .foreground, style: StrokeStyle(lineWidth: 1.2, lineCap: .round))
         }
         .accessibilityHidden(true)
+    }
+}
+
+extension SessionListPane {
+    /// The List's rows as drawn: session keys, a breaker for each label and fold row (DL-247).
+    @MainActor static func order(_ list: SessionList, model: AppModel, filtering: Bool) -> [String] {
+        let b = SessionSelection.breaker
+        if filtering { return model.listMatches.map(\.row.session.tabKey) }
+        var out: [String] = []
+        if model.rightCollapsedAllProjects, !list.needsYou.isEmpty { out.append(b); out += list.needsYou.map(\.session.tabKey) }
+        for s in list.sections { out.append(b); out += s.rows.map(\.session.tabKey) }
+        out.append(b)
+        if model.expandedGroups.contains(SessionListKeys.earlier) { out += list.earlier.map(\.session.tabKey) }
+        out.append(b)
+        if model.listShowsArchived, model.expandedGroups.contains(SessionListKeys.archived) { out += list.archived.map(\.session.tabKey) }
+        return out
     }
 }

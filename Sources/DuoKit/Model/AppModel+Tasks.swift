@@ -199,7 +199,19 @@ extension AppModel {
             }))
         case .taskMake:
             guard let k = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
-            if let s = findSession(k, in: nil), let sid = s.sessionId {
+            if inv.positional.count > 1 {
+                // Several sessions make one task (DL-247): all of one project.
+                let (found, missing) = sessionsNamed(inv.positional)
+                guard let first = found.first else { return done(.fail(Self.noSessions(missing))) }
+                guard missing.isEmpty else { return done(.fail(Self.noSessions(missing) + " Nothing made.")) }
+                guard found.allSatisfy({ $0.project == first.project }) else { return done(.fail("Those sessions are in different projects; a task holds one project's sessions. Nothing made.")) }
+                let title = inv.flags["title"] ?? first.name.trimmingCharacters(in: CharacterSet(charactersIn: "“”\""))
+                sessionSelection.clear()
+                switch makeTask(title: title, sessionIds: found.compactMap(\.sessionId), project: first.project) {
+                case .success(let p): done(.ok("Made \(first.project)/\(p) with \(found.count) sessions. Undo: duo2 undo"))
+                case .failure(let e): done(.fail("\(e)"))
+                }
+            } else if let s = findSession(k, in: nil), let sid = s.sessionId {
                 let title = inv.flags["title"] ?? s.name.trimmingCharacters(in: CharacterSet(charactersIn: "“”\""))
                 switch makeTask(title: title, sessionIds: [sid], project: s.project) {
                 case .success(let p): done(.ok("Made \(s.project)/\(p) with \(s.name). Undo: duo2 undo"))
@@ -249,9 +261,21 @@ extension AppModel {
             case .failure(let e): done(.fail("\(e)"))
             }
         case .taskAdd:
-            guard let t = inv[0], let k = inv[1], let s = findSession(k, in: nil) else { return done(.fail("usage: \(id.action.usage)")) }
+            guard let t = inv[0], let k = inv[1], let s = findSession(k, in: nil) else {
+                return done(.fail(inv.positional.count > 1 ? Self.noSessions([inv[1]!]) : "usage: \(id.action.usage)"))
+            }
             let path = t.hasPrefix("tasks/") ? t : taskNotes(in: s.project).first { $0.title.caseInsensitiveCompare(t) == .orderedSame || $0.path == "tasks/\(t)" || $0.path == "tasks/\(t).md" }?.path
             guard let path else { return done(.fail("no task '\(t)' in \(s.project)")) }
+            if inv.positional.count > 2 {
+                let (found, missing) = sessionsNamed(Array(inv.positional.dropFirst()))
+                let refused = addSessionsToTask(found.map(\.tabKey), task: path)
+                let n = found.count - refused.count
+                var msg = "Added \(n) of \(found.count) sessions to \(s.project)/\(path)."
+                if n > 0 { msg += " Undo: duo2 undo" }
+                if !refused.isEmpty { msg += " Not added: " + refused.joined(separator: "; ") + "." }
+                if !missing.isEmpty { msg += " " + Self.noSessions(missing) }
+                return done(n > 0 ? .ok(msg) : .fail(msg))
+            }
             if let why = addToTask(sessionKey: s.tabKey, task: path) { return done(.fail(why)) }
             done(.ok("Added \(s.name) to \(s.project)/\(path). Undo: duo2 undo"))
         case .taskRename, .taskArchive, .taskUnarchive, .taskDelete, .taskMove, .taskLink, .taskReveal:

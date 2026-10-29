@@ -157,3 +157,58 @@ struct MoveToProjectMenu: View {
         }
     }
 }
+
+/// The selection's menu (DL-247, session-multiselect-handoff board 02): the one-session verbs that make sense for
+/// many, each naming how many it acts on. Task items need one project.
+struct SelectionMenuItems: View {
+    let model: AppModel
+
+    var body: some View {
+        let sessions = model.selectedSessions
+        let keys = sessions.map(\.tabKey)
+        let c = model.selectionCounts(sessions)
+        let tasks = c.project.map { model.taskNotes(in: $0) } ?? []
+        // Counted labels ("Archive 3 Sessions"); the actions' `ui:` name them as "Archive n Sessions".
+        let archive = "Archive " + Self.sessions(c.archive.count), unarchive = "Unarchive " + Self.sessions(c.unarchive.count)
+        let delete = "Delete " + Self.sessions(keys.count) + "…", park = "Park " + Self.sessions(c.park.count)
+        Button("Make a Task") { model.makeTask(fromSessions: keys) }   // action: task make
+            .disabled(c.project == nil || sessions.contains { $0.sessionId == nil })
+        if tasks.isEmpty {
+            Button("Add to Task") {}.disabled(true)
+        } else {
+            Menu("Add to Task") {   // action: task add
+                ForEach(tasks, id: \.path) { t in
+                    Button(t.title) { let why = model.addSessionsToTask(keys, task: t.path); if !why.isEmpty { model.info(why.joined(separator: "\n")) } }
+                }
+            }
+        }
+        Divider()
+        Menu("Move to Project") {   // action: session move
+            let ids = sessions.compactMap(\.sessionId)
+            Button("New Project…") { model.sessionSelection.clear(); model.moveSessionsToNewProject(ids) }
+            Divider()
+            ForEach(model.moveTargets(excluding: c.project ?? "")) { p in
+                Button(p.isFolderOnly ? "\(p.name) (folder)" : p.name) { model.sessionSelection.clear(); model.moveSessions(ids, to: p.name) }
+            }
+        }
+        Divider()
+        if !c.archive.isEmpty {
+            Button(archive) { _ = model.archiveSessions(c.archive, true) }   // action: session archive
+        }
+        if !c.unarchive.isEmpty {
+            Button(unarchive) { _ = model.archiveSessions(c.unarchive, false) }   // action: session unarchive
+        }
+        Button(delete) {   // action: session delete
+            model.deleteSessions(keys) { if case .failure(let e) = $0, !"\(e)".hasPrefix("Not deleted") { model.info("\(e)") } }
+        }
+        Divider()
+        if c.park.isEmpty {
+            Button("Park Sessions") {}.disabled(true)
+        } else {
+            Button(park) { let why = model.parkSessions(c.park); if !why.isEmpty { model.info(why.joined(separator: "\n")) } }   // action: session park
+        }
+    }
+
+    /// "1 Session", "5 Sessions": menu items are Title Case.
+    static func sessions(_ n: Int) -> String { "\(n) Session\(n == 1 ? "" : "s")" }
+}

@@ -73,6 +73,7 @@ func repoFixture() throws -> Fixture {
     sessionRowChecks(f)
     sessionGlyphChecks(f)
     sidebarHierarchyChecks(f)
+    sessionSelectionChecks(f)
     sidebarSplitChecks()
     try forkChecks(f)
     try forkAdoptChecks()

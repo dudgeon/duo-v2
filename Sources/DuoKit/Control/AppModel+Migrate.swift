@@ -71,44 +71,74 @@ extension AppModel {
     /// Delete Session… (Geoff, 2026-10-04): the session and its local logs, gone for good, after the
     /// user confirms in Duo. Refused while it runs anywhere.
     public func deleteSession(_ key: String, done: (@MainActor (Result<String, Error>) -> Void)? = nil) {
-        guard let s = (fixture.sessions + (fixture.archivedSessions ?? [])).first(where: { $0.tabKey == key || $0.sessionId == key }), let id = s.sessionId else {
-            done?(.failure(Migrator.Refusal("no session '\(key)'"))); return
+        let prepared: PreparedDelete
+        switch prepareDelete(key) {
+        case .failure(let e): done?(.failure(e)); return
+        case .success(let p): prepared = p
         }
-        let m = Migrator()
+        let (title, detail, bytes) = Self.deleteWording(name: prepared.session.name, plan: prepared.plan, inDuo: prepared.inDuo)
+        confirm(title: title, detail: detail, button: "Move to Trash") { [weak self] ok in
+            guard let self else { return }
+            guard ok else { done?(.failure(Migrator.Refusal("Not deleted: the user clicked Cancel in Duo. Nothing changed."))); return }
+            self.runDeletes([prepared]) { results in
+                switch results.first?.1 {
+                case .some(.failure(let e)): done?(.failure(e))
+                default: done?(.success("Deleted \(prepared.session.name) and its local logs (\(bytes))."))
+                }
+            }
+        }
+    }
+
+    /// One session's delete, planned by its session id before anything is asked (DL-247: only these files).
+    struct PreparedDelete {
+        let session: Fixture.Session
+        let id: String
         let plan: Migrator.Journal
-        // Running in one of Duo's own terminals: Duo ends it after the user confirms. Running anywhere else
-        // (a Terminal window, another Duo) is refused: Duo can't end that.
+        /// Running in one of Duo's own terminals: Duo ends it after the user confirms.
+        let inDuo: Bool
+        let ownPids: Set<Int32>
+        var bytes: Int64 { Int64(plan.steps.compactMap(\.bytesBefore).reduce(0, +)) }
+    }
+
+    /// Plans a delete, or says why it can't be: running anywhere other than Duo's own terminal (Duo can't end that).
+    func prepareDelete(_ key: String) -> Result<PreparedDelete, Error> {
+        guard let s = (fixture.sessions + (fixture.archivedSessions ?? [])).first(where: { $0.tabKey == key || $0.sessionId == key }), let id = s.sessionId else {
+            return .failure(Migrator.Refusal("no session '\(key)'"))
+        }
         let inDuo = terminals.existing(s.tabKey).map { !$0.exited } ?? false
         let beaconPids = Beacon.readAll().filter { $0.sessionId == id }.map(\.pid)
         let ownPids = Set(terminals.existing(s.tabKey)?.view.process.map { [$0.shellPid] } ?? [])
         let elsewhere = beaconPids.contains { !ownPids.contains($0) && !Self.isDescendant($0, of: ownPids) }
         if elsewhere || (!inDuo && !beaconPids.isEmpty) {
-            done?(.failure(Migrator.Refusal("“\(s.name)” is running outside Duo. End it there first, then delete it."))); return
+            return .failure(Migrator.Refusal("“\(s.name)” is running outside Duo. End it there first, then delete it."))
         }
         do {
-            plan = try m.planDelete(id, live: [], extra: [SessionArchive.copyURL(id), SessionArchive.sidecarURL(id)])
-        } catch { done?(.failure(error)); return }
-        let (title, detail, bytes) = Self.deleteWording(name: s.name, plan: plan, inDuo: inDuo)
-        confirm(title: title, detail: detail, button: "Move to Trash") { [weak self] ok in
-            guard let self else { return }
-            guard ok else { done?(.failure(Migrator.Refusal("Not deleted: the user clicked Cancel in Duo. Nothing changed."))); return }
-            let pids = ownPids
-            if inDuo { self.terminals.close(s.tabKey); self.chats.forget(s.tabKey) }
-            if self.consoleTab == s.tabKey { self.consoleTab = nil }
-            if self.homeTab == s.tabKey { self.homeTab = nil }
-            // Wait (up to 8 s) for the process to end and its beacon to go before the files do; a session with no turn yet has no beacon.
-            @MainActor func attempt(_ left: Int) {
-                if left > 0, Beacon.readAll().contains(where: { $0.sessionId == id }) || pids.contains(where: { ProcessLiveness.isRunning($0) }) {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { MainActor.assumeIsolated { attempt(left - 1) } }
-                    return
-                }
-                do {
-                    try self.applyDelete(plan, id: id, key: key)
-                    done?(.success("Deleted \(s.name) and its local logs (\(bytes))."))
-                } catch { done?(.failure(error)) }
-            }
-            attempt(40)
+            let plan = try Migrator().planDelete(id, live: [], extra: [SessionArchive.copyURL(id), SessionArchive.sidecarURL(id)])
+            return .success(PreparedDelete(session: s, id: id, plan: plan, inDuo: inDuo, ownPids: ownPids))
+        } catch { return .failure(error) }
+    }
+
+    /// Ends the ones running in Duo, waits (up to 8 s) for their processes and beacons to go, then applies each
+    /// plan. Every plan was made for its own session id, so nothing else is touched.
+    func runDeletes(_ all: [PreparedDelete], done: @escaping @MainActor ([(PreparedDelete, Result<Void, Error>)]) -> Void) {
+        for p in all where p.inDuo {
+            terminals.close(p.session.tabKey); chats.forget(p.session.tabKey)
+            if consoleTab == p.session.tabKey { consoleTab = nil }
+            if homeTab == p.session.tabKey { homeTab = nil }
         }
+        let ids = Set(all.map(\.id))
+        let pids = all.reduce(into: Set<Int32>()) { $0.formUnion($1.ownPids) }
+        // A session with no turn yet has no beacon.
+        @MainActor func attempt(_ left: Int) {
+            if left > 0, Beacon.readAll().contains(where: { ids.contains($0.sessionId) }) || pids.contains(where: { ProcessLiveness.isRunning($0) }) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { MainActor.assumeIsolated { attempt(left - 1) } }
+                return
+            }
+            done(all.map { p in
+                do { try self.applyDelete(p.plan, id: p.id, key: p.session.tabKey); return (p, .success(())) } catch { return (p, .failure(error)) }
+            })
+        }
+        attempt(40)
     }
 
     /// What Delete Session…'s question says (also asked by the intro video's `video-s4-delete-ask` with a sample plan).

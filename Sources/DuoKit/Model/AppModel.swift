@@ -45,6 +45,10 @@ public final class AppModel {
 
     // Inside a project
     public var selectedSidebarItem: String?     // group name or Session.id
+    /// Several sessions selected in one list (DL-247).
+    public var sessionSelection = SessionSelection()
+    /// Each list's rows as last drawn, session keys and breakers (`SessionSelection.breaker`): what a ⇧-click ranges over.
+    @ObservationIgnored public var selectionOrders: [String: [String]] = [:]
     public var expandedGroups: Set<String> = []
     /// The session list's order while the pointer is in it (Q-80, DL-130): project, then each
     /// section's row ids. Nil when the list is free to reorder.

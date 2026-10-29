@@ -156,6 +156,8 @@ struct IdleListPopover: View {
         let buckets = model.idleGroups()
         let rows = buckets.flatMap(\.rows)
         let flat = buckets.flatMap(\.rows)
+        // What ⇧ ranges over (DL-247): the rows, a breaker at each bucket's label.
+        let _ = model.noteSelectionOrder("idle", buckets.flatMap { [SessionSelection.breaker] + $0.rows.map(\.id) })
         VStack(alignment: .leading, spacing: 0) {
             SectionLabel(text: "Idle, resumable", count: rows.count).padding(EdgeInsets(top: 0, leading: 8, bottom: 2, trailing: 8))
             ScrollViewReader { proxy in
@@ -165,9 +167,10 @@ struct IdleListPopover: View {
                             SectionLabel(text: b.label, count: b.rows.count).padding(EdgeInsets(top: 8, leading: 8, bottom: 2, trailing: 8))
                             ForEach(b.rows) { r in
                                 let i = flat.firstIndex(of: r) ?? 0
-                                IdleRowView(row: r, selected: i == model.idleSelection)
+                                IdleRowView(row: r, selected: i == model.idleSelection, run: model.selectionRun(r.id, list: "idle"))
                                     .id(r.id)
-                                    .onActivate { model.idleSelection = i; model.resumeIdle(r) }  // action: session open
+                                    // A plain click resumes; ⇧ and ⌘ select and never resume (DL-247).
+                                    .onActivate { model.sessionRowClicked(r.id, list: "idle") { model.idleSelection = i; model.resumeIdle(r) } }  // action: session open, view select
                                     .modifier(SessionOrganizeMenu(sessionKey: r.id, radius: DuoMetric.idleRowRadius))
                             }
                         }
@@ -205,6 +208,7 @@ struct IdleListPopover: View {
 struct IdleRowView: View {
     let row: IdleRow
     let selected: Bool
+    var run: SessionSelection.Run = .none
 
     var body: some View {
         HStack(spacing: 8) {
@@ -231,7 +235,10 @@ struct IdleRowView: View {
         }
         .padding(.horizontal, 8)
         .frame(height: DuoMetric.idleRowHeight)
-        .background(RoundedRectangle(cornerRadius: DuoMetric.idleRowRadius).fill(selected ? DuoColor.selected : .clear))
+        .background {
+            if run != .none { SelectionRunFill(run: run) }   // several selected (DL-247)
+            else { RoundedRectangle(cornerRadius: DuoMetric.idleRowRadius).fill(selected ? DuoColor.selected : .clear) }
+        }
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityLabel([row.name, row.group.map { "in \($0)" }, row.unfiled ? "Unfiled" : row.project, row.openIn.map { "open in \($0)" } ?? "idle \(row.age)"]

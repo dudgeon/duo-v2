@@ -174,9 +174,7 @@ extension AppModel {
             if inv[1] == "collapse" { expandedGroups.remove(key) } else { expandedGroups.insert(key) }
             done(.ok(inv[1] == "collapse" ? "Collapsed \(g)." : "Expanded \(g)."))
         case .viewSelect:
-            guard let s = inv[0].flatMap({ findSession($0, in: nil) }) else { return done(.fail("no session '\(inv[0] ?? "")'")) }
-            if peekOpen { peekSelection = s.id } else { selectedActionSession = s.id }
-            done(.ok("Selected \(s.name)."))
+            viewSelect(inv, done)
 
         // MARK: Projects
         case .projects:
@@ -306,6 +304,16 @@ extension AppModel {
                 var j: [String: Any] = ["parked": r.parked.map { $0.sessionId ?? $0.tabKey }]
                 j["kept"] = r.kept.map { ["id": $0.session.sessionId ?? $0.session.tabKey, "title": $0.session.name, "why": $0.block.why] }
                 return done(.ok(r.text, j))
+            }
+            if inv.positional.count > 1 {
+                let (found, missing) = sessionsNamed(inv.positional)
+                guard !found.isEmpty else { return done(.fail(Self.noSessions(missing))) }
+                let refused = parkSessions(found.map(\.tabKey))
+                let parked = found.count - refused.count
+                var msg = "Parked \(parked) of \(found.count) sessions\(parked > 0 ? ": " + found.filter { s in !refused.contains { $0.hasPrefix(ParkCheck.quoted(s.name)) } }.map(\.name).joined(separator: ", ") : "")."
+                if !refused.isEmpty { msg += " Not parked: " + refused.joined(separator: "; ") + "." }
+                if !missing.isEmpty { msg += " " + Self.noSessions(missing) }
+                return done(parked > 0 ? .ok(msg, ["parked": found.map { $0.sessionId ?? $0.tabKey }]) : .fail(msg))
             }
             guard let k = inv[0], let s = findSession(k, in: nil) ?? fixture.sessions.first(where: { $0.tabKey == k }) else {
                 return done(.fail(inv[0].map { "no session '\($0)'" } ?? "usage: \(id.action.usage)"))
@@ -494,11 +502,29 @@ extension AppModel {
                 let evidence = transcripts.map { Inventory.evidence($0.transcript, cwd: $0.cwd) }
                 await MainActor.run { self.evidenceReply(name, evidence, titles, done) }
             }
+        case .sessionArchive where inv.positional.count > 1, .sessionUnarchive where inv.positional.count > 1:
+            let on = id == .sessionArchive
+            let (found, missing) = sessionsNamed(inv.positional)
+            guard !found.isEmpty else { return done(.fail(Self.noSessions(missing))) }
+            let refused = archiveSessions(found.map(\.tabKey), on)
+            let n = found.count - refused.count
+            var msg = n > 0 ? (on ? "Archived \(n) of \(found.count) sessions: they're in their projects' Archived folds, still searchable. Undo: duo2 undo"
+                                  : "\(n) of \(found.count) sessions are back in their projects' lists. Undo: duo2 undo") : (on ? "Nothing archived." : "Nothing unarchived.")
+            if !refused.isEmpty { msg += " Not " + (on ? "archived" : "unarchived") + ": " + refused.joined(separator: "; ") + "." }
+            if !missing.isEmpty { msg += " " + Self.noSessions(missing) }
+            done(n > 0 ? .ok(msg) : .fail(msg))
         case .sessionArchive, .sessionUnarchive:
             guard let k = inv[0], let s = findSession(k, in: nil) else { return done(.fail(inv[0].map { "no session '\($0)'" } ?? "usage: \(id.action.usage)")) }
             let on = id == .sessionArchive
             if let why = setSessionArchived(s.tabKey, on) { return done(.fail(why)) }
             done(.ok(on ? "Archived \(s.name): it's in \(s.project)'s Archived fold, still searchable. Undo: duo2 undo" : "\(s.name) is back in \(s.project)'s list."))
+        case .sessionDelete where inv.positional.count > 1:
+            let (found, missing) = sessionsNamed(inv.positional)
+            guard !found.isEmpty else { return done(.fail(Self.noSessions(missing))) }
+            deleteSessions(found.map(\.tabKey)) { r in
+                let note = missing.isEmpty ? "" : " " + Self.noSessions(missing)
+                switch r { case .success(let m): done(.ok(m + note)); case .failure(let e): done(.fail("\(e)" + note)) }
+            }
         case .sessionDelete:
             guard let k = inv[0], let s = findSession(k, in: nil) else { return done(.fail(inv[0].map { "no session '\($0)'" } ?? "usage: \(id.action.usage)")) }
             deleteSession(s.tabKey) { r in
@@ -538,24 +564,30 @@ extension AppModel {
         case .groups, .groupNew, .groupAdd, .groupRemove, .groupRename, .groupDelete:
             groupVerb(id, inv, req, done)
         case .sessionMove where inv.has("new"):
-            guard let k = inv[0], let s = findSession(k, in: nil), let sid = s.sessionId, let name = inv.flags["to"] ?? inv[1] else {
-                return done(.fail("usage: \(id.action.usage)"))
-            }
+            let (ids, target) = moveTargets(inv)
+            let (found, missing) = sessionsNamed(ids)
+            guard let name = target, let s = found.first else { return done(.fail(found.isEmpty && !missing.isEmpty ? Self.noSessions(missing) : "usage: \(id.action.usage)")) }
+            let sids = found.compactMap(\.sessionId)
             if let why = newProjectProblem(name) { return done(.fail(why)) }
-            confirm(title: "Move “\(s.name)” to a new project “\(name)”?",
+            let what = found.count == 1 ? "“\(s.name)”" : "\(found.count) sessions"
+            confirm(title: "Move \(what) to a new project “\(name)”?",
                     detail: "Duo makes \(name)'s folder in Home with a starter PROJECT.md. Files stay where they are; the session moves to the new folder the next time you resume it. You can undo this.",
                     button: "Create and Move") { [weak self] ok in
                 guard let self else { return }
                 guard ok else { return done(.fail("Not moved: the user clicked Cancel in Duo. Nothing changed and nothing is pending.")) }
-                if let why = self.createProject(named: name, moving: [sid]) { return done(.fail(why)) }
-                done(.ok("Made the project \(name) in Home and filed \(s.name) in it; it moves there on its next resume. Undo: duo2 undo"))
+                if let why = self.createProject(named: name, moving: sids) { return done(.fail(why)) }
+                let note = missing.isEmpty ? "" : " " + Self.noSessions(missing)
+                done(.ok("Made the project \(name) in Home and filed \(found.count == 1 ? s.name : "\(found.count) sessions") in it; \(found.count == 1 ? "it moves" : "they move") there on their next resume. Undo: duo2 undo" + note))
             }
         case .sessionMove:
-            guard let k = inv[0], let s = findSession(k, in: nil), let sid = s.sessionId, let to = inv.flags["to"] ?? inv[1], let dst = project(named: to) else {
-                return done(.fail("usage: \(id.action.usage)"))
+            let (ids, target) = moveTargets(inv)
+            let (found, missing) = sessionsNamed(ids)
+            guard let to = target, let s = found.first, let dst = project(named: to) else {
+                return done(.fail(found.isEmpty && !missing.isEmpty ? Self.noSessions(missing) : "usage: \(id.action.usage)"))
             }
-            moveSessions([sid], to: dst.name) { ok in
-                done(ok ? .ok("Filed \(s.name) in \(dst.name); it moves there on its next resume. Undo: duo2 undo") : .fail("Not moved: the user clicked Cancel in Duo. Nothing changed and nothing is pending."))
+            let note = missing.isEmpty ? "" : " " + Self.noSessions(missing)
+            moveSessions(found.compactMap(\.sessionId), to: dst.name) { ok in
+                done(ok ? .ok((found.count == 1 ? "Filed \(s.name) in \(dst.name); it moves there on its next resume." : "Filed \(found.count) sessions in \(dst.name); they move there on their next resume.") + " Undo: duo2 undo" + note) : .fail("Not moved: the user clicked Cancel in Duo. Nothing changed and nothing is pending."))
             }
         case .sessionNote, .sessionNext:
             guard let sid = req.session else { return done(.fail("not run from a Claude session (no session id)")) }
@@ -1189,6 +1221,68 @@ extension AppModel {
         }.joined(separator: "\n")
         done(.ok(text.isEmpty ? "No sessions with transcripts in \(name)." : text,
                  evidence.map { ["id": $0.sessionId, "edited": $0.edited, "candidateHome": $0.candidateHome ?? NSNull(), "partial": $0.partial] as [String: Any] }))
+    }
+
+    /// Several ids at once (DL-247): the sessions found, once each in the order given, and the words that matched none.
+    func sessionsNamed(_ words: [String]) -> (found: [Fixture.Session], missing: [String]) {
+        var found: [Fixture.Session] = [], missing: [String] = []
+        for w in words {
+            if let s = findSession(w, in: nil) ?? fixture.sessions.first(where: { $0.tabKey == w }) {
+                if !found.contains(where: { $0.tabKey == s.tabKey }) { found.append(s) }
+            } else { missing.append(w) }
+        }
+        return (found, missing)
+    }
+
+    static func noSessions(_ missing: [String]) -> String {
+        "No session " + missing.map { "'\($0)'" }.joined(separator: ", ") + "."
+    }
+
+    /// `session move <id>… --to <project>`, or the older `<id> <project>`: the ids, and the project's name.
+    func moveTargets(_ inv: Invocation) -> (ids: [String], target: String?) {
+        if let to = inv.flags["to"] { return (inv.positional, to) }
+        return (Array(inv.positional.dropLast()), inv.positional.count > 1 ? inv.positional.last : nil)
+    }
+
+    /// `view select` (DL-247): prints the selection, or sets, adds to, selects all of, or clears it in the list in front.
+    func viewSelect(_ inv: Invocation, _ done: @escaping @MainActor (Reply) -> Void) {
+        let all = fixture.sessions + (fixture.archivedSessions ?? [])
+        func describe(_ keys: [String]) -> [(id: String, name: String)] {
+            keys.map { k in let s = all.first { $0.tabKey == k }; return (s?.sessionId ?? k, s?.name ?? k) }
+        }
+        let list: String
+        switch inv.flags["list"] {
+        case "project"?:
+            guard currentProject != nil else { return done(.fail("no project is open, so there is no project list")) }
+            list = projectSelectionList
+        case let l? where ["list", "action", "idle"].contains(l): list = l
+        case let l?: return done(.fail("no list '\(l)': project | list | action | idle"))
+        case nil: list = selectionListWithKeyboard ?? (currentProject != nil && !altitude.isAllProjects ? projectSelectionList : "list")
+        }
+        if inv.has("clear") {
+            sessionSelection.clear()
+            return done(.ok("Selection cleared."))
+        }
+        if inv.has("all") {
+            selectAllSessions(list: list)
+            let rows = describe(sessionSelection.keys)
+            guard !rows.isEmpty else { return done(.fail("No session rows are showing in the \(list) list.")) }
+            return done(.ok("Selected all \(rows.count) sessions in the \(list) list.", ["list": list, "sessions": rows.map { ["id": $0.id, "title": $0.name] }]))
+        }
+        if inv.positional.isEmpty {
+            let rows = describe(sessionSelection.keys)
+            let text = rows.isEmpty ? "Nothing is selected." : "\(rows.count) selected in the \(sessionSelection.list) list:\n" + rows.map { "  \($0.id.prefix(8))  \($0.name)" }.joined(separator: "\n")
+            return done(.ok(text, ["list": sessionSelection.list, "sessions": rows.map { ["id": $0.id, "title": $0.name] }]))
+        }
+        let (found, missing) = sessionsNamed(inv.positional)
+        guard !found.isEmpty else { return done(.fail(Self.noSessions(missing))) }
+        sessionSelection.set(found.map(\.tabKey), list: list, adding: inv.has("add"))
+        // One id, as before: its card in the action column or the peek.
+        if found.count == 1, !inv.has("add"), let s = found.first { if peekOpen { peekSelection = s.id } else { selectedActionSession = s.id } }
+        let rows = describe(sessionSelection.keys)
+        let note = missing.isEmpty ? "" : " " + Self.noSessions(missing)
+        done(.ok((found.count == 1 && rows.count == 1 ? "Selected \(found[0].name)." : "Selected \(rows.count) sessions in the \(list) list.") + note,
+                 ["list": list, "sessions": rows.map { ["id": $0.id, "title": $0.name] }]))
     }
 
     func findSession(_ key: String, in project: String?) -> Fixture.Session? {
