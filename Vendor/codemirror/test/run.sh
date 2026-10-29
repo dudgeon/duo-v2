@@ -9,3 +9,6 @@ node "$out"
 out2="${TMPDIR:-/tmp}/duo-lists-test.cjs"
 ./node_modules/.bin/esbuild test/lists.test.mjs --bundle --platform=node --format=cjs --outfile="$out2" --log-level=error
 node "$out2"
+out3="${TMPDIR:-/tmp}/duo-atmenu-test.cjs"
+./node_modules/.bin/esbuild test/atmenu.test.mjs --bundle --platform=node --format=cjs --outfile="$out3" --log-level=error
+node "$out3"

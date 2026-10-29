@@ -292,6 +292,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 
 | Item | Why it has no verb |
 |---|---|
+| @ menu in a margin comment | input help while typing a comment (DL-251): it inserts the text `@claude`, and `duo2 comment add`/`reply` take that text as typed |
 | About Duo | the standard macOS About panel, whose credits list the third-party notices (DL-176); system UI for a person at the screen |
 | Add to .gitignore | a one-time question to the user (DL-50) |
 | Align Column | a submenu, not an action |

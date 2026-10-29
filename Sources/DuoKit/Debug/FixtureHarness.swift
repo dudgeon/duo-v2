@@ -377,6 +377,9 @@ public enum FixtureHarness {
         case "review-comment":   // review-comment:<anchor text>=><comment>: a comment on that text, as the composer posts it
             let p = (parts.count > 1 ? parts[1] : "").components(separatedBy: "=>")
             if p.count == 2 { model.editor.run("const d = view_text(); const at = d.indexOf(a); return at < 0 ? null : duo.reviewComment(t.replace(/~/g, ' '), at, at + a.length)".replacingOccurrences(of: "view_text()", with: "duo.text()"), ["a": p[0].replacingOccurrences(of: "~", with: " "), "t": p[1]]) { _ in } }
+        case "review-at":   // review-at:<anchor>=><typed>=><keys, + between: tab down up esc return post>: a comment typed in the margin's composer (~ for spaces); the field and the @ menu go to stderr
+            let p = (parts.count > 1 ? parts[1] : "").components(separatedBy: "=>").map { $0.replacingOccurrences(of: "~", with: " ") }
+            if p.count == 3 { model.editor.run("return await duo.reviewDrive(a, t, k)", ["a": p[0], "t": p[1], "k": p[2]]) { v in FileHandle.standardError.write(Data("review-at: \(v as? String ?? "nil")\n".utf8)) } }
         case "review-op":   // review-op:<reply|close|reopen|delete>=<thread id>[=<text, ~ for spaces>]: what a margin button does
             let p = (parts.count > 1 ? parts[1] : "").components(separatedBy: "=")
             if p.count >= 2 { model.editor.run("return duo.reviewOp(o, i, t)", ["o": p[0], "i": p[1], "t": p.count > 2 ? p[2].replacingOccurrences(of: "~", with: " ") : ""]) { _ in } }
