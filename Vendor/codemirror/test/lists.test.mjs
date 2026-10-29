@@ -2,7 +2,7 @@
 import { EditorState } from "@codemirror/state";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { history, undo, indentMore, indentLess, moveLineUp, deleteCharBackward, insertNewlineAndIndent } from "@codemirror/commands";
-import { renumberLists, renumberAfter } from "../src/lists.js";
+import { renumberLists, renumberAfter, listIndentKeys } from "../src/lists.js";
 import { reviewCore } from "../src/critic.js";
 
 let failed = 0;
@@ -78,6 +78,43 @@ st = apply(mk(sug + "<!-- -->"), { changes: { from: 0, to: 0, insert: "" } });
 const agent = apply(mk("1. a\n3. b\n3. c\n"), { changes: { from: 5, insert: "" }, userEvent: "agent" });
 const fix = renumberAfter(agent, [[0, 15]]);
 check(fix.length === 1 && apply(agent, { changes: fix }).doc.toString() === "1. a\n2. b\n3. c\n", "renumberAfter fixes an agent edit's list", fix);
+
+// ⌘] ⌘[ Tab ⇧Tab in list items (DL-244): move by the parent's marker width
+const key = (k) => listIndentKeys.find((b) => b.key === k).run;
+const press = (k, s) => { let out = s, handled; handled = key(k)({ state: s, dispatch: (spec) => { out = s.update(spec).state; } }); return { handled, doc: out.doc.toString(), state: out }; };
+let r = press("Mod-]", mk("1. a\n2. b\n3. c\n", { anchor: 7 }));
+check(r.doc === "1. a\n   1. b\n2. c\n", "⌘] nests under \"1. \" by 3 and the sub-list starts at 1", r.doc);
+r = press("Tab", mk("1. a\n2. b\n3. c\n", { anchor: 7 }));
+check(r.doc === "1. a\n   1. b\n2. c\n", "Tab does the same in a list item", r.doc);
+r = press("Mod-]", mk("10. a\n11. b\n", { anchor: 8 }));
+check(r.doc === "10. a\n    1. b\n", "under \"10. \" by 4", r.doc);
+r = press("Mod-]", mk("- a\n- b\n", { anchor: 6 }));
+check(r.doc === "- a\n  - b\n", "under \"- \" by 2", r.doc);
+r = press("Mod-]", mk("1. a\n2. b\n", { anchor: 1 }));
+check(r.handled && r.doc === "1. a\n2. b\n", "the first item can't nest: nothing moves");
+r = press("Mod-]", mk("1. a\n2. b\n   1. x\n3. c\n", { anchor: 7 }));
+check(r.doc === "1. a\n   1. b\n      1. x\n2. c\n", "an item moves with its sub-list", r.doc);
+r = press("Mod-]", mk("1. a\n2. b\n3. c\n4. d\n", { anchor: 7, head: 12 }));
+check(r.doc === "1. a\n   1. b\n   2. c\n2. d\n", "a selection of items nests them together and renumbers both lists", r.doc);
+r = press("Mod-[", mk("1. a\n   1. b\n   2. c\n2. d\n", { anchor: 9 }));
+check(r.doc === "1. a\n2. b\n   1. c\n3. d\n", "⌘[ moves back to the parent's column and renumbers both lists", r.doc);
+r = press("Shift-Tab", mk("1. a\n   1. b\n2. d\n", { anchor: 9 }));
+check(r.doc === "1. a\n2. b\n3. d\n", "⇧Tab does the same", r.doc);
+r = press("Mod-[", mk("1. a\n2. b\n", { anchor: 7 }));
+check(r.handled && r.doc === "1. a\n2. b\n", "a top-level item doesn't outdent");
+r = press("Mod-]", mk("intro\n1. a\n2. b\n", { anchor: 0, head: 12 }));
+check(r.doc === "  intro\n1. a\n   1. b\n".replace("1. a\n   1. b","1. a\n2. b") || r.doc === "  intro\n1. a\n2. b\n", "a mixed selection: prose gets two spaces, the first item can't nest", r.doc);
+r = press("Mod-]", mk("just prose\n", { anchor: 3 }));
+check(!r.handled, "outside lists the command declines (the default indent and Tab apply)");
+r = press("Mod-]", mk("> 1. a\n> 2. b\n", { anchor: 11 }));
+check(r.doc === "> 1. a\n>    1. b\n", "in a block quote", r.doc);
+{
+  let s2 = mk("1. a\n2. b\n3. c\n", { anchor: 7 });
+  s2 = press("Mod-]", s2).state;
+  check(s2.doc.toString() === "1. a\n   1. b\n2. c\n", "(indented)");
+  s2 = run(undo, s2);
+  check(s2.doc.toString() === "1. a\n2. b\n3. c\n", "undo takes back the indent and the renumbering in one step", s2.doc.toString());
+}
 
 console.log(failed ? `${failed} failed` : "all passed");
 process.exit(failed ? 1 : 0);
