@@ -21,7 +21,21 @@ extension AppModel {
     }
 
     public func sessionRowClicked(_ key: String, _ click: SessionSelection.Click, list: String, open: () -> Void) {
-        if sessionSelection.click(key, click, list: list, order: selectionOrders[list] ?? []) { open() }
+        // The project pane's rows as they are now, not as last drawn: a thread unfolded a moment ago counts (DL-250).
+        if click != .plain, list == projectSelectionList, let p = currentProject?.name { noteSelectionOrder(list, sidebarOrder(sidebarItems(p), project: p)) }
+        if sessionSelection.click(key, click, list: list, order: selectionOrders[list] ?? []) { return open() }
+        takeInThreads(list)
+    }
+
+    /// A folded fork thread that a ⌘-click, a ⇧ range or ⌘A took in unfolds, and all its sessions are selected
+    /// (Geoff, DL-250): ⌘-click then takes out any one. Its chevron still only folds and unfolds.
+    func takeInThreads(_ list: String) {
+        let threads = selectionThreads[list] ?? [:]
+        guard !threads.isEmpty else { return }
+        let opened = sessionSelection.takeInThreads(threads.mapValues(\.members))
+        guard !opened.isEmpty else { return }
+        withDuoAnimation(.fold) { for r in opened { if let f = threads[r]?.fold { expandedGroups.insert(f) } } }
+        if list == projectSelectionList, let p = currentProject?.name { selectionOrders[list] = sidebarOrder(sidebarItems(p), project: p) }
     }
 
     /// The list's rows as drawn, so ⇧ ranges over what's on screen. Called from each list's body.
@@ -31,7 +45,12 @@ extension AppModel {
         if sessionSelection.list == list, !sessionSelection.isEmpty {
             let present = Set(order)
             if sessionSelection.keys.contains(where: { !present.contains($0) }) {
-                DispatchQueue.main.async { MainActor.assumeIsolated { self.sessionSelection.keepOnly(Set(self.selectionOrders[list] ?? [])) } }
+                // Judged on the rows as they are then, not as this draw had them: a thread unfolding mid-draw
+                // must not drop the forks it just brought in (DL-250).
+                DispatchQueue.main.async { MainActor.assumeIsolated {
+                    if list == self.projectSelectionList, let p = self.currentProject?.name { self.selectionOrders[list] = self.sidebarOrder(self.sidebarItems(p), project: p) }
+                    self.sessionSelection.keepOnly(Set(self.selectionOrders[list] ?? []))
+                } }
             }
         }
     }
@@ -42,13 +61,22 @@ extension AppModel {
         return sessionSelection.run(key, order: selectionOrders[list] ?? [key])
     }
 
+    /// The project pane's items, as `ProjectSidebarPane` lists them.
+    func sidebarItems(_ project: String) -> [SidebarItem] {
+        SidebarItem.items(sidebarSections(), tasksShown: terminalsMode == .live || videoTasks, folded: { self.timeGroupFolded(project: project, $0) })
+    }
+
     /// The project pane's rows in order: a session row's key, or a breaker for every row that isn't one.
     public func sidebarOrder(_ items: [SidebarItem], project: String) -> [String] {
         let b = SessionSelection.breaker
+        var threads: [String: (fold: String, members: [String])] = [:]
         func member(_ r: SidebarRow) -> [String] {
             switch r.kind {
             case .thread(_, let members) where expandedGroups.contains(r.id): return members.map(\.sessionKey)
-            case .thread, .session: return [r.sessionKey]
+            case .thread(_, let members):   // folded: the row stands for the original; selecting it takes in all (DL-250)
+                threads[r.sessionKey] = (r.id, members.map(\.sessionKey))
+                return [r.sessionKey]
+            case .session: return [r.sessionKey]
             case .taskLine: return [b]
             case .group(let threads, _): return [b] + (expandedGroups.contains(r.name) ? threads.flatMap(member) : [])
             case .older(let rows): return [b] + (expandedGroups.contains(r.id) ? rows.flatMap(member) : [])
@@ -58,6 +86,7 @@ extension AppModel {
         for item in items {
             if case .row(let r, _) = item.kind { out += member(r) } else { out.append(b) }
         }
+        selectionThreads["project:\(project)"] = threads
         out.append(b)   // the Archived fold's row
         if expandedGroups.contains("\(project)/archived") { out += fixture.archivedSessions(inProject: project).map(\.tabKey) }
         return out
@@ -87,7 +116,9 @@ extension AppModel {
 
     /// ⌘A in a list with the keyboard.
     public func selectAllSessions(list: String) {
+        if list == projectSelectionList, let p = currentProject?.name { noteSelectionOrder(list, sidebarOrder(sidebarItems(p), project: p)) }
         sessionSelection.selectAll(list: list, order: selectionOrders[list] ?? [])
+        takeInThreads(list)
     }
 
     // MARK: The selection's menu (board 02)

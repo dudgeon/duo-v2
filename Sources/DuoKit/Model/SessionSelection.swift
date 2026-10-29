@@ -49,6 +49,23 @@ public struct SessionSelection: Equatable, Sendable {
         return false
     }
 
+    /// Folded fork threads a modified click took in (DL-250): `threads` maps a folded thread's row key to its
+    /// sessions, the original first. Each one taken in brings all its sessions into the selection (⌘-click or
+    /// ⌘A: for keeps; ⇧: as part of the range). Returns the row keys whose threads should unfold.
+    @discardableResult
+    public mutating func takeInThreads(_ threads: [String: [String]]) -> [String] {
+        var opened: [String] = []
+        for (row, members) in threads.sorted(by: { $0.key < $1.key }) where keys.contains(row) {
+            opened.append(row)
+            let keep = base.contains(row)
+            for m in members where !keys.contains(m) {
+                keys.append(m)
+                if keep { base.append(m) }
+            }
+        }
+        return opened
+    }
+
     /// ⌘A: every session row showing in `list`.
     public mutating func selectAll(list: String, order: [String]) {
         if list != self.list { self = SessionSelection(); self.list = list }

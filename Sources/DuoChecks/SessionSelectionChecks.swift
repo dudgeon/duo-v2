@@ -51,6 +51,34 @@ import Foundation
         check(m.selectionRun("d", list: "L") == .middle && m.selectionRun("d", list: "other") == .none, "a row's fill is its own list's")
     }
 
+    // A folded fork thread (DL-250, Geoff): ⌘-click or a ⇧ range takes in the original and every fork, the thread
+    // unfolds, and ⌘-click then takes any one out.
+    do {
+        var t = SessionSelection()
+        let tOrder = ["x", "orig", "y"]
+        let threads = ["orig": ["orig", "fork1", "fork2"]]
+        t.click("orig", .command, list: "T", order: tOrder)
+        check(t.takeInThreads(threads) == ["orig"] && t.keys == ["orig", "fork1", "fork2"], "⌘-click on a folded thread selects the original and every fork")
+        t.click("fork1", .command, list: "T", order: ["x", "orig", "fork1", "fork2", "y"])
+        check(t.keys == ["orig", "fork2"], "then ⌘-click takes one out, as for any row")
+        var r = SessionSelection()
+        r.click("x", .plain, list: "T", order: tOrder)
+        r.click("y", .shift, list: "T", order: tOrder)
+        r.takeInThreads(threads)
+        check(Set(r.keys) == ["x", "orig", "fork1", "fork2", "y"], "a ⇧ range across a folded thread takes in all its sessions")
+        var u = SessionSelection()
+        u.click("x", .command, list: "T", order: tOrder)
+        check(u.takeInThreads(threads).isEmpty && u.keys == ["x"], "a thread outside the selection stays as it is")
+
+        let m = AppModel(fixture: base)
+        m.selectionOrders["T"] = tOrder
+        m.selectionThreads["T"] = ["orig": (fold: "p/thread/orig", members: ["orig", "fork1", "fork2"])]
+        var opened = 0
+        m.sessionRowClicked("orig", .command, list: "T") { opened += 1 }
+        check(opened == 0 && m.expandedGroups.contains("p/thread/orig") && Set(m.sessionSelection.keys) == ["orig", "fork1", "fork2"],
+              "in the pane the thread unfolds, nothing opens, and all its sessions are selected")
+    }
+
     // Delete n Sessions…: parked, live and archived sessions mixed; only the selected ones that can go, go.
     do {
         let root = URL(fileURLWithPath: "/tmp/duo-ms-\(UUID().uuidString.prefix(8))")
@@ -99,5 +127,65 @@ import Foundation
         check(onDisk(2) && said.contains("Live one"), "a selected session running outside Duo is left out, and named")
         check(onDisk(1) && onDisk(4), "a session outside the selection is never touched")
         check(!DuoState.load().archivedSessions.contains(id(3)), "the deleted archived session leaves Duo's archive list")
+    }
+
+    // Geoff, 2026-10-29: "can you delete the parent and keep a child fork?" A /branch fork is its own transcript, holding
+    // a copy of the parent's messages and `forkedFrom` naming it. Delete the parent: the fork's file is untouched and it
+    // stays listed, as a plain session (no thread, no "Fork of"). scripts/check-fork-parent-delete.sh proves the CLI side.
+    do {
+        let fm = FileManager.default
+        let root = URL(fileURLWithPath: "/tmp/duo-fp-\(UUID().uuidString.prefix(8))")
+        let support = root.appending(path: "s"), config = root.appending(path: "c"), proj = root.appending(path: "forky")
+        for d in [support, config.appending(path: "projects"), proj] { try? fm.createDirectory(at: d, withIntermediateDirectories: true) }
+        try? Data("# forky\n".utf8).write(to: proj.appending(path: "PROJECT.md"))
+        let saved = ["DUO_SUPPORT_DIR", "CLAUDE_CONFIG_DIR", "DUO_AUTOCONFIRM"].map { k in (k, ProcessInfo.processInfo.environment[k]) }
+        setenv("DUO_SUPPORT_DIR", support.path, 1); setenv("CLAUDE_CONFIG_DIR", config.path, 1); setenv("DUO_AUTOCONFIRM", "1", 1)
+        defer {
+            for (k, v) in saved { if let v { setenv(k, v, 1) } else { unsetenv(k) } }
+            try? fm.removeItem(at: root)
+        }
+        let parent = "cccccccc-0000-4000-8000-000000000001", fork = "cccccccc-0000-4000-8000-000000000002"
+        let bucket = config.appending(path: "projects/" + ClaudeStorage.encode(proj.path))
+        try? fm.createDirectory(at: bucket, withIntermediateDirectories: true)
+        func line(_ sid: String, _ type: String, _ uuid: String, _ parentUuid: String?, _ text: String, _ ts: String, forked: Bool) -> String {
+            var r: [String: Any] = ["type": type, "uuid": uuid, "sessionId": sid, "cwd": proj.path, "timestamp": ts,
+                                    "message": ["role": type, "content": text]]
+            r["parentUuid"] = parentUuid ?? NSNull()
+            if forked { r["forkedFrom"] = ["sessionId": parent, "messageUuid": "u-a1"] }
+            return String(data: try! JSONSerialization.data(withJSONObject: r), encoding: .utf8)! + "\n"
+        }
+        let shared = [("user", "u-u1", nil as String?, "Plan the launch", "2026-10-29T10:00:00Z"), ("assistant", "u-a1", "u-u1", "Here's a plan", "2026-10-29T10:00:05Z")]
+        let parentText = shared.map { line(parent, $0.0, $0.1, $0.2, $0.3, $0.4, forked: false) }.joined()
+        let forkText = shared.map { line(fork, $0.0, $0.1, $0.2, $0.3, $0.4, forked: true) }.joined()
+            + line(fork, "user", "u-u2", "u-a1", "Now the email", "2026-10-29T10:05:00Z", forked: true)
+        let pURL = bucket.appending(path: "\(parent).jsonl"), fURL = bucket.appending(path: "\(fork).jsonl")
+        try? Data(parentText.utf8).write(to: pURL); try? Data(forkText.utf8).write(to: fURL)
+        func snapshot(_ ids: [String]) -> (Fixture, [String: URL]) {
+            var c = LiveSnapshot.Context(root: nil)
+            c.includeHistory = false
+            c.historyOverride = ids.map { (id: $0, transcript: bucket.appending(path: "\($0).jsonl"), cwd: proj.path) }
+            let (f, folders, _) = LiveSnapshot.build(c, beacons: [])
+            return (f, folders)
+        }
+        let (before, folders) = snapshot([parent, fork])
+        let f0 = before.sessions.first { $0.sessionId == fork }
+        let rows0 = SidebarRow.rows(for: "forky", in: before)
+        check(f0?.forkParent == parent && f0?.forkOf != nil && rows0.count == 1 && { if case .thread(2, _) = rows0[0].kind { return true } else { return false } }(),
+              "before: the fork names its parent (forkedFrom) and the two are one thread")
+        let m = AppModel(fixture: before)
+        m.terminalsMode = .live
+        m.liveFolders = folders
+        let pKey = before.sessions.first { $0.sessionId == parent }!.tabKey
+        var said = ""
+        m.deleteSession(pKey) { r in said = "\(r)" }
+        check(!fm.fileExists(atPath: pURL.path) && (try? String(contentsOf: fURL, encoding: .utf8)) == forkText,
+              "deleting the parent leaves the fork's transcript byte for byte, its copy of the parent's messages included (\(said.prefix(60)))")
+        let (after, _) = snapshot([fork])
+        let f1 = after.sessions.first { $0.sessionId == fork }
+        let rows1 = SidebarRow.rows(for: "forky", in: after)
+        check(f1 != nil && f1?.forkOf == nil && rows1.count == 1 && rows1[0].kind == .session,
+              "after: the fork is still listed, as a plain session row (no thread, no Fork of)")
+        let m2 = AppModel(fixture: after)
+        check(m2.forkParentName(of: f1!.tabKey) == nil, "its console tab names no parent")
     }
 }

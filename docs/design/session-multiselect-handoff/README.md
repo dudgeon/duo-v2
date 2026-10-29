@@ -27,6 +27,7 @@ The screens are copies of the canvas boards, rendered to static HTML by `scripts
   - Sessions only, across sections. One list at a time: switching project or altitude clears it.
   - A selected session that changes section stays selected. One that leaves the list leaves the selection.
 - **After an action:** the selection clears. Archive, Park, Add to Task and Move to Project act at once and undo with ⌘Z. Delete asks first.
+- **A folded fork thread** (DL-250): a ⌘-click on its row, a ⇧ range or ⌘A over it unfolds it and selects every session in it, the original and each fork. ⌘-click then takes any one out. The chevron still only folds and unfolds.
 - **VoiceOver** says "n sessions selected", and each selected row reads "selected".
 
 ## The look (`01`, A)
