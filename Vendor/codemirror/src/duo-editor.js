@@ -9,7 +9,7 @@ import { syntaxTree } from "@codemirror/language";
 import { autocompletion, startCompletion, completionStatus, acceptCompletion } from "@codemirror/autocomplete";
 import { marginExtensions, marginTheme, composeComment, activate, setDelivery, addThread, replyTo, closeThread, reopenThread, deleteThread } from "./margin.js";
 import { reviewCore, reviewDrawing, reviewSummary, setMarkup as setReviewMarkup, setReviewer, onReviewAction, resolveSuggestion, resolveAll as resolveAllSuggestions, step as stepReview, suggestHunks, reviewField, suggestEditsOn } from "./critic.js";
-import { renumberLists, renumberAfter } from "./lists.js";
+import { renumberLists, renumberAfter, listIndentKeys } from "./lists.js";
 import { search, searchKeymap, SearchQuery, setSearchQuery, getSearchQuery, findNext, findPrevious, openSearchPanel, closeSearchPanel, replaceNext } from "@codemirror/search";
 
 // ---------- live preview ----------
@@ -2199,6 +2199,7 @@ function extensions(readOnly) {
       linkClicks,
       // Duo's menu chords win over CodeMirror's: ⌘D is Send Selection to Claude (DL-79), ⌘I is
       // Italic (CodeMirror's select-parent-syntax took it, so Format › Italic never fired).
+      keymap.of(listIndentKeys),
       keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap].filter((b) => !DUO_CHORDS.has(b.key))),
       EditorView.contentAttributes.of({ spellcheck: "true", autocorrect: "on", autocapitalize: "on" }),
       EditorView.updateListener.of((u) => {

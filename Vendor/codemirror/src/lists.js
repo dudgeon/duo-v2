@@ -114,3 +114,72 @@ export function renumberAfter(state, ranges) {
   if (suggesting(state)) return [];
   return renumber(state, ranges, null);
 }
+
+// ---------- indent and outdent in a list (DL-244) ----------
+// ⌘] ⌘[ Tab ⇧Tab in a list item move the item (with its lines) by the width of the marker it nests under, so it
+// really nests: 3 under "1. ", 4 under "10. ", 2 under "- ". Anywhere else the command returns false and the
+// editor's own indent (or nothing, for Tab) applies. The renumbering above follows in the same transaction.
+const QUOTE = /^(?:[ \t]{0,3}>[ \t]?)*/;
+const quoteLen = (text) => QUOTE.exec(text)[0].length;
+
+function itemAt(state, tree, line) {
+  const text = line.text, at = line.from + quoteLen(text) + (/^[ \t]*/.exec(text.slice(quoteLen(text)))[0].length);
+  for (let n = tree.resolveInner(Math.min(at, state.doc.length), 1); n; n = n.parent) if (n.name === "ListItem") return n;
+  return null;
+}
+const columnOf = (state, item) => { const l = state.doc.lineAt(item.from); return item.from - l.from - quoteLen(l.text); };
+const widthOf = (state, item) => { const m = item.firstChild; return m?.name === "ListMark" ? m.to - m.from + 1 : 2; };
+
+function listShift(view, dir) {
+  const state = view.state;
+  if (state.readOnly) return false;
+  const tree = treeOf(state), doc = state.doc;
+  const items = new Map(), others = [];
+  for (const r of state.selection.ranges) {
+    for (let n = doc.lineAt(r.from).number; n <= doc.lineAt(r.to).number; n++) {
+      const line = doc.line(n), it = itemAt(state, tree, line);
+      if (it) items.set(it.from, it); else if (line.length) others.push(line);
+    }
+  }
+  if (!items.size) return false;
+  // an item whose ancestor is also chosen moves with it
+  const chosen = [...items.values()].filter((it) => { for (let p = it.parent; p; p = p.parent) if (p.name === "ListItem" && items.has(p.from)) return false; return true; });
+  const changes = [], done = new Set();
+  const shiftLines = (a, b, by) => {
+    for (let n = doc.lineAt(a).number; n <= doc.lineAt(Math.max(a, b - 1)).number; n++) {
+      if (done.has(n)) continue;
+      done.add(n);
+      const line = doc.line(n), at = line.from + quoteLen(line.text);
+      if (by > 0) { if (line.length > at - line.from) changes.push({ from: at, insert: " ".repeat(by) }); continue; }
+      const ws = /^[ \t]*/.exec(doc.sliceString(at, line.to))[0].length, cut = Math.min(-by, ws);
+      if (cut) changes.push({ from: at, to: at + cut });
+    }
+  };
+  for (const it of chosen) {
+    const col = columnOf(state, it);
+    if (dir > 0) {
+      let p = it.prevSibling;
+      while (p && p.name !== "ListItem") p = p.prevSibling;
+      while (p && items.has(p.from)) { p = p.prevSibling; while (p && p.name !== "ListItem") p = p.prevSibling; }   // chosen siblings nest together
+      if (!p) continue;
+      const by = columnOf(state, p) + widthOf(state, p) - col;
+      if (by > 0) shiftLines(it.from, it.to, by);
+    } else {
+      let parent = it.parent; while (parent && parent.name !== "ListItem") parent = parent.parent;
+      const by = parent ? col - columnOf(state, parent) : col;
+      if (by > 0) shiftLines(it.from, it.to, -by);
+    }
+  }
+  // lines of the selection outside any list keep the editor's own indent
+  for (const line of others) shiftLines(line.from, line.from + 1, dir > 0 ? 2 : -2);
+  if (changes.length) view.dispatch({ changes, userEvent: dir > 0 ? "input.indent" : "delete.dedent", scrollIntoView: true });
+  return true;
+}
+
+// Run before the default keymap; false when the selection touches no list item.
+export const listIndentKeys = [
+  { key: "Mod-]", run: (v) => listShift(v, 1) },
+  { key: "Mod-[", run: (v) => listShift(v, -1) },
+  { key: "Tab", run: (v) => listShift(v, 1) },
+  { key: "Shift-Tab", run: (v) => listShift(v, -1) },
+];
