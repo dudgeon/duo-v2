@@ -1,0 +1,56 @@
+{
+ "$note": "Selecting several sessions, approved 2026-10-29 by buttons (DL-247). kind=board: drawn on the Design canvas and rendered to static HTML by scripts/dc-render.py from canvas/.",
+ "source": "https://claude.ai/artifact/6FH9QMZrJS5bVTasHoaqb1",
+ "screens": [
+  {
+   "file": "screens/00-click-model.html",
+   "png": "screens/png/00-click-model@2x.png",
+   "board": "Main.dc.html",
+   "kind": "board",
+   "width": 1100,
+   "height": 1000,
+   "decision": "DL-247",
+   "shows": "The clicks, what a selection is, after an action."
+  },
+  {
+   "file": "screens/01-selected-rows.html",
+   "png": "screens/png/01-selected-rows@2x.png",
+   "board": "Look.dc.html",
+   "kind": "board",
+   "width": 1180,
+   "height": 1000,
+   "decision": "DL-247",
+   "shows": "A: joined runs (target); B not chosen."
+  },
+  {
+   "file": "screens/02-selection-menu.html",
+   "png": "screens/png/02-selection-menu@2x.png",
+   "board": "Menu.dc.html",
+   "kind": "board",
+   "width": 1240,
+   "height": 1000,
+   "decision": "DL-247",
+   "shows": "The selection's menu, in a project and across projects; menuTarget on every selected row."
+  },
+  {
+   "file": "screens/03-delete-sheet.html",
+   "png": "screens/png/03-delete-sheet@2x.png",
+   "board": "Sheet.dc.html",
+   "kind": "board",
+   "width": 2060,
+   "height": 640,
+   "decision": "DL-247",
+   "shows": "Delete n Sessions…: plain, one running in Duo, one running outside Duo, 14 (scrolls)."
+  },
+  {
+   "file": "screens/04-lists-and-duo2.html",
+   "png": "screens/png/04-lists-and-duo2@2x.png",
+   "board": "Lists.dc.html",
+   "kind": "board",
+   "width": 1180,
+   "height": 880,
+   "decision": "DL-247",
+   "shows": "Which lists select; the duo2 verbs."
+  }
+ ]
+}

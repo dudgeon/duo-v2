@@ -426,7 +426,7 @@ struct HomeTile: View {
                 TileSessionRow(session: s, selected: model.selectedActionSession == s.id, active: model.hasOpenTerminal(s.tabKey))
                     .padding(.top, i == 0 ? 6 : 0)
                     .contentShape(Rectangle())
-                    .onActivate { model.open(project: home.name, session: s.name) }  // action: open
+                    .onActivate { if AppModel.currentClick() == .plain { model.open(project: home.name, session: s.name) } }  // action: open (⇧/⌘ do nothing on a tile, DL-247)
                     .modifier(SessionOrganizeMenu(sessionKey: s.tabKey))
             }
             if all.count > shown.count {
@@ -664,7 +664,7 @@ struct ProjectTile: View {
                     TileSessionRow(session: s, selected: model.selectedActionSession == s.id, active: model.hasOpenTerminal(s.tabKey))
                         .padding(.top, i == 0 ? 6 : 0)
                         .contentShape(Rectangle())
-                        .onActivate { model.open(project: project.name, session: s.name) }  // action: open
+                        .onActivate { if AppModel.currentClick() == .plain { model.open(project: project.name, session: s.name) } }  // action: open (⇧/⌘ do nothing on a tile, DL-247)
                         .modifier(SessionOrganizeMenu(sessionKey: s.tabKey))
                         .accessibilityIdentifier("video.board.card.\(s.name)")   // anchors: the video cursor's target
                 }
@@ -815,6 +815,8 @@ struct ActionColumnPane: View {
         let f = model.fixture
         let needsYou = f.needsYou
         let reviews = f.sessions.filter { $0.state == .readyForReview }
+        // What ⇧ ranges over in the column (DL-247): the needs-you cards, then the review cards.
+        let _ = model.noteSelectionOrder("action", needsYou.filter { $0.project != f.home?.name }.map(\.tabKey) + [SessionSelection.breaker] + reviews.map(\.tabKey))
         ScrollView {
             VStack(alignment: .leading, spacing: DuoSpace.gapCardToCard) {
                 if needsYou.isEmpty && model.terminalsMode == .live {
@@ -832,7 +834,7 @@ struct ActionColumnPane: View {
                                 if s.project == f.home?.name {
                                     HomePointerCard(session: s)
                                 } else {
-                                    NeedsYouCard(session: s, selected: model.selectedActionSession == s.id)
+                                    NeedsYouCard(session: s, selected: model.selectedActionSession == s.id || model.selectionRun(s.tabKey, list: "action") != .none)
                                 }
                             }
                             .accessibilityIdentifier("video.s3.needs.\(i + 1)")   // anchors: the video cursor's target (1-based)
@@ -925,7 +927,7 @@ struct NeedsYouCard: View {
         .contentShape(Rectangle())
         // Clicking a session resumes it (Geoff, 2026-10-04): its project opens with it in the console.
         // Arrow keys still move the selection without opening.
-        .onActivate { model.selectedActionSession = session.id; model.open(project: session.project, session: session.name) }  // action: open
+        .onActivate { model.sessionRowClicked(session.tabKey, list: "action") { model.selectedActionSession = session.id; model.open(project: session.project, session: session.name) } }  // action: open, view select
         .modifier(SessionOrganizeMenu(sessionKey: session.tabKey, radius: DuoMetric.radiusCard))
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(session.name), needs you, waiting \(session.wait ?? ""), \(session.project)")
@@ -987,8 +989,10 @@ struct ReviewCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .bordered(DuoSpace.cardPadding)
         .contentShape(Rectangle())
-        // Clicking the card resumes the session, as Review does (Geoff, 2026-10-04).
-        .onActivate { model.open(project: session.project, session: session.name, document: session.document) }  // action: open
+        // Several selected (DL-247): the selected card's border, a stand-in (Q-304).
+        .overlay { if model.selectionRun(session.tabKey, list: "action") != .none { RoundedRectangle(cornerRadius: DuoMetric.radiusCard).strokeBorder(DuoColor.text, lineWidth: DuoMetric.borderEmphasis) } }
+        // Clicking the card resumes the session, as Review does (Geoff, 2026-10-04); ⇧ and ⌘ only select (DL-247).
+        .onActivate { model.sessionRowClicked(session.tabKey, list: "action") { model.open(project: session.project, session: session.name, document: session.document) } }  // action: open, view select
         .modifier(SessionOrganizeMenu(sessionKey: session.tabKey, radius: DuoMetric.radiusCard))
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(session.name), ready for review, \(session.project)")
@@ -1021,6 +1025,9 @@ struct SessionOrganizeMenu: ViewModifier {
             let payload = AppModel.dragPayload(session: id)
             content
                 .contextMenu {
+                  if model.sessionSelection.isMulti(sessionKey) {
+                    SelectionMenuItems(model: model)   // DL-247: the selection's menu
+                  } else {
                     SendMenu { _ in model.sessionPayload(sessionKey) }
                     Button("Find Similar") { model.findSimilar(session: sessionKey) }
                     // A link for a task note (DL-87): [title](duo2://session/<id>).
@@ -1057,6 +1064,7 @@ struct SessionOrganizeMenu: ViewModifier {
                         Button("Move Tab Right") { model.moveTab(sessionKey, in: pane, by: 1) }  // action: view tab-move
                             .disabled(!model.canMoveTab(sessionKey, in: pane, by: 1))
                     }
+                  }
                 }
                 // A tab leaves its place empty while it's dragged (tabs-drag); a row sinks back.
                 .modifier(Lifted(active: dragImage == nil && model.dragging == payload))
@@ -1081,7 +1089,8 @@ struct MenuTargetFill: ViewModifier {
     let onConsole: Bool
 
     func body(content: Content) -> some View {
-        let on = model.contextMenuSession == sessionKey
+        // Several selected (DL-247): their own fill turns `menuTarget` (SelectionRunFill), so no second one here.
+        let on = model.contextMenuSession == sessionKey && !model.sessionSelection.isMulti(sessionKey)
         content
             .background(MenuProbe { [model, sessionKey] in MenuTargetFill.begin(model, sessionKey) })
             .overlay {
@@ -1097,6 +1106,8 @@ struct MenuTargetFill: ViewModifier {
     }
 
     @MainActor static func begin(_ model: AppModel, _ key: String) {
+        // A right-click outside the selection moves it to that row, as in Finder (DL-247).
+        if !model.sessionSelection.contains(key) { model.sessionSelection.clear() }
         model.contextMenuSession = key
         guard !watching else { return }
         watching = true

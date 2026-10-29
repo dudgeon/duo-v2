@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The selection's menu</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.bd{box-sizing:border-box;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif}
+.bd *{box-sizing:border-box}
+.t2{color:#5B636D}
+.cap{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;margin:0 0 8px}
+.card{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;padding:12px 14px}
+.menu{width:236px;background:#FFFFFF;border:1px solid #C9CDD3;border-radius:10px;box-shadow:0 8px 24px rgba(31,35,40,.18);padding:5px 0}
+.mi{display:flex;align-items:center;height:22px;padding:0 12px 0 22px;font-size:13px;line-height:20px}
+.mi .x{margin-left:auto;color:#5B636D}
+.mi.off{color:#5B636D;opacity:.55}
+.mi.hi{background:#1F2328;color:#FFFFFF;border-radius:5px;margin:0 5px;padding-left:17px;padding-right:7px}
+.msep{height:1px;background:#C9CDD3;margin:5px 12px}
+.n{display:grid;grid-template-columns:22px minmax(0,1fr);column-gap:4px;margin:0 0 6px;font-size:12px;line-height:18px}
+.m{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:8px;background:#1F2328;color:#FFFFFF;font:600 10px/16px -apple-system,system-ui,sans-serif;margin-top:1px}
+ul{margin:0;padding-left:18px}
+li{margin:0 0 5px;font-size:12px;line-height:18px}
+</style>
+</helmet>
+<div class="bd" style="width: 1240px; height: 1000px; padding: 28px 32px; display: flex; flex-direction: column; gap: 16px">
+<div>
+<h1 style="margin: 0; font: 600 20px/26px -apple-system, system-ui, sans-serif">The selection's menu</h1>
+<p class="t2" style="margin: 4px 0 0; font-size: 12px; line-height: 18px">⌃-click or right-click on any selected row. Native: macOS draws the menu, so match its contents and order, not this drawing. Verbs from the one-session menu only; each item names how many sessions it will act on. [P]</p>
+</div>
+<div style="display: flex; gap: 24px; align-items: flex-start">
+<div style="width: 300px; flex: none">
+<div class="cap">In checkout, 5 selected</div>
+<dc-import name="Pane" pane="{{p}}" hint-size="300px,720px"></dc-import>
+</div>
+<div style="width: 236px; flex: none; padding-top: 474px">
+<div class="menu">
+<div class="mi">Make a Task<span class="m" style="margin-left: auto">1</span></div>
+<div class="mi">Add to Task<span class="x">›</span></div>
+<div class="msep"></div>
+<div class="mi">Move to Project<span class="x">›</span></div>
+<div class="msep"></div>
+<div class="mi">Archive 5 Sessions</div>
+<div class="mi hi">Delete 5 Sessions…</div>
+<div class="msep"></div>
+<div class="mi">Park 1 Session<span class="m" style="margin-left: auto">2</span></div>
+</div>
+</div>
+<div style="width: 236px; flex: none">
+<div class="cap">Home's List, across projects</div>
+<div class="menu">
+<div class="mi off">Make a Task<span class="m" style="margin-left: auto">3</span></div>
+<div class="mi off">Add to Task</div>
+<div class="msep"></div>
+<div class="mi">Move to Project<span class="x">›</span></div>
+<div class="msep"></div>
+<div class="mi">Archive 3 Sessions</div>
+<div class="mi">Unarchive 2 Sessions<span class="m" style="margin-left: auto">4</span></div>
+<div class="mi">Delete 5 Sessions…</div>
+<div class="msep"></div>
+<div class="mi off">Park Sessions</div>
+</div>
+</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+<div class="card">
+<div class="cap">What's drawn</div>
+<div class="n"><span class="m">1</span><div><b>Make a Task</b> makes one task linking all of them, as it does for one. <b>Add to Task ›</b> adds all of them to the task picked (DL-93, DL-147).</div></div>
+<div class="n"><span class="m">2</span><div><b>Counts are what the item will do.</b> Only Refund edge cases is open and can park, so “Park 1 Session”. With none, it reads “Park Sessions”, dimmed.</div></div>
+<div class="n"><span class="m">3</span><div><b>Task items need one project.</b> Across projects they're dimmed; Move to Project still works.</div></div>
+<div class="n" style="margin: 0"><span class="m">4</span><div><b>A mixed selection gets both</b> Archive n and Unarchive n, each counting its own.</div></div>
+</div>
+<div class="card">
+<div class="cap">While the menu is open</div>
+<p style="margin: 0; font-size: 12px; line-height: 18px">Every selected row takes `menuTarget` (Q-147's fill, today on the one row), so it's clear the menu acts on all five.</p>
+</div>
+<div class="card">
+<div class="cap">Left out for many</div>
+<ul>
+<li>Send ›, Find Similar, Copy Link, Resume as a Fork: one session's.</li>
+<li>Keep Running and End Session: per tab. Park covers ending many.</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1240,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = (sh) => ({ sel: true, mt: true, sh });
+    return { p: { w: 300, title: 'checkout', goal: 'Ship the new checkout by Nov 1', rows: [
+      { k: 'sec', label: 'Needs you · 1' },
+      { k: 'row', g: 'hand', title: 'Pricing copy review', tm: '4m' },
+      { k: 'sec', label: 'Open · 2' },
+      { k: 'row', g: 'tw', tint: true, title: 'Fix flaky cart test', tm: 'working' },
+      Object.assign({ k: 'row', g: 'ti', tint: true, title: 'Refund edge cases', tm: 'at prompt' }, S('one')),
+      { k: 'sec', label: 'Tasks · 2' },
+      { k: 'task', chev: 'd', title: 'Launch email', tm: 'open · 2' },
+      { k: 'row', in: 'nest', g: 'cw', tint: true, title: 'Draft launch email', tm: 'working' },
+      { k: 'row', in: 'nest', g: 'ci', title: 'Subject line ideas', tm: '2h' },
+      { k: 'task', title: 'Fraud rule audit', tm: '1d' },
+      { k: 'new', title: 'New task' },
+      { k: 'sec', label: 'Other sessions · 18' },
+      { k: 'fold', chev: 'd', title: 'Today', tm: '3' },
+      Object.assign({ k: 'row', in: 'kid', g: 'ti', title: 'Cart copy tweaks', tm: '1h' }, S('t')),
+      Object.assign({ k: 'row', in: 'kid', g: 'ti', title: 'Try Stripe test keys', tm: '3h' }, S('m')),
+      Object.assign({ k: 'row', in: 'kid', g: 'ci', title: '“Summarise the six buyer…”', tm: '5h' }, S('b')),
+      { k: 'fold', chev: 'd', title: 'This week', tm: '3' },
+      Object.assign({ k: 'row', in: 'kid', g: 'ti', title: 'Old checkout flow notes', tm: '2d' }, S('t')),
+      Object.assign({ k: 'row', in: 'kid', g: 'ti', title: 'Coupon bug repro', tm: '3d' }, S('b')),
+      { k: 'row', in: 'kid', g: 'ti', title: 'Session 4:12 PM', tm: '4d' },
+      { k: 'fold', chev: 'r', title: 'Earlier', tm: '12' }
+    ] } };
+  }
+}
+</script>
+</body>
+</html>

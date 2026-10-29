@@ -53,6 +53,24 @@ extension AppModel {
                 }
                 return used ? nil : e
             }
+            // Esc clears a selection of sessions, ⌘A selects a list's sessions (DL-247): only while the list's pane
+            // has the keyboard, so a terminal's Esc and an editor's ⌘A stay theirs.
+            let mods = e.modifierFlags.intersection([.command, .shift, .option, .control])
+            if (e.keyCode == 53 && mods.isEmpty) || (e.keyCode == 0 && mods == .command) {
+                let used = MainActor.assumeIsolated { () -> Bool in
+                    guard let self, let w = e.window, w.title == "Duo", w.attachedSheet == nil, !(w.firstResponder is NSTextView),
+                          !self.sheetIsUp, !self.search.isOpen, !self.peekOpen, !self.idleOpen,
+                          let list = self.selectionListWithKeyboard else { return false }
+                    if e.keyCode == 53 {
+                        guard self.sessionSelection.list == list, !self.sessionSelection.isEmpty else { return false }
+                        self.clearSessionSelection()
+                    } else {
+                        self.selectAllSessions(list: list)
+                    }
+                    return true
+                }
+                if used { return nil }
+            }
             guard let forward = PaneCycle.tabCycleDirection(keyCode: e.keyCode, flags: e.modifierFlags) else { return e }
             let used = MainActor.assumeIsolated { () -> Bool in
                 guard let self, let w = e.window, w.title == "Duo", w.attachedSheet == nil,
