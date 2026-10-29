@@ -45,7 +45,7 @@ Write `build/release/<version>-notes.md` (beside the output folder, not inside i
 
 Before Geoff's go, put this beside the notes. The director turns it into the console's release card.
 
-- **A launch tier for each user-visible change,** with a one-line reason. Read the feature catalogue, `docs/product/features.md`, once it exists, to name the feature each change belongs to.
+- **A launch tier for each user-visible change,** with a one-line reason. Read the feature catalogue, `docs/product/features.md`, to name the feature (FEAT-n) each change belongs to; a change to a feature's **How it works** is usually T2, and a new FEAT row usually T1.
   - **T1:** a new way of working that a user would tell someone about, for example tracked changes and comments in Markdown. Expect about one a month.
   - **T2:** a feature someone has to know about to use, such as a new menu, sheet or chord.
   - **T3:** a fix or polish. It gets a line in the notes only.

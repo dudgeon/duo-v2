@@ -15,6 +15,7 @@
   - the branch and the work tree name;
   - **reserved record numbers** (DL, F, Q, C, ENH), taken after checking main and every branch, and different for each parallel session;
   - which other sessions are working where (stay out of their files);
+  - the feature catalogue rows (FEAT-n in `docs/product/features.md`) this changes, or "none";
   - how to prove it (DuoChecks, `scripts/bundle.sh`, `NO_BUILD=1 scripts/check-ui.sh`, captures against the boards, the relevant check scripts) and which CLAUDE.md rules matter most for the job (never invent a design; build to the screens and prove it; the DL-71 duo2 verb; Xcode-free; generated tokens);
   - which model the job runs on, and which parts go to Sonnet and Haiku subagents;
   - for design work: a Design canvas with the Duo design system, every mark [P], one AskUserQuestion round, and a handoff exported to `docs/design/<x>-handoff/`;
