@@ -6,7 +6,8 @@
 // are the ones `Review` writes in Swift (`{>>@name date #c1.2: text<<}`, `{>>@name date #c1.3 closed<<}`).
 import { StateEffect, EditorSelection } from "@codemirror/state";
 import { EditorView, ViewPlugin, Decoration } from "@codemirror/view";
-import { attachAtMenu, atTheme } from "./atmenu.js";
+import { attachAtMenu, atTheme, atPeople } from "./atmenu.js";
+import { parseReview } from "./critic.js";
 import { reviewField, markupField, reviewerField, signatureName, today, nextId, nextReply, emitReviewAction } from "./critic.js";
 
 const MARGIN_W = 180, MARGIN_RIGHT = 20, GAP_TEXT = 12, CARD_GAP = 10, ACTIVE_W = 192, NARROW = 420, GUTTER = 24, POPOVER_W = 280;
@@ -176,10 +177,15 @@ class Margin {
     line.append(who, el("span", "duo-mg-date", ` · ${day(c.date)}${extra || ""}`));
     return line;
   }
+  // Who the `@` menu offers besides Claude: the names in this document (comment-at stage 2, DL-251).
+  people() { return atPeople(parseReview(this.view.state.doc.toString()), signatureName(reviewer(this.view))); }
   body(text) {
     const d = el("div", "duo-mg-text");
-    const parts = text.split(/(@claude\b)/i);
-    for (const p of parts) { if (/^@claude$/i.test(p)) d.append(el("span", "duo-mg-claude", p)); else if (p) d.append(document.createTextNode(p)); }
+    for (const p of text.split(/((?:^|(?<=\s))@[\w][\w-]*)/)) {
+      if (/^@claude$/i.test(p)) d.append(el("span", "duo-mg-claude", p));
+      else if (/^@[\w][\w-]*$/.test(p)) d.append(el("span", "duo-mg-mention", p));   // a person's tag: text, drawn as a mention, routes nothing
+      else if (p) d.append(document.createTextNode(p));
+    }
     return d;
   }
 
@@ -206,7 +212,7 @@ class Margin {
         if (replies.length > 3) { const more = el("div", "duo-mg-more", `${replies.length - 2} more replies`); dom.append(more); }
         for (const r of shown) { const rd = el("div", "duo-mg-reply"); rd.append(this.nameLine(r, n), this.body(r.text)); dom.append(rd); }
         const field = el("textarea", "duo-mg-field"); field.rows = 1; field.placeholder = t.closed ? "Reply to reopen…" : "Reply…";
-        attachAtMenu(field, dom, () => { field.style.height = "auto"; field.style.height = field.scrollHeight + "px"; this.place(this.mode()); });
+        attachAtMenu(field, dom, () => { field.style.height = "auto"; field.style.height = field.scrollHeight + "px"; this.place(this.mode()); }, () => this.people());
         field.addEventListener("keydown", (e) => this.fieldKey(e, t, field));
         field.addEventListener("input", () => { field.style.height = "auto"; field.style.height = field.scrollHeight + "px"; this.place(this.mode()); });
         dom.append(field);
@@ -270,7 +276,7 @@ class Margin {
     const post = el("button", "duo-rv-btn", "Post"); post.type = "button"; post.dataset.op = "post";
     const cancel = el("button", "duo-rv-btn", "Cancel"); cancel.type = "button"; cancel.dataset.op = "cancel";
     verbs.append(post, cancel);
-    attachAtMenu(field, dom, () => field.dispatchEvent(new Event("input")));
+    attachAtMenu(field, dom, () => field.dispatchEvent(new Event("input")), () => this.people());
     field.addEventListener("keydown", (e) => {
       if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); this.post(field.value); }
       if (e.key === "Escape") { e.preventDefault(); this.cancelCompose(); }
@@ -435,6 +441,7 @@ export const marginTheme = EditorView.baseTheme({
   ".duo-mg-pop": { borderRadius: "10px", boxShadow: "var(--duo-shadow)", padding: "10px 12px", zIndex: "3" },
   ".duo-mg-who": { fontWeight: "600" },
   ".duo-mg-date": { color: "var(--duo-text2)" },
+  ".duo-mg-mention": { fontWeight: "600" },
   ".duo-mg-claude": { fontWeight: "600", color: "var(--duo-review-3)" },
   ".duo-mg-clamp": { display: "-webkit-box", WebkitLineClamp: "2", WebkitBoxOrient: "vertical", overflow: "hidden" },
   ".duo-mg-replies": { color: "var(--duo-text2)" },

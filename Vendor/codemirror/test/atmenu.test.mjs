@@ -1,6 +1,7 @@
 // Checks for src/atmenu.js without a browser: when `@` opens the menu, the filter, the keys and the insertion.
 // Run by `Vendor/codemirror/test/run.sh` (also called from DuoChecks).
-import { atQuery, atFilter, atKey, atInsert } from "../src/atmenu.js";
+import { atQuery, atFilter, atKey, atInsert, atPeople, AT_ITEMS } from "../src/atmenu.js";
+import { parseReview } from "../src/critic.js";
 
 let failed = 0;
 const check = (ok, name) => { if (!ok) failed++; console.log(`${ok ? "  ✔" : "  ✘"} ${name}`); };
@@ -29,5 +30,25 @@ check(r.text === "ask @claude " && r.caret === 12, "inserting writes exactly @cl
 r = atInsert("ask @cl please", 4, 7, "claude");
 check(r.text === "ask @claude please" && r.caret === 11, "before a space it adds none");
 check(/@claude\b/i.test(atInsert("@", 0, 1, "claude").text), "what it writes routes to Claude (the @claude test the margin uses)");
+
+// People (stage 2): the names in the document, newest first.
+const pdoc = [
+  "A {==one==}{>>@sam 2026-10-26 #c1: first<<}{>>@geoff 2026-10-27 #c1.1: yes<<} and {==two==}{>>@lena 2026-10-28 #c2: @Sam can you check? Also @claude<<}.",
+  "Then {++three++}{>>@Dana-Ops 2026-10-25 #s1: from the deck<<} and {==four==}{>>@geoff 2026-10-27 #c3: ask @pat and a@b.com<<}",
+  "```", "{==code==}{>>@ghost 2026-10-29 #c9: @nobody<<}", "```",
+].join("\n");
+const parsed = parseReview(pdoc);
+const names = atPeople(parsed, "geoff").map((p) => p.name);
+check(names.join(",") === "lena,Sam,pat,Dana-Ops", "people: newest first, signers and mentions, no Claude, not yourself, none from code (" + names.join(",") + ")");
+check(names.includes("Sam") && !names.includes("sam"), "names that differ in case are one person, spelled as last written");
+check(!names.includes("b.com") && !names.includes("b"), "an @ inside a word (an email) names nobody");
+check(atPeople(parsed, "").some((p) => p.name === "geoff"), "with no name of your own, you are listed too");
+check(atPeople(parsed, "geoff").every((p) => p.hint === ""), "a person's row has no hint");
+const items = AT_ITEMS.concat(atPeople(parsed, "geoff"));
+check(atFilter("", items)[0].name === "claude" && atFilter("", items).length === 5, "the menu is Claude, then the people");
+check(atFilter("s", items).map((i) => i.name).join() === "Sam", "typing filters the people too, in any case");
+check(atInsert("ask @l", 4, 6, "lena").text === "ask @lena ", "a person is inserted as written, as text");
+check(!/@claude\b/i.test(atInsert("@l", 0, 2, "lena").text), "a person's tag is not the @claude that routes");
+check(atPeople({ threads: [], suggestions: [] }, "x").length === 0, "no names in the document: only Claude");
 
 if (failed) { console.log(`${failed} failed`); process.exit(1); }
