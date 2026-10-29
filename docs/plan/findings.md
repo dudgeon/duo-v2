@@ -4339,3 +4339,14 @@ Research for DL-236 (8), "the things the users should feel familiar with". Googl
 - Menu look: the chat menu's (DL-133) at 12/20 rows in the card's width; the margin card is 180 wide, so the hint column truncates first.
 - **Popover, not part of the card** (director's review): the menu is a child of the margin layer, so the card keeps its border and size and the menu floats over its lower part (and what's under it), at the card's width, under the field, or above it when the window has no room below. Measured against `composer-at` (`build/review-editor/at-look.png`, target render `composer-at-target.png`): row 28 high (padding 4 10, 13/20), container padding 5, radius 10, selected fill `#E9ECEF`, hint `#5B636D`, shadow `0 8 24` plus a 1 ring. Chat's menu sets names in mono (`.row .n`, 12), and so does this one; Claude's name takes the margin's green and semibold.
 - The page's `--duo-shadow` (DocumentEditor.tokenCSS) is only a colour, so `box-shadow: var(--duo-shadow)` is invalid: `.duo-mg-pop` (the narrow cut's popover) draws no shadow. Not fixed here; the `@` menu writes its own shadow.
+
+## F-409 · The Docs API makes suggestions and anchored comments (gdocs-landscape, 2026-10-29)
+
+- Since 2026-09-30 (GA; preview from 2026-07-07), `documents.batchUpdate` with `writeControl.writeMode: "SUGGEST"` turns every request in the batch into a Docs suggestion; `acceptSuggestion`, `rejectSuggestion` and `deleteSuggestion` exist. SUGGEST refuses tab, named-range, header/footer-delete and column-width requests. Personal accounts included, no admin switch.
+- `insertComment` takes a `range` (anchored, unlike Drive API comments, which Docs still shows unanchored); `addCommentReply` resolves or reopens. Google's Docs MCP server (developer preview) passes both through `update_doc` since 2026-10-01; MCP OAuth clients must be flagged "AI-powered agent" from 2026-11-11.
+- Nothing in the API or MCP server exposes the user's selection or cursor. Who a suggestion is credited to isn't documented (inferred: the OAuth user). Sources and the rest: `docs/research/google-docs-in-duo/agent-landscape.md`.
+
+## F-410 · Docs' annotated canvas gives text and selection in the page, behind an allowlist (gdocs-landscape, 2026-10-29)
+
+- With `window._docs_annotate_canvas_by_ext` set to an allowlisted extension ID at document start, Docs exposes `_docs_annotate_getAnnotatedText(id)`: `getText()`, `getSelection()` (offsets) and `setSelection(start, end)`. Harper's `google-docs-bridge.js` replaces a range by `setSelection` then a synthetic `paste` ClipboardEvent (`text/plain`) into `.docs-texteventtarget-iframe`'s contenteditable, then re-reads to confirm (read in its code, 2026-10-29). Chromium's Reading Mode sets the same flag.
+- The allowlist is undocumented (a 2021 form, no recorded answers); Harper uses an ID that isn't its own. Untested in WKWebView; borrowing an ID is a ToS/impersonation risk, so it's a question for Geoff, not a technique to ship.
