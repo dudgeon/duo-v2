@@ -14,6 +14,7 @@ How Duo's own director works, beyond the shared `duo-director` skill (source `sk
 | The director console: collections, how taps arrive | `console.md`; source `console.html` |
 | Problem discovery: the weekday scheduled run over GitHub issues, its page, and carrying out the actions Geoff queues there | `problem-discovery.md` (`discovery-gather.py`; page source `discovery.html`) |
 | Dependencies: the geoff-voice repo | `voice-repo.md` |
+| Recurring jobs (DL-240): the weekly tidy-up, the fortnightly deep review, and the one-off feature catalogue brief | `weekly-tidy.md` (`tidy-gather.py`), `deep-review.md`, `feature-catalogue-brief.md` |
 | Lessons, and where things are | `lessons.md` |
 
 `session-links.py [id-prefix...]` prints the phone link of each session (put it in the console's `threads` row).

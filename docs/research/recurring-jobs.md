@@ -39,7 +39,7 @@ Folding six drift sweeps into one weekly report, and marketing into the release 
    - Counter-evidence: when a feature brief names the design-system docs, the docs move in the same commit (DL-229 a9283154, DL-233 1b5d0628, the tabs work b8a4a33d). **Drift happens where no brief or gate names the doc.**
 2. **Records are left open.** About 130 of 207 Q rows and 13 of 97 C rows have an "open" status cell.
    - The oldest open Q rows (Q-11, Q-12, Q-17, Q-20, Q-27 to Q-30) are three to four weeks old.
-   - Some open rows already carry their answer in the notes, Q-43 and Q-47 among them. So the status column itself is unreliable.
+   - Some open rows already carry their answer in the notes: Q-167, Q-168, Q-223, Q-224, Q-229, Q-232 and Q-240, each with "**Answered …" while its status reads open. So the status column itself is unreliable. (A first count also named Q-43 and Q-47; both are in fact closed.)
    - `check-records.sh` checks only two things: no id appears twice, and no id is lost in a merge. It doesn't look at status or age.
    - Record-number collisions show up in **about 12 commits** that renumber records (4aec4426, f38cf351, 38ad8ed1, 7d4d150b, f3c7570d and 9d04bed4 among them). All were caught at merge.
 3. **Stand-ins are never revisited.** 63 Q rows say "stand-in" or "nothing drawn", and **38 are still open**. Examples: Q-30 (Move to Project ▸ New Project…, open 24 days), Q-39, Q-44, Q-46 and Q-50. No procedure brings them back to Geoff.
@@ -216,7 +216,7 @@ All follow the problem-discovery shape:
   - the merge-gate log (ENH-284);
   - the open walk ledger.
 - **Output:** one console `needs` card, kind `look`, "Tidy-up, week of <date>". It has up to six sections, and each item carries a suggested action the director can take:
-  - "close Q-43 (answered in notes)";
+  - "close Q-229 (answered in notes)";
   - "stop and remove work tree claude/menu-bar (merged 10-07)";
   - "republish the design-system artifact: surfaces.md, chat.md differ";
   - "2.1.312 changes the dialog footer: delegate a compatibility check".
@@ -224,7 +224,7 @@ All follow the problem-discovery shape:
   The options are **Do all** (recommended), **Pick in the note**, and **Snooze a week**. The director carries out what Geoff picks, through its own procedures. Everything the director may already do under D2 and its standing approvals, such as the design-system republish, closing records and stopping finished workers, it does without the card. **The card carries only what needs Geoff.** The rest goes in the card as a "done for you" line.
 - **Who acts:** the director, and Geoff only for decisions.
 - **Guard against noise:**
-  1. Each item has a key, such as `wt:claude/menu-bar` or `q:Q-43`, kept in the console db under `tidy/<key>` with first-seen, last-reported and snoozed-until. An item is reported once, and again only when its state changes or a week's snooze ends.
+  1. Each item has a key, such as `wt:claude/menu-bar` or `q:Q-229:answered`, kept in the console db under `tidy/<key>` with first-seen, last-reported and snoozed-until. An item is reported once, and again only when its state changes or a week's snooze ends.
   2. With nothing new, the job posts no card, only `meta/console.updated`.
   3. Each section is capped at 5 items, with "and N more" linking to the run's log.
   4. The thresholds are numbers in the procedure (14 days, 7 days, 20 merges), not judgement.
@@ -307,4 +307,4 @@ These make A cheap, and some drift impossible:
 - **Q-277** — Start D, the fortnightly deep review alternating code and design? (Recommended: yes, after A's first two runs, so November.)
 - **Q-278** — Does A's card go on the console, or on its own page? (Recommended: the console. One place, and problem discovery already has its page.)
 
-Picks become **DL-240**. Each picked job becomes a `status: suggested` task note for the director, which writes the procedure doc and creates the scheduled task. This study schedules nothing.
+**Geoff's picks (2026-10-29, DL-240):** A, B, C and D, with every job reporting on the director console; the director added E. Their procedures are `docs/director/weekly-tidy.md`, the release skill's §3, `docs/director/feature-catalogue-brief.md` and `docs/director/deep-review.md`. E is built in `scripts/check-hygiene.py` and `scripts/merge-gate.sh`. This study schedules nothing: the director creates the scheduled tasks.
