@@ -243,9 +243,10 @@ func repoFixture() throws -> Fixture {
         let fx = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("Fixtures/release-notes")
         let real = ["0.2.18", "0.2.19", "0.2.20"].map { (try? String(contentsOf: fx.appendingPathComponent("\($0).md"), encoding: .utf8)) ?? "" }
         let lines = real.map(UpdateCheck.notesLines)
-        check(lines.allSatisfy { !$0.isEmpty && $0.count <= UpdateCheck.notesCap + 1 && !$0.contains { $0.contains("**") || $0.contains("macOS 26") || $0.contains("Open the DMG") } },
-              "real notes of 0.2.18-0.2.20 give at most \(UpdateCheck.notesCap) bullets plus a count, no Requirements or Install (\(lines.map(\.count)))")
-        check(lines[2].first == "• Directors work without Duo open." && lines[2].last == "and 3 more" && lines[2].count == 7, "0.2.20: first bold lead, then 'and 3 more' (\(lines[2]))")
+        check(lines.allSatisfy { !$0.isEmpty && !$0.contains { $0.contains("**") || $0.contains("macOS 26") || $0.contains("Open the DMG") || $0.hasPrefix("and ") } },
+              "real notes of 0.2.18-0.2.20 give every bullet, no Requirements or Install, no cap (\(lines.map(\.count)))")
+        check(lines[2].count == 9 && lines[2].first == "• Directors work without Duo open." && lines[2].last?.hasPrefix("• `duo2") == false && lines[2].last?.hasPrefix("• ") == true,
+              "0.2.20 lists all 9 bullets (\(lines[2]))")
         check(UpdateCheck.notesLines("").isEmpty && UpdateCheck.notesLines("Fixed things.\nNo list here.").isEmpty && UpdateCheck.notesLines("## What's new\n**x** [broken](").count == 0
               && UpdateCheck.notesLines("- **\n- ****\n- ").isEmpty, "no notes, prose only or malformed give no lines, so the question reads as before")
         let r = UpdateCheck.Release(version: "0.1.9", page: URL(string: "https://example.com")!, notes: md)

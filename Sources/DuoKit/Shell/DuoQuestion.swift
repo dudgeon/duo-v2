@@ -128,7 +128,7 @@ public struct DuoQuestion: Identifiable {
 }
 
 /// The update question's notes (DL-132 b, standins2-handoff q47-writable): `WHAT’S NEW` over the
-/// release's lines in a `pane` box like the items', up to 200 high (six bullets and "and n more" fit; q47 drew 160, Q-285), then it scrolls.
+/// release's lines in a `pane` box like the items', up to 160 high, then it scrolls (DL-249).
 struct NotesBox: View {
     let lines: [String]
     var body: some View {
@@ -143,7 +143,7 @@ struct NotesBox: View {
             .padding(.vertical, 10)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(maxHeight: 200)
+        .frame(maxHeight: 160)
         .fixedSize(horizontal: false, vertical: true)
         .background(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).fill(DuoColor.pane))
         .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
