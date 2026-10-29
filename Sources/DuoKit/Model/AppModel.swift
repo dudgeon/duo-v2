@@ -49,6 +49,8 @@ public final class AppModel {
     public var sessionSelection = SessionSelection()
     /// Each list's rows as last drawn, session keys and breakers (`SessionSelection.breaker`): what a ⇧-click ranges over.
     @ObservationIgnored public var selectionOrders: [String: [String]] = [:]
+    /// Each list's folded fork threads as last drawn: the row's key → its fold key and its sessions (DL-250).
+    @ObservationIgnored public var selectionThreads: [String: [String: (fold: String, members: [String])]] = [:]
     public var expandedGroups: Set<String> = []
     /// The session list's order while the pointer is in it (Q-80, DL-130): project, then each
     /// section's row ids. Nil when the list is free to reorder.
