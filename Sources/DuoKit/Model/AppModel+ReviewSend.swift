@@ -91,9 +91,12 @@ extension AppModel {
             ReviewDelivery(state: st, session: s.tabKey, sessionName: s.name, at: Date(), why: why, claudeBefore: claudeBefore, turn: turn)
         }
         let facts = workerFacts(s)
-        let rung = SendLadder.choose(director: ClientCaps(), worker: facts, duoRunning: true)
-        switch rung {
-        case .duoSubmit:
+        // Duo types a review comment into a session it hosts (DL-244 retired this for directors, not for a person's comment).
+        enum Way { case submit, resume, queue, none }
+        let way: Way = facts.place != .duo ? .none
+            : facts.run == .stopped ? .resume : facts.run == .idle && !facts.userTyping ? .submit : .queue
+        switch way {
+        case .submit:
             guardedSubmit(key: s.tabKey, message: turn, directedBy: "review", director: "review", onTask: true) { [self] refusal, typed in
                 if let refusal {
                     if typed {   // Typed but not sent: it stays in the prompt, as ⌘D leaves it.
@@ -108,7 +111,7 @@ extension AppModel {
                     done?(.ok("Sent to \(s.name)."))
                 }
             }
-        case .duoResume:
+        case .resume:
             let folder = liveFolders[s.project] ?? url.deletingLastPathComponent()
             if let why = resumeWithPrompt(s, prompt: turn, folder: folder) {
                 setDelivery(key, state(.notDelivered, "\(s.name) can't be resumed here (\(why))"))
@@ -117,10 +120,10 @@ extension AppModel {
                 setDelivery(key, state(.sent))
                 done?(.ok("\(s.name) was stopped: Duo reopened it with the comment as its next prompt."))
             }
-        case .queued:
+        case .queue:
             setDelivery(key, state(.queued, "\(s.name) is busy"))
             done?(.ok("Queued: \(s.name) is busy. Duo sends it at its next idle, with an empty prompt."))
-        default:
+        case .none:
             // It runs outside Duo, or can't be reached: nothing here types into it.
             setDelivery(key, state(.notDelivered, "\(s.name) isn't reachable from Duo"))
             done?(.ok("Not delivered: \(s.name) isn't reachable from Duo. Pick another with --to, or send the document yourself."))

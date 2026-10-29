@@ -2,16 +2,16 @@ import AppKit
 import DuoControl
 import Foundation
 
-/// DL-199: Duo carries a director's messages where sessions can't message each other. This is new
-/// ground: Duo presses Enter for a director, so every way in goes through `SubmitGuard` (fed from
-/// the note and `.duo/director.json`, never assumed) and the screen check below, and every send is
-/// logged with its rung and noted in the task's Progress.
+/// `duo2 director send` (DL-199, DL-244): a live worker is reached by the director's own SendMessage,
+/// so Duo only logs and notes the hand-over; a stopped one is woken by a background resume or reopened
+/// in Duo; otherwise the user passes it on. Duo types nothing into a worker for a director. Every send
+/// is logged with its rung and noted in the task's Progress.
 extension AppModel {
     func directorSend(_ p: Fixture.Project, folder: URL, inv: Invocation, director: String, caps: ClientCaps,
                       log: @escaping (String, String?, String?, String?, String?) -> Void, done: @escaping @MainActor (Reply) -> Void) {
         if let target = inv.flags["director"] {
             guard p.isHome == true else { return done(.fail("--director is for Home's director asking a project's (DL-197); run it from Home.")) }
-            return sendToDirector(target, message: inv.text, from: director, log: log, done: done)
+            return sendToDirector(target, message: inv.text, from: director, caps: caps, log: log, done: done)
         }
         guard let t = inv[0], inv.positional.count > 1 else { return done(.fail("usage: \(ActionID.directorSend.action.usage)")) }
         let message = inv.positional.dropFirst().joined(separator: " ")
@@ -32,7 +32,7 @@ extension AppModel {
             let facts = self.workerFacts(worker, paused: false)
             let rung = SendLadder.choose(director: caps, worker: facts, duoRunning: true)
             self.carry(rung, message: message, task: hit.path, project: p.name, folder: folder, worker: worker, facts: facts, director: director,
-                       directedBy: directedBy, onTask: true, log: log, done: done)
+                       caps: caps, log: log, done: done)
         }
         // DL-200's pause: the user took the worker over (a turn of theirs in its transcript since the
         // director's last message). Only the user lifts it, in Duo: --handed-back makes Duo ask them.
@@ -56,37 +56,31 @@ extension AppModel {
         }
     }
 
-    /// Takes one rung. When Duo's guards refuse before anything was typed, `refused` decides (the
-    /// queue's own delivery leaves the message where it is); by default it joins the queue. Text
-    /// Duo typed but didn't send stays in the prompt for the user and is never queued as well.
+    /// Takes one rung. Live workers get nothing from Duo: the reply tells the director to SendMessage.
     func carry(_ rung: SendRung, message: String, task: String, project: String, folder: URL, worker: Fixture.Session, facts: WorkerFacts,
-               director: String, directedBy: String?, onTask: Bool,
-               log: @escaping (String, String?, String?, String?, String?) -> Void, done: @escaping @MainActor (Reply) -> Void,
-               refused: (@MainActor (_ why: String, _ typed: Bool) -> Void)? = nil) {
+               director: String, caps: ClientCaps,
+               log: @escaping (String, String?, String?, String?, String?) -> Void, done: @escaping @MainActor (Reply) -> Void) {
         let sid = worker.sessionId ?? worker.tabKey
         // What Duo delivers carries the director's tag, so the worker's transcript tells it from the user's turns.
         let tagged = Director.tag(director) + message
-        func queue(_ why: String? = nil) {
-            if let refused { return refused(why ?? "not now", false) }
-            self.queue(message, task: task, folder: folder, project: project, why: why, log: log, done: done)
-        }
         func delivered(_ how: String) {
             editTaskNote(project, task, .appendLine(section: "Progress", line: DirectorNotes.progressLine("Sent to the worker (\(how)): \(message.prefix(300))")))
             log("send", task, sid, rung.rawValue, how)
         }
+        func notDelivered(_ why: String) {
+            editTaskNote(project, task, .appendLine(section: "Progress", line: DirectorNotes.progressLine("Not delivered (\(why)): \(message.prefix(200))")))
+            log("refused", task, sid, rung.rawValue, why)
+            done(.fail("Not delivered: \(why). Ask the user to pass it on to session \(sid.prefix(8))."))
+        }
         switch rung {
         case .message:
             // Duo can't call SendMessage for the director: log that it was handed over, never "delivered" (F-342).
-            editTaskNote(project, task, .appendLine(section: "Progress", line: DirectorNotes.progressLine("Handed to the director to send (SendMessage; not confirmed delivered, and held if the permission modes differ): \(message.prefix(300))")))
+            editTaskNote(project, task, .appendLine(section: "Progress", line: DirectorNotes.progressLine("Handed to the director to send by SendMessage: \(message.prefix(300))")))
             log("handed", task, sid, rung.rawValue, "handed to the director to send")
-            done(.ok("Send it yourself: SendMessage(to: \"\(facts.peerName ?? sid)\"). Logged and noted in Progress as handed to you, not delivered. Messages between sessions in different permission modes are held and can expire unseen: the worker's last message and task note are the channel back, so read them rather than wait.", ["task": task, "worker": sid, "rung": rung.rawValue]))
+            done(.ok("Send it yourself: SendMessage(to: \"\(facts.peerName ?? sid)\", message: \"…\", notify_when_idle: true). Its reply or the idle notice wakes you; a [Cross-session delivery notice] that says held, expired or refused means read its task note and last message instead (duo2 session show \(sid)).", ["task": task, "worker": sid, "rung": rung.rawValue]))
         case .resumeBackground, .headless:
-            guard let claude = ClaudeLocator.resolve() else { return queue("no claude to run") }
-            // `--` ends the options: a message starting with "-" is never read as a flag.
-            // A worker resumed in the background comes back reachable from the user's phone (DL-230).
-            let name = DirectorRegistry.load(project: folder).worker(task: task)?.name
-            let rc = rung == .resumeBackground && ClientCaps.probe(env: [:], cwd: nil).remoteControl == .yes ? name.map { ["--remote-control", $0] } ?? [] : []
-            let args = (rung == .headless ? ["-p", "--resume", sid] : ["--bg", "--resume", sid] + rc) + ["--", tagged]
+            guard let claude = ClaudeLocator.resolve() else { return notDelivered("no claude to run") }
+            let args = SendLadder.resumeArgs(rung, session: sid, message: tagged)
             let cwd = workerCwd(worker, folder: folder)
             let runLog = folder.appending(path: ".duo/director-runs/\(sid.prefix(8))-\(Int(Date().timeIntervalSince1970)).log")
             let how = rung == .headless ? "a headless turn" : "resumed in the background"
@@ -99,69 +93,40 @@ extension AppModel {
                     self.editTaskNote(project, task, .appendLine(section: "Progress", line: DirectorNotes.progressLine("Not delivered (\(how) ended with \(status); its output is in .duo/director-runs/): \(message.prefix(200))")))
                 }
             }
-            if let why = started { log("refused", task, sid, rung.rawValue, why); return queue(why) }
+            if let why = started { return notDelivered(why) }
             done(.ok(rung == .headless
                      ? "The worker had stopped: it's taking a headless turn with your message, in its own folder. It's logged as sent when the turn ends well; read the answer with `duo2 session show \(sid)`."
                      : "The worker had stopped: it's resuming in the background with your message. It's logged as sent once it has started.",
                      ["task": task, "worker": sid, "rung": rung.rawValue]))
-        case .duoSubmit:
-            guardedSubmit(key: worker.tabKey, message: tagged, directedBy: directedBy, director: director, onTask: onTask) { refusal, typed in
-                if let refusal {
-                    if refused == nil || typed { log("refused", task, sid, rung.rawValue, refusal) }
-                    if typed {
-                        // Typed but not sent: the text stays in the prompt for the user, so it isn't queued too.
-                        self.editTaskNote(project, task, .appendLine(section: "Progress", line: DirectorNotes.progressLine("Typed into the worker's prompt but not sent (\(refusal)); left there for the user: \(message.prefix(200))")))
-                        if let refused { return refused(refusal, true) }
-                        return done(.ok("Not sent: \(refusal). Duo's text is left in the worker's prompt for the user to send or clear, so it isn't queued.", ["task": task, "rung": "left-in-prompt"]))
-                    }
-                    queue(refusal)
-                } else {
-                    delivered("Duo typed it and pressed Enter")
-                    done(.ok("Delivered: Duo typed it into the worker and pressed Enter.", ["task": task, "worker": sid, "rung": rung.rawValue]))
-                }
-            }
         case .duoResume:
-            if let why = resumeWithPrompt(worker, prompt: tagged, folder: folder) { log("refused", task, sid, rung.rawValue, why); return queue(why) }
+            if let why = resumeWithPrompt(worker, prompt: tagged, folder: folder) { return notDelivered(why) }
             delivered("reopened in Duo with it")
             done(.ok("The worker had stopped: Duo reopened it with your message as its next prompt.", ["task": task, "worker": sid, "rung": rung.rawValue]))
-        case .queued:
-            queue()
         case .askUser:
-            log("send", task, sid, rung.rawValue, "no route")
-            done(.ok("Duo can't reach this worker now: ask the user to pass it on to session \(sid.prefix(8)).", ["task": task, "worker": sid, "rung": rung.rawValue]))
+            let why = SendLadder.blocked(director: caps, worker: facts).map { " (\($0))" } ?? ""
+            log("send", task, sid, rung.rawValue, "no route\(why)")
+            done(.ok("Duo can't reach this worker now\(why): ask the user to pass it on to session \(sid.prefix(8)).", ["task": task, "worker": sid, "rung": rung.rawValue]))
         }
     }
 
-    func queue(_ message: String, task: String, folder: URL, project: String, why: String?,
-               log: (String, String?, String?, String?, String?) -> Void, done: @MainActor (Reply) -> Void) {
-        var reg = DirectorRegistry.load(project: folder)
-        reg.pending.append(.init(task: task, message: message, at: Self.isoNow()))
-        try? reg.save(project: folder)
-        editTaskNote(project, task, .appendLine(section: "Progress", line: DirectorNotes.progressLine("Waiting to go when the worker is next idle\(why.map { " (\($0))" } ?? ""): \(message.prefix(300))")))
-        log("send", task, nil, SendRung.queued.rawValue, why)
-        done(.ok("Queued\(why.map { " (\($0))" } ?? ""): Duo sends it when the worker is next idle, and it's noted in Progress.", ["task": task, "rung": SendRung.queued.rawValue]))
-    }
-
-    /// Home asking a project's director (DL-197): Duo types it into that director when it's idle.
-    /// The target must be the session that project's `.duo/director.json` names now.
-    func sendToDirector(_ project: String, message: String, from: String, log: @escaping (String, String?, String?, String?, String?) -> Void,
+    /// Home asking a project's director (DL-197), with no Duo typing (DL-244): the caller sends it by
+    /// SendMessage when it has messaging and the director is a live session with a peer name; else the user passes it on.
+    func sendToDirector(_ project: String, message: String, from: String, caps: ClientCaps, log: @escaping (String, String?, String?, String?, String?) -> Void,
                         done: @escaping @MainActor (Reply) -> Void) {
         guard let p = self.project(named: project), let folder = liveFolders[p.name], let d = DirectorRegistry.load(project: folder).current else {
             return done(.fail("\(project) has no director: direct its work yourself (DL-197)."))
         }
-        guard !message.isEmpty, let s = fixture.sessions.first(where: { $0.sessionId == d.sessionId }) else {
-            return done(.fail("\(d.name) isn't a session Duo knows (\(d.sessionId.prefix(8))); ask the user to pass it on."))
-        }
-        let msg = "From \(from): \(message)"
-        let isTheirs = DirectorRegistry.load(project: folder).current?.sessionId == s.sessionId
-        guardedSubmit(key: s.tabKey, message: msg, directedBy: d.name, director: d.name, onTask: isTheirs) { refusal, typed in
-            log("send", nil, d.sessionId, refusal == nil ? SendRung.duoSubmit.rawValue : SendRung.askUser.rawValue, refusal.map { "to \(d.name): \($0)" } ?? "to \(d.name)")
-            if refusal == nil { return done(.ok("Delivered to \(d.name).")) }
-            done(.ok("\(d.name) can't take it now (\(refusal!))\(typed ? "; Duo's text is left in its prompt" : ""): try again later, or use SendMessage(to: \"\(d.name)\") if you have it."))
+        guard !message.isEmpty else { return done(.fail("usage: \(ActionID.directorSend.action.usage)")) }
+        if caps.messaging == .yes, let peer = Beacon.readAll().first(where: { $0.sessionId == d.sessionId })?.peerName {
+            log("handed", nil, d.sessionId, SendRung.message.rawValue, "to \(d.name)")
+            done(.ok("Send it yourself: SendMessage(to: \"\(peer)\") with \"From \(from): \(message)\". Logged as handed to you, not delivered."))
+        } else {
+            log("send", nil, d.sessionId, SendRung.askUser.rawValue, "to \(d.name): no live session with messaging")
+            done(.ok("\(d.name) isn't a live session you can message: ask the user to pass it on."))
         }
     }
 
-    // MARK: The guarded Enter
+    // MARK: The guarded Enter (@claude review comments only, DL-244)
 
     /// What the screen check reads from a worker's terminal: Claude at its prompt, and the prompt's text.
     public struct PromptRead: Equatable { public var idle: Bool; public var input: String
@@ -319,52 +284,21 @@ extension AppModel {
         }
     }
 
-    // MARK: The queue
+    // MARK: Housekeeping
 
-    /// Delivers messages waiting for idle workers (each refresh). A message whose worker is gone,
-    /// or whose task no longer names its director, is dropped with a Progress line; one naming a
-    /// path outside `tasks/` is dropped untouched.
-    public func deliverDirectorMessages() {
+    /// Each refresh: prunes every live folder's registry. Messages an older Duo queued (`pending`) are
+    /// not carried any more (DL-244): each becomes a Progress line on its task and the list is emptied.
+    public func pruneDirectorRegistries() {
         for (project, folder) in liveFolders {
             guard FileManager.default.fileExists(atPath: DirectorRegistry.file(project: folder).path) else { continue }
             pruneDirectorWorkers(folder)
-            let reg = DirectorRegistry.load(project: folder)
-            guard let first = reg.pending.first, let director = reg.current?.name, !deliveringDirector.contains(project) else { continue }
-            let drop: (String) -> Void = { [weak self] why in
-                var r = DirectorRegistry.load(project: folder)
-                r.pending.removeAll { $0 == first }
-                try? r.save(project: folder)
-                self?.editTaskNote(project, first.task, .appendLine(section: "Progress", line: DirectorNotes.progressLine("Not delivered (\(why)): \(first.message.prefix(200))")))
-                DirectorLog.append(DirectorEvent(at: Self.isoNow(), director: director, event: "dropped", task: first.task, detail: why), project: folder)
+            var reg = DirectorRegistry.load(project: folder)
+            guard !reg.pending.isEmpty else { continue }
+            for m in reg.pending where DirectorRegistry.isTaskPath(m.task) {
+                editTaskNote(project, m.task, .appendLine(section: "Progress", line: DirectorNotes.progressLine("Not delivered: Duo no longer carries messages (DL-244); send it again with SendMessage: \(m.message.prefix(200))")))
             }
-            guard DirectorRegistry.isTaskPath(first.task) else { drop("not a note in tasks/"); continue }
-            guard let t = directedTasks(project, folder: folder, director: director).first(where: { $0.note.path == first.task }) else { drop("the task isn't this director's any more"); continue }
-            guard let w = t.worker, let f = t.facts else { drop("no worker"); continue }
-            if f.userTyping { continue }   // paused until the user hands it back (DL-200)
-            let rung = SendLadder.choose(director: ClientCaps(), worker: f, duoRunning: true)
-            guard rung != .queued, rung != .askUser else { continue }
-            deliveringDirector.insert(project)
-            let onTask = reg.worker(task: first.task)?.session == w.sessionId
-            carry(rung, message: first.message, task: first.task, project: project, folder: folder, worker: w, facts: f, director: director,
-                  directedBy: DirectorNotes.directedBy(t.text), onTask: onTask,
-                  log: { e, task, worker, rung, detail in
-                      DirectorLog.append(DirectorEvent(at: Self.isoNow(), director: director, event: e == "send" && rung != SendRung.queued.rawValue ? "delivered" : e,
-                                                       task: task, worker: worker, rung: rung, detail: detail), project: folder)
-                  }, done: { [weak self] _ in
-                      self?.deliveringDirector.remove(project)
-                      var now = DirectorRegistry.load(project: folder)
-                      if let i = now.pending.firstIndex(of: first) { now.pending.remove(at: i) }
-                      try? now.save(project: folder)
-                  }, refused: { [weak self] _, typed in
-                      self?.deliveringDirector.remove(project)
-                      // Typed but not sent: the text is in the prompt now, so this copy goes.
-                      if typed {
-                          var now = DirectorRegistry.load(project: folder)
-                          if let i = now.pending.firstIndex(of: first) { now.pending.remove(at: i) }
-                          try? now.save(project: folder)
-                      }
-                      // Otherwise (the prompt has text, Claude got busy) it stays first in line.
-                  })
+            reg.pending = []
+            try? reg.save(project: folder)
         }
     }
 }
