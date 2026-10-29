@@ -200,6 +200,7 @@ All Duo shortcuts carry ⌘, so they never collide with keys typed into Claude C
 | ⌘L | A browser tab's address field |
 | ⌘N / ⇧⌘N | New Markdown file / new folder |
 | ⌘S, ⌘B, ⌘I, ⇧⌘X | Save, bold, italic, strikethrough in the editor (DL-189) |
+| ⇧⌘E / ⌥⌘M | In a Markdown document: Suggest Edits on and off / Add Comment on the selection, as in Word and Google Docs (DL-248) |
 | ⌘] / ⌘[, Tab / ⇧Tab | In the editor, in a list item: indent / outdent by the parent marker's width (3 under `1. `, 4 under `10. `, 2 under `- `), so the item nests and the sub-list renumbers from 1; elsewhere ⌘] ⌘[ indent two spaces and Tab is unchanged (DL-244) |
 | ⌘D | Send selection to Claude |
 | ⌘W / ⇧⌘W | Close tab (never the window) / close window |
