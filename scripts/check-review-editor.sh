@@ -177,6 +177,20 @@ run at-post "${open}$A,wait:3,verb:session new --project garden,wait:2,review-io
 expect "@ menu: Return inserts, then Post writes the signed @claude comment" $A has "Please @claude<<}"
 expect "@ menu: and the turn reaches the session" $out/at-post.log has "review-typed: <paste>@claude comment in"
 expect "@ menu: with the comment as data" $out/at-post.log has "Please @claude"
+# 7c. people in the @ menu (comment-at stage 2, DL-251): the names in the document below Claude, newest first (Sam as last
+#     written, once; not geoff, the person at the keyboard); a person's tag is text and sends nothing.
+pdoc=$'---\ntitle: Offline mode\n---\n\n# Offline mode\n\nLaunch is {==planned for early November==}{>>@sam 2026-10-26 #c1: when?<<}{>>@lena 2026-10-28 #c1.1: @Sam it slipped<<} and the {==sync==}{>>@geoff 2026-10-27 #c2: ok<<} engine retries.\n\nA new anchor here.\n'
+fresh_p() { fresh $1; print -rn -- "$pdoc" > $A; }
+fresh_p at-people
+run at-people "${open}$A,wait:3,review-at:A~new~anchor=>Hi~@=>"
+expect "@ people: Claude first, then the people newest first, each once" $out/at-people.log has "menu=claudeto a sessionlenaSam popover=true"
+fresh_p at-people-s
+run at-people-s "${open}$A,wait:3,review-at:A~new~anchor=>Hi~@s=>"
+expect "@ people: typing filters them" $out/at-people-s.log has 'field="Hi @s" menu=Sam popover=true'
+fresh_p at-person-post
+run at-person-post "${open}$A,wait:3,verb:session new --project garden,wait:2,review-io:idle,review-at:A~new~anchor=>Hi~@l=>tab+post,wait:4"
+expect "@ people: Tab writes the name as the comment's text" $A has "#c3: Hi @lena<<}"
+expect "@ people: a tag of a person sends nothing" $out/at-person-post.log lacks "review-typed:"
 # 8. what the Word converter writes (Q-283): a deletion inside a highlight, a comment over two paragraphs
 vdoc=$'---\ntitle: Converted\n---\n\nSome {=={--some old words--}{>>@morgan-editor 2026-09-06 #s2: <<}==}{>>@riley-reviewer 2026-09-06 #c3: Why cut these?<<} here.\n\n{==This paragraph is commented along with the next one.==}\n\n{==It carries the end of the comment.==}{>>@riley-reviewer 2026-09-05 #c5: Both paragraphs need a source.<<}{>>@dana-writer 2026-09-05 #c5.1: Added.<<}\n'
 fresh cv-draw; print -rn -- "$vdoc" > $A

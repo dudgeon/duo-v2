@@ -14,6 +14,25 @@ export function atQuery(value, caret) {
   return { start, query: value.slice(i, caret) };
 }
 
+/**
+ * People named in the document, most recent first (comment-at stage 2, DL-251): the authors who sign comments and
+ * suggestions and the `@name` mentions in their text, from parseReview's output. Each name is spelled as the latest
+ * place it's written; names that differ only in case are one person. Claude and `self` are left out (Claude is the
+ * menu's first item; you don't tag yourself). Newest by date, then later in the document, then a signer before
+ * someone mentioned in the same comment. A person's tag is text: nothing routes to it.
+ */
+export function atPeople(parsed, self) {
+  const ev = [];
+  const mention = (text, date, at) => { for (const m of (text || "").matchAll(/(^|\s)@([\w][\w-]*)/g)) ev.push({ name: m[2], date: date || "", at, rank: 0 }); };
+  const signed = (who, date, at, text) => { if (who) ev.push({ name: who, date: date || "", at, rank: 1 }); mention(text, date, at); };
+  for (const t of parsed.threads) for (const c of t.comments) signed(c.author, c.date, c.from, c.text);
+  for (const g of parsed.suggestions) signed(g.author, g.date, g.from, g.note);
+  ev.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : (b.at - a.at) || (b.rank - a.rank)));
+  const seen = new Set(["claude", String(self || "").toLowerCase()]), out = [];
+  for (const e of ev) { const k = e.name.toLowerCase(); if (seen.has(k)) continue; seen.add(k); out.push({ name: e.name, hint: "" }); }
+  return out;
+}
+
 /** Items whose name starts with what's been typed, Claude first. */
 export function atFilter(query, items = AT_ITEMS) {
   const q = query.toLowerCase();
@@ -40,7 +59,7 @@ export function atInsert(value, start, caret, name) {
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 
 /** Wires the menu to a textarea inside `card` (positioned). `onInput` runs after an insertion so the card re-places. */
-export function attachAtMenu(field, card, onInput) {
+export function attachAtMenu(field, card, onInput, people) {
   let menu = null, st = null;   // st: { start, items, sel }
   const close = () => { if (menu) menu.remove(); menu = null; st = null; };
   const draw = () => {
@@ -74,7 +93,7 @@ export function attachAtMenu(field, card, onInput) {
   };
   const refresh = () => {
     const q = atQuery(field.value, field.selectionStart);
-    const items = q ? atFilter(q.query) : [];
+    const items = q ? atFilter(q.query, AT_ITEMS.concat(people ? people() : [])) : [];
     if (!q || !items.length) { close(); return; }
     st = { start: q.start, items, sel: Math.min(st ? st.sel : 0, items.length - 1) };
     draw();
