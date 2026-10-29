@@ -73,7 +73,16 @@ export const TRANSITIONS = {
   // The director film's scenes (src/scenes/director/): each opens on the last picture of the scene before and carries
   // its shapes on (the board's layouts, board.ts), so the move between them is the next scene's own entry.
   'board-carry': {kind: 'graphic', from: [...DIRECTOR_SCENES, 'paper-card'], to: DIRECTOR_SCENES, in: 0.4},
+  // The 0.2.21 release film (src/scenes/release-0-2-21/). Out of the title card: logo-to-dock's moves, then Duo's window opens out
+  // of its Dock tile onto the desk, ending on the next scene's first picture.
+  'rel-open': {kind: 'graphic', from: 'rel-title', to: 'rel-app', out: 2.3},
+  // Its app scenes carry on from each other as 'carry-on' does: the same picture, and the scene's own first beat moves us.
+  'rel-carry': {kind: 'app', from: 'rel-app', to: 'rel-app'},
+  // Back to the card: the scene opens on the app's last picture, wide, and folds the window into its Dock tile on its `fold` event.
+  'rel-close': {kind: 'graphic', from: 'rel-app', to: 'rel-end'},
 };
+/** Scenes planned as an `app` scene (planApp) but drawn by a registered component. */
+const APP_LIKE = ['app', 'rel-app'];
 export const sceneType = (shot) => (shot.kind === 'drawn' ? shot.scene : shot.kind);
 export const fromOk = (tr, type) => (Array.isArray(tr.from) ? tr.from.includes(type) : tr.from === type);
 export const toOk = (tr, type) => (Array.isArray(tr.to) ? tr.to.includes(type) : tr.to === type);
@@ -324,8 +333,13 @@ export function plan({scenes, shots, voiced, captures, style, used}) {
         if (lines[0] && lines[0].start < tr.in + 0.6) throw new BuildError(`transition: ${scene.id}'s voice starts at ${lines[0].start}s, during its ${shot.transitionIn} entry (${tr.in}s). Raise its leadIn.`);
       }
       Object.assign(s, {drawn: {scene: shot.scene, events}});
-      if (shot.scene === 'app') s.app = planApp({scene, shot, lines, tr, prev, prevShot: prev && shots[prev.id], captures, events, style, used});
-      if (shot.scene === 'app') for (const b of s.app.ends) end = Math.max(end, b);
+      if (APP_LIKE.includes(shot.scene)) s.app = planApp({scene, shot, lines, tr, prev, prevShot: prev && shots[prev.id], captures, events, style, used});
+      if (APP_LIKE.includes(shot.scene)) for (const b of s.app.ends) end = Math.max(end, b);
+      // A registered scene that shows captures (the release film's title and ending): their pictures, by state.
+      if (shot.scene === 'rel-title' || shot.scene === 'rel-end') {
+        const caps = (shot.states ?? []).map((st) => { if (!captures[st]) throw new BuildError(`shots: ${scene.id} needs a capture of ${st}`); return [st, captures[st]]; });
+        if (caps.length) s.stills = {window: {w: caps[0][1].widthPt, h: caps[0][1].heightPt}, src: Object.fromEntries(caps.map(([st, c]) => [st, c.src])), first: caps[0][0], last: caps[caps.length - 1][0]};
+      }
       if (shot.scene === 'morph') {
         // S2's morph draws panes from several captures of one layout; anchors come from the first.
         const caps = shot.states.map((st) => { if (!captures[st]) throw new BuildError(`shots: ${scene.id} needs a capture of ${st}`); return [st, captures[st]]; });

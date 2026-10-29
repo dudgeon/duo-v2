@@ -42,6 +42,7 @@ The transitions so far:
 | `pile-to-duo` | graphic | S8 → S9 | The resume picker's pile fades out and Duo's window fades back in on the next scene's first capture, the same picture S7 ended on. |
 | `duo-steps-away` | graphic | S10 → S11 | Duo's window shrinks and slides off as a thumbnail while the paper ground fills in. |
 | `paper-carry` | graphic | paper scene → paper scene (director film's `paper-card`; S11) | The paper ground stays put and the incoming scene's content takes the place of the outgoing one's; the frames either side share the ground. |
+| `rel-open`, `rel-carry`, `rel-close` | graphic, app, graphic | the 0.2.21 film: title → app → app → card | Out of the title card as `logo-to-dock`, then Duo's window opens out of its Dock tile onto the next scene's first picture; app scenes carry on as `carry-on`; at the end the window folds back into its tile and the card returns (`src/scenes/release-0-2-21/Title.tsx`). |
 | `stand-in`, `stand-in-out` | graphic | any → card → S11 | Only while a scene's captures aren't built: a labelled card, never silent (the report names it). |
 
 ## App scenes (S3 on)

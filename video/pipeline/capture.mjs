@@ -32,10 +32,11 @@ export function captureStates(states, {repo, cache, pub, scale, fixture, force =
       let ok = false;
       for (let attempt = 0; attempt < 2 && !ok; attempt++) {
         const support = mkdtempSync('/tmp/dvid.');
-        // open(1) doesn't hand its own environment to the app: pass the support folder with --env.
+        // open(1) doesn't hand its own environment to the app: pass the support folder with --env. Light always: a capture
+        // otherwise follows macOS, which turns dark at sunset on this Mac (F-399).
         const env = {...process.env};
         for (const k of ['DUO_SOCKET', 'DUO_TOKEN', 'DUO_SUPPORT_DIR']) delete env[k];
-        const r = spawnSync('/usr/bin/open', ['-g', '-W', '-n', '--env', `DUO_SUPPORT_DIR=${support}`, app, '--args', '--state', state,
+        const r = spawnSync('/usr/bin/open', ['-g', '-W', '-n', '--env', `DUO_SUPPORT_DIR=${support}`, '--env', 'DUO_APPEARANCE=light', app, '--args', '--state', state,
           '--capture-scale', String(scale), ...(fx ? ['--fixture', fx] : []), '--then', `anchors:${anchors}`, '--capture-window', png], {env, timeout: 90000});
         rmSync(support, {recursive: true, force: true});
         ok = r.status === 0 && existsSync(png);

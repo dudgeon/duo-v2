@@ -1,0 +1,755 @@
+{
+  "$note": "The 0.2.21 release film (DL-245): one shot per scene of films/release-0-2-21/script.md, in the intro's shots.json format. S0 is the title card (src/scenes/release-0-2-21/Title.tsx, the intro's Logo build with the release's words); S1 to S4 are app scenes (`rel-app`: the intro's AppScene with captions) on the video-rv-* states (Sources/DuoKit/Debug/VideoTargets+Review.swift, fixture video/fixture/make-review.py); S5 folds the window back into the Dock and ends on the card.",
+  "S0": {
+    "kind": "drawn",
+    "scene": "rel-title",
+    "leadIn": 1.8,
+    "tail": 0.6,
+    "thumbnail": -0.4,
+    "states": [
+      "video-rv-open"
+    ],
+    "events": {
+      "title": {
+        "line": 1,
+        "offset": 0.2
+      },
+      "sub": {
+        "line": 1,
+        "word": "comments"
+      }
+    },
+    "requires": [
+      {
+        "what": "The Duo icon builds itself on the High Sierra wallpaper, as the intro's title card",
+        "by": [
+          "src:src/scenes/release-0-2-21/Title.tsx",
+          "src:src/lib/DuoIcon.tsx"
+        ]
+      },
+      {
+        "what": "It settles beside \"Duo 0.2.21\" and the line \"Review in Markdown\" / \"Comments, suggested edits and @claude\" (the note's words on two lines, no colon), one composition",
+        "by": [
+          "event:title",
+          "event:sub"
+        ]
+      },
+      {
+        "what": "The settled frame is the thumbnail (frame 0)",
+        "by": [
+          "event:sub",
+          "src:build.mjs"
+        ]
+      },
+      {
+        "what": "The words wipe back, the menu bar and Dock slide in, the icon drops into its Dock slot, and Duo's window opens out of the Dock on Sam's PRD with the review in the margin",
+        "by": [
+          "src:src/scenes/release-0-2-21/Title.tsx",
+          "state:video-rv-open"
+        ]
+      }
+    ],
+    "shotSha": "616bfefbdc7b"
+  },
+  "S1": {
+    "kind": "drawn",
+    "scene": "rel-app",
+    "transitionIn": "rel-open",
+    "leadIn": 0.9,
+    "states": [
+      "video-rv-open"
+    ],
+    "pauses": {
+      "1": 3.9
+    },
+    "tail": 0.6,
+    "beats": [
+      {
+        "id": "push",
+        "at": {
+          "line": 1,
+          "offset": -0.7
+        },
+        "in": "video-rv-open",
+        "cam": {
+          "on": "video.pane.right",
+          "y0": 0.32,
+          "y1": 0.64
+        },
+        "dur": 1.3
+      },
+      {
+        "id": "margin-mark",
+        "at": {
+          "line": 1,
+          "word": "margin"
+        },
+        "in": "video-rv-open",
+        "mark": {
+          "fit": [
+            "video.rv.card.c1",
+            "video.rv.card.c2"
+          ],
+          "pad": 2
+        },
+        "hold": 1.9
+      },
+      {
+        "id": "select-onetap",
+        "at": {
+          "line": 1,
+          "word": "about",
+          "offset": 0.7
+        },
+        "in": "video-rv-sel-onetap",
+        "drag": {
+          "from": "video.rv.text.oneTap",
+          "fx0": 0,
+          "fx1": 1,
+          "dur": 0.8,
+          "reveal": "video-rv-sel-onetap"
+        },
+        "state": "video-rv-sel-onetap",
+        "stateAfter": 0.8
+      },
+      {
+        "id": "add-comment",
+        "at": {
+          "line": 1,
+          "word": "about",
+          "offset": 1.9
+        },
+        "key": "⌥⌘M",
+        "in": "video-rv-compose-onetap-empty",
+        "state": "video-rv-compose-onetap-empty",
+        "stateAfter": 0.06
+      },
+      {
+        "id": "type-comment",
+        "at": {
+          "line": 1,
+          "word": "about",
+          "offset": 2.5
+        },
+        "in": "video-rv-compose-onetap",
+        "wipe": {
+          "state": "video-rv-compose-onetap",
+          "on": "video.rv.composer.field",
+          "dur": 1.5,
+          "chars": 49
+        },
+        "state": "video-rv-compose-onetap",
+        "stateAfter": 1.5
+      },
+      {
+        "id": "post",
+        "at": {
+          "line": 1,
+          "word": "about",
+          "offset": 4.3
+        },
+        "click": "video.rv.composer.post",
+        "in": "video-rv-compose-onetap",
+        "state": "video-rv-commented"
+      },
+      {
+        "id": "open-lena",
+        "at": {
+          "line": 2,
+          "offset": 0.1
+        },
+        "click": "video.rv.card.c1",
+        "fy": 0.3,
+        "in": "video-rv-commented",
+        "state": "video-rv-c1-active"
+      },
+      {
+        "id": "verbs-mark",
+        "at": {
+          "line": 2,
+          "word": "close"
+        },
+        "in": "video-rv-c1-active",
+        "mark": "video.rv.card.verbs",
+        "hold": 1.3
+      },
+      {
+        "id": "delete",
+        "at": {
+          "line": 2,
+          "word": "delete"
+        },
+        "click": "video.rv.card.delete",
+        "in": "video-rv-c1-active",
+        "state": "video-rv-deleted"
+      }
+    ],
+    "requires": [
+      {
+        "what": "The camera pushes in on the PRD in the right pane",
+        "by": [
+          "#push"
+        ]
+      },
+      {
+        "what": "On \"margin\" the outline traces the margin's cards (Lena's and Ravi's) beside their highlighted text",
+        "by": [
+          "#margin-mark"
+        ]
+      },
+      {
+        "what": "The cursor drag-selects \"Fixing a flagged book takes one tap\"",
+        "by": [
+          "#select-onetap"
+        ]
+      },
+      {
+        "what": "⌥⌘M shows as keycaps and a comment card opens in the margin",
+        "by": [
+          "#add-comment"
+        ]
+      },
+      {
+        "what": "\"Lena, can you mock the one-tap fix for Thursday?\" types into it, and the cursor clicks Post",
+        "by": [
+          "#type-comment",
+          "#post"
+        ]
+      },
+      {
+        "what": "On the second line the cursor clicks Lena's thread (answered already) and its card opens with Close and Keep and Delete",
+        "by": [
+          "#open-lena"
+        ]
+      },
+      {
+        "what": "The outline traces the two buttons on \"close it and keep it\"",
+        "by": [
+          "#verbs-mark"
+        ]
+      },
+      {
+        "what": "The cursor clicks Delete on \"delete\": the thread goes and its text stays",
+        "by": [
+          "#delete"
+        ]
+      }
+    ],
+    "shotSha": "79b8398c0a8e"
+  },
+  "S2": {
+    "kind": "drawn",
+    "scene": "rel-app",
+    "transitionIn": "rel-carry",
+    "leadIn": 0.5,
+    "states": [
+      "video-rv-deleted"
+    ],
+    "pauses": {
+      "1": 2.9
+    },
+    "tail": 0.8,
+    "beats": [
+      {
+        "id": "glare-frame",
+        "at": {
+          "line": 1,
+          "offset": -0.4
+        },
+        "in": "video-rv-deleted",
+        "cam": {
+          "on": "video.pane.right",
+          "y0": 0.5,
+          "y1": 0.8
+        },
+        "dur": 0.9
+      },
+      {
+        "id": "select-glare",
+        "at": {
+          "line": 1,
+          "word": "mention",
+          "offset": -0.3
+        },
+        "in": "video-rv-sel-glare",
+        "drag": {
+          "from": "video.rv.text.glare",
+          "fx0": 0,
+          "fx1": 1,
+          "dur": 0.7,
+          "reveal": "video-rv-sel-glare"
+        },
+        "state": "video-rv-sel-glare",
+        "stateAfter": 0.7
+      },
+      {
+        "id": "add-glare-comment",
+        "at": {
+          "line": 1,
+          "word": "mention",
+          "offset": 0.7
+        },
+        "key": "⌥⌘M",
+        "in": "video-rv-compose-glare-empty",
+        "state": "video-rv-compose-glare-empty",
+        "stateAfter": 0.06
+      },
+      {
+        "id": "type-claude",
+        "at": {
+          "line": 1,
+          "word": "mention",
+          "offset": 1.2
+        },
+        "in": "video-rv-compose-glare",
+        "wipe": {
+          "state": "video-rv-compose-glare",
+          "on": "video.rv.composer.field",
+          "dur": 2.6,
+          "chars": 82
+        },
+        "state": "video-rv-compose-glare",
+        "stateAfter": 2.6
+      },
+      {
+        "id": "pill-mark",
+        "at": {
+          "line": 1,
+          "word": "pill"
+        },
+        "in": "video-rv-compose-glare",
+        "mark": "video.rv.composer.pill",
+        "hold": 1.5
+      },
+      {
+        "id": "post-claude",
+        "at": {
+          "line": 1,
+          "word": "pill",
+          "offset": 1.6
+        },
+        "click": "video.rv.composer.post",
+        "in": "video-rv-compose-glare",
+        "state": "video-rv-sent"
+      },
+      {
+        "id": "sent-mark",
+        "at": {
+          "line": 1,
+          "word": "pill",
+          "offset": 2.1
+        },
+        "in": "video-rv-sent",
+        "mark": "video.rv.card.status",
+        "hold": 0.9
+      },
+      {
+        "id": "to-chat",
+        "at": {
+          "line": 1,
+          "word": "pill",
+          "offset": 2.7
+        },
+        "in": "video-rv-sent",
+        "cam": {
+          "on": "video.pane.middle",
+          "y0": 0.42,
+          "y1": 1
+        },
+        "dur": 1
+      },
+      {
+        "id": "working",
+        "at": {
+          "line": 1,
+          "word": "pill",
+          "offset": 3.7
+        },
+        "in": "video-rv-working",
+        "state": "video-rv-working",
+        "fade": 0.3
+      },
+      {
+        "id": "back-to-doc",
+        "at": {
+          "line": 2,
+          "offset": -0.2
+        },
+        "in": "video-rv-replied",
+        "cam": {
+          "on": "video.pane.right",
+          "y0": 0.55,
+          "y1": 0.93
+        },
+        "dur": 1
+      },
+      {
+        "id": "replied",
+        "at": {
+          "line": 2,
+          "word": "change"
+        },
+        "in": "video-rv-replied",
+        "state": "video-rv-replied",
+        "stateAfter": 0,
+        "fade": 0.5
+      },
+      {
+        "id": "change-mark",
+        "at": {
+          "line": 2,
+          "word": "change",
+          "offset": 0.5
+        },
+        "in": "video-rv-replied",
+        "mark": "video.rv.text.glareNew",
+        "hold": 1.1
+      },
+      {
+        "id": "reply-mark",
+        "at": {
+          "line": 2,
+          "word": "thread"
+        },
+        "in": "video-rv-replied",
+        "mark": "video.rv.card.reply",
+        "hold": 1.6
+      }
+    ],
+    "requires": [
+      {
+        "what": "The cursor selects the glare requirement and opens a comment",
+        "by": [
+          "#select-glare",
+          "#add-glare-comment"
+        ]
+      },
+      {
+        "what": "\"@claude can you make this one testable? Denise's feedback is in research/feedback.\" types in, and To and the session pill appear under the field (Auto-add decision · at prompt)",
+        "by": [
+          "#type-claude"
+        ]
+      },
+      {
+        "what": "On \"pill\" the outline traces it",
+        "by": [
+          "#pill-mark"
+        ]
+      },
+      {
+        "what": "The cursor clicks Post and the card says Sent",
+        "by": [
+          "#post-claude",
+          "#sent-mark"
+        ]
+      },
+      {
+        "what": "The camera moves to the middle pane, where the comment arrives in the Auto-add decision chat as Duo sends it and Claude starts working; the card says Claude is replying",
+        "by": [
+          "#to-chat",
+          "#working",
+          "state:video-rv-working"
+        ]
+      },
+      {
+        "what": "On the second line the camera comes back: the requirement has changed in place, and Claude's reply sits in the thread in Claude's green",
+        "by": [
+          "#back-to-doc",
+          "#replied",
+          "#change-mark",
+          "#reply-mark"
+        ]
+      }
+    ],
+    "shotSha": "e66a94b5cc2b"
+  },
+  "S3": {
+    "kind": "drawn",
+    "scene": "rel-app",
+    "transitionIn": "rel-carry",
+    "leadIn": 0.5,
+    "states": [
+      "video-rv-replied"
+    ],
+    "tail": 1.2,
+    "beats": [
+      {
+        "id": "bar-frame",
+        "at": {
+          "line": 1,
+          "offset": -0.5
+        },
+        "in": "video-rv-replied",
+        "cam": {
+          "on": "video.pane.right",
+          "y0": 0,
+          "y1": 0.42
+        },
+        "dur": 1
+      },
+      {
+        "id": "suggest-on",
+        "at": {
+          "line": 1,
+          "word": "suggest"
+        },
+        "click": "Suggest Edits",
+        "in": "video-rv-replied",
+        "state": "video-rv-suggest-on"
+      },
+      {
+        "id": "goals-frame",
+        "at": {
+          "line": 1,
+          "word": "on",
+          "offset": 0.1
+        },
+        "in": "video-rv-typed",
+        "cam": {
+          "fit": [
+            "video.rv.mark.s3",
+            "video.rv.mark.s2"
+          ],
+          "pad": {
+            "t": 30,
+            "b": 30,
+            "l": 30,
+            "r": 200
+          }
+        },
+        "dur": 0.8
+      },
+      {
+        "id": "type-goal",
+        "at": {
+          "line": 1,
+          "word": "become",
+          "offset": -0.4
+        },
+        "in": "video-rv-typed",
+        "wipe": {
+          "state": "video-rv-typed",
+          "on": "video.rv.mark.s3",
+          "dur": 0.9
+        },
+        "state": "video-rv-typed",
+        "stateAfter": 0.9
+      },
+      {
+        "id": "open-s1",
+        "at": {
+          "line": 1,
+          "word": "accept",
+          "offset": -0.9
+        },
+        "click": "video.rv.mark.s1",
+        "in": "video-rv-typed",
+        "state": "video-rv-hover-s1"
+      },
+      {
+        "id": "accept",
+        "at": {
+          "line": 1,
+          "word": "accept",
+          "offset": 0.2
+        },
+        "click": "video.rv.tip.accept",
+        "in": "video-rv-hover-s1",
+        "state": "video-rv-accepted"
+      },
+      {
+        "id": "open-s2",
+        "at": {
+          "line": 1,
+          "word": "reject",
+          "offset": -0.7
+        },
+        "click": "video.rv.mark.s2",
+        "fx": 0.3,
+        "in": "video-rv-accepted",
+        "state": "video-rv-hover-s2"
+      },
+      {
+        "id": "reject",
+        "at": {
+          "line": 1,
+          "word": "reject",
+          "offset": 0.4
+        },
+        "click": "video.rv.tip.reject",
+        "in": "video-rv-hover-s2",
+        "state": "video-rv-rejected"
+      },
+      {
+        "id": "wide",
+        "at": {
+          "line": 1,
+          "word": "reject",
+          "offset": 1.4
+        },
+        "in": "video-rv-rejected",
+        "cam": "wide",
+        "dur": 1.1
+      }
+    ],
+    "requires": [
+      {
+        "what": "The cursor clicks Suggest Edits in the review bar: its dot fills and the file gains its suggest-edits line",
+        "by": [
+          "#suggest-on"
+        ]
+      },
+      {
+        "what": "Sam changes \"80% of scans\" to \"85%\", shown as his suggestion, struck through and underlined in his colour",
+        "by": [
+          "#type-goal"
+        ]
+      },
+      {
+        "what": "On \"accept\" Jo's suggestion's label opens and the cursor clicks Accept (a click on the mark opens it, as a hover does)",
+        "by": [
+          "#open-s1",
+          "#accept"
+        ]
+      },
+      {
+        "what": "On \"reject\" the same on Ravi's added words, and Reject",
+        "by": [
+          "#open-s2",
+          "#reject"
+        ]
+      }
+    ],
+    "shotSha": "8d9b286cdbc8"
+  },
+  "S5": {
+    "kind": "drawn",
+    "scene": "rel-end",
+    "transitionIn": "rel-close",
+    "leadIn": 0.3,
+    "tail": 2.3,
+    "states": [
+      "video-rv-simple"
+    ],
+    "events": {
+      "fold": {
+        "line": 1,
+        "word": "file",
+        "offset": 0.1
+      },
+      "card": {
+        "line": 1,
+        "word": "update",
+        "offset": -0.3
+      },
+      "foot": {
+        "line": 1,
+        "word": "try"
+      }
+    },
+    "requires": [
+      {
+        "what": "The camera pulls back to the whole window",
+        "by": [
+          "transition"
+        ]
+      },
+      {
+        "what": "Duo's window folds back into its Dock icon and the title card comes back as it opened",
+        "by": [
+          "event:fold",
+          "event:card",
+          "src:src/scenes/release-0-2-21/Title.tsx"
+        ]
+      },
+      {
+        "what": "A last line under it: \"Duo › Check for Updates…\"",
+        "by": [
+          "event:foot"
+        ]
+      },
+      {
+        "what": "Held about 3 s after the line",
+        "by": [
+          "event:foot"
+        ]
+      }
+    ],
+    "shotSha": "65d34daf9c84"
+  },
+  "$cutMarkup": {
+    "$note": "Cut for time (Q-301): the Markup scene, kept for when the Doc brings it back.",
+    "kind": "drawn",
+    "scene": "rel-app",
+    "transitionIn": "rel-carry",
+    "leadIn": 0.4,
+    "states": [
+      "video-rv-rejected"
+    ],
+    "tail": 1.3,
+    "beats": [
+      {
+        "id": "bar",
+        "at": {
+          "line": 1,
+          "offset": -0.3
+        },
+        "in": "video-rv-rejected",
+        "cam": {
+          "on": "video.pane.right",
+          "y0": 0,
+          "y1": 0.42
+        },
+        "dur": 0.8
+      },
+      {
+        "id": "menu",
+        "at": {
+          "line": 1,
+          "word": "markup"
+        },
+        "click": "Markup",
+        "in": "video-rv-rejected",
+        "state": "video-rv-menu"
+      },
+      {
+        "id": "simple",
+        "at": {
+          "line": 1,
+          "word": "simpler"
+        },
+        "click": "Simple Markup",
+        "fx": 0.25,
+        "in": "video-rv-menu",
+        "state": "video-rv-simple"
+      },
+      {
+        "id": "wide",
+        "at": {
+          "line": 1,
+          "word": "on",
+          "offset": 0.5
+        },
+        "in": "video-rv-simple",
+        "cam": "wide",
+        "dur": 1.2
+      }
+    ],
+    "requires": [
+      {
+        "what": "The cursor opens Markup ⌄ with its real items",
+        "by": [
+          "#menu",
+          "state:video-rv-menu"
+        ]
+      },
+      {
+        "what": "It picks Simple Markup: the marks fold away and a bar at the left shows each changed line",
+        "by": [
+          "#simple"
+        ]
+      }
+    ],
+    "shotSha": "ea0dc54dae4d"
+  }
+}
