@@ -11,10 +11,10 @@ import WebKit
 extension VideoTargets {
     nonisolated static let rvScreens = [
         // Comments: the margin, a new comment, a finished thread deleted.
-        "video-rv-open", "video-rv-sel-onetap", "video-rv-compose-onetap-empty", "video-rv-compose-onetap", "video-rv-commented",
+        "video-rv-open", "video-rv-sel-onetap", "video-rv-compose-onetap-empty", "video-rv-compose-onetap-blank", "video-rv-compose-onetap", "video-rv-commented",
         "video-rv-c1-active", "video-rv-deleted",
         // @claude: the comment, the pill, Post, the turn in the chat, Claude's edit and reply.
-        "video-rv-sel-glare", "video-rv-compose-glare-empty", "video-rv-compose-glare", "video-rv-sent", "video-rv-working", "video-rv-replied",
+        "video-rv-sel-glare", "video-rv-compose-glare-empty", "video-rv-compose-glare-blank", "video-rv-compose-glare", "video-rv-sent", "video-rv-working", "video-rv-replied",
         // Suggest Edits: on, Sam's change, accept one, reject one.
         "video-rv-suggest-on", "video-rv-typed", "video-rv-hover-s1", "video-rv-accepted", "video-rv-hover-s2", "video-rv-rejected",
         // Markup.
@@ -27,7 +27,7 @@ extension VideoTargets {
         static func of(_ screen: String) -> RV {
             switch String(screen.dropFirst("video-rv-".count)) {
             case "commented", "c1-active": return .init(stage: "commented")
-            case "deleted", "sel-glare", "compose-glare-empty", "compose-glare": return .init(stage: "deleted")
+            case "deleted", "sel-glare", "compose-glare-empty", "compose-glare-blank", "compose-glare": return .init(stage: "deleted")
             case "sent": return .init(stage: "asked", chat: "chat-rv-sent", delivery: .sent)
             case "working": return .init(stage: "asked", chat: "chat-rv-working", delivery: .replying, working: true)
             case "replied": return .init(stage: "replied-before-edit", chat: "chat-rv-replied", delivery: .replied)
@@ -87,11 +87,13 @@ extension VideoTargets {
         switch name {
         case "sel-onetap": return settle + ["video:rv-select=oneTap"] + measure
         case "compose-onetap-empty": return settle + ["video:rv-select=oneTap", "video:rv-compose", "wait:0.4"] + measure
+        case "compose-onetap-blank": return settle + ["video:rv-select=oneTap", "video:rv-compose", "wait:0.4", "video:rv-blank"] + measure
         case "compose-onetap": return settle + ["video:rv-select=oneTap", "video:rv-compose", "wait:0.4", "video:rv-type=oneTap"] + measure
         case "commented": return settle + ["review-active:c3"] + measure
         case "c1-active": return settle + ["review-active:c1"] + measure
         case "sel-glare": return settle + ["video:rv-select=glare"] + measure
         case "compose-glare-empty": return settle + ["video:rv-select=glare", "video:rv-compose", "wait:0.4"] + measure
+        case "compose-glare-blank": return settle + ["video:rv-select=glare", "video:rv-compose", "wait:0.4", "video:rv-blank"] + measure
         case "compose-glare": return settle + ["video:rv-select=glare", "video:rv-compose", "wait:0.4", "video:rv-type=claude"] + measure
         case "sent", "working": return settle + ["review-active:c4"] + measure
         case "replied": return settle + ["video:rv-claude-edit", "wait:0.8", "review-active:c4"] + measure
@@ -120,6 +122,8 @@ extension VideoTargets {
         case "rv-compose": js("return duo.reviewAddComment()")
         case "rv-type":   // the composer's field holding the comment, as typed (its input event shows To and the pill for @claude)
             js("const f = document.querySelector('.duo-mg-composer textarea'); if (!f) return 'no composer'; f.value = s; f.dispatchEvent(new Event('input', {bubbles: true})); f.focus(); return s.length", ["s": text("comments")])
+        case "rv-blank":   // the field once typing has begun: its placeholder gone, nothing in it yet (the typing wipe draws the text)
+            js("const f = document.querySelector('.duo-mg-composer textarea'); if (!f) return 'no composer'; f.placeholder = ''; f.focus(); return true")
         case "rv-hover":   // the pointer over a suggestion: its label (Accept, Reject, Reply) opens as it does on a hover
             js("""
                const el = document.querySelector('[data-rv="' + i + '"].duo-rv-ins') || document.querySelector('[data-rv="' + i + '"]'); if (!el) return 'no mark';

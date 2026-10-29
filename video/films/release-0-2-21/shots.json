@@ -3,9 +3,9 @@
   "S0": {
     "kind": "drawn",
     "scene": "rel-title",
-    "leadIn": 1.8,
-    "tail": 0.6,
-    "thumbnail": -0.4,
+    "leadIn": 1,
+    "tail": -0.7,
+    "thumbnail": -0.2,
     "states": [
       "video-rv-open"
     ],
@@ -72,9 +72,11 @@
         },
         "in": "video-rv-open",
         "cam": {
-          "on": "video.pane.right",
-          "y0": 0.32,
-          "y1": 0.64
+          "rel": "video.pane.right",
+          "dx": 38.6,
+          "dy": 389.7,
+          "w": 642.9,
+          "h": 361.6
         },
         "dur": 1.3
       },
@@ -125,6 +127,17 @@
         "stateAfter": 0.06
       },
       {
+        "id": "type-comment-start",
+        "at": {
+          "line": 1,
+          "word": "about",
+          "offset": 2.5
+        },
+        "in": "video-rv-compose-onetap-blank",
+        "state": "video-rv-compose-onetap-blank",
+        "stateAfter": 0
+      },
+      {
         "id": "type-comment",
         "at": {
           "line": 1,
@@ -134,12 +147,35 @@
         "in": "video-rv-compose-onetap",
         "wipe": {
           "state": "video-rv-compose-onetap",
-          "on": "video.rv.composer.field",
-          "dur": 1.5,
-          "chars": 49
+          "on": {
+            "on": "video.rv.composer.field",
+            "y0": 0,
+            "y1": 0.5
+          },
+          "dur": 0.8,
+          "chars": 26
+        }
+      },
+      {
+        "id": "type-comment-row2",
+        "at": {
+          "line": 1,
+          "word": "about",
+          "offset": 3.3
+        },
+        "in": "video-rv-compose-onetap",
+        "wipe": {
+          "state": "video-rv-compose-onetap",
+          "on": {
+            "on": "video.rv.composer.field",
+            "y0": 0.5,
+            "y1": 1
+          },
+          "dur": 0.7,
+          "chars": 23
         },
         "state": "video-rv-compose-onetap",
-        "stateAfter": 1.5
+        "stateAfter": 0.7
       },
       {
         "id": "post",
@@ -258,9 +294,11 @@
         },
         "in": "video-rv-deleted",
         "cam": {
-          "on": "video.pane.right",
-          "y0": 0.5,
-          "y1": 0.8
+          "rel": "video.pane.right",
+          "dx": 38.6,
+          "dy": 601.7,
+          "w": 642.9,
+          "h": 361.6
         },
         "dur": 0.9
       },
@@ -295,6 +333,17 @@
         "stateAfter": 0.06
       },
       {
+        "id": "type-claude-start",
+        "at": {
+          "line": 1,
+          "word": "mention",
+          "offset": 1.2
+        },
+        "in": "video-rv-compose-glare-blank",
+        "state": "video-rv-compose-glare-blank",
+        "stateAfter": 0
+      },
+      {
         "id": "type-claude",
         "at": {
           "line": 1,
@@ -304,12 +353,35 @@
         "in": "video-rv-compose-glare",
         "wipe": {
           "state": "video-rv-compose-glare",
-          "on": "video.rv.composer.field",
-          "dur": 2.6,
-          "chars": 82
+          "on": {
+            "on": "video.rv.composer.field",
+            "y0": 0,
+            "y1": 0.5
+          },
+          "dur": 1.3,
+          "chars": 30
+        }
+      },
+      {
+        "id": "type-claude-row2",
+        "at": {
+          "line": 1,
+          "word": "mention",
+          "offset": 2.5
+        },
+        "in": "video-rv-compose-glare",
+        "wipe": {
+          "state": "video-rv-compose-glare",
+          "on": {
+            "on": "video.rv.composer.field",
+            "y0": 0.5,
+            "y1": 1
+          },
+          "dur": 1.3,
+          "chars": 30
         },
         "state": "video-rv-compose-glare",
-        "stateAfter": 2.6
+        "stateAfter": 1.3
       },
       {
         "id": "pill-mark",
@@ -352,9 +424,11 @@
         },
         "in": "video-rv-sent",
         "cam": {
-          "on": "video.pane.middle",
-          "y0": 0.42,
-          "y1": 1
+          "rel": "video.pane.middle",
+          "dx": 44.9,
+          "dy": 585.3,
+          "w": 749.1,
+          "h": 421.4
         },
         "dur": 1
       },
@@ -366,8 +440,7 @@
           "offset": 3.7
         },
         "in": "video-rv-working",
-        "state": "video-rv-working",
-        "fade": 0.3
+        "state": "video-rv-working"
       },
       {
         "id": "back-to-doc",
@@ -377,9 +450,11 @@
         },
         "in": "video-rv-replied",
         "cam": {
-          "on": "video.pane.right",
-          "y0": 0.55,
-          "y1": 0.93
+          "rel": "video.pane.right",
+          "dx": 38.6,
+          "dy": 621.7,
+          "w": 642.9,
+          "h": 361.6
         },
         "dur": 1
       },
@@ -481,9 +556,11 @@
         },
         "in": "video-rv-replied",
         "cam": {
-          "on": "video.pane.right",
-          "y0": 0,
-          "y1": 0.42
+          "rel": "video.pane.right",
+          "dx": 38.6,
+          "dy": 21.7,
+          "w": 642.9,
+          "h": 361.6
         },
         "dur": 1
       },
@@ -506,16 +583,11 @@
         },
         "in": "video-rv-typed",
         "cam": {
-          "fit": [
-            "video.rv.mark.s3",
-            "video.rv.mark.s2"
-          ],
-          "pad": {
-            "t": 30,
-            "b": 30,
-            "l": 30,
-            "r": 200
-          }
+          "rel": "video.pane.right",
+          "dx": 38.6,
+          "dy": 411.7,
+          "w": 642.9,
+          "h": 361.6
         },
         "dur": 0.8
       },

@@ -70,10 +70,11 @@ export const ReleaseTitle = ({t, ev, scene}: SceneProps) => {
   const scrim = ramp(t, titleAt - 0.3, titleAt + 0.5);
   // The way out ('rel-open'): Logo.tsx's 'logo-to-dock' (words back, bars in, the icon arcs into its slot), then the window opens.
   const e0 = ev.exit ?? 1e9;
-  const wipe = interpolate(t, [e0, e0 + 0.5], [0, 1], clamp);
-  const bars = ramp(t, e0 + 0.3, e0 + 0.85), fly = ramp(t, e0 + 0.25, e0 + 1.15), landed = t >= e0 + 1.15;
-  const pop = landed ? Math.sin(Math.min(1, (t - e0 - 1.15) / 0.22) * Math.PI) * 0.1 : 0;
-  const open = ramp(t, e0 + 1.3, e0 + 2.15);
+  // Quicker than Logo.tsx's (Q-302): the film is under a minute, and the window starts opening under a second after the exit.
+  const wipe = interpolate(t, [e0, e0 + 0.4], [0, 1], clamp);
+  const bars = ramp(t, e0 + 0.15, e0 + 0.6), fly = ramp(t, e0 + 0.1, e0 + 0.8), landed = t >= e0 + 0.8;
+  const pop = landed ? Math.sin(Math.min(1, (t - e0 - 0.8) / 0.18) * Math.PI) * 0.1 : 0;
+  const open = ramp(t, e0 + 0.9, e0 + 1.65);
   const cx = (x + tileAt.x) / 2, cy = Math.min(y, tileAt.y) - 220;
   const bez = (a: number, c: number, b: number) => (1 - fly) ** 2 * a + 2 * (1 - fly) * fly * c + fly ** 2 * b;
   return (
@@ -102,9 +103,9 @@ export const ReleaseEnd = ({t, ev, scene}: SceneProps) => {
   const x1 = S + 32, y1 = H / 2 - 150 - 10;
   const cx = (tileAt.x + x1) / 2, cy = Math.min(tileAt.y, y1) - 220;
   const bez = (a: number, c: number, b: number) => (1 - rise) ** 2 * a + 2 * (1 - rise) * rise * c + rise ** 2 * b;
-  const c0 = ev.card ?? f0 + 1.6;
+  const c0 = Math.max(ev.card ?? 0, f0 + 1.75);   // the words come in once the icon has landed beside them
   const title = ramp(t, c0, c0 + 0.4), sub = ramp(t, c0 + 0.3, c0 + 0.65), ink = ramp(t, c0 + 0.65, c0 + 1.3);
-  const foot = ramp(t, ev.foot ?? c0 + 0.9, (ev.foot ?? c0 + 0.9) + 0.4);
+  const f1 = Math.max(ev.foot ?? 0, c0 + 0.7), foot = ramp(t, f1, f1 + 0.4);
   return (
     <AbsoluteFill>
       <Wallpaper w={W} h={H} />

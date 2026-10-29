@@ -1,5 +1,5 @@
 # Duo 0.2.21 release film: Review in Markdown
-<!-- Synced from the script Doc at rev 8 on 2026-10-29 by pipeline/sync.mjs; edit the Doc, not this file. -->
+<!-- Synced from the script Doc at rev 9 on 2026-10-29 by pipeline/sync.mjs; edit the Doc, not this file. -->
 
 Oct 28, 2026 · @Geoff Dudgeon
 
@@ -30,7 +30,7 @@ A film for the 0.2.21 release notes, under a minute, in your voice and the intro
 
 ### S0 · Title (about 7 s)
 
-- In 0.2.21 I added comments and suggested edits to Markdown files, a lot like Google Docs.
+- In 0.2.21 I added comments and suggested edits to Markdown files.
 
 Shot: the intro's title card, built the same way: the Duo icon builds itself on the High Sierra wallpaper, then settles beside "Duo 0.2.21" and the line "Review in Markdown: comments, suggested edits and @claude", framed as one composition. That settled frame is the film's thumbnail. Then the words wipe back into the icon, the menu bar and Dock slide in, the icon drops into its Dock slot, and Duo's window opens out of the Dock onto the desk, on Sam's PRD with this morning's review in the margin.
 

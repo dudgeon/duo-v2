@@ -75,7 +75,7 @@ export const TRANSITIONS = {
   'board-carry': {kind: 'graphic', from: [...DIRECTOR_SCENES, 'paper-card'], to: DIRECTOR_SCENES, in: 0.4},
   // The 0.2.21 release film (src/scenes/release-0-2-21/). Out of the title card: logo-to-dock's moves, then Duo's window opens out
   // of its Dock tile onto the desk, ending on the next scene's first picture.
-  'rel-open': {kind: 'graphic', from: 'rel-title', to: 'rel-app', out: 2.3},
+  'rel-open': {kind: 'graphic', from: 'rel-title', to: 'rel-app', out: 1.8},
   // Its app scenes carry on from each other as 'carry-on' does: the same picture, and the scene's own first beat moves us.
   'rel-carry': {kind: 'app', from: 'rel-app', to: 'rel-app'},
   // Back to the card: the scene opens on the app's last picture, wide, and folds the window into its Dock tile on its `fold` event.
@@ -178,8 +178,10 @@ function planApp({scene, shot, lines, tr, prev, prevShot, captures, events, styl
       if (c.fit) {
         const rs = c.fit.map((k) => anchorRect(c0, k, inSt, scene.id));
         const p = typeof c.pad === 'object' ? c.pad : {t: c.pad ?? 0, r: c.pad ?? 0, b: c.pad ?? 0, l: c.pad ?? 0};
-        const x0 = Math.min(...rs.map((r) => r.x)) - (p.l ?? 0), y0 = Math.min(...rs.map((r) => r.y)) - (p.t ?? 0);
-        const x1 = Math.max(...rs.map((r) => r.x + r.w)) + (p.r ?? 0), y1 = Math.max(...rs.map((r) => r.y + r.h)) + (p.b ?? 0);
+        let x0 = Math.min(...rs.map((r) => r.x)) - (p.l ?? 0), y0 = Math.min(...rs.map((r) => r.y)) - (p.t ?? 0);
+        let x1 = Math.max(...rs.map((r) => r.x + r.w)) + (p.r ?? 0), y1 = Math.max(...rs.map((r) => r.y + r.h)) + (p.b ?? 0);
+        // across: {on, x0, x1}: the anchors frame the shot's height and a pane its width, so the crop lands on the pane's edges.
+        if (c.across) { const a = anchorRect(c0, c.across.on, inSt, scene.id); x0 = a.x + a.w * (c.across.x0 ?? 0); x1 = a.x + a.w * (c.across.x1 ?? 1); }
         return note(role, c.fit.join(' + '), {x: x0, y: y0, w: x1 - x0, h: y1 - y0});
       }
       return note(role, null, c);
