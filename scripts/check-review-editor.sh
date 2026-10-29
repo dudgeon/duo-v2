@@ -64,6 +64,26 @@ expect "suggest: typing became a signed substitution" $A has "{~~early November~
 expect "suggest: Claude's doc replace became a signed mark" $A has "{~~nothing in the cloud~>nothing at all in the cloud~~}{>>@claude "
 expect "suggest: the switch is reported on" $out/suggest.log has "Suggest Edits is on"
 
+# 4b. Suggest Edits on: a comment-thread verb is a change to the thread, never a suggestion (F-398)
+fresh sug-reply
+run sug-reply "${open}$A,wait:2,verb:doc review on,wait:2,verb:comment reply c1 Done,wait:1,verb:comment close c1,wait:3"
+expect "suggest on: a reply is a thread comment" $A has "#c1.1: Done<<}"
+expect "suggest on: a reply is not a tracked insertion" $A lacks "{++{>>"
+expect "suggest on: close writes the closing line" $A has "#c1.2 closed<<}"
+expect "suggest on: close is not a suggestion either" $A lacks "{++{>>"
+fresh sug-delete
+run sug-delete "${open}$A,wait:2,verb:doc review on,wait:2,verb:comment delete c1,wait:3"
+expect "suggest on: delete takes the thread out" $A lacks "#c1"
+expect "suggest on: delete is not a tracked deletion" $A lacks "{--"
+fresh sug-accept
+run sug-accept "${open}$A,wait:2,verb:doc review on,wait:2,verb:suggestion accept s1,wait:3"
+expect "suggest on: accept resolves the mark" $A has "retries every 10 seconds"
+expect "suggest on: and is not itself a suggestion" $A lacks "{~~30~>10~~}"
+fresh sug-add
+run sug-add "${open}$A,wait:2,verb:doc review on,wait:2,verb:comment add ${A} --at Launch Is~it~ready,wait:3"
+expect "suggest on: a new comment is a comment" $A has "{==Launch"
+expect "suggest on: not wrapped as an insertion" $A lacks "{++{==Launch"
+
 fresh suggest-off
 run suggest-off "${open}$A,wait:2,verb:doc review on,wait:2,verb:doc review off,wait:3"
 expect "suggest off: the line is gone" $A lacks "suggest-edits"
