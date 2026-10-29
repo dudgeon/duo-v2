@@ -105,7 +105,9 @@ def main(d, ids):
         trail = dur - words[-1]["end"] if words else dur
         gaps = [round(b["start"] - a["end"], 2) for a, b in zip(words, words[1:])]
         spoken = (words[-1]["end"] - words[0]["start"]) if words else dur
-        wps = len(words) / spoken if spoken > 0 else 0
+        # A dotted number is one token but several spoken words ("0.2.21" is "zero point two point twenty-one"): count what was said.
+        said_n = sum(2 * len(re.findall(r"\d+", w["word"])) - 1 if re.search(r"\d\.\d", w["word"]) else 1 for w in words)
+        wps = said_n / spoken if spoken > 0 else 0
         reasons = []
         if wer > 0.05: reasons.append(f"WER {wer:.3f}")
         if cmiss or cextra: reasons.append(f"content words missing {cmiss} / added {cextra}")

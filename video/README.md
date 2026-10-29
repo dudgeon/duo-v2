@@ -75,6 +75,7 @@ The pipeline builds more than one film. `node build.mjs` builds the intro, with 
 - `node pipeline/sync.mjs <export.md> --rev <n> --film <name>` writes that film's `script.md`; `pipeline/voice-only.mjs --film <name>` voices it.
 - The wallpaper and the intro's prototype page are prepared only when a film has desk scenes; a film with no `thumbnail` on its first shot gets no poster check.
 - A film's own scenes are registered in `src/scenes/registry.ts` (scene kind to component) and live in `src/scenes/<name>/`. Film.tsx consults the registry before its own branches. A film's render keys leave out the other films' scene folders (and the intro's leave out the registry), so adding a film re-renders nothing of another's; the hook lines in Film.tsx carry `@film-hook` and are left out of the hash for the same reason.
+- `films/release-0-2-21/` is the 0.2.21 release film (DL-245): Review in Markdown on the intro's world, under a minute, in Geoff's voice. Its states are `video-rv-*` (`Sources/DuoKit/Debug/VideoTargets+Review.swift`) from `fixture/make-review.py`; its scenes (`rel-title`, `rel-app` with captions, `rel-end`) are in `src/scenes/release-0-2-21/`.
 - `films/director/` is a placeholder: two `paper-card` scenes (paper ground, the scene's title in ink) joined by the `paper-carry` transition, so the film builds end to end before its real scenes exist.
 
 ## Rules

@@ -133,7 +133,9 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
 
     /// Loads the editor page (again, after its process died).
     /// Who signs a person's typing as a suggestion: the Mac account's short name (DL-236 11).
-    static var reviewerName: String { NSUserName() }
+    static var reviewerName: String { reviewerOverride ?? NSUserName() }
+    /// The film's demo person (VideoTargets+Review): a fixture state signs as them, not as the Mac's account.
+    static var reviewerOverride: String?
 
     private func loadPage() {
         if let dir = Bundle.main.resourceURL?.appending(path: "editor"),
