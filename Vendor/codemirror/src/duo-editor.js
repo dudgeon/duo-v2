@@ -2669,6 +2669,23 @@ window.duo = {
   reviewOp: (op, id, text) => ({ reply: () => replyTo(view, id, text || ""), close: () => closeThread(view, id), reopen: () => reopenThread(view, id), delete: () => deleteThread(view, id) }[op] || (() => false))(),
   reviewActivate: (id) => { activate(view, id); return true; },
   reviewComment: (text, from, to) => addThread(view, text, { from, to }),
+  // A comment typed in the margin's composer as a person would (comment-at): select the anchor, type, press keys
+  // (tab|down|up|esc|return|post = ⌘Return), and say what the field and the @ menu hold after.
+  reviewDrive: async (anchor, typed, keys) => {
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const at = view.state.doc.toString().indexOf(anchor);
+    if (at < 0) return "no anchor";
+    view.dispatch({ selection: { anchor: at, head: at + anchor.length } });
+    composeComment(view); await wait(200);
+    const f = document.querySelector(".duo-mg-composer .duo-mg-field");
+    if (!f) return "no composer";
+    f.focus(); f.value = typed; f.setSelectionRange(typed.length, typed.length); f.dispatchEvent(new Event("input", { bubbles: true }));
+    const map = { tab: { key: "Tab" }, down: { key: "ArrowDown" }, up: { key: "ArrowUp" }, esc: { key: "Escape" }, return: { key: "Enter" }, post: { key: "Enter", metaKey: true } };
+    for (const k of (keys || "").split("+").filter(Boolean)) { await wait(120); if (map[k]) f.dispatchEvent(new KeyboardEvent("keydown", { ...map[k], bubbles: true, cancelable: true })); }
+    await wait(200);
+    const g = document.querySelector(".duo-mg-composer .duo-mg-field"), m = document.querySelector(".duo-mg-at");
+    return "field=" + JSON.stringify(g ? g.value : null) + " menu=" + (m ? m.textContent : "closed");
+  },
   hiddenCount: () => document.querySelectorAll(".cm-line").length,
 };
 post("ready", {});

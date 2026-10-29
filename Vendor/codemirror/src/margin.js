@@ -6,6 +6,7 @@
 // are the ones `Review` writes in Swift (`{>>@name date #c1.2: text<<}`, `{>>@name date #c1.3 closed<<}`).
 import { StateEffect, EditorSelection } from "@codemirror/state";
 import { EditorView, ViewPlugin, Decoration } from "@codemirror/view";
+import { attachAtMenu, atTheme } from "./atmenu.js";
 import { reviewField, markupField, reviewerField, signatureName, today, nextId, nextReply, emitReviewAction } from "./critic.js";
 
 const MARGIN_W = 180, MARGIN_RIGHT = 20, GAP_TEXT = 12, CARD_GAP = 10, ACTIVE_W = 192, NARROW = 420, GUTTER = 24, POPOVER_W = 280;
@@ -205,6 +206,7 @@ class Margin {
         if (replies.length > 3) { const more = el("div", "duo-mg-more", `${replies.length - 2} more replies`); dom.append(more); }
         for (const r of shown) { const rd = el("div", "duo-mg-reply"); rd.append(this.nameLine(r, n), this.body(r.text)); dom.append(rd); }
         const field = el("textarea", "duo-mg-field"); field.rows = 1; field.placeholder = t.closed ? "Reply to reopen…" : "Reply…";
+        attachAtMenu(field, dom, () => { field.style.height = "auto"; field.style.height = field.scrollHeight + "px"; this.place(this.mode()); });
         field.addEventListener("keydown", (e) => this.fieldKey(e, t, field));
         field.addEventListener("input", () => { field.style.height = "auto"; field.style.height = field.scrollHeight + "px"; this.place(this.mode()); });
         dom.append(field);
@@ -268,6 +270,7 @@ class Margin {
     const post = el("button", "duo-rv-btn", "Post"); post.type = "button"; post.dataset.op = "post";
     const cancel = el("button", "duo-rv-btn", "Cancel"); cancel.type = "button"; cancel.dataset.op = "cancel";
     verbs.append(post, cancel);
+    attachAtMenu(field, dom, () => field.dispatchEvent(new Event("input")));
     field.addEventListener("keydown", (e) => {
       if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); this.post(field.value); }
       if (e.key === "Escape") { e.preventDefault(); this.cancelCompose(); }
@@ -458,5 +461,6 @@ export const marginTheme = EditorView.baseTheme({
   ".duo-mg-pill-status": { color: "var(--duo-text2)", whiteSpace: "nowrap", flex: "none" },
   ".duo-mg-pill-chev": { flex: "none" },
   ".duo-mg-to-label": { color: "var(--duo-text2)", font: "11px/16px -apple-system, sans-serif", marginTop: "6px" },
+  ...atTheme,
   ".duo-rv-hl-hot": { backgroundColor: "var(--duo-comment-highlight-active) !important" },
 });

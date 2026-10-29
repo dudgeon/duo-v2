@@ -4330,3 +4330,10 @@ Research for DL-236 (8), "the things the users should feel familiar with". Googl
 - `NotesBox` draws each `[text](url)` as a link in chat's link style (text colour, solid `controlEdge` underline; no new look), opening in the default browser through SwiftUI's openURL. Text links in a SwiftUI `Text` aren't Tab stops, so keyboard users reach them by the Open Releases Page button (the full notes, with the video); VoiceOver reads the line with its link. The 160 box, scrolling and every bullet stay (DL-249).
 - `duo2 update` prints a link as `text <url>` (`UpdateCheck.plainNote`), in its text and in `data.notes`.
 - DuoChecks: one link, two, a link in the bold lead, none, `plainNote`, and 0.2.21's real notes (`Fixtures/release-notes/0.2.21.md`). Capture: `ask-update:real` (new harness form reading that fixture) at `--state overview`, compared by eye with q47.
+
+## F-407: `@` autocomplete in the margin's comment fields (DL-251)
+
+- `Vendor/codemirror/src/atmenu.js` holds the trigger (`atQuery`: an `@` at the start or after whitespace, the word up to the caret), the filter, the keys and the insertion as pure functions (`test/atmenu.test.mjs`, run by `test/run.sh` and DuoChecks), and `attachAtMenu`, which draws the menu in the card under the field. `margin.js` attaches it to the composer and to a thread's reply field. The menu's keydown listener is registered first and stops the event, so Esc closes the menu without cancelling the comment and Return inserts instead of adding a line; ⌘Return still posts.
+- Inserting writes `@claude ` and fires the field's `input`, so the "To" pill and the card's height follow, and Post sends as before.
+- Scripted: `review-at:<anchor>=><typed>=><keys>` (FixtureHarness, `duo.reviewDrive`) types in the composer with real events; `scripts/check-review-editor.sh` case 7b covers open, Tab, Esc, no match, and a comment chosen from the menu reaching the stand-in session.
+- Menu look: the chat menu's (DL-133) at 12/20 rows in the card's width; the margin card is 180 wide, so the hint column truncates first.
