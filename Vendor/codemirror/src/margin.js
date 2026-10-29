@@ -313,6 +313,8 @@ class Margin {
         }
       }
     } else {
+      // Widths first: a card's height depends on the width its text wraps at (F-400).
+      items.forEach((it) => { const a = this.active === it.t.id; it.card.dom.style.width = (a ? ACTIVE_W : MARGIN_W) + "px"; });
       const heights = items.map((it) => it.card.dom.offsetHeight || 60);
       const activeIx = items.findIndex((it) => this.active === it.t.id);
       const tops = items.map(() => 0);
@@ -335,7 +337,8 @@ class Margin {
         d.style.left = (isActive ? activeLeft : left) + "px";
         d.style.width = (isActive ? ACTIVE_W : MARGIN_W) + "px";
         d.style.top = (tops[i] + shift) + "px";
-        bottom = Math.max(bottom, tops[i] + shift + heights[i]);
+        // The live height, not the one measured before the cards moved: the foot follows a card that grew.
+        bottom = Math.max(bottom, tops[i] + shift + (d.offsetHeight || heights[i]));
       });
     }
     if (this.composerDom) {

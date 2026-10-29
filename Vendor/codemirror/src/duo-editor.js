@@ -2427,7 +2427,8 @@ function external(diskText) {
 // Claude's Edit / MultiEdit / Write, applied to the buffer instead of the file (DL-78): each
 // edit is checked against the text the user sees, with the Edit tool's rules (old text must be
 // there, once unless replace_all), then the whole change lands as small, highlighted changes.
-function agentEdit(edits, content) {
+// `thread` is a comment-thread write (reply, close, delete…): a change to the review, never a suggestion (F-398).
+function agentEdit(edits, content, thread) {
   const before = view.state.doc.toString();
   let text = before;
   if (content != null) {
@@ -2450,7 +2451,7 @@ function agentEdit(edits, content) {
     return { from: starts[h.aFrom] + d.from, to: starts[h.aFrom] + d.to, insert: d.insert };
   });
   // Suggest Edits (DL-237): Claude's hunks become signed marks, not plain text.
-  if (view.state.field(reviewField).suggest) {
+  if (!thread && view.state.field(reviewField).suggest) {
     const marked = suggestHunks(view.state, changes, "claude");
     view.dispatch({ changes: marked.map(({ from, to, insert }) => ({ from, to, insert })), userEvent: "agent" });
     return { result: "applied", changes: marked.length, line: view.state.doc.lineAt(changes[0].from).number, suggested: true };
