@@ -10,9 +10,9 @@ import WebKit
 /// the agent edit path, a hover over a mark). The @claude comment goes to Auto-add decision, the session on screen.
 extension VideoTargets {
     nonisolated static let rvScreens = [
-        // Comments: the margin, a new comment, a finished thread deleted.
+        // Comments: the margin, a new comment, Close and Keep.
         "video-rv-open", "video-rv-sel-onetap", "video-rv-compose-onetap-empty", "video-rv-compose-onetap-blank", "video-rv-compose-onetap", "video-rv-commented",
-        "video-rv-c1-active", "video-rv-deleted",
+        "video-rv-c1-active", "video-rv-closed",
         // @claude: the comment, the pill, Post, the turn in the chat, Claude's edit and reply.
         "video-rv-sel-glare", "video-rv-compose-glare-empty", "video-rv-compose-glare-blank", "video-rv-compose-glare", "video-rv-sent", "video-rv-working", "video-rv-replied",
         // Suggest Edits: on, Sam's change, accept one, reject one.
@@ -27,7 +27,7 @@ extension VideoTargets {
         static func of(_ screen: String) -> RV {
             switch String(screen.dropFirst("video-rv-".count)) {
             case "commented", "c1-active": return .init(stage: "commented")
-            case "deleted", "sel-glare", "compose-glare-empty", "compose-glare-blank", "compose-glare": return .init(stage: "deleted")
+            case "closed", "sel-glare", "compose-glare-empty", "compose-glare-blank", "compose-glare": return .init(stage: "closed")
             case "sent": return .init(stage: "asked", chat: "chat-rv-sent", delivery: .sent)
             case "working": return .init(stage: "asked", chat: "chat-rv-working", delivery: .replying, working: true)
             case "replied": return .init(stage: "replied-before-edit", chat: "chat-rv-replied", delivery: .replied)

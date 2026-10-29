@@ -200,24 +200,25 @@
         "state": "video-rv-c1-active"
       },
       {
-        "id": "verbs-mark",
+        "id": "close-keep",
         "at": {
           "line": 2,
           "word": "close"
         },
+        "click": "video.rv.card.close",
         "in": "video-rv-c1-active",
-        "mark": "video.rv.card.verbs",
-        "hold": 1.3
+        "state": "video-rv-closed"
       },
       {
-        "id": "delete",
+        "id": "foot-mark",
         "at": {
           "line": 2,
-          "word": "delete"
+          "word": "keep",
+          "offset": 0.3
         },
-        "click": "video.rv.card.delete",
-        "in": "video-rv-c1-active",
-        "state": "video-rv-deleted"
+        "in": "video-rv-closed",
+        "mark": "video.rv.foot",
+        "hold": 1.4
       }
     ],
     "requires": [
@@ -259,19 +260,20 @@
         ]
       },
       {
-        "what": "The outline traces the two buttons on \"close it and keep it\"",
+        "what": "On \"close it and keep it\" the cursor clicks Close and Keep",
         "by": [
-          "#verbs-mark"
+          "#close-keep"
         ]
       },
       {
-        "what": "The cursor clicks Delete on \"delete\": the thread goes and its text stays",
+        "what": "The thread folds away into \"1 closed · Show\" at the foot of the margin, and its text stays",
         "by": [
-          "#delete"
+          "#foot-mark",
+          "state:video-rv-closed"
         ]
       }
     ],
-    "shotSha": "79b8398c0a8e"
+    "shotSha": "d33b5a7cdeb6"
   },
   "S2": {
     "kind": "drawn",
@@ -279,7 +281,7 @@
     "transitionIn": "rel-carry",
     "leadIn": 0.5,
     "states": [
-      "video-rv-deleted"
+      "video-rv-closed"
     ],
     "pauses": {
       "1": 2.9
@@ -292,7 +294,7 @@
           "line": 1,
           "offset": -0.4
         },
-        "in": "video-rv-deleted",
+        "in": "video-rv-closed",
         "cam": {
           "rel": "video.pane.right",
           "dx": 38.6,

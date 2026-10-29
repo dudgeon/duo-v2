@@ -12,7 +12,7 @@ Shelf scan reads about four spines in five correctly, and v1 adds every spine it
 
 ## What we heard
 Three of eight testers (P3, P6, P8) stopped scanning after a wrong book was added for them.
-Glare from glass-door boxes caused 27% of wrong reads; Denise (P3) can't scan her box at all after 4pm.
+Glare from glass-door boxes caused 27% of wrong reads; {==Denise (P3) can't scan her box at all after 4pm==}{>>@lena 2026-10-12 #c1: Is this the low sun through the door? I'd like one of Denise's photos for the deck.<<}{>>@sam 2026-10-13 #c1.1: Yes, it faces west. She sent two.<<}{>>@sam 2026-10-13 #c1.2 closed<<}.
 With a review step in the prototype, testers fixed every miss{++ in their first two scans++}{>>@ravi 2026-10-12 #s2<<}: 97% of books right, median 18 s a shelf.
 
 ## Requirements

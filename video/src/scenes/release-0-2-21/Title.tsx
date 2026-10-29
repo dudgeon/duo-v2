@@ -70,7 +70,7 @@ export const ReleaseTitle = ({t, ev, scene}: SceneProps) => {
   const scrim = ramp(t, titleAt - 0.3, titleAt + 0.5);
   // The way out ('rel-open'): Logo.tsx's 'logo-to-dock' (words back, bars in, the icon arcs into its slot), then the window opens.
   const e0 = ev.exit ?? 1e9;
-  // Quicker than Logo.tsx's (Q-302): the film is under a minute, and the window starts opening under a second after the exit.
+  // Quicker than Logo.tsx's (Q-303): the film is under a minute, and the window starts opening under a second after the exit.
   const wipe = interpolate(t, [e0, e0 + 0.4], [0, 1], clamp);
   const bars = ramp(t, e0 + 0.15, e0 + 0.6), fly = ramp(t, e0 + 0.1, e0 + 0.8), landed = t >= e0 + 0.8;
   const pop = landed ? Math.sin(Math.min(1, (t - e0 - 0.8) / 0.18) * Math.PI) * 0.1 : 0;

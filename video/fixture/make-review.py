@@ -63,10 +63,10 @@ stages["open"] = t
 # 1. Sam comments on the one-tap line, asking Lena.
 t = sub(t, ONE_TAP, "{==" + ONE_TAP + "==}" + sig("sam", DAY, "c3", SAM_ONE_TAP))
 stages["commented"] = t
-# 2. Lena's thread is done: Delete takes the highlight and its comments and keeps the text (DL-237). The film shows Delete,
-#    not Close and Keep: a kept thread's "n closed · Show" foot is drawn over an open card below it in 0.2.21 (F-400, Q-293).
-t = sub(t, "{==" + HEARD + "==}" + sig("lena", YESTERDAY, "c1", LENA) + sig("sam", DAY, "c1.1", SAM_TO_LENA), HEARD)
-stages["deleted"] = t
+# 2. Lena's thread is done: Close and Keep writes a closing line after its last comment (Q-262); the text stays, the
+#    highlight is no longer drawn, and the margin's foot says "1 closed · Show" (DL-237).
+t = sub(t, sig("sam", DAY, "c1.1", SAM_TO_LENA), sig("sam", DAY, "c1.1", SAM_TO_LENA) + sig("sam", DAY, "c1.2 closed"))
+stages["closed"] = t
 # 3. Sam asks @claude about the glare requirement; Post sends it to the session on screen (DL-236 10A).
 t = sub(t, GLARE, "{==" + GLARE + "==}" + sig("sam", DAY, "c4", SAM_CLAUDE))
 stages["asked"] = t

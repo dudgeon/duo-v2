@@ -1,5 +1,5 @@
 # Duo 0.2.21 release film: Review in Markdown
-<!-- Synced from the script Doc at rev 9 on 2026-10-29 by pipeline/sync.mjs; edit the Doc, not this file. -->
+<!-- Synced from the script Doc at rev 10 on 2026-10-29 by pipeline/sync.mjs; edit the Doc, not this file. -->
 
 Oct 28, 2026 · @Geoff Dudgeon
 
@@ -39,7 +39,7 @@ Shot: the intro's title card, built the same way: the Duo icon builds itself on 
 - Comments sit in the *margin*, next to the text they're about,
 - and when a thread's done, I can *close it and keep it*, or delete it.
 
-Shot: the camera pushes in on the PRD in the right pane. On "margin" the outline traces the margin's cards (Ravi's and Lena's) beside their highlighted text. Then Sam adds one: the cursor drag-selects "Fixing a flagged book takes one tap", ⌥⌘M shows as keycaps, a comment card opens in the margin and "Lena, can you mock the one-tap fix for Thursday?" types into it, and the cursor clicks Post. On the second line the cursor clicks Lena's thread (answered already), its card opens with Close and Keep and Delete, the outline traces the two buttons on "close it and keep it", and the cursor clicks Delete on "delete": the thread goes and its text stays.
+Shot: the camera pushes in on the PRD in the right pane. On "margin" the outline traces the margin's cards (Ravi's and Lena's) beside their highlighted text. Then Sam adds one: the cursor drag-selects "Fixing a flagged book takes one tap", ⌥⌘M shows as keycaps, a comment card opens in the margin and "Lena, can you mock the one-tap fix for Thursday?" types into it, and the cursor clicks Post. On the second line the cursor clicks Lena's thread (answered already), its card opens with Close and Keep and Delete, and on "close it and keep it" the cursor clicks Close and Keep: the thread folds away into "1 closed · Show" at the foot of the margin, and its text stays.
 
 ### S2 · @claude (about 16 s)
 
