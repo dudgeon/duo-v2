@@ -148,17 +148,38 @@ extension UpdateCheck {
             if let r = t.range(of: #"^([-*+]|\d+[.)]) +"#, options: .regularExpression) { t = String(t[r.upperBound...]) } else { continue }
             if t.hasPrefix("**"), let end = t.dropFirst(2).range(of: "**") {
                 let lead = String(t.dropFirst(2)[..<end.lowerBound])
-                if !lead.isEmpty { t = lead }
+                if !lead.isEmpty {
+                    // A parenthetical of links right after the lead stays: `**Review** ([video](…))`.
+                    let rest = String(t.dropFirst(2)[end.upperBound...])
+                    let group = rest.range(of: #"^\s*\((?:\[[^\]]*\]\([^)\s]*\)|[^()\[\]])*\)"#, options: .regularExpression).map { String(rest[$0]) }
+                    t = lead + (group.flatMap { $0.contains("](") ? " " + $0.trimmingCharacters(in: .whitespaces) : nil } ?? "")
+                }
             } else if let dot = t.range(of: #"[.!?](\s|$)"#, options: .regularExpression) {
                 t = String(t[..<dot.upperBound])
             }
             t = t.replacingOccurrences(of: "**", with: "").replacingOccurrences(of: "__", with: "").replacingOccurrences(of: "`", with: "")
-            t = t.replacingOccurrences(of: #"\[([^\]]+)\]\([^)]+\)"#, with: "$1", options: .regularExpression)
             t = t.trimmingCharacters(in: .whitespaces)
             if t.hasSuffix(".") { t.removeLast() }
             if !t.isEmpty { bullets.append("• " + t + ".") }
         }
         return bullets
+    }
+
+    /// A line's Markdown links, as text and address, for drawing and for `duo2 update`.
+    public static func noteLinks(_ line: String) -> [(text: String, url: URL, range: Range<String.Index>)] {
+        guard let re = try? NSRegularExpression(pattern: #"\[([^\]]+)\]\(([^)\s]+)\)"#) else { return [] }
+        let ns = line as NSString
+        return re.matches(in: line, range: NSRange(location: 0, length: ns.length)).compactMap { m in
+            guard let url = URL(string: ns.substring(with: m.range(at: 2))), let r = Range(m.range, in: line) else { return nil }
+            return (ns.substring(with: m.range(at: 1)), url, r)
+        }
+    }
+
+    /// A line with its links as `text <url>`, for the terminal.
+    public static func plainNote(_ line: String) -> String {
+        var out = line
+        for l in noteLinks(line).reversed() { out.replaceSubrange(l.range, with: "\(l.text) <\(l.url.absoluteString)>") }
+        return out
     }
 
     /// `duo2 update`'s answer: what's newest, its releases page, and whether installing in place
@@ -175,7 +196,7 @@ extension UpdateCheck {
             return "Duo \(current) is the latest.\nReleases page: \(page.absoluteString)\n\(place)"
         case .offer(let o):
             let have = o.current == "0.0.1" ? "a development build" : o.current
-            let notes = notesLines(o.notes).map { "\n" + $0 }.joined()
+            let notes = notesLines(o.notes).map { "\n" + plainNote($0) }.joined()
             return "Duo \(o.version) is available (this is \(have)).\(notes)\nReleases page: \(o.page.absoluteString)\n\(place)"
         }
     }
@@ -214,7 +235,7 @@ extension AppModel {
                 if open { NSWorkspace.shared.open(page); text += "\nOpened the releases page." }
                 var data: [String: Any] = ["current": UpdateCheck.current, "page": page.absoluteString, "installedAt": app.path,
                                            "needsAdmin": !writable, "reachable": plan != .unreachable]
-                if case .offer(let o) = plan { data["latest"] = o.version; data["notes"] = UpdateCheck.notesLines(o.notes) }
+                if case .offer(let o) = plan { data["latest"] = o.version; data["notes"] = UpdateCheck.notesLines(o.notes).map(UpdateCheck.plainNote) }
                 if case .upToDate = plan { data["latest"] = UpdateCheck.current }
                 return done(text, data)
             }

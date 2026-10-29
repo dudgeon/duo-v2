@@ -138,7 +138,7 @@ struct NotesBox: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("WHAT’S NEW").duoText(.sectionLabel).foregroundStyle(DuoColor.text2)
                 ForEach(Array(lines.enumerated()), id: \.offset) { _, l in
-                    Text(l).duoText(.body).fixedSize(horizontal: false, vertical: true)
+                    Text(Self.attributed(l)).duoText(.body).fixedSize(horizontal: false, vertical: true)
                 }
             }
             .padding(.horizontal, DuoSpace.cardPadding.leading)
@@ -149,7 +149,24 @@ struct NotesBox: View {
         .fixedSize(horizontal: false, vertical: true)
         .background(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).fill(DuoColor.pane))
         .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
-        .accessibilityLabel("What’s new: " + lines.joined(separator: " "))
+        .accessibilityLabel("What’s new: " + lines.map(UpdateCheck.plainNote).joined(separator: " "))
+    }
+
+    /// A line with its Markdown links drawn as links, as chat draws a web link (text colour, solid
+    /// underline); a click opens the address in the default browser.
+    static func attributed(_ line: String) -> AttributedString {
+        var out = AttributedString()
+        var at = line.startIndex
+        for l in UpdateCheck.noteLinks(line) {
+            out += AttributedString(String(line[at..<l.range.lowerBound]))
+            var a = AttributedString(l.text)
+            a.link = l.url
+            a.foregroundColor = DuoColor.text
+            a.underlineStyle = Text.LineStyle(pattern: .solid, color: DuoColor.controlEdge)
+            out += a
+            at = l.range.upperBound
+        }
+        return out + AttributedString(String(line[at...]))
     }
 }
 
