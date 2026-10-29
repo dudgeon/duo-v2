@@ -4339,3 +4339,38 @@ Research for DL-236 (8), "the things the users should feel familiar with". Googl
 - Menu look: the chat menu's (DL-133) at 12/20 rows in the card's width; the margin card is 180 wide, so the hint column truncates first.
 - **Popover, not part of the card** (director's review): the menu is a child of the margin layer, so the card keeps its border and size and the menu floats over its lower part (and what's under it), at the card's width, under the field, or above it when the window has no room below. Measured against `composer-at` (`build/review-editor/at-look.png`, target render `composer-at-target.png`): row 28 high (padding 4 10, 13/20), container padding 5, radius 10, selected fill `#E9ECEF`, hint `#5B636D`, shadow `0 8 24` plus a 1 ring. Chat's menu sets names in mono (`.row .n`, 12), and so does this one; Claude's name takes the margin's green and semibold.
 - The page's `--duo-shadow` (DocumentEditor.tokenCSS) is only a colour, so `box-shadow: var(--duo-shadow)` is invalid: `.duo-mg-pop` (the narrow cut's popover) draws no shadow. Not fixed here; the `@` menu writes its own shadow.
+
+## F-411 · `duo2 browser` on a Google Doc gets the chrome, not the document (gdocs-frame, 2026-10-29)
+
+Isolated Duo (6d9d1e8f, own support folder and socket, `docs.google.com` on its allow list only), a public Doc signed out. Full table: `docs/research/google-docs-in-duo/duo-browser-today.md` §2; output `probes/duo2-verbs.out.txt`.
+- **`read` returns Docs' chrome and the outline's headings, none of the body.** Docs draws text on canvas. `read .kix-canvas-tile-content` is empty. `…/mobilebasic` is an HTML view whose text `read` does get.
+- **`scroll` and `screenshot --full-page` see one screen:** "Scrolled to 0 of 789 px" every time. A Doc scrolls `.kix-appview-editor`, not the document.
+- **`fill` can't type into a Doc:** the keyboard target is a contenteditable *inside* `.docs-texteventtarget-iframe`, a separate document. `click` on that iframe falls back to synthetic, because Docs parks it off screen.
+- **`click` lands real clicks on the canvas and the menus** (39–98 ms).
+- **`print --pdf` makes a picture-only PDF:** 4 pages, 8 images, no fonts.
+- **`go …/export?format=md` downloads nothing.** The export redirects to `doc-…-docstext.googleusercontent.com`, which isn't on the allow list, so the tab blocks it and `back` then fails.
+- **At a 459 pt pane, Docs' outline panel and its "Use Google Docs in Chrome" promo cover the view;** the page sits off to the right (`img/duo-pane-459.png`).
+- **Presence works signed out:** the viewers list reads "7 total viewers: Anonymous Camel, …".
+- **The isolated store is non-persistent (C-32), so a test instance can't stay signed in.** `WKWebsiteDataStore(forIdentifier:)` per support folder would allow it (Q-312).
+
+## F-412 · Docs' annotated-text hook answers any page script in WebKit, with no extension id (gdocs-frame, 2026-10-29)
+
+Bare WKWebView configured as a Duo tab (non-persistent store, Safari token), page world, a public Doc signed out (`probes/main.swift`, `ann*.js`).
+- Docs' boot script defines `_docs_annotate_getAnnotatedText = function(id) {return KX_kixApp.getAnnotatedText(id);}` in every Doc's HTML.
+- `await _docs_annotate_getAnnotatedText('duo-probe')`, and the same with `''`, resolved to `{getText, getAnnotations, getSelection, setSelection}`. This was **without** setting `_docs_annotate_canvas_by_ext`; the SVG `rect[aria-label]` overlay stayed absent.
+- **`getText()`:** the whole doc in under 1 ms (5,104 characters; `\u0003` at offset 0; parts never scrolled into view included).
+- **`getAnnotations()`:** `{link: [{range: {start, end}, value}]}`, all 22 links.
+- **`getSelection()`:** `[{start, end}]`; the caret alone is `{1, 1}`.
+- **`setSelection(381, 396)`:** drew a real selection on the canvas (`img/setselection.png`).
+- **Ready time:** the hook is there about 450 ms after navigation starts.
+- **Not reachable from duo2 today:** it's undefined in Duo's isolated world (`.defaultClient`), so duo2 would need a page-world call.
+- **This qualifies F-410** ("behind an allowlist"): the allowlist may gate the SVG overlay, or apply in Chrome or signed in, but the hook itself wasn't gated here. Signed in and editable is T-02.
+- **Undocumented,** so whether to use it is Geoff's call (Q-309).
+
+## F-413 · Real mouse and key events reach Docs' editor with the app in the background (gdocs-frame, 2026-10-29)
+
+- These were NSEvents sent straight to the web view, as `duo2 browser click` sends them (F-119), in an app that never activated, with a window that was never key.
+- A `leftMouseDown` → 8 × `leftMouseDragged` → `leftMouseUp` drag across "Session History" selected it: `getSelection()` = 381–396.
+- `keyDown`/`keyUp` Shift+→ ×3 then Shift+↓ extended it to 381–419.
+- So a key/type verb and a drag verb would drive Docs as a person does.
+- The off-screen probe window needed WebKit's occlusion detection switched off (`_setWindowOcclusionDetectionEnabled:`), or the page counts as hidden. Duo's own hidden test window draws (F-227).
