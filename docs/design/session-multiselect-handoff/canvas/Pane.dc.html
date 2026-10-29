@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Project sessions pane</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.pane{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;white-space:nowrap;box-sizing:border-box}
+.pane *{box-sizing:border-box}
+.pane .hd{padding:14px 16px 4px}
+.pane .pn{font-weight:600;font-size:14px;line-height:20px}
+.pane .t2{color:#5B636D;overflow:hidden;text-overflow:ellipsis}
+.pane .body{position:relative;overflow:hidden;padding-bottom:6px}
+.pane .sec{padding:12px 16px 4px;font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;display:flex;align-items:center;gap:6px}
+.pane .row{display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;margin:0 8px;border-radius:6px}
+.pane .tint{background:#E8F0FA}
+.pane .sel{background:#E9ECEF}
+.pane .mt{background:#D8DCE1}
+.pane .shT{border-radius:6px 6px 0 0}
+.pane .shM{border-radius:0}
+.pane .shB{border-radius:0 0 6px 6px}
+.pane .gp{margin-top:2px}
+.pane .ftx{font-size:12px;line-height:16px;color:#5B636D;margin-left:10px}
+.pane .nest{margin-left:21px;border-left:1.5px solid #8B939C}
+.pane .nest .row{margin:0 8px 0 3px}
+.pane .kid .row{margin:0 8px 0 24px}
+.pane .grp{display:flex;align-items:center;gap:8px;height:28px;padding:0 8px;margin:0 8px;border-radius:6px}
+.pane .ti{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.pane .b{font-weight:600}
+.pane .tm{color:#5B636D;flex:none}
+.pane .done{color:#5B636D;text-decoration:line-through}
+.pane .dim{color:#5B636D}
+.pane .slot{display:flex;align-items:flex-start;gap:8px;padding:5px 8px;margin:4px 8px 2px;border-radius:6px}
+.pane .gpad{padding-top:5px;display:flex}
+.pane .sl{flex:1;min-width:0}
+.pane .l1{display:flex;align-items:center;gap:6px;height:20px}
+.pane .l2{font-size:12px;line-height:16px;color:#5B636D;display:flex;align-items:center;gap:6px;min-width:0}
+.pane .l2 span{overflow:hidden;text-overflow:ellipsis}
+.pane .rl{height:1px;background:#C9CDD3;margin:6px 16px 2px}
+.pane .more{padding:2px 16px 2px 44px;color:#5B636D;font-size:12px;line-height:18px}
+.pane .mk{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:8px;background:#1F2328;color:#FFFFFF;font:600 10px/16px -apple-system,system-ui,sans-serif;flex:none;letter-spacing:0}
+.pane .cut{position:absolute;left:0;right:0;bottom:0;height:52px;border-top:1.5px dashed #1F2328;background:#FFFFFF;color:#1F2328;font:600 11px/16px -apple-system,system-ui,sans-serif;padding:8px 16px;white-space:normal}
+.pane .ft{border-top:1px solid #C9CDD3;padding:10px 16px}
+.pane .btn{display:inline-flex;align-items:center;height:26px;padding:0 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font-size:12px;line-height:16px;color:#1F2328;flex:none}
+.pane .sp{width:10px;height:10px;flex:none;display:inline-flex}
+.pane .tag{color:#5B636D;flex:0 1 auto;max-width:96px;overflow:hidden;text-overflow:ellipsis}
+.pane .row .ti{flex:0 1 auto}
+.pane .row .tm{margin-left:auto}
+</style>
+</helmet>
+<div class="pane" style="width: {{w}}px">
+<div class="hd"><div class="pn">{{title}}</div><div class="t2">{{goal}}</div></div>
+<div class="body" style="height: {{bodyH}}">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="12">
+<sc-if value="{{r.isSec}}"><div class="sec"><sc-if value="{{r.chevR}}"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M3.8 2.5 6.3 5 3.8 7.5" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if><span>{{r.label}}</span><sc-if value="{{r.hasMk}}"><span class="mk">{{r.mk}}</span></sc-if></div></sc-if>
+<sc-if value="{{r.isRow}}"><div class="{{r.wrap}}"><div class="{{r.cls}}"><dc-import name="Glyph" g="{{r.g}}" hint-size="10px,10px"></dc-import><span class="{{r.tcls}}">{{r.title}}</span><sc-if value="{{r.hasTag}}"><span class="tag">{{r.tag}}</span></sc-if><sc-if value="{{r.pin}}"><svg width="9" height="9" viewBox="0 0 10 10" role="img" aria-label="Keeps running" style="flex: none"><path d="M3.5 1.2 L6.5 1.2 M4.2 1.2 L4.2 4.3 L2.6 6 L7.4 6 L5.8 4.3 L5.8 1.2 M5 6 L5 9" fill="none" stroke="#5B636D" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if><span class="tm">{{r.tm}}</span><sc-if value="{{r.hasMk}}"><span class="mk">{{r.mk}}</span></sc-if></div></div></sc-if>
+<sc-if value="{{r.isSlot}}"><div class="{{r.cls}}"><span class="gpad"><dc-import name="Glyph" g="{{r.g}}" hint-size="10px,10px"></dc-import></span><div class="sl"><div class="l1"><span class="{{r.tcls}}">{{r.title}}</span><sc-if value="{{r.pin}}"><svg width="9" height="9" viewBox="0 0 10 10" role="img" aria-label="Keeps running" style="flex: none"><path d="M3.5 1.2 L6.5 1.2 M4.2 1.2 L4.2 4.3 L2.6 6 L7.4 6 L5.8 4.3 L5.8 1.2 M5 6 L5 9" fill="none" stroke="#5B636D" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if><span class="tm">{{r.tm}}</span><sc-if value="{{r.hasMk}}"><span class="mk">{{r.mk}}</span></sc-if></div><div class="l2"><span style="flex: 1">{{r.sub}}</span><sc-if value="{{r.hasBtn}}"><span class="btn">{{r.btn}}</span></sc-if></div></div></div></sc-if>
+<sc-if value="{{r.isTask}}"><div class="{{r.cls}}"><sc-if value="{{r.chevD}}"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><path d="M2.5 3.8 5 6.3 7.5 3.8" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if><sc-if value="{{r.chevR}}"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><path d="M3.8 2.5 6.3 5 3.8 7.5" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if><sc-if value="{{r.noChev}}"><span class="sp"></span></sc-if><sc-if value="{{r.hand}}"><dc-import name="Glyph" g="hand" hint-size="10px,10px"></dc-import></sc-if><sc-if value="{{r.noHand}}"><span class="sp"></span></sc-if><sc-if value="{{r.done}}"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><rect x="1" y="1" width="8" height="8" rx="2" fill="none" stroke="#5B636D" stroke-width="1.2"></rect><path d="M2.9 5.1 4.4 6.6 7.2 3.5" fill="none" stroke="#5B636D" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if><sc-if value="{{r.open}}"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><rect x="1" y="1" width="8" height="8" rx="2" fill="none" stroke="#1F2328" stroke-width="1.2"></rect></svg></sc-if><span class="{{r.tcls}}">{{r.title}}</span><span class="tm">{{r.tm}}</span><sc-if value="{{r.hasMk}}"><span class="mk">{{r.mk}}</span></sc-if></div></sc-if>
+<sc-if value="{{r.isFold}}"><div class="{{r.cls}}"><sc-if value="{{r.chevD}}"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><path d="M2.5 3.8 5 6.3 7.5 3.8" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if><sc-if value="{{r.chevR}}"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><path d="M3.8 2.5 6.3 5 3.8 7.5" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if><span class="{{r.tcls}}">{{r.title}}</span><span class="tm">{{r.tm}}</span><sc-if value="{{r.hasMk}}"><span class="mk">{{r.mk}}</span></sc-if></div></sc-if>
+<sc-if value="{{r.isNew}}"><div class="grp" style="color: #5B636D"><span class="sp"></span><span style="width: 10px; text-align: center; flex: none">+</span><span class="ti">{{r.title}}</span><sc-if value="{{r.hasMk}}"><span class="mk">{{r.mk}}</span></sc-if></div></sc-if>
+<sc-if value="{{r.isRule}}"><div class="rl"></div></sc-if>
+<sc-if value="{{r.isMore}}"><div class="more">{{r.title}}</div></sc-if>
+</sc-for>
+<sc-if value="{{hasCut}}"><div class="cut">{{cut}}</div></sc-if>
+</div>
+<div class="ft" style="display: flex; align-items: center"><span class="btn">+ New Claude Code session</span><sc-if value="{{hasFt}}"><span class="ftx">{{ft}}</span></sc-if></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"pane":{"editor":null},"$preview":{"width":300,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const demo = { w: 300, title: 'checkout', goal: 'Ship the new checkout by Nov 1', rows: [
+      { k: 'sec', label: 'Needs you · 1' }, { k: 'row', g: 'hand', title: 'Pricing copy review', tm: '4m' },
+      { k: 'sec', label: 'Tasks · 2' }, { k: 'task', chev: 'd', hand: true, title: 'Launch email', tm: 'open · 2' },
+      { k: 'row', in: 'nest', g: 'cw', tint: true, title: 'Draft launch email', tm: 'working' },
+      { k: 'new', title: 'New task' }, { k: 'sec', label: 'Other sessions · 1' },
+      { k: 'fold', chev: 'd', title: 'Open', tm: '1' }, { k: 'row', in: 'kid', g: 'tw', tint: true, title: 'Fix flaky cart test', tm: 'working' }
+    ] };
+    const p = this.props.pane || demo;
+    const rows = (p.rows || []).map((r) => {
+      const k = r.k;
+      let cls = '';
+      if (k === 'row') cls = 'row' + (r.tint ? ' tint' : '') + (r.sel ? ' sel' : '') + (r.mt ? ' mt' : '') + (r.sh === 't' ? ' shT' : r.sh === 'm' ? ' shM' : r.sh === 'b' ? ' shB' : '') + (r.gp ? ' gp' : '');
+      if (k === 'slot') cls = 'slot' + (r.tint ? ' tint' : '') + (r.sel ? ' sel' : '');
+      if (k === 'task' || k === 'fold' || k === 'line') cls = 'grp' + (r.sel ? ' sel' : '');
+      const strong = (k === 'task' || k === 'fold' || k === 'slot') && !r.light;
+      const tcls = 'ti' + (strong ? ' b' : '') + (r.done ? ' done' : '') + (r.dim ? ' dim' : '');
+      return {
+        ...r,
+        isSec: k === 'sec', isRow: k === 'row', isSlot: k === 'slot', isTask: k === 'task' || k === 'line', isFold: k === 'fold',
+        isNew: k === 'new', isRule: k === 'rule', isMore: k === 'more',
+        wrap: r.in === 'nest' ? 'nest' : (r.in === 'kid' ? 'kid' : ''),
+        cls, tcls, tm: r.tm || '', g: r.g || 'ti',
+        chevD: r.chev === 'd', chevR: r.chev === 'r', noChev: !r.chev,
+        hand: !!r.hand, noHand: !r.hand, done: !!r.done, open: !r.done,
+        hasMk: !!r.mk, hasTag: !!r.tag, tag: r.tag || '', hasBtn: !!r.btn, pin: !!r.pin, sub: r.sub || ''
+      };
+    });
+    return { w: p.w || 300, title: p.title, goal: p.goal || '', rows, bodyH: p.h ? p.h + 'px' : 'auto', hasCut: !!p.cut, cut: p.cut || '', hasFt: !!p.ft, ft: p.ft || '' };
+  }
+}
+</script>
+</body>
+</html>

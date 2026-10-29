@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Which lists, and duo2</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.bd{box-sizing:border-box;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif}
+.bd *{box-sizing:border-box}
+.t2{color:#5B636D}
+.cap{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;margin:0 0 8px}
+.card{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;padding:12px 14px}
+.tb{display:grid;grid-template-columns:200px 70px minmax(0,1fr);column-gap:14px}
+.tb > div{padding:6px 0;border-top:1px solid #C9CDD3;font-size:12px;line-height:18px}
+.tb .h{border-top:0;font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;padding-top:0}
+.y{font-weight:600}
+code{font:12px/18px ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace}
+.cl{display:grid;grid-template-columns:330px minmax(0,1fr);column-gap:14px}
+.cl > div{padding:5px 0;border-top:1px solid #C9CDD3;font-size:12px;line-height:18px}
+</style>
+</helmet>
+<div class="bd" style="width: 1180px; height: 880px; padding: 28px 32px; display: flex; flex-direction: column; gap: 16px">
+<div>
+<h1 style="margin: 0; font: 600 20px/26px -apple-system, system-ui, sans-serif">Which lists, and duo2</h1>
+<p class="t2" style="margin: 4px 0 0; font-size: 12px; line-height: 18px">The same clicks, look and menu wherever sessions are listed as rows. [P]</p>
+</div>
+<div class="card">
+<div class="cap">Lists</div>
+<div class="tb">
+<div class="h">List</div><div class="h">Selects</div><div class="h">Notes</div>
+<div>A project's session pane</div><div class="y">Yes</div><div>Every section: PINNED and the director's slot, NEEDS YOU, OPEN, a task's rows, OTHER SESSIONS' time groups, Archived (its menu offers Unarchive n and Delete n).</div>
+<div>Home's session pane</div><div class="y">Yes</div><div>The same view as a project's.</div>
+<div>All projects › List (DL-142)</div><div class="y">Yes</div><div>Across projects: the task items dim (board 02).</div>
+<div>All projects' action column</div><div class="y">Yes</div><div>Needs you and ready for review, across projects.</div>
+<div>The idle list (“21 idle, resumable ›”)</div><div class="y">Yes</div><div>A plain click resumes, as today; ⇧ and ⌘ select without resuming. Its menu adds Archive n and Delete n.</div>
+<div>Map tiles' session rows</div><div>No</div><div>A tile is a project's card; its rows open. ⇧- and ⌘-click on them do nothing rather than open (Q-b).</div>
+<div>Console and Home tab strips</div><div>No</div><div>Tabs, not a list (DL-225 has their own menus).</div>
+<div>Search results, task board cards</div><div>No</div><div>Results pick one; a card's rows belong to its task.</div>
+</div>
+</div>
+<div class="card">
+<div class="cap">duo2 (DL-71)</div>
+<div class="cl">
+<div><code>duo2 session delete &lt;id&gt; &lt;id&gt;…</code></div><div>One question in Duo for all of them, as the sheet. Ids it can't find, or that run outside Duo, are named and left out.</div>
+<div><code>duo2 session archive | unarchive &lt;id&gt;…</code></div><div>All at once; one <code>duo2 undo</code>.</div>
+<div><code>duo2 session park &lt;id&gt;…</code></div><div>Parks those it can; says why for the rest.</div>
+<div><code>duo2 session move &lt;id&gt;… --to &lt;project&gt;</code></div><div>Move to Project.</div>
+<div><code>duo2 task add &lt;task&gt; &lt;session&gt;…</code></div><div>Add to Task.</div>
+<div><code>duo2 task make &lt;session&gt;…</code></div><div>Make a Task from several.</div>
+<div><code>duo2 view select &lt;id&gt;… | --add | --all | --clear</code></div><div>The selection itself, in the list in front (the project's pane, or All projects' List). <code>duo2 view select</code> alone prints it; “what I selected” reads it.</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1180,"height":880}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
