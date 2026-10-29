@@ -144,17 +144,19 @@
           "word": "about",
           "offset": 2.5
         },
-        "in": "video-rv-compose-onetap",
+        "in": "video-rv-compose-onetap-row1",
         "wipe": {
-          "state": "video-rv-compose-onetap",
+          "state": "video-rv-compose-onetap-row1",
           "on": {
             "on": "video.rv.composer.field",
             "y0": 0,
             "y1": 0.5
           },
           "dur": 0.8,
-          "chars": 26
-        }
+          "chars": 22
+        },
+        "state": "video-rv-compose-onetap-row1",
+        "stateAfter": 0.8
       },
       {
         "id": "type-comment-row2",
@@ -172,7 +174,7 @@
             "y1": 1
           },
           "dur": 0.7,
-          "chars": 23
+          "chars": 27
         },
         "state": "video-rv-compose-onetap",
         "stateAfter": 0.7
@@ -352,17 +354,19 @@
           "word": "mention",
           "offset": 1.2
         },
-        "in": "video-rv-compose-glare",
+        "in": "video-rv-compose-glare-row1",
         "wipe": {
-          "state": "video-rv-compose-glare",
+          "state": "video-rv-compose-glare-row1",
           "on": {
             "on": "video.rv.composer.field",
             "y0": 0,
             "y1": 0.5
           },
           "dur": 1.3,
-          "chars": 30
-        }
+          "chars": 20
+        },
+        "state": "video-rv-compose-glare-row1",
+        "stateAfter": 1.3
       },
       {
         "id": "type-claude-row2",
@@ -380,7 +384,7 @@
             "y1": 1
           },
           "dur": 1.3,
-          "chars": 30
+          "chars": 40
         },
         "state": "video-rv-compose-glare",
         "stateAfter": 1.3

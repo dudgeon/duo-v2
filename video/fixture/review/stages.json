@@ -14,7 +14,9 @@
  },
  "comments": {
   "oneTap": "Lena, can you mock the one-tap fix for Thursday?",
-  "claude": "@claude can you make this one testable? Denise's feedback is in research/feedback."
+  "claude": "@claude can you make this one testable? Denise's feedback is in research/feedback.",
+  "oneTapRow1": "Lena, can you mock the",
+  "claudeRow1": "@claude can you make"
  },
  "glareEdit": {
   "old_string": "Warn about glare before the photo is taken, and suggest opening the door.",

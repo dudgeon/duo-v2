@@ -11,10 +11,10 @@ import WebKit
 extension VideoTargets {
     nonisolated static let rvScreens = [
         // Comments: the margin, a new comment, Close and Keep.
-        "video-rv-open", "video-rv-sel-onetap", "video-rv-compose-onetap-empty", "video-rv-compose-onetap-blank", "video-rv-compose-onetap", "video-rv-commented",
+        "video-rv-open", "video-rv-sel-onetap", "video-rv-compose-onetap-empty", "video-rv-compose-onetap-blank", "video-rv-compose-onetap-row1", "video-rv-compose-onetap", "video-rv-commented",
         "video-rv-c1-active", "video-rv-closed",
         // @claude: the comment, the pill, Post, the turn in the chat, Claude's edit and reply.
-        "video-rv-sel-glare", "video-rv-compose-glare-empty", "video-rv-compose-glare-blank", "video-rv-compose-glare", "video-rv-sent", "video-rv-working", "video-rv-replied",
+        "video-rv-sel-glare", "video-rv-compose-glare-empty", "video-rv-compose-glare-blank", "video-rv-compose-glare-row1", "video-rv-compose-glare", "video-rv-sent", "video-rv-working", "video-rv-replied",
         // Suggest Edits: on, Sam's change, accept one, reject one.
         "video-rv-suggest-on", "video-rv-typed", "video-rv-hover-s1", "video-rv-accepted", "video-rv-hover-s2", "video-rv-rejected",
         // Markup.
@@ -27,7 +27,7 @@ extension VideoTargets {
         static func of(_ screen: String) -> RV {
             switch String(screen.dropFirst("video-rv-".count)) {
             case "commented", "c1-active": return .init(stage: "commented")
-            case "closed", "sel-glare", "compose-glare-empty", "compose-glare-blank", "compose-glare": return .init(stage: "closed")
+            case "closed", "sel-glare", "compose-glare-empty", "compose-glare-blank", "compose-glare-row1", "compose-glare": return .init(stage: "closed")
             case "sent": return .init(stage: "asked", chat: "chat-rv-sent", delivery: .sent)
             case "working": return .init(stage: "asked", chat: "chat-rv-working", delivery: .replying, working: true)
             case "replied": return .init(stage: "replied-before-edit", chat: "chat-rv-replied", delivery: .replied)
@@ -88,12 +88,14 @@ extension VideoTargets {
         case "sel-onetap": return settle + ["video:rv-select=oneTap"] + measure
         case "compose-onetap-empty": return settle + ["video:rv-select=oneTap", "video:rv-compose", "wait:0.4"] + measure
         case "compose-onetap-blank": return settle + ["video:rv-select=oneTap", "video:rv-compose", "wait:0.4", "video:rv-blank"] + measure
+        case "compose-onetap-row1": return settle + ["video:rv-select=oneTap", "video:rv-compose", "wait:0.4", "video:rv-type=oneTapRow1"] + measure
         case "compose-onetap": return settle + ["video:rv-select=oneTap", "video:rv-compose", "wait:0.4", "video:rv-type=oneTap"] + measure
         case "commented": return settle + ["review-active:c3"] + measure
         case "c1-active": return settle + ["review-active:c1"] + measure
         case "sel-glare": return settle + ["video:rv-select=glare"] + measure
         case "compose-glare-empty": return settle + ["video:rv-select=glare", "video:rv-compose", "wait:0.4"] + measure
         case "compose-glare-blank": return settle + ["video:rv-select=glare", "video:rv-compose", "wait:0.4", "video:rv-blank"] + measure
+        case "compose-glare-row1": return settle + ["video:rv-select=glare", "video:rv-compose", "wait:0.4", "video:rv-type=claudeRow1"] + measure
         case "compose-glare": return settle + ["video:rv-select=glare", "video:rv-compose", "wait:0.4", "video:rv-type=claude"] + measure
         case "sent", "working": return settle + ["review-active:c4"] + measure
         case "replied": return settle + ["video:rv-claude-edit", "wait:0.8", "review-active:c4"] + measure

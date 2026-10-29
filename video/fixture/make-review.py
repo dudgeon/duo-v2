@@ -107,7 +107,9 @@ json.dump({
     "$note": "make-review.py writes this; VideoTargets+Review.swift reads it. Each state's PRD stage, the anchors' texts, the clock.",
     "day": DAY, "sent": "09:52",
     "anchors": {"goal3": "under 15", "goal2": GOAL2_OLD, "heard": HEARD, "unsure": UNSURE, "oneTap": ONE_TAP, "glare": GLARE, "glareNew": GLARE_NEW, "speed": SPEED},
-    "comments": {"oneTap": SAM_ONE_TAP, "claude": SAM_CLAUDE},
+    "comments": {"oneTap": SAM_ONE_TAP, "claude": SAM_CLAUDE,
+                 # The words on the field's first row (it wraps there at the margin's width): the typing wipe's halfway state.
+                 "oneTapRow1": "Lena, can you mock the", "claudeRow1": "@claude can you make"},
     "glareEdit": {"old_string": GLARE, "new_string": GLARE_NEW},
 }, open(os.path.join(out, "stages.json"), "w", encoding="utf-8"), indent=1, ensure_ascii=False)
 
