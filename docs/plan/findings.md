@@ -4340,3 +4340,19 @@ Research for DL-236 (8), "the things the users should feel familiar with". Googl
 - **Popover, not part of the card** (director's review): the menu is a child of the margin layer, so the card keeps its border and size and the menu floats over its lower part (and what's under it), at the card's width, under the field, or above it when the window has no room below. Measured against `composer-at` (`build/review-editor/at-look.png`, target render `composer-at-target.png`): row 28 high (padding 4 10, 13/20), container padding 5, radius 10, selected fill `#E9ECEF`, hint `#5B636D`, shadow `0 8 24` plus a 1 ring. Chat's menu sets names in mono (`.row .n`, 12), and so does this one; Claude's name takes the margin's green and semibold.
 - The page's `--duo-shadow` (DocumentEditor.tokenCSS) is only a colour, so `box-shadow: var(--duo-shadow)` is invalid: `.duo-mg-pop` (the narrow cut's popover) draws no shadow. Not fixed here; the `@` menu writes its own shadow.
 - **Stage 2, people:** `atPeople(parseReview(doc), self)` reads the names from comment and suggestion signatures and `@name` mentions in their text (`(^|\s)@name`, so an email names nobody; none from code, which `parseReview` skips), sorts by the comment's date, then later in the file, then a signer before one mentioned in the same comment, and keeps one entry per lower-cased name, spelled as last written, leaving out Claude and the name you sign with. A person's tag is text: `margin.js` draws any `@name` that isn't Claude semibold (`.duo-mg-mention`, Q-308), and every routing test still reads `@claude\b` only. Scripted: cases 7c of `check-review-editor.sh` (the menu is Claude, lena, Sam; `@s` filters to Sam; Tab writes `@lena` and Post sends nothing), and `test/atmenu.test.mjs` for the names, order, case dedupe and non-routing. Capture `build/review-editor/at-people.png`.
+## F-383 · Where Duo drifts without anyone noticing (recurring-jobs study, 2026-10-28)
+- Counted on origin/main from 09-28 to 10-28 (1,050 commits, 31 tags; the full counts are in `docs/research/recurring-jobs.md` §1).
+- `docs/design/README.md:29` still says chat mode is "not built". The 10-12 codebase review flagged that line, and it was still there 16 days later.
+- About 130 of 207 Q rows read open, and some of them already carry their answer in the notes (Q-167, Q-223, Q-229, Q-240; a first count also named Q-43 and Q-47, which are in fact closed).
+- 38 stand-in questions are still open; the oldest is Q-30, open for 24 days.
+- 24 task notes say `in-progress`, 19 of them with nothing after 10-20, several for work shipped in 0.2.18.
+- The README is silent on a dozen features shipped from 0.2.18 to 0.2.20.
+- No performance budget run is recorded after 10-12, and C-79's idle burn was found by a one-off review rather than a budget check.
+- There are 43 work trees.
+- Three CLI-version breaks were found in the field: F-176, F-306 and F-363.
+- What is guarded mechanically (duo2.md parity, the generated tokens, the video's `--check`) barely drifted. Drift happens where no brief or gate names the doc.
+
+## F-384 · What recurring maintenance jobs last elsewhere (recurring-jobs study, 2026-10-28)
+- Sources are in `docs/research/recurring-jobs.md` §2: GitHub Agentic Workflows, Codex automations, Google SRE, Dependabot and Renovate guidance, Airtable's flaky-test digest, the stale-bot critiques, launch tiers, fitness functions and living documentation.
+- The jobs teams keep share five traits: they run on a schedule; they write one output and stay silent when clean; they report while a person acts; they are narrow and capped; and they turn every rule that can be written down into a mechanical check instead of an LLM's opinion.
+- What gets muted or abandoned: broad AI reviewers, per-event bots, daily reports that repeat the same item, and auto-closing stale bots.
