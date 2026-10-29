@@ -39,6 +39,7 @@ Write `build/release/<version>-notes.md` (beside the output folder, not inside i
 - **Requirements**: macOS 26 or later, Apple Silicon (until Universal builds are decided), Claude Code installed.
 - **Install**: open the DMG and drag Duo to Applications. The `duo2` command is at `Duo.app/Contents/Helpers/duo2`.
 - Known gaps worth a warning (open C-n rows that bite users).
+- **A video or picture goes with the feature it shows** (Geoff, 2026-10-29): link it from that feature's bullet, e.g. `**Review in Markdown** ([watch it](<asset url>)).`. Never put it at the top of the notes, and never describe the asset itself (its length, who narrates it, how it was made): that isn't for the user.
 
 ## 4. Run it
 
