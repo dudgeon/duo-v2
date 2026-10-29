@@ -37,8 +37,8 @@ extension AppModel {
         else { done(FileManager.default.contents(atPath: url.path).map { String(decoding: $0, as: UTF8.self) }) }
     }
 
-    /// Write `new` where `old` was: through the editor when the file is open, else to disk.
-    func reviewWrite(_ url: URL, old: String, new: String, plain: Bool, _ done: @escaping @MainActor (String?) -> Void) {
+    /// Write `new` where `old` was: through the editor when the file is open, else to disk. `thread`: a review verb's change, which Suggest Edits never turns into a suggestion (F-398).
+    func reviewWrite(_ url: URL, old: String, new: String, plain: Bool, thread: Bool = false, _ done: @escaping @MainActor (String?) -> Void) {
         guard new != old else { return done(nil) }
         if let e = isOpenInEditor(url) {
             if let why = e.readOnlyReason { return done("open in Duo but read-only (\(why)); leave it, or ask the user") }
@@ -46,7 +46,7 @@ extension AppModel {
             if plain {
                 e.run("return duo.applyPlain(b, t)", ["b": old, "t": new]) { ok in done(ok as? Bool == true ? nil : "the text changed while Duo was writing; try again") }
             } else {
-                e.run("return duo.agentEdit(e, c)", ["e": [Any](), "c": new]) { v in
+                e.run("return duo.agentEdit(e, c, t)", ["e": [Any](), "c": new, "t": thread]) { v in
                     let r = (v as? [String: Any])?["result"] as? String
                     done(r == "applied" || r == "unchanged" ? nil : ((v as? [String: Any])?["reason"] as? String ?? "couldn't apply the change"))
                 }
@@ -89,7 +89,7 @@ extension AppModel {
             @MainActor func edit(_ make: () throws -> Review.Result, extra: [String: Any] = [:]) {
                 do {
                     let r = try make()
-                    self.reviewWrite(url, old: text, new: r.text, plain: false) { err in
+                    self.reviewWrite(url, old: text, new: r.text, plain: false, thread: true) { err in
                         if let err { return done(.fail(err)) }
                         done(.ok(r.summary + (self.isOpenInEditor(url) != nil ? " The user sees it in the editor; it autosaves." : ""), ["file": name, "id": r.id].merging(extra) { $1 }))
                     }
