@@ -2684,7 +2684,7 @@ window.duo = {
     for (const k of (keys || "").split("+").filter(Boolean)) { await wait(120); if (map[k]) f.dispatchEvent(new KeyboardEvent("keydown", { ...map[k], bubbles: true, cancelable: true })); }
     await wait(200);
     const g = document.querySelector(".duo-mg-composer .duo-mg-field"), m = document.querySelector(".duo-mg-at");
-    return "field=" + JSON.stringify(g ? g.value : null) + " menu=" + (m ? m.textContent : "closed");
+    return "field=" + JSON.stringify(g ? g.value : null) + " menu=" + (m ? m.textContent : "closed") + (m ? " popover=" + !m.closest(".duo-mg-card") + " box=" + [m, g.closest(".duo-mg-card")].map((e) => { const r = e.getBoundingClientRect(); return [r.left, r.top, r.width, r.height].map(Math.round).join(","); }).join(" card=") : "");
   },
   hiddenCount: () => document.querySelectorAll(".cm-line").length,
 };

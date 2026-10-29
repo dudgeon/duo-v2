@@ -44,7 +44,11 @@ export function attachAtMenu(field, card, onInput) {
   let menu = null, st = null;   // st: { start, items, sel }
   const close = () => { if (menu) menu.remove(); menu = null; st = null; };
   const draw = () => {
-    if (!menu) { menu = el("div", "duo-mg-at"); menu.dataset.atMenu = "1"; card.append(menu); }
+    // A popover, not part of the card (composer-at): a child of the margin layer, floating over the card's lower part
+    // and whatever is under it, so the card keeps its border and size.
+    const layer = card.parentElement;
+    if (!layer) return;
+    if (!menu) { menu = el("div", "duo-mg-at"); menu.dataset.atMenu = "1"; menu.style.visibility = "hidden"; layer.append(menu); }
     menu.replaceChildren();
     st.items.forEach((it, i) => {
       const row = el("div", "duo-mg-at-row" + (i === st.sel ? " duo-mg-at-sel" : ""));
@@ -53,7 +57,20 @@ export function attachAtMenu(field, card, onInput) {
       row.addEventListener("mousedown", (e) => { e.preventDefault(); insert(it); });
       menu.append(row);
     });
-    menu.style.top = (field.offsetTop + field.offsetHeight + 4) + "px";
+    // Under the field, at the card's width; above it when the window has no room below. Again next frame: the margin
+    // places the card (its width, its left) after the input that opened the menu.
+    const m = menu;
+    const position = () => {
+      if (!m.isConnected) return;
+      const lr = layer.getBoundingClientRect(), cr = card.getBoundingClientRect(), fr = field.getBoundingClientRect();
+      m.style.left = (cr.left - lr.left) + "px";
+      m.style.width = cr.width + "px";
+      const h = m.offsetHeight;
+      m.style.top = ((fr.bottom + 4 + h > window.innerHeight && fr.top - 4 - h > 0) ? fr.top - lr.top - 4 - h : fr.bottom - lr.top + 4) + "px";
+      m.style.visibility = "";
+    };
+    position();
+    requestAnimationFrame(position);
   };
   const refresh = () => {
     const q = atQuery(field.value, field.selectionStart);
@@ -82,9 +99,10 @@ export function attachAtMenu(field, card, onInput) {
   return { close, refresh };
 }
 
+// The popover's shadow and ring are composer-at's; the page's --duo-shadow is only the colour.
 export const atTheme = {
-  ".duo-mg-at": { position: "absolute", left: "8px", right: "8px", zIndex: "4", boxSizing: "border-box", backgroundColor: "var(--duo-pane)", borderRadius: "10px", boxShadow: "var(--duo-shadow)", padding: "5px" },
-  ".duo-mg-at-row": { display: "flex", alignItems: "center", gap: "8px", padding: "4px 10px", borderRadius: "6px", font: "12px/20px -apple-system, BlinkMacSystemFont, sans-serif", cursor: "default" },
+  ".duo-mg-at": { position: "absolute", zIndex: "5", boxSizing: "border-box", backgroundColor: "var(--duo-pane)", borderRadius: "10px", boxShadow: "0 8px 24px var(--duo-shadow), 0 0 0 1px color-mix(in srgb, var(--duo-text) 8%, transparent)", padding: "5px" },
+  ".duo-mg-at-row": { display: "flex", alignItems: "center", gap: "8px", padding: "4px 10px", borderRadius: "6px", font: "13px/20px -apple-system, BlinkMacSystemFont, sans-serif", cursor: "default" },
   ".duo-mg-at-sel": { backgroundColor: "var(--duo-selected)" },
   ".duo-mg-at-name": { fontFamily: "'SF Mono', ui-monospace, monospace", fontSize: "12px" },
   ".duo-mg-at-hint": { color: "var(--duo-text2)", marginLeft: "auto", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: "0" },

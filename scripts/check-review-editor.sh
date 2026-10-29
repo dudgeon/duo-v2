@@ -159,6 +159,10 @@ fresh_c at-open
 run at-open "${open}$A,wait:3,review-at:planned~for~early~November=>Please~@cl=>"
 expect "@ menu: typing @cl opens the menu with Claude" $out/at-open.log has "menu=claude"
 expect "@ menu: the field keeps what was typed" $out/at-open.log has 'field="Please @cl"'
+expect "@ menu: it floats, not a part of the card" $out/at-open.log has "popover=true"
+fresh at-look
+run at-look "${open}$A,wait:3,review-at:early~November=>Please~@cl=>"
+expect "@ menu: on a clean margin too" $out/at-look.log has "menu=claude"
 fresh_c at-tab
 run at-tab "${open}$A,wait:3,review-at:planned~for~early~November=>Please~@=>down+tab"
 expect "@ menu: Tab inserts @claude" $out/at-tab.log has 'field="Please @claude " menu=closed'
