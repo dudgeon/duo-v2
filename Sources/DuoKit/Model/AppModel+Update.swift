@@ -129,12 +129,9 @@ extension UpdateCheck {
         return q
     }
 
-    /// The most bullets the question shows; the rest become "and n more".
-    public static let notesCap = 6
-
     /// A release's Markdown notes as the question's lines: one `•` line per bullet under
-    /// "What's new" (the bold lead when it has one, else the bullet's first sentence), at most
-    /// `notesCap`, then "and n more". Group titles, prose and sections after it (Requirements,
+    /// "What's new" (the bold lead when it has one, else the bullet's first sentence), all of them:
+    /// the question's box scrolls (DL-249). Group titles, prose and sections after it (Requirements,
     /// Install) are left out. Notes with no bullets give no lines, so the question reads as before.
     public static func notesLines(_ md: String) -> [String] {
         var bullets: [String] = []
@@ -161,8 +158,7 @@ extension UpdateCheck {
             if t.hasSuffix(".") { t.removeLast() }
             if !t.isEmpty { bullets.append("• " + t + ".") }
         }
-        guard bullets.count > notesCap else { return bullets }
-        return Array(bullets.prefix(notesCap)) + ["and \(bullets.count - notesCap) more"]
+        return bullets
     }
 
     /// `duo2 update`'s answer: what's newest, its releases page, and whether installing in place
