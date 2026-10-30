@@ -178,12 +178,12 @@ expect "@ menu: Return inserts, then Post writes the signed @claude comment" $A 
 expect "@ menu: and the turn reaches the session" $out/at-post.log has "review-typed: <paste>@claude comment in"
 expect "@ menu: with the comment as data" $out/at-post.log has "Please @claude"
 # 7c. people in the @ menu (comment-at stage 2, DL-251): the names in the document below Claude, newest first (Sam as last
-#     written, once; not geoff, the person at the keyboard); a person's tag is text and sends nothing.
+#     written, once; geoff, the person at the keyboard, is listed too, Q-308); a person's tag is text and sends nothing.
 pdoc=$'---\ntitle: Offline mode\n---\n\n# Offline mode\n\nLaunch is {==planned for early November==}{>>@sam 2026-10-26 #c1: when?<<}{>>@lena 2026-10-28 #c1.1: @Sam it slipped<<} and the {==sync==}{>>@geoff 2026-10-27 #c2: ok<<} engine retries.\n\nA new anchor here.\n'
 fresh_p() { fresh $1; print -rn -- "$pdoc" > $A; }
 fresh_p at-people
 run at-people "${open}$A,wait:3,review-at:A~new~anchor=>Hi~@=>"
-expect "@ people: Claude first, then the people newest first, each once" $out/at-people.log has "menu=claudeto a sessionlenaSam popover=true"
+expect "@ people: Claude first, then the people newest first, each once" $out/at-people.log has "menu=claudeto a sessionlenaSamgeoff popover=true"
 fresh_p at-people-s
 run at-people-s "${open}$A,wait:3,review-at:A~new~anchor=>Hi~@s=>"
 expect "@ people: typing filters them" $out/at-people-s.log has 'field="Hi @s" menu=Sam popover=true'

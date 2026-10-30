@@ -3036,13 +3036,13 @@
    "id": "tab-drag-doc",
    "group": "In checkout: documents",
    "title": "Drag a document tab to reorder it in the right pane",
-   "what": "Document tabs reorder by dragging within the right pane; Move Tab Left / Right are on the tab menu and `duo2 view tab-move` (DL-220).",
+   "what": "Drag a document tab along the right pane's strip with the pointer; it follows, slides the others aside and lands where you let go (DL-220).",
    "steps": [
-    "With several documents open, drag one tab left past its neighbour and release; drag another to the far right.",
-    "Right-click a tab ▸ Move Tab Left, then Move Tab Right.",
-    "Try to drag a tab in front of Project; click a tab without dragging; `duo2 view tab-move left`."
+    "With the four documents open in the right pane, press on `research.md` and drag it left past `prd.md`, then release.",
+    "Drag `checkout.html` to the far right and release; drag another tab to the left until it meets Project.",
+    "Click a tab without dragging; click the editor and type a letter after a drag."
    ],
-   "expect": "The lifted tab follows the pointer and the others slide aside; it lands where released and stays selected. A plain click still selects. Project is always first and nothing passes it. A drag stays inside the strip. Not designed (Q-210): the lifted tab is drawn in its own look (an unselected tab lifts in a quieter text colour); no chord for Move Tab; Project and group pages are fixed. C-96: the real-pointer drag was only proved by the harness and captures, so this walk is its first real test.",
+   "expect": "The tab follows the pointer all the way, the others slide aside, and it lands where released and stays selected. Nothing passes Project, which stays first. A plain click still selects. Nothing is typed into the editor by a drag. Not designed (Q-210): the lifted tab's look. C-96: the first real-pointer test of this.",
    "ref": "DL-220, ENH-042, Q-210, C-96, F-333",
    "commit": "8d3bb5ddc34009e4fdbebec62b4c8727a25f9068",
    "alsoCommits": [],
@@ -3059,7 +3059,7 @@
     "result": "partial",
     "did": [
      "`duo2 view tab-move left|right|<n> <doc> --pane right` moved documents along the right strip (to places 3, 1, 2 and 1 of 5); `doc tabs` showed the new order each time; Project stayed first, and `tab-move left Project` was refused (`no tab 'Project' that moves`).",
-     "`duo2 walk setup` ran against an isolated Duo built from 0a77556 (DUO_SOCKET and DUO_TOKEN checked non-empty)."
+     "`duo2 walk setup tab-drag-doc` ran to Ready against an isolated Duo (DUO_SOCKET and DUO_TOKEN both set; the session setup timed out once and passed on a rerun)."
     ],
     "didnt": [
      "A real pointer drag, the lift look and the tab menu's Move Tab Left/Right (C-96)."
@@ -3067,7 +3067,7 @@
     "human": [
      "Drag a document tab; use Move Tab Left/Right in the menu."
     ],
-    "at": "2026-10-18"
+    "at": "2026-10-30"
    }
   },
   {
@@ -5057,19 +5057,54 @@
   {
    "id": "tab-drag-console",
    "group": "In checkout: shells and tabs",
-   "title": "Drag shell and session tabs to reorder them in the console",
-   "what": "Shell tabs and live session tabs reorder along the console strip; a session tab's menu ends with Move Tab Left / Right (DL-220).",
+   "title": "Drag a shell tab along the console strip",
+   "what": "A shell tab follows the pointer along the console strip and lands where dropped (DL-220).",
    "steps": [
-    "Open two shells (⌘T twice) and a running session; drag a shell tab left past the other, then the session tab to the first place.",
-    "Right-click the session tab ▸ Move Tab Left / Right (they sit after Close Tab); right-click a shell tab.",
-    "Quit and reopen Duo."
+    "In `checkout`, find the two new shell tabs (`shell new` made them). Drag one left past the other and release.",
+    "Drag it to the far right of the strip and release; click it once without dragging.",
+    "Quit and reopen Duo (`open-duo.sh`)."
    ],
-   "expect": "Tabs slide as they're dragged and land where released; the order survives a relaunch. Session tabs keep their own system drag (so dragging one to a task or project still works) and reorder through the strip as a drop target. A shell tab has no menu, so only drag and `duo2 view tab-move` move it. Not designed (Q-210): Move Tab Left / Right sit at the end of the session tab's menu; Home's tabs don't move; no chord; no moving a tab across panes or projects.",
+   "expect": "The shell tab follows the pointer, the others slide aside, and it lands where released. A plain click still selects it. Nothing is typed into the terminal by a drag. The order survives a relaunch. A shell tab has no menu, so drag and `duo2 view tab-move` are its only ways. Not designed (Q-210): the lifted look; Home's tabs don't move. C-96.",
    "ref": "DL-220, ENH-042, Q-210, C-96, F-333",
    "commit": "8d3bb5ddc34009e4fdbebec62b4c8727a25f9068",
    "alsoCommits": [],
    "workMac": "small",
-   "workMacWhy": "Needs two shells and a running session",
+   "workMacWhy": "Needs two shells, made by hand in a minute",
+   "setup": [
+    "open checkout",
+    "shell new",
+    "shell new"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup tab-drag-console` ran to Ready against an isolated Duo (DUO_SOCKET and DUO_TOKEN both set; the session setup timed out once and passed on a rerun)."
+    ],
+    "didnt": [
+     "A real pointer drag (C-96); split from the combined card."
+    ],
+    "human": [
+     "Drag a shell tab along the strip; relaunch."
+    ],
+    "at": "2026-10-30"
+   }
+  },
+  {
+   "id": "tab-drag-session",
+   "group": "In checkout: shells and tabs",
+   "title": "Drag a session tab along the console strip",
+   "what": "A live session's tab reorders along the console strip by drag, and through Move Tab Left / Right (DL-220).",
+   "steps": [
+    "With a running session and the shells in `checkout`, drag the session tab to the first place and release.",
+    "Drag it back to the right of the shells.",
+    "Right-click the session tab ▸ Move Tab Left, then Move Tab Right (after Close Tab)."
+   ],
+   "expect": "The session tab follows the pointer, the others slide aside, and it lands where released. A plain click still selects it. Its menu's Move Tab Left / Right do the same by one place. Session tabs keep their own system drag (DL-147), reordering through the strip as a drop target. Not designed (Q-210): Move Tab placement at the menu's end; no chord. C-96.",
+   "ref": "DL-220, ENH-042, Q-210, C-96, F-333",
+   "commit": "8d3bb5ddc34009e4fdbebec62b4c8727a25f9068",
+   "alsoCommits": [],
+   "workMac": "small",
+   "workMacWhy": "Needs a running session and a couple of shells",
    "setup": [
     "open checkout",
     "shell new",
@@ -5079,28 +5114,30 @@
    "claude": {
     "result": "partial",
     "did": [
-     "`duo2 walk setup` ran against an isolated Duo built from 0a77556 (DUO_SOCKET and DUO_TOKEN checked non-empty).",
-     "`duo2 view tab-move` moved a session tab among shell tabs in the middle pane (place 1 and 2 of 7) and said `already the first tab` at the edge."
+     "`duo2 view tab-move` moved a session tab among shell tabs (2026-10-18).",
+     "`duo2 walk setup tab-drag-session` ran to Ready against an isolated Duo (DUO_SOCKET and DUO_TOKEN both set; the session setup timed out once and passed on a rerun)."
     ],
     "didnt": [
-     "Real drags and the tab menu; a relaunch (not run)."
+     "A real pointer drag and the tab menu (C-96)."
     ],
     "human": [
-     "Drag a shell and a session tab; Move Tab Left/Right; quit and reopen."
+     "Drag the session tab; Move Tab Left/Right."
     ],
-    "at": "2026-10-18"
+    "at": "2026-10-30"
    }
   },
   {
    "id": "tab-drop-on-task",
    "group": "In checkout: shells and tabs",
    "title": "A session tab dropped on a task still moves the session",
-   "what": "Reordering must not break DL-147's drag of a session tab onto a task or project.",
+   "what": "Drag a session tab out of the console strip onto a task in the sidebar: the session joins the task and the strip's order is unchanged (DL-220, DL-147).",
    "steps": [
-    "Open the project's task and a running session; drag the session's console tab onto the task row in the sidebar, passing over the strip on the way.",
-    "Look at the task's sessions and at the strip's order."
+    "Open a task in the sidebar and keep the running session open (the setup does).",
+    "Press on the session's console tab and drag it onto the task's row, passing over the other tabs on the way; release on the task.",
+    "Look under the task for the session, and at the strip's order.",
+    "Drag the session tab onto the editor and release."
    ],
-   "expect": "The session joins the task (its row appears under it) and the console strip's order is unchanged; passing over the strip on the way doesn't leave the tab moved. A session tab dropped on the editor types its drag text (`duo-session:<id>`), as before DL-220.",
+   "expect": "The session joins the task (its row appears under it) and the console strip's order is unchanged; passing over the strip doesn't leave the tab moved. Dropped on the editor, it types its drag text (`duo-session:<id>`), as before DL-220. C-96.",
    "ref": "DL-220, DL-147, C-96",
    "commit": "8d3bb5ddc34009e4fdbebec62b4c8727a25f9068",
    "alsoCommits": [],
@@ -5108,12 +5145,13 @@
    "workMacWhy": "Needs a task and a running session",
    "setup": [
     "open checkout",
+    "shell new",
     "session-running checkout"
    ],
    "claude": {
     "result": "partial",
     "did": [
-     "`duo2 walk setup` ran against an isolated Duo built from 0a77556 (DUO_SOCKET and DUO_TOKEN checked non-empty)."
+     "`duo2 walk setup tab-drop-on-task` ran to Ready against an isolated Duo (DUO_SOCKET and DUO_TOKEN both set; the session setup timed out once and passed on a rerun)."
     ],
     "didnt": [
      "The drag onto a task needs a real pointer (C-96)."
@@ -5121,7 +5159,7 @@
     "human": [
      "Drag the session tab onto a task and check the strip's order."
     ],
-    "at": "2026-10-18"
+    "at": "2026-10-30"
    }
   },
   {
