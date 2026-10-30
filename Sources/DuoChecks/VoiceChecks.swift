@@ -18,6 +18,10 @@ import Foundation
     check(M.next(.failed("x"), .dismiss) == .idle, "voice: a failure line is dismissed")
     check(M.next(.idle, .denied) == .denied && M.next(.denied, .start) == .asking, "voice: denied, then a press asks again")
     check(M.next(.idle, .restricted) == .restricted, "voice: restricted")
+    // An isolated Duo never asks for the mic, unless launched with DUO_VOICE_LIVE=1 for a hands-on test
+    check(VoiceInput.isolatedWithout([:], isolated: true), "voice: an isolated Duo doesn't ask")
+    check(!VoiceInput.isolatedWithout(["DUO_VOICE_LIVE": "1"], isolated: true), "voice: DUO_VOICE_LIVE=1 lets an isolated Duo ask")
+    check(!VoiceInput.isolatedWithout(["DUO_VOICE_LIVE": "0"], isolated: false), "voice: the user's own Duo asks")
     check(M.next(.idle, .finish) == .idle && M.next(.idle, .finished) == .idle, "voice: stray events leave idle alone")
     check(!VoiceState.idle.isActive && VoiceState.listening.isActive && !VoiceState.denied.isActive, "voice: which states are active")
 

@@ -94,8 +94,14 @@ public final class VoiceInput {
     public var holding = false
     /// Where the terminal mic last was (screen cells' rect in its view), for the notice.
     @ObservationIgnored public var host: Host?
-    /// Whether the app asks for the microphone itself: false in a scripted or isolated Duo.
-    @ObservationIgnored public var isolated: () -> Bool = { SupportFolder.isIsolated }
+    /// Whether the app asks for the microphone itself: false in a scripted or isolated Duo, unless that Duo was
+    /// launched with `DUO_VOICE_LIVE=1` for a person's own hands-on test (a gated, visible dev instance): then it
+    /// asks for the microphone and uses the clipboard as the user's own Duo does.
+    @ObservationIgnored public var isolated: () -> Bool = { VoiceInput.isolatedWithout(ProcessInfo.processInfo.environment) }
+
+    public static func isolatedWithout(_ env: [String: String], isolated: Bool = SupportFolder.isIsolated) -> Bool {
+        isolated && env["DUO_VOICE_LIVE"] != "1"
+    }
 
     /// The words a blocked dictation didn't send (always kept; on the clipboard only in the user's own Duo).
     public private(set) var unsentWords: String?
