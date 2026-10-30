@@ -137,10 +137,10 @@ footer { margin-top: 3rem; font-size: .86rem; color: var(--ink2); }
     <h3>Docs in Duo's browser</h3>
     <div class="flow">
       <div class="row"><span class="who">You + team</span><span class="via good">Google's editor in a Duo tab</span></div>
-      <div class="row"><span class="who">Claude</span><span class="via">reads and types in that same tab</span></div>
+      <div class="row"><span class="who">Claude</span><span class="via">reads your tab, types in a hidden second tab</span></div>
       <div class="doc">the live Google Doc</div>
     </div>
-    <p class="verdict">Real Docs for people. Claude's edits are typed into your session, so they're yours, and your caret moves.</p>
+    <p class="verdict">Real Docs for people, nothing to set up. Claude's edits are typed into your own session, which is less exact, and they stop when Duo is closed.</p>
   </div>
   <div class="ap">
     <span class="letter">B</span>
@@ -155,26 +155,27 @@ footer { margin-top: 3rem; font-size: .86rem; color: var(--ink2); }
   </div>
   <div class="ap lead">
     <span class="letter">C · recommended</span>
-    <h3>Browser for people, API for Claude's edits</h3>
+    <h3>A, plus one tap for Google's API</h3>
     <div class="flow">
       <div class="row"><span class="who">You + team</span><span class="via good">Google's editor in a Duo tab</span></div>
       <div class="row"><span class="who">Claude reads</span><span class="via">your selection, from that tab</span></div>
-      <div class="row"><span class="who">Claude writes</span><span class="via good">suggestions + comments by API</span></div>
+      <div class="row"><span class="who">Claude writes</span><span class="via good">suggestions + comments by API, once you tap Allow</span></div>
       <div class="doc">the live Google Doc</div>
     </div>
-    <p class="verdict">Real Docs for people, real tracked changes from Claude, and your caret is never touched.</p>
+    <p class="verdict">Everything A does, with no setup. One "Allow" per doc adds exact suggestions and comments, and lets Claude answer comments while Duo is closed.</p>
   </div>
 </div>
 
-<h3>How Claude gets into the API (approach C)</h3>
-<p>Claude's API access works the way any app's "Sign in with Google" access does, with you as the app's only user. Nothing goes through Duo's browser, and Claude never sees your password.</p>
+<h3>How Claude gets API access, without setup work</h3>
+<p>Nobody sets anything up. Duo registers with Google once, as any app does, and each person just answers one "Allow" when they first need it:</p>
 <ol class="tight">
-  <li><b>A project of your own.</b> You set up a Google Cloud project in testing mode, with the Docs API (reading, suggestions, comments) and the Drive API (exports, version history) turned on. You're its only test user.</li>
-  <li><b>One consent screen.</b> A small helper on the Mac mini opens Google's "allow access" page in your normal browser, not in Duo's tab, which Google refuses for this. You approve once.</li>
-  <li><b>A key kept in the Keychain.</b> Google hands back a long-lived key (a <i>refresh token</i>). The helper keeps it in this Mac's Keychain, never in the repo or on a page.</li>
-  <li><b>Short-lived passes for each edit.</b> When Claude makes a suggestion or a comment, the helper trades that key for a pass that lasts an hour, and makes the call. Claude asks the helper; it never holds the key.</li>
+  <li><b>The first time Claude goes to suggest in a Doc,</b> Duo asks: "Let Claude suggest edits and comment in this doc?"</li>
+  <li><b>Google's own picker and consent appear inside Duo,</b> through Google's sign-in kit for Mac apps (not Duo's browser tab, which Google refuses for this). If you're signed in to Google, that's one tap.</li>
+  <li><b>Access covers only the Docs you allow,</b> one at a time. Google calls this permission <code>drive.file</code> and classes it as non-sensitive, so Duo needs only Google's basic app check (a homepage, a privacy policy, a verified domain), not a security audit.</li>
+  <li><b>Duo keeps the key in your Mac's Keychain and refreshes it quietly.</b> It doesn't expire weekly; that only happens in Google's developer testing mode.</li>
 </ol>
-<p class="gloss">Two catches. In testing mode Google expires the key after about 7 days, so during Phase 2 you'd approve again roughly weekly; a proper Duo-wide setup, verified by Google, removes that and waits for Phase 3. The alternative is Google's own Docs MCP server, which runs its own sign-in but can't download exports or versions. That's question Q-314 below.</p>
+<p><b>At work:</b> Workspace's default lets people use any third-party app. Where an admin has tightened that, the person gets Google's "request access" button, and the admin approves Duo once for the whole company by its app id. Until then, that person still has everything in A, because the browser route only needs Docs to open in Duo.</p>
+<p class="gloss">Sources: Google's Drive scope guide (updated 3 Sep 2026), its OAuth guide for native apps (29 Oct 2026), and the Workspace admin help on app access (26 Oct 2026). What isn't proved yet: that Google's picker can grant a doc the person already has open in Duo in one step, and how long Google's basic app check takes. Phase 2 checks both.</p>
 
 <h2 id="evidence">What we know, and how we know it</h2>
 <div class="note"><b>Nothing has run in your Google account yet.</b> Every test so far was signed out, on public Docs anyone can view, in Duo's browser engine (WebKit, Safari's engine) on the Mac mini. Signing in, editing and live collaboration are all Phase 2.</div>
@@ -212,7 +213,9 @@ footer { margin-top: 3rem; font-size: .86rem; color: var(--ink2); }
 <h3>Inferred</h3>
 <ul class="evidence">
   <li><span class="tag t-inferred">Inferred</span><b>The page function is unofficial and could change without notice.</b> Google documents none of it. Other sources describe it as gated by an allowlist of extension ids. It wasn't gated in our test, but it might be when signed in, in an editable doc, or later.</li>
-  <li><span class="tag t-inferred">Inferred</span><b>Suggestions Claude makes through the API will carry your name,</b> because they're made with your permission. Google's docs imply it but don't say so. Phase 2 checks.</li>
+  <li><span class="tag t-inferred">Inferred</span><b>Claude's suggestions will carry your name</b> either way: from a hidden tab they're made in your session, and through the API they're made with your permission. Phase 2 checks what collaborators see.</li>
+  <li><span class="tag t-inferred">Inferred</span><b>A hidden second tab can suggest without disturbing yours.</b> Docs treats each tab as its own session, with its own caret and Suggesting switch. Untested.</li>
+  <li><span class="tag t-inferred">Inferred</span><b>Google's picker can grant a doc you already have open in one tap.</b> The picker can be pointed at a given file, but nobody has tried it from Duo.</li>
   <li><span class="tag t-inferred">Inferred</span><b>Sign-in in Duo's tab may work, or may hit a "this browser may not be secure" wall.</b> Enforcement varies by account. A managed work account may also insist on Chrome.</li>
   <li><span class="tag t-inferred">Inferred</span><b>A Duo-drawn editor (B) can't match Docs' live collaboration or look at any sensible cost.</b> It would mean rebuilding Docs' layout, tables, chips, comments and sync, against an API that has no live edits and no cursors.</li>
 </ul>
@@ -220,8 +223,9 @@ footer { margin-top: 3rem; font-size: .86rem; color: var(--ink2); }
 <h2 id="means">What it means</h2>
 <ul class="tight">
   <li><b>B is out.</b> It fails the two things you named first, near-perfect rendering and live collaboration. Its one advantage was full control over Claude's edits, and Google's new suggest mode now gives that to the browser approaches too.</li>
-  <li><b>C beats A on Claude's edits.</b> In A, Claude types into your tab, so its edits are your own suggestions, made in your session, and your cursor jumps around while you work. In C, Claude's suggestions and comments go in through the API. They're real Docs suggestions every collaborator sees, they merge with live typing, and your caret is never touched.</li>
-  <li><b>The page function is what makes "Claude knows my selection" possible without an add-on.</b> We'd use it for reading only: the text, your selection, and highlighting a passage to show you. If Google closes it, Duo loses live selection awareness, not editing, and falls back to an Apps Script add-on or to Send Selection by copy.</li>
+  <li><b>C is A with an upgrade, not a different product.</b> Everyone gets A with no setup: Docs in Duo's tab, Claude reading your selection, and Claude suggesting from a hidden second tab in your own session. Where Google access is allowed, one tap per doc moves Claude's edits to the API. They become exact, they merge cleanly with live typing, they never touch your tab, and they work while Duo is closed (an @claude comment can be answered from a background session).</li>
+  <li><b>The setup cost lands on us, once.</b> Duo registers its Google app and passes Google's basic check. Users never see Google Cloud. Work admins approve Duo once, or not at all if they leave the default.</li>
+  <li><b>The page function does the live work.</b> It tells Claude your selection, and in the hidden tab it lets Claude select exactly the passage to change. If Google closes it, Duo keeps editing through the API where access is allowed, and falls back to Docs' own find and keyboard elsewhere.</li>
   <li><b>duo2 needs new verbs either way:</b>
     <ul class="tight">
       <li>a Docs read (text, links, selection)</li>
@@ -236,16 +240,17 @@ footer { margin-top: 3rem; font-size: .86rem; color: var(--ink2); }
 </ul>
 
 <h2 id="plan">What I recommend</h2>
-<p><b>Aim for C</b>: Google's editor in Duo's tab for you and your team, Claude reading the live tab for your selection, and Claude writing suggestions and comments through the API. Phase 2 tests it in this order, cheapest and most decisive first:</p>
+<p><b>Aim for C, built in layers.</b> First A, for everyone: Google's editor in Duo's tab, Claude reading your selection, and Claude suggesting from a hidden tab. Then the one-tap Google access, for Claude's exact edits and comments. Phase 2 tests it in this order, cheapest and most decisive first:</p>
 <div class="tablewrap"><table>
   <thead><tr><th>Test</th><th>What runs</th><th>What it decides</th><th>Needs you</th></tr></thead>
   <tbody>
-    <tr><td class="n">T-00</td><td>You sign in to Google in Duo's tab; we check it survives a relaunch and a day</td><td>Whether A or C can work at all</td><td>About 5 minutes</td></tr>
+    <tr><td class="n">T-00</td><td>You sign in to Google in Duo's tab; we check it survives a relaunch and a day</td><td>Whether A, and so C, can work at all</td><td>About 5 minutes</td></tr>
     <tr><td class="n">T-02, T-03</td><td>The page function, signed in, in an editable doc: text, your selection, what it carries (comments? suggestions?)</td><td>Whether "Claude knows my selection" works for real, and how fast (bar: under ¼ second)</td><td>About 10 minutes of selecting</td></tr>
     <tr><td class="n">T-10</td><td>Docs' shortcuts in Duo's tab</td><td>Which Duo shortcuts must give way on a Docs tab</td><td>A few minutes, on screen</td></tr>
     <tr><td class="n">T-01</td><td>Duo's tab against Chrome, captured side by side at three pane widths</td><td>Whether rendering is near-perfect</td><td>A look at the images</td></tr>
-    <tr><td class="n">T-06</td><td>Claude suggesting by typing in your tab</td><td>A's way of editing, as the fallback</td><td>Nothing</td></tr>
-    <tr><td class="n">T-05, T-04</td><td>Claude's suggestions and comments by API, and mapping your selection to the API's positions</td><td>C's way of editing: credit, speed, exact placement</td><td>One API authorization</td></tr>
+    <tr><td class="n">T-06</td><td>Claude suggesting from a hidden second tab, in Suggesting mode, while you work in yours</td><td>The no-setup layer: whether its edits land exactly without moving your caret</td><td>Nothing</td></tr>
+    <tr><td class="n">T-16</td><td>The one-tap flow: Duo's Google app (in testing, so only you see it), Google's picker on a doc you have open, and the consent inside Duo</td><td>Whether access really is one tap per doc</td><td>A couple of taps</td></tr>
+    <tr><td class="n">T-05, T-04</td><td>Claude's suggestions and comments by API, and mapping your selection to the API's positions</td><td>The upgrade layer: credit, speed, exact placement</td><td>Nothing more</td></tr>
     <tr><td class="n">T-08, T-09</td><td>A second person types and comments while you work; we time Duo against Chrome, and how fast Claude notices an @claude</td><td>Live collaboration and @claude in comments</td><td>A second collaborator, about 30 minutes</td></tr>
   </tbody>
 </table></div>
@@ -285,20 +290,20 @@ const QUESTIONS = [
       "<b>A second Google account of yours, on another device</b> (your phone or laptop), driven by you or by Claude in Chrome.",
       "<b>A real colleague</b>, at a time you pick. Best for presence and @mentions.",
       "<b>A second account on this Mac in Chrome</b>, fully scripted, but one machine makes the timing look better than it is." ] },
-  { id: "q314", rec: "Q-314", title: "May Phase 2 use Google's API with your permission?",
-    why: "Claude's suggestions and comments by API (approach C) can't be tested without it.",
+  { id: "q314", rec: "Q-314", title: "How does Claude get Google API access?",
+    why: "The API gives Claude exact suggestions and comments, and works while Duo is closed. The question is who does the setup.",
     opts: [
-      "<b>Yes, through your own Google Cloud project</b> in testing mode, with you as its only user. One consent screen in your normal browser. The key stays in this Mac's Keychain. A Duo-wide setup waits for Phase 3.",
-      "<b>Only through Google's Docs MCP server</b> (a preview Google runs for AI tools), in one test Claude session. It needs less code, but it can't download exports or versions.",
-      "<b>No API in Phase 2.</b> Test the browser-only route, and decide on C later." ] },
+      "<b>Duo registers one Google app; people tap Allow per doc.</b> Duo's own app, limited to the Docs each person allows (drive.file), consent through Google's Mac sign-in kit. Phase 2 tests it in Google's testing mode with you as the only user; Duo applies for Google's basic app check after Checkpoint 2. The browser layer works with no access at all.",
+      "<b>Browser only.</b> Claude suggests from a hidden tab and nothing asks for Google access. Simpler, but less exact, and nothing happens while Duo is closed.",
+      "<b>Use Google's Docs MCP server</b> (a preview Google runs for AI tools) from Claude's session instead of Duo's own app. Less code for Duo, but it's in preview, still needs a Google app and consent, and can't download exports or versions." ] },
   { id: "q309", rec: "Q-309", title: "May Duo use Docs' unofficial page function?",
     why: "It's how Claude knows your selection without an add-on, and it's fast. But Google doesn't document it and could change it any day.",
     opts: [
-      "<b>Test it fully, and use it for reading only</b> (text, your selection, highlighting a passage). Claude's edits go through the API. A nightly check catches breakage, and an add-on or copy-to-Claude is the fallback.",
+      "<b>Test it fully, and build on it.</b> Claude reads your selection with it, and in the hidden tab uses it to select a passage before typing. With Google access, Claude's edits go through the API instead. A nightly check catches breakage; the fallbacks are Docs' own find and keyboard, and sending a selection by copy.",
       "<b>Test it, but don't build on it.</b> Selection comes from an Apps Script add-on or a copy.",
       "<b>Don't touch it.</b>" ] },
   { id: "q315", rec: "Q-315", title: "Whose name goes on Claude's suggestions?",
-    why: "Suggestions and comments made through the API are credited to the account that gave permission: yours.",
+    why: "Claude works in your session or with your permission, so Google credits its suggestions and comments to you.",
     opts: [
       "<b>Yours for now,</b> with \"Claude:\" at the start of Claude's comments. Duo remembers which suggestions are Claude's, so you can reject only those. We'll see what Google actually shows.",
       "<b>A separate Google account for Claude</b>, shared on the doc as an editor, so colleagues see \"Claude\". Clearer to them, but it's another account to run.",
