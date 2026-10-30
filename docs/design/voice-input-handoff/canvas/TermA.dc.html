@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Terminal A: straight into the prompt</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.bd{box-sizing:border-box;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif}
+.bd *{box-sizing:border-box}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.cap{color:#5B636D;font-size:12px;line-height:17px;margin:0}
+.con{background:#15171B;border-radius:6px;overflow:hidden;color:#E6E8EB;display:flex;flex-direction:column}
+.strip{height:32px;display:flex;align-items:center;gap:18px;padding:0 12px 0 16px;border-bottom:1px solid #2B2F36;font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px;line-height:19px;color:#9AA1AB;white-space:nowrap}
+.tab{display:flex;align-items:center;gap:6px}
+.on{color:#E6E8EB;font-weight:500}
+.mp,.np{display:flex;align-items:center;border:1px solid #4A4F57;border-radius:6px;overflow:hidden}
+.ms{width:20px;height:16px;display:flex;align-items:center;justify-content:center}
+.ns{width:26px;height:20px;display:flex;align-items:center;justify-content:center}
+.son{background:#2B2F36}
+.hair{width:1px;height:12px;background:#4A4F57}
+.term{padding:12px 18px;font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px;line-height:19px;display:flex;flex-direction:column;white-space:pre}
+.dim{color:#9AA1AB}
+.ibox{border:1px solid #4A4F57;border-radius:4px;padding:3px 10px;margin-top:10px;white-space:pre-wrap}
+.cur{display:inline-block;width:7px;height:15px;background:#E6E8EB;vertical-align:-3px}
+.lv{display:inline-flex;align-items:flex-end;gap:1.5px;height:10px;flex:none}
+.lv span{display:block;width:2px;border-radius:1px;background:#E6E8EB}
+.tip{align-self:flex-start;margin-left:16px;background:#FFFFFF;border:1px solid #C9CDD3;border-radius:4px;padding:1px 6px;font-size:11px;line-height:16px;color:#1F2328}
+.frame{display:flex;flex-direction:column;gap:6px}
+.notes{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:12px 14px}
+.notes li{font-size:12px;line-height:18px;margin:0 0 5px}
+ul{margin:0;padding-left:18px}
+.menu{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:10px;box-shadow:0 8px 24px rgba(31,35,40,.18);padding:5px;width:280px;font-size:13px;line-height:20px}
+.mi{display:flex;justify-content:space-between;padding:2px 10px;border-radius:5px}
+.sel{background:#D8DCE1}
+</style>
+</helmet>
+<div class="bd" style="width: 1440px; height: 1060px; padding: 24px 28px; display: flex; flex-direction: column; gap: 14px">
+<div>
+<h1 style="margin: 0; font: 600 20px/26px -apple-system, system-ui, sans-serif">A · Words go straight into Claude’s prompt, a phrase at a time; nothing added to the strip [P] (recommended)</h1>
+<p class="cap" style="margin-top: 4px">On the console strip as DL-253 draws it: the Terminal / Chat toggle on the selected tab, <b>+</b> and robot | shell at the end. Voice input adds no button there. ⇧⌘D or Edit › Start Voice Input starts it; while Duo listens, the selected tab’s state glyph becomes a small level meter. Each phrase lands in Claude’s prompt as soon as Apple settles it (about every 1–2 s of speech), as a bracketed paste. Duo never presses Return.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 36px">
+
+<div class="frame">
+<div class="lbl">1 · At rest · the strip as DL-253 has it</div>
+<div class="con">
+<div class="strip"><div class="tab on"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.6" fill="none" stroke="#E6E8EB" stroke-width="1.5"></circle></svg>Pricing research<div class="mp" style="margin-left: 4px"><span class="ms son"><svg width="11" height="9" viewBox="0 0 13 10" aria-label="Terminal, shown" role="img"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h5" fill="none" stroke="#E6E8EB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class="ms"><svg width="11" height="10" viewBox="0 0 13 11" aria-label="Chat" role="img"><path d="M2.5 1H10.5Q12 1 12 2.5V6.5Q12 8 10.5 8H6L3.5 10V8H2.5Q1 8 1 6.5V2.5Q1 1 2.5 1Z" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linejoin="round"></path></svg></span></div></div><div class="tab"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5h6" stroke="#9AA1AB" stroke-width="1.6" stroke-linecap="round"></path></svg>Fix flaky cart test</div><span style="flex: 1"></span><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5v7 M1.5 5h7" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round"></path></svg><div class="np" style="margin-left: -10px"><span class="ns"><svg width="13" height="9" viewBox="0 0 12 8" aria-label="New Claude session" role="img"><path fill="#9AA1AB" d="M5 0h1v1h-1zM2 1h8v1h-8zM2 2h1v1h-1zM4 2h4v1h-4zM9 2h1v1h-1zM2 3h8v2h-8zM1 5h10v1h-10zM3 6h2v1h-2zM7 6h2v1h-2zM3 7h2v1h-2zM7 7h2v1h-2z"></path></svg></span><span class="hair"></span><span class="ns"><svg width="12" height="10" viewBox="0 0 12 10" aria-label="New shell" role="img"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h4" fill="none" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></div></div>
+<div class="term"><span>● The annual plan saves 17 %. Want me to add it to the</span><span>  pricing table?</span><div class="ibox">&gt; <span class="cur"></span></div><span class="dim">  ⏵⏵ auto mode on (shift+tab to cycle)</span></div>
+</div>
+<div style="display: flex; gap: 16px; align-items: flex-start">
+<div class="menu"><div class="mi"><span>Paste</span><span style="color: #5B636D">⌘V</span></div><div style="height: 1px; background: #C9CDD3; margin: 4px 6px"></div><div class="mi sel"><span>Start Voice Input</span><span style="color: #5B636D">⇧⌘D</span></div><div class="mi"><span>Start Dictation…</span><span style="color: #5B636D">fn fn</span></div></div>
+<p class="cap" style="flex: 1">The click path is the Edit menu (DL-71). macOS adds its own Start Dictation… below; Duo’s item is named apart. The same chord works in chat, where the composer also has its mic.</p>
+</div>
+</div>
+
+<div class="frame">
+<div class="lbl">2 · Listening · the first phrase is already in Claude’s prompt</div>
+<div class="con">
+<div class="strip"><div class="tab on"><span class="lv" aria-label="Listening"><span style="height: 4px"></span><span style="height: 10px"></span><span style="height: 7px"></span><span style="height: 3px"></span></span>Pricing research<div class="mp" style="margin-left: 4px"><span class="ms son"><svg width="11" height="9" viewBox="0 0 13 10" aria-hidden="true"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h5" fill="none" stroke="#E6E8EB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class="ms"><svg width="11" height="10" viewBox="0 0 13 11" aria-hidden="true"><path d="M2.5 1H10.5Q12 1 12 2.5V6.5Q12 8 10.5 8H6L3.5 10V8H2.5Q1 8 1 6.5V2.5Q1 1 2.5 1Z" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linejoin="round"></path></svg></span></div></div><div class="tab"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5h6" stroke="#9AA1AB" stroke-width="1.6" stroke-linecap="round"></path></svg>Fix flaky cart test</div><span style="flex: 1"></span><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5v7 M1.5 5h7" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round"></path></svg><div class="np" style="margin-left: -10px"><span class="ns"><svg width="13" height="9" viewBox="0 0 12 8" aria-hidden="true"><path fill="#9AA1AB" d="M5 0h1v1h-1zM2 1h8v1h-8zM2 2h1v1h-1zM4 2h4v1h-4zM9 2h1v1h-1zM2 3h8v2h-8zM1 5h10v1h-10zM3 6h2v1h-2zM7 6h2v1h-2zM3 7h2v1h-2zM7 7h2v1h-2z"></path></svg></span><span class="hair"></span><span class="ns"><svg width="12" height="10" viewBox="0 0 12 10" aria-hidden="true"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h4" fill="none" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></div></div>
+<div class="term"><span>● The annual plan saves 17 %. Want me to add it to the</span><span>  pricing table?</span><div class="ibox">&gt; Yes, add it, and show the monthly price <span class="cur"></span></div><span class="dim">  ⏵⏵ auto mode on (shift+tab to cycle)</span></div>
+</div>
+<div class="tip">Listening: words go into Claude’s prompt as you speak · ⇧⌘D finishes</div>
+<p class="cap">The level meter (4 bars, 2 wide, <b>consoleText</b>) takes the glyph’s 10 × 10 box on the selected tab only; still under Reduce Motion. The words Apple is still deciding on stay unsent until they settle, so nothing reaches Claude that has to be taken back.</p>
+</div>
+
+<div class="frame">
+<div class="lbl">3 · Finished · the last phrase lands; not sent</div>
+<div class="con">
+<div class="strip"><div class="tab on"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.6" fill="none" stroke="#E6E8EB" stroke-width="1.5"></circle></svg>Pricing research<div class="mp" style="margin-left: 4px"><span class="ms son"><svg width="11" height="9" viewBox="0 0 13 10" aria-hidden="true"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h5" fill="none" stroke="#E6E8EB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class="ms"><svg width="11" height="10" viewBox="0 0 13 11" aria-hidden="true"><path d="M2.5 1H10.5Q12 1 12 2.5V6.5Q12 8 10.5 8H6L3.5 10V8H2.5Q1 8 1 6.5V2.5Q1 1 2.5 1Z" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linejoin="round"></path></svg></span></div></div><div class="tab"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5h6" stroke="#9AA1AB" stroke-width="1.6" stroke-linecap="round"></path></svg>Fix flaky cart test</div><span style="flex: 1"></span><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5v7 M1.5 5h7" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round"></path></svg><div class="np" style="margin-left: -10px"><span class="ns"><svg width="13" height="9" viewBox="0 0 12 8" aria-hidden="true"><path fill="#9AA1AB" d="M5 0h1v1h-1zM2 1h8v1h-8zM2 2h1v1h-1zM4 2h4v1h-4zM9 2h1v1h-1zM2 3h8v2h-8zM1 5h10v1h-10zM3 6h2v1h-2zM7 6h2v1h-2zM3 7h2v1h-2zM7 7h2v1h-2z"></path></svg></span><span class="hair"></span><span class="ns"><svg width="12" height="10" viewBox="0 0 12 10" aria-hidden="true"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h4" fill="none" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></div></div>
+<div class="term"><span>● The annual plan saves 17 %. Want me to add it to the</span><span>  pricing table?</span><div class="ibox">&gt; Yes, add it, and show the monthly price crossed out next to it.<span class="cur"></span></div><span class="dim">  ⏵⏵ auto mode on (shift+tab to cycle)</span></div>
+</div>
+<p class="cap">Each phrase is one bracketed paste (Duo’s <b>bracketed()</b>, as <b>duo2 send text</b>): no slash menu or @ picker fires, newlines don’t send. Fix words with the keyboard in Claude’s prompt as usual; you press Return.</p>
+</div>
+
+<div class="frame">
+<div class="lbl">4 · Claude asks a question mid-dictation · Duo stops sending</div>
+<div class="con">
+<div class="strip"><div class="tab on"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="#F97316"></circle></svg>Pricing research<div class="mp" style="margin-left: 4px"><span class="ms son"><svg width="11" height="9" viewBox="0 0 13 10" aria-hidden="true"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h5" fill="none" stroke="#E6E8EB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class="ms"><svg width="11" height="10" viewBox="0 0 13 11" aria-hidden="true"><path d="M2.5 1H10.5Q12 1 12 2.5V6.5Q12 8 10.5 8H6L3.5 10V8H2.5Q1 8 1 6.5V2.5Q1 1 2.5 1Z" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linejoin="round"></path></svg></span></div></div><div class="tab"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5h6" stroke="#9AA1AB" stroke-width="1.6" stroke-linecap="round"></path></svg>Fix flaky cart test</div><span style="flex: 1"></span><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5v7 M1.5 5h7" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round"></path></svg><div class="np" style="margin-left: -10px"><span class="ns"><svg width="13" height="9" viewBox="0 0 12 8" aria-hidden="true"><path fill="#9AA1AB" d="M5 0h1v1h-1zM2 1h8v1h-8zM2 2h1v1h-1zM4 2h4v1h-4zM9 2h1v1h-1zM2 3h8v2h-8zM1 5h10v1h-10zM3 6h2v1h-2zM7 6h2v1h-2zM3 7h2v1h-2zM7 7h2v1h-2z"></path></svg></span><span class="hair"></span><span class="ns"><svg width="12" height="10" viewBox="0 0 12 10" aria-hidden="true"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h4" fill="none" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></div></div>
+<div class="term"><span> Edit file pricing.md</span><span class="dim"> Do you want to make this edit to pricing.md?</span><span> ❯ 1. Yes</span><span>   2. Yes, allow all edits during this session</span><span>   3. No, and tell Claude what to do differently</span></div>
+</div>
+<div class="tip">Voice input stopped: Claude asked a question. Your words are on the clipboard.</div>
+<p class="cap">A paste into one of Claude’s questions could answer it, so Duo reads the screen before each phrase. When a question appears, listening stops, the words not yet sent go to the clipboard, and the tooltip-style notice shows under the tab for 6 s. While Claude works with its prompt on screen, phrases go in as typing does. ⇧⌘D with a question already up does nothing but say why.</p>
+</div>
+
+</div>
+<div class="notes">
+<div class="lbl" style="margin-bottom: 6px">Trade-offs</div>
+<ul>
+<li><b>For:</b> the words land in Claude’s own prompt, the composer of the terminal, as you speak; nothing new in the strip; nothing drawn over the TUI; a paste is all it needs, so it works on 2.1.219 and 2.1.284.</li>
+<li><b>Against:</b> the words come a phrase at a time (1–2 s behind your voice), not word by word; no visible button in the terminal, only the chord and the Edit menu (chat has the visible mic); typing in Claude’s prompt while dictating finishes the dictation first.</li>
+<li><b>Shell tabs:</b> the same, into the shell’s prompt. Return is never pressed there either.</li>
+</ul>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1060}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

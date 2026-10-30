@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Chat composer mic</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.bd{box-sizing:border-box;background:#F3F4F6;color:#1F2328;font:14px/22px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif}
+.bd *{box-sizing:border-box}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.cap{color:#5B636D;font-size:12px;line-height:17px;margin:0}
+.snip{display:flex;flex-direction:column;gap:6px}
+.row{display:flex;gap:10px;align-items:flex-end}
+.field{flex:1;display:flex;align-items:flex-end;gap:8px;background:#FFFFFF;border:1px solid #8B939C;border-radius:12px;padding:6px 6px 6px 14px;min-height:44px}
+.focus{border:1.5px solid #1F2328}
+.txt{flex:1;padding:4px 0;min-width:0}
+.ph{color:#5B636D}
+.prov{color:#5B636D}
+.caret{display:inline-block;width:1.5px;height:17px;background:#1F2328;vertical-align:-3px;margin-left:1px}
+.mic{flex:none;width:30px;height:30px;border-radius:15px;border:0;background:transparent;display:flex;align-items:center;justify-content:center;padding:0}
+.micx{background:#E9ECEF}
+.micon{background:#1F2328}
+.micoff{border:1px dashed #C9CDD3}
+.hint{display:flex;align-items:center;gap:8px;font-size:12px;line-height:16px;color:#5B636D;padding:0 4px;white-space:nowrap}
+.chipm{font:inherit;font-size:12px;line-height:16px;color:#5B636D;border:1px solid #C9CDD3;border-radius:9px;padding:0 8px;background:#FFFFFF;white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
+.chipon{font:inherit;font-size:12px;line-height:16px;color:#FFFFFF;border:1px solid #1F2328;border-radius:9px;padding:0 8px;background:#1F2328;white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
+.btn{font:inherit;font-size:12px;line-height:16px;padding:4px 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;color:#1F2328;white-space:nowrap}
+.tip{align-self:flex-end;background:#FFFFFF;border:1px solid #C9CDD3;border-radius:4px;padding:1px 6px;font-size:11px;line-height:16px;color:#1F2328}
+.lv{display:inline-flex;align-items:flex-end;gap:2px;height:12px}
+.lv span{display:block;width:3px;border-radius:1px;background:#1F2328}
+.you{align-self:flex-end;background:#DCE6F7;border-radius:14px 14px 3px 14px;padding:6px 12px;font-size:14px;line-height:22px;max-width:440px}
+</style>
+</helmet>
+<div class="bd" style="width: 1440px; height: 1180px; padding: 24px 28px; display: flex; flex-direction: column; gap: 16px">
+<div>
+<h1 style="margin: 0; font: 600 20px/26px -apple-system, system-ui, sans-serif">Chat: the mic button and its states [P]</h1>
+<p class="cap" style="margin-top: 4px">Chat’s composer as built (DL-119, DL-168), at the console’s usual 680. The mic is SF Symbol <b>mic</b> (stand-in drawn here), 14 pt, in <b>text2</b>. Listening is shown in ink, never in the needs-you accent and never red: a recording dot would read as “needs you”.</p>
+</div>
+<div style="display: flex; gap: 40px; align-items: flex-start">
+
+<div style="width: 680px; flex: none; display: flex; flex-direction: column; gap: 22px">
+
+<div class="snip">
+<div class="lbl">Where · B (recommended) · inside the field, at its trailing end</div>
+<div class="row"><div class="field"><div class="txt ph">Reply to Claude</div><button type="button" class="mic" aria-label="Voice input"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5" fill="none" stroke="#5B636D" stroke-width="1.4"></rect><path d="M3 7.8a5 5 0 0 0 10 0M8 12.8v1.9" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round"></path></svg></button></div></div>
+<div class="hint"><span class="chipm">⏵⏵ auto mode on</span><span>⏎ send · ⇧⏎ new line · ⇧⇥ mode · / commands</span><span style="margin-left: auto"></span><span class="chipm">◐ medium</span><span class="chipm">Opus 5.5</span></div>
+<p class="cap">Where people look for it (Messages, the Claude app). A 30 circle, bottom-aligned, so it stays at the last line as the field grows. The field’s text stops 8 short of it. Pointer over it: <b>selected</b> fill and the tooltip.</p>
+</div>
+
+<div class="snip">
+<div class="lbl">Where · A · a chip in the hint row</div>
+<div class="row"><div class="field"><div class="txt ph">Reply to Claude</div></div></div>
+<div class="hint"><span class="chipm">⏵⏵ auto mode on</span><span>⏎ send · ⇧⏎ new line · ⇧⇥ mode</span><span style="margin-left: auto"></span><span class="chipm"><svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5" fill="none" stroke="#5B636D" stroke-width="1.4"></rect><path d="M3 7.8a5 5 0 0 0 10 0M8 12.8v1.9" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round"></path></svg></span><span class="chipm">◐ medium</span><span class="chipm">Opus 5.5</span></div>
+<p class="cap">The chips’ row, so nothing new enters the field. Smaller and further from the words; on a narrow console it competes with the hints, which already drop from the right (DL-129).</p>
+</div>
+
+<div class="snip">
+<div class="lbl">Listening · words appear as you speak</div>
+<div class="row"><div class="field focus"><div class="txt">Rename the Later fold in the session list to <span class="prov">Earlier and keep the</span><span class="caret"></span></div><button type="button" class="mic micon" aria-label="Finish voice input"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5" fill="none" stroke="#FFFFFF" stroke-width="1.4"></rect><path d="M3 7.8a5 5 0 0 0 10 0M8 12.8v1.9" fill="none" stroke="#FFFFFF" stroke-width="1.4" stroke-linecap="round"></path></svg></button></div></div>
+<div class="hint"><span class="lv"><span style="height: 5px"></span><span style="height: 11px"></span><span style="height: 8px"></span><span style="height: 4px"></span></span><span style="color: #1F2328">Listening</span><span>· ⇧⌘D or the mic finishes · esc discards</span><span style="margin-left: auto"></span><span class="chipm">◐ medium</span><span class="chipm">Opus 5.5</span></div>
+<p class="cap">The words go in at the caret, after anything already typed. Words Apple may still change are <b>text2</b>; they turn <b>text</b> as they settle. The mic fills with <b>text</b>, its glyph <b>pane</b>. The hint row trades its hints for a level meter (4 bars, 3 wide, in <b>text</b>, moving with your voice; still under Reduce Motion) and the keys. Typing while listening finishes first, then types.</p>
+</div>
+
+<div class="snip">
+<div class="lbl">Done · the text stays in the composer, unsent</div>
+<div class="row"><div class="field focus"><div class="txt">Rename the Later fold in the session list to Earlier and keep the count.<span class="caret"></span></div><button type="button" class="mic" aria-label="Voice input"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5" fill="none" stroke="#5B636D" stroke-width="1.4"></rect><path d="M3 7.8a5 5 0 0 0 10 0M8 12.8v1.9" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round"></path></svg></button></div></div>
+<div class="hint"><span class="chipm">⏵⏵ auto mode on</span><span>⏎ send · ⇧⏎ new line · ⇧⇥ mode · / commands</span><span style="margin-left: auto"></span><span class="chipm">◐ medium</span><span class="chipm">Opus 5.5</span></div>
+<p class="cap">Apple’s punctuation and capitals as given. ⌘Z removes the whole dictation. Return while listening finishes and keeps the text; it never sends. A second Return sends.</p>
+</div>
+</div>
+
+<div style="width: 664px; flex: none; display: flex; flex-direction: column; gap: 18px">
+
+<div class="snip">
+<div class="lbl">At rest · pointer over the mic</div>
+<div class="row"><div class="field"><div class="txt ph">Reply to Claude</div><button type="button" class="mic micx" aria-label="Voice input"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5" fill="none" stroke="#1F2328" stroke-width="1.4"></rect><path d="M3 7.8a5 5 0 0 0 10 0M8 12.8v1.9" fill="none" stroke="#1F2328" stroke-width="1.4" stroke-linecap="round"></path></svg></button></div></div>
+<div class="tip">Voice input ⇧⌘D · hold to talk</div>
+</div>
+
+<div class="snip">
+<div class="lbl">Holding ⇧⌘D · hold-to-talk</div>
+<div class="hint"><span class="lv"><span style="height: 9px"></span><span style="height: 4px"></span><span style="height: 12px"></span><span style="height: 6px"></span></span><span style="color: #1F2328">Listening while you hold ⇧⌘D</span><span>· let go to finish</span></div>
+<p class="cap">Same field as Listening. Held past 0.3 s, ⇧⌘D is hold-to-talk; a quicker tap is the toggle.</p>
+</div>
+
+<div class="snip">
+<div class="lbl">Finishing · usually under 0.2 s</div>
+<div class="hint"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg><span>Finishing…</span></div>
+<p class="cap">The working ring, still. The mic shows its idle look; a press now starts a new dictation after this one lands.</p>
+</div>
+
+<div class="snip">
+<div class="lbl">While Claude works · dictation still fills the composer</div>
+<div class="row"><div class="field focus"><div class="txt">and the empty state too<span class="caret"></span></div><button type="button" class="mic micon" aria-label="Finish voice input"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5" fill="none" stroke="#FFFFFF" stroke-width="1.4"></rect><path d="M3 7.8a5 5 0 0 0 10 0M8 12.8v1.9" fill="none" stroke="#FFFFFF" stroke-width="1.4" stroke-linecap="round"></path></svg></button></div><button type="button" class="btn" style="margin-bottom: 7px">Stop <span style="color: #5B636D">esc</span></button></div>
+<div class="hint"><span class="lv"><span style="height: 5px"></span><span style="height: 9px"></span><span style="height: 6px"></span><span style="height: 3px"></span></span><span style="color: #1F2328">Listening</span><span>· ⇧⌘D or the mic finishes</span></div>
+<p class="cap">While listening, Esc discards the dictation, not Claude’s turn; the Stop button still stops Claude. Sending queues as any message does.</p>
+</div>
+
+<div class="snip">
+<div class="lbl">First use · Apple’s speech model is downloading</div>
+<div class="hint"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg><span style="color: #1F2328">Getting the speech model from Apple · 40%</span><span>· once per Mac</span></div>
+<p class="cap">macOS fetches it; Duo only shows progress. The mic waits (dashed); a press while it downloads starts listening when it lands.</p>
+</div>
+
+<div class="snip">
+<div class="lbl">Microphone off for Duo · you said no, or turned it off</div>
+<div class="hint"><span style="color: #1F2328">Duo can’t use the microphone.</span><button type="button" class="chipm">Open Privacy Settings</button><span style="margin-left: auto"></span><span class="chipm">◐ medium</span></div>
+<p class="cap">Shown on a press, in the hint row, as the paste notice is (DL-197); it goes after 6 s or on typing. The button opens System Settings › Privacy &amp; Security › Microphone.</p>
+</div>
+
+<div class="snip">
+<div class="lbl">Blocked by your organisation</div>
+<div class="row"><div class="field"><div class="txt ph">Reply to Claude</div><button type="button" class="mic micoff" aria-label="Voice input is off" disabled><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5" fill="none" stroke="#5B636D" stroke-width="1.4"></rect><path d="M3 7.8a5 5 0 0 0 10 0M8 12.8v1.9" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round"></path></svg></button></div></div>
+<div class="tip">Your Mac’s administrator doesn’t allow voice input for Duo</div>
+<p class="cap">When macOS says the microphone or speech recognition is <i>restricted</i> (a profile), not denied. The mic stays, dashed, so it’s explained rather than missing; no button, since you can’t change it.</p>
+</div>
+
+<div class="snip">
+<div class="lbl">Can’t start, or stopped by itself</div>
+<div class="hint"><span style="color: #1F2328">No microphone found.</span><span>Plug one in or pick one in System Settings › Sound.</span></div>
+<div class="hint"><span style="color: #1F2328">Voice input isn’t available in Norsk on this Mac.</span></div>
+<div class="hint"><span style="color: #1F2328">Stopped: nothing heard for 15 s.</span><span>Your words are kept.</span></div>
+<div class="hint"><span style="color: #1F2328">Stopped: the microphone went away.</span><span>Your words are kept.</span></div>
+</div>
+
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1180}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
