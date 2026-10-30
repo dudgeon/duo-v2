@@ -4371,7 +4371,7 @@ Field report (Geoff's work Mac, Duo 0.2.21 (1117), Claude Code 2.1.284, trust `n
   - **The feed reads no hooks while it loads the transcript** (seconds for a long one, F-160): on attach, a Duo restart or a tab first shown. Now it takes a dialog's request while loading (`peekRequest`, without reading the rest), and the grace waits up to 15 s for a feed still loading (`loadingGrace`).
   - **The window read at attach.** `startEvents` reads the last 256 KB of events and replays from the turn's `UserPromptSubmit`. A long turn's `MessageDisplay` events can push the prompt out of the window, and then the turn's pending request was skipped. Now an unanswered `PermissionRequest` in the window (none of `Stop`, `SessionStart`, or the tool's `PostToolUse` after it) is kept.
   - **A lost `PermissionRequest` line** (two hooks writing at once, C-27): a question's `PreToolUse` carries the same input and now sets the request too.
-- **The report now says what the feed had read:** `hooks: last event <name> <n> s ago[, transcript still loading][, off screen]`, also in `chat-fallbacks.jsonl` (`pending`, `hooks`; older lines still read). Which of the four paths hit Geoff isn't in the photo; the next report will say.
+- **The report now says what the feed had read:** `hooks: last event <name> <n> s ago[, transcript still loading][, off screen]`, also in `chat-fallbacks.jsonl` (`pending`, `hooks`; older lines still read). Which of the four paths hit Geoff isn't in the photo: it is cut off after the "Screen the reader judged" rows, so it doesn't show the verdict changes or the chat state history either. The next report from the work Mac, with this `hooks:` line, is what will tell.
 - Checks: `DUO_CHECKS=chat` "a question's request, however late the feed reads it" (2.1.284's question at 60 columns; a request the stopped feed hadn't read, no fallback; no request at all, the report names the last hook; a turn longer than the window; one answered before opening; PreToolUse alone; the log's counts). The F-328 check now has the question's PreToolUse land after the screen, as the request's first word. Policy for a mismatch that resolves late: Q-326.
 
 ## F-420 · A skill missing from chat's `/` menu: the mirror garbled Claude's prompt when typed fast (chat-reliability, 2026-10-29)
@@ -4385,7 +4385,7 @@ Geoff (work Mac, 2.1.284): `/ask-data`, his skill, autocompleted in the terminal
 - Checks: `DUO_CHECKS=chat`: the 2.1.284 and 2.1.311 menus read; nine mirrors typed 30 ms apart into a fake TUI that repaints 120 ms after each key leave `/ask-data` (before the fix `///ask-data`), and backspacing fast leaves `/ask`. chat-live (100×34) types `/ask-data` the same way into the real TUI, with a user skill and a project skill installed in its scratch config, and checks Claude's prompt and the menu.
 - Not changed: chat mirrors only over an idle prompt, so `/` typed while Claude is working shows no menu in chat, though the TUI's does. Mirroring then is unsafe with 2.1.296's inline renderer, whose menu covers the busy row (F-284), so the chat would read the turn as ended; logged as Q-329.
 
-## F-421 · Chat's fallback rules ranked, and 2.1.284 verified (chat-reliability, 2026-10-29)
+## F-435 · Chat's fallback rules ranked, and 2.1.284 verified (chat-reliability, 2026-10-29)
 
 No `chat-fallbacks.jsonl` exists on this Mac (Geoff's work Mac has the field log), so the ranking comes from the field reports (F-376, F-419), the code and runs on 2.1.284. From likeliest:
 

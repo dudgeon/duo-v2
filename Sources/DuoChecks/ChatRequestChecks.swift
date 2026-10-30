@@ -139,7 +139,7 @@ import Foundation
         check(ChatFallbackLog.read(from: url).count == 1, "a log line written by 0.2.21 still reads")
     }
 
-    print("chat mode: Claude Code 2.1.284, the version work pins now (F-421)")
+    print("chat mode: Claude Code 2.1.284, the version work pins now (F-435)")
     do {
         // The dialog tour on the real 2.1.284 against the mock, in manual mode (Spikes/chat-mode/scenario-tour-2.1.284.json).
         let expect: [(String, ChatScreen.Kind)] = [("01-markdown", .idle), ("02-bash-permission", .permission), ("03-edit-permission", .permission),
