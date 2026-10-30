@@ -137,7 +137,7 @@ func directorStatusOffline(_ rest: [String]) -> Int32 {
     let d: OfflineDirector
     do { d = try OfflineDirector(inv, login: true) } catch let e as OfflineFailure { return offlineFail(e.why) } catch { return offlineFail("\(error)") }
     let p = d.projectName
-    print("Duo isn't running. Directing doesn't need it; Duo only carries messages where sessions can't message each other (DL-231).")
+    print("Duo isn't running. Directing doesn't need it (DL-231); workers are reached by SendMessage, or a background resume.")
     print("Project: \(p) (\(d.project.path)).")
     let installed = (try? String(contentsOf: Installer.directorSkillFile, encoding: .utf8)) ?? (try? String(contentsOf: Installer.directorAliasFile, encoding: .utf8))
     if let note = DirectorSkill.versionNote(installed: installed) { print(note) }
@@ -172,7 +172,12 @@ func directorStatusOffline(_ rest: [String]) -> Int32 {
         else { l += "no worker" }
         print(l)
     }
-    if !d.reg.pending.isEmpty { print("Waiting to be delivered: " + d.reg.pending.map { "\($0.task) (since \($0.at))" }.joined(separator: ", ")) }
+    for t in tasks where t.session != nil && t.state != "stopped" && t.state != "no worker" {
+        if let mine = d.caps.permissionClass, let theirs = t.permissionClass, mine != theirs {
+            print("  \(t.path): your messages to its worker and its to you are held (\(theirs.rawValue) against your \(mine.rawValue)): switch this session to Auto, or ask the user to switch the worker.")
+        }
+    }
+    print("Hearing back: SendMessage a live worker (notify_when_idle: true); its reply or the idle notice wakes you. Where messaging can't carry, run `duo2 director watch` under Monitor as the fallback.")
     print("Rules (the project's win where they disagree):")
     for s in DirectorRules.sources(project: d.project, home: home) { print("  - " + s.report) }
     if home == nil { print("  - No Home: rules for every director live in Home's HOME.md. Offer to set one up (`duo2 home set <folder>`), or keep a rule in this project (DL-207).") }
@@ -340,16 +345,17 @@ func directorSendOffline(_ rest: [String]) -> Int32 {
     }
     let beacon = d.beacons.first { $0.sessionId == sid }
     let run: WorkerFacts.Run = beacon.map { $0.status == "busy" ? .working : $0.status == "waiting" ? .needsYou : .idle } ?? .stopped
-    let facts = WorkerFacts(place: .background, run: run, peerName: beacon?.peerName, userTyping: false)
+    let mode = DirectorOffline.transcript(sessionId: sid).flatMap { PermissionClass.latestMode(inTranscript: $0) }
+    let facts = WorkerFacts(place: .background, run: run, peerName: beacon?.peerName, userTyping: false, permissionClass: PermissionClass.of(mode: mode))
     let rung = SendLadder.choose(director: d.caps, worker: facts, duoRunning: false)
     let tagged = Director.tag(d.name) + message
 
     switch rung {
     case .message:
         // duo2 can't call SendMessage for the director: log that it was handed over, never "delivered" (F-342).
-        d.progress(hit.path, "Handed to the director to send (SendMessage; not confirmed delivered, and held if the permission modes differ): \(message.prefix(300))")
+        d.progress(hit.path, "Handed to the director to send by SendMessage: \(message.prefix(300))")
         d.log("handed", task: hit.path, worker: sid, rung: rung.rawValue, "handed to the director to send")
-        print("Send it yourself: SendMessage(to: \"\(facts.peerName ?? sid)\"). Logged and noted in Progress as handed to you, not delivered. Messages between sessions in different permission modes are held and can expire unseen: the worker's last message and task note are the channel back, so read them rather than wait.")
+        print("Send it yourself: SendMessage(to: \"\(facts.peerName ?? sid)\", message: \"…\", notify_when_idle: true). Its reply or the idle notice wakes you; a [Cross-session delivery notice] that says held, expired or refused means read its task note and last message instead (duo2 session show \(sid)).")
         return 0
     case .resumeBackground, .headless:
         let env = ProcessInfo.processInfo.environment
@@ -359,10 +365,8 @@ func directorSendOffline(_ rest: [String]) -> Int32 {
             caps.cliLogin = ClientCaps.cliLogin(env: env)
             if let why = Director.backgroundRefusal(caps) { d.log("refused", task: hit.path, worker: sid, rung: rung.rawValue, why); return offlineFail(why) }
         }
-        // `--` ends the options: a message starting with "-" is never read as a flag.
-        // A worker resumed in the background comes back reachable from the user's phone (DL-230).
-        let rc = rung == .resumeBackground && d.caps.remoteControl == .yes ? w.name.map { ["--remote-control", $0] } ?? [] : []
-        let args = (rung == .headless ? ["-p", "--resume", sid] : ["--bg", "--resume", sid] + rc) + ["--", tagged]
+        // No other flags: the resumed worker keeps its saved name, Remote Control, mode and model (F-422).
+        let args = SendLadder.resumeArgs(rung, session: sid, message: tagged)
         let cwd = DirectorOffline.transcript(sessionId: sid).flatMap(DirectorOffline.filedCwd).flatMap { FileManager.default.fileExists(atPath: $0) ? $0 : nil } ?? d.project.path
         let log = d.project.appending(path: ".duo/director-runs/\(sid.prefix(8))-\(Int(Date().timeIntervalSince1970)).log")
         let how = rung == .headless ? "a headless turn" : "resumed in the background"
@@ -389,13 +393,10 @@ func directorSendOffline(_ rest: [String]) -> Int32 {
         d.log("send", task: hit.path, worker: sid, rung: rung.rawValue, how)
         print("The worker had stopped: it's resuming in the background with your message. Read what it answers with `duo2 session show \(sid)`, or `duo2 director watch`.")
         return 0
-    case .queued:
-        // A busy worker that can't take messages: waiting needs Duo to deliver it, and it isn't running.
-        d.log("refused", task: hit.path, worker: sid, rung: rung.rawValue, "busy, no messaging, Duo closed")
-        return offlineFail("It's busy and can't take messages, and Duo isn't running to hold it: send again when it's stopped, or open Duo.")
     default:
-        d.log("send", task: hit.path, worker: sid, rung: SendRung.askUser.rawValue, "no route")
-        print("Duo can't reach this worker now: ask the user to pass it on to session \(sid.prefix(8)).")
+        let why = SendLadder.blocked(director: d.caps, worker: facts).map { " (\($0))" } ?? ""
+        d.log("send", task: hit.path, worker: sid, rung: SendRung.askUser.rawValue, "no route\(why)")
+        print("Can't reach this worker now\(why): ask the user to pass it on to session \(sid.prefix(8)).")
         return 0
     }
 }
@@ -415,7 +416,7 @@ func sendToDirectorOffline(_ d: OfflineDirector, _ target: String, message: Stri
         print("Send it yourself: SendMessage(to: \"\(peer)\") with \"From \(d.name): \(message)\". Logged as handed to you, not delivered.")
     } else {
         d.log("send", worker: cur.sessionId, rung: SendRung.askUser.rawValue, "to \(cur.name): no live session with messaging")
-        print("\(cur.name) isn't a live session you can message (Duo isn't running to carry it): ask the user to pass it on.")
+        print("\(cur.name) isn't a live session you can message: ask the user to pass it on.")
     }
     return 0
 }

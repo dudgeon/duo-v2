@@ -192,7 +192,10 @@ extension AppModel {
         if !runningHere && !runningElsewhere { run = .stopped }
         else { run = s.state == .working ? .working : s.state == .needsYou ? .needsYou : .idle }
         let beacon = Beacon.readAll().first { $0.sessionId == s.sessionId }
-        return WorkerFacts(place: place, run: run, peerName: beacon?.peerName, userTyping: paused)
+        // The worker's permission class, from its transcript (F-421): messages cross only within one class.
+        let mode = s.sessionId.flatMap { id in ClaudeStorage.transcript(sessionId: id, cwd: cwd(of: s.tabKey) ?? liveFolders[s.project]?.path ?? "") }
+            .flatMap { PermissionClass.latestMode(inTranscript: $0) }
+        return WorkerFacts(place: place, run: run, peerName: beacon?.peerName, userTyping: paused, permissionClass: PermissionClass.of(mode: mode))
     }
 
     func directorStatus(_ p: Fixture.Project, folder: URL, reg: DirectorRegistry, role: DirectorRegistry.Role, director: String, caps: ClientCaps) -> Reply {
@@ -229,16 +232,19 @@ extension AppModel {
                 l += "\(t.stateWord), \(f.place.rawValue), session \(w.sessionId?.prefix(8) ?? "?")"
                 if let q = w.question { l += ": \(q)" }
                 if f.userTyping { l += " · the user took it over (typed there since your last message): you're paused there until they hand it back" }
+                if f.run != .stopped, let mine = caps.permissionClass, let theirs = f.permissionClass, mine != theirs {
+                    l += " · your messages to it and its to you are held (\(theirs.rawValue) against your \(mine.rawValue)): switch this session to Auto, or ask the user to switch the worker"
+                }
             } else if let n = t.pendingName { l += "starting in the background as \(n)" }
             else { l += "no worker" }
             lines.append(l)
         }
-        let pending = reg.pending
-        if !pending.isEmpty { lines.append("Waiting to be delivered: " + pending.map { "\($0.task) (since \($0.at))" }.joined(separator: ", ")) }
+        lines.append("Hearing back: SendMessage a live worker (notify_when_idle: true); its reply or the idle notice wakes you. Where messaging can't carry (a class mismatch above, or no messaging), run `duo2 director watch` under Monitor as the fallback.")
+        let pending = reg.pending   // retired by DL-257; an older file may still hold some
         j["workers"] = tasks.map { t -> [String: Any] in
             var w: [String: Any] = ["task": t.note.path, "title": t.note.title, "status": t.note.status ?? "open", "state": t.stateWord, "noteModified": t.modified]
             if let s = t.worker { w["session"] = s.sessionId ?? ""; if let q = s.question { w["question"] = q } }
-            if let f = t.facts { w["place"] = f.place.rawValue; w["userTyping"] = f.userTyping; if let n = f.peerName { w["peer"] = n } }
+            if let f = t.facts { w["place"] = f.place.rawValue; w["userTyping"] = f.userTyping; if let n = f.peerName { w["peer"] = n }; if let c = f.permissionClass { w["permissionClass"] = c.rawValue } }
             // The user's last turn there since the director's last message (DL-200): an overlay's
             // "never stop or archive a session the user is in" reads it too.
             if let s = t.worker, let at = takenOver(s, folder: folder, director: reg.current?.name ?? director, reg: reg) { w["userTurnAt"] = Self.isoNow(at) }
@@ -268,7 +274,7 @@ extension AppModel {
         j["client"] = ["version": caps.version ?? "", "messaging": caps.messaging.rawValue, "background": caps.background.rawValue,
                        "remoteControl": caps.remoteControl.rawValue, "hooks": caps.hooks.rawValue, "monitor": caps.monitor.rawValue,
                        "cliLogin": (caps.cliLogin ?? .unknown).rawValue,
-                       "inDuo": caps.inDuo, "projects": caps.projects]
+                       "inDuo": caps.inDuo, "projects": caps.projects, "permissionClass": caps.permissionClass?.rawValue ?? "unknown"]
         return .ok(lines.joined(separator: "\n"), j)
     }
 
@@ -353,10 +359,9 @@ extension AppModel {
         if let w = inv.flags["worker"], let s = findSession(w, in: nil), let id = s.sessionId {
             adopted = !startedBy(director, id, task: path, folder: folder)
             sid = id; how = adopted ? "adopted \(s.name) (the user allowed it in Duo)" : "linked \(s.name)"
-        } else if inv.has("background") || (!inv.has("in-duo") && caps.background != .no && caps.messaging != .no) {
-            // The default worker (DL-231): in the background, reachable by SendMessage; Duo carries
-            // messages only where that fails, so --in-duo, or a client without messaging or
-            // background sessions, starts it in Duo instead.
+        } else if inv.has("background") || (!inv.has("in-duo") && caps.background != .no) {
+            // The default worker (DL-231, DL-257): in the background, reachable by SendMessage; Duo
+            // carries no messages, so --in-duo, or a client without background sessions, starts it in Duo instead.
             // The director runs the command itself (its own flags, Remote Control, its model).
             // `claude --bg` picks its own session id (it ignores --session-id), so the worker is
             // recorded by a name unique to this start; Duo links it when a session with that name
@@ -381,7 +386,7 @@ extension AppModel {
         inProgress()
         log("start", path, sid, nil, how)
         refreshLive()
-        return .ok("\(path): worker \(sid) \(how), directed by \(director). Hear back with Monitor on `duo2 director watch` (or `duo2 director status`).",
+        return .ok("\(path): worker \(sid) \(how), directed by \(director). Hear back by SendMessage and idle notices (`duo2 director watch` under Monitor where messaging can't carry).",
                    ["task": path, "worker": sid, "director": director])
     }
 

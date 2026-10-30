@@ -3,8 +3,8 @@ import Foundation
 /// The director's exact parts (DL-193 to DL-205), Foundation only, so `duo2`, the app and the checks
 /// share them: who directs a project (`.duo/director.json`, DL-200), the log every `duo2 director`
 /// verb writes (the metrics in `docs/research/director-product.md` are counted from it), where the
-/// rules are (DL-193), what the calling client can do, the ladder `send` walks (DL-199), and the
-/// guards on Duo pressing Enter for a director (DL-199).
+/// rules are (DL-193), what the calling client can do, the ladder `send` walks (DL-199, DL-257), and
+/// the guards on Duo pressing Enter in a session (`SubmitGuard`, kept for @claude review comments).
 public enum Director {
     /// A director's fixed name (DL-200): `director-<project>`, given with `claude -n`, which survives
     /// restarts where a derived name doesn't (P3).
@@ -24,7 +24,8 @@ public enum Director {
         don't decide anything the Request says you mustn't, and ask in this session if something only the user can answer comes up. \
         As you go, append dated one-line updates under the note's ## Progress; if you can't write to the note, put those lines in your report. \
         When you're done or stuck, end your turn with your report as your last message: what you did, what you checked and how, \
-        and any other work you noticed (as suggestions, not done).
+        and any other work you noticed (as suggestions, not done). \
+        Also send that report to \(director) with SendMessage(to: \"\(director)\"), by that name (not a from address), if you have SendMessage.
         """
     }
 
@@ -113,7 +114,7 @@ public enum DirectorSkill {
     public static let format = 1
     /// Bump when the skill starts needing a `duo2 director` verb or behaviour an older Duo lacks
     /// (F-341): `status` compares the installed skill's revision with the running Duo's.
-    public static let revision = 2
+    public static let revision = 3
     public static func text(name: String = "director") -> String {
         let t = source.replacingOccurrences(of: "{{FORMAT}}", with: "\(format)").replacingOccurrences(of: "{{REVISION}}", with: "\(revision)")
         return name == "director" ? t : t.replacingOccurrences(of: "name: director\n", with: "name: \(name)\n")
@@ -173,7 +174,8 @@ public struct DirectorRegistry: Codable, Equatable, Sendable {
     public var schema = 1
     public var current: Entry?
     public var retired: [Entry] = []
-    /// Messages waiting for a worker to go idle (DL-199's last rung before asking the user).
+    /// Retired by DL-257: Duo no longer carries a director's messages, so nothing adds to this. Kept so
+    /// an older file still loads; the app turns what it finds into a Progress line and empties it.
     public var pending: [Pending] = []
 
     public struct Pending: Codable, Equatable, Sendable {
@@ -575,8 +577,12 @@ public struct ClientCaps: Codable, Equatable, Sendable {
     public var hooks: Tri = .unknown
     /// Monitor: offered only when the account's flag is on (F-310) and nothing denies it.
     public var monitor: Tri = .unknown
-    /// Resuming a stopped background session with a message (2.1.285+).
+    /// Resuming a stopped background session with a message (2.1.284+, F-422).
     public var backgroundResume: Tri = .unknown
+    /// The session's permission mode (`default`, `acceptEdits`, `auto`, `bypassPermissions`, …), from the
+    /// tail of its transcript; nil if unread. Messages cross only between sessions of one `PermissionClass`.
+    public var permissionMode: String?
+    public var permissionClass: PermissionClass? { PermissionClass.of(mode: permissionMode) }
     /// This session runs in a Duo terminal.
     public var inDuo = false
     /// A Claude Code Projects session (DL-203): the director starts nothing.
@@ -617,6 +623,9 @@ public struct ClientCaps: Codable, Equatable, Sendable {
         }
         if env["CLAUDE_CODE_MESSAGING_SOCKET"] != nil { c.messaging = .yes }
 
+        // The permission mode: the last one the session's transcript records.
+        if let sid = c.sessionId, let t = DirectorOffline.transcript(sessionId: sid, claudeDir: claudeDir) { c.permissionMode = PermissionClass.latestMode(inTranscript: t) }
+
         // Settings: managed, user, project, local. A key that turns a feature off anywhere wins (F-311).
         var settings: [[String: Any]] = []
         for url in [URL(fileURLWithPath: managed), claudeDir.appending(path: "settings.json")] + (cwd.map { d in
@@ -632,7 +641,7 @@ public struct ClientCaps: Codable, Equatable, Sendable {
         c.remoteControl = flag("disableRemoteControl") ? .no : .yes
         c.background = (flag("disableAgentView") || env["CLAUDE_CODE_DISABLE_AGENT_VIEW"].map { !$0.isEmpty && $0 != "0" } == true) ? .no : .yes
         if refuses("crossSessionInbound") || denied.contains("SendMessage") { c.messaging = .no }
-        if let v = c.version { c.backgroundResume = VersionOrder.atLeast(v, "2.1.285") ? .yes : .no }
+        if let v = c.version { c.backgroundResume = VersionOrder.atLeast(v, "2.1.284") ? .yes : .no }
         if c.background == .no { c.backgroundResume = .no }
 
         // Monitor (F-310): the account flag Claude cached, unless a setting denies the tool.
@@ -678,6 +687,14 @@ public struct ClientCaps: Codable, Equatable, Sendable {
         func w(_ t: Tri) -> String { t.rawValue }
         var out = ["Claude Code \(version ?? "(version unknown)")\(name.map { ", named \"\($0)\"" } ?? "")\(inDuo ? ", in Duo" : ", outside Duo")."]
         out.append("Messaging (SendMessage, idle notices): \(w(messaging)). Background sessions: \(w(background)); resuming one with a message: \(w(backgroundResume)).")
+        switch permissionClass {
+        case .prompting?:
+            out.append("Permission class: prompting (\(permissionMode ?? "?")): workers in Auto or Default get your messages at once, and theirs reach you.")
+        case .bypass?:
+            out.append("Permission class: bypass (\(permissionMode ?? "?")): messages to and from your workers (in Auto) are held and expire unseen in about 16 minutes. Switch this session to Auto; nothing may rely on bypassPermissions (DL-222).")
+        case nil:
+            out.append("Permission class: unknown (\(permissionMode.map { "mode \($0)" } ?? "no mode read from the transcript")). Messages cross only between sessions in the same class (bypass, or prompting: Auto, Default, Accept Edits, Plan).")
+        }
         out.append("Remote Control: \(w(remoteControl))\(remoteControlOn ? ", on for this session" : ""). Hooks: \(w(hooks)).")
         out.append("Monitor: \(w(monitor))\(monitor == .yes ? " (wake on `duo2 director watch`)" : monitor == .no ? " (wake with ScheduleWakeup instead)" : " (check your tools; else ScheduleWakeup)").")
         if cliLogin == .no { out.append("CLI login: no. Claude's CLI is logged out on this Mac, so no background worker can start. Ask the user to run `claude auth login` here, and start no worker another way until they have (DL-230).") }
@@ -701,22 +718,55 @@ public enum VersionOrder {
     }
 }
 
-// MARK: - The ladder `send` walks (DL-199)
+// MARK: - Permission classes (F-421)
 
-/// The ways to reach a worker, best first (director-product.md, "Commitments").
+/// The CLI's own split for session-to-session messages: a message crosses only between two sessions of
+/// one class, and one that crosses classes is held and expires unseen (about 16 minutes). A plan mode
+/// entered from bypass is bypass in the CLI, but a transcript can't tell that from plan alone, so it
+/// reads as prompting.
+public enum PermissionClass: String, Codable, Sendable {
+    case bypass, prompting
+
+    public static func of(mode: String?) -> PermissionClass? {
+        switch mode {
+        case "bypassPermissions": return .bypass
+        case "default", "acceptEdits", "auto", "dontAsk", "plan": return .prompting
+        default: return nil
+        }
+    }
+
+    /// The last `"permissionMode":"…"` in the final ~256 KB of a transcript, or nil.
+    public static func latestMode(inTranscript url: URL, tailBytes: Int = 256 * 1024) -> String? {
+        guard let h = try? FileHandle(forReadingFrom: url) else { return nil }
+        defer { try? h.close() }
+        let size = (try? h.seekToEnd()) ?? 0
+        try? h.seek(toOffset: size > UInt64(tailBytes) ? size - UInt64(tailBytes) : 0)
+        guard let data = try? h.readToEnd() else { return nil }
+        return latestMode(in: String(decoding: data, as: UTF8.self))
+    }
+
+    /// The last `"permissionMode":"…"` in `text`, or nil.
+    public static func latestMode(in text: String) -> String? {
+        guard let re = try? NSRegularExpression(pattern: #""permissionMode"\s*:\s*"([A-Za-z]+)""#),
+              let m = re.matches(in: text, range: NSRange(text.startIndex..., in: text)).last, let r = Range(m.range(at: 1), in: text) else { return nil }
+        return String(text[r])
+    }
+}
+
+// MARK: - The ladder `send` walks (DL-199, DL-257)
+
+/// The ways to reach a worker, best first (director-product.md, "Commitments"). Duo types nothing into
+/// a worker for a director (DL-257): old log lines may still name the retired rungs `duo-submit` and
+/// `queued`, as strings.
 public enum SendRung: String, Codable, CaseIterable, Sendable {
-    /// SendMessage, where both sessions have messaging: the director sends it itself.
+    /// SendMessage, where both sessions have messaging and share a permission class: the director sends it itself.
     case message
-    /// `claude --bg --resume <id> "<message>"` for a stopped background worker (2.1.285+).
+    /// `claude --bg --resume <id> -- <message>` for a stopped background worker (2.1.284+).
     case resumeBackground = "resume-background"
-    /// `claude -p --resume <id> "<message>"`: a headless turn for a stopped background worker.
+    /// `claude -p --resume <id> -- <message>`: a headless turn for a stopped background worker.
     case headless
-    /// Duo types it into the worker's prompt and presses Enter (every `SubmitGuard` holds).
-    case duoSubmit = "duo-submit"
     /// Duo reopens a stopped worker in its tab, with the message as its first prompt.
     case duoResume = "duo-resume"
-    /// It waits in the task note, and Duo sends it when the worker next goes idle.
-    case queued
     /// Nothing works: the director asks the user to pass it on.
     case askUser = "ask-user"
 }
@@ -731,37 +781,49 @@ public struct WorkerFacts: Equatable, Sendable {
     public var peerName: String?
     /// The user typed into it recently, so its director is paused there (DL-200).
     public var userTyping = false
-    public init(place: Where, run: Run, peerName: String? = nil, userTyping: Bool = false) {
-        self.place = place; self.run = run; self.peerName = peerName; self.userTyping = userTyping
+    /// The worker's permission class, from its transcript; nil if unread.
+    public var permissionClass: PermissionClass?
+    public init(place: Where, run: Run, peerName: String? = nil, userTyping: Bool = false, permissionClass: PermissionClass? = nil) {
+        self.place = place; self.run = run; self.peerName = peerName; self.userTyping = userTyping; self.permissionClass = permissionClass
     }
 }
 
 public enum SendLadder {
     /// The rung to take now. `duoRunning` is whether the app answered.
     public static func choose(director c: ClientCaps, worker w: WorkerFacts, duoRunning: Bool) -> SendRung {
-        if c.messaging == .yes, w.peerName != nil, w.run != .stopped { return .message }
-        switch (w.place, w.run) {
-        case (.background, .stopped):
-            if c.backgroundResume == .yes { return .resumeBackground }
-            return .headless
-        case (.duo, .stopped):
-            return duoRunning ? .duoResume : .askUser
-        case (.duo, .idle):
-            return duoRunning && !w.userTyping ? .duoSubmit : .queued
-        case (.duo, _):
-            return duoRunning ? .queued : .askUser
-        case (.background, _):
-            // A live background worker without messaging: nothing types into it; wait for it to stop.
-            return .queued
-        default:
-            return .askUser
+        if w.run == .stopped {
+            if w.place == .duo && duoRunning { return .duoResume }
+            return c.backgroundResume == .yes ? .resumeBackground : .headless
         }
+        return blocked(director: c, worker: w) == nil ? .message : .askUser
+    }
+
+    /// Why a live worker can't be messaged, or nil when it can: no messaging here, no peer name, or
+    /// a permission class that differs from the director's (the message would be held).
+    public static func blocked(director c: ClientCaps, worker w: WorkerFacts) -> String? {
+        guard c.messaging == .yes else {
+            return c.messaging == .no ? "this client has no session messaging (SendMessage)" : "this client's messaging isn't known to work"
+        }
+        guard w.peerName != nil else { return "the worker has no peer name to message (its session doesn't take messages)" }
+        if let mine = c.permissionClass, let theirs = w.permissionClass, mine != theirs {
+            return "it runs in \(theirs == .bypass ? "bypass" : "Auto or Default"), you in \(mine == .bypass ? "bypass" : "Auto or Default"), so the message would be held and expire unseen; switch to Auto"
+        }
+        return nil
+    }
+
+    /// The `claude` arguments that deliver `message` to a stopped worker. Nothing else is passed: a
+    /// resumed background session keeps its saved name, Remote Control, mode and model, and any flag
+    /// makes the CLI start a renamed copy instead of waking it (F-422). `--` ends the options, so a
+    /// message starting with "-" is never read as a flag.
+    public static func resumeArgs(_ rung: SendRung, session: String, message: String) -> [String] {
+        (rung == .headless ? ["-p", "--resume", session] : ["--bg", "--resume", session]) + ["--", message]
     }
 }
 
-// MARK: - When Duo may press Enter for a director (DL-199)
+// MARK: - When Duo may press Enter (DL-199)
 
-/// Duo submits a director's message into a worker's prompt only when every one of these holds.
+/// Duo presses Enter in a session's prompt for a person's say-so (an @claude review comment) only when
+/// every one of these holds. It no longer guards directors (DL-257): their messages go by SendMessage.
 /// Each refusal says which, so the director (and the log) know why; DuoChecks proves each one.
 public enum SubmitGuard {
     /// How long after the user's last keystroke in a worker Duo keeps out (DL-199 "recently").

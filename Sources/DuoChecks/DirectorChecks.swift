@@ -140,7 +140,7 @@ import Foundation
         check(c.messaging == .no && c.monitor == .no && c.backgroundResume == .yes && c.projects, "a project's crossSessionInbound: refuse, the account without Monitor's flag (F-310), and a Projects session")
         c = ClientCaps.probe(env: ["CLAUDE_CODE_SESSION_ID": "nope", "CLAUDE_CONFIG_DIR": cfg.path], cwd: nil, claudeDir: cfg, managed: managed, home: root)
         check(c.version == nil && c.messaging == .unknown && c.monitor == .no && !c.notes.isEmpty, "no beacon: version and messaging unknown, and it says so")
-        check(VersionOrder.atLeast("2.1.285", "2.1.285") && VersionOrder.atLeast("2.1.299", "2.1.285") && !VersionOrder.atLeast("2.1.219", "2.1.285") && VersionOrder.atLeast("2.2.0", "2.1.300"), "versions compare by number")
+        check(VersionOrder.atLeast("2.1.284", "2.1.284") && VersionOrder.atLeast("2.1.299", "2.1.284") && !VersionOrder.atLeast("2.1.219", "2.1.284") && VersionOrder.atLeast("2.2.0", "2.1.300"), "versions compare by number")
         try? fm.removeItem(at: root)
     }
 
@@ -168,21 +168,61 @@ import Foundation
         check(skill.contains("never through your client's own way of starting sessions") && skill.contains("start_session"), "the skill keeps directors off the Claude app's session tool")
     }
 
-    print("director: the send ladder (DL-199)")
+    print("director: the send ladder (DL-199, DL-257) and permission classes (F-421)")
     do {
-        var full = ClientCaps(); full.messaging = .yes; full.backgroundResume = .yes
+        check(PermissionClass.of(mode: "bypassPermissions") == .bypass, "bypassPermissions is the bypass class")
+        check(["default", "acceptEdits", "auto", "dontAsk", "plan"].allSatisfy { PermissionClass.of(mode: $0) == .prompting }, "default, acceptEdits, auto, dontAsk and plan are the prompting class")
+        check(PermissionClass.of(mode: "somethingNew") == nil && PermissionClass.of(mode: nil) == nil, "an unknown or missing mode has no class")
+        let tail = "{\"permissionMode\":\"auto\",\"x\":1}\n{\"type\":\"user\"}\n{\"permissionMode\":\"bypassPermissions\"}\n"
+        check(PermissionClass.latestMode(in: tail) == "bypassPermissions" && PermissionClass.latestMode(in: "{\"permissionMode\":\"auto\"}") == "auto" && PermissionClass.latestMode(in: "{}") == nil,
+              "the class reader takes the last permissionMode in a transcript")
+        var full = ClientCaps(); full.messaging = .yes; full.backgroundResume = .yes; full.permissionMode = "auto"
         var old = ClientCaps(); old.messaging = .no; old.backgroundResume = .no
         let L = SendLadder.choose
-        check(L(full, WorkerFacts(place: .duo, run: .idle, peerName: "w1"), true) == .message && L(full, WorkerFacts(place: .background, run: .working, peerName: "w1"), true) == .message,
-              "messaging first, where both sides have it")
-        check(L(full, WorkerFacts(place: .duo, run: .idle), true) == .duoSubmit, "a worker without messaging, idle in Duo: Duo submits it")
+        check(full.permissionClass == .prompting, "caps read the mode into a class")
+        check(L(full, WorkerFacts(place: .duo, run: .idle, peerName: "w1"), true) == .message && L(full, WorkerFacts(place: .background, run: .working, peerName: "w1"), true) == .message
+              && L(full, WorkerFacts(place: .background, run: .needsYou, peerName: "w1", permissionClass: .prompting), true) == .message,
+              "a live worker with messaging and the same (or an unread) class: message")
+        check(L(full, WorkerFacts(place: .duo, run: .idle), true) == .askUser && L(old, WorkerFacts(place: .background, run: .working, peerName: "w1"), true) == .askUser,
+              "a live worker without a peer name, or a client without messaging: ask the user (Duo types nothing)")
+        let mismatch = WorkerFacts(place: .background, run: .working, peerName: "w1", permissionClass: .bypass)
+        check(L(full, mismatch, true) == .askUser && SendLadder.blocked(director: full, worker: mismatch)?.contains("Auto") == true && SendLadder.blocked(director: full, worker: mismatch)?.contains("expire") == true,
+              "a class mismatch: ask the user, and the reason says the message would expire and to switch to Auto")
+        check(SendLadder.blocked(director: full, worker: WorkerFacts(place: .duo, run: .idle, peerName: "w1")) == nil, "nothing blocks a matching worker")
         check(L(full, WorkerFacts(place: .background, run: .stopped, peerName: "w1"), true) == .resumeBackground && L(old, WorkerFacts(place: .background, run: .stopped), true) == .headless,
-              "a stopped background worker: resumed with it (2.1.285+), else a headless turn")
-        check(L(old, WorkerFacts(place: .duo, run: .stopped), true) == .duoResume && L(old, WorkerFacts(place: .duo, run: .stopped), false) == .askUser, "a stopped worker in Duo: reopened with it, while Duo runs")
-        check(L(old, WorkerFacts(place: .duo, run: .working), true) == .queued && L(old, WorkerFacts(place: .duo, run: .needsYou), true) == .queued
-              && L(old, WorkerFacts(place: .background, run: .working), true) == .queued, "a busy worker without messaging: it waits for the next idle")
-        check(L(old, WorkerFacts(place: .duo, run: .idle, userTyping: true), true) == .queued, "never Duo's Enter into a worker the user is typing in")
-        check(L(old, WorkerFacts(place: .unknown, run: .idle), true) == .askUser, "nothing reaches it: ask the user")
+              "a stopped background worker: resumed with it (2.1.284+), else a headless turn")
+        check(L(full, WorkerFacts(place: .duo, run: .stopped), true) == .duoResume && L(old, WorkerFacts(place: .duo, run: .stopped), false) == .headless && L(full, WorkerFacts(place: .duo, run: .stopped), false) == .resumeBackground,
+              "a stopped worker in Duo: reopened by Duo while it runs, else resumed")
+        let bg = SendLadder.resumeArgs(.resumeBackground, session: "sid", message: "-x hi")
+        check(bg == ["--bg", "--resume", "sid", "--", "-x hi"] && !bg.contains("--remote-control") && SendLadder.resumeArgs(.headless, session: "sid", message: "m") == ["-p", "--resume", "sid", "--", "m"],
+              "resume arguments carry no flag besides --resume and end with -- <message> (F-422)")
+        check(VersionOrder.atLeast("2.1.284", "2.1.284") && !VersionOrder.atLeast("2.1.283", "2.1.284"), "2.1.284 is where background resume starts")
+        check(Director.workerPrompt(note: "/n.md", director: "director-p").contains("SendMessage(to: \"director-p\")"), "a worker's brief asks it to send its report to the director by name")
+    }
+
+    print("director: a recorded 2.1.284 beacon and its transcript (the work Mac)")
+    do {
+        let fm = FileManager.default
+        let root = fm.temporaryDirectory.appending(path: "d284-\(UUID().uuidString.prefix(6))")
+        let cfg = root.appending(path: "cfg")
+        let sid = "00000000-2840-4000-8000-000000000284"
+        try fm.createDirectory(at: cfg.appending(path: "sessions"), withIntermediateDirectories: true)
+        try fm.createDirectory(at: cfg.appending(path: "projects/-tmp-dm-scratch"), withIntermediateDirectories: true)
+        defer { try? fm.removeItem(at: root) }
+        let beacon = #"{"pid":37914,"sessionId":"00000000-2840-4000-8000-000000000284","cwd":"/tmp/dm-scratch","startedAt":1793216494047,"version":"2.1.284","peerProtocol":1,"peerFeatures":["notify_idle","reply_across_default_dirs","artifact_yield"],"kind":"interactive","entrypoint":"cli","pidDomain":"darwin","messagingSocketPath":"/tmp/cc-socks/37914.sock","name":"dm-284i","nameSource":"user","status":"idle"}"#
+        try Data(beacon.utf8).write(to: cfg.appending(path: "sessions/37914.json"))
+        let transcript = cfg.appending(path: "projects/-tmp-dm-scratch/\(sid).jsonl")
+        try Data("{\"type\":\"user\",\"permissionMode\":\"auto\"}\n{\"type\":\"user\",\"permissionMode\":\"auto\"}\n".utf8).write(to: transcript)
+        let env = ["CLAUDE_PID": "37914", "CLAUDE_CODE_SESSION_ID": sid, "CLAUDE_CONFIG_DIR": cfg.path]
+        var c = ClientCaps.probe(env: env, cwd: nil, claudeDir: cfg, managed: root.appending(path: "none.json").path, home: root)
+        check(c.version == "2.1.284" && c.messaging == .yes && c.backgroundResume == .yes && c.permissionMode == "auto" && c.permissionClass == .prompting,
+              "a 2.1.284 beacon: messaging yes, background resume yes, Auto is the prompting class (\(c.lines.joined(separator: " ")))")
+        check(c.lines.contains { $0.hasPrefix("Permission class: prompting") }, "status names the class")
+        try Data("{\"permissionMode\":\"auto\"}\n{\"permissionMode\":\"bypassPermissions\"}\n".utf8).write(to: transcript)
+        c = ClientCaps.probe(env: env, cwd: nil, claudeDir: cfg, managed: root.appending(path: "none.json").path, home: root)
+        check(c.permissionClass == .bypass && c.lines.contains { $0.hasPrefix("Permission class: bypass") && $0.contains("Switch this session to Auto") }, "a director in bypass is told its messages are held, and to switch to Auto")
+        let old = try JSONDecoder().decode(ClientCaps.self, from: JSONEncoder().encode(ClientCaps()))
+        check(old.permissionMode == nil && old.permissionClass == nil, "caps without a mode (an older duo2) still decode")
     }
 
     print("director: when Duo may press Enter (DL-199)")
@@ -378,8 +418,8 @@ import Foundation
         check(DirectorSkill.versionNote(installed: "revision \(DirectorSkill.revision - 1)")?.contains("older") == true, "a skill older than Duo says Duo updates it")
         check(DirectorSkill.versionNote(installed: nil) == nil && DirectorSkill.versionNote(installed: "no header") == nil, "no skill or no header: no note")
         check(DirectorSkill.text().contains("If `duo2` answers \"unknown command\", Duo is older"), "the skill says what to do when verbs are missing")
-        check(DirectorSkill.text().contains("never use a subagent instead") && DirectorSkill.text().contains("never a subagent") && DirectorSkill.text().contains("Don't wait for a SendMessage"),
-              "the skill rules out subagents for steerable work and says to read, not wait (P3, P4)")
+        check(DirectorSkill.text().contains("never use a subagent instead") && DirectorSkill.text().contains("never a subagent") && DirectorSkill.text().contains("Never take silence for an answer") && DirectorSkill.text().contains("notify_when_idle: true"),
+              "the skill rules out subagents for steerable work, hears back by message, and never takes silence for an answer (P3, P4, DL-257)")
         check(!DirectorSkill.text().contains("bypassPermissions") || DirectorSkill.text().contains("never rely on `bypassPermissions`"), "nothing relies on bypassPermissions (DL-222)")
     }
 
@@ -511,7 +551,7 @@ import Foundation
     caps.backgroundResume = .no
     check(SendLadder.choose(director: caps, worker: WorkerFacts(place: .background, run: .stopped), duoRunning: false) == .headless, "ladder, Duo closed: a stopped worker, no resume: a headless turn")
     caps.messaging = .no
-    check(SendLadder.choose(director: caps, worker: WorkerFacts(place: .background, run: .working), duoRunning: false) == .queued, "ladder, Duo closed: a busy worker without messaging: queued (duo2 refuses it, nothing would deliver it)")
+    check(SendLadder.choose(director: caps, worker: WorkerFacts(place: .background, run: .working), duoRunning: false) == .askUser, "ladder, Duo closed: a live worker without messaging: ask the user")
     check(DirectorOffline.runEnvironment(["DUO_SOCKET": "x", "DUO_TOKEN": "y", "CLAUDECODE": "1", "CLAUDE_CODE_SESSION_ID": "s", "CLAUDE_CODE_SESSION_X": "s", "PATH": "/bin", "CLAUDE_CONFIG_DIR": "/c"])
           == ["PATH": "/bin", "CLAUDE_CONFIG_DIR": "/c"], "a claude run for a director gets neither Duo's variables nor the calling session's")
     let runs = root.appending(path: "runs")
@@ -615,7 +655,7 @@ import Foundation
     check(stray?.ok == false && stray?.output.contains("doesn't know") == true, "status from a folder Duo doesn't know is refused, though a project is on screen")
 
     // start a new task.
-    r = run("director start", ["--title", "One-page brief", "--request", "Draft a one-page brief from these three notes.", "--done-when", "a brief exists"], as: D, name: "director-dirproj")
+    r = run("director start", ["--title", "One-page brief", "--request", "Draft a one-page brief from these three notes.", "--done-when", "a brief exists", "--in-duo"], as: D, name: "director-dirproj")
     let brief = note("tasks/one-page-brief.md")
     let w1 = TaskNotes.parse(brief, path: "x").sessionIds.first ?? ""
     check(r.ok && DirectorNotes.directedBy(brief) == "director-dirproj" && brief.contains("## Request\n\nDraft a one-page brief from these three notes.")
@@ -632,9 +672,9 @@ import Foundation
     check(!r.ok && r.output.contains("directed by director-dirproj"), "a second session can't start work in a directed project without --take-over")
 
     // No cap (DL-232): a "max workers" line in ## Director changes nothing.
-    r = run("director start", ["--title", "Second", "--request", "two"], as: D, name: "director-dirproj")
+    r = run("director start", ["--title", "Second", "--request", "two", "--in-duo"], as: D, name: "director-dirproj")
     check(r.ok, "a second worker starts")
-    r = run("director start", ["--title", "Third", "--request", "three"], as: D, name: "director-dirproj")
+    r = run("director start", ["--title", "Third", "--request", "three", "--in-duo"], as: D, name: "director-dirproj")
     check(r.ok && TaskNotes.parse(note("tasks/third.md"), path: "x").status == "in-progress" && !TaskNotes.parse(note("tasks/third.md"), path: "x").sessionIds.isEmpty,
           "a third starts too, past the old \"max workers: 2\" line: there's no cap")
     r = run("director start", ["--title", "Idea", "--request", "maybe", "--suggest"], as: D, name: "director-dirproj")
@@ -675,31 +715,12 @@ import Foundation
     check(guardRefusal?.contains("isn't on the task") == true, "the guard's onTask is real: a session that isn't the task's worker is refused")
     m.submitHooks = nil
 
-    // Duo's Enter, through a scripted screen.
-    typealias PromptRead = AppModel.PromptRead
-    var screen = PromptRead(idle: true, input: "")
-    var typed: [String] = []
-    var beaconIdle = true
-    m.submitHooks = AppModel.SubmitIO(read: { screen }, beaconIdle: { beaconIdle }, type: { s in
-        typed.append(s)
-        if s != "\r" { screen.input = String(SendFormat.clean(s.replacingOccurrences(of: "\u{1b}[200~", with: "").replacingOccurrences(of: "\u{1b}[201~", with: ""))) }
-    }, settle: 0.05)
+    // A live worker: Duo types nothing (DL-257); the reply hands the director SendMessage or says why not.
     setState(w1, .idle)
     r = run("director send", ["one-page-brief", "Use the second note as the outline."], as: D, name: "director-dirproj")
-    check(r.ok && r.output.hasPrefix("Delivered") && typed.count == 2 && typed[0].hasPrefix("\u{1b}[200~[director-dirproj] Use the second note") && typed[1] == "\r",
-          "an idle worker on your task: Duo types the message, sees it in the prompt, then presses Enter (\(r.output))")
-    check(note("tasks/one-page-brief.md").contains("Sent to the worker (Duo typed it and pressed Enter): Use the second note as the outline."), "the send is noted in Progress")
-
-    typed = []; screen = PromptRead(idle: true, input: "half a thought")
-    r = run("director send", ["one-page-brief", "Another thing."], as: D, name: "director-dirproj")
-    check(r.ok && r.output.hasPrefix("Queued") && typed.isEmpty && DirectorRegistry.load(project: proj).pending.count == 1,
-          "text in the worker's prompt: nothing typed, the message waits (\(r.output))")
-    screen = PromptRead(idle: false, input: "")
-    m.deliverDirectorMessages(); wait { false || !typed.isEmpty }
-    check(typed.isEmpty && DirectorRegistry.load(project: proj).pending.count == 1, "still busy at the next refresh: it keeps waiting, untouched")
-    screen = PromptRead(idle: true, input: ""); typed = []
-    m.deliverDirectorMessages(); wait { typed.count == 2 }
-    check(typed.count == 2 && typed[1] == "\r" && DirectorRegistry.load(project: proj).pending.isEmpty, "idle and empty at the next refresh: delivered, and the queue is empty")
+    check(r.ok && r.output.contains("can't reach") && r.output.contains("no session messaging") && note("tasks/one-page-brief.md").contains("Use the second note") == false,
+          "a live worker the client can't message: ask the user, with the reason, and nothing is typed (\(r.output))")
+    var reg = DirectorRegistry.load(project: proj)
 
     // The user takes the worker over (a turn of theirs in its transcript): the director is paused
     // there until the user hands it back in Duo (DL-200). It holds across restarts by nature.
@@ -723,44 +744,18 @@ import Foundation
     try transcript([briefLine, turn("let me look at this myself", origin: "human", at: Date().addingTimeInterval(-300))])
     let sw = statusWorker()
     check(sw?["userTyping"] as? Bool == true && sw?["userTurnAt"] != nil, "a turn the user typed (in Duo, from the phone, anywhere): status says it was taken over, and when")
-    typed = []
     r = run("director send", ["one-page-brief", "Ping."], as: D, name: "director-dirproj")
-    check(!r.ok && r.output.contains("paused") && r.output.contains("--handed-back") && typed.isEmpty, "the director is paused there, and is told how to ask")
+    check(!r.ok && r.output.contains("paused") && r.output.contains("--handed-back"), "the director is paused there, and is told how to ask")
     (ra, asked) = runAnswering("director send", ["one-page-brief", "Ping.", "--handed-back"], as: D, name: "director-dirproj", answer: "Cancel")
-    check(asked?.hasPrefix("Hand ") == true && !ra.ok && ra.output.contains("kept it paused") && typed.isEmpty,
+    check(asked?.hasPrefix("Hand ") == true && !ra.ok && ra.output.contains("kept it paused"),
           "--handed-back: Duo asks the user; on Cancel nothing is sent and the pause stays")
-    screen = PromptRead(idle: true, input: "")
-    m.submitHooks?.type = { s in typed.append(s); if s != "\r" { screen.input = String(SendFormat.clean(s.replacingOccurrences(of: "\u{1b}[200~", with: "").replacingOccurrences(of: "\u{1b}[201~", with: ""))) } }
-    typed = []
     (ra, _) = runAnswering("director send", ["one-page-brief", "Ping.", "--handed-back"], as: D, name: "director-dirproj", answer: "Hand Back")
-    check(ra.ok && ra.output.hasPrefix("Delivered") && typed.first?.contains("[director-dirproj] Ping.") == true && typed.last == "\r"
-          && DirectorRegistry.load(project: proj).handedBack[w1] != nil && statusWorker()?["userTyping"] as? Bool == false,
-          "on Hand Back the message goes, tagged as the director's, and the earlier turn no longer pauses it (\(ra.output))")
+    check(ra.ok && ra.output.contains("can't reach") && DirectorRegistry.load(project: proj).handedBack[w1] != nil && statusWorker()?["userTyping"] as? Bool == false,
+          "on Hand Back the pause lifts and the send goes on down the ladder (\(ra.output))")
     try transcript([briefLine, turn("let me look at this myself", origin: "human", at: Date().addingTimeInterval(-300)),
                     turn("one more thing from me", origin: "human", at: Date().addingTimeInterval(60))])
     check(statusWorker()?["userTyping"] as? Bool == true, "a new turn of the user's after the hand-back pauses it again")
     try transcript([briefLine])
-
-    // Typed but not sent: left in the prompt for the user, and never queued as well.
-    UserTyping.reset()
-    var reg = DirectorRegistry.load(project: proj); reg.pending = []; try reg.save(project: proj)
-    typed = []; screen = PromptRead(idle: true, input: "")
-    m.submitHooks?.type = { s in typed.append(s); if s != "\r" { screen.input = "Late"; UserTyping.note(w1) } }
-    r = run("director send", ["one-page-brief", "Late message."], as: D, name: "director-dirproj")
-    check(typed.count == 1 && !typed.contains("\r") && r.output.contains("left in the worker's prompt") && DirectorRegistry.load(project: proj).pending.isEmpty,
-          "the user typed while Duo typed: no Enter, the text stays in the prompt, nothing queued (\(r.output))")
-    UserTyping.reset(); reg = DirectorRegistry.load(project: proj); reg.pending = []; try reg.save(project: proj)
-    typed = []; screen = PromptRead(idle: true, input: "")
-    m.submitHooks?.type = { s in typed.append(s); if s != "\r" { screen.input = "something else entirely" } }
-    r = run("director send", ["one-page-brief", "Check the totals."], as: D, name: "director-dirproj")
-    check(typed.count == 1 && r.output.contains("didn't show") && DirectorRegistry.load(project: proj).pending.isEmpty, "the prompt doesn't show the message: no Enter, not queued")
-    typed = []; screen = PromptRead(idle: true, input: "")
-    m.submitHooks?.type = { s in typed.append(s); if s != "\r" { screen.input = "Check"; beaconIdle = false } }
-    r = run("director send", ["one-page-brief", "Check the totals."], as: D, name: "director-dirproj")
-    check(typed.count == 1 && r.output.contains("stopped being idle"), "Claude stops being idle while Duo types: no Enter")
-    beaconIdle = true
-    reg = DirectorRegistry.load(project: proj); reg.pending = []; try reg.save(project: proj)
-    m.submitHooks = nil
 
     // A stopped worker in Duo is reopened with the message as its next prompt, after `--`.
     func active() -> Int { (((try? JSONSerialization.jsonObject(with: Data(run("director status", ["--json"], as: D, name: "director-dirproj").output.utf8))) as? [String: Any])?["active"] as? Int) ?? -1 }
@@ -799,7 +794,7 @@ import Foundation
     let bgId = "b9b9b9b9-0000-4000-8000-000000000001"
     try Data("{\"pid\": \(getpid()), \"sessionId\": \"\(bgId)\", \"cwd\": \"\(proj.path)\", \"status\": \"idle\", \"name\": \"\(bgWorker?.name ?? "?")\"}".utf8)
         .write(to: config.appending(path: "sessions/\(getpid()).json"))
-    m.deliverDirectorMessages()   // a refresh
+    m.pruneDirectorRegistries()   // a refresh
     let linked = DirectorRegistry.load(project: proj).worker(task: "tasks/bg-job.md")
     check(linked?.session == bgId && linked?.pending == false && linked?.adopted == false && note("tasks/bg-job.md").contains(bgId),
           "at the next refresh Duo links it by its name: no link step, no --adopt, and the note links the session")
@@ -810,25 +805,25 @@ import Foundation
     var reg2 = DirectorRegistry.load(project: proj)
     if let i = reg2.workers.firstIndex(where: { $0.task == "tasks/bg-two.md" }) { reg2.workers[i].since = "2026-01-01T00:00:00Z" }
     try reg2.save(project: proj)
-    m.deliverDirectorMessages()
+    m.pruneDirectorRegistries()
     check(DirectorRegistry.load(project: proj).worker(task: "tasks/bg-two.md") == nil, "a pending worker that never appears is dropped after 30 minutes")
     // The default worker (DL-231): with no flag, a background one where the client has messaging and
     // background sessions; --in-duo, or a client without messaging, starts it in Duo.
     r = run("director start", ["--title", "Default way", "--request", "d"], as: D3Pre, name: "director-dirproj", messaging: .yes)
     let defWorker = DirectorRegistry.load(project: proj).worker(task: "tasks/default-way.md")
     check(r.ok && defWorker?.pending == true && r.output.contains("claude --bg") && !r.output.contains("--session-id"),
-          "start with no flag, a client with messaging: a background worker, not a Duo session (\(r.output.prefix(80)))")
+          "start with no flag: a background worker, not a Duo session (\(r.output.prefix(80)))")
     r = run("director start", ["--title", "In Duo please", "--request", "d", "--in-duo"], as: D3Pre, name: "director-dirproj", messaging: .yes)
     let duoWorker = DirectorRegistry.load(project: proj).worker(task: "tasks/in-duo-please.md")
     check(r.ok && duoWorker?.pending == false && duoWorker?.session.isEmpty == false && !r.output.contains("claude --bg"),
           "start --in-duo: the worker starts in Duo (\(r.output.prefix(80)))")
     r = run("director start", ["--title", "No messaging", "--request", "d"], as: D3Pre, name: "director-dirproj", messaging: .no)
-    check(r.ok && DirectorRegistry.load(project: proj).worker(task: "tasks/no-messaging.md")?.pending == false && !r.output.contains("claude --bg"),
-          "start with no flag, a client without messaging: the worker starts in Duo")
+    check(r.ok && DirectorRegistry.load(project: proj).worker(task: "tasks/no-messaging.md")?.pending == true && r.output.contains("claude --bg"),
+          "start with no flag, a client without messaging: still a background worker (DL-257)")
 
     // Done or archived tasks lose their worker entry; old run logs are pruned.
     try Data(note("tasks/bg-job.md").replacingOccurrences(of: "status: in-progress", with: "status: done").utf8).write(to: proj.appending(path: "tasks/bg-job.md"))
-    m.deliverDirectorMessages()
+    m.pruneDirectorRegistries()
     check(DirectorRegistry.load(project: proj).worker(task: "tasks/bg-job.md") == nil && DirectorRegistry.load(project: proj).worker(task: "tasks/one-page-brief.md") != nil,
           "a done task's worker entry is removed at the next refresh; others stay")
     let runs = root.appending(path: "runs")
@@ -845,10 +840,13 @@ import Foundation
           && !DirectorRegistry.isTaskPath("tasks/sub/a.md") && !DirectorRegistry.isTaskPath("/etc/a.md"), "only notes directly in tasks/ count")
     let outside = root.appending(path: "escaped.md")
     try Data("---\ntitle: x\n---\n".utf8).write(to: outside)
-    reg = DirectorRegistry.load(project: proj); reg.pending = [.init(task: "tasks/../../escaped.md", message: "x", at: "t")]; try reg.save(project: proj)
-    m.deliverDirectorMessages()
-    check(DirectorRegistry.load(project: proj).pending.isEmpty && (try? String(contentsOf: outside, encoding: .utf8)) == "---\ntitle: x\n---\n",
-          "a pending message naming a path outside tasks/ is dropped, and nothing outside is written")
+    reg = DirectorRegistry.load(project: proj)
+    reg.pending = [.init(task: "tasks/../../escaped.md", message: "x", at: "t"), .init(task: "tasks/one-page-brief.md", message: "an old queued message", at: "t")]
+    try reg.save(project: proj)
+    m.pruneDirectorRegistries()
+    check(DirectorRegistry.load(project: proj).pending.isEmpty && (try? String(contentsOf: outside, encoding: .utf8)) == "---\ntitle: x\n---\n"
+          && note("tasks/one-page-brief.md").contains("Not delivered: Duo no longer carries messages (DL-257); send it again with SendMessage: an old queued message"),
+          "an old queued message becomes a Progress line and the list empties; a path outside tasks/ writes nothing outside")
 
     // The same name is not the same director: only --take-over moves the registry.
     let D3 = "dir-session-3"
@@ -885,6 +883,6 @@ import Foundation
           "session new --name starts claude with -n <name> (\(namedArgs.prefix(4)))")
 
     let metrics = DirectorLog.metrics(DirectorLog.read(project: proj))
-    check(metrics.starts >= 3 && metrics.takeovers >= 1 && (metrics.sends["duo-submit"] ?? 0) >= 1 && (metrics.sends["queued"] ?? 0) >= 1 && metrics.refusals >= 3,
+    check(metrics.starts >= 3 && metrics.takeovers >= 1 && (metrics.sends["ask-user"] ?? 0) >= 1 && metrics.refusals >= 3,
           "the log has every step (\(metrics))")
 }

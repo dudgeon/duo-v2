@@ -98,6 +98,8 @@ public enum DirectorOffline {
         /// A background worker that hasn't appeared yet: the name it will.
         public var pendingName: String?
         public var peerName: String?
+        /// The worker's permission class, from its transcript (F-421).
+        public var permissionClass: PermissionClass?
         public var question: String?
         public var userTyping: Bool
         public var userTurnAt: Date?
@@ -118,7 +120,7 @@ public enum DirectorOffline {
             let status = Director.frontmatter("status", in: text)
             let mod = ((try? url.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? .distantPast).timeIntervalSince1970
             var t = Task(path: path, title: title(of: text, stem: url.deletingPathExtension().lastPathComponent), status: status, noteModified: mod,
-                         session: nil, workerName: nil, place: "background", state: "no worker", pendingName: nil, peerName: nil, question: nil,
+                         session: nil, workerName: nil, place: "background", state: "no worker", pendingName: nil, peerName: nil, permissionClass: nil, question: nil,
                          userTyping: false, userTurnAt: nil, running: false)
             let unfinished = Director.unfinished(status: status, archived: false)
             guard let w = reg.worker(task: path) else { return t }
@@ -138,6 +140,7 @@ public enum DirectorOffline {
             } else {
                 t.state = "stopped"
             }
+            t.permissionClass = transcript(sessionId: w.session, claudeDir: claudeDir).flatMap { PermissionClass.latestMode(inTranscript: $0) }.flatMap { PermissionClass.of(mode: $0) }
             t.userTurnAt = userTurn(sessionId: w.session, director: director, reg: reg, claudeDir: claudeDir)
             t.userTyping = t.userTurnAt != nil
             return t
