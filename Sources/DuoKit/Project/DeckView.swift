@@ -145,7 +145,7 @@ struct PickerButtonRow: View {
             Divider()
             Button("New Session") { model.sendPickedElement(to: nil) }
         } label: {
-            HStack(spacing: 4) { Text("Send To"); Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold)) }
+            HStack(spacing: 4) { Text("Send To"); Image(systemName: "chevron.down").font(.system(size: DuoSymbolSize.chevron, weight: .semibold)) }
         }
         .menuStyle(.button).fixedSize()
         .modifier(SendToStyle(isDefault: sendToDefault))

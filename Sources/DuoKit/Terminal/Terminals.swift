@@ -162,16 +162,17 @@ public final class TerminalSession {
         view.feed(text: "\u{1b}[2 q")
     }
 
-    /// The DB-2 palette, or its Increase Contrast set when that accessibility setting is on.
+    /// The DB-2 palette of the scheme in force, or its Increase Contrast set when that accessibility setting is on.
     static func applyPalette(_ view: TerminalView) {
-        let set = NSWorkspace.shared.accessibilityDisplayShouldIncreaseContrast ? DuoTerminalPalette.ansiIncreaseContrast : DuoTerminalPalette.ansi
+        let colors = DuoScheme.resolved(view.effectiveAppearance).terminal
+        let set = NSWorkspace.shared.accessibilityDisplayShouldIncreaseContrast ? colors.ansiIncreaseContrast : colors.ansi
         view.installColors(set.map { c in
             let s = c.usingColorSpace(.sRGB) ?? c
             return SwiftTerm.Color(red: UInt16(s.redComponent * 65535), green: UInt16(s.greenComponent * 65535), blue: UInt16(s.blueComponent * 65535))
         })
-        view.caretColor = DuoTerminalPalette.cursor
-        view.caretTextColor = DuoTerminalPalette.textUnderCursor
-        view.selectedTextBackgroundColor = DuoTerminalPalette.selection
+        view.caretColor = colors.cursor
+        view.caretTextColor = colors.textUnderCursor
+        view.selectedTextBackgroundColor = colors.selection
     }
 
     private func start() {
@@ -311,6 +312,7 @@ public final class GuardedTerminalView: LocalProcessTerminalView {
             nativeBackgroundColor = DuoNSColor.console
             nativeForegroundColor = DuoNSColor.consoleText
         }
+        TerminalSession.applyPalette(self)   // the ANSI set is a snapshot too: a scheme has its own
         needsDisplay = true
     }
 

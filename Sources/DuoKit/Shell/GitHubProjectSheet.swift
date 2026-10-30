@@ -165,7 +165,7 @@ struct RadioRow: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Circle().strokeBorder(on ? Color.accentColor : DuoColor.controlEdge, lineWidth: on ? 4 : 1)
+            Circle().strokeBorder(on ? DuoColor.text : DuoColor.controlEdge, lineWidth: on ? 4 : 1)
                 .background(Circle().fill(DuoColor.pane)).frame(width: 14, height: 14)
             Text(label).duoText(.body)
         }

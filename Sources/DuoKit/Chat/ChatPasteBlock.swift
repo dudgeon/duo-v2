@@ -90,7 +90,7 @@ final class PasteBlockView: NSView, NSTextViewDelegate {
     }
     required init?(coder: NSCoder) { fatalError() }
 
-    static let head = NSFont.systemFont(ofSize: 12, weight: .semibold), meta = NSFont.systemFont(ofSize: 12)
+    static let head = NSFont.systemFont(ofSize: DuoTextStyle.control.spec.size, weight: .semibold), meta = NSFont.systemFont(ofSize: DuoTextStyle.control.spec.size)
     static let body = NSFont.systemFont(ofSize: DuoTextStyle.body.spec.size)
 
     /// Builds or drops the editor to match the block's state.

@@ -342,14 +342,16 @@ public enum DuoSpace {
     public static let gapAboveDocumentHeading: CGFloat = 4.0
 }
 
-/// The terminal's colours (surfaces-handoff DB-2): the 16 ANSI colours, an Increase Contrast set,
-/// cursor and selection. Contrast is against `console`.
+/// One scheme's terminal colours (surfaces-handoff DB-2): the 16 ANSI colours, an Increase Contrast set, cursor and selection.
+public struct DuoTerminalColors: Sendable {
+    public let ansi: [NSColor], ansiIncreaseContrast: [NSColor], cursor: NSColor, textUnderCursor: NSColor, selection: NSColor
+}
+
+/// The terminal's colours per scheme. `terminal` in tokens.json is the base; `terminal.scheme.<name>` overrides parts of it for
+/// that scheme (a scheme with no entry takes the base). Contrast is against `console`. `DuoScheme.palette` picks one.
 public enum DuoTerminalPalette {
-    public static let ansi: [NSColor] = [.duoFixed(0x2B2F36), .duoFixed(0xE27A85), .duoFixed(0x8CC08A), .duoFixed(0xD6C26B), .duoFixed(0x7FA8E6), .duoFixed(0xC792D8), .duoFixed(0x74C2C9), .duoFixed(0xC9CDD3), .duoFixed(0x7D8590), .duoFixed(0xF09AA3), .duoFixed(0xA9D7A6), .duoFixed(0xE8D98E), .duoFixed(0xA4C3F3), .duoFixed(0xDAB1E7), .duoFixed(0x9BDBE0), .duoFixed(0xFFFFFF)]
-    public static let ansiIncreaseContrast: [NSColor] = [.duoFixed(0x4A4F57), .duoFixed(0xF09AA3), .duoFixed(0xA9D7A6), .duoFixed(0xE8D98E), .duoFixed(0xA4C3F3), .duoFixed(0xDAB1E7), .duoFixed(0x9BDBE0), .duoFixed(0xE6E8EB), .duoFixed(0x9AA1AB), .duoFixed(0xF8BDC3), .duoFixed(0xC6E6C3), .duoFixed(0xF2E5B4), .duoFixed(0xC3D8F8), .duoFixed(0xE8CDF0), .duoFixed(0xBEE9EC), .duoFixed(0xFFFFFF)]
-    public static let cursor = NSColor.duoFixed(0xE6E8EB)
-    public static let textUnderCursor = NSColor.duoFixed(0x15171B)
-    public static let selection = NSColor.duoFixed(0x3A4250)
+    public static let light = DuoTerminalColors(ansi: [.duoFixed(0x2B2F36), .duoFixed(0xE27A85), .duoFixed(0x8CC08A), .duoFixed(0xD6C26B), .duoFixed(0x7FA8E6), .duoFixed(0xC792D8), .duoFixed(0x74C2C9), .duoFixed(0xC9CDD3), .duoFixed(0x7D8590), .duoFixed(0xF09AA3), .duoFixed(0xA9D7A6), .duoFixed(0xE8D98E), .duoFixed(0xA4C3F3), .duoFixed(0xDAB1E7), .duoFixed(0x9BDBE0), .duoFixed(0xFFFFFF)], ansiIncreaseContrast: [.duoFixed(0x4A4F57), .duoFixed(0xF09AA3), .duoFixed(0xA9D7A6), .duoFixed(0xE8D98E), .duoFixed(0xA4C3F3), .duoFixed(0xDAB1E7), .duoFixed(0x9BDBE0), .duoFixed(0xE6E8EB), .duoFixed(0x9AA1AB), .duoFixed(0xF8BDC3), .duoFixed(0xC6E6C3), .duoFixed(0xF2E5B4), .duoFixed(0xC3D8F8), .duoFixed(0xE8CDF0), .duoFixed(0xBEE9EC), .duoFixed(0xFFFFFF)], cursor: NSColor.duoFixed(0xE6E8EB), textUnderCursor: NSColor.duoFixed(0x15171B), selection: NSColor.duoFixed(0x3A4250))
+    public static let dark = DuoTerminalColors(ansi: [.duoFixed(0x2B2F36), .duoFixed(0xE27A85), .duoFixed(0x8CC08A), .duoFixed(0xD6C26B), .duoFixed(0x7FA8E6), .duoFixed(0xC792D8), .duoFixed(0x74C2C9), .duoFixed(0xC9CDD3), .duoFixed(0x7D8590), .duoFixed(0xF09AA3), .duoFixed(0xA9D7A6), .duoFixed(0xE8D98E), .duoFixed(0xA4C3F3), .duoFixed(0xDAB1E7), .duoFixed(0x9BDBE0), .duoFixed(0xFFFFFF)], ansiIncreaseContrast: [.duoFixed(0x4A4F57), .duoFixed(0xF09AA3), .duoFixed(0xA9D7A6), .duoFixed(0xE8D98E), .duoFixed(0xA4C3F3), .duoFixed(0xDAB1E7), .duoFixed(0x9BDBE0), .duoFixed(0xE6E8EB), .duoFixed(0x9AA1AB), .duoFixed(0xF8BDC3), .duoFixed(0xC6E6C3), .duoFixed(0xF2E5B4), .duoFixed(0xC3D8F8), .duoFixed(0xE8CDF0), .duoFixed(0xBEE9EC), .duoFixed(0xFFFFFF)], cursor: NSColor.duoFixed(0xE6E8EB), textUnderCursor: NSColor.duoFixed(0x15171B), selection: NSColor.duoFixed(0x3A4250))
 }
 
 /// Type styles (handoff §4.2).
@@ -517,6 +519,24 @@ public enum DuoMotionToken: String, CaseIterable, Sendable {
     }
 }
 
+/// SF Symbol and glyph sizes (style-audit fix list 9): `.font(.system(size: DuoSymbolSize.x))`.
+public enum DuoSymbolSize {
+    public static let chevronSmall: CGFloat = 8.0
+    public static let chevron: CGFloat = 9.0
+    public static let modeGlyph: CGFloat = 9.0
+    public static let searchIcon: CGFloat = 10.0
+    public static let toolbarGlyph: CGFloat = 11.0
+    public static let barIcon: CGFloat = 12.0
+    public static let toolbarIcon: CGFloat = 14.0
+    public static let badgeNumber: CGFloat = 10.0
+}
+
+/// State strengths (style-audit fix list 7): the one place an opacity is a convention.
+public enum DuoOpacity {
+    public static let disabled: Double = 0.5
+    public static let pressed: Double = 0.2
+}
+
 /// The popover shadow (handoff §4.5): search, the action menu, the idle list, drag cards.
 public enum DuoShadow {
     public static let popoverColor = Color(nsColor: NSColor.duoDynamicRGBA(light: (31, 35, 40, 0.22), dark: (0, 0, 0, 0.5), name: "popoverShadow"))
@@ -525,7 +545,7 @@ public enum DuoShadow {
     public static let popoverX: CGFloat = 0.0
     public static let popoverY: CGFloat = 12.0
     /// A console tab lifted by a drag (DL-220): the popover's shape on the dark console.
-    public static let consoleLiftColor = Color(.sRGB, red: 0/255, green: 0/255, blue: 0/255, opacity: 0.5)
+    public static let consoleLiftColor = Color(nsColor: NSColor.duoDynamicRGBA(light: (0, 0, 0, 0.5), dark: (0, 0, 0, 0.5), name: "consoleLiftShadow"))
     public static let consoleLiftRadius: CGFloat = 16.0
     public static let consoleLiftY: CGFloat = 12.0
     /// Dashed borders (New project tile, drop targets): on, off.
@@ -549,4 +569,105 @@ public enum DuoGlyphPath {
     public static let working = "<circle cx='5' cy='5' r='4.2' fill='none' stroke-width='1.5'/>"
     public static let idle = "<path d='M1 5h8' fill='none' stroke-width='1.6' stroke-linecap='round'/>"
     public static let resolved = "<path d='M1.5 5.4 4 7.8 8.5 2.4' fill='none' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/>"
+}
+
+/// What web pages (the editor, the Word and deck viewers) get as CSS variables: every colour, the radii, the faces, the
+/// document's type and the type sizes. Generated, so a token reaches the web without anyone listing it by hand.
+public enum DuoWebTokens {
+    public static let colors: [(name: String, color: NSColor)] = [
+        ("ground", DuoNSColor.ground),
+        ("pane", DuoNSColor.pane),
+        ("selected", DuoNSColor.selected),
+        ("claude-edit", DuoNSColor.claudeEdit),
+        ("menu-target", DuoNSColor.menuTarget),
+        ("rule", DuoNSColor.rule),
+        ("control-edge", DuoNSColor.controlEdge),
+        ("text", DuoNSColor.text),
+        ("text2", DuoNSColor.text2),
+        ("needs-you", DuoNSColor.needsYou),
+        ("on-needs-you", DuoNSColor.onNeedsYou),
+        ("placeholder-bar", DuoNSColor.placeholderBar),
+        ("placeholder-bar-on-selected", DuoNSColor.placeholderBarOnSelected),
+        ("scrim", DuoNSColor.scrim),
+        ("active-tint", DuoNSColor.activeTint),
+        ("chat-ground", DuoNSColor.chatGround),
+        ("chat-you", DuoNSColor.chatYou),
+        ("diff-add-fill", DuoNSColor.diffAddFill),
+        ("diff-add-text", DuoNSColor.diffAddText),
+        ("diff-del-fill", DuoNSColor.diffDelFill),
+        ("diff-del-text", DuoNSColor.diffDelText),
+        ("tool-error-edge", DuoNSColor.toolErrorEdge),
+        ("tool-output-fill", DuoNSColor.toolOutputFill),
+        ("review-1", DuoNSColor.reviewAuthor1),
+        ("review-2", DuoNSColor.reviewAuthor2),
+        ("review-3", DuoNSColor.reviewAuthor3),
+        ("review-4", DuoNSColor.reviewAuthor4),
+        ("review-5", DuoNSColor.reviewAuthor5),
+        ("comment-highlight", DuoNSColor.commentHighlight),
+        ("comment-highlight-active", DuoNSColor.commentHighlightActive),
+        ("console", DuoNSColor.console),
+        ("console-rule", DuoNSColor.consoleRule),
+        ("console-menu-target", DuoNSColor.consoleMenuTarget),
+        ("console-hover", DuoNSColor.consoleHover),
+        ("console-text", DuoNSColor.consoleText),
+        ("console-text2", DuoNSColor.consoleText2),
+        ("needs-you-on-console", DuoNSColor.needsYouOnConsole),
+        ("placeholder-bar-on-console", DuoNSColor.placeholderBarOnConsole),
+        ("tui-input-border", DuoNSColor.tuiInputBorder),
+    ]
+    public static let fonts: [(name: String, css: String)] = [
+        ("font-ui", "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif"),
+        ("font-mono", "ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace"),
+    ]
+    /// The document's face, as a key into `fonts`, and its size, line height and heading weight (font.document).
+    public static let documentFamily = "font-ui"
+    public static let documentSize: CGFloat = 13.0
+    public static let documentLine: CGFloat = 20.0
+    public static let documentHeadingWeight: Int = 600
+    /// Scalar radii in points, as `--duo-radius-<name>`.
+    public static let radii: [(name: String, value: CGFloat)] = [
+        ("control", 6.0),
+        ("card", 6.0),
+        ("selection", 6.0),
+        ("field", 6.0),
+        ("pill", 9.0),
+        ("popover", 10.0),
+        ("placeholder-bar", 3.0),
+        ("review-card", 14.0),
+        ("composer", 12.0),
+        ("chat-inline-code", 4.0),
+        ("chat-step-body", 8.0),
+        ("chat-code-block", 10.0),
+        ("chat-checkbox", 3.0),
+        ("chat-preview-code", 6.0),
+        ("chat-thumb", 8.0),
+    ]
+    /// Type styles, as `--duo-size-<name>` and `--duo-line-<name>` in points.
+    public static let sizes: [(name: String, size: CGFloat, line: CGFloat)] = [
+        ("body", 13.0, 20.0),
+        ("body-emphasis", 13.0, 20.0),
+        ("title", 14.0, 20.0),
+        ("heading1", 18.0, 24.0),
+        ("control", 12.0, 16.0),
+        ("chip", 12.0, 20.0),
+        ("section-label", 11.0, 16.0),
+        ("pill", 11.0, 16.0),
+        ("mono", 12.0, 19.0),
+        ("mono-active-tab", 12.0, 19.0),
+        ("mono-path", 11.0, 20.0),
+        ("search-field", 17.0, 24.0),
+        ("chat-body", 14.0, 22.0),
+        ("chat-body-emphasis", 14.0, 22.0),
+        ("chat-heading", 16.0, 24.0),
+        ("chat-heading1", 18.0, 26.0),
+        ("chat-heading3", 14.0, 22.0),
+        ("chat-meta", 12.0, 16.0),
+        ("chat-inline-code", 12.5, 22.0),
+        ("chat-diff", 11.5, 18.0),
+        ("chat-preview", 10.5, 14.0),
+        ("chat-plan-heading", 15.0, 22.0),
+        ("card-title", 13.0, 18.0),
+    ]
+    public static let documentPaddingY: CGFloat = 22.0
+    public static let documentPaddingX: CGFloat = 28.0
 }

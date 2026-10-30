@@ -336,7 +336,7 @@ struct MapHeader: View {
         HStack(spacing: 10) {
             HomeViewToggle()
             HStack(spacing: 6) {
-                Image(systemName: "magnifyingglass").font(.system(size: 10, weight: .medium)).foregroundStyle(DuoColor.text2)
+                Image(systemName: "magnifyingglass").font(.system(size: DuoSymbolSize.searchIcon, weight: .medium)).foregroundStyle(DuoColor.text2)
                     .accessibilityHidden(true)
                 TextField(list ? "Filter sessions" : "Filter folders", text: text)
                     .textFieldStyle(.plain)
@@ -391,7 +391,7 @@ struct MapHeader: View {
             } label: {
                 HStack(spacing: 6) {
                     Text(list ? "Recent" : model.mapSort.title).duoText(.control).foregroundStyle(DuoColor.text)
-                    Image(systemName: "chevron.up.chevron.down").font(.system(size: 8, weight: .semibold)).foregroundStyle(DuoColor.text2)
+                    Image(systemName: "chevron.up.chevron.down").font(.system(size: DuoSymbolSize.chevronSmall, weight: .semibold)).foregroundStyle(DuoColor.text2)
                 }
                 .padding(.leading, 8).padding(.trailing, 6)
                 .frame(height: DuoMetric.mapHeaderControlHeight)
@@ -432,7 +432,7 @@ struct HomeTile: View {
             if all.count > shown.count {
                 HStack(spacing: DuoSpace.gapGlyphToLabel) {
                     Text("\(all.count - shown.count) more").duoText(.body)
-                    Image(systemName: "chevron.right").font(.system(size: 9, weight: .semibold)).accessibilityHidden(true)
+                    Image(systemName: "chevron.right").font(.system(size: DuoSymbolSize.chevron, weight: .semibold)).accessibilityHidden(true)
                 }
                 .foregroundStyle(DuoColor.text2)
                 .frame(height: DuoMetric.rowTileSession)
@@ -472,7 +472,7 @@ struct OutsideGroup: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 5) {
-                Image(systemName: "folder").font(.system(size: 9, weight: .semibold)).foregroundStyle(DuoColor.text2)
+                Image(systemName: "folder").font(.system(size: DuoSymbolSize.chevron, weight: .semibold)).foregroundStyle(DuoColor.text2)
                     .accessibilityHidden(true)
                 SectionLabel(text: "\(MapColumn.label(column.topic)) /")
                 Spacer(minLength: 6)
@@ -559,7 +559,7 @@ struct MapColumn: View {
             // Columns read as folders (DL-92): a folder mark and a trailing slash.
             HStack(spacing: 5) {
                 if !topic.isEmpty {
-                    Image(systemName: "folder").font(.system(size: 9, weight: .semibold)).foregroundStyle(DuoColor.text2)
+                    Image(systemName: "folder").font(.system(size: DuoSymbolSize.chevron, weight: .semibold)).foregroundStyle(DuoColor.text2)
                         .accessibilityHidden(true)
                 }
                 SectionLabel(text: topic.isEmpty ? " " : "\(Self.label(topic)) /")
@@ -1269,7 +1269,7 @@ struct DropTarget: ViewModifier {
             }
             // DL-130: `lift` and `landed`, ease-out, no spring; nothing scales with Reduce Motion.
             .scaleEffect(hot && !MotionSettings.shared.reduce ? 1.03 : 1)
-            .shadow(color: DuoColor.text.opacity(hot ? 0.18 : 0), radius: 12, x: 0, y: 6)
+            .shadow(color: hot ? DuoShadow.popoverColor : .clear, radius: DuoShadow.popoverRadius, x: DuoShadow.popoverX, y: DuoShadow.popoverY)
             .duoAnimation(.lift, value: hot)
             .duoAnimation(.landed, value: landed)
     }

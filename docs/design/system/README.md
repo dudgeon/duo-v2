@@ -65,7 +65,7 @@ Light chrome, from `tokens.json`:
 - **Lines:** `rule` for pane dividers and card or field borders. `controlEdge` for button and pill borders, dashed borders and the group rule.
 - **The accent:** `needsYou` only (above). `onNeedsYou` is text on the filled chip.
 
-The dark pane uses `console`, `consoleRule`, `consoleText`, `consoleText2` and `needsYouOnConsole`. These are fixed in every appearance. Inside terminals, use only the `terminal*` colours (DB-2), with `terminalHC*` when Increase Contrast is on.
+The dark pane uses `console`, `consoleRule`, `consoleText`, `consoleText2` and `needsYouOnConsole`. In Dark they sink to their Ink values (DL-224). Inside terminals, use only the `terminal*` colours (DB-2), with `terminalHC*` when Increase Contrast is on.
 
 `scrim` dims the window behind the search modal. The `placeholderBar` colours exist only in design targets; don't build them.
 

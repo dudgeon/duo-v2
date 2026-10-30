@@ -29,3 +29,18 @@ public enum AppearanceSetting: String, CaseIterable, Sendable {
         apply()
     }
 }
+
+/// The look the app is drawing in now: what a token resolves to and which terminal palette applies. Views never ask;
+/// only the places that copy a resolved value out of the appearance (the terminal, the web pages) do.
+public enum DuoScheme: Sendable {
+    case light, dark
+
+    /// From an appearance (`NSApp.effectiveAppearance`, or a view's).
+    public static func resolved(_ appearance: NSAppearance) -> DuoScheme {
+        appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? .dark : .light
+    }
+
+    public var terminal: DuoTerminalColors {
+        switch self { case .light: DuoTerminalPalette.light; case .dark: DuoTerminalPalette.dark }
+    }
+}

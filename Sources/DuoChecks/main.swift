@@ -80,6 +80,7 @@ func repoFixture() throws -> Fixture {
     try trustChecks(f)
     try taskBoardChecks()
     try appearanceChecks()
+    try styleLiteralChecks()
 
     print("properties (DB-16)")
     do {
@@ -1252,7 +1253,7 @@ func repoFixture() throws -> Fixture {
         let many = (0..<40).map { r("s\($0)", 15 + $0 * 3) }
         check(AppModel.idleBuckets(many, now: now).dropFirst(0).contains { $0.label == "August" }, "a long tail is grouped by month")
         check(ForegroundCommand.arguments(getpid()).first?.hasSuffix("DuoChecks") == true, "a process's argv, for a shell tab's title (DB-4)")
-        check(DuoTerminalPalette.ansi.count == 16 && DuoTerminalPalette.ansiIncreaseContrast.count == 16, "the terminal palette has 16 colours and an Increase Contrast set (DB-2)")
+        check(DuoTerminalPalette.light.ansi.count == 16 && DuoTerminalPalette.light.ansiIncreaseContrast.count == 16, "the terminal palette has 16 colours and an Increase Contrast set (DB-2)")
     }
 
     print("search modal (DL-76, DL-79, DL-80)")

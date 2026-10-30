@@ -81,7 +81,7 @@ struct OpenWithMenu: View {
         } label: {
             if isDefault || bordered {
                 // The button style hides the menu's own chevron; draw it, as on the boards (F, F2).
-                HStack(spacing: 4) { Text("Open With"); Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold)) }
+                HStack(spacing: 4) { Text("Open With"); Image(systemName: "chevron.down").font(.system(size: DuoSymbolSize.chevron, weight: .semibold)) }
             } else {
                 Text("Open With")
             }

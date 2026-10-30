@@ -24,8 +24,8 @@ public enum AboutCredits {
         let paragraph = NSMutableParagraphStyle()
         paragraph.alignment = .center
         let body: [NSAttributedString.Key: Any] = [
-            .font: NSFont.systemFont(ofSize: NSFont.smallSystemFontSize),
-            .foregroundColor: NSColor.labelColor,
+            .font: DuoTextStyle.pill.spec.nsFont,
+            .foregroundColor: DuoNSColor.text,
             .paragraphStyle: paragraph,
         ]
         var text = "Duo includes third-party software:\n\n"

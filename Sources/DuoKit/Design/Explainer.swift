@@ -307,7 +307,7 @@ struct ExplainerCard<Picture: View>: View {
                             ExplainerMark(number: i + 1).padding(.top, 0.5)
                             (Text(p.lead + " ").fontWeight(.semibold).foregroundStyle(DuoColor.text)
                                 + Text(p.rest).foregroundStyle(DuoColor.text2))
-                                .font(.system(size: 12)).lineSpacing(3.5)
+                                .font(.system(size: DuoTextStyle.control.spec.size)).lineSpacing(3.5)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }
@@ -340,7 +340,7 @@ struct ExplainerCard<Picture: View>: View {
 struct ExplainerMark: View {
     let number: Int
     var body: some View {
-        Text("\(number)").font(.system(size: 10, weight: .semibold)).foregroundStyle(DuoColor.pane)
+        Text("\(number)").font(.system(size: DuoSymbolSize.badgeNumber, weight: .semibold)).foregroundStyle(DuoColor.pane)
             .frame(width: 16, height: 16).background(Circle().fill(DuoColor.text))
     }
 }
@@ -353,13 +353,13 @@ struct TaskExplainerPicture: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: DuoSpace.gapRowItems) {
                 TaskBox().scaleEffect(1.25)   // board 02 draws the box at about 11 pt
-                Text("Draft the Q4 plan").font(.system(size: 12, weight: .semibold)).foregroundStyle(DuoColor.text).lineLimit(1)
+                Text("Draft the Q4 plan").font(.system(size: DuoTextStyle.control.spec.size, weight: .semibold)).foregroundStyle(DuoColor.text).lineLimit(1)
             }.frame(height: 20)
             VStack(alignment: .leading, spacing: 0) {
                 Text("Done when staff sign off.").frame(height: 17.5)
                 Text("Start from last year’s plan.").frame(height: 17.5)
             }
-            .font(.system(size: 11)).foregroundStyle(DuoColor.text2)
+            .font(.system(size: DuoTextStyle.pill.spec.size)).foregroundStyle(DuoColor.text2)
             .padding(.top, 2.5).padding(.leading, 18)
             HStack(spacing: 5) {
                 chip(mono: true, "outline.md") { BoardGlyph(.page, color: DuoColor.text2).frame(width: 10, height: 10) }

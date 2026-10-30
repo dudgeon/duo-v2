@@ -52,7 +52,7 @@ private struct DuoButtonBody: View {
                     .padding(.vertical, DuoSpace.buttonPadding.top + DuoMetric.borderHairline)
             }
         }
-            .foregroundStyle(enabled ? DuoColor.text : DuoColor.text2.opacity(0.5))
+            .foregroundStyle(enabled ? DuoColor.text : DuoColor.text2.opacity(DuoOpacity.disabled))
             .lineLimit(1)
             .background(
                 RoundedRectangle(cornerRadius: DuoMetric.radiusControl)
@@ -60,7 +60,7 @@ private struct DuoButtonBody: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: DuoMetric.radiusControl)
-                    .strokeBorder(DuoColor.controlEdge.opacity(enabled ? 1 : 0.5), lineWidth: DuoMetric.borderHairline)
+                    .strokeBorder(DuoColor.controlEdge.opacity(enabled ? 1 : DuoOpacity.disabled), lineWidth: DuoMetric.borderHairline)
             )
             .contentShape(Rectangle())
     }

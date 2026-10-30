@@ -129,7 +129,7 @@ struct ChatConfigChip: View {
 struct ChatModeMark: View {
     let mode: ChatPermissionMode
     var body: some View {
-        Text(mode == .manual || mode == .plan ? "⏸" : "⏵⏵").font(.system(size: 9))
+        Text(mode == .manual || mode == .plan ? "⏸" : "⏵⏵").font(.system(size: DuoSymbolSize.modeGlyph))
     }
 }
 
