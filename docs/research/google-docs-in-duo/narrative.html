@@ -166,6 +166,16 @@ footer { margin-top: 3rem; font-size: .86rem; color: var(--ink2); }
   </div>
 </div>
 
+<h3>How Claude gets into the API (approach C)</h3>
+<p>Claude's API access works the way any app's "Sign in with Google" access does, with you as the app's only user. Nothing goes through Duo's browser, and Claude never sees your password.</p>
+<ol class="tight">
+  <li><b>A project of your own.</b> You set up a Google Cloud project in testing mode, with the Docs API (reading, suggestions, comments) and the Drive API (exports, version history) turned on. You're its only test user.</li>
+  <li><b>One consent screen.</b> A small helper on the Mac mini opens Google's "allow access" page in your normal browser, not in Duo's tab, which Google refuses for this. You approve once.</li>
+  <li><b>A key kept in the Keychain.</b> Google hands back a long-lived key (a <i>refresh token</i>). The helper keeps it in this Mac's Keychain, never in the repo or on a page.</li>
+  <li><b>Short-lived passes for each edit.</b> When Claude makes a suggestion or a comment, the helper trades that key for a pass that lasts an hour, and makes the call. Claude asks the helper; it never holds the key.</li>
+</ol>
+<p class="gloss">Two catches. In testing mode Google expires the key after about 7 days, so during Phase 2 you'd approve again roughly weekly; a proper Duo-wide setup, verified by Google, removes that and waits for Phase 3. The alternative is Google's own Docs MCP server, which runs its own sign-in but can't download exports or versions. That's question Q-314 below.</p>
+
 <h2 id="evidence">What we know, and how we know it</h2>
 <div class="note"><b>Nothing has run in your Google account yet.</b> Every test so far was signed out, on public Docs anyone can view, in Duo's browser engine (WebKit, Safari's engine) on the Mac mini. Signing in, editing and live collaboration are all Phase 2.</div>
 <p>Two sessions did Phase 1 on 29 October. gdocs-landscape surveyed how other agents drive Google Docs. gdocs-frame (this one) took Duo's browser apart, probed a Doc and wrote the plan. Each fact below is tagged with how we know it.</p>
