@@ -1325,9 +1325,12 @@ const clearOnUserEdit = EditorView.updateListener.of((u) => {
 // too short for that is padded to it, so nothing below moves when the caret enters or leaves.
 // A row draws 29 (4 + 20 + 4 + its rule) and the table one more for the last rule, in Chromium and WebKit alike.
 const TABLE_BAR = 28;
-// A row is a line plus its cell padding and rule (9 at the 13/20 page); the page's line height is the app's token.
-const docLine = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--duo-document-line")) || 20;
-const tableHeight = (rows) => { const line = docLine(); return Math.max((line + 9) * rows + 1, line * (rows + 1) + TABLE_BAR); };
+// A row is a line plus its cell padding and rule (29 at the 13/20 page); the page's size and line height are the app's tokens.
+const docVar = (name, fallback) => parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || fallback;
+const tableHeight = (rows) => {
+  const line = docVar("--duo-document-line", 20), pad = 8 * docVar("--duo-document-size", 13) / 13;   // a cell's padding, 4 above and below
+  return Math.max((line + pad + 1) * rows + 1, line * (rows + 1) + TABLE_BAR);
+};
 class TableWidget extends WidgetType {
   constructor(rows, align) { super(); this.rows = rows; this.align = align; }
   eq(o) { return JSON.stringify(o.rows) === JSON.stringify(this.rows) && o.align.join() === this.align.join(); }
@@ -1826,8 +1829,8 @@ const duoTheme = EditorView.theme({
   ".cm-line": { padding: "0" },
   // How documents are drawn (S3-5, DL-101): H1 18/24, H2 14/20, the rest 13/20, all semibold.
   ".duo-h": { fontSize: DOC_SIZE, fontWeight: "var(--duo-document-heading-weight)" },
-  ".duo-h1": { fontSize: S(18), lineHeight: L(24) },
-  ".duo-h2": { fontSize: S(14) },
+  ".duo-h1": { fontSize: "var(--duo-document-h1)", lineHeight: "var(--duo-document-h1-line)" },
+  ".duo-h2": { fontSize: "var(--duo-document-h2)" },
   // H2 and smaller sit 4 lower than the 10 between blocks, as editor-document draws them (C-22):
   // space.gap.aboveDocumentHeading, set by the app as --duo-heading-above. Padding, not margin, so
   // CodeMirror measures the line's height with it.

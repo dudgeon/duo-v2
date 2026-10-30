@@ -17,12 +17,65 @@ import Foundation
     check(hex(DuoNSColor.console, .aqua) == "#15171B" && hex(DuoNSColor.console, .darkAqua) == "#0C0D10", "the console stays in light and sinks in dark")
     check(hex(DuoNSColor.chatGround, .aqua) == "#F3F4F6" && hex(DuoNSColor.chatGround, .darkAqua) == "#0C0D10", "chat's ground is the console colour in dark only")
     check(hex(DuoNSColor.needsYou, .darkAqua) == "#F97316" && hex(DuoNSColor.onNeedsYou, .darkAqua) == "#0C0D10", "the accent is the console's orange in dark, with dark text on it")
+    // Classic (DL-252, option C'): legacy Duo's paper, as one more answer from the same colour providers, light only.
+    print("Classic: a tokens block, no per-view code")
+    DuoScheme.classicActive = true
+    defer { DuoScheme.classicActive = false }
+    check(hex(DuoNSColor.ground, .aqua) == "#F0E9D6" && hex(DuoNSColor.pane, .aqua) == "#FBF8EE" && hex(DuoNSColor.text, .aqua) == "#1A1410", "Classic: paper-deep ground, paper pane, ink text")
+    check(hex(DuoNSColor.selected, .aqua) == "#F2D9B8" && hex(DuoNSColor.paneFocus, .aqua) == "#C66A2E" && hex(DuoNSColor.paneFocusOnConsole, .aqua) == "#E08F4A", "Classic: selected in accent-soft, the active-pane rule in orange")
+    check(hex(DuoNSColor.needsYou, .aqua) == "#B91C1C" && hex(DuoNSColor.needsYouOnConsole, .aqua) == "#DC2626", "Classic: needs you is red, so orange never means two things")
+    check(hex(DuoNSColor.console, .aqua) == "#1A1410" && hex(DuoNSColor.consoleText, .aqua) == "#F0E9D6", "Classic: the brown-black console")
+    check(hex(DuoNSColor.console, .darkAqua) == "#0C0D10" && hex(DuoNSColor.ground, .darkAqua) == "#131518", "Classic is light only: dark ignores it")
+    check(hex(DuoNSColor.diffDelText, .aqua) == "#B42318", "Classic leaves a token it doesn't list alone (diffDelText)")
+    check(DuoScheme.classic.terminal.ansi != DuoScheme.light.terminal.ansi && DuoScheme.classic.document.size == 16 && DuoScheme.classic.document.lineHeight == 27
+          && DuoScheme.classic.document.family == "font-serif" && DuoScheme.light.document.size == 13, "Classic's terminal is v1's warm palette and its page is New York 16/27")
+    DuoScheme.classicActive = false
+    check(hex(DuoNSColor.paneFocus, .aqua) == hex(DuoNSColor.text, .aqua) && hex(DuoNSColor.paneFocusOnConsole, .darkAqua) == hex(DuoNSColor.consoleText, .darkAqua)
+          && hex(DuoNSColor.paneFocus, .aqua) == "#1F2328", "v2 draws the pane-focus rule in the text colour as before")
+
+    // The guardrail that keeps "here" and "needs you" apart in every scheme: needs you stays 3:1 off the selected fill, and at least
+    // 15 degrees of hue off the selected fill and the pane-focus rule (an achromatic colour has no hue to confuse).
+    func rgb(_ c: NSColor, _ n: NSAppearance.Name) -> (Double, Double, Double) {
+        var out = (0.0, 0.0, 0.0)
+        NSAppearance(named: n)!.performAsCurrentDrawingAppearance {
+            let s = c.usingColorSpace(.sRGB) ?? c
+            out = (Double(s.redComponent), Double(s.greenComponent), Double(s.blueComponent))
+        }
+        return out
+    }
+    func lum(_ c: (Double, Double, Double)) -> Double {
+        func f(_ v: Double) -> Double { v <= 0.03928 ? v / 12.92 : pow((v + 0.055) / 1.055, 2.4) }
+        return 0.2126 * f(c.0) + 0.7152 * f(c.1) + 0.0722 * f(c.2)
+    }
+    func ratio(_ a: (Double, Double, Double), _ b: (Double, Double, Double)) -> Double {
+        let (x, y) = (lum(a), lum(b)); return (max(x, y) + 0.05) / (min(x, y) + 0.05)
+    }
+    func hue(_ c: (Double, Double, Double)) -> Double? {
+        let (mx, mn) = (max(c.0, c.1, c.2), min(c.0, c.1, c.2))
+        guard mx - mn > 0.12 else { return nil }   // nearly grey: no hue to confuse
+        let d = mx - mn
+        let h = mx == c.0 ? (c.1 - c.2) / d : mx == c.1 ? 2 + (c.2 - c.0) / d : 4 + (c.0 - c.1) / d
+        return (h * 60 + 360).truncatingRemainder(dividingBy: 360)
+    }
+    func apart(_ a: (Double, Double, Double), _ b: (Double, Double, Double)) -> Bool {
+        guard let x = hue(a), let y = hue(b) else { return true }
+        let d = abs(x - y); return min(d, 360 - d) >= 15
+    }
+    for (scheme, name, classic) in [("light", NSAppearance.Name.aqua, false), ("dark", .darkAqua, false), ("classic", .aqua, true)] {
+        DuoScheme.classicActive = classic
+        let (ny, sel, focus) = (rgb(DuoNSColor.needsYou, name), rgb(DuoNSColor.selected, name), rgb(DuoNSColor.paneFocus, name))
+        let (nyc, hov, focusc) = (rgb(DuoNSColor.needsYouOnConsole, name), rgb(DuoNSColor.consoleHover, name), rgb(DuoNSColor.paneFocusOnConsole, name))
+        check(ratio(ny, sel) >= 3 && apart(ny, sel) && apart(ny, focus), "\(scheme): needs you is 3:1 and 15° of hue from selected, and 15° from the pane-focus rule")
+        check(ratio(nyc, hov) >= 3 && apart(nyc, hov) && apart(nyc, focusc), "\(scheme): needs you on the console is 3:1 and 15° of hue from its hover fill, and 15° from the rule")
+    }
+    DuoScheme.classicActive = false
+
     // Style audit fix list: the terminal has a palette per scheme (the same in light and dark for now), and the web gets every token.
     check(DuoScheme.light.terminal.ansi == DuoScheme.dark.terminal.ansi && DuoScheme.dark.terminal.ansi.count == 16, "the terminal palette is picked by scheme; dark takes the base while it has no override of its own")
     let css = EditorController.tokenCSS()
-    check(DuoWebTokens.colors.count == 39 && DuoWebTokens.colors.allSatisfy { css.contains("--duo-\($0.name):") }, "the web pages get all 39 colours as variables, generated from tokens")
+    check(DuoWebTokens.colors.count == 41 && DuoWebTokens.colors.allSatisfy { css.contains("--duo-\($0.name):") }, "the web pages get all 41 colours as variables, generated from tokens")
     check(css.contains("--duo-font-ui:") && css.contains("--duo-font-mono:") && css.contains("--duo-font-document:") && css.contains("--duo-document-size: 13px") && css.contains("--duo-shadow-popover: 0px 12px 32px"), "the web pages get the faces, the document's type and the whole popover shadow")
-    check(AppearanceSetting.allCases.map(\.rawValue) == ["system", "light", "dark"], "the setting is system, light or dark")
+    check(AppearanceSetting.allCases.map(\.rawValue) == ["system", "light", "dark", "classic"], "the setting is system, light, dark or classic")
 
     // C-122: Appearance stuck on Match System, and Light did nothing, on Geoff's Mac. DuoState's decoder never read `appearance`
     // back, so every load saw nil and every other update (which loads, changes and writes) wrote the file without it.

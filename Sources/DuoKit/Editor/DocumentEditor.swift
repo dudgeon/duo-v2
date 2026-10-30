@@ -166,8 +166,10 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         vars += DuoWebTokens.fonts.map { "--duo-\($0.name): \($0.css);" }
         vars += DuoWebTokens.radii.map { "--duo-radius-\($0.name): \(Int($0.value))px;" }
         vars += DuoWebTokens.sizes.map { "--duo-size-\($0.name): \(Int($0.size))px; --duo-line-\($0.name): \(Int($0.line))px;" }
-        let family = DuoWebTokens.fonts.first { $0.name == DuoWebTokens.documentFamily }?.css ?? "sans-serif"
-        vars.append("--duo-font-document: \(family); --duo-document-size: \(Int(DuoWebTokens.documentSize))px; --duo-document-line: \(Int(DuoWebTokens.documentLine))px; --duo-document-heading-weight: \(DuoWebTokens.documentHeadingWeight);")
+        let doc = DuoScheme.resolved(NSApp.effectiveAppearance).document
+        let family = DuoWebTokens.fonts.first { $0.name == doc.family }?.css ?? "sans-serif"
+        vars.append("--duo-font-document: \(family); --duo-document-size: \(Int(doc.size))px; --duo-document-line: \(Int(doc.lineHeight))px; --duo-document-heading-weight: \(doc.headingWeight);")
+        vars.append("--duo-document-h1: \(Int(doc.h1Size))px; --duo-document-h1-line: \(Int(doc.h1Line))px; --duo-document-h2: \(Int(doc.h2Size))px;")
         vars.append("--duo-document-padding-y: \(Int(DuoWebTokens.documentPaddingY))px; --duo-document-padding-x: \(Int(DuoWebTokens.documentPaddingX))px;")
         // Motion (DL-130): Claude's highlight fading in and out, in ms (zero with Reduce Motion).
         // The deck (same token script): a slide change's scroll and the picker outline's glide.

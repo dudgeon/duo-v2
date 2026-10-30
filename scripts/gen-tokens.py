@@ -28,6 +28,10 @@ light = t["color"]["light"]
 console = t["color"]["console"]
 dark = t["color"]["dark"]   # DL-224: Dark B, "Ink"
 # A palette is complete or generation fails (style-audit fix list 10): no silent fall-back to the light value.
+classic = {k: v for k, v in t["color"]["classic"].items() if not k.startswith("$")}   # DL-252: Classic overrides, light only
+for _name in classic:
+    if _name not in light and _name not in console:
+        raise SystemExit(f"color.classic has {_name!r}, which is no colour token")
 for _name in list(light) + list(console):
     if not _name.startswith("$") and _name not in dark:
         raise SystemExit(f"color.dark has no value for {_name!r}")
@@ -38,9 +42,13 @@ def alphas(name, spec):
     return f", lightAlpha: {la!r}, darkAlpha: {da!r}" if (la, da) != (1.0, 1.0) else ""
 
 
+def classic_hex(name, spec):
+    return hex6(classic.get(name, {}).get("value", spec["value"]))   # a token Classic doesn't list is its light value
+
+
 def dyn(name, spec):
     d = dark.get(name, {}).get("value", spec["value"])
-    return f'NSColor.duoDynamic(light: {hex6(spec["value"])}, dark: {hex6(d)}, name: "{name}"{alphas(name, spec)})'
+    return f'NSColor.duoDynamic(light: {hex6(spec["value"])}, dark: {hex6(d)}, classic: {classic_hex(name, spec)}, name: "{name}"{alphas(name, spec)})'
 
 
 lines = []
@@ -58,7 +66,7 @@ for name, spec in light.items():
     d = dark.get(name, {}).get("value", spec["value"])
     use = spec.get("use", "")
     w(f"    /// {use}" if use else f"    /// {name}")
-    w(f"    public static let {name} = Color(nsColor: NSColor.duoDynamic(light: {hex6(spec['value'])}, dark: {hex6(d)}, name: \"{name}\"{alphas(name, spec)}))")
+    w(f"    public static let {name} = Color(nsColor: NSColor.duoDynamic(light: {hex6(spec['value'])}, dark: {hex6(d)}, classic: {classic_hex(name, spec)}, name: \"{name}\"{alphas(name, spec)}))")
 w("")
 w("    // Console chrome: light values here, and in dark the console sinks (DL-224).")
 for name, spec in console.items():
@@ -327,12 +335,25 @@ w("    public static let fonts: [(name: String, css: String)] = [")
 for k in fam:
     w(f'        ("font-{k}", {json.dumps(fam[k]["css"])}),')
 w("    ]")
-w("    /// The document's face, as a key into `fonts`, and its size, line height and heading weight (font.document).")
 dc = t["font"]["document"]
-w(f'    public static let documentFamily = "font-{dc["family"]}"')
-w(f"    public static let documentSize: CGFloat = {num(dc['size'])}")
-w(f"    public static let documentLine: CGFloat = {num(dc['lineHeight'])}")
-w(f"    public static let documentHeadingWeight: Int = {int(dc['headingWeight'])}")
+
+
+def doc_spec(scheme):
+    o = dc.get("scheme", {}).get(scheme, {})
+    pick = lambda k: o.get(k, dc[k])
+    h1 = {**dc["h1"], **o.get("h1", {})}
+    h2 = {**dc["h2"], **o.get("h2", {})}
+    return (f'DuoDocumentType(family: "font-{pick("family")}", size: {num(pick("size"))}, lineHeight: {num(pick("lineHeight"))}, '
+            f'headingWeight: {int(pick("headingWeight"))}, h1Size: {num(h1["size"])}, h1Line: {num(h1["lineHeight"])}, h2Size: {num(h2["size"])})')
+
+
+w("    /// The document's type (font.document), by scheme: a key into `fonts`, sizes in points, the heading weight.")
+w("    public struct DuoDocumentType: Sendable {")
+w("        public let family: String; public let size: CGFloat; public let lineHeight: CGFloat; public let headingWeight: Int")
+w("        public let h1Size: CGFloat; public let h1Line: CGFloat; public let h2Size: CGFloat")
+w("    }")
+for scheme in ["light", "dark"] + [s for s in dc.get("scheme", {}) if s not in ("light", "dark")]:
+    w(f"    public static let document{scheme[0].upper() + scheme[1:]} = {doc_spec(scheme) if scheme in dc.get('scheme', {}) else doc_spec('base')}")
 w("    /// Scalar radii in points, as `--duo-radius-<name>`.")
 w("    public static let radii: [(name: String, value: CGFloat)] = [")
 for k, v in t["radius"].items():

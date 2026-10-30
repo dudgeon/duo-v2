@@ -43,11 +43,15 @@ def rgba(spec):
 
 # ---------- colour ----------
 darkset = t["color"]["dark"]
+classicset = {k: v for k, v in t["color"]["classic"].items() if not k.startswith("$")}   # DL-252: overrides; the rest is light's
 
 
 def both(name, spec):
-    """Light and dark (DL-224, Dark B "Ink"); a token with no dark value is the same in both."""
-    return {"light": rgba(spec), "dark": rgba({"value": darkset.get(name, spec)["value"], **({"alpha": darkset.get(name, spec)["alpha"]} if "alpha" in darkset.get(name, spec) else {})})}
+    """Light, dark (DL-224, Dark B "Ink") and Classic (DL-252, light only: a token it doesn't list is light's)."""
+    cl = classicset.get(name, spec)
+    return {"light": rgba(spec),
+            "dark": rgba({"value": darkset.get(name, spec)["value"], **({"alpha": darkset.get(name, spec)["alpha"]} if "alpha" in darkset.get(name, spec) else {})}),
+            "classic": rgba({"value": cl["value"], **({"alpha": spec["alpha"]} if "alpha" in spec else {})})}
 
 
 colors = []
@@ -59,15 +63,16 @@ for name, spec in console.items():
         colors.append({"name": name, "value": both(name, spec),
                        "usage": spec.get("use", "") + " Console chrome: the console sinks in dark (DL-224)."})
 tp = t["terminal"]
+tc = tp["scheme"]["classic"]   # v1's warm terminal palette (DL-252)
 for k, spec in tp["ansi"].items():
-    colors.append({"name": "terminal" + cap(k), "value": {"light": spec["value"].lower()},
+    colors.append({"name": "terminal" + cap(k), "value": {"light": spec["value"].lower(), "classic": tc["ansi"][k]["value"].lower()},
                    "usage": f"Terminal ANSI {spec['index']} ({k}) on `console`, {spec['contrastOnConsole']}:1 (DB-2). Only inside terminals."})
 for k, spec in tp["ansiIncreaseContrast"].items():
     colors.append({"name": "terminalHC" + cap(k), "value": {"light": spec["value"].lower()},
                    "usage": f"Terminal ANSI {spec['index']} ({k}) when macOS Increase Contrast is on (DB-2)."})
-colors.append({"name": "terminalCursor", "value": {"light": tp["cursor"]["value"].lower()}, "usage": "The terminal's block cursor (DB-2)."})
+colors.append({"name": "terminalCursor", "value": {"light": tp["cursor"]["value"].lower(), "classic": tc["cursor"]["value"].lower()}, "usage": "The terminal's block cursor (DB-2)."})
 colors.append({"name": "terminalTextUnderCursor", "value": {"light": tp["cursor"]["textUnderCursor"].lower()}, "usage": "Text under the terminal's cursor."})
-colors.append({"name": "terminalSelection", "value": {"light": tp["selection"]["value"].lower()}, "usage": "Selected text in a terminal."})
+colors.append({"name": "terminalSelection", "value": {"light": tp["selection"]["value"].lower(), "classic": tc["selection"]["value"].lower()}, "usage": "Selected text in a terminal."})
 
 # ---------- type ----------
 weights = {"regular": 400, "medium": 500, "semibold": 600, "bold": 700}
@@ -267,7 +272,7 @@ source = {"source": "github", "repo": "dudgeon/duo-v2", "paths": {"tokens": ["do
           "swift": ["Sources/DuoKit/Design/Tokens.swift"]}, "generator": "scripts/gen-design-system.py"}
 tokens = {
     "name": "Duo", "version": 1, "meta": source,
-    "color": {"themes": [{"id": "light", "name": "Light"}, {"id": "dark", "name": "Dark"}], "note": "Light, and Dark B \"Ink\" (DL-224): Match System, Light or Dark in Settings. The terminal's ANSI palette is the same in both.", "tokens": colors},
+    "color": {"themes": [{"id": "light", "name": "Light"}, {"id": "dark", "name": "Dark"}, {"id": "classic", "name": "Classic"}], "note": "Light, Dark B \"Ink\" (DL-224) and Classic (DL-252, legacy Duo's paper look, light only): Match System, Light, Dark or Classic in Settings. The terminal's ANSI palette is the same in light and dark; Classic has v1's warm one.", "tokens": colors},
     "type": typ,
     "spacing": {"tokens": spacing},
     "radius": {"tokens": radius},
