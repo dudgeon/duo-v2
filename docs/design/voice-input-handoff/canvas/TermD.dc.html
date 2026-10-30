@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Terminal D: Claude Code's voice</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.bd{box-sizing:border-box;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif}
+.bd *{box-sizing:border-box}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.cap{color:#5B636D;font-size:12px;line-height:17px;margin:0}
+.con{background:#15171B;border-radius:6px;overflow:hidden;color:#E6E8EB;display:flex;flex-direction:column}
+.strip{height:44px;display:flex;align-items:center;gap:20px;padding:0 12px 0 18px;border-bottom:1px solid #2B2F36;font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px;line-height:19px;color:#9AA1AB;white-space:nowrap}
+.act{color:#E6E8EB;font-weight:500}
+.term{padding:12px 18px;font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px;line-height:19px;display:flex;flex-direction:column;white-space:pre}
+.dim{color:#9AA1AB}
+.ibox{border:1px solid #4A4F57;border-radius:4px;padding:3px 10px;margin-top:10px;white-space:pre-wrap}
+.cur{display:inline-block;width:7px;height:15px;background:#E6E8EB;vertical-align:-3px}
+.pill{display:flex;border:1px solid #4A4F57;border-radius:6px;overflow:hidden}
+.pill span{width:26px;height:22px;display:flex;align-items:center;justify-content:center;color:#9AA1AB;font-size:11px}
+.pill .on{background:#2D3138;color:#E6E8EB}
+.frame{display:flex;flex-direction:column;gap:6px}
+.notes{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:12px 14px}
+.notes li{font-size:12px;line-height:18px;margin:0 0 5px}
+ul{margin:0;padding-left:18px}
+.set{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;font-size:13px;line-height:20px}
+.sw{width:30px;height:18px;border-radius:9px;background:#1F2328;position:relative;flex:none}
+.sw span{position:absolute;right:2px;top:2px;width:14px;height:14px;border-radius:7px;background:#FFFFFF}
+.mono{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:11.5px}
+.stand{border:1px dashed #9AA1AB;padding:0 4px}
+</style>
+</helmet>
+<div class="bd" style="width: 1440px; height: 1060px; padding: 24px 28px; display: flex; flex-direction: column; gap: 14px">
+<div>
+<h1 style="margin: 0; font: 600 20px/26px -apple-system, system-ui, sans-serif">D · Claude Code’s own voice mode (/voice), with Duo only turning it on [P, not recommended]</h1>
+<p class="cap" style="margin-top: 4px">Claude Code has had hold-to-talk dictation since early 2026 (/voice; the <span class="mono">voice:pushToTalk</span> key is in the 2.1.71 changelog, <span class="mono">voice.enabled</span> in 2.1.239), so 2.1.284 has it. <b>It transcribes in Anthropic’s cloud, not on the Mac</b>, so it misses Geoff’s brief: “leverage the on-device transcription service”.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 36px">
+
+<div class="frame">
+<div class="lbl">1 · Holding Space · Claude’s own words in Claude’s own prompt</div>
+<div class="con">
+<div class="strip"><span class="act">○ Pricing research</span><span>— Fix flaky cart test</span><span style="margin-left: auto"></span><span>+</span><div class="pill"><span>▣</span><span>&gt;_</span></div></div>
+<div class="term"><span>● The annual plan saves 17 %. Want me to add it to the</span><span>  pricing table?</span><div class="ibox">&gt; Yes, add it, and show the monthly <span class="stand">▁▃▅ listening</span></div><span class="dim">  keep holding… </span></div>
+</div>
+<p class="cap">Drawn from its strings, not a capture (dashed: stand-in). Claude Code shows live partial text in its input with a waveform cursor. Duo draws nothing: no button, no bar. Hold mode never sends unless <span class="mono">voice.autoSubmit</span> is on (off by default). Tap mode (“tap to start, tap again to send”) sends on the second tap.</p>
+</div>
+
+<div class="frame">
+<div class="lbl">2 · Duo’s part · one setting, written for Duo’s sessions</div>
+<div class="set">
+<div style="display: flex; align-items: center; gap: 10px"><div class="sw"><span></span></div><div style="flex: 1">Claude Code’s voice mode in Duo’s sessions</div></div>
+<div class="cap">Hold Space in Claude’s prompt to talk. Uses your claude.ai sign-in; Anthropic transcribes it.</div>
+</div>
+<p class="cap">Duo would pass <span class="mono">voice.enabled</span> through <span class="mono">--settings</span> when it starts a session, never writing the user’s <span class="mono">~/.claude/settings.json</span>. The mic button can’t drive it: a terminal sends no key-up, so Claude Code detects a held Space from key repeat, which Duo can’t fake from a click, and tap mode presses send.</p>
+</div>
+
+</div>
+<div class="notes">
+<div class="lbl" style="margin-bottom: 6px">Trade-offs</div>
+<ul>
+<li><b>For:</b> almost no Duo work; Claude Code’s own partials, in its own input, maintained by Anthropic; the TUI is untouched; probably more accurate on jargon than Apple’s model.</li>
+<li><b>Against:</b> audio goes to Anthropic, which breaks the on-device brief and the promise that nothing leaves the Mac; claude.ai login only (hidden for other sign-ins, and an organisation policy can turn it off: likely on the work Mac); needs SoX or Claude’s native audio; macOS likely charges the microphone to Duo as the host app, so Duo still needs the entitlement and usage string, with a prompt Duo didn’t explain (to check); no help for chat, which needs Duo’s own mic anyway; two different dictation systems in one app.</li>
+<li><b>Could still coexist:</b> nothing stops a user turning /voice on themselves today. If Duo ships A, both work; Space belongs to Claude Code and ⇧⌘D to Duo.</li>
+</ul>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1060}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

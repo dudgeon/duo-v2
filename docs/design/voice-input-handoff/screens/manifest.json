@@ -1,0 +1,34 @@
+{
+ "handoff": "voice-input",
+ "canvas": "https://claude.ai/artifact/3JgWhruXuK21r826nGG4JW",
+ "screens": [
+  {
+   "file": "composer.html",
+   "size": "1440x1180",
+   "decision": "DL-261",
+   "shows": "Chat composer: the mic inside the field, and every state (B chosen; A, the hint-row chip, not chosen)",
+   "canvasBoard": "Composer.dc.html"
+  },
+  {
+   "file": "composer-appearances.html",
+   "size": "1440x560",
+   "decision": "DL-261",
+   "shows": "Chat listening in Light, Dark and Classic",
+   "canvasBoard": "Themes.dc.html"
+  },
+  {
+   "file": "first-press.html",
+   "size": "1440x500",
+   "decision": "DL-261",
+   "shows": "The first press: Duo's sheet, the macOS prompt and usage strings, what Duo shows for each permission state",
+   "canvasBoard": "Sheets.dc.html"
+  },
+  {
+   "file": "terminal.html",
+   "size": "1440x1060",
+   "decision": "DL-261",
+   "shows": "Terminal: the mic on Claude's input box (C3), words into Claude's prompt a phrase at a time; the box growing; no box",
+   "canvasBoard": "Terminal.dc.html"
+  }
+ ]
+}

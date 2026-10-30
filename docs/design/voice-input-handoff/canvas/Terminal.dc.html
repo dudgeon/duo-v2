@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Terminal voice input: chosen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.bd{box-sizing:border-box;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif}
+.bd *{box-sizing:border-box}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.cap{color:#5B636D;font-size:12px;line-height:17px;margin:0}
+.con{background:#15171B;border-radius:6px;overflow:hidden;color:#E6E8EB;display:flex;flex-direction:column;position:relative}
+.strip{height:32px;display:flex;align-items:center;gap:18px;padding:0 12px 0 16px;border-bottom:1px solid #2B2F36;font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px;line-height:19px;color:#9AA1AB;white-space:nowrap}
+.tab{display:flex;align-items:center;gap:6px}
+.on{color:#E6E8EB;font-weight:500}
+.mp,.np{display:flex;align-items:center;border:1px solid #4A4F57;border-radius:6px;overflow:hidden}
+.ms{width:20px;height:16px;display:flex;align-items:center;justify-content:center}
+.ns{width:26px;height:20px;display:flex;align-items:center;justify-content:center}
+.son{background:#2B2F36}
+.hair{width:1px;height:12px;background:#4A4F57}
+.term{padding:12px 18px;font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px;line-height:19px;display:flex;flex-direction:column;white-space:pre}
+.dim{color:#9AA1AB}
+.ibox{border:1px solid #4A4F57;border-radius:4px;padding:3px 10px;margin-top:10px;white-space:pre-wrap}
+.cur{display:inline-block;width:7px;height:15px;background:#E6E8EB;vertical-align:-3px}
+.rmic{position:absolute;right:30px;bottom:22px;width:24px;height:18px;border-radius:5px;border:0;background:#15171B;display:flex;align-items:center;justify-content:center;padding:0}
+.rmon{background:#E6E8EB}
+.tip{align-self:flex-end;margin-right:8px;background:#FFFFFF;border:1px solid #C9CDD3;border-radius:4px;padding:1px 6px;font-size:11px;line-height:16px;color:#1F2328}
+.frame{display:flex;flex-direction:column;gap:6px}
+.notes{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:12px 14px}
+.notes li{font-size:12px;line-height:18px;margin:0 0 4px}
+ul{margin:0;padding-left:18px}
+</style>
+</helmet>
+<div class="bd" style="width: 1440px; height: 1060px; padding: 24px 28px; display: flex; flex-direction: column; gap: 14px">
+<div>
+<h1 style="margin: 0; font: 600 20px/26px -apple-system, system-ui, sans-serif">Terminal, chosen: the mic on Claude’s input box, words into Claude’s prompt a phrase at a time [G]</h1>
+<p class="cap" style="margin-top: 4px">Geoff, 2026-10-30: C3 for the mic (“pls test to make sure it does not occlude other text entered into the box, and other failure modes”), phrase at a time, ⇧⌘D tap/hold. The strip stays as DL-253 draws it. Details [P] unless marked.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 36px">
+
+<div class="frame">
+<div class="lbl">1 · At rest · pointer over the mic</div>
+<div class="con">
+<div class="strip"><div class="tab on"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.6" fill="none" stroke="#E6E8EB" stroke-width="1.5"></circle></svg>Pricing research<div class="mp" style="margin-left: 4px"><span class="ms son"><svg width="11" height="9" viewBox="0 0 13 10" aria-label="Terminal, shown" role="img"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h5" fill="none" stroke="#E6E8EB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class="ms"><svg width="11" height="10" viewBox="0 0 13 11" aria-label="Chat" role="img"><path d="M2.5 1H10.5Q12 1 12 2.5V6.5Q12 8 10.5 8H6L3.5 10V8H2.5Q1 8 1 6.5V2.5Q1 1 2.5 1Z" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linejoin="round"></path></svg></span></div></div><div class="tab"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5h6" stroke="#9AA1AB" stroke-width="1.6" stroke-linecap="round"></path></svg>Fix flaky cart test</div><span style="flex: 1"></span><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5v7 M1.5 5h7" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round"></path></svg><div class="np" style="margin-left: -10px"><span class="ns"><svg width="13" height="9" viewBox="0 0 12 8" aria-label="New Claude session" role="img"><path fill="#9AA1AB" d="M5 0h1v1h-1zM2 1h8v1h-8zM2 2h1v1h-1zM4 2h4v1h-4zM9 2h1v1h-1zM2 3h8v2h-8zM1 5h10v1h-10zM3 6h2v1h-2zM7 6h2v1h-2zM3 7h2v1h-2zM7 7h2v1h-2z"></path></svg></span><span class="hair"></span><span class="ns"><svg width="12" height="10" viewBox="0 0 12 10" aria-label="New shell" role="img"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h4" fill="none" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></div></div>
+<div class="term"><span>● The annual plan saves 17 %. Want me to add it to the</span><span>  pricing table?</span><div class="ibox">&gt; <span class="cur"></span></div><span class="dim">  ⏵⏵ auto mode on (shift+tab to cycle)</span></div>
+<button type="button" class="rmic" style="background: #2B2F36" aria-label="Voice input"><svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5" fill="none" stroke="#E6E8EB" stroke-width="1.5"></rect><path d="M3 7.8a5 5 0 0 0 10 0M8 12.8v1.9" fill="none" stroke="#E6E8EB" stroke-width="1.5" stroke-linecap="round"></path></svg></button>
+</div>
+<div class="tip">Voice input ⇧⌘D · hold to talk</div>
+<p class="cap">On the input box’s bottom rule, its right edge 2 columns in from the corner: 24 × 18, radius 5, on a <b>console</b> patch that breaks the rule. At rest the mark is <b>consoleText2</b> on <b>console</b>; hovered (drawn) <b>consoleRule</b> fill, <b>consoleText</b> mark. The rule row never holds typed text.</p>
+</div>
+
+<div class="frame">
+<div class="lbl">2 · Listening · the first phrase is already in the prompt</div>
+<div class="con">
+<div class="strip"><div class="tab on"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.6" fill="none" stroke="#E6E8EB" stroke-width="1.5"></circle></svg>Pricing research<div class="mp" style="margin-left: 4px"><span class="ms son"><svg width="11" height="9" viewBox="0 0 13 10" aria-hidden="true"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h5" fill="none" stroke="#E6E8EB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class="ms"><svg width="11" height="10" viewBox="0 0 13 11" aria-hidden="true"><path d="M2.5 1H10.5Q12 1 12 2.5V6.5Q12 8 10.5 8H6L3.5 10V8H2.5Q1 8 1 6.5V2.5Q1 1 2.5 1Z" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linejoin="round"></path></svg></span></div></div><div class="tab"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5h6" stroke="#9AA1AB" stroke-width="1.6" stroke-linecap="round"></path></svg>Fix flaky cart test</div><span style="flex: 1"></span><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5v7 M1.5 5h7" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round"></path></svg><div class="np" style="margin-left: -10px"><span class="ns"><svg width="13" height="9" viewBox="0 0 12 8" aria-hidden="true"><path fill="#9AA1AB" d="M5 0h1v1h-1zM2 1h8v1h-8zM2 2h1v1h-1zM4 2h4v1h-4zM9 2h1v1h-1zM2 3h8v2h-8zM1 5h10v1h-10zM3 6h2v1h-2zM7 6h2v1h-2zM3 7h2v1h-2zM7 7h2v1h-2z"></path></svg></span><span class="hair"></span><span class="ns"><svg width="12" height="10" viewBox="0 0 12 10" aria-hidden="true"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h4" fill="none" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></div></div>
+<div class="term"><span>● The annual plan saves 17 %. Want me to add it to the</span><span>  pricing table?</span><div class="ibox">&gt; Yes, add it, and show the monthly price <span class="cur"></span></div><span class="dim">  ⏵⏵ auto mode on (shift+tab to cycle)</span></div>
+<button type="button" class="rmic rmon" aria-label="Finish voice input"><svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5" fill="none" stroke="#15171B" stroke-width="1.5"></rect><path d="M3 7.8a5 5 0 0 0 10 0M8 12.8v1.9" fill="none" stroke="#15171B" stroke-width="1.5" stroke-linecap="round"></path></svg></button>
+</div>
+<p class="cap">The mic fills with <b>consoleText</b>, its mark <b>console</b>. Each phrase is pasted (bracketed) as Apple settles it; words still being decided are never sent. A click or ⇧⌘D finishes; the last phrase lands; Return is never pressed.</p>
+</div>
+
+<div class="frame">
+<div class="lbl">3 · The box grows · the mic follows its bottom rule</div>
+<div class="con">
+<div class="term"><span>● The annual plan saves 17 %. Want me to add it to the</span><span>  pricing table?</span><div class="ibox">&gt; Yes, add it, and show the monthly price crossed out next to it,
+  then put a short note under the table that says prices are in US
+  dollars and exclude tax.<span class="cur"></span></div><span class="dim">  ⏵⏵ auto mode on (shift+tab to cycle)</span></div>
+<button type="button" class="rmic" aria-label="Voice input"><svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5" fill="none" stroke="#9AA1AB" stroke-width="1.5"></rect><path d="M3 7.8a5 5 0 0 0 10 0M8 12.8v1.9" fill="none" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round"></path></svg></button>
+</div>
+<p class="cap">Text that reaches the right edge wraps inside the box, above the rule; the mic is never over it.</p>
+</div>
+
+<div class="frame">
+<div class="lbl">4 · No input box on screen · the mic hides</div>
+<div class="con">
+<div class="term"><span> Edit file pricing.md</span><span class="dim"> Do you want to make this edit to pricing.md?</span><span> ❯ 1. Yes</span><span>   2. Yes, allow all edits during this session</span><span>   3. No, and tell Claude what to do differently</span></div>
+</div>
+<p class="cap">One of Claude’s questions, a full-screen view (/model’s picker, a diff), scrolled back from the bottom, or a shell: no mic. If a question appears mid-dictation, listening stops and the unsent words go to the clipboard, with “Voice input stopped: Claude asked a question. Your words are on the clipboard.” as a tooltip at the mic’s last place for 6 s.</p>
+</div>
+
+</div>
+<div class="notes">
+<div class="lbl" style="margin-bottom: 6px">Failure modes the build tests (DuoChecks on recorded screens of 2.1.219, 2.1.284 and latest)</div>
+<ul>
+<li><b>Never over text:</b> the mic’s cells are on a rule row (only box-drawing characters), checked on every screen update; if the row under it holds anything else, the mic hides that frame.</li>
+<li><b>Finding the box:</b> the lowest rule row with Claude’s prompt marker (›/&gt;) above it; versions without side borders (rules only) and with the effort label in the top rule (2.1.296+) both pass, since the mic uses the bottom rule. No box found: hidden; ⇧⌘D still works.</li>
+<li><b>Moving:</b> the box grows, a slash or @ menu opens under it, the window resizes, the font zooms: the mic re-anchors on the next frame, no flicker over text.</li>
+<li><b>Busy:</b> while Claude works with its prompt on screen, phrases go in as typing does. A question up: no paste (it could answer it).</li>
+<li><b>Clicks:</b> only the mic’s 24 × 18 takes the click; selection and scrolling elsewhere are untouched. Light, Dark and Classic consoles.</li>
+</ul>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1060}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

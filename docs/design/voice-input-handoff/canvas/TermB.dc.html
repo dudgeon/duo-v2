@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Terminal B: word by word</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.bd{box-sizing:border-box;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif}
+.bd *{box-sizing:border-box}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.cap{color:#5B636D;font-size:12px;line-height:17px;margin:0}
+.con{background:#15171B;border-radius:6px;overflow:hidden;color:#E6E8EB;display:flex;flex-direction:column}
+.strip{height:32px;display:flex;align-items:center;gap:18px;padding:0 12px 0 16px;border-bottom:1px solid #2B2F36;font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px;line-height:19px;color:#9AA1AB;white-space:nowrap}
+.tab{display:flex;align-items:center;gap:6px}
+.on{color:#E6E8EB;font-weight:500}
+.mp,.np{display:flex;align-items:center;border:1px solid #4A4F57;border-radius:6px;overflow:hidden}
+.ms{width:20px;height:16px;display:flex;align-items:center;justify-content:center}
+.ns{width:26px;height:20px;display:flex;align-items:center;justify-content:center}
+.son{background:#2B2F36}
+.hair{width:1px;height:12px;background:#4A4F57}
+.term{padding:12px 18px;font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px;line-height:19px;display:flex;flex-direction:column;white-space:pre}
+.dim{color:#9AA1AB}
+.ibox{border:1px solid #4A4F57;border-radius:4px;padding:3px 10px;margin-top:10px;white-space:pre-wrap}
+.cur{display:inline-block;width:7px;height:15px;background:#E6E8EB;vertical-align:-3px}
+.lv{display:inline-flex;align-items:flex-end;gap:1.5px;height:10px;flex:none}
+.lv span{display:block;width:2px;border-radius:1px;background:#E6E8EB}
+.frame{display:flex;flex-direction:column;gap:6px}
+.notes{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:12px 14px}
+.notes li{font-size:12px;line-height:18px;margin:0 0 5px}
+ul{margin:0;padding-left:18px}
+.mono{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:11.5px}
+</style>
+</helmet>
+<div class="bd" style="width: 1440px; height: 1060px; padding: 24px 28px; display: flex; flex-direction: column; gap: 14px">
+<div>
+<h1 style="margin: 0; font: 600 20px/26px -apple-system, system-ui, sans-serif">B · Word by word into Claude’s prompt, with Duo correcting the words Apple changes its mind about [P]</h1>
+<p class="cap" style="margin-top: 4px">Same start and strip as A. Instead of waiting for each phrase to settle, Duo types Apple’s partial words into Claude’s prompt at once, and when Apple revises them, sends backspaces over what it typed and the new words. As live as the system’s own dictation.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 36px">
+
+<div class="frame">
+<div class="lbl">1 · 0.8 s in · Apple’s first guess, typed</div>
+<div class="con">
+<div class="strip"><div class="tab on"><span class="lv" aria-label="Listening"><span style="height: 4px"></span><span style="height: 10px"></span><span style="height: 7px"></span><span style="height: 3px"></span></span>Pricing research<div class="mp" style="margin-left: 4px"><span class="ms son"><svg width="11" height="9" viewBox="0 0 13 10" aria-hidden="true"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h5" fill="none" stroke="#E6E8EB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class="ms"><svg width="11" height="10" viewBox="0 0 13 11" aria-hidden="true"><path d="M2.5 1H10.5Q12 1 12 2.5V6.5Q12 8 10.5 8H6L3.5 10V8H2.5Q1 8 1 6.5V2.5Q1 1 2.5 1Z" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linejoin="round"></path></svg></span></div></div><div class="tab"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5h6" stroke="#9AA1AB" stroke-width="1.6" stroke-linecap="round"></path></svg>Fix flaky cart test</div><span style="flex: 1"></span><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5v7 M1.5 5h7" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round"></path></svg><div class="np" style="margin-left: -10px"><span class="ns"><svg width="13" height="9" viewBox="0 0 12 8" aria-hidden="true"><path fill="#9AA1AB" d="M5 0h1v1h-1zM2 1h8v1h-8zM2 2h1v1h-1zM4 2h4v1h-4zM9 2h1v1h-1zM2 3h8v2h-8zM1 5h10v1h-10zM3 6h2v1h-2zM7 6h2v1h-2zM3 7h2v1h-2zM7 7h2v1h-2z"></path></svg></span><span class="hair"></span><span class="ns"><svg width="12" height="10" viewBox="0 0 12 10" aria-hidden="true"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h4" fill="none" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></div></div>
+<div class="term"><span>● The annual plan saves 17 %. Want me to add it to the</span><span>  pricing table?</span><div class="ibox">&gt; Yes add it and so the month<span class="cur"></span></div><span class="dim">  ⏵⏵ auto mode on (shift+tab to cycle)</span></div>
+</div>
+<p class="cap">The terminal can’t colour provisional words, so they look final. Here Apple heard “so the month”.</p>
+</div>
+
+<div class="frame">
+<div class="lbl">2 · 1.4 s · Apple revises; Duo backspaces 14 and retypes</div>
+<div class="con">
+<div class="strip"><div class="tab on"><span class="lv" aria-label="Listening"><span style="height: 8px"></span><span style="height: 4px"></span><span style="height: 10px"></span><span style="height: 6px"></span></span>Pricing research<div class="mp" style="margin-left: 4px"><span class="ms son"><svg width="11" height="9" viewBox="0 0 13 10" aria-hidden="true"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h5" fill="none" stroke="#E6E8EB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class="ms"><svg width="11" height="10" viewBox="0 0 13 11" aria-hidden="true"><path d="M2.5 1H10.5Q12 1 12 2.5V6.5Q12 8 10.5 8H6L3.5 10V8H2.5Q1 8 1 6.5V2.5Q1 1 2.5 1Z" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linejoin="round"></path></svg></span></div></div><div class="tab"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5h6" stroke="#9AA1AB" stroke-width="1.6" stroke-linecap="round"></path></svg>Fix flaky cart test</div><span style="flex: 1"></span><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5v7 M1.5 5h7" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round"></path></svg><div class="np" style="margin-left: -10px"><span class="ns"><svg width="13" height="9" viewBox="0 0 12 8" aria-hidden="true"><path fill="#9AA1AB" d="M5 0h1v1h-1zM2 1h8v1h-8zM2 2h1v1h-1zM4 2h4v1h-4zM9 2h1v1h-1zM2 3h8v2h-8zM1 5h10v1h-10zM3 6h2v1h-2zM7 6h2v1h-2zM3 7h2v1h-2zM7 7h2v1h-2z"></path></svg></span><span class="hair"></span><span class="ns"><svg width="12" height="10" viewBox="0 0 12 10" aria-hidden="true"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h4" fill="none" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></div></div>
+<div class="term"><span>● The annual plan saves 17 %. Want me to add it to the</span><span>  pricing table?</span><div class="ibox">&gt; Yes, add it, and show the monthly price<span class="cur"></span></div><span class="dim">  ⏵⏵ auto mode on (shift+tab to cycle)</span></div>
+</div>
+<p class="cap">Duo only ever erases characters it typed itself since the last settled phrase. If you type or move the cursor, Duo stops correcting and finishes the dictation.</p>
+</div>
+
+</div>
+<div class="notes">
+<div class="lbl" style="margin-bottom: 6px">Trade-offs</div>
+<ul>
+<li><b>For:</b> words appear as you say them, the most direct feel; nothing added to the strip or drawn over the TUI.</li>
+<li><b>Against:</b> text in Claude’s prompt jumps and rewrites itself, and provisional words look final; every correction is backspaces into a live TUI, so if Claude Code redraws, wraps a long line or moves its cursor (a slash menu opening, a paste-collapsed “[Pasted text]” block) Duo can erase the wrong characters. Claude Code collapses long pastes, so typed text would have to go as keystrokes, where <span class="mono">/</span> and <span class="mono">@</span> at a word’s start open Claude’s menus. More to test on each Claude Code version (2.1.219, 2.1.284, latest).</li>
+<li><b>Could come later</b> behind A: A’s phrase-by-phrase is B with the corrections turned off.</li>
+</ul>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1060}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
