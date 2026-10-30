@@ -4392,3 +4392,14 @@ Research for DL-236 (8), "the things the users should feel familiar with". Googl
 - v2's editor takes its colours from tokens (`DocumentEditor.tokenScript()` sets `--duo-*` CSS variables), but its font families are literals in `Vendor/codemirror/src/duo-editor.js` (about 25 `fontFamily:` strings). A serif document face needs one token-fed variable first.
 - Both apps have the same structure: about half light pane and half dark console (v2 `project`: `pane` 49 %, `console` 47 %). Most of the classic look is two large value swaps.
 - v1 runs hidden from a scratch copy: `electron-vite build`, `BrowserWindow` forced to `show:false`, `webContents.capturePage`, `HOME` overridden (v1 keeps all its state in `~/.claude/duo`), and a stub `claude`. `electron-rebuild` crashes on Node 26 (skip it; node-pty's prebuilds work after `chmod +x spawn-helper`). The prompt and `os.userInfo()` must be overridden or the captures show the real user and host.
+
+## F-409 · The Docs API makes suggestions and anchored comments (gdocs-landscape, 2026-10-29)
+
+- Since 2026-09-30 (GA; preview from 2026-07-07), `documents.batchUpdate` with `writeControl.writeMode: "SUGGEST"` turns every request in the batch into a Docs suggestion; `acceptSuggestion`, `rejectSuggestion` and `deleteSuggestion` exist. SUGGEST refuses tab, named-range, header/footer-delete and column-width requests. Personal accounts included, no admin switch.
+- `insertComment` takes a `range` (anchored, unlike Drive API comments, which Docs still shows unanchored); `addCommentReply` resolves or reopens. Google's Docs MCP server (developer preview) passes both through `update_doc` since 2026-10-01; MCP OAuth clients must be flagged "AI-powered agent" from 2026-11-11.
+- Nothing in the API or MCP server exposes the user's selection or cursor. Who a suggestion is credited to isn't documented (inferred: the OAuth user). Sources and the rest: `docs/research/google-docs-in-duo/agent-landscape.md`.
+
+## F-410 · Docs' annotated canvas gives text and selection in the page, behind an allowlist (gdocs-landscape, 2026-10-29)
+
+- With `window._docs_annotate_canvas_by_ext` set to an allowlisted extension ID at document start, Docs exposes `_docs_annotate_getAnnotatedText(id)`: `getText()`, `getSelection()` (offsets) and `setSelection(start, end)`. Harper's `google-docs-bridge.js` replaces a range by `setSelection` then a synthetic `paste` ClipboardEvent (`text/plain`) into `.docs-texteventtarget-iframe`'s contenteditable, then re-reads to confirm (read in its code, 2026-10-29). Chromium's Reading Mode sets the same flag.
+- The allowlist is undocumented (a 2021 form, no recorded answers); Harper uses an ID that isn't its own. Untested in WKWebView; borrowing an ID is a ToS/impersonation risk, so it's a question for Geoff, not a technique to ship.
