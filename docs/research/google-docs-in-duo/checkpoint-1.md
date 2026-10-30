@@ -56,17 +56,26 @@ T-08, T-09 and half of T-05 need someone typing and commenting in another browse
 2. **A real colleague** (best for presence and @mentions), at a time you pick.
 3. **A second Google account on this Mac, in Chrome, driven by Claude in Chrome.** Fully scripted, but it's one machine, so latency is optimistic.
 
-### 4. The API authorization (Q-314)
-The suggestion, comment, index-mapping and change tests (T-04, T-05, T-09, T-11, T-13, T-14) need Google's API with your consent.
+### 4. How Claude gets Google API access (Q-314; revised 2026-10-30)
+Geoff, on the first version: a Google Cloud project per user "sounds absolutely horrendous. personal users won't want to do this, enterprise users likely will not be able to do this." The setup belongs to Duo, once, not to each user. The layers:
+- **No access needed:** Claude reads your selection in Duo's tab and suggests from a hidden second tab in your own session.
+- **Google access, one tap per doc:** Claude's edits and comments go through the API instead. They're exact, they merge cleanly with live typing, and they work while Duo is closed.
+
+Sources, all read 2026-10-30:
+- Drive scope guide (2026-09-03): `drive.file` is non-sensitive and needs only basic OAuth app verification, and Google recommends pairing it with the Picker.
+- Docs batchUpdate reference: it accepts `drive.file`.
+- OAuth for native apps (2026-10-29): desktop clients are public, loopback is the recommended redirect, and `WKWebView` is refused.
+- Workspace admin help (2026-10-26): the default is "Allow users to access any third-party apps". Admins can trust an app by client id, and users can request access.
 
 **Options:**
-1. **(Recommended)** **Your own Google Cloud project, OAuth client in testing mode, you as its only test user.**
-   - Scopes: `documents` and `drive.file`, plus the Apps Script scope for T-11.
-   - One consent screen, opened in your normal browser.
-   - The token stays in this Mac's Keychain.
-   - Fleet OAuth (Duo's own verified client) waits for Phase 3.
-2. **Google's Docs MCP server only** (developer preview), connected to one scratch Claude session. It needs less code, but the same consent, and it can't do Drive export or revisions.
-3. **No API in Phase 2.** Test A's in-page route only, and decide C later. That's cheaper, but it leaves Checkpoint 2 without the API side of the comparison.
+1. **(Recommended)** **Duo registers one Google app; people tap Allow per doc.**
+   - Scope: `drive.file`.
+   - Consent goes through Google's sign-in kit for Mac apps.
+   - Google's picker is pointed at the doc you have open.
+   - Phase 2 tests it in Google's testing mode, with Geoff as the only user (T-16).
+   - Duo applies for the basic app check after Checkpoint 2.
+2. **Browser only.** Claude suggests from a hidden tab and nothing asks for access. It's less exact, and nothing happens while Duo is closed.
+3. **Google's Docs MCP server** from Claude's session. It's in preview, still needs a Google app and consent, and can't download exports or versions.
 
 ### 5. May Duo use Docs' undocumented in-page hook? (Q-309)
 It gives Claude your selection and the live text, and it's the best route found. But it's a Google internal that could change without notice. It isn't the "borrowed extension id" the landscape survey worried about: Docs answered with no id.
