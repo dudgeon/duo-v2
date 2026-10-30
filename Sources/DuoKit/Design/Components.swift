@@ -198,3 +198,99 @@ extension View {
             .accessibilityAction(.default, action)
     }
 }
+
+// MARK: - The segmented pill (DL-253)
+
+/// The robot beside "new session": a filled 12 × 8 pixel mark with its eyes cut out and an antenna
+/// (tokens.json `icon.newSessionRobot`), the design system's one filled icon.
+struct RobotMark: Shape {
+    func path(in r: CGRect) -> Path {
+        let sx = r.width / 12, sy = r.height / 8
+        var p = Path()
+        // x, y, w, h in the 12 × 8 grid (each a pixel run).
+        for (x, y, w, h) in [(5, 0, 1, 1), (2, 1, 8, 1), (2, 2, 1, 1), (4, 2, 4, 1), (9, 2, 1, 1), (2, 3, 8, 2),
+                             (1, 5, 10, 1), (3, 6, 2, 1), (7, 6, 2, 1), (3, 7, 2, 1), (7, 7, 2, 1)] {
+            p.addRect(CGRect(x: CGFloat(x) * sx, y: CGFloat(y) * sy, width: CGFloat(w) * sx, height: CGFloat(h) * sy))
+        }
+        return p
+    }
+}
+
+/// `>_` in a 12 × 10 box (tokens.json `icon.shellPrompt`), as a shape.
+struct ShellPromptShape: Shape {
+    func path(in r: CGRect) -> Path {
+        let sx = r.width / 12, sy = r.height / 10
+        var p = Path()
+        p.move(to: .init(x: 1.5 * sx, y: 2 * sy)); p.addLine(to: .init(x: 5 * sx, y: 5 * sy)); p.addLine(to: .init(x: 1.5 * sx, y: 8 * sy))
+        p.move(to: .init(x: 6.5 * sx, y: 8.5 * sy)); p.addLine(to: .init(x: 10.5 * sx, y: 8.5 * sy))
+        return p
+    }
+}
+
+/// `+` in a 10 × 10 box, stroke 1.5.
+struct PlusShape: Shape {
+    func path(in r: CGRect) -> Path {
+        var p = Path()
+        p.move(to: .init(x: r.midX, y: r.minY + r.height * 0.15)); p.addLine(to: .init(x: r.midX, y: r.maxY - r.height * 0.15))
+        p.move(to: .init(x: r.minX + r.width * 0.15, y: r.midY)); p.addLine(to: .init(x: r.maxX - r.width * 0.15, y: r.midY))
+        return p
+    }
+}
+
+/// Two or more icon segments in one bordered box, shared by the chat mode toggle (a mode pill shows its
+/// chosen segment) and the new-session pill (an action pill shows hover only). Marks are `consoleText2` /
+/// `text2`; a chosen or hovered segment fills `consoleRule` / `selected` and its mark takes `consoleText` / `text`.
+/// `light` is the thin strip over chat: 1 pt `controlEdge`, white inside.
+struct SegmentedPill<Content: View>: View {
+    var light = false
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        HStack(spacing: 0) { content() }
+            .background(light ? DuoColor.pane : .clear)
+            .clipShape(RoundedRectangle(cornerRadius: DuoMetric.radiusControl))
+            // The border sits outside the segments (the target's 22 × 16 inside a 1 pt border).
+            .padding(DuoMetric.borderHairline)
+            .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).strokeBorder(light ? DuoColor.controlEdge : DuoColor.tuiInputBorder, lineWidth: DuoMetric.borderHairline))
+    }
+}
+
+/// The hairline between an action pill's segments (the mode pill has none).
+struct PillDivider: View {
+    var light = false
+    var body: some View {
+        (light ? DuoColor.rule : DuoColor.tuiInputBorder).frame(width: DuoMetric.borderHairline, height: light ? 10 : 12)
+    }
+}
+
+/// One segment of a `SegmentedPill`. `id` names it for hover (`AppModel.hoveredPill`).
+struct PillSegment<Mark: View>: View {
+    @Environment(AppModel.self) private var model
+    let id: String
+    var light = false
+    let size: CGSize
+    /// The chosen segment of a mode pill.
+    var on = false
+    /// An action pill's segments fill under the pointer; a mode pill's show only the chosen one.
+    var hovers = true
+    let label: String
+    var help: String? = nil
+    let action: () -> Void
+    @ViewBuilder let mark: () -> Mark
+
+    var body: some View {
+        let lit = on || (hovers && model.hoveredPill == id)
+        mark()
+            .foregroundStyle(light ? (lit ? DuoColor.text : DuoColor.text2) : lit ? DuoColor.consoleText : DuoColor.consoleText2)
+            .frame(width: size.width, height: size.height)
+            .background(lit ? (light ? DuoColor.selected : DuoColor.consoleRule) : .clear)
+            .contentShape(Rectangle())
+            .onActivate(action)
+            .onHover { inside in
+                if inside { model.hoveredPill = id } else if model.hoveredPill == id { model.hoveredPill = nil }
+            }
+            .help(help ?? label)
+            .accessibilityLabel(label)
+        .accessibilityAddTraits(on ? .isSelected : [])
+    }
+}

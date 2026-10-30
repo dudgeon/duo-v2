@@ -4438,3 +4438,12 @@ Bare WKWebView configured as a Duo tab (non-persistent store, Safari token), pag
 - `keyDown`/`keyUp` Shift+→ ×3 then Shift+↓ extended it to 381–419.
 - So a key/type verb and a drag verb would drive Docs as a person does.
 - The off-screen probe window needed WebKit's occlusion detection switched off (`_setWindowOcclusionDetectionEnabled:`), or the page counts as hidden. Duo's own hidden test window draws (F-227).
+
+## F-423 · The new-session pill and the toggle on the tab (new-session-buttons, 2026-10-30)
+
+- Built to `new-session-handoff/screens/chosen-placement-4.html` (DL-253): `+` and a split pill [robot | shell] end the console strip; the Terminal / Chat toggle rides on the selected Claude tab, 4 pt after its name, outside the hover fill (the fill now ends at the label when the toggle follows, `TabHoverFill.trailing`).
+- One shared `SegmentedPill` + `PillSegment` + `PillDivider` in `Design/Components.swift` draws both; a mode pill shows its chosen segment, the action pill hover only (`AppModel.hoveredPill`, harness `hover-pill:`).
+- The `⌄` menu is gone: the robot runs `duo2 session new` (⌘T), the shell `duo2 shell new` (⇧⌘T). Nothing else used the menu.
+- The robot is tokens.json `icon.newSessionRobot`, a filled mark; `gen-design-system.py` now exports an icon with a `fill` as a filled SVG.
+- Home with tabs now also ends its strip with the pill (before, Home showed `+` only with no tabs); with none, the pill starts the strip (an empty scroll area took the full width and pushed it right).
+- Fixture states `newsession-a` to `-f` (`NewSessionTargets`); A, C, F and the light strip toggle sizes are Q-325 stand-ins.

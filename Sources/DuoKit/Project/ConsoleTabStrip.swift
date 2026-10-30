@@ -45,31 +45,9 @@ struct ConsoleTabStrip: View {
                 }
                 .duoAnimation(.tabMove, value: tabs.map(\.id))
             },
-            plus: {
-                // Home shows the + only with no tabs (home-none); the console always.
-                if !isHome || tabs.isEmpty { HStack(spacing: 5) {
-                    Text("+").duoText(light ? .control : .mono).foregroundStyle(dim)
-                        .onActivate { newSession() }  // action: session new
-                        .accessibilityLabel("New Claude session")
-                    Chevron(direction: .down, color: dim).frame(width: 8, height: 6).scaleEffect(0.8)
-                        .frame(height: 16).contentShape(Rectangle())
-                        .onActivate {  // action: session new
-                            PopUp.show([("New Claude Session", { newSession() }), ("New Shell", { model.newShell() })],
-                                       keys: [("t", [.command]), ("t", [.command, .shift])])
-                        }
-                        .accessibilityLabel("New session or shell")
-                }
-                .padding(.leading, tabs.isEmpty ? 0 : gap)
-                // Opaque on the strip, so it covers a tab fading out as it slides (DL-130).
-                .background(ground) }
-            },
-            edge: {
-                // Terminal / Chat, for the selected Claude tab (chat-mode-handoff `toggle`); 12 from the edge.
-                if let key = selection, tabs.contains(where: { $0.id == key && $0.state != nil }),
-                   model.chat(for: key) != nil {
-                    ChatToggle(key: key, light: light).padding(.trailing, light ? -6 : -4)   // 11 from the edge (bar-thin) on the thin strip
-                }
-            })
+            // Home's empty strip starts with `+` and the pill (home-none); otherwise they end the strip (DL-253).
+            plus: { if isHome && tabs.isEmpty { newSessionPill } },
+            edge: { if !(isHome && tabs.isEmpty) { newSessionPill } })
         // A live session's tab is dragged as itself (onto a task or a project, DL-147); along the strip its place moves (DL-220).
         .onDrop(of: [.plainText, .utf8PlainText], delegate: TabStripDrop(model: model, pane: pane))  // action: view tab-move
         .overlay(alignment: .topLeading) {
@@ -82,6 +60,36 @@ struct ConsoleTabStrip: View {
         .frame(height: height)
         .id(project)   // another project's tabs replace these at once
         .background(light ? DuoColor.ground : .clear)
+    }
+
+    /// `+` and the split pill [robot | shell] (new-session-handoff placement 4): one click each, no menu.
+    @ViewBuilder private var newSessionPill: some View {
+        let size = CGSize(width: light ? 22 : 26, height: light ? 16 : 20)
+        let plus: CGFloat = light ? 9 : 10
+        HStack(spacing: 7) {
+            PlusShape().stroke(dim, style: StrokeStyle(lineWidth: 1.5, lineCap: .round)).frame(width: plus, height: plus)
+                .accessibilityHidden(true)
+            SegmentedPill(light: light) {
+                PillSegment(id: "new-claude", light: light, size: size, label: "New Claude session", help: newSessionHelp, action: { newSession() }) {  // action: session new
+                    RobotMark().frame(width: light ? 12 : 13.5, height: light ? 8 : 9)
+                }
+                PillDivider(light: light)
+                PillSegment(id: "new-shell", light: light, size: size, label: "New shell", help: newShellHelp, action: { model.newShell() }) {  // action: shell new
+                    ShellPromptShape().stroke(style: StrokeStyle(lineWidth: 1.5 * (light ? 11.0 : 12.0) / 12, lineCap: .round, lineJoin: .round))
+                        .frame(width: light ? 11 : 12, height: light ? 9 : 10)
+                }
+            }
+        }
+        // Opaque on the strip, so it covers a tab fading out as it slides (DL-130).
+        .background(ground)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("New session or shell")
+    }
+
+    private var newSessionHelp: String { "New Claude session ⌘T · in \(isHome ? "home" : project ?? "this project")" }
+    private var newShellHelp: String {
+        let folder = project.flatMap { model.liveFolders[$0]?.path } ?? FileManager.default.homeDirectoryForCurrentUser.path
+        return "New shell ⇧⌘T · in \((folder as NSString).abbreviatingWithTildeInPath)"
     }
 
     private func open(_ key: String) { if isHome { model.homeTab = key } else { model.openConsoleTab(key) } }  // action: session open
@@ -136,19 +144,34 @@ struct ConsoleTabStrip: View {
         .fixedSize()
     }
 
+    /// The mode toggle rides on the selected Claude tab that has a chat (DL-253, placement 4).
+    func showsToggle(_ t: Tab) -> Bool { t.id == selection && t.state != nil && model.showsModeToggle(t.id) }
+
+    /// A tab: its core (glyph, name, pin; the hover fill, menu and clicks), then the mode toggle 4 pt after it, outside the hover fill.
     @ViewBuilder func tab(_ t: Tab, shown: [String]) -> some View {
         let active = t.id == selection
-        label(t, closable: true)
-        .modifier(TabHoverFill(key: t.id, onConsole: !light, fill: light ? DuoColor.selected : nil))
+        HStack(spacing: 4) {
+            tabCore(t)
+            if showsToggle(t) { ChatToggle(key: t.id, light: light) }
+        }
         .frame(maxHeight: light ? .infinity : nil)
-        // The selected tab is underlined at the strip's foot (DL-136).
+        // The selected tab is underlined at the strip's foot (DL-136), under the toggle too.
         .overlay(alignment: .bottom) { if light && active { DuoColor.text.frame(height: 2) } }
+        // Dragged along the strip, its place moves (DL-220, console-drag). A live session's tab is a drag source already.
+        .modifier(TabDraggable(key: t.id, pane: pane, space: Self.space, enabled: !model.isSessionDragSource(t.id), shown: { shown }))
+        .background(ground)
+        .transition(.tab)
+    }
+
+    @ViewBuilder private func tabCore(_ t: Tab) -> some View {
+        let active = t.id == selection
+        label(t, closable: true)
+        .modifier(TabHoverFill(key: t.id, onConsole: !light, fill: light ? DuoColor.selected : nil, trailing: showsToggle(t) ? 0 : DuoMetric.tabHoverInset))
+        .frame(maxHeight: light ? .infinity : nil)
         .contentShape(Rectangle())
         .onActivate { open(t.id) }  // action: session open
         .modifier(SessionOrganizeMenu(sessionKey: t.id, radius: DuoMetric.tabHoverRadius, onConsole: !light, tab: true, pane: pane,
                                       dragImage: { AnyView(TabDragImage(onConsole: !light) { label(t) }.padding(24)) }))   // room for the shadow
-        // Dragged along the strip, its place moves (DL-220, console-drag). A live session's tab is a drag source already.
-        .modifier(TabDraggable(key: t.id, pane: pane, space: Self.space, enabled: !model.isSessionDragSource(t.id), shown: { shown }))
         .modifier(ShellTabMenu(key: t.id, pane: pane, enabled: t.state == nil))
         .modifier(TabHover(key: t.id) { model.closeConsoleTab(t.id) })
         .accessibilityElement(children: .combine)
@@ -165,8 +188,6 @@ struct ConsoleTabStrip: View {
                     .accessibilityIdentifier("video.tab.middle.close.\((allTabs.firstIndex { $0.id == t.id } ?? 0) + 1)")
             }
         }
-        .background(ground)
-        .transition(.tab)
     }
 
     static func short(_ s: String) -> String {

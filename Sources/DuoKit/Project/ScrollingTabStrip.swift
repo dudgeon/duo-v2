@@ -167,7 +167,7 @@ struct ScrollingTabStrip<Pinned: View, Tabs: View, Plus: View, Edge: View>: View
         .onScrollGeometryChange(for: CGFloat.self, of: { $0.contentOffset.x }) { _, x in st.offset = x }
         .onScrollGeometryChange(for: CGFloat.self, of: { $0.containerSize.width }) { _, w in st.viewport = w }
         .onScrollPhaseChange { _, phase in st.userScrolling = phase == .interacting }
-        .frame(maxWidth: st.content > 0 ? st.content : .infinity)
+        .frame(maxWidth: keys.isEmpty ? 0 : st.content > 0 ? st.content : .infinity)   // no tabs: the pill starts the strip (DL-253)
         .frame(height: height)
         .overlay(alignment: .leading) { fade(st, leading: true) }
         .overlay(alignment: .trailing) { fade(st, leading: false) }

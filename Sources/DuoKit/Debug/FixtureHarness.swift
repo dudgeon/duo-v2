@@ -269,6 +269,8 @@ public enum FixtureHarness {
                 model.hoveredTabClose = on == "close" || on == "press" ? key : nil
                 model.pressedTabClose = on == "press" ? key : nil
             }
+        case "hover-pill":   // hover-pill:<new-claude|new-shell>: the pointer over a half of the new-session pill (DL-253)
+            if parts.count > 1 { model.hoveredPill = parts[1] }
         case "move-tab":   // move-tab:<tab key or document path>=<place>: a tab put at a place along its strip, 1-based, as a drag drops it (DL-220)
             if parts.count > 1 {
                 let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init)
