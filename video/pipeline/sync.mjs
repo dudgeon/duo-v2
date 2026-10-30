@@ -60,7 +60,8 @@ const report = [], problems = [];
 for (const sc of now.scenes) if (!old.scenes.some((s) => s.id === sc.id)) report.push(`+ scene ${sc.id} · ${sc.title}: needs a shot in shots.json`);
 for (const os of old.scenes) {
   const ns = now.scenes.find((s) => s.id === os.id);
-  if (!ns) { problems.push(`scene ${os.id} is gone from the Doc; remove its shot first`); continue; }
+  // A scene gone from the Doc whose shot has already been set aside (renamed `$…` in shots.json) is fine.
+  if (!ns) { if (shots[os.id]) problems.push(`scene ${os.id} is gone from the Doc; remove its shot first`); else report.push(`- scene ${os.id} · ${os.title}`); continue; }
   const map = align(os.lines.map((l) => l.text), ns.lines.map((l) => l.text));
   map.forEach((j, i) => {
     if (j === null) report.push(`- ${os.id}-${i + 1}: "${os.lines[i].text}"`);

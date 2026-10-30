@@ -166,6 +166,7 @@ const KINDS = {
   relay:    { verb: "Send to a worker",         hint: "The director passes it on, issue quoted as untrusted", what: "The director messages the worker in your name, with your note, and quotes the issue as untrusted text. The worker never reads the issue on its own." },
   backlog:  { verb: "Add to the backlog",       hint: "Becomes an ENH record; no work starts", what: "The director writes an ENH record linking these issues. No work starts, and nothing is posted to GitHub unless you also reply." },
   research: { verb: "Start research",           hint: "A new task note and worker, on your question", what: "The director writes a task note with your question and starts a research worker on it. The issue goes in as quoted, untrusted text." },
+  instruct: { verb: "Tell the discovery agent", hint: "Your own instructions for its runs; the director is copied", what: "Saved as your instruction on this problem. The next discovery run follows it (for example: merge this with another problem, treat it as a bug, watch for a reply) and says what it did here; an instruction meant to last stays in force for later runs. The director is copied on it and steps in if it needs more than a run can do." },
   snooze:   { verb: "Nothing to do for now",    hint: "Moves it to Quiet until the issue changes", what: "The next run keeps this in Quiet until someone comments or a new issue joins it. Nothing goes to the director." },
 };
 
@@ -204,18 +205,19 @@ function actionLine(a, withCancel) {
   if (a.close) bits.push("and close");
   if (bits.length) what.append(" · " + bits.join(" "));
   top.append(what);
-  const st = { queued: "Waiting for the director", done: "Done", declined: "Director declined", cancelled: "Cancelled" }[a.status || "queued"];
+  const st = { queued: a.kind === "instruct" ? "Waiting for the next run" : "Waiting for the director", standing: "In force for every run", done: "Done", declined: "Director declined", cancelled: "Cancelled" }[a.status || "queued"];
   top.append(el("span", "status" + (a.status === "done" ? " ok" : ""), st + (a.at ? " · " + ago(a.doneAt || a.at) + " ago" : "")));
   li.append(top);
   if (a.result) li.append(el("span", "status", a.result));
-  if (withCancel && (a.status || "queued") === "queued") {
+  if (a.kind === "instruct" && a.note) li.append(el("span", "status", "“" + a.note + "”"));
+  if (withCancel && ["queued", "standing"].includes(a.status || "queued")) {
     const b = el("button", "btn ghost small", "Cancel"); b.onclick = () => cancelAction(a.id); li.append(b);
   }
   return li;
 }
 function renderQueue() {
   const acts = list(store.actions).filter(a => a.kind !== "snooze").sort((x, y) => String(y.at).localeCompare(String(x.at)));
-  const recent = acts.filter(a => (a.status || "queued") === "queued" || (Date.now() - new Date(a.doneAt || a.at)) < 7 * 864e5);
+  const recent = acts.filter(a => ["queued", "standing"].includes(a.status || "queued") || (Date.now() - new Date(a.doneAt || a.at)) < 7 * 864e5);
   $("#queue-sec").hidden = !recent.length;
   $("#queue").replaceChildren(...recent.slice(0, 12).map(a => actionLine(a, true)));
 }
@@ -263,7 +265,7 @@ function workerRow(w) {
   }
   return li;
 }
-function myActions(c) { return list(store.actions).filter(a => a.cluster === c.id && a.kind !== "snooze" && ((a.status || "queued") === "queued" || (Date.now() - new Date(a.doneAt || a.at)) < 3 * 864e5)); }
+function myActions(c) { return list(store.actions).filter(a => a.cluster === c.id && a.kind !== "snooze" && (["queued", "standing"].includes(a.status || "queued") || (Date.now() - new Date(a.doneAt || a.at)) < 3 * 864e5)); }
 
 function composer(c, kind) {
   const box = el("div", "composer");
@@ -289,7 +291,7 @@ function composer(c, kind) {
     lab.append(f.target); box.append(lab);
   }
   if (kind !== "reply" && kind !== "snooze") {
-    const lab = el("label", "", kind === "relay" ? "Your note to the worker (what to do with it)" : kind === "research" ? "Your question for the research" : "Note for the backlog record (optional)");
+    const lab = el("label", "", kind === "relay" ? "Your note to the worker (what to do with it)" : kind === "research" ? "Your question for the research" : kind === "instruct" ? "Your instructions to the discovery agent" : "Note for the backlog record (optional)");
     f.note = el("textarea"); f.note.id = "nt-" + kind + "-" + c.id; f.note.value = ((c.suggest || {}).kind === kind && c.suggest.note) || "";
     lab.append(f.note); box.append(lab);
   }
@@ -308,6 +310,7 @@ function composer(c, kind) {
     if (f.target) a.target = f.target.value === "other" ? "" : f.target.value;
     if (f.note) a.note = f.note.value.trim();
     if (kind === "relay" && !a.target && !a.note) { st.className = "status err"; st.textContent = "Name the worker in your note."; return; }
+    if (kind === "instruct" && !a.note) { st.className = "status err"; st.textContent = "Write the instructions first."; return; }
     if (kind === "research" && !a.note) { st.className = "status err"; st.textContent = "Say what the research should answer."; return; }
     if (kind === "snooze") a.seenUpdated = c.updated || null;
     go.disabled = true; st.className = "status"; st.textContent = "Saving…";
@@ -355,7 +358,7 @@ function clusterCard(c) {
   const st = ui[c.id] || {};
   if (st.mode === "menu") {
     const m = el("div", "menu");
-    ["reply", "relay", "backlog", "research", "snooze"].forEach(k => {
+    ["reply", "relay", "backlog", "research", "instruct", "snooze"].forEach(k => {
       if (k === "relay" && !(c.workers || []).length) return;
       const b = el("button", "btn"); b.append(KINDS[k].verb, el("small", "", KINDS[k].hint));
       b.onclick = () => { ui[c.id] = { mode: k }; renderClusters(); }; m.append(b);
@@ -426,6 +429,8 @@ async function notifyDirector(a) {
     "Action: " + (KINDS[a.kind] || {}).verb + (a.issues ? " · issues " + a.issues.map(n => "#" + n).join(", ") : "") + (a.target ? " · to " + a.target : "") + (a.close ? " · and close" : ""),
     "Cluster: " + (a.clusterTitle || a.cluster),
   ];
+  // Geoff's own words (never issue text) travel for an instruction, so the director is copied on exactly what he asked.
+  if (!a.cancelId && a.kind === "instruct" && a.note) lines.push("Geoff's instructions to the discovery agent (cc the director): " + a.note);
   try { const anchor = await comments.anchorFor(document.getElementById("c-" + a.cluster) || document.body); await comments.sendToClaude({ anchor, text: lines.join("\n") }); } catch (e) {}
 }
 
@@ -447,3 +452,4 @@ async function notifyDirector(a) {
 })();
 setInterval(renderMeta, 60000);
 </script>
+

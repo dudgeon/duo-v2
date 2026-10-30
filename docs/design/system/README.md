@@ -7,6 +7,8 @@ This system is the current state of Duo's design: what's approved, what's built,
 - the component you're working on;
 - **Working on Duo's design**: how to read the targets and hand work back.
 
+This system says how Duo looks. What each feature is for, and the rules it keeps, are in the feature catalogue, `docs/product/features.md` (FEAT-n, DL-240): read a feature's row beside its surface before you design for it.
+
 Every component README starts with a **Status** line:
 - **Designed**: built to an approved target screen.
 - **Designed, changed by decision**: a target, amended by a later decision (DL-n).
@@ -200,6 +202,8 @@ All Duo shortcuts carry ⌘, so they never collide with keys typed into Claude C
 | ⌘L | A browser tab's address field |
 | ⌘N / ⇧⌘N | New Markdown file / new folder |
 | ⌘S, ⌘B, ⌘I, ⇧⌘X | Save, bold, italic, strikethrough in the editor (DL-189) |
+| ⇧⌘E / ⌥⌘M | In a Markdown document: Suggest Edits on and off / Add Comment on the selection, as in Word and Google Docs (DL-248) |
+| ⌘] / ⌘[, Tab / ⇧Tab | In the editor, in a list item: indent / outdent by the parent marker's width (3 under `1. `, 4 under `10. `, 2 under `- `), so the item nests and the sub-list renumbers from 1; elsewhere ⌘] ⌘[ indent two spaces and Tab is unchanged (DL-244) |
 | ⌘D | Send selection to Claude |
 | ⌘W / ⇧⌘W | Close tab (never the window) / close window |
 | ⌥⌘0 | Hide or show the right pane (DL-129) |

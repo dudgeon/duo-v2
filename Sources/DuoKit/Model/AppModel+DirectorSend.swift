@@ -2,7 +2,7 @@ import AppKit
 import DuoControl
 import Foundation
 
-/// `duo2 director send` (DL-199, DL-244): a live worker is reached by the director's own SendMessage,
+/// `duo2 director send` (DL-199, DL-256): a live worker is reached by the director's own SendMessage,
 /// so Duo only logs and notes the hand-over; a stopped one is woken by a background resume or reopened
 /// in Duo; otherwise the user passes it on. Duo types nothing into a worker for a director. Every send
 /// is logged with its rung and noted in the task's Progress.
@@ -109,7 +109,7 @@ extension AppModel {
         }
     }
 
-    /// Home asking a project's director (DL-197), with no Duo typing (DL-244): the caller sends it by
+    /// Home asking a project's director (DL-197), with no Duo typing (DL-256): the caller sends it by
     /// SendMessage when it has messaging and the director is a live session with a peer name; else the user passes it on.
     func sendToDirector(_ project: String, message: String, from: String, caps: ClientCaps, log: @escaping (String, String?, String?, String?, String?) -> Void,
                         done: @escaping @MainActor (Reply) -> Void) {
@@ -126,7 +126,7 @@ extension AppModel {
         }
     }
 
-    // MARK: The guarded Enter (@claude review comments only, DL-244)
+    // MARK: The guarded Enter (@claude review comments only, DL-256)
 
     /// What the screen check reads from a worker's terminal: Claude at its prompt, and the prompt's text.
     public struct PromptRead: Equatable { public var idle: Bool; public var input: String
@@ -287,7 +287,7 @@ extension AppModel {
     // MARK: Housekeeping
 
     /// Each refresh: prunes every live folder's registry. Messages an older Duo queued (`pending`) are
-    /// not carried any more (DL-244): each becomes a Progress line on its task and the list is emptied.
+    /// not carried any more (DL-256): each becomes a Progress line on its task and the list is emptied.
     public func pruneDirectorRegistries() {
         for (project, folder) in liveFolders {
             guard FileManager.default.fileExists(atPath: DirectorRegistry.file(project: folder).path) else { continue }
@@ -295,7 +295,7 @@ extension AppModel {
             var reg = DirectorRegistry.load(project: folder)
             guard !reg.pending.isEmpty else { continue }
             for m in reg.pending where DirectorRegistry.isTaskPath(m.task) {
-                editTaskNote(project, m.task, .appendLine(section: "Progress", line: DirectorNotes.progressLine("Not delivered: Duo no longer carries messages (DL-244); send it again with SendMessage: \(m.message.prefix(200))")))
+                editTaskNote(project, m.task, .appendLine(section: "Progress", line: DirectorNotes.progressLine("Not delivered: Duo no longer carries messages (DL-256); send it again with SendMessage: \(m.message.prefix(200))")))
             }
             reg.pending = []
             try? reg.save(project: folder)

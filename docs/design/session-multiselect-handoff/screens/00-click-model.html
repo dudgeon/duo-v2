@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="1100x1000">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="session-multiselect">
+<!--
+APPROVED Main.dc.html. Geoff, 2026-10-29, by buttons (DL-247).
+Exported from the Design canvas https://claude.ai/artifact/6FH9QMZrJS5bVTasHoaqb1 (board BOARD), rendered to static markup by scripts/dc-render.py.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and data are illustrative.
+-->
+<title>Duo · Select several sessions: the click model</title>
+<style>
+
+body{margin:0}
+.bd{box-sizing:border-box;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif}
+.bd *{box-sizing:border-box}
+.t2{color:#5B636D}
+.cap{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;margin:0 0 8px}
+.card{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;padding:14px 16px}
+.k{font:600 12px/18px -apple-system,system-ui,sans-serif;white-space:nowrap}
+.tb{display:grid;grid-template-columns:150px minmax(0,1fr) 230px;column-gap:16px;row-gap:0}
+.tb > div{padding:7px 0;border-top:1px solid #C9CDD3;font-size:12px;line-height:18px}
+.tb .h{border-top:0;font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;padding-top:0}
+ul{margin:0;padding-left:18px}
+li{margin:0 0 6px;font-size:12px;line-height:18px}
+code{font:12px/18px ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace}
+
+</style>
+</head>
+<body>
+
+
+<div class="bd" style="width: 1100px; height: 1000px; padding: 28px 32px; display: flex; flex-direction: column; gap: 16px">
+<div>
+<h1 style="margin: 0; font: 600 20px/26px -apple-system, system-ui, sans-serif">Select several sessions, then act on all of them</h1>
+<p class="t2" style="margin: 4px 0 0; font-size: 12px; line-height: 18px">Geoff, 2026-10-29: “shift click a range of sessions (without them opening if parked), control click in that range, and delete them.” Finder's and Mail's rules, on Duo's session rows. Everything here is [P].</p>
+</div>
+<div class="card">
+<div class="cap">The clicks</div>
+<div class="tb">
+<div class="h">Click</div><div class="h">What it does</div><div class="h">On a parked session</div>
+<div class="k">Click</div><div>Opens the session in the console, as today, and clears any selection. It becomes the anchor.</div><div>Resumes it, as today (DL-156).</div>
+<div class="k">⇧-click</div><div>Selects every session row from the anchor to this one, in the order on screen. Task lines, fold rows and section labels in between aren't selected; folded rows aren't either. Replaces the last ⇧ range, as Finder does.</div><div><b>Selects it. Never resumes, never opens a tab.</b></div>
+<div class="k">⌘-click</div><div>Adds the row to the selection, or takes it out. It becomes the anchor for the next ⇧-click.</div><div><b>Selects it. Never resumes.</b></div>
+<div class="k">⌃-click, right-click</div><div>On a selected row: the menu for the whole selection (board 02). On a row outside it: the selection moves to that row, and its own menu opens, as in Finder.</div><div>Never resumes.</div>
+<div class="k">Esc</div><div>Clears the selection, while the list has the keyboard.</div><div>—</div>
+<div class="k">Click on empty pane</div><div>Clears the selection.</div><div>—</div>
+<div class="k">⌘A</div><div>While the list has the keyboard (after a click in it, or ⌥⌘← to its pane): every session row showing in that list. Not task lines, not folded rows. In a terminal, ⌘A stays the terminal's.</div><div>Selects; never resumes.</div>
+</div>
+</div>
+<div style="display: flex; gap: 16px; align-items: stretch">
+<div class="card" style="flex: 1">
+<div class="cap">“Control click” (Q-a)</div>
+<ul>
+<li>On a Mac, ⌃-click is right-click: it opens a menu. So <b>⌘-click</b> adds or removes one row, as everywhere else on the Mac.</li>
+<li>⌃-click inside the selection opens the selection's menu, so “control click in that range, then Delete” works as Geoff said it.</li>
+<li>Q-a asks Geoff which he meant.</li>
+</ul>
+</div>
+<div class="card" style="flex: 1">
+<div class="cap">What a selection is</div>
+<ul>
+<li>Sessions only, across sections: NEEDS YOU, OPEN, a task's rows and OTHER SESSIONS can be selected together.</li>
+<li>One list at a time. Switching project or altitude clears it.</li>
+<li>A selected session that changes section (it starts working, it needs you) stays selected. The list already holds still while the pointer is in it (DL-130).</li>
+<li>A session that leaves the list (archived, deleted, moved) leaves the selection.</li>
+<li>The console keeps showing what it showed. Selecting never changes the console.</li>
+</ul>
+</div>
+<div class="card" style="flex: 1">
+<div class="cap">After the action</div>
+<ul>
+<li>Archive, Park, Add to Task and Move to Project act at once, with ⌘Z, as they do for one session.</li>
+<li>Delete asks once, in a sheet (board 03): it can't be undone.</li>
+<li>The selection clears after any action.</li>
+<li>VoiceOver: “3 sessions selected”; each row reads “selected”.</li>
+</ul>
+</div>
+</div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="1180x1000">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="session-multiselect">
+<!--
+APPROVED BOARD. Geoff, 2026-10-29, by buttons (DL-247).
+Exported from the Design canvas https://claude.ai/artifact/6FH9QMZrJS5bVTasHoaqb1 (board Look.dc.html), rendered to static markup by scripts/dc-render.py.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and data are illustrative.
+-->
+<title>Duo · What several selected rows look like</title>
+<style>
+
+body{margin:0}
+.bd{box-sizing:border-box;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif}
+.bd *{box-sizing:border-box}
+.t2{color:#5B636D}
+.cap{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;margin:0 0 8px}
+.card{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;padding:12px 14px}
+.n{display:grid;grid-template-columns:22px minmax(0,1fr);column-gap:4px;margin:0 0 6px;font-size:12px;line-height:18px}
+.m{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:8px;background:#1F2328;color:#FFFFFF;font:600 10px/16px -apple-system,system-ui,sans-serif;margin-top:1px}
+.pick{display:inline-block;font:600 11px/16px -apple-system,system-ui,sans-serif;border:1px solid #1F2328;border-radius:9px;padding:0 7px;margin-left:6px}
+
+
+body{margin:0}
+.pane{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;white-space:nowrap;box-sizing:border-box}
+.pane *{box-sizing:border-box}
+.pane .hd{padding:14px 16px 4px}
+.pane .pn{font-weight:600;font-size:14px;line-height:20px}
+.pane .t2{color:#5B636D;overflow:hidden;text-overflow:ellipsis}
+.pane .body{position:relative;overflow:hidden;padding-bottom:6px}
+.pane .sec{padding:12px 16px 4px;font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;display:flex;align-items:center;gap:6px}
+.pane .row{display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;margin:0 8px;border-radius:6px}
+.pane .tint{background:#E8F0FA}
+.pane .sel{background:#E9ECEF}
+.pane .mt{background:#D8DCE1}
+.pane .shT{border-radius:6px 6px 0 0}
+.pane .shM{border-radius:0}
+.pane .shB{border-radius:0 0 6px 6px}
+.pane .gp{margin-top:2px}
+.pane .ftx{font-size:12px;line-height:16px;color:#5B636D;margin-left:10px}
+.pane .nest{margin-left:21px;border-left:1.5px solid #8B939C}
+.pane .nest .row{margin:0 8px 0 3px}
+.pane .kid .row{margin:0 8px 0 24px}
+.pane .grp{display:flex;align-items:center;gap:8px;height:28px;padding:0 8px;margin:0 8px;border-radius:6px}
+.pane .ti{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.pane .b{font-weight:600}
+.pane .tm{color:#5B636D;flex:none}
+.pane .done{color:#5B636D;text-decoration:line-through}
+.pane .dim{color:#5B636D}
+.pane .slot{display:flex;align-items:flex-start;gap:8px;padding:5px 8px;margin:4px 8px 2px;border-radius:6px}
+.pane .gpad{padding-top:5px;display:flex}
+.pane .sl{flex:1;min-width:0}
+.pane .l1{display:flex;align-items:center;gap:6px;height:20px}
+.pane .l2{font-size:12px;line-height:16px;color:#5B636D;display:flex;align-items:center;gap:6px;min-width:0}
+.pane .l2 span{overflow:hidden;text-overflow:ellipsis}
+.pane .rl{height:1px;background:#C9CDD3;margin:6px 16px 2px}
+.pane .more{padding:2px 16px 2px 44px;color:#5B636D;font-size:12px;line-height:18px}
+.pane .mk{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:8px;background:#1F2328;color:#FFFFFF;font:600 10px/16px -apple-system,system-ui,sans-serif;flex:none;letter-spacing:0}
+.pane .cut{position:absolute;left:0;right:0;bottom:0;height:52px;border-top:1.5px dashed #1F2328;background:#FFFFFF;color:#1F2328;font:600 11px/16px -apple-system,system-ui,sans-serif;padding:8px 16px;white-space:normal}
+.pane .ft{border-top:1px solid #C9CDD3;padding:10px 16px}
+.pane .btn{display:inline-flex;align-items:center;height:26px;padding:0 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font-size:12px;line-height:16px;color:#1F2328;flex:none}
+.pane .sp{width:10px;height:10px;flex:none;display:inline-flex}
+.pane .tag{color:#5B636D;flex:0 1 auto;max-width:96px;overflow:hidden;text-overflow:ellipsis}
+.pane .row .ti{flex:0 1 auto}
+.pane .row .tm{margin-left:auto}
+
+body{margin:0}
+</style>
+</head>
+<body>
+
+
+<div class="bd" style="width: 1180px; height: 1000px; padding: 28px 32px; display: flex; flex-direction: column; gap: 16px">
+<div>
+<h1 style="margin: 0; font: 600 20px/26px -apple-system, system-ui, sans-serif">Several selected rows</h1>
+<p class="t2" style="margin: 4px 0 0; font-size: 12px; line-height: 18px">The same pane, the same selection: ⌘-click on Refund edge cases, then ⌘-click on Cart copy tweaks and ⇧-click on Coupon bug repro. Five sessions. Existing tokens only: `selected` for the fill, as for one row today. [P]</p>
+</div>
+<div style="display: flex; gap: 28px; align-items: flex-start">
+<div style="width: 300px; flex: none">
+<div class="cap">A · Joined runs<span class="pick">Pick</span></div>
+
+
+<div class="pane" style="width: 300px">
+<div class="hd"><div class="pn">checkout</div><div class="t2">Ship the new checkout by Nov 1</div></div>
+<div class="body" style="height: auto">
+
+<div class="sec"><span>Needs you · 1</span></div>
+
+
+
+
+
+
+
+
+
+<div class=""><div class="row">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+
+
+
+
+
+
+<svg width="10" height="10" viewbox="0 0 10 10" role="img" aria-label="needs you"><g fill="#C2410C"><rect x="2.1" y="1.7" width="1.45" height="5" rx=".72"></rect><rect x="3.8" y=".5" width="1.45" height="5.6" rx=".72"></rect><rect x="5.5" y=".9" width="1.45" height="5.3" rx=".72"></rect><rect x="7.2" y="2" width="1.45" height="4.6" rx=".72"></rect><rect x="2.1" y="4.6" width="6.55" height="5" rx="2.3"></rect><rect x=".7" y="4.3" width="1.45" height="3.6" rx=".72" transform="rotate(-30 1.4 7.9)"></rect></g></svg>
+
+</span>
+<span class="ti">Pricing copy review</span><span class="tm">4m</span></div></div>
+
+
+
+
+
+
+
+<div class="sec"><span>Open · 2</span></div>
+
+
+
+
+
+
+
+
+
+<div class=""><div class="row tint">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+
+<svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true"><path d="M1.6 2.2 4.6 5 1.6 7.8" fill="none" stroke="#1F2328" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><rect x="5.6" y="5" width="3.2" height="3.6" rx=".5" fill="#1F2328"></rect></svg>
+
+
+
+
+
+
+</span>
+<span class="ti">Fix flaky cart test</span><span class="tm">working</span></div></div>
+
+
+
+
+
+
+
+
+<div class=""><div class="row tint sel">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+<svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true"><path d="M1.6 2.2 4.6 5 1.6 7.8M5.9 8.1h2.8" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+
+
+
+
+
+
+</span>
+<span class="ti">Refund edge cases</span><span class="tm">at prompt</span><span class="mk">3</span></div></div>
+
+
+
+
+
+
+
+<div class="sec"><span>Tasks · 2</span></div>
+
+
+
+
+
+
+
+
+
+
+
+<div class="grp"><svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true" style="flex: none"><path d="M2.5 3.8 5 6.3 7.5 3.8" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg><span class="sp"></span><svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true" style="flex: none"><rect x="1" y="1" width="8" height="8" rx="2" fill="none" stroke="#1F2328" stroke-width="1.2"></rect></svg><span class="ti b">Launch email</span><span class="tm">open · 2</span></div>
+
+
+
+
+
+
+<div class="nest"><div class="row tint">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+
+
+
+
+<svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true"><path d="M2.1 1.2h5.8a1.5 1.5 0 0 1 1.5 1.5v3.4a1.5 1.5 0 0 1-1.5 1.5H4.7L2.3 9.3V7.6h-.2A1.5 1.5 0 0 1 .6 6.1V2.7a1.5 1.5 0 0 1 1.5-1.5z" fill="none" stroke="#1F2328" stroke-width="1.2" stroke-linejoin="round"></path><circle cx="3.1" cy="4.4" r=".75" fill="#1F2328"></circle><circle cx="5" cy="4.4" r=".75" fill="#1F2328"></circle><circle cx="6.9" cy="4.4" r=".75" fill="#1F2328"></circle></svg>
+
+
+
+</span>
+<span class="ti">Draft launch email</span><span class="tm">working</span></div></div>
+
+
+
+
+
+
+
+
+<div class="nest"><div class="row">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+
+
+
+<svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true"><path d="M2.1 1.2h5.8a1.5 1.5 0 0 1 1.5 1.5v3.4a1.5 1.5 0 0 1-1.5 1.5H4.7L2.3 9.3V7.6h-.2A1.5 1.5 0 0 1 .6 6.1V2.7a1.5 1.5 0 0 1 1.5-1.5z" fill="none" stroke="#5B636D" stroke-width="1.2" stroke-linejoin="round"></path></svg>
+
+
+
+
+</span>
+<span class="ti">Subject line ideas</span><span class="tm">2h</span></div></div>
+
+
+
+
+
+
+
+
+
+
+<div class="grp"><span class="sp"></span><span class="sp"></span><svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true" style="flex: none"><rect x="1" y="1" width="8" height="8" rx="2" fill="none" stroke="#1F2328" stroke-width="1.2"></rect></svg><span class="ti b">Fraud rule audit</span><span class="tm">1d</span></div>
+
+
+
+
+
+
+
+
+
+
+<div class="grp" style="color: #5B636D"><span class="sp"></span><span style="width: 10px; text-align: center; flex: none">+</span><span class="ti">New task</span></div>
+
+
+
+<div class="sec"><span>Other sessions · 18</span></div>
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="grp"><svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true" style="flex: none"><path d="M2.5 3.8 5 6.3 7.5 3.8" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg><span class="ti b">Today</span><span class="tm">3</span></div>
+
+
+
+
+
+<div class="kid"><div class="row sel shT">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+<svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true"><path d="M1.6 2.2 4.6 5 1.6 7.8M5.9 8.1h2.8" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+
+
+
+
+
+
+</span>
+<span class="ti">Cart copy tweaks</span><span class="tm">1h</span><span class="mk">1</span></div></div>
+
+
+
+
+
+
+
+
+<div class="kid"><div class="row sel shM">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+<svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true"><path d="M1.6 2.2 4.6 5 1.6 7.8M5.9 8.1h2.8" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+
+
+
+
+
+
+</span>
+<span class="ti">Try Stripe test keys</span><span class="tm">3h</span></div></div>
+
+
+
+
+
+
+
+
+<div class="kid"><div class="row sel shB">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+
+
+
+<svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true"><path d="M2.1 1.2h5.8a1.5 1.5 0 0 1 1.5 1.5v3.4a1.5 1.5 0 0 1-1.5 1.5H4.7L2.3 9.3V7.6h-.2A1.5 1.5 0 0 1 .6 6.1V2.7a1.5 1.5 0 0 1 1.5-1.5z" fill="none" stroke="#5B636D" stroke-width="1.2" stroke-linejoin="round"></path></svg>
+
+
+
+
+</span>
+<span class="ti">“Summarise the six buyer…”</span><span class="tm">5h</span></div></div>
+
+
+
+
+
+
+
+
+
+
+
+<div class="grp"><svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true" style="flex: none"><path d="M2.5 3.8 5 6.3 7.5 3.8" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg><span class="ti b">This week</span><span class="tm">3</span><span class="mk">2</span></div>
+
+
+
+
+
+<div class="kid"><div class="row sel shT">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+<svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true"><path d="M1.6 2.2 4.6 5 1.6 7.8M5.9 8.1h2.8" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+
+
+
+
+
+
+</span>
+<span class="ti">Old checkout flow notes</span><span class="tm">2d</span></div></div>
+
+
+
+
+
+
+
+
+<div class="kid"><div class="row sel shB">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+<svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true"><path d="M1.6 2.2 4.6 5 1.6 7.8M5.9 8.1h2.8" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+
+
+
+
+
+
+</span>
+<span class="ti">Coupon bug repro</span><span class="tm">3d</span></div></div>
+
+
+
+
+
+
+
+
+<div class="kid"><div class="row">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+<svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true"><path d="M1.6 2.2 4.6 5 1.6 7.8M5.9 8.1h2.8" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+
+
+
+
+
+
+</span>
+<span class="ti">Session 4:12 PM</span><span class="tm">4d</span></div></div>
+
+
+
+
+
+
+
+
+
+
+
+<div class="grp"><svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true" style="flex: none"><path d="M3.8 2.5 6.3 5 3.8 7.5" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg><span class="ti b">Earlier</span><span class="tm">12</span></div>
+
+
+
+
+
+
+
+
+<div class="grp"><svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true" style="flex: none"><path d="M3.8 2.5 6.3 5 3.8 7.5" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg><span class="ti">Archived</span><span class="tm">4</span></div>
+
+
+
+
+
+</div>
+<div class="ft" style="display: flex; align-items: center"><span class="btn">+ New Claude Code session</span></div>
+</div>
+
+</div>
+<div style="width: 300px; flex: none">
+<div class="cap">B · Each row its own</div>
+
+
+<div class="pane" style="width: 300px">
+<div class="hd"><div class="pn">checkout</div><div class="t2">Ship the new checkout by Nov 1</div></div>
+<div class="body" style="height: auto">
+
+<div class="sec"><span>Needs you · 1</span></div>
+
+
+
+
+
+
+
+
+
+<div class=""><div class="row">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+
+
+
+
+
+
+<svg width="10" height="10" viewbox="0 0 10 10" role="img" aria-label="needs you"><g fill="#C2410C"><rect x="2.1" y="1.7" width="1.45" height="5" rx=".72"></rect><rect x="3.8" y=".5" width="1.45" height="5.6" rx=".72"></rect><rect x="5.5" y=".9" width="1.45" height="5.3" rx=".72"></rect><rect x="7.2" y="2" width="1.45" height="4.6" rx=".72"></rect><rect x="2.1" y="4.6" width="6.55" height="5" rx="2.3"></rect><rect x=".7" y="4.3" width="1.45" height="3.6" rx=".72" transform="rotate(-30 1.4 7.9)"></rect></g></svg>
+
+</span>
+<span class="ti">Pricing copy review</span><span class="tm">4m</span></div></div>
+
+
+
+
+
+
+
+<div class="sec"><span>Open · 2</span></div>
+
+
+
+
+
+
+
+
+
+<div class=""><div class="row tint">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+
+<svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true"><path d="M1.6 2.2 4.6 5 1.6 7.8" fill="none" stroke="#1F2328" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><rect x="5.6" y="5" width="3.2" height="3.6" rx=".5" fill="#1F2328"></rect></svg>
+
+
+
+
+
+
+</span>
+<span class="ti">Fix flaky cart test</span><span class="tm">working</span></div></div>
+
+
+
+
+
+
+
+
+<div class=""><div class="row tint sel">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+<svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true"><path d="M1.6 2.2 4.6 5 1.6 7.8M5.9 8.1h2.8" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+
+
+
+
+
+
+</span>
+<span class="ti">Refund edge cases</span><span class="tm">at prompt</span></div></div>
+
+
+
+
+
+
+
+<div class="sec"><span>Tasks · 2</span></div>
+
+
+
+
+
+
+
+
+
+
+
+<div class="grp"><svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true" style="flex: none"><path d="M2.5 3.8 5 6.3 7.5 3.8" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg><span class="sp"></span><svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true" style="flex: none"><rect x="1" y="1" width="8" height="8" rx="2" fill="none" stroke="#1F2328" stroke-width="1.2"></rect></svg><span class="ti b">Launch email</span><span class="tm">open · 2</span></div>
+
+
+
+
+
+
+<div class="nest"><div class="row tint">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+
+
+
+
+<svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true"><path d="M2.1 1.2h5.8a1.5 1.5 0 0 1 1.5 1.5v3.4a1.5 1.5 0 0 1-1.5 1.5H4.7L2.3 9.3V7.6h-.2A1.5 1.5 0 0 1 .6 6.1V2.7a1.5 1.5 0 0 1 1.5-1.5z" fill="none" stroke="#1F2328" stroke-width="1.2" stroke-linejoin="round"></path><circle cx="3.1" cy="4.4" r=".75" fill="#1F2328"></circle><circle cx="5" cy="4.4" r=".75" fill="#1F2328"></circle><circle cx="6.9" cy="4.4" r=".75" fill="#1F2328"></circle></svg>
+
+
+
+</span>
+<span class="ti">Draft launch email</span><span class="tm">working</span></div></div>
+
+
+
+
+
+
+
+
+<div class="nest"><div class="row">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+
+
+
+<svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true"><path d="M2.1 1.2h5.8a1.5 1.5 0 0 1 1.5 1.5v3.4a1.5 1.5 0 0 1-1.5 1.5H4.7L2.3 9.3V7.6h-.2A1.5 1.5 0 0 1 .6 6.1V2.7a1.5 1.5 0 0 1 1.5-1.5z" fill="none" stroke="#5B636D" stroke-width="1.2" stroke-linejoin="round"></path></svg>
+
+
+
+
+</span>
+<span class="ti">Subject line ideas</span><span class="tm">2h</span></div></div>
+
+
+
+
+
+
+
+
+
+
+<div class="grp"><span class="sp"></span><span class="sp"></span><svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true" style="flex: none"><rect x="1" y="1" width="8" height="8" rx="2" fill="none" stroke="#1F2328" stroke-width="1.2"></rect></svg><span class="ti b">Fraud rule audit</span><span class="tm">1d</span></div>
+
+
+
+
+
+
+
+
+
+
+<div class="grp" style="color: #5B636D"><span class="sp"></span><span style="width: 10px; text-align: center; flex: none">+</span><span class="ti">New task</span></div>
+
+
+
+<div class="sec"><span>Other sessions · 18</span></div>
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="grp"><svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true" style="flex: none"><path d="M2.5 3.8 5 6.3 7.5 3.8" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg><span class="ti b">Today</span><span class="tm">3</span></div>
+
+
+
+
+
+<div class="kid"><div class="row sel">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+<svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true"><path d="M1.6 2.2 4.6 5 1.6 7.8M5.9 8.1h2.8" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+
+
+
+
+
+
+</span>
+<span class="ti">Cart copy tweaks</span><span class="tm">1h</span></div></div>
+
+
+
+
+
+
+
+
+<div class="kid"><div class="row sel gp">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+<svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true"><path d="M1.6 2.2 4.6 5 1.6 7.8M5.9 8.1h2.8" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+
+
+
+
+
+
+</span>
+<span class="ti">Try Stripe test keys</span><span class="tm">3h</span></div></div>
+
+
+
+
+
+
+
+
+<div class="kid"><div class="row sel gp">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+
+
+
+<svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true"><path d="M2.1 1.2h5.8a1.5 1.5 0 0 1 1.5 1.5v3.4a1.5 1.5 0 0 1-1.5 1.5H4.7L2.3 9.3V7.6h-.2A1.5 1.5 0 0 1 .6 6.1V2.7a1.5 1.5 0 0 1 1.5-1.5z" fill="none" stroke="#5B636D" stroke-width="1.2" stroke-linejoin="round"></path></svg>
+
+
+
+
+</span>
+<span class="ti">“Summarise the six buyer…”</span><span class="tm">5h</span></div></div>
+
+
+
+
+
+
+
+
+
+
+
+<div class="grp"><svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true" style="flex: none"><path d="M2.5 3.8 5 6.3 7.5 3.8" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg><span class="ti b">This week</span><span class="tm">3</span></div>
+
+
+
+
+
+<div class="kid"><div class="row sel">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+<svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true"><path d="M1.6 2.2 4.6 5 1.6 7.8M5.9 8.1h2.8" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+
+
+
+
+
+
+</span>
+<span class="ti">Old checkout flow notes</span><span class="tm">2d</span></div></div>
+
+
+
+
+
+
+
+
+<div class="kid"><div class="row sel gp">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+<svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true"><path d="M1.6 2.2 4.6 5 1.6 7.8M5.9 8.1h2.8" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+
+
+
+
+
+
+</span>
+<span class="ti">Coupon bug repro</span><span class="tm">3d</span></div></div>
+
+
+
+
+
+
+
+
+<div class="kid"><div class="row">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+<svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true"><path d="M1.6 2.2 4.6 5 1.6 7.8M5.9 8.1h2.8" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+
+
+
+
+
+
+</span>
+<span class="ti">Session 4:12 PM</span><span class="tm">4d</span></div></div>
+
+
+
+
+
+
+
+
+
+
+
+<div class="grp"><svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true" style="flex: none"><path d="M3.8 2.5 6.3 5 3.8 7.5" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg><span class="ti b">Earlier</span><span class="tm">12</span></div>
+
+
+
+
+
+
+
+
+<div class="grp"><svg width="10" height="10" viewbox="0 0 10 10" aria-hidden="true" style="flex: none"><path d="M3.8 2.5 6.3 5 3.8 7.5" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg><span class="ti">Archived</span><span class="tm">4</span></div>
+
+
+
+
+
+</div>
+<div class="ft" style="display: flex; align-items: center"><span class="btn">+ New Claude Code session</span></div>
+</div>
+
+</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+<div class="card">
+<div class="cap">A · Joined runs (pick)</div>
+<div class="n"><span class="m">1</span><div><b>Neighbouring selected rows join</b> into one `selected` block: rounded 6 at its top and bottom only, the row's usual 8 inset. Finder's and Mail's lists do this, so a range reads as one thing.</div></div>
+<div class="n"><span class="m">2</span><div><b>A row that isn't a session breaks the run.</b> The This week fold row isn't selected, so the range shows as two blocks either side of it.</div></div>
+<div class="n"><span class="m">3</span><div><b>Selection wins over `activeTint`.</b> Refund edge cases has a tab open: selected, it takes `selected`; it still reads “at prompt”. Unselected open rows keep their tint.</div></div>
+<div class="n" style="margin: 0"><span class="m">4</span><div><b>The console doesn't change.</b> It still shows Fix flaky cart test. One selected row looks exactly as today.</div></div>
+</div>
+<div class="card">
+<div class="cap">B · Each row its own</div>
+<p style="margin: 0; font-size: 12px; line-height: 18px">Every selected row keeps its own rounded fill, 2 apart, as one selected row is drawn today. Plainer to build; a long range reads as stripes rather than one block.</p>
+</div>
+<div class="card">
+<div class="cap">Not drawn, on purpose</div>
+<p style="margin: 0; font-size: 12px; line-height: 18px">No checkboxes and no “Select” mode: the clicks are the Mac's. No count bar in the footer: the menu names the count (board 02). No accent: `needsYou` keeps its one meaning. Dark uses the same tokens' dark values (`selected` #262A30).</p>
+</div>
+</div>
+</div>
+</div>
+
+</body>
+</html>

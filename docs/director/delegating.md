@@ -15,10 +15,16 @@
   - the branch and the work tree name;
   - **reserved record numbers** (DL, F, Q, C, ENH), taken after checking main and every branch, and different for each parallel session;
   - which other sessions are working where (stay out of their files);
+  - the feature catalogue rows (FEAT-n in `docs/product/features.md`) this changes, or "none";
   - how to prove it (DuoChecks, `scripts/bundle.sh`, `NO_BUILD=1 scripts/check-ui.sh`, captures against the boards, the relevant check scripts) and which CLAUDE.md rules matter most for the job (never invent a design; build to the screens and prove it; the DL-71 duo2 verb; Xcode-free; generated tokens);
   - which model the job runs on, and which parts go to Sonnet and Haiku subagents;
   - for design work: a Design canvas with the Duo design system, every mark [P], one AskUserQuestion round, and a handoff exported to `docs/design/<x>-handoff/`;
   - "Report by SendMessage to director-duo-v2, by that name, and end your turn with the same report as your last message (branch, full shas, records, checks), plus a dated line in your task note's `## Progress`." For big jobs, ask for it in slices, so each merge is small.
-- Then subscribe: `SendMessage(to: "<name>", notify_when_idle: true)`. Its report and the idle notice wake you. Both sessions must be in the same permission class (Auto; DL-244); across classes messages are held and expire in about 16 minutes (F-397).
+
+**No stranded workers** (Geoff, 2026-10-30: "we CANNOT have stranded workers"). Four workers once finished or waited for hours unseen: the director ran in Bypass, so their reports were held and expired, and its watchers named specific ids. So:
+- the director runs in **Auto**, the workers' mode, so SendMessage reports arrive;
+- it keeps `docs/director/skills/director-console/watch-workers.sh` (its local copy in `~/.claude/skills/director-console/`) running in the background, which wakes it when any duo-v2 worker stops, including workers started later; it re-arms the watcher on every wake;
+- on every wake, `worker-links.py` lists every worker's state, and a stopped worker with no console row or task-note line gets read and acted on at once.
+- Then subscribe: `SendMessage(to: "<name>", notify_when_idle: true)`. Its report and the idle notice wake you. Both sessions must be in the same permission class (Auto; DL-256); across classes messages are held and expire in about 16 minutes (F-421).
 - **A worker's SendMessage address is the name `ListAgents` shows.** For `claude --bg -n <name>` that's its `-n` name. A session started in Duo may show a peer name (`duo-v2-xx`) instead, so look it up. If it isn't listed, it has stopped: `duo2 director send` resumes it.
 - **Nothing relies on `bypassPermissions`** (the work Mac disables it). Workers run in `auto`; run the director in Auto too, never the workers in bypass.

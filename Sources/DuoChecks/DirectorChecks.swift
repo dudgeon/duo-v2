@@ -168,7 +168,7 @@ import Foundation
         check(skill.contains("never through your client's own way of starting sessions") && skill.contains("start_session"), "the skill keeps directors off the Claude app's session tool")
     }
 
-    print("director: the send ladder (DL-199, DL-244) and permission classes (F-397)")
+    print("director: the send ladder (DL-199, DL-256) and permission classes (F-421)")
     do {
         check(PermissionClass.of(mode: "bypassPermissions") == .bypass, "bypassPermissions is the bypass class")
         check(["default", "acceptEdits", "auto", "dontAsk", "plan"].allSatisfy { PermissionClass.of(mode: $0) == .prompting }, "default, acceptEdits, auto, dontAsk and plan are the prompting class")
@@ -419,7 +419,7 @@ import Foundation
         check(DirectorSkill.versionNote(installed: nil) == nil && DirectorSkill.versionNote(installed: "no header") == nil, "no skill or no header: no note")
         check(DirectorSkill.text().contains("If `duo2` answers \"unknown command\", Duo is older"), "the skill says what to do when verbs are missing")
         check(DirectorSkill.text().contains("never use a subagent instead") && DirectorSkill.text().contains("never a subagent") && DirectorSkill.text().contains("Never take silence for an answer") && DirectorSkill.text().contains("notify_when_idle: true"),
-              "the skill rules out subagents for steerable work, hears back by message, and never takes silence for an answer (P3, P4, DL-244)")
+              "the skill rules out subagents for steerable work, hears back by message, and never takes silence for an answer (P3, P4, DL-256)")
         check(!DirectorSkill.text().contains("bypassPermissions") || DirectorSkill.text().contains("never rely on `bypassPermissions`"), "nothing relies on bypassPermissions (DL-222)")
     }
 
@@ -715,7 +715,7 @@ import Foundation
     check(guardRefusal?.contains("isn't on the task") == true, "the guard's onTask is real: a session that isn't the task's worker is refused")
     m.submitHooks = nil
 
-    // A live worker: Duo types nothing (DL-244); the reply hands the director SendMessage or says why not.
+    // A live worker: Duo types nothing (DL-256); the reply hands the director SendMessage or says why not.
     setState(w1, .idle)
     r = run("director send", ["one-page-brief", "Use the second note as the outline."], as: D, name: "director-dirproj")
     check(r.ok && r.output.contains("can't reach") && r.output.contains("no session messaging") && note("tasks/one-page-brief.md").contains("Use the second note") == false,
@@ -819,7 +819,7 @@ import Foundation
           "start --in-duo: the worker starts in Duo (\(r.output.prefix(80)))")
     r = run("director start", ["--title", "No messaging", "--request", "d"], as: D3Pre, name: "director-dirproj", messaging: .no)
     check(r.ok && DirectorRegistry.load(project: proj).worker(task: "tasks/no-messaging.md")?.pending == true && r.output.contains("claude --bg"),
-          "start with no flag, a client without messaging: still a background worker (DL-244)")
+          "start with no flag, a client without messaging: still a background worker (DL-256)")
 
     // Done or archived tasks lose their worker entry; old run logs are pruned.
     try Data(note("tasks/bg-job.md").replacingOccurrences(of: "status: in-progress", with: "status: done").utf8).write(to: proj.appending(path: "tasks/bg-job.md"))
@@ -845,7 +845,7 @@ import Foundation
     try reg.save(project: proj)
     m.pruneDirectorRegistries()
     check(DirectorRegistry.load(project: proj).pending.isEmpty && (try? String(contentsOf: outside, encoding: .utf8)) == "---\ntitle: x\n---\n"
-          && note("tasks/one-page-brief.md").contains("Not delivered: Duo no longer carries messages (DL-244); send it again with SendMessage: an old queued message"),
+          && note("tasks/one-page-brief.md").contains("Not delivered: Duo no longer carries messages (DL-256); send it again with SendMessage: an old queued message"),
           "an old queued message becomes a Progress line and the list empties; a path outside tasks/ writes nothing outside")
 
     // The same name is not the same director: only --take-over moves the registry.

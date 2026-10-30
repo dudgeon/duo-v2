@@ -13,6 +13,8 @@ import {Done} from './director/Done';
 import {Patterns} from './director/Patterns';
 import {NextUp, Projects, StartHere} from './director/Ending';
 import {FromLine, Standup, Team} from './director/Stories';
+import {ReleaseApp, endCaptioned} from './release-0-2-21/ReleaseApp';
+import {ReleaseEnd, ReleaseTitle} from './release-0-2-21/Title';
 
 /** What a registered scene draws: the time in the scene, its events (seconds), and the scene's timeline entry. */
 export type SceneProps = {t: number; ev: Record<string, number>; scene: {id: string; title: string; topic?: string | null; lines?: {text: string; start: number; duration: number}[]}};
@@ -44,4 +46,9 @@ export const SCENE_KINDS: Record<string, ComponentType<SceneProps>> = {
   'dir-brief': captioned(FromLine),
   'dir-team': captioned(Team),
   'dir-standup': captioned(Standup),
+  // The 0.2.21 release film (films/release-0-2-21): the title card and its ending, and app scenes with captions.
+  // The title card's own words carry its line, so the poster frame stays clean (Q-297).
+  'rel-title': ReleaseTitle,
+  'rel-app': ReleaseApp,
+  'rel-end': endCaptioned(ReleaseEnd),
 };

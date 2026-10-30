@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>What several selected rows look like</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.bd{box-sizing:border-box;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif}
+.bd *{box-sizing:border-box}
+.t2{color:#5B636D}
+.cap{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;margin:0 0 8px}
+.card{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;padding:12px 14px}
+.n{display:grid;grid-template-columns:22px minmax(0,1fr);column-gap:4px;margin:0 0 6px;font-size:12px;line-height:18px}
+.m{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:8px;background:#1F2328;color:#FFFFFF;font:600 10px/16px -apple-system,system-ui,sans-serif;margin-top:1px}
+.pick{display:inline-block;font:600 11px/16px -apple-system,system-ui,sans-serif;border:1px solid #1F2328;border-radius:9px;padding:0 7px;margin-left:6px}
+</style>
+</helmet>
+<div class="bd" style="width: 1180px; height: 1000px; padding: 28px 32px; display: flex; flex-direction: column; gap: 16px">
+<div>
+<h1 style="margin: 0; font: 600 20px/26px -apple-system, system-ui, sans-serif">Several selected rows</h1>
+<p class="t2" style="margin: 4px 0 0; font-size: 12px; line-height: 18px">The same pane, the same selection: ⌘-click on Refund edge cases, then ⌘-click on Cart copy tweaks and ⇧-click on Coupon bug repro. Five sessions. Existing tokens only: `selected` for the fill, as for one row today. [P]</p>
+</div>
+<div style="display: flex; gap: 28px; align-items: flex-start">
+<div style="width: 300px; flex: none">
+<div class="cap">A · Joined runs<span class="pick">Pick</span></div>
+<dc-import name="Pane" pane="{{a}}" hint-size="300px,720px"></dc-import>
+</div>
+<div style="width: 300px; flex: none">
+<div class="cap">B · Each row its own</div>
+<dc-import name="Pane" pane="{{b}}" hint-size="300px,720px"></dc-import>
+</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+<div class="card">
+<div class="cap">A · Joined runs (pick)</div>
+<div class="n"><span class="m">1</span><div><b>Neighbouring selected rows join</b> into one `selected` block: rounded 6 at its top and bottom only, the row's usual 8 inset. Finder's and Mail's lists do this, so a range reads as one thing.</div></div>
+<div class="n"><span class="m">2</span><div><b>A row that isn't a session breaks the run.</b> The This week fold row isn't selected, so the range shows as two blocks either side of it.</div></div>
+<div class="n"><span class="m">3</span><div><b>Selection wins over `activeTint`.</b> Refund edge cases has a tab open: selected, it takes `selected`; it still reads “at prompt”. Unselected open rows keep their tint.</div></div>
+<div class="n" style="margin: 0"><span class="m">4</span><div><b>The console doesn't change.</b> It still shows Fix flaky cart test. One selected row looks exactly as today.</div></div>
+</div>
+<div class="card">
+<div class="cap">B · Each row its own</div>
+<p style="margin: 0; font-size: 12px; line-height: 18px">Every selected row keeps its own rounded fill, 2 apart, as one selected row is drawn today. Plainer to build; a long range reads as stripes rather than one block.</p>
+</div>
+<div class="card">
+<div class="cap">Not drawn, on purpose</div>
+<p style="margin: 0; font-size: 12px; line-height: 18px">No checkboxes and no “Select” mode: the clicks are the Mac's. No count bar in the footer: the menu names the count (board 02). No accent: `needsYou` keeps its one meaning. Dark uses the same tokens' dark values (`selected` #262A30).</p>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1180,"height":1000}}'>
+class Component extends DCLogic {
+  pane(joined) {
+    const S = (sh) => joined ? { sel: true, sh } : { sel: true, gp: sh !== 't' && sh !== 'one' ? true : false };
+    return { w: 300, title: 'checkout', goal: 'Ship the new checkout by Nov 1', rows: [
+      { k: 'sec', label: 'Needs you · 1' },
+      { k: 'row', g: 'hand', title: 'Pricing copy review', tm: '4m' },
+      { k: 'sec', label: 'Open · 2' },
+      { k: 'row', g: 'tw', tint: true, title: 'Fix flaky cart test', tm: 'working' },
+      Object.assign({ k: 'row', g: 'ti', tint: true, title: 'Refund edge cases', tm: 'at prompt', mk: joined ? '3' : '' }, S('one')),
+      { k: 'sec', label: 'Tasks · 2' },
+      { k: 'task', chev: 'd', title: 'Launch email', tm: 'open · 2' },
+      { k: 'row', in: 'nest', g: 'cw', tint: true, title: 'Draft launch email', tm: 'working' },
+      { k: 'row', in: 'nest', g: 'ci', title: 'Subject line ideas', tm: '2h' },
+      { k: 'task', noChev: true, title: 'Fraud rule audit', tm: '1d' },
+      { k: 'new', title: 'New task' },
+      { k: 'sec', label: 'Other sessions · 18' },
+      { k: 'fold', chev: 'd', title: 'Today', tm: '3' },
+      Object.assign({ k: 'row', in: 'kid', g: 'ti', title: 'Cart copy tweaks', tm: '1h', mk: joined ? '1' : '' }, S('t')),
+      Object.assign({ k: 'row', in: 'kid', g: 'ti', title: 'Try Stripe test keys', tm: '3h' }, S('m')),
+      Object.assign({ k: 'row', in: 'kid', g: 'ci', title: '“Summarise the six buyer…”', tm: '5h' }, S('b')),
+      { k: 'fold', chev: 'd', title: 'This week', tm: '3', mk: joined ? '2' : '' },
+      Object.assign({ k: 'row', in: 'kid', g: 'ti', title: 'Old checkout flow notes', tm: '2d' }, S('t')),
+      Object.assign({ k: 'row', in: 'kid', g: 'ti', title: 'Coupon bug repro', tm: '3d' }, S('b')),
+      { k: 'row', in: 'kid', g: 'ti', title: 'Session 4:12 PM', tm: '4d' },
+      { k: 'fold', chev: 'r', title: 'Earlier', tm: '12' },
+      { k: 'fold', chev: 'r', title: 'Archived', tm: '4', light: true }
+    ] };
+  }
+  renderVals() {
+    return { a: this.pane(true), b: this.pane(false) };
+  }
+}
+</script>
+</body>
+</html>

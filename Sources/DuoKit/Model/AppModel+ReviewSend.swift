@@ -91,7 +91,7 @@ extension AppModel {
             ReviewDelivery(state: st, session: s.tabKey, sessionName: s.name, at: Date(), why: why, claudeBefore: claudeBefore, turn: turn)
         }
         let facts = workerFacts(s)
-        // Duo types a review comment into a session it hosts (DL-244 retired this for directors, not for a person's comment).
+        // Duo types a review comment into a session it hosts (DL-256 retired this for directors, not for a person's comment).
         enum Way { case submit, resume, queue, none }
         let way: Way = facts.place != .duo ? .none
             : facts.run == .stopped ? .resume : facts.run == .idle && !facts.userTyping ? .submit : .queue

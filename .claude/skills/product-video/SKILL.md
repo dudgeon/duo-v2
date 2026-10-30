@@ -133,9 +133,10 @@ Use it for Geoff's own projects. It is his voice: don't use it for anyone else's
 - Say in your report which voice narrated.
 
 **Privacy, for any film in Geoff's voice:**
-- Nothing of it enters a public repo: no audio, no weights, no reference clip, no voice card, no voiced lines, no paths into his checkout. Voiced lines stay in the gitignored `.cache/`, `build/` and `out/`. Never add geoff-voice as a submodule, and never copy from it.
-- Before every commit: `git status --porcelain | grep -Ei '\.(wav|mp3|m4a|aac|flac|ogg|safetensors|pt|bin)$'` must print nothing. The one exception is a designed voice's own `voice/house/reference.wav`: it is synthetic, nobody's real voice, so commit it, but only on purpose.
-- A finished film in his voice is published only where he says.
+- **Two things never enter a public repo (Geoff, DL-246):** the voice model's weights (the LoRA, any checkpoint), and the raw audio it was trained on (his takes, and the reference clip cut from them). Never add geoff-voice as a submodule, and never copy those from it.
+- **Everything voiced with it is fine to commit or publish:** a rendered film, a voiced line, a clip. Builds keep them in the gitignored `.cache/`, `build/` and `out/` only because they're build output. Voice cards hold machine-local paths, so they stay on the machine.
+- Before every commit: `git status --porcelain | grep -Ei '\.(wav|mp3|m4a|aac|flac|ogg|safetensors|pt|bin)$'` should print only files you mean to commit, and never weights or his takes. A designed voice's own `voice/house/reference.wav` is synthetic, nobody's real voice, so commit it on purpose.
+- Where a finished film is published (release notes, README, a release asset) is still Geoff's call, as for any film.
 
 ## Common failures
 
@@ -159,5 +160,5 @@ Use it for Geoff's own projects. It is his voice: don't use it for anyone else's
 ## Before you report
 
 - `node build.mjs --check` passes, and the last build's `out/report.md` lists nothing unexpectedly not built.
-- `git status` shows no audio, weights or private paths.
+- `git status` shows no voice weights, raw takes or private paths (DL-246).
 - The report says which voice narrated, what isn't built yet, and what Geoff should look at, with timecodes.

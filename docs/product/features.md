@@ -1,0 +1,627 @@
+---
+type: catalogue
+title: Duo's feature catalogue
+aliases: [Feature catalogue, features]
+created: 2026-10-29
+decided_by: DL-240
+---
+
+# Duo's feature catalogue
+
+This is the canonical list of Duo's major features: what each is for, and the rules a user can see and rely on. It **restates** the records; it doesn't decide anything. Where it disagrees with a decision (`docs/design/decisions.md`, DL-n) or an approved design screen, the decision and the screen win (CLAUDE.md, Precedence), and the disagreement is logged as a Q record rather than fixed here in silence.
+
+How to keep it current (DL-240):
+- **A branch that changes what a feature does updates that feature's row**, in the same branch as the code. A brief names the FEAT rows it changes, or "none" (`docs/director/delegating.md`); the merge checklist checks it (`docs/director/merging-and-records.md` §2), and `scripts/check-hygiene.py` warns when `Sources/` changed and this file didn't.
+- **A new feature gets the next FEAT number.** Numbers are stable and never reused. A retired feature keeps its row, marked `Status: retired (DL-n)`.
+- **Paper cuts, keys and polish go inside their feature's rules**, not as rows of their own.
+- Write intent in Geoff's terms where he stated it, quoted with a date. Where the records don't say why a feature exists, the row says "Intent: not recorded" and a Q asks.
+
+Each row has the same shape: **Intent**, **How it works** (each rule cites what decides it), **Not** (what it deliberately doesn't do), **Governed by**, **Status** (first release, changes, open questions), **duo2** (its verbs, from `Sources/DuoControl/Actions.swift`), and **Shown in** (films and guide pages). The areas follow the README and `docs/guide/`.
+
+Releases named in **Status** are from the GitHub release notes (`gh release list`); "0.1.x" means it was there from the first builds.
+
+
+# Sessions
+
+## FEAT-01 · Every session in one list
+- **Intent:** Claude Code keeps each conversation as a session, but a terminal only shows the one in its window. Duo reads Claude Code's own records and lists every session on the Mac, so none gets lost. Scope: the session list and its rows. Home's List view is FEAT-16 and is mentioned here only as a session list.
+- **How it works:**
+  - Duo lists every session found in Claude Code's records, by the folder it ran in, including ones started in Terminal before Duo (DL-59, DL-98). Nothing needs setting up.
+  - Facts that come from Claude's transcripts (title, last prompt, todos, files touched) sit in a cache Duo can delete and rebuild. Duo's own facts (note, next step, star, archive) are kept in the project's `.duo/sessions.json` (DL-1).
+  - Before Claude names a session, its row shows your first words in quotes. A session with nothing typed yet shows its start time (`Session 4:12 PM`, with the date when it isn't today). Never "New session" (DL-90).
+  - A project's pane reads from the top: Pinned, Needs you, Open, Tasks, Other sessions (Today, This week, Earlier), then Archived. Open sessions say `at prompt` or `working` in place of a time (DL-91, DL-133, DL-174, DL-217).
+  - A row's glyph says its kind: `>_` for a terminal session, a bubble for chat. Attention replaces it: working adds a still cursor or dots, done fills it, needs you is a drawn raised hand, resolved is a tick. Task and group rows show only the hand (DL-174).
+  - Home's List (All projects) is one list of every session across projects, by recency, with the project and task on each row and a hybrid search filter (DL-142).
+  - ⇧-click selects a range and ⌘-click toggles one row. Neither opens or resumes a session, parked ones included. ⌃-click or right-click opens the selection's menu: Make a Task, Add to Task, Move to Project, Archive, Unarchive, Delete, Park. Delete asks once, naming every session, and leaves out any running outside Duo (DL-247).
+  - Archive takes a session out of the lists but keeps it searchable. Delete Session… removes it for good and asks first.
+- **Not:** no separate "Resume a session" button; the list is the way back (DL-59). No quick-reply buttons on the cards (DL-29). Map tiles don't take a selection (DL-247).
+- **Governed by:** DL-1, DL-29, DL-59, DL-64, DL-90, DL-91, DL-98, DL-133, DL-142, DL-174, DL-217, DL-247, `docs/design/session-glyphs-handoff/`, `docs/design/sidebar-hierarchy-handoff/`, `docs/design/session-multiselect-handoff/`, `docs/design/home-evolution-handoff/`.
+- **Status:** shipped in 0.1.0 (the list); changed in 0.1.2 (Open, then past; untitled sessions show first words), 0.2.5 (All projects List and filter), 0.2.12 (kind glyphs, Needs you / Tasks / Other sessions), 0.2.18 (Pinned and Open above Tasks), 0.2.21 (multi-select). Open questions: Q-207, Q-226 (stand-ins in the pinned and Later rows).
+- **duo2:** `duo2 sessions`, `duo2 session show`, `duo2 session open`, `duo2 session move`, `duo2 session note`, `duo2 session next`, `duo2 session link`, `duo2 session archive`, `duo2 session unarchive`, `duo2 session delete`, `duo2 view select`, `duo2 view home`
+- **Shown in:** the intro film (S4 Sessions in `video/script.md`), the guide page (`docs/guide/sessions.md`).
+
+## FEAT-02 · Kept past the 30-day cleanup
+- **Intent:** Claude Code deletes transcripts after 30 days, and Geoff wants the history of Duo's sessions kept. Geoff, 2026-10-03 (DL-44): Duo keeps the history even after the sweep. He also wants a session that can no longer be resumed to be fed into a new one, so the work can carry on.
+- **How it works:**
+  - Duo copies each listed session's transcript into `~/Library/Application Support/Duo/archive/` within about a minute of any change, and puts it back when you resume (DL-47, DL-53).
+  - The archive also holds each session's sidecar folder (tool outputs, subagent transcripts), and restores both (DL-48).
+  - Keep-alive: a listed session quiet for half the cleanup period has its files' modification time set back by half the period, so Claude's sweep skips it without it jumping to the top of recency lists (DL-47).
+  - A session whose transcript is gone can be carried into a new session (`duo2 session carry-on`, DL-47).
+  - Sessions that were purged stay searchable from Duo's archive, labelled archived (DL-49).
+  - The archive has no size limit. Duo shows its size in `duo2 doctor`, and in Settings (DL-56).
+  - Duo never changes Claude Code's global `cleanupPeriodDays`. Sessions Duo doesn't list follow Claude's own 30 days (DL-57).
+- **Not:** no offer to raise `cleanupPeriodDays` (DL-57, which supersedes C-4's retention consent). No cap or oldest-first pruning of the archive (DL-56).
+- **Governed by:** DL-44, DL-47, DL-48, DL-49, DL-53, DL-56, DL-57.
+- **Status:** shipped in 0.1.0 (Duo keeps its own copy of every listed session); changed in 0.1.5 (Settings shows the archive's size). Open questions: none found.
+- **duo2:** `duo2 session carry-on`, `duo2 doctor`
+- **Shown in:** the guide page (`docs/guide/sessions.md`, "In Duo" and "For power users"); the intro film (named in S0, no scene of its own).
+
+## FEAT-03 · The console: Claude in a terminal, and shell tabs
+- **Intent:** the console is where a session runs: Claude Code's own interactive TUI in a terminal tab, plus plain shell tabs beside it. Scope: console specifics only. The tab strip itself (scrolling, reorder, hover close) is FEAT-29, and chat mode is FEAT-04.
+- **How it works:**
+  - The console shows Claude Code's TUI unmodified. Duo draws nothing inside the terminal (DL-27).
+  - Duo shares `~/.claude` with Claude Code; it does not use a separate profile. It mints each session's `--session-id` and never uses `claude -c` or the resume picker (DL-14).
+  - ⇧⌘T opens a plain shell tab. Running `claude` in one promotes it to a tracked session, through a Duo-only `claude` wrapper put first on `PATH` inside Duo's shells and nowhere else (DL-8, DL-98).
+  - Duo, its tools and `duo2` may type into a running session's terminal when that is the simplest way (DL-45).
+  - Closing a console or Home tab asks first, only when it is busy: Claude is working, or a shell is running a command. The question is a Duo sheet with Close Tab as the default; an idle tab closes at once. `duo2 session close` refuses a working session without `--force` (DL-127).
+  - If a session is already running somewhere else (Terminal, say), the console says where, and offers Look Again and Resume as a Fork. Duo never ends the other copy (DL-109).
+  - Restored tabs wait until shown: a launch resumes only what's on screen (DL-156, see FEAT-07). Everything open in a project, in the console and the right pane, comes back when you return to it (DL-107).
+  - Programs in Duo's terminals ask macOS for access as Duo, not as themselves, so a Claude Code update doesn't raise a new prompt (DL-190).
+  - Return chords: ↩ sends; ⇧↩, ⌥↩ and ⌃J add a line; a trailing `\` then ↩ adds a line; ⌘↩ sends; ⌃↩ sends now. The same table serves chat and the terminal (DL-241).
+  - The console font is SF Mono; the terminal palette is the muted one (DL-36, DL-86).
+- **Not:** no "End There and Resume…" button that stops the other copy (DL-109).
+- **Governed by:** DL-8, DL-14, DL-27, DL-36, DL-45, DL-86, DL-98, DL-107, DL-109, DL-127, DL-156, DL-190, DL-241.
+- **Status:** shipped in 0.1.0 (console, shell tabs); changed in 0.2.0 (closing a busy tab asks), 0.2.6 (restored tabs wait until opened), 0.2.14 (Duo answers for its terminals again, undoing 0.2.13's per-program prompts), 0.2.21 (return chords). Open questions: Q-286, Q-287 (what chat shows after ⌃↩; naming the chords in the hint row).
+- **duo2:** `duo2 session new`, `duo2 session open`, `duo2 session close`, `duo2 sessions`
+- **Shown in:** the intro film (S5 Terminal pane), the guide page (`docs/guide/sessions.md`, "Good to know").
+
+## FEAT-04 · Chat mode
+- **Intent:** a session can be read as a conversation instead of a terminal. Geoff asked for it as ENH-13 (DL-118, 2026-10-06). Chat mode is a readable overlay on the real Claude Code TUI, never a replacement for it.
+- **How it works:**
+  - It presents the interactive TUI more readably (Markdown, links, tool cards). It is not a headless, `-p` or SDK chat (DL-118).
+  - It never circumvents review. Permission prompts, plan approval, questions and confirmations stay your choice, nothing is pre-selected, and your answer goes to the TUI as the key you'd press (DL-118, DL-119).
+  - A Terminal / Chat pill toggles at any moment. A new session opens in the mode you used last; each session keeps its own mode; Home opens in chat (DL-119, DL-142).
+  - Duo falls back to the terminal, with a bar naming why, when it meets a screen it can't show. It never returns to chat by itself: only Back to Chat does (DL-154, DL-235). The bar has a Debug button for a copyable report (DL-234).
+  - Dialogs are answered in chat on any 2.1.x while they read whole, and the check runs on every version. A dialog that doesn't read whole goes to the terminal (DL-145, DL-155, DL-164).
+  - Tool calls fold to one line per run (`Ran 4 shell commands, read 3 files`); a click opens it. A step waiting on you is never folded. The strip over chat is thin and light (DL-135, DL-136).
+  - Slash commands: a result is a quiet line or an output block, `/context` is a usage box, `/model` and `/effort` are picker cards, and the `/` menu follows Claude Code's own (DL-143). The model and effort chips are clickable, and wait while Claude works (DL-168).
+  - Composer: `@` lists the project's files and folders and adds `@path` as text (DL-133). Pasted pictures show as thumbnails, and a paste over 12 lines folds (DL-161). Your Markdown is lightly styled as you type, with ⌘B, ⌘I, ⇧⌘X, ⌘E, ⌘K, and rendered in your bubble (DL-188). ⌘] indents, ⌘[ outdents; ⌥⌘↑ and ⌥⌘↓ step between your messages (DL-242).
+  - Long sessions stay smooth (DL-137).
+- **Not:** no quick-reply buttons on waiting sessions (DL-29). No pre-selected answers and no answering for you (DL-118). `@` completion only in chat's composer, since Claude Code's prompt already does it in the terminal (DL-133).
+- **Governed by:** DL-29, DL-118, DL-119, DL-120, DL-133, DL-135, DL-136, DL-137, DL-143, DL-145, DL-154, DL-155, DL-161, DL-164, DL-168, DL-188, DL-234, DL-235, DL-241, DL-242, `docs/design/chat-mode-handoff/`, `chat-polish-handoff/`, `chat-paste-handoff/`, `chat-markdown-handoff/`, `chat-slash-handoff/`, `chat-model-chip-handoff/`.
+- **Status:** shipped in 0.2.0; changed in 0.2.3 (tool folds, light strip, `@` files), 0.2.5 (slash commands, Home chat, Return fix), 0.2.8 (paste), 0.2.11 (model chip), 0.2.15 (your Markdown), 0.2.20 (Debug button, no automatic return), 0.2.21 (Return and indent chords). Open questions: Q-135, Q-136, Q-286, Q-287.
+- **duo2:** `duo2 session chat`
+- **Shown in:** the intro film (S6 Chat mode), the guide page (`docs/guide/sessions.md`, "Chat mode").
+
+## FEAT-05 · Forks
+- **Intent:** Geoff's issue #14: when a user forks a Claude Code session, a new tab should open with the fork, the original should stay, and forks should be obvious in the left pane (`docs/research/fork-handling.md`).
+- **How it works:**
+  - `/branch` in a Duo session splits in two: the new session gets its own tab, and the original reopens by resume in its tab. `/fork` opens an attach tab for the forked session. Both stay live (DL-227).
+  - A thread is one row in the left pane: the original leads, its forks hang under it, oldest first. Folded, it keeps the original's name, the thread's most urgent state and `thread · n` (DL-228).
+  - A fork made in Duo opens its thread; after that the fold stays as you left it, per project (DL-228).
+  - A fork's tab carries a drawn fork mark after the state glyph, sits right after its original, and closing an attached fork's tab detaches it (DL-228).
+  - A member that needs you leaves the thread for NEEDS YOU, with "Fork of ‹original›" (DL-228).
+  - Selecting a folded thread unfolds it and selects the original and every fork. Deleting the original keeps a fork, which resumes with its whole history (DL-250).
+  - If a session is open in another place, you can Resume as a Fork (`claude --resume … --fork-session`, DL-109). `duo2 session fork` carries a session on as a fork.
+- **Not:** no notice after a fork is made (DL-228).
+- **Governed by:** DL-24, DL-109, DL-227, DL-228, DL-250, `docs/design/fork-thread-handoff/`, `docs/research/fork-handling.md`.
+- **Status:** shipped in 0.2.19; changed in 0.2.21 (a folded thread selects as a whole). Open question: Q-233 (what the build chose where the boards were silent).
+- **duo2:** `duo2 session fork`, `duo2 sessions`
+- **Shown in:** —
+
+## FEAT-06 · The "Trust this folder" notice
+- **Intent:** after `/fork`, Claude Code can say "Workspace not trusted" in a folder whose parent is trusted, because its background trust check stops at the git root (Q-219, `docs/research/fork-handling.md`). It is not Duo's fault, but Duo can unblock you.
+- **How it works:**
+  - The notice appears only when the session's screen shows "Workspace not trusted" after `/fork`, and a folder above the repository is already trusted in Claude Code (DL-229).
+  - It is a bar under the terminal; in chat, a bar over the composer (DL-229).
+  - Trust This Folder… asks first in a Duo sheet naming the folder, the file and the one change. Then Duo writes that one key, `hasTrustDialogAccepted`, for the repository's top folder in Claude Code's `.claude.json`, under Claude's own lock (DL-229).
+  - It never happens silently or by itself. Nothing else in the file changes (DL-229).
+  - Afterwards the bar says "Claude Code now trusts ‹folder›." with Fork Again, which types the same `/fork` line, and OK (DL-229).
+  - `duo2 session trust-folder` always shows the sheet and waits for your answer (DL-229).
+- **Not:** no `--yes` that skips the sheet; no Claude Code trust question opened in a tab instead (DL-229). Moves never copy trust (FR-7.10.10, as noted in DL-229).
+- **Governed by:** DL-227, DL-229, `docs/design/trust-notice-handoff/`.
+- **Status:** shipped in 0.2.19. Open questions: Q-234, Q-235 (Q-235: not captured at narrow widths).
+- **duo2:** `duo2 session trust-folder`, `duo2 session fork-again`
+- **Shown in:** —
+
+## FEAT-07 · Parking and Keep Running
+- **Intent:** a live Claude session costs about 230 MB (measured 2026-10-13) plus its MCP servers. Geoff, 2026-10-13, asked for a command "to terminate background (ie non-foregrounded) claude sessions (ie to free up memory)", ideally "opaque to users: sessions on a restarted app should auto-resume when foregrounded" (DL-192).
+- **How it works:**
+  - Parking ends a session's Claude process gracefully, as quitting Duo does, keeps its tab, and resumes the session when the tab is shown (DL-192).
+  - It is manual: Session › Park Session, and Park Background Sessions for the tabs not on screen. Duo never parks on its own (DL-192).
+  - Under high memory pressure, Duo asks in a Duo sheet, listing the tabs it would park. It never uses a system alert (DL-192).
+  - Only Claude tabs idle at their prompt are parked: not mid-turn, not waiting on you, not with background shells, Monitors or subagents running (DL-192).
+  - Keep Running pins a session so it is never parked and resumes at launch. A pin shows after the tab's name (DL-192).
+  - Kept-running sessions lead the project pane in PINNED, after the director's slot (DL-217, DL-218).
+  - On relaunch, every tab restores parked and resumes when shown, or when `duo2` needs it (a send wakes it and says to send again). Closing a parked tab forgets it (DL-156).
+  - Remote Control tabs park like any other and come online when opened (DL-156, DL-192).
+- **Not:** no idle timer and no automatic parking (DL-192). No skipping Remote Control tabs (DL-192).
+- **Governed by:** DL-156, DL-192, DL-217, DL-218, `docs/design/park-handoff/`, `docs/design/sidebar-hierarchy-handoff/`.
+- **Status:** shipped in 0.2.6 (restore parks every tab); changed in 0.2.15 (Park, Park Background Sessions, Keep Running), 0.2.18 (Keep Running sessions lead the pane). Costs: background work and `/loop` wake-ups die, a pending question is dropped, and a session-only effort level is lost (C-86). Open questions: Q-136 (how a parked tab looks), Q-207.
+- **duo2:** `duo2 session park`, `duo2 session keep-running`
+- **Shown in:** —
+
+## FEAT-08 · Remote Control for sessions Duo starts
+- **Intent:** Geoff, 2026-10-06, through the director: "sessions the director starts should have Remote Control on, so he can open them in the Claude app" (DL-128).
+- **How it works:**
+  - `duo2 session new --remote-control [name]` starts the session with `claude --remote-control <name>`. The name defaults to the project and a short id (DL-128).
+  - It stays on for that session. The name is kept in the project's session index and every resume passes it again, whether by restore, `duo2 session open` or a click. A move to another project keeps it (DL-128).
+  - If the installed `claude` doesn't list `--remote-control` in its help, the session starts without it and the reply says so (DL-128).
+  - `duo2 session show` and `duo2 sessions --json` report it (DL-128).
+  - Workers a director starts get Remote Control, through `duo2 director start` (0.2.19 notes).
+  - A parked Remote Control session has no phone link until its tab is shown (DL-156, DL-192).
+- **Not:** no UI control yet, since a toggle in New Session is a new control that needs a canvas first (Q-72). Not on by default for every session, and not an app-wide setting (DL-128).
+- **Governed by:** DL-128, DL-156, DL-192.
+- **Status:** shipped in 0.2.1; changed in 0.2.19 (workers always get it). Open question: Q-72.
+- **duo2:** `duo2 session new`, `duo2 session show`, `duo2 sessions`
+- **Shown in:** the guide page (`docs/guide/sessions.md`, "For power users").
+
+# Projects
+
+## FEAT-09 · Projects and PROJECT.md
+- **Intent:** a project is a folder with a one-page brief, so you and Claude both know what a piece of work is for, how it's going and what comes next. Scope: the project itself, making one, its tab and its pane order. Moving sessions and merging are FEAT-10; templates are FEAT-11; tasks are FEAT-12.
+- **How it works:**
+  - A project is a folder with a `PROJECT.md`. The name stays `PROJECT.md`, with `title` and `aliases` so Obsidian shows the real name (DL-18). A folder with one is a project wherever it is. Its properties are `type`, `title`, `aliases`, `status`, `goal`, `health`, `next`, `created` (DL-146).
+  - **+ New project** is a sheet: name, one-line goal, which folder, and an option to start a Claude session. "In" lists every folder in Home, then Choose Folder…; you can make the chosen folder itself the project (DL-100, DL-211).
+  - **Make a Project** writes the base `PROJECT.md` first, so the folder is a project at once and Undo works. Then it starts a Claude session that reads the folder, asks three to five questions one at a time, and fills `goal`, `next`, Why, Done when and a Log line. It leaves `status` and `health` alone. Every Make a Project button does this, and so does `duo2 project make` unless you pass `--no-interview` (DL-223).
+  - Before you have any projects, All projects shows Home's folders, each with Make a Project, and a visible + New project (DL-212).
+  - The Project tab opens `PROJECT.md` in the editor, so goal, health and next are edited there. There is no separate overview card (DL-60).
+  - Inside a project the left pane is sessions over a file tree, the console is in the middle, and the right pane has the Project tab, group pages and documents (DL-23). The session list runs PINNED, NEEDS YOU, OPEN, TASKS, OTHER SESSIONS (Today, This week, Earlier), then Archived (DL-174, DL-217). Sessions and files share the sidebar's height by need: if both need over half, each gets half (DL-219).
+  - Coming back to a project brings back everything that was open: console tabs (sessions and shells) and right-pane tabs, with the same tab selected in each (DL-107). File › Open File… (and dragging from Finder) opens any file as a tab; the tree can browse above the project folder, read only (DL-106).
+  - Duo offers once per repo to add `.duo/` to `.gitignore`; it never does it silently (DL-50). New items are named inline like Finder: `Untitled.md` with the name selected, Return confirms, Esc cancels (DL-62).
+  - Claude is told the project's name, folder, goal, health and next step when a session starts, resumes, clears or compacts (shipped 0.2.3). Archiving a project files its tile into the map's Archived rollup; sessions, counts and search are unchanged.
+- **Not:** no folder-note or `README.md` as the brief (DL-18 weighed and dropped them). No automatic project for every folder (DL-110). No separate Project overview card (DL-60).
+- **Governed by:** DL-18, DL-23, DL-50, DL-60, DL-62, DL-100, DL-106, DL-107, DL-146, DL-174, DL-211, DL-212, DL-217, DL-219, DL-223; DL-147 (amends DL-18; see Status); `docs/design/project-task-cx/`, `docs/design/sidebar-hierarchy-handoff/`, `docs/design/session-glyphs-handoff/`.
+- **Status:** shipped in 0.1.0 (projects, archive); 0.1.4 (New project sheet); 0.2.3 (Claude told the brief); 0.2.12 (glyphs, TASKS and OTHER SESSIONS); 0.2.15 (any folder in Home, no-projects state); 0.2.18 (new pane order, Later fold); 0.2.19 (Make a Project interviews). DL-147's `_PROJECT.md` name, the "brief note" (`project_brief: true`), Start from, Getting started card and guided Make a Task sheet are designed, not built (the task board and Push already read those names). Open: Q-114, Q-115, Q-116, Q-118, Q-197.
+- **duo2:** `duo2 projects`, `duo2 project show`, `duo2 project make`, `duo2 project new`, `duo2 project archive`, `duo2 project unarchive`, `duo2 project move-into-home`, `duo2 project reconnect`, `duo2 project forget`.
+- **Shown in:** the intro film (S8 Projects Background, `video/src/scenes/ProjectsBg.tsx`; S9 Duo Projects), `docs/guide/projects.md`.
+
+## FEAT-10 · Where a session belongs
+- **Intent:** Claude files each conversation under the folder it started in, so one started in the wrong place is as good as lost. Duo follows the same rule and lets you correct it. It must also let you turn working folders into projects and/or move their sessions into real projects (DL-4). Scope: placement, moving, merging. Home's container rule belongs to Home.
+- **How it works:**
+  - A session belongs to the closest project around the folder it ran in; the deepest project wins (DL-89).
+  - A folder with sessions but no project file shows in its own place on the map, marked "No project file" ("Has CLAUDE.md" when it has one). Three paths: keep working as is, Make a Project, or merge its sessions into a project (DL-63). Map columns group by parent folder (DL-83).
+  - Inside such a folder the line under its name says `Folder · no project file`, and a notice offers Make a Project and Not Now. Not Now hides it for that folder only, remembered by Duo and undoable; the Project tab then offers Make a Project (and Open CLAUDE.md) (DL-110).
+  - Moving a session files it in the project now; it moves on the next resume. Duo resumes it in the old folder and, once Claude's prompt is ready, sends `/cd <project folder>`, so Claude moves the transcript itself. A moved session stays where it was filed whatever its cwd (DL-64).
+  - Merging projects moves sessions only. The source's folder and files stay where they are (DL-65).
+  - Every move or merge, by right-click or by dragging onto a tile, opens a sheet that says exactly what moves (which sessions, from where, to where, and that files stay). Edit › Undo (`duo2 undo`) puts it back (DL-66).
+  - Dropping Finder files on a folder in the file tree moves them there (a taken name asks Replace / Keep Both / Cancel; undoable). Dropping them on a terminal types their absolute paths (DL-117).
+  - A project folder moved outside Duo keeps its tile and offers to bring its sessions along (shipped 0.1.5).
+- **Not:** merging doesn't move the folder in or combine folders (DL-65). Relocating the transcript immediately was weighed and not chosen (DL-64). Making every folder a project automatically was not chosen (DL-110).
+- **Governed by:** DL-4, DL-63, DL-64, DL-65, DL-66, DL-83, DL-89, DL-110, DL-117; `docs/design/folder-handoff/`.
+- **Status:** shipped in 0.1.0 (move and merge, folders without a project); 0.1.5 (moved folders, folder columns); 0.1.7 and 0.1.8 (a folder lists its files, Make a Project / Not Now notice); changed in 0.2.15 (Home's folders offer Make a Project). Open questions: none found.
+- **duo2:** `duo2 session move`, `duo2 project merge`, `duo2 project make`, `duo2 undo`.
+- **Shown in:** `docs/guide/where-a-session-belongs.md`; —  for a film of its own.
+
+## FEAT-11 · Templates
+- **Intent:** Geoff, 2026-10-07: "project.md needs a solid base template and a template editor — so do tasks". New projects and tasks start from a sensible note you can change, in plain Markdown that Obsidian's Templates plugin can also use.
+- **How it works:**
+  - Duo's base `PROJECT.md` is `type: project`, `title`, `aliases`, `status: active`, `goal`, `health` (empty), `next`, `created`, then Why, Done when, Notes, Log. A task is `type: task`, `title`, `status: open`, `sessions`, `created`, then Done when and Notes (DL-146).
+  - Placeholders are Obsidian's own: `{{title}}`, `{{date}}`, `{{time}}`, `{{date:FORMAT}}`, `{{time:FORMAT}}`. Templater's `<% %>` is left as written. Values a flow knows (goal, status, sessions) are set by key after the fill, and a template never writes over a file (DL-146).
+  - Which template: a project's own `templates/new-task.md`, else Home's `templates/`, else Duo's base. `new-project.md` comes from Home or the base only. The `new-…` names stop `templates/` reading as a project on a case-insensitive disk (DL-146).
+  - A template is a document. It opens in the right pane with a bar: what it's for, scope, Insert ▾, Preview, and Reset… (or Use Home's… on a project's own). Placeholders show as chips (DL-146).
+  - Reach it from Settings › Templates and the Tasks section's right-click menu (Edit Task Template, Make a Template for ‹project›) (DL-146).
+  - Neither `lanes:` nor `references:` is ever in a template (DL-146, DL-150).
+- **Not:** no form sheet in Settings and no Template pop-up in the New sheets for now (DL-146 options B and C, not chosen).
+- **Governed by:** DL-146, DL-150; `docs/design/templates-handoff/`.
+- **Status:** shipped in 0.2.6. Open questions: none found.
+- **duo2:** `duo2 template show`, `duo2 template edit`, `duo2 template copy`, `duo2 template reset`, `duo2 template preview`.
+- **Shown in:** `docs/guide/projects.md` and `docs/guide/tasks.md` (For power users); —  for a film.
+
+# Tasks
+
+## FEAT-12 · Tasks
+- **Intent:** real work takes more than one conversation, so a task is a to-do note in a project that keeps track of the sessions working on it. Geoff, 2026-10-04: "Tasks are a purely markdown construct; they may contain links to sessions." Tasks are optional; nothing in navigation depends on one (DL-25). Scope: the note, the list rows, the menu. The board is FEAT-13.
+- **How it works:**
+  - A task is `tasks/<slug>.md` with `type: task`, a `status` and a `sessions:` list whose entries are session links, `- "[title](duo2://session/<id>)"` (DL-6, DL-13, DL-87, DL-93). Duo edits only that key, status and (on rename) title, and goes through the editor's buffer when the note is open. Path is identity (DL-19).
+  - Statuses: open, in progress, waiting, review, done, dropped. Make a Task works on a session or a group; Add to Task adds a link to an existing note (DL-93). You can also drag a session tab onto a task (shipped 0.2.17).
+  - Groups stay Duo-only hand-made bundles; tasks are notes (DL-88, DL-24).
+  - A task's right-click menu is the same wherever it's listed: Open Task Note, New Session in Task, Add Session, Rename, Mark Complete, Set Status, Copy Link, Reveal in Finder, Move to Project, Archive Task…, Delete Task…. Archive, Delete and Move ask in a Duo question whether the sessions go too; Delete defaults to the task only; a running session is never archived or deleted (DL-115).
+  - Copy Link is `duo2://task/<id>`, with the id written once into the note's `id:` so links survive renames (DL-115).
+  - New Session in Task (a + on the row's hover) drafts `@tasks/<note>.md` in the new session's prompt without sending it (DL-112).
+  - A session linked to a task knows it: Duo's hooks tell Claude the task's title, status and note path at start, resume, clear and compact, and once more when something changes. After `/clear` the new session joins the same tasks (DL-116).
+  - `+ New task` is the TASKS section's last row, quieter than the footer's `+ New Claude Code session`. A short Explainer shows on a long hover until you choose Don't show again (DL-172, DL-174).
+  - A done task stays checked, grey and struck through for as long as it's listed, and completing it folds its sessions. Mark Complete holds the row for 5 seconds so you can undo (DL-130, DL-187). Tasks with no activity for 3 days go to a Later fold (DL-217).
+  - For a director, one piece of delegated work is one task, with `## Request`, `done_when:`, `## Progress` and `directed_by:`. The director asks before marking tasks complete or archiving them (DL-194, DL-204).
+- **Not:** tasks don't replace groups (DL-88). No stable `id:` minted up front (DL-19). No UI for accepting work; the director asks in session (DL-204). Director buttons Start, Send back, Accept, Resolve, Direct this, and a decisions file raising Needs you, were ruled out (DL-196).
+- **Governed by:** DL-6, DL-13, DL-19, DL-24, DL-25, DL-87, DL-88, DL-93, DL-112, DL-115, DL-116, DL-130, DL-172, DL-174, DL-187, DL-194, DL-196, DL-204, DL-217; `docs/design/task-menu-handoff/`, `docs/design/explanatory-tooltips-handoff/`, `docs/design/session-glyphs-handoff/`; `docs/research/obsidian-compatible-task-format.md`.
+- **Status:** shipped in 0.1.2 (tasks, Make a Task); 0.1.4 (+ New task, Open tasks); 0.1.7 and 0.1.8 (New Session in Task); 0.2.0 (right-click menu, a session knows its task); 0.2.2 (Mark Complete hold); 0.2.12 (quieter New task, Explainer); 0.2.13 (done look); 0.2.18 (Later fold); 0.2.19 (Claude told how to use tasks with `duo2`). The director's board changes (S1, S2, Open worker, DL-196) are designed, not built. Open: Q-177, Q-193.
+- **duo2:** `duo2 tasks`, `duo2 task make`, `duo2 task new`, `duo2 task session`, `duo2 task status`, `duo2 task add`, `duo2 task rename`, `duo2 task archive`, `duo2 task unarchive`, `duo2 task delete`, `duo2 task move`, `duo2 task link`, `duo2 task reveal`, `duo2 session task`, `duo2 groups`, `duo2 group new`.
+- **Shown in:** the intro film (S10 Tasks, `video/script.md`), `docs/guide/tasks.md`.
+
+## FEAT-13 · The task board
+- **Intent:** Geoff, 2026-10-07: "projects would benefit from a visual way of tracking tasks besides the left column — do some research into the obsidian kanban feature". His rule: "maximize backwards compatibility with existing obsidian handling and/or OKF." The board is a view computed from the task notes, so nothing extra is stored for it.
+- **How it works:**
+  - Lanes are `status`. A drag writes only the `status:` line (and `completed:`, as Set Status does), through the editor's buffer when the note is open, and ⌘Z undoes it. No order or position key is ever written (DL-148).
+  - A Sessions | Tasks switch in the project's toolbar puts the board over the left and middle panes; clicking a card shows its note in the right pane. Inside a lane the order is computed: needs you, then due, then oldest (DL-148).
+  - A card shows its sessions as filled rows (glyph, title, wait; up to three, then "+n more"); clicking one opens that session (DL-148).
+  - A column is a status value. A project's columns are a `lanes:` list in the project's brief, written only when someone first changes the default five (open, in-progress, waiting, review, done). + Add Column and each lane's ⋯ menu add, move and remove columns. Open and Done can't be removed, and removing a column that holds tasks asks where they go (DL-150).
+  - A task's references are a `references:` list in its frontmatter: quoted relative links to files, folders and URLs, written only when one is added. The note's properties show them; the field completes files and folders; files dragged from the tree onto a card are added (DL-150).
+  - Add Obsidian Board writes `tasks.base` (a Bases kanban view with `groupOrder` pinned to the lanes, plus a table). Duo never writes a `.base` on its own and never edits it except through Update Obsidian Board (DL-20, DL-148).
+- **Not:** no Kanban-plugin note, no rank or lane key in notes, no Obsidian-only files unless you ask (DL-20, DL-148). Renaming a column (which would rewrite every task in it) isn't offered yet (DL-150).
+- **Governed by:** DL-20, DL-148, DL-150, DL-158, DL-196; `docs/design/task-board-handoff/`; `docs/research/task-board.md`.
+- **Status:** shipped in 0.2.8 (board, drag, columns, references, Obsidian base); the Issues lane is not built (FEAT-15). Open: Q-141, Q-142, Q-144, Q-145.
+- **duo2:** `duo2 task board`, `duo2 task column`, `duo2 task reference`, `duo2 task base`, `duo2 task status`.
+- **Shown in:** the intro film (S10 Tasks, the kanban shot); `docs/guide/tasks.md` says nothing about the board.
+
+## FEAT-14 · GitHub in a project
+- **Intent:** Geoff, 2026-10-07: "we should incorporate github primitives in many places; eg we should make it easy to add a project from remote (gh), as a new or existing branch, and make it easy to push and/or open a pr (anticipating that many users will not be admin)". And: "duo should detect when projects are already repos and provide the same affordances, even if duo did not clone them" (DL-157). Scope: repos, branches, push and PRs. Issue links are FEAT-15.
+- **How it works:**
+  - Any project whose folder is inside a git repository gets the repo state, Push / Open PR, the fork, Get Latest and Bring In Changes from main, whoever cloned it (DL-157, DL-149).
+  - New project can start From GitHub: a clone per project, on a new branch of its own by default or an existing one (DL-149).
+  - The repo state shows in the Files block: the branch at the right of the Files header, one fact and at most one button under it, changed and new files marked in the tree (DL-149).
+  - Duo's sheet pushes: it commits the ticked files, pushes (never force) and opens the PR with `gh pr create`, or GitHub's compare page without gh. Claude writes the message and description only when asked (DL-149).
+  - If you can't push to the repo, Duo says so before you copy it: your work goes to your own fork, made at the first push, with nothing changed on your GitHub account until then (DL-149).
+  - The project file and `.duo/` stay out of git by a visible checkbox, on by default. In a repo Duo didn't copy they are listed unticked under "Duo's files" in the Push sheet (DL-149, DL-157).
+  - Duo stores no token; it uses your `gh auth` or git's helper. Every failure shows in Duo's question look (DL-149).
+- **Not:** no force push (DL-149). Worktrees inside a project are wanted later (ENH-47, DL-149). Other git hosts get local facts only, and Push says what's missing (DL-157).
+- **Governed by:** DL-149, DL-157; `docs/design/github-handoff/`, `docs/design/github-study/`; `docs/research/github-primitives.md`.
+- **Status:** shipped in 0.2.8 (repo state, Push, Open PR, fork, Get Latest, New project from GitHub). Open: Q-139.
+- **duo2:** `duo2 repo status`, `duo2 repo check`, `duo2 repo latest`, `duo2 repo update`, `duo2 repo put-back`, `duo2 repo push`, `duo2 repo pr`, `duo2 repo draft`, `duo2 repo move-to-branch`, `duo2 repo signin`, `duo2 repo open`, `duo2 project new`.
+- **Shown in:** —. (`docs/guide/` has no GitHub page.)
+
+## FEAT-15 · GitHub issue links
+- **Intent:** let a task point at the GitHub issue it tracks and show its live state, without copying issues into Duo. Geoff, 2026-10-17: "I am open to b, but I don't want ALL issues to automatically create tasks".
+- **How it works:**
+  - A task links one issue, with no sync. The link is `issue:` with one quoted URL in the task note; the issue's state is read from GitHub, never copied into the note (DL-226).
+  - The task's card shows the issue's live state (open, or closed on GitHub), and the note's properties show an issue row (DL-226).
+  - Nothing creates a task from an issue automatically; only your link or, later, a drag into the Issues lane (DL-226).
+  - Duo writes to GitHub in three places only: Close/Reopen, New Issue from Task, and "Closes #n" in Push's pull request. Triage stays with Claude (DL-226). From `duo2`, the writes need `--yes` because they publish under your name.
+  - Unlinked issues will show as an Issues lane on the task board, and GitHub Projects will come later as a board source (ENH-68). Both are for v1.1 (DL-226).
+- **Not:** no mirroring of issues into task notes, no live read-only list, no automatic task creation (DL-226). GitHub Projects need `read:project`, which Geoff's gh login lacks (DL-226).
+- **Governed by:** DL-226, DL-149; `docs/design/github-issues-handoff/`, `docs/design/github-issues-study/`; `docs/research/github-issues.md`.
+- **Status:** slice 1 shipped in 0.2.18 (the link, the card's live state, Close/Reopen, New Issue from Task, "Closes #n"); the Issues lane and its offers are designed, not built. Open: Q-231 (stand-ins).
+- **duo2:** `duo2 issue show`, `duo2 issue open`, `duo2 issue close`, `duo2 issue reopen`, `duo2 issue new`, `duo2 task issue`.
+- **Shown in:** —.
+
+# Home
+
+## FEAT-16 · Home
+- **Intent:** Home is the one folder you choose for the projects you track, with its own Claude session beside the map. Scope: Home itself, its session and its files. Topics have their own entry (FEAT-17), the map is FEAT-27, and the director is FEAT-18. The guide says the problem: work arrives from everywhere, projects live in many folders, and every new Claude session starts knowing nothing about you. Geoff, 2026-10-07 (DL-142): "many users will just want to see all active and recent sessions, with their project and other helpful metadata … in a single list — much like the left bar on the Claude app".
+- **How it works:**
+  - Home is optional. Duo lists every Claude session from Claude's own logs on every launch, with or without a Home, and Home can be set any time (DL-82, 2026-10-04 "Sessions first, Home optional").
+  - Each user picks Home; nothing assumes a path (DL-94). A `HOME.md` at the top of the folder marks it, with the same fields as a `PROJECT.md`; it replaces `PROJECT.md` for Home (DL-42, DL-52). Duo never edits or deletes a `HOME.md` it didn't create. With several, it uses the last used and shows a quiet "Use this one" notice (DL-42).
+  - Home holds the primary, tracked projects, and Home's own sessions run in it. Projects outside Home stay first-class: listed, openable, resumable, searchable. Home claims only sessions run in its own folder, not its subfolders (DL-85).
+  - Move into Home moves a project's folder in with its sessions; Claude's transcripts follow, you confirm first, and Undo puts it back (DL-85, DL-66).
+  - Claude reads a `CLAUDE.md` in the folder it starts in and every folder above, so one at the top of Home is read by every session inside it. Duo gives Home's session no special instructions; what it does is up to that file (`docs/guide/home.md`).
+  - With Home set, Duo starts a Home session if there is none (DL-54). With no Home, the left pane offers Choose Home Folder… and starts nothing (DL-84).
+  - Home opens in chat: new Home sessions, the one started on launch included, open in chat under a light strip, and each keeps its own mode once you switch (DL-142 (6), (7)).
+  - A new user sees All projects' List first; after that Duo remembers the last choice (DL-142 (1)). See FEAT-27.
+  - Home's rules for every director live in `HOME.md` under `## Director` (DL-207, FEAT-18).
+  - With no projects yet, All projects shows Home's folders, each with Make a Project, and a + New project button; New Project's In list shows every folder in Home (DL-211, DL-212).
+- **Not:** Home as one project among others (DL-85 refines DL-42). No session in a terminal in `~` when there is no Home (DL-84). Nothing assumes `~/repos` or any fixed path (DL-94). The Sessions-view-like layout (option D) waits as ENH-28 (DL-142).
+- **Governed by:** DL-42, DL-52, DL-54, DL-82, DL-84, DL-85, DL-94, DL-142, DL-207, DL-211, DL-212; `docs/design/home-evolution-handoff/`.
+- **Status:** shipped in 0.1.1 (Home, Move into Home, `HOME.md`); changed in 0.1.4 (no-Home pane with Choose Home Folder… or Not Now; Move into Home sheet), 0.2.4 (chat in Home's pane), 0.2.5 (Home opens in chat; Board | List), 0.2.15 (first-run Home folders, New Project in any Home folder). Open: Q-100 (no chord for Show Board / Show List), Q-197 (first-run paths are stand-ins).
+- **duo2:** `duo2 home set`, `duo2 project move-into-home`, `duo2 go home`, `duo2 session chat`, `duo2 project new`
+- **Shown in:** intro film S3 "All projects" (`video/script.md`), `docs/guide/home.md`.
+
+## FEAT-17 · Topics and knowledge bases
+- **Intent:** A topic is a folder in Home for an area you own, like payments or growth. It never finishes; it holds the projects that do. Knowledge bases are for projects or Home that hold an LLM wiki or second brain. Geoff, 2026-10-07: "many users will have a project (or more) that contain LLM wiki and or OKF second brains … think about what features we could add (not just a pile of features but thoughtful service design) to better support these uses without getting in others' way" (DL-152). Scope: topics are built; knowledge bases are designed, not built.
+- **How it works:**
+  - A folder that isn't a project but holds projects is a topic. No file marks it (DL-89). Inside Home it is the folder a project sits in; outside Home it is the parent folder's path (DL-83).
+  - A project inside another project's folder sits beside it in the same column; parenthood doesn't show on the map. A session still belongs to the deepest project around its folder. Discovery looks four folders deep (DL-89).
+  - Topics keep the folder's real name, never recapitalised, drawn as a folder heading with a trailing slash (`payments /`) (DL-92).
+  - Projects sitting directly in Home share the first, unlabelled column under the ★ tile (DL-83, DL-104, DL-111).
+  - On a narrow window topics pack into as many columns as fit at 220 wide, three at most, each going to the shortest column (DL-129).
+  - Groups and tasks stay separate: groups are Duo-only hand-made bundles, tasks are notes (DL-88).
+  - Knowledge base (DL-152): any project or Home, added in Settings › Knowledge bases (alpha). The mark is Duo's own state; nothing is written in the folder. Duo never writes `index.md`, `log.md` or `.obsidian/`.
+  - ⇧⌘N would become New Note in Inbox, opened in the right-pane editor, with New Folder moving to ⌥⇧⌘N; a read-only Knowledge base tab shows the inbox, log and index only where added (DL-152 (3), (4)).
+  - A passage the director files lands as a new note in the knowledge base's inbox with its date and a source link; the user's own skills digest it from there, and the director can offer to run them if the `PROJECT.md` Director section describes them (DL-210).
+  - Reading a vault right is for everyone: wikilinks drawn and followed, shortest-path links, `![[embeds]]` (DL-152 (7)).
+- **Not:** no processing prompt in v1; "the user will define their own skills for maintaining the wiki" (DL-152 (5)). No file or `PROJECT.md` line marks a topic (DL-89 over T2 to T4). No global capture hotkey (DL-152). The director does not work passages into wiki pages itself (DL-210).
+- **Governed by:** DL-83, DL-88, DL-89, DL-92, DL-129, DL-152, DL-210; `docs/design/second-brain-study/`, `docs/research/second-brains.md`.
+- **Status:** topics shipped in 0.1.1 (folders become columns), changed in 0.1.2 (folder headings), 0.2.2 (topics pack into columns). Knowledge bases: designed, not built; `docs/cli/duo2.md` has no `kb` or `note` verb and the study README says boards await export to a handoff. Open questions about them: none found open.
+- **duo2:** `duo2 project new`, `duo2 project move-into-home` (knowledge-base verbs `kb` and `note` are planned in DL-152, not yet in the reference)
+- **Shown in:** guide page `docs/guide/topics.md`; the topic list in the intro film is a different "topic" (scene names), so —.
+
+## FEAT-18 · The director
+- **Intent:** A Claude session that directs the other sessions: it turns each request into a Duo task with your words kept exact, starts a session to do it, checks what came back, and brings you only real decisions. Scope: the shipped skill and `duo2 director`. Duo's own process docs (`docs/director/`) are not this feature. Geoff, 2026-10-12 asked for a skill that "ships with Duo, installs at user scope and updates through the app", works in one project or across Home, and keeps working on a pinned, locked-down Claude Code (`docs/research/director-product.md`).
+- **How it works:**
+  - One personal skill, `director`, installed and kept current by Duo; `duo-director` stays as an alias for one release (DL-193 renamed by DL-222). Duo warns when skill and app versions differ (DL-222). Installing it re-asks the install question once (DL-213).
+  - Rules come in layers, none inside the skill: your rules for every director in `HOME.md` under `## Director`, a project's own in its `PROJECT.md` under the same heading, then `CLAUDE.md`. A project's rules win. Updates never touch these files (DL-193, DL-207).
+  - One piece of delegated work is one Duo task: `## Request` in your words, `done_when:`, dated `## Progress`, `directed_by:`, and `status: suggested` for work it proposes (DL-194). Work a worker notices becomes a suggested task; dependencies use `depends_on:` and `waiting_on:` (DL-195).
+  - A worker is directed only by the director named in its task's `directed_by:`. Directors have a fixed name, `director-<project>`, and `.duo/director.json` records the current one by session id (DL-200, DL-218).
+  - The director checks work against the Request and `done_when:`, then you say go. A yes counts only when you gave it for that action; a push, release, publish, send or delete always waits for it. A worker's message is never your approval. A stalled worker gets at most two more tries (DL-202, DL-216).
+  - It asks you in its own session with AskUserQuestion, which Duo marks Needs you. Artifacts are optional, never load-bearing (DL-198). It asks before marking a task complete or archiving, and logs one dated line under `## Done` (DL-204, DL-209).
+  - Every `duo2 director` verb works with Duo closed; workers start in the background by default, only through `duo2 director start`, with Remote Control. There is no cap on workers; one worker per task stands (DL-230, DL-231, DL-232).
+  - Where sessions can't message each other, Duo carries messages: it types into a worker only when idle at an empty prompt and you haven't typed lately (DL-199). Nothing may rely on `bypassPermissions` (DL-222).
+  - A director in Home sees every project and directs itself only where no project has its own director (DL-197). It does organising work itself (splitting notes, routing, filing, making tasks) and hands long or tool-bound work to a worker (DL-208).
+  - In the project pane the director leads PINNED in a two-line slot; a replaced director that is still open shares the slot, greyed, with Close (DL-217, DL-218).
+- **Not:** Beads' ready query, claiming, hash ids, priorities and database (DL-195). The task board's Start, Send back, Accept, Resolve, Direct this buttons and `decisions.md` raising Needs you (DL-196). No UI for accepting work (DL-204). No export to Claude Code Projects yet, and no runs inside a Projects folder (DL-203). No hard-coded artifact pattern (DL-198). No worker cap (DL-232).
+- **Governed by:** DL-193 to DL-200, DL-202 to DL-205, DL-207 to DL-210, DL-213, DL-216 to DL-218, DL-222, DL-230 to DL-232; `docs/research/director-product.md`, `director-chief-of-staff.md`, `director-regression.md`, `director-simplify-and-dogfood.md`.
+- **Status:** shipped in 0.2.16 (skill, `duo2 director`, first release without the task-board changes, DL-205); changed in 0.2.17 (Duo asks before adopting a session; standing yeses), 0.2.18 (named `director`; version check; hears workers in any mode; pinned slot), 0.2.20 (works without Duo; no worker cap; one start path; logged-out CLI caught). Task-board changes (folder follows its note, "Directed by", Open worker, DL-196) were deferred past the first release (DL-205); whether they shipped is not stated in the notes read. Open: Q-204, Q-205, Q-208.
+- **duo2:** `duo2 director status`, `duo2 director start`, `duo2 director send`, `duo2 director retire`, `duo2 director guide`, `duo2 director watch`
+- **Shown in:** the director film (`video/films/director/`, scenes in `video/src/scenes/director/`, DL-180, DL-184; `duo-director.mp4` attached to 0.2.13); README links it. Guide page: —.
+
+# Documents
+
+## FEAT-19 · Documents beside the conversation: the right pane and the Markdown editor
+- **Intent:** Claude makes PRDs, notes and prototypes. They open as tabs in the right pane, next to the session that is working on them, so you don't hunt for them in Finder or work out what changed. This feature covers the pane and the Markdown editor; comments and suggestions are FEAT-20, Word FEAT-21, PowerPoint FEAT-22, HTML and the browser FEAT-23, files FEAT-24, Send to Claude FEAT-25.
+- **How it works:**
+  - Markdown opens in an editor that looks like a document, not code: CodeMirror 6 live preview, kept after Geoff accepted the editor review (Geoff, 2026-10-09: "I accept the markdown editor recs"). Every line keeps one height whether or not the caret is on it; each document keeps its own undo, caret and scroll across tab switches; View › Source Mode shows the raw text per document (DL-167).
+  - Text Claude adds is highlighted until your next edit. The highlight fades in over 400 ms on a pale green (`claudeEdit`), per Geoff's comment of 2026-10-13 (DL-5, DL-186).
+  - For a document showing in Duo, Claude's Edit, MultiEdit and Write go through the editor by a hook, merged with your unsaved typing. Where hooks are off, the primer tells Claude to use `duo2 doc edit --stdin` (DL-78).
+  - Duo never loses either side: a three-way merge by line, saves that read the disk first, and a real overlap keeps your text, pauses autosave and asks Keep Mine or Use Theirs. A file removed on disk keeps its text with Save to Recreate (DL-77, `docs/design/collisions.md`).
+  - Tables: Format › Table (Insert Table, rows, columns, align) plus a bar while the caret is in a table; Tab in the last cell adds a row. What Duo writes renders the same in GitHub and Obsidian. A small table keeps one height drawn or as source (DL-113, DL-182, `tables-handoff/`).
+  - Pasting: if the clipboard holds text and a picture, the text wins; a table from Numbers or Excel becomes a Markdown table. A picture alone is saved beside the document and linked (DL-181).
+  - Strikethrough: `~~text~~` renders struck through; ⇧⌘X toggles it (Google Docs' chord); ⌘B and ⌘I now toggle too (DL-189).
+  - In a list, ⌘] and Tab indent an item and ⌘[ and ⇧Tab outdent it, by the width of the parent's marker; each is one ⌘Z (DL-244).
+  - Code blocks show a Copy button on hover that reads "Copied" for about 1.5 s (DL-220).
+  - Links are Markdown links, `[Title](relative/path.md)`; Duo reads wikilinks but never writes them (DL-17). A note may show an `https:` image (DL-175).
+- **Not:** no wikilinks written (DL-17); no switch to ProseMirror or a native TextKit editor (DL-167); no direct write over your unsaved text (DL-78).
+- **Governed by:** DL-5, DL-17, DL-77, DL-78, DL-113, DL-167, DL-175, DL-181, DL-182, DL-186, DL-189, DL-220, DL-244, `docs/design/collisions.md`, `docs/design/tables-handoff/`, `docs/design/papercuts-copy-tabs-handoff/`.
+- **Status:** shipped in 0.1.0 (editor, Claude's highlight, merge, conflict question); changed in 0.1.5 (properties, how documents look, notices), 0.1.9 (tables), 0.2.2 (highlight fades), 0.2.11 (Source Mode, steady line heights), 0.2.13 (paste, notes show https images only), 0.2.14 (strikethrough), 0.2.17 (Copy on code blocks), 0.2.21 (list indent). No open questions found.
+- **duo2:** `duo2 doc open`, `duo2 doc selection`, `duo2 doc format`, `duo2 doc table`, `duo2 doc mode`, `duo2 doc find`, `duo2 doc insert`, `duo2 doc replace`, `duo2 doc edit`, `duo2 doc revert`, `duo2 doc resolve`, `duo2 doc history`.
+- **Shown in:** the intro film (`video/shots.json`, scene `app`, shots `tab-md`, `md-sent`, `md-after`); `docs/guide/documents.md`.
+
+## FEAT-20 · Review in Markdown: comments, suggested edits, @claude
+- **Intent:** Markdown files take comments and suggested edits the way a Word or Google doc does, with Claude as one of the reviewers. The marks live in the file as plain text, so any editor can read them. Geoff chose the twelve design points on 2026-10-28 (DL-236); research is `docs/research/markdown-review.md`.
+- **How it works:**
+  - The file carries CriticMarkup, with a readable `@name YYYY-MM-DD #id` signature at the start of each comment. Comments sit inline right after the text they are about; there is no sidecar file (DL-236).
+  - Comments and suggestions draw in a margin column beside the text, cards level with their anchors. Under 420 wide the margin folds to a gutter of count markers and a thread opens as a popover. Suggestions are inline marks with a hover label (Accept, Reject, Reply), never cards (DL-237).
+  - One Suggest Edits switch per document, for everyone: you, Claude through Duo's hook, a team-mate's Duo and Claude outside Duo. It is kept in the frontmatter as `suggest-edits: true`, written only while on. Edit › Suggest Edits is ⇧⌘E; Add Comment is ⌥⌘M (DL-237, DL-248).
+  - You close a thread: Close and Keep, or Delete; both undo with ⌘Z. A closed comment is not drawn unless Markup › Show Closed Comments is on (DL-237).
+  - A comment that names `@claude` goes to a session when you post it. Duo picks the session, shows it on the card and remembers it per document. A card shows one status: Queued, Sent, Claude is replying, Replied, Not delivered or Not sent. A comment that arrives in the file waits for your click (DL-236, DL-237).
+  - Typing `@` in the comment field opens a menu: Claude first, then people named in the document. A person's tag is plain text and routes nothing; only `@claude` routes (DL-251).
+  - Claude always signs in green. Your name is your Mac account's short name, changeable in Settings (DL-236, DL-237).
+  - Duo gives every session it runs the convention paragraph and `duo2` verbs to reply (DL-236).
+  - Convert to Markdown keeps a Word document's tracked changes as suggestions and its comments as threads (DL-236, amends DL-123).
+- **Not:** no sidecar file for comments (DL-236); the margin's single-key shortcuts (J, K, R, ⌘Return) are not built (DL-248); no separate tracking toggle per person, since one switch covers everyone (DL-237).
+- **Governed by:** DL-236, DL-237, DL-248, DL-251, DL-186, `docs/design/markdown-review-handoff/`, `docs/research/markdown-review.md`.
+- **Status:** shipped in 0.2.21 (comments, suggestions, margin, @claude, shortcuts, Convert keeps Word review); the `@` menu is recorded as built on 2026-10-29 (DL-251), release not confirmed. Open questions Q-241, Q-242, Q-243, Q-244, Q-246, Q-247, Q-262, Q-266, Q-308.
+- **duo2:** `duo2 doc review`, `duo2 doc comments`, `duo2 comment add`, `duo2 comment list`, `duo2 comment reply`, `duo2 comment send`, `duo2 comment close`, `duo2 comment delete`.
+- **Shown in:** its own film (`video/films/release-0-2-21/`); `docs/guide/documents.md` doesn't cover it yet.
+
+## FEAT-21 · The Word viewer, and Convert to Markdown
+- **Intent:** a .docx should be readable in Duo, with other people's comments and tracked changes visible, without Duo ever changing the file. Geoff, 2026-10-08: "offer to convert (may be lossy) or offer to render as view only … view only should preserve and render comments, track changes, etc".
+- **How it works:**
+  - A .docx opens straight into a read-only viewer in the right pane, at the pane's width with no pagination. Tracked insertions, deletions, moves and formatting changes show in each person's colour; comments sit as cards under their paragraph, replies nested, resolved ones folded (DL-162).
+  - The bar holds Markup ⌄ (All Markup, Simple Markup, No Markup, Original; comments; resolved comments; people), Select Text, Convert to Markdown…, Open With ⌄ (DL-162).
+  - Select Text picks a paragraph or comment and sends it to Claude with its changes and comments (DL-162).
+  - Where a file says nothing, Google Docs' defaults fill in: Arial 11 pt at 1.15, Google's Title and Heading sizes. The document's own styles win. A missing font is drawn in a stand-in (Calibri as Arial, Cambria as Georgia), never the browser's serif (DL-233).
+  - A table wider than the pane keeps its column widths and scrolls sideways inside a box of its own (DL-243).
+  - Convert to Markdown asks first what won't come over, then writes `<name>.md` into a tab of its own. If `<name>.md` exists, a sheet offers a free name, Replace or Open Existing. Headings, typed lists and layout tables are tidied; images go in `<name>-images/` (DL-123, DL-162).
+  - Convert keeps tracked changes as signed suggestions and comments as threads (DL-236). Before that, changes were accepted and comments became endnotes (DL-123).
+  - A document Duo can't draw falls back to Quick Look with a notice saying why (DL-162).
+- **Not:** Duo never writes the .docx (DL-123, DL-162); no pages scaled to the pane with comments in a margin, and no question on every open (DL-162's other options).
+- **Governed by:** DL-123, DL-162, DL-233, DL-243, DL-236 (point 12), `docs/design/docx-viewer-handoff/`, `docs/design/docx-handoff/`.
+- **Status:** the Markdown copy shipped in 0.2.0; the viewer in 0.2.8; changed in 0.2.20 (Google Docs defaults, tracked changes drawn right), 0.2.21 (wide tables scroll, `doc layout`, `doc screenshot`, Convert keeps review). No open questions found.
+- **duo2:** `duo2 file convert`, `duo2 doc outline`, `duo2 doc layout`, `duo2 doc screenshot`, `duo2 doc pick`, `duo2 doc element`, `duo2 doc markup`, `duo2 doc comments`.
+- **Shown in:** the intro film (shot `tab-docx`); `docs/guide/documents.md` (describes only the older Convert offer).
+
+## FEAT-22 · The PowerPoint viewer
+- **Intent:** a deck should be visible in Duo, and you should be able to point Claude at one shape on a slide. Geoff asked for it before v1 shipped, as an exception to the build plan (DL-121).
+- **How it works:**
+  - A .pptx opens in the right pane, drawn by `@aiden0z/pptx-renderer` in a web view. Slides scroll at the pane's width, numbered, under a bar with ‹ › Slide n of N, Select Shape, Open With (DL-121, DL-125).
+  - Select Shape shows a dashed outline and name on hover, a solid outline when picked. The picker bar then offers Send to Claude, Send To, Pick Another and Cancel (DL-125).
+  - Send puts the shape into Claude's prompt as text, with no Return: file, slide, name and id, groups, text, box, the `duo2 slide shapes` command and a screenshot (DL-125).
+  - A deck that won't draw falls back to Quick Look with a notice saying why. The stand-ins for "drawing" and "no session to send to" were approved as drawn (DL-125, DL-132).
+  - Slides scroll smoothly and the picker's outline glides (DL-130).
+  - Duo reads slides from the file's XML; it doesn't write the deck (DL-121).
+- **Not:** no one-slide-at-a-time view with a thumbnail strip, and no Send without the screenshot (DL-125's other options); no LibreOffice conversion (DL-121's other options).
+- **Governed by:** DL-121, DL-125, DL-130, DL-132, `docs/design/pptx-handoff/`.
+- **Status:** shipped in 0.2.0; changed in 0.2.2 (smooth scroll), 0.2.4 (frames while drawing), 0.2.13 (closed decks free their web processes). No open questions found.
+- **duo2:** `duo2 slide`, `duo2 slide go`, `duo2 slide shapes`, `duo2 slide notes`, `duo2 slide pick`, `duo2 slide element`.
+- **Shown in:** `docs/guide/documents.md`; no film of its own.
+
+## FEAT-23 · HTML pages and the browser
+- **Intent:** not recorded. The records give the rule, local files and localhost in Duo and other sites in your browser (legacy behaviour, DL-3), but not why Duo has a browser at all (Q-317). What they imply: a prototype Claude writes shows live beside the session, and Claude can read and work a page you have open.
+- **How it works:**
+  - A local HTML file opens read-only in the right pane and reloads within a second when it or a file next to it changes (DL-67, `docs/features/send-to-claude.md`).
+  - Local pages load nothing remote; notes may still show `https:` images (DL-175).
+  - Browser tabs are local-only by default. Files and localhost open in Duo; other sites open in your usual browser unless added to the allow list, a file you can edit (DL-3).
+  - ⌥⌘T opens a browser tab; ⌘L opens the address field while a browser tab is showing (DL-99).
+  - Browser tabs support uploads, downloads to ~/Downloads with Finder's naming, printing, popups that keep their opener, real clicks, and zoom (⌘+ ⌘- ⌘0) remembered per site (DL-124).
+  - `duo2 browser allow <host>` asks you through a Duo sheet first, and a browser tab's `file:` reads stay inside the project's folders (DL-178).
+  - Claude may read Google Docs, Sheets and Figma on allowed sites, read-only, through the accessibility tree. DL-7 ranks it "Should", after the core browser.
+- **Not:** no in-app browsing by default (DL-3); no quiet widening of the allow list by a session (DL-178); no remote script, style, frame or image on a local HTML page (DL-175).
+- **Governed by:** DL-3, DL-7, DL-99, DL-124, DL-175, DL-178, `docs/design/standins2-handoff/`.
+- **Status:** HTML pages shipped in 0.1.0; browser tabs in 0.1.4; uploads, downloads, print, zoom, popups in 0.2.0; changed in 0.2.4 (download progress, popup mark), 0.2.13 (local pages load nothing remote, allow asks first), 0.2.21 (`browser screenshot --full-page`, `browser scroll`). The HTML page's look is still a stand-in per surfaces.md.
+- **duo2:** `duo2 browser open`, `duo2 browser allow`, `duo2 browser sites`, `duo2 browser tabs`, `duo2 browser read`, `duo2 browser click`, `duo2 browser fill`, `duo2 browser wait`, `duo2 browser screenshot`, `duo2 browser scroll`, `duo2 browser go`, `duo2 browser back`, `duo2 browser forward`, `duo2 browser close`, `duo2 browser zoom`, `duo2 browser print`, `duo2 browser upload`, `duo2 browser downloads`, `duo2 html reload`.
+- **Shown in:** the intro film (shots `html-tab`, `html-menu`, `html-pick`); `docs/guide/documents.md` (Web pages).
+
+## FEAT-24 · Files: the file tree, file actions, drops and downloads
+- **Intent:** not recorded for the file tree and its actions: the records list the verbs (DL-61) but not the reason (Q-317). For Source links, Geoff, 2026-10-08: "when a user views a pptx or docs, theres a thin bar that lets them add a source … thin bar carries a link so the user can click on it in a future session".
+- **How it works:**
+  - The tree and document tabs share one set of actions: New Markdown File, New Folder, New from Template, Rename, Duplicate, Move to…, Move to Trash, Copy Path, Copy Relative Path, Copy as Markdown Link, Reveal in Finder, Open With, Send to Claude. Delete always goes to the Trash (DL-61).
+  - View › Show Hidden Files is global. Hidden rows are in `text2`; `.git`, `.DS_Store` and `.duo` stay hidden. Folders are collapsible and listed lazily (DL-105).
+  - Files dropped on a terminal type their absolute, shell-escaped paths at the cursor, with a trailing space and never a Return (DL-117).
+  - Files dropped from Finder on a folder of the tree move there, undoable with Edit › Undo. A taken name asks Replace, Keep Both or Cancel. From another volume they copy (DL-117).
+  - A file Duo can't show gets a quiet strip (its kind, read only, Open With, Show in Finder) over Quick Look (DL-132).
+  - A download in a browser tab shows its progress and can be cancelled (DL-124, DL-132).
+  - Source links (decided, not built): a thin bar under a .pptx or .docx viewer offers Add Source. The first source in a folder creates `_sources.md`; later ones add a line. Newer downloads are matched by name and Google id through Spotlight, never by listing ~/Downloads; Replace keeps the name and trashes the old copy with Undo. The downloaded file is never changed (DL-163).
+- **Not:** no writing a source into the file's own properties (ENH-56, DL-163); no relative paths in a terminal drop (DL-117); no overwriting on a move (DL-117).
+- **Governed by:** DL-61, DL-105, DL-117, DL-124, DL-132, DL-163, `docs/design/source-links-study/`, `docs/research/source-links.md`, `docs/design/standins2-handoff/`.
+- **Status:** hidden files shipped in 0.1.5; drops in 0.2.0; running downloads in 0.2.4; file actions' first release not confirmed; Source links decided (DL-163), not built. Open question Q-155 (whether Spotlight hands Duo a Downloads item without a privacy prompt).
+- **duo2:** `duo2 file new`, `duo2 file new-folder`, `duo2 file template`, `duo2 file rename`, `duo2 file duplicate`, `duo2 file move`, `duo2 file trash`, `duo2 file reveal`, `duo2 file open-with`, `duo2 file path`, `duo2 files browse`, `duo2 view hidden`, `duo2 undo`, `duo2 browser downloads`.
+- **Shown in:** `docs/guide/documents.md` (outside files only); no film of its own.
+
+## FEAT-25 · Send to Claude
+- **Intent:** you point at something and Claude gets it as context, with where it came from. Duo types it into the prompt and never presses Return, so you add the request yourself (DL-67, DL-68).
+- **How it works:**
+  - You can send selected text in a document, selected text and images in an HTML page, a picked HTML element, a file or folder, a session, a project, a shape on a slide (DL-125), and a paragraph or comment in a Word document (DL-162).
+  - It goes in always inline, as a quoted block via bracketed paste, so newlines don't submit. An element's screenshot is saved as a PNG and its path is in the text (DL-68).
+  - It goes to the Claude session showing in the console (Home's at All projects). Send To ▸ lists every other running Claude session and New Session. When no Claude session is showing, the item says why (DL-69).
+  - ⌘D is Send Selection to Claude, and gives way to CodeMirror's select-next-occurrence. Search's Send to Claude is ⌘D too (DL-79).
+  - The element picker: right-click an HTML page › Select Element. Elements outline in the system selection colour, a click freezes, a small bar offers Send to Claude, Send To, Pick Another and Cancel; Esc exits. The look is plain system styling until designed (DL-70).
+  - `duo2 selection` tells Claude what you have selected right now, so nothing needs sending (`docs/features/send-to-claude.md`).
+- **Not:** no quick-reply buttons (DL-29); no context file instead of inline (DL-68); never presses Return (DL-67).
+- **Governed by:** DL-29, DL-67, DL-68, DL-69, DL-70, DL-79, DL-125, DL-162, `docs/features/send-to-claude.md`.
+- **Status:** shipped in 0.1.0 (⌘D, files, folders, sessions, projects, HTML element); picker in browser tabs in 0.1.4; slide shapes in 0.2.0; Word paragraphs in 0.2.8. The picker's look is still a stand-in (DL-70).
+- **duo2:** `duo2 send file`, `duo2 send session`, `duo2 send project`, `duo2 send selection`, `duo2 send element`, `duo2 send text`, `duo2 selection`, `duo2 html pick`, `duo2 html element`, `duo2 html stop`, `duo2 html selection`.
+- **Shown in:** the intro film (shots `html-pick`, `html-send`); `docs/guide/documents.md`; `docs/features/send-to-claude.md`.
+
+# What needs you
+
+## FEAT-26 · What needs you
+- **Intent:** Duo sorts everything by what needs you, so a session waiting on a question, a permission or a plan is never buried. In a background window Claude can wait an hour unnoticed (`docs/guide/what-needs-you.md`). Scope: the attention queue, the peek, Dock and notifications. Where the queue lives on the map is FEAT-27.
+- **How it works:**
+  - The attention surface is called All projects; "Home" stays the folder (DL-2). Its right column lists the sessions that need you (and, in the build handoff, those ready for review) with Claude's question word for word, longest wait first (DL-22, DL-29).
+  - Order is most urgent first, longest wait first within a state; a task, group, project or topic shows the state of its most urgent session (`docs/design/build-handoff/` §2.2).
+  - A card says why a session waits (`checkout · permission`, `· question`, `· plan to approve`); a question over six lines folds. The button reads **Open project** (DL-58). With nothing waiting it says "Nothing needs you."
+  - Peek (DL-28): the toolbar chip counts what needs you elsewhere; ⇧⌘P opens a popover listing them with a way to jump into the project or go Home (DL-34). ⌘↩ jumps into the selected card's project.
+  - Needs you is shown by shape as well as colour. A session row's kind glyph (`>_` or bubble) is replaced by a drawn raised hand in the needs-you colour while it waits; task and group rows show only the hand (DL-174).
+  - The Dock icon shows the count: every project and Home, the session on screen too, nothing at 0. Duo asks macOS for badges with alerts and sounds, only live and never in a scripted run (DL-138).
+  - When macOS hides Duo's attention, Settings says so under Show the count on the Dock icon, with Open Notification Settings…. Right-clicking the Dock icon lists waiting sessions (header, session · project · wait, first 9 then "N more need you…") (DL-144).
+  - Running-but-quiet sessions keep the idle glyph and aren't counted as resumable (DL-55). In Home's List the column owns Needs you; the list starts with one `3 need you ›` line (DL-142 (3)).
+- **Not:** no replying from the cards, Peek or Dock; the quick-reply buttons are not built, not even behind a switch (DL-29). No Dock bounce, no menu bar count, no reviews in the badge (DL-144, declined for now). Duo cannot turn on macOS notification or badge permission itself (DL-138).
+- **Governed by:** DL-2, DL-22, DL-28, DL-29, DL-34, DL-55, DL-58, DL-138, DL-142, DL-144, DL-174; LR-1, LR-2; `docs/design/dock-badge-handoff/`, `docs/design/build-handoff/`.
+- **Status:** shipped in 0.1.0 (column, states), changed in 0.1.4 (reasons on cards; "Nothing needs you."), 0.1.5 (Dock count), 0.2.4 (Dock count fixed with badges; Settings hint; Dock menu), 0.2.12 (raised hand on rows). Open questions: none found open (Q-93 is answered).
+- **duo2:** `duo2 needs-you`, `duo2 peek`, `duo2 status`, `duo2 settings`
+- **Shown in:** intro film S3 "All projects" (ends on the Needs you column), guide `docs/guide/what-needs-you.md`.
+
+# Getting around
+
+## FEAT-27 · The map (All projects)
+- **Intent:** All projects answers "what's in flight, and what's waiting on me?": Home's session on the left, a map of your projects in the middle, what needs you on the right. It is one of Duo's two altitudes. Scope: layout, grouping and what shows on launch; the queue is FEAT-26, search FEAT-28.
+- **How it works:**
+  - Two altitudes, one window: All projects and inside a project; ⌘↑ goes back out (DL-21, DL-34). Each project reopens with its tabs as you left them (DL-107).
+  - Layout: Home's terminal or chat left, the project map by topic in the middle, the action column right (DL-22). On launch Duo shows every Claude session from Claude's logs, grouped by folder, with no setup (DL-82).
+  - Grouping is by parent folder everywhere: topic folder inside Home, labelled path (`~/repos /`) outside (DL-83, DL-92). The toolbar names the path inside a project: `All projects › payments › checkout` (DL-92).
+  - Home is a ★ tile, first in its unlabelled column, with goal, session count and five sessions in attention order; a session in it opens Home as a project on that session (DL-104).
+  - Outside Home each folder is a 24 pt row (5 per group, then `+ n more`); a folder with a session that needs you or is working becomes a full tile in `ACTIVE OUTSIDE HOME`. A header carries Filter folders and Sort: Recent / Name (DL-104).
+  - When every Home project sits directly in Home, tiles flow three across; with exactly two lists each stays a third wide (DL-111).
+  - The middle has Board | List (DL-142): List is every active and recent session across projects, grouped by recency (Open, Today, This week, folded Earlier and Archived), with a hybrid-ranked filter; a click jumps into the session's project.
+  - A `CLAUDE.md` folder in Home with no sessions still appears as a folder entry; a folder with sessions but no project file shows "No project file" with Make a Project or merge (DL-63, DL-103, DL-110).
+  - Open sessions read `working` or `at prompt` in place of their time on tiles (DL-133 (2)). Before there are any projects, see FEAT-16 (DL-212).
+- **Not:** no single "Elsewhere" column (DL-83). A session in Home's tile does not open in Home's pane (DL-104). No active tint in the List (DL-142). The D-style Sessions view waits (ENH-28, DL-142).
+- **Governed by:** DL-21, DL-22, DL-63, DL-82, DL-83, DL-92, DL-104, DL-107, DL-111, DL-133, DL-142, DL-212; LR-22; `docs/design/many-projects-handoff/`, `docs/design/home-evolution-handoff/`.
+- **Status:** shipped in 0.1.0 (map); changed in 0.1.2 (folder headings), 0.1.5 (many projects: compact rows, filter, sort), 0.1.7 (three across), 0.2.2 (columns pack), 0.2.5 (Board | List), 0.2.15 (no-projects state). Open: Q-100, Q-206.
+- **duo2:** `duo2 go all`, `duo2 open`, `duo2 view sort`, `duo2 view filter`, `duo2 view home`, `duo2 project make`
+- **Shown in:** intro film S3 "All projects", guide `docs/guide/getting-around.md` and `docs/guide/home.md`.
+
+## FEAT-28 · Search
+- **Intent:** One search for people and Claude across every project's files, every session and Claude's memory, by meaning and by exact words, all on the device. The PRD's problem: "Where did we decide how retries should work?" has no good answer when work spans a dozen projects and months of transcripts (`docs/prd/cross-project-search.md`).
+- **How it works:**
+  - ⇧⌘A opens search (DL-46). It is one Spotlight-style modal over a dimmed window with a preview of the selected result; Return runs the main action (open a file at its lines, resume a session) and Tab shows others (DL-76).
+  - There is no separate Jump. Name matches (projects, groups, sessions) come first as a "Go to" block; content follows; `New project "…"` ends the list. Name matching works while the index rebuilds (DL-80, DL-81). ⌘K is free and became Link… in Format (DL-108).
+  - ⇧⌘A again narrows to this project and back; ⇧tab reaches filters; ⇧↑/⇧↓ select several; ⌘E toggles Exact; ⌘D sends to Claude, so ⌘↩ keeps its one meaning; Esc steps back (DL-79).
+  - Search reads every Claude folder, not only projects: projects, folders with sessions, and folders with a `CLAUDE.md`. The user's home folder and folders above it are never read (DL-103).
+  - Purged sessions stay searchable from Duo's archive, labelled archived (DL-49).
+  - Home's List filter uses the same hybrid ranking over titles, what was said, project, folder and task names (DL-142 (4)).
+  - Below 1440×900 the modal is centred, 92 from the top (DL-129).
+  - The model is committed to the Duo repo, checksummed (DL-40). It loads on demand and is released after a few idle minutes (0.2.13).
+  - Claude gets the same results from `duo2 search`, which works without the app.
+- **Not:** no ⌘K Jump scope (DL-80). Open in split view isn't built (DL-76). No network at query time or while indexing (PRD goal 5).
+- **Governed by:** DL-38 (superseded in part), DL-40, DL-46, DL-49, DL-76, DL-79, DL-80, DL-81, DL-103, DL-129, DL-142; LR-25; `docs/design/search-handoff/`, `docs/prd/cross-project-search.md`.
+- **Status:** shipped in 0.1.0; changed in 0.1.1 (cursor in the field at once), 0.1.5 (every Claude folder), 0.2.12 (less idle CPU), 0.2.13 (model loads on demand). Open questions: none found.
+- **duo2:** `duo2 search`, `duo2 search-status`, `duo2 search-rebuild`
+- **Shown in:** guide `docs/guide/getting-around.md`; the intro film's opening names it (S0), no scene of its own found.
+
+## FEAT-29 · Window, panes and tabs
+- **Intent:** Duo's window should hold up on small screens and make it plain where you are and what a key will do. Scope: pane layout, tab strips, focus and chords. The map is FEAT-27; the right pane's content is other features. Geoff, 2026-10-09 (DL-165): "I need tab cycling … a chord to cycle which pane is active. And we need a ui affordance (eg outline or glow) to show which pane is active."
+- **How it works:**
+  - Side panes hold their width and the middle takes the change. At 1280×800: project 300 | 520 | 460, All projects 340 | 600 | 340. The right pane gives way first, down to 360, then the left. A PTY never goes below 8×1 (DL-129, LR-14).
+  - A button at the toolbar's trailing end hides and shows the right pane, as ⌥⌘0 does; opening a document shows it again. ⌃⌘S hides the left pane (DL-129, DL-34).
+  - The active pane shows a 2 pt rule across its top edge. ⌥⌘→ and ⌥⌘← move between panes; ⌃Tab and ⌃⇧Tab step through the active pane's tabs, in terminals too (DL-165). Provisional until Geoff confirms on a desktop.
+  - Under the pointer a tab shows an × and a subtle fill behind name and ×; the × does what ⌘W does. A busy tab (Claude working, a shell running) asks first, in a Duo question; `duo2 session close` refuses unless `--force` (DL-126, DL-127, DL-134).
+  - Tabs scroll when many are open: natural width, edge fades, the selected tab always in view, one `n ⌄` menu listing every tab. Project (and a group page) stay pinned left. Closing a tab selects its left neighbour. Shells are titled by the running command, else their folder (DL-225).
+  - Tabs reorder by dragging within their strip, and the tab menu has Move Tab Left and Move Tab Right (DL-220).
+  - One document is visible at a time in the right pane; side by side is later (DL-11).
+  - Chords have one table in `Sources/DuoKit/Navigation/Commands.swift`; changing one needs a log entry (DL-34, LR-60). Browser tabs: ⌥⌘T and ⌘L (DL-99). New Window is ⌥⌘N (DL-141).
+  - Motion follows Reduce Motion: with it on, all of Duo's own motion is instant (DL-129, DL-130). The menu bar has Project and Session menus acting on what's in front of you (DL-108).
+- **Not:** no tab-close prompt for idle tabs or documents (DL-127). No `» n` overflow any more (DL-225). Multi-window is not built (DL-141, Q-99). No Pin to Top separate from Keep Running (DL-217).
+- **Governed by:** DL-11, DL-34, DL-99, DL-108, DL-126, DL-127, DL-129, DL-130, DL-134, DL-141, DL-165, DL-220, DL-225; LR-14, LR-60; `narrow-handoff/`, `pane-focus-handoff/`, `tab-close-handoff/`, `tab-hover-handoff/`, `papercuts-copy-tabs-handoff/`, `tabs-handoff/`, `docs/research/multi-window.md`.
+- **Status:** shipped in 0.1.4 (browser tabs, ⌥⌘T); changed in 0.2.0 (hover ×, busy-tab ask), 0.2.2 (small windows, right-pane button, motion), 0.2.3 (hover fill), 0.2.10 (pane focus, ⌥⌘←/→, ⌃Tab), 0.2.11 (` » ` menu), 0.2.17 (drag tabs), 0.2.18 (scrolling strip). Multi-window: designed (study and spec), not built. Open: Q-95 to Q-99 (multi-window), Q-165, Q-166 (pane focus look and chord).
+- **duo2:** `duo2 view right`, `duo2 view sidebar`, `duo2 view pane`, `duo2 view tab`, `duo2 view tab-move`, `duo2 session close`, `duo2 view select`
+- **Shown in:** guide `docs/guide/getting-around.md`; the intro film shows tab close in S4 (Sessions).
+
+# Plain files, and Claude driving Duo
+
+## FEAT-30 · duo2: Claude drives Duo
+- **Intent:** `duo2` is Duo's command line. It is mainly for Claude, the agent in each terminal, and it works for you too. The rule is that anything you can do in Duo, Claude can do (DL-71, kept from legacy Duo's premise). Scope: the command and how sessions learn it. The documents it edits and the sessions it starts belong to their own features.
+- **How it works:**
+  - Every action a person can take in Duo has a `duo2` verb. A check (`swift run DuoChecks`) fails when a button, menu item or drag has none, unless it is listed as UI-only with a reason (DL-71).
+  - Each action is defined once, in a registry. Menus, the CLI, `duo2 help`, the reference, the primer and Claude's guidance are all generated from it, so none can name a verb that doesn't exist (DL-72).
+  - Output is readable text by default. Every verb takes `--json`. Errors go to stderr with a non-zero exit (DL-73).
+  - The command is `duo2`, so it coexists with legacy Duo's `duo` (DL-16, DL-37).
+  - It talks to Duo over an owner-only Unix socket plus a per-launch token. Duo's sessions allow that one socket in Claude's sandbox. Claude Code then withholds its device tools in those sessions when your sandbox is on, and Duo accepts that (DL-43, DL-51).
+  - Duo's own sessions get a short primer generated from the registry. Sessions anywhere on the Mac learn `duo2` from three installed pieces: a ~60-word block in `~/.claude/CLAUDE.md`, a `duo2` skill, and `~/.local/bin/duo2` linked to the app. They are rewritten at every launch. Files you edit are left alone, a block you delete stays deleted, and `duo2 uninstall` removes it all (DL-74).
+  - Before installing, Duo asks once with one alert that lists every change, and asks again only when that list changes. Declining leaves Duo working without the install; `duo2 doctor` says how to opt in (DL-75). Adding the director skill re-asked everyone who had said yes; nothing is written until they answer, and Not Now also pauses updates to the duo2 skill and block (DL-213).
+  - Moves and merges show Duo's own confirmation sheet and the command waits for you. `duo2 undo` reverses the last move, merge or Make a Project (`docs/features/duo2.md`).
+- **Not:** no global `claude` wrapper, no SessionStart double injection, no subagent and no edit guard (DL-74). No JSON-only output (DL-73).
+- **Governed by:** DL-15, DL-16, DL-37, DL-43, DL-51, DL-71, DL-72, DL-73, DL-74, DL-75, DL-213, `docs/features/duo2.md`, `docs/cli/duo2.md`, `docs/design/cli-teaching.md`. DL-74 revises LR-55 ("install nothing in `~/.claude`").
+- **Status:** shipped (in every release from 0.1.x); changed in 0.2.16 (the install question is asked again for the director skill), 0.2.18 (`duo2 doctor` reports whether Claude Code mods work), 0.2.21 (`duo2 doc layout`, `duo2 doc screenshot`). Open questions: none found.
+- **duo2:** the main families are Duo itself (`duo2 ping`, `duo2 status`, `duo2 needs-you`, `duo2 undo`, `duo2 help`, `duo2 update`, `duo2 hangs`), what's on screen (`duo2 go`, `duo2 open`, `duo2 view`), projects (`duo2 project`, `duo2 home set`, `duo2 migrate`), sessions and tasks (`duo2 session`, `duo2 task`), director (`duo2 director`), files (`duo2 file`), GitHub (`duo2 repo`, `duo2 issue`), documents (`duo2 doc`, `duo2 slide`, `duo2 browser`), Send to Claude (`duo2 send`), search (`duo2 search`) and setup (`duo2 install`, `duo2 uninstall`, `duo2 doctor`, `duo2 settings`, `duo2 legacy`). The reference lists about 214 verbs.
+- **Shown in:** the intro film (`video/script.md` mentions it in S0 and S7; no scene of its own), the guide page `docs/guide/plain-files.md`, `docs/features/duo2.md`.
+
+## FEAT-31 · Plain files
+- **Intent:** everything Duo knows about your work is an ordinary file you can read, edit in Finder, Obsidian or any editor, and keep if you delete Duo. The files must also work as native Obsidian notes, so a project folder can be opened as a vault (DL-6, `docs/research/obsidian-compatible-task-format.md`). Scope: file formats and where state lives. Templates, boards and knowledge bases have their own features.
+- **How it works:**
+  - A project is `PROJECT.md`, Home is `HOME.md`, a task is one note in `tasks/` with `type: task`. Duo picks up your edits (DL-6, DL-18, DL-85).
+  - `PROJECT.md` keeps its name, with `title` and `aliases` so Obsidian shows the real name. Obsidian's graph and tab titles still say "PROJECT" in a multi-project vault, and that is accepted (DL-18).
+  - Tasks are flat: no nested YAML in keys Duo owns, relative Markdown links, and Duo never writes `.obsidian/` (DL-6). There is no `id:` in v1; the path is the identity and the `id` key is reserved (DL-19).
+  - Duo writes Markdown links, `[Title](relative/path.md)`, and never wikilinks. It reads wikilinks it finds but doesn't convert them (DL-17).
+  - A task's `sessions:` list is the truth for task-to-session links. Duo edits only that line, and not while the file has unsaved edits in the editor (DL-13).
+  - Facts read from Claude's transcripts live in a deletable cache that rebuilds from them. Facts only Duo knows (notes, stars, archive) live in `<project>/.duo/sessions.json`. Delete the cache and the UI is identical (DL-1).
+  - Duo's own state is in `~/Library/Application Support/Duo/`, out of reach of Claude's cleanup (DL-53). In a git repo Duo offers once to add `.duo/` to `.gitignore` and never does it silently (DL-50).
+  - Duo never writes a `.base` file unless you choose Add Obsidian Board (DL-20). New projects and tasks come from templates that use Obsidian's own placeholders (DL-146).
+- **Not:** no wikilinks written (DL-17), no Obsidian-only files unless asked (DL-20), no silent `.gitignore` edits (DL-50).
+- **Governed by:** DL-1, DL-6, DL-13, DL-17, DL-18, DL-19, DL-20, DL-50, DL-53, DL-85, DL-146, `docs/research/obsidian-compatible-task-format.md`, `docs/guide/plain-files.md`.
+- **Status:** shipped (0.1.x onward); changed in 0.2.5 (templates, DL-146). Open questions: none found.
+- **duo2:** `duo2 task new`, `duo2 task add`, `duo2 task base`, `duo2 home set`, `duo2 project make`, `duo2 template`.
+- **Shown in:** the intro film (S8 Projects Background, S9 Duo Projects, S10 Tasks in `video/script.md`), the guide page `docs/guide/plain-files.md`.
+
+# The app
+
+## FEAT-32 · Updates
+- **Intent:** installed copies of Duo update themselves, but Sparkle's in-place install asks for an administrator password that many users don't have. Geoff tested it and the fix was recorded on 2026-10-06 (DL-114). Scope: Check for Updates… and the update question.
+- **How it works:**
+  - Release builds check for a new version once a day. A new version downloads, then Duo asks before it relaunches, and what you had open comes back (0.1.6 release notes).
+  - Duo › Check for Updates… asks GitHub first. When a newer Duo exists, Duo asks with its own question: Later, Install Now (Sparkle) or Open Releases Page (download the DMG and install by hand) (DL-114).
+  - Where this account can't replace Duo in `/Applications` (the `duo2 update probe` test), the question says so and Open Releases Page is the default. Otherwise Install Now is (DL-114).
+  - Sparkle's scheduled checks on such an install ask Duo's question too. If you're up to date, or GitHub is unreachable, Sparkle answers as before (DL-114).
+  - The question lists the release's notes, every bold lead, in a box that keeps its drawn height (at most 160) and scrolls. There is no cap at six and no "and n more" (DL-249).
+  - Test builds are named "Duo Dev" with a hazard-stripe icon and use a temporary support folder, so a test build is never taken for the real Duo. Only the main checkout's build and installed releases are Duo to macOS (DL-140, DL-151).
+- **Not:** Sparkle's own window is not the only path, and Sparkle isn't dropped (options weighed in DL-114).
+- **Governed by:** DL-114, DL-249, DL-151, DL-140, DL-132, `docs/design/standins2-handoff/` (q47).
+- **Status:** shipped in 0.1.6 (self-update); changed in 0.1.8 (known issue: the password prompt), 0.1.9 (the three-button question, DL-114), 0.2.4 (the question shows what's new), 0.2.21 (every bullet in a scrolling box; `duo2 update` prints the notes, DL-249). Open questions: none (Q-47, the question's look, was answered by DL-132).
+- **duo2:** `duo2 update`, `duo2 update probe`.
+- **Shown in:** the intro film (a last line, "Duo › Check for Updates…", in `video/script.md`), —.
+
+## FEAT-33 · Coming from Legacy Duo
+- **Intent:** people who use Legacy Duo should be able to install v2 beside it, find their sessions and files where they were, and keep working. Legacy Duo is a shared desk for one document; v2 is a home base across all projects (`docs/guide/coming-from-legacy-duo.md`).
+- **How it works:**
+  - Duo v2 starts clean: no import of legacy Duo's state or settings (DL-10). It finds every Claude session on the Mac, including ones run in Legacy Duo, and files stay where they are.
+  - The command is `duo2`, so both CLIs coexist and legacy files are left untouched (DL-16, DL-37).
+  - Legacy Duo's skill, subagent, hooks and `CLAUDE.md` block in `~/.claude` still load into every session. Duo detects them and shows a notice. One action disables them after backing everything up, and the backup can be restored. It is never silent (DL-39).
+  - Both apps are named `Duo.app`, so dragging v2 in asks to replace Legacy Duo. The guide tells people to rename Legacy Duo first (`docs/guide/coming-from-legacy-duo.md`).
+  - Moving a session or a folder goes through a deterministic, journaled, undoable migrator. Agents may propose a migration and never execute it. Archive preserves sessions, out of the 30-day sweep (DL-41: R1, R2, R4, L3a).
+  - The guide lists what moved (files, tabs, the project rail, Home, workspaces, the `duo` command) and what isn't in v2, as of 0.2.2.
+- **Not:** no import of legacy state (DL-10); an agent never runs a migration (DL-41).
+- **Governed by:** DL-10, DL-16, DL-37, DL-39, DL-41, `docs/guide/coming-from-legacy-duo.md`, `docs/prd/legacy-session-consolidation.md`, LR-55, LR-66 (dropped).
+- **Status:** shipped (0.1.x onward). The guide's "not yet" list is dated 0.2.2. Open questions: none found.
+- **duo2:** `duo2 legacy`, `duo2 migrate`.
+- **Shown in:** the guide page `docs/guide/coming-from-legacy-duo.md`, —.
+
+## FEAT-34 · Appearance and motion
+- **Intent:** how Duo looks and moves. Short on purpose; each surface's own look belongs to its feature.
+- **How it works:**
+  - The look is two-tone: a light chrome beside a dark console, system faces, and one accent, orange, for needs-you. The approved design screens are the literal build target (DL-26).
+  - Dark appearance, "Ink" (DL-224): every colour token has a dark value, and the console sinks a step deeper than the chrome. Settings › General › Appearance offers Match System (the default), Light and Dark, live with no relaunch. HTML pages, Word documents and decks keep their author's colours, and the app icon doesn't change. Geoff brought it forward on 2026-10-19 after GitHub #8 (DL-221).
+  - Motion follows `motion-handoff/` (DL-130): sheets hang from the toolbar, rows travel to their new section, folds turn their chevron, tabs fade. A pane hiding or showing animates its width in 200 ms (DL-129).
+  - Mark Complete shows the row checked and struck through at once, holds for 5 seconds so you can undo, then leaves (DL-130).
+  - Reduce Motion makes all of Duo's own motion instant; Mark Complete still holds 5 s (DL-129, DL-130).
+  - The app icon is two panes: a graphite console beside a white page, no orange (DL-131). Dev builds add yellow-and-black stripes and the name "Duo Dev" (DL-140).
+  - About Duo lists each open-source component and its licence, and `THIRD-PARTY-NOTICES.md` ships in the app (DL-176). The top of `README.md` says Duo is a personal open-source project by one developer, Geoffrey Dudgeon (DL-177).
+- **Not:** no dark, tinted or clear icon variants yet (Q-81, open); documents are not drawn dark (DL-224); no springs in drag and drop (DL-130).
+- **Governed by:** DL-26, DL-129, DL-130, DL-131, DL-140, DL-176, DL-177, DL-221, DL-224, `docs/design/dark-appearance-handoff/`, `docs/design/motion-handoff/`, `docs/design/icon-handoff/`, `docs/design/narrow-handoff/`.
+- **Status:** motion in 0.2.2; icon in 0.2.3; About with third-party notices in 0.2.12; dark appearance in 0.2.18. Open questions: Q-81.
+- **duo2:** `duo2 settings`, `duo2 view`.
+- **Shown in:** the intro film (S0 Intro onward), —.
+
+## FEAT-35 · Hang log and issue reports
+- **Intent:** when Duo stalls or misbehaves, there should be evidence on your Mac and an easy way to tell Geoff. Geoff chose evidence first among the chat-performance follow-ups (DL-139, 2026-10-07). On chat falling back to the terminal: "I keep getting false positives … it is not clear why. Please add a debug button to the banner" (Geoff, 2026-10-28, DL-234).
+- **How it works:**
+  - Duo logs every stall of its main thread of 250 ms or more, on this Mac. Each line says when, how long and what was on screen (no titles or text). Stalls of half a second or more also say where the thread was. Nothing is sent and nothing is drawn (DL-139).
+  - `duo2 hangs` reads the log. `--stacks` adds where Duo was stuck, `--clear` empties it. The file is `hangs.jsonl`, capped at 512 KB, and `DUO_HANG_LOG=0` turns it off (DL-139).
+  - Help › Report an Issue… opens GitHub's new-issue form, filled in, for you to edit and submit (DL-108 m4, `docs/cli/duo2.md`).
+  - Chat's fallback bar has a Debug button after Back to Chat. It opens a Duo sheet with a copyable report: the rule that fired, the reader's verdict and evidence, the last 40 screen rows, versions, and the last 10 chat-state changes. Copy Report is the default (DL-234).
+  - `duo2 session chat why` prints the same report. Every automatic fallback also writes one JSON line (a hash and 8 rows, not the full screen) to `logs/chat-fallbacks.jsonl`; `why --log` lists them (DL-234).
+  - `duo2 doctor` says how this terminal finds Duo, what Duo installed, and whether Claude Code mods can run here (`docs/cli/duo2.md`).
+  - `duo-signal`, a sensor-only Claude Code mod, was spiked (DL-183, F-297). It goes only to sessions Duo starts, installs nothing in `~/.claude`, and fails safe on a Claude Code without mods (the work Mac's). Per F-297 it works but buys little and is off by default (`DUO_SIGNAL=1`).
+- **Not:** no automatic report sent to anyone (DL-139, DL-234); the hang log draws nothing in the app (DL-139).
+- **Governed by:** DL-139, DL-234, DL-183, DL-108, F-297, F-375.
+- **Status:** Report an Issue… shipped in 0.1.8; hang log in 0.2.4, recording while still stalled in 0.2.6, `--stacks` in 0.2.7; `duo2 doctor`'s mod check in 0.2.18; Debug report in 0.2.20. The sensor mod is spiked, not shipped. Open questions: none found (Q-256 is answered).
+- **duo2:** `duo2 hangs`, `duo2 doctor`, `duo2 session chat`.
+- **Shown in:** —, —.

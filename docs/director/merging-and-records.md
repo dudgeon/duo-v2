@@ -14,13 +14,18 @@ For each branch:
 5. **Check, never in the main checkout's `build/`** (2026-10-12). Geoff's own Duo may run from `build/Duo.app`. That bundle is signed ad hoc, so every rebuild changes its identity to macOS, his privacy answers stop sticking, and the prompts repeat. Run every build and check in the director's own work tree, `.claude/worktrees/director-check`: `git -C .claude/worktrees/director-check checkout --detach <merge sha>`, then the scripts there. Its builds are `com.dudgeon.duo.test` (DL-151). Rebuild main's `build/Duo.app` only when Geoff asks.
    - **`scripts/merge-gate.sh <merge sha>` runs the list below as one command** (each gate under the main checkout's `gpu-lock.sh --shared`, one line per gate, non-zero on any failure). The list says what it covers; the baseline comparison, `check-launch-services.sh` and the timing checks stay by hand.
    - `scripts/check-records.sh` (every record id from both parents survives);
+   - `scripts/check-hygiene.py --summary`: warnings only, never a failure (records whose text holds the answer, old stand-ins, stale task notes, design README against `surfaces.md`, the feature catalogue; ENH-281 to ENH-285). Every gate's result goes to a machine-local run log, and a gate that passes only on retry prints FLAKY (ENH-284). `MERGE_GATE_IDLE=1` adds the idle fitness function under the exclusive lock (ENH-286, opt-in);
    - `scripts/bundle.sh`;
    - `swift run DuoChecks` (and `DUO_CHECKS=chat` when chat is touched);
    - `NO_BUILD=1 scripts/check-ui.sh`, then `python3 scripts/samepng.py /tmp/dir-base/<s>.png build/ui/<s>.png` for the six states. A difference must be explained (an intended change) or it's a regression; check main without the merge before blaming the branch. Run the checks inside `scripts/check-background.sh -- …` (or plain `scripts/check-background.sh` for check-ui, check-chat and check-composer-focus together): it fails if a test Duo came to the front, ran as a Dock app or captured while active (F-227). With the screen locked it says the front-app part proves nothing.
    - `scripts/check-launch-services.sh` after every merge (and `--clean` if it fails): only main's build may be registered as Duo (DL-151). Branches made before 76fb3e6 must merge main before their next bundle.sh (C-55).
    - The editor and deck checks when relevant: `NODE_PATH=/tmp/pwc/node_modules node scripts/check-editor-selection.mjs` (also check-editor-motion and check-deck-motion). playwright-core lives in /tmp/pwc; `npm i playwright-core` there if it's missing.
-6. **Push,** then remove the work tree and branch (local and origin), message the session ("merged, you're done").
-7. **Never push a merge you haven't checked.** If you find a problem, `git reset --hard origin/main` (only for an unpushed local merge) and send it back with specifics.
+6. **Keep the living docs current** (DL-240):
+   - a branch that changes what a feature does updates its row (FEAT-n) in `docs/product/features.md`, the feature catalogue, or adds a row for a new feature (the next FEAT number; numbers are never reused, and a retired feature keeps its row marked `Status: retired (DL-n)`). `merge-gate.sh`'s hygiene line warns when `Sources/` changed and the catalogue didn't; a merge that isn't a feature change says so in its message;
+   - a surface whose status changed updates `docs/design/system/surfaces.md` and the handoff's row in `docs/design/README.md` (the hygiene line warns on a mismatch);
+   - after the merge, republish the design system if `docs/design/system/` changed.
+7. **Push,** then remove the work tree and branch (local and origin), message the session ("merged, you're done").
+8. **Never push a merge you haven't checked.** If you find a problem, `git reset --hard origin/main` (only for an unpushed local merge) and send it back with specifics.
 
 ## 3. Records
 

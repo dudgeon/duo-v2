@@ -116,11 +116,15 @@ struct DirectorSlotRow: View {
         }
         .padding(.leading, DuoSpace.panePadding - DuoSpace.selectionInset).padding(.trailing, DuoSpace.panePadding - DuoSpace.selectionInset)
         .padding(.vertical, 5)
-        .background { RoundedRectangle(cornerRadius: DuoMetric.radiusSelection).fill(open ? DuoColor.activeTint : Color.clear) }
+        .background {
+            let run = model.selectionRun(key, list: model.projectSelectionList)
+            if run != .none { SelectionRunFill(run: run) }   // DL-247
+            else { RoundedRectangle(cornerRadius: DuoMetric.radiusSelection).fill(open ? DuoColor.activeTint : Color.clear) }
+        }
         .padding(.horizontal, DuoSpace.selectionInset)
         .background(DuoColor.pane)
         .contentShape(Rectangle())
-        .onActivate { model.openConsoleTab(key) }  // action: session open
+        .onActivate { model.sessionRowClicked(key, list: model.projectSelectionList) { model.openConsoleTab(key) } }  // action: session open, view select
         .modifier(SessionOrganizeMenu(sessionKey: key))
         .accessibilityElement(children: .combine)
         .accessibilityLabel(spoken(open: open))

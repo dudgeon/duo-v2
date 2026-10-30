@@ -48,6 +48,8 @@ public struct DuoQuestion: Identifiable {
     public var paragraphs: [String] = []
     /// What it changes, each with its path, in a box (launch questions, merges, deletes).
     public var items: [Item] = []
+    /// The items' box scrolls past this height (Delete n Sessions…, DL-247: about five sessions).
+    public var itemsMaxHeight: CGFloat? = nil
     public var field: Field? = nil
     public var pick: Pick? = nil
     public var note: String? = nil
@@ -128,7 +130,7 @@ public struct DuoQuestion: Identifiable {
 }
 
 /// The update question's notes (DL-132 b, standins2-handoff q47-writable): `WHAT’S NEW` over the
-/// release's lines in a `pane` box like the items', up to 200 high (six bullets and "and n more" fit; q47 drew 160, Q-285), then it scrolls.
+/// release's lines in a `pane` box like the items', up to 160 high, then it scrolls (DL-249).
 struct NotesBox: View {
     let lines: [String]
     var body: some View {
@@ -136,18 +138,35 @@ struct NotesBox: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("WHAT’S NEW").duoText(.sectionLabel).foregroundStyle(DuoColor.text2)
                 ForEach(Array(lines.enumerated()), id: \.offset) { _, l in
-                    Text(l).duoText(.body).fixedSize(horizontal: false, vertical: true)
+                    Text(Self.attributed(l)).duoText(.body).fixedSize(horizontal: false, vertical: true)
                 }
             }
             .padding(.horizontal, DuoSpace.cardPadding.leading)
             .padding(.vertical, 10)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(maxHeight: 200)
+        .frame(maxHeight: 160)
         .fixedSize(horizontal: false, vertical: true)
         .background(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).fill(DuoColor.pane))
         .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
-        .accessibilityLabel("What’s new: " + lines.joined(separator: " "))
+        .accessibilityLabel("What’s new: " + lines.map(UpdateCheck.plainNote).joined(separator: " "))
+    }
+
+    /// A line with its Markdown links drawn as links, as chat draws a web link (text colour, solid
+    /// underline); a click opens the address in the default browser.
+    static func attributed(_ line: String) -> AttributedString {
+        var out = AttributedString()
+        var at = line.startIndex
+        for l in UpdateCheck.noteLinks(line) {
+            out += AttributedString(String(line[at..<l.range.lowerBound]))
+            var a = AttributedString(l.text)
+            a.link = l.url
+            a.foregroundColor = DuoColor.text
+            a.underlineStyle = Text.LineStyle(pattern: .solid, color: DuoColor.controlEdge)
+            out += a
+            at = l.range.upperBound
+        }
+        return out + AttributedString(String(line[at...]))
     }
 }
 
@@ -188,6 +207,7 @@ struct QuestionSheet: View {
                 let rowed = q.items.contains { !$0.what.isEmpty && !$0.path.isEmpty && $0.detail != nil }
                 // Name rows (the memory question's tabs, DL-192) are 20-high lines with no gap (park-handoff).
                 let named = q.items.contains { !$0.what.isEmpty && $0.path.isEmpty && $0.detail != nil }
+                ScrollIfTaller(maxHeight: q.itemsMaxHeight) {
                 VStack(alignment: .leading, spacing: rowed || named ? 0 : DuoSpace.gapGlyphToLabel) {
                     ForEach(Array(q.items.enumerated()), id: \.offset) { n, i in
                         if rowed && n > 0 { DuoColor.rule.frame(height: DuoMetric.borderHairline).padding(.horizontal, -DuoSpace.cardPadding.leading) }
@@ -234,6 +254,7 @@ struct QuestionSheet: View {
                 .padding(.horizontal, DuoSpace.cardPadding.leading)
                 .padding(.vertical, rowed ? 0 : named ? DuoSpace.gapGlyphToLabel : DuoSpace.gapRowItems)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                }
                 .background(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).fill(DuoColor.pane))
                 .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
             }
@@ -306,6 +327,24 @@ struct PickRow: View {
             }
             .labelsHidden().pickerStyle(.menu).fixedSize()
             Spacer(minLength: 0)
+        }
+    }
+}
+
+/// Its content as it is, or in a scroll view of `maxHeight` when it's taller (the items' box, DL-247).
+struct ScrollIfTaller<Content: View>: View {
+    let maxHeight: CGFloat?
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        if let maxHeight {
+            ViewThatFits(in: .vertical) {
+                content()
+                ScrollView(.vertical) { content() }.frame(height: maxHeight)
+            }
+            .frame(maxHeight: maxHeight)
+        } else {
+            content()
         }
     }
 }

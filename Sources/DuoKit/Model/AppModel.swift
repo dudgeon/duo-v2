@@ -45,6 +45,12 @@ public final class AppModel {
 
     // Inside a project
     public var selectedSidebarItem: String?     // group name or Session.id
+    /// Several sessions selected in one list (DL-247).
+    public var sessionSelection = SessionSelection()
+    /// Each list's rows as last drawn, session keys and breakers (`SessionSelection.breaker`): what a ⇧-click ranges over.
+    @ObservationIgnored public var selectionOrders: [String: [String]] = [:]
+    /// Each list's folded fork threads as last drawn: the row's key → its fold key and its sessions (DL-250).
+    @ObservationIgnored public var selectionThreads: [String: [String: (fold: String, members: [String])]] = [:]
     public var expandedGroups: Set<String> = []
     /// The session list's order while the pointer is in it (Q-80, DL-130): project, then each
     /// section's row ids. Nil when the list is free to reorder.
@@ -572,7 +578,7 @@ public final class AppModel {
         pushNoteContext()
         Notifier.shared.model = self
         notifyNeedsYou()
-        pruneDirectorRegistries()   // workers whose task is done; messages an older Duo queued (DL-244)
+        pruneDirectorRegistries()   // workers whose task is done; messages an older Duo queued (DL-256)
         deliverReviewComments()     // @claude comments waiting for their session, and their replies (DL-236 10A)
         archiveListedSessions()  // after the snapshot is applied: it archives what's listed now
         GitIgnoreOffer.consider(folders, interactive: interactivePrompts && !SupportFolder.isIsolated)   // C-28: no first-run questions in an isolated instance

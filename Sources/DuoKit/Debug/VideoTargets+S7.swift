@@ -120,6 +120,7 @@ extension VideoTargets {
             e.webView.window?.makeFirstResponder(e.webView)
             e.run("duo.focus(); " + code, args) { v in FileHandle.standardError.write(Data("video:\(verb): \(String(describing: v ?? "nil"))\n".utf8)) }
         }
+        if verb.hasPrefix("rv-") { return rvAct(verb, arg, on: model) }
         switch verb {
         case "select": js("const t = duo.text(), i = t.indexOf(s); if (i < 0) return 'not found'; duo.select(i, i + s.length); return i", ["s": arg])
         case "lines":

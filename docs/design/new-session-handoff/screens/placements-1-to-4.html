@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>New session buttons: placement</title>
+<meta name="viewport" content="width=device-width">
+</head>
+<body>
+<style>
+body{margin:0}
+.strip{width:1680px;height:64px;background:#15171B;display:flex;align-items:center;gap:36px;padding:0 32px;box-sizing:border-box;font-family:ui-monospace,'SF Mono',monospace;font-size:24px;border-radius:6px;overflow:hidden}
+.tab{display:flex;align-items:center;gap:12px;color:#9AA1AB;white-space:nowrap;flex:0 0 auto}
+.on{color:#E6E8EB;font-weight:500}
+.ovf{display:flex;align-items:center;gap:8px;color:#9AA1AB;flex:0 0 auto}
+.pill{display:flex;align-items:center;border:2px solid #4A4F57;border-radius:12px;overflow:hidden;flex:0 0 auto}
+.seg{width:52px;height:40px;display:flex;align-items:center;justify-content:center}
+.segon{background:#2B2F36}
+.hair{width:2px;height:24px;background:#4A4F57}
+.grow{flex:1 1 auto}
+.sep{width:2px;height:32px;background:#2B2F36;flex:0 0 auto}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:0.66px;text-transform:uppercase;color:#5B636D}
+.row{display:flex;flex-direction:column;gap:8px}
+.note{font-size:14px;line-height:21px;max-width:1680px}
+</style>
+<div style="width: 2000px; height: 1680px; box-sizing: border-box; padding: 48px 56px; background: #F3F4F6; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; display: flex; flex-direction: column; gap: 22px">
+  <div style="display: flex; align-items: center; gap: 10px">
+    <h1 style="margin: 0; font-size: 28px; line-height: 36px; font-weight: 600">Where the two pills go, with few tabs and with many</h1>
+    <span style="font-size: 11px; line-height: 16px; padding: 1px 7px; border: 1px solid #8B939C; border-radius: 9px; color: #5B636D">[P]</span>
+  </div>
+  <div class="row">
+    <div class="lbl">Today, crowded (real capture, light strip, 2×): the overflow <span style="text-transform:none">6 ⌄</span> pushes <span style="text-transform:none">+ ⌄</span> against the toggle</div>
+    <img src="../strip-v2-light.png" alt="v2 light strip with many tabs: overflow count, plus, chevron, then the Terminal/Chat toggle" style="width: 1680px; display: block; border: 1px solid #C9CDD3; border-radius: 6px">
+  </div>
+
+  <div class="row">
+    <div style="font-size: 18px; line-height: 24px; font-weight: 600">1 · After the tabs (as on the options board)</div>
+    <div class="strip">
+      <div class="tab on"><svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.6" fill="none" stroke="#E6E8EB" stroke-width="1.5"></circle></svg>Tighten PRD goals</div>
+      <div class="tab"><svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5h6" stroke="#9AA1AB" stroke-width="1.6" stroke-linecap="round"></path></svg>Prototype scan review</div>
+      <svg width="20" height="20" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5v7 M1.5 5h7" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round"></path></svg>
+      <div class="pill" style="margin-left:-22px"><div class="seg"><svg width="27" height="18" viewBox="0 0 12 8" aria-label="New Claude session" role="img"><path fill="#9AA1AB" d="M5 0h1v1h-1zM2 1h8v1h-8zM2 2h1v1h-1zM4 2h4v1h-4zM9 2h1v1h-1zM2 3h8v2h-8zM1 5h10v1h-10zM3 6h2v1h-2zM7 6h2v1h-2zM3 7h2v1h-2zM7 7h2v1h-2z"></path></svg></div><div class="hair"></div><div class="seg"><svg width="24" height="20" viewBox="0 0 12 10" aria-label="New shell" role="img"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h4" fill="none" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div></div>
+      <div class="grow"></div>
+      <div class="pill"><div class="seg segon"><svg width="26" height="20" viewBox="0 0 13 10" aria-hidden="true"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h5" fill="none" stroke="#E6E8EB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div><div class="seg"><svg width="26" height="22" viewBox="0 0 13 11" aria-hidden="true"><path d="M2.5 1H10.5Q12 1 12 2.5V6.5Q12 8 10.5 8H6L3.5 10V8H2.5Q1 8 1 6.5V2.5Q1 1 2.5 1Z" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linejoin="round"></path></svg></div></div>
+    </div>
+    <div class="strip">
+      <div class="tab"><svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5h6" stroke="#9AA1AB" stroke-width="1.6" stroke-linecap="round"></path></svg>Tighten PRD goals</div>
+      <div class="tab"><svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5h6" stroke="#9AA1AB" stroke-width="1.6" stroke-linecap="round"></path></svg>Prototype scan review</div>
+      <div class="tab"><svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5h6" stroke="#9AA1AB" stroke-width="1.6" stroke-linecap="round"></path></svg>Synthesis from intervie…</div>
+      <div class="tab on"><svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="#F97316"></circle></svg>Auto-add decision</div>
+      <div class="ovf">6<svg width="14" height="10" viewBox="0 0 8 6" aria-hidden="true"><path d="M1 1.5 4 4.5 7 1.5" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+      <svg width="20" height="20" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5v7 M1.5 5h7" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round"></path></svg>
+      <div class="pill" style="margin-left:-22px"><div class="seg"><svg width="27" height="18" viewBox="0 0 12 8" aria-hidden="true"><path fill="#9AA1AB" d="M5 0h1v1h-1zM2 1h8v1h-8zM2 2h1v1h-1zM4 2h4v1h-4zM9 2h1v1h-1zM2 3h8v2h-8zM1 5h10v1h-10zM3 6h2v1h-2zM7 6h2v1h-2zM3 7h2v1h-2zM7 7h2v1h-2z"></path></svg></div><div class="hair"></div><div class="seg"><svg width="24" height="20" viewBox="0 0 12 10" aria-hidden="true"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h4" fill="none" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div></div>
+      <div class="pill" style="margin-left:-20px"><div class="seg segon"><svg width="26" height="20" viewBox="0 0 13 10" aria-hidden="true"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h5" fill="none" stroke="#E6E8EB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div><div class="seg"><svg width="26" height="22" viewBox="0 0 13 11" aria-hidden="true"><path d="M2.5 1H10.5Q12 1 12 2.5V6.5Q12 8 10.5 8H6L3.5 10V8H2.5Q1 8 1 6.5V2.5Q1 1 2.5 1Z" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linejoin="round"></path></svg></div></div>
+    </div>
+    <div class="note"><b>Crowded:</b> the two pills touch, and two <code>›_</code> halves sit side by side, one meaning “new shell” and one meaning “show as terminal”. The new pill also moves every time a tab opens or closes.</div>
+  </div>
+
+  <div class="row">
+    <div style="display: flex; align-items: baseline; gap: 12px"><div style="font-size: 18px; line-height: 24px; font-weight: 600">2 · New at the left edge, mode at the right edge</div><div style="font-size: 12px; line-height: 16px; font-weight: 600; padding: 2px 8px; border: 1.5px solid #1F2328; border-radius: 9px">Recommended</div></div>
+    <div class="strip">
+      <svg width="20" height="20" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5v7 M1.5 5h7" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round"></path></svg>
+      <div class="pill" style="margin-left:-22px"><div class="seg"><svg width="27" height="18" viewBox="0 0 12 8" aria-hidden="true"><path fill="#9AA1AB" d="M5 0h1v1h-1zM2 1h8v1h-8zM2 2h1v1h-1zM4 2h4v1h-4zM9 2h1v1h-1zM2 3h8v2h-8zM1 5h10v1h-10zM3 6h2v1h-2zM7 6h2v1h-2zM3 7h2v1h-2zM7 7h2v1h-2z"></path></svg></div><div class="hair"></div><div class="seg"><svg width="24" height="20" viewBox="0 0 12 10" aria-hidden="true"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h4" fill="none" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div></div>
+      <div class="sep"></div>
+      <div class="tab on"><svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.6" fill="none" stroke="#E6E8EB" stroke-width="1.5"></circle></svg>Tighten PRD goals</div>
+      <div class="tab"><svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5h6" stroke="#9AA1AB" stroke-width="1.6" stroke-linecap="round"></path></svg>Prototype scan review</div>
+      <div class="grow"></div>
+      <div class="pill"><div class="seg segon"><svg width="26" height="20" viewBox="0 0 13 10" aria-hidden="true"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h5" fill="none" stroke="#E6E8EB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div><div class="seg"><svg width="26" height="22" viewBox="0 0 13 11" aria-hidden="true"><path d="M2.5 1H10.5Q12 1 12 2.5V6.5Q12 8 10.5 8H6L3.5 10V8H2.5Q1 8 1 6.5V2.5Q1 1 2.5 1Z" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linejoin="round"></path></svg></div></div>
+    </div>
+    <div class="strip">
+      <svg width="20" height="20" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5v7 M1.5 5h7" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round"></path></svg>
+      <div class="pill" style="margin-left:-22px"><div class="seg"><svg width="27" height="18" viewBox="0 0 12 8" aria-hidden="true"><path fill="#9AA1AB" d="M5 0h1v1h-1zM2 1h8v1h-8zM2 2h1v1h-1zM4 2h4v1h-4zM9 2h1v1h-1zM2 3h8v2h-8zM1 5h10v1h-10zM3 6h2v1h-2zM7 6h2v1h-2zM3 7h2v1h-2zM7 7h2v1h-2z"></path></svg></div><div class="hair"></div><div class="seg"><svg width="24" height="20" viewBox="0 0 12 10" aria-hidden="true"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h4" fill="none" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div></div>
+      <div class="sep"></div>
+      <div class="tab"><svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5h6" stroke="#9AA1AB" stroke-width="1.6" stroke-linecap="round"></path></svg>Tighten PRD goals</div>
+      <div class="tab"><svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5h6" stroke="#9AA1AB" stroke-width="1.6" stroke-linecap="round"></path></svg>Prototype scan review</div>
+      <div class="tab"><svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5h6" stroke="#9AA1AB" stroke-width="1.6" stroke-linecap="round"></path></svg>Synthesis from in…</div>
+      <div class="tab on"><svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="#F97316"></circle></svg>Auto-add decision</div>
+      <div class="ovf">6<svg width="14" height="10" viewBox="0 0 8 6" aria-hidden="true"><path d="M1 1.5 4 4.5 7 1.5" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+      <div class="grow"></div>
+      <div class="pill"><div class="seg segon"><svg width="26" height="20" viewBox="0 0 13 10" aria-hidden="true"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h5" fill="none" stroke="#E6E8EB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div><div class="seg"><svg width="26" height="22" viewBox="0 0 13 11" aria-hidden="true"><path d="M2.5 1H10.5Q12 1 12 2.5V6.5Q12 8 10.5 8H6L3.5 10V8H2.5Q1 8 1 6.5V2.5Q1 1 2.5 1Z" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linejoin="round"></path></svg></div></div>
+    </div>
+    <div class="note"><b>For:</b> the new pill never moves, and the two pills never meet: the tabs and the overflow live between them, so the strip's own width keeps them apart. <b>Against:</b> the first tab starts about 70 pt further right, and new tabs still appear at the right end of the tabs, away from the button that made them.</div>
+  </div>
+
+  <div class="row">
+    <div style="font-size: 18px; line-height: 24px; font-weight: 600">3 · One cluster at the right edge, with a gap</div>
+    <div class="strip">
+      <div class="tab on"><svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.6" fill="none" stroke="#E6E8EB" stroke-width="1.5"></circle></svg>Tighten PRD goals</div>
+      <div class="tab"><svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5h6" stroke="#9AA1AB" stroke-width="1.6" stroke-linecap="round"></path></svg>Prototype scan review</div>
+      <div class="tab"><svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5h6" stroke="#9AA1AB" stroke-width="1.6" stroke-linecap="round"></path></svg>Synthesis from in…</div>
+      <div class="tab"><svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="#F97316"></circle></svg>Auto-add decision</div>
+      <div class="ovf">6<svg width="14" height="10" viewBox="0 0 8 6" aria-hidden="true"><path d="M1 1.5 4 4.5 7 1.5" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+      <div class="grow"></div>
+      <div class="pill"><div class="seg segon"><svg width="26" height="20" viewBox="0 0 13 10" aria-hidden="true"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h5" fill="none" stroke="#E6E8EB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div><div class="seg"><svg width="26" height="22" viewBox="0 0 13 11" aria-hidden="true"><path d="M2.5 1H10.5Q12 1 12 2.5V6.5Q12 8 10.5 8H6L3.5 10V8H2.5Q1 8 1 6.5V2.5Q1 1 2.5 1Z" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linejoin="round"></path></svg></div></div>
+      <div class="sep"></div>
+      <svg width="20" height="20" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5v7 M1.5 5h7" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round"></path></svg>
+      <div class="pill" style="margin-left:-22px"><div class="seg"><svg width="27" height="18" viewBox="0 0 12 8" aria-hidden="true"><path fill="#9AA1AB" d="M5 0h1v1h-1zM2 1h8v1h-8zM2 2h1v1h-1zM4 2h4v1h-4zM9 2h1v1h-1zM2 3h8v2h-8zM1 5h10v1h-10zM3 6h2v1h-2zM7 6h2v1h-2zM3 7h2v1h-2zM7 7h2v1h-2z"></path></svg></div><div class="hair"></div><div class="seg"><svg width="24" height="20" viewBox="0 0 12 10" aria-hidden="true"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h4" fill="none" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div></div>
+    </div>
+    <div class="note">Shown crowded; with few tabs the cluster looks the same. <b>For:</b> v1's arrangement (a hairline, then the cluster), fixed in place, and the two pills read as a deliberate pair: this session's mode, then new ones. <b>Against:</b> the <code>›_</code> halves are still only a hairline apart.</div>
+  </div>
+
+  <div class="row">
+    <div style="font-size: 18px; line-height: 24px; font-weight: 600">4 · The mode toggle rides on the selected tab; the new pill ends the strip</div>
+    <div class="strip">
+      <div class="tab"><svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5h6" stroke="#9AA1AB" stroke-width="1.6" stroke-linecap="round"></path></svg>Tighten PRD goals</div>
+      <div class="tab"><svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5h6" stroke="#9AA1AB" stroke-width="1.6" stroke-linecap="round"></path></svg>Prototype scan review</div>
+      <div class="tab on"><svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="#F97316"></circle></svg>Auto-add decision
+        <div class="pill" style="margin-left:6px"><div class="seg segon" style="width:40px;height:32px"><svg width="22" height="17" viewBox="0 0 13 10" aria-hidden="true"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h5" fill="none" stroke="#E6E8EB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div><div class="seg" style="width:40px;height:32px"><svg width="22" height="19" viewBox="0 0 13 11" aria-hidden="true"><path d="M2.5 1H10.5Q12 1 12 2.5V6.5Q12 8 10.5 8H6L3.5 10V8H2.5Q1 8 1 6.5V2.5Q1 1 2.5 1Z" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linejoin="round"></path></svg></div></div>
+      </div>
+      <div class="tab"><svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5h6" stroke="#9AA1AB" stroke-width="1.6" stroke-linecap="round"></path></svg>Spine eval: gl…</div>
+      <div class="ovf">6<svg width="14" height="10" viewBox="0 0 8 6" aria-hidden="true"><path d="M1 1.5 4 4.5 7 1.5" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+      <div class="grow"></div>
+      <svg width="20" height="20" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5v7 M1.5 5h7" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round"></path></svg>
+      <div class="pill" style="margin-left:-22px"><div class="seg"><svg width="27" height="18" viewBox="0 0 12 8" aria-hidden="true"><path fill="#9AA1AB" d="M5 0h1v1h-1zM2 1h8v1h-8zM2 2h1v1h-1zM4 2h4v1h-4zM9 2h1v1h-1zM2 3h8v2h-8zM1 5h10v1h-10zM3 6h2v1h-2zM7 6h2v1h-2zM3 7h2v1h-2zM7 7h2v1h-2z"></path></svg></div><div class="hair"></div><div class="seg"><svg width="24" height="20" viewBox="0 0 12 10" aria-hidden="true"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h4" fill="none" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div></div>
+    </div>
+    <div class="note">Shown crowded. <b>For:</b> the mode visibly belongs to that session, and the two pills are far apart. <b>Against:</b> the selected tab grows by about 46 pt and changes width as you switch tabs. It's a smaller toggle (20 × 16 segments) and a new tab layout, so the most new design of the four.</div>
+  </div>
+</div>
+</body>
+</html>

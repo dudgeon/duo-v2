@@ -98,7 +98,7 @@ public enum DirectorOffline {
         /// A background worker that hasn't appeared yet: the name it will.
         public var pendingName: String?
         public var peerName: String?
-        /// The worker's permission class, from its transcript (F-397).
+        /// The worker's permission class, from its transcript (F-421).
         public var permissionClass: PermissionClass?
         public var question: String?
         public var userTyping: Bool

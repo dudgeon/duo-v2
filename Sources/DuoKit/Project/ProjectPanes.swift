@@ -70,6 +70,8 @@ struct ProjectSidebarPane: View {
                         }
                     }
                     .onChange(of: items.map(\.id), initial: true) { model.noteSidebar(sections) }
+                    // What a ⇧-click ranges over, as drawn (DL-247).
+                    let _ = model.noteSelectionOrder(model.projectSelectionList, model.sidebarOrder(items, project: name))
                     if let project { ArchivedSessionsFold(project: project.name) }
                     HStack(spacing: DuoSpace.gapButtonToButton) {
                         Button("+ New Claude Code session") { model.newSession() }.buttonStyle(.duo)
@@ -84,6 +86,8 @@ struct ProjectSidebarPane: View {
                 // rows fading in over these (DL-130).
                 .id(project?.name)
             }
+            // A click on the pane where no row is clears the selection (DL-247).
+            .background { Color.clear.contentShape(Rectangle()).onTapGesture { model.clearSessionSelection() } }
             .onHover { model.hoverSidebar($0) }
             .onGeometryChange(for: CGFloat.self, of: { $0.size.width }) { model.sidebarWidth = $0 }
             .background { if model.videoDemoFolder != nil { Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Sessions").accessibilityIdentifier("video.sessions.list") } }   // anchors (scene 9)
@@ -429,18 +433,24 @@ struct SidebarLeafRow: View {
         .padding(.leading, leading ?? (nested ? 11 + DuoMetric.borderEmphasis : DuoSpace.panePadding))
         .padding(.trailing, DuoSpace.panePadding)
         .frame(height: row.showsOrigin ? 42 : DuoMetric.rowSession, alignment: .top)
-        // A terminal is open for it in Duo (ENH-7). The selected row's own fill is drawn by the list.
+        // A terminal is open for it in Duo (ENH-7). Selected with others, the selection's fill wins and joins its
+        // neighbours' (DL-247, board 01 A).
         .background {
             // Inset and rounded, as the boards draw it (sidebar-hierarchy-handoff, session-glyphs-handoff 04).
-            if model.hasOpenTerminal(row.sessionKey) {
+            let run = model.selectionRun(row.sessionKey, list: model.projectSelectionList)
+            if run != .none {
+                SelectionRunFill(run: run).padding(.horizontal, DuoSpace.selectionInset)
+            } else if model.hasOpenTerminal(row.sessionKey) {
                 RoundedRectangle(cornerRadius: DuoMetric.radiusSelection).fill(DuoColor.activeTint).padding(.horizontal, DuoSpace.selectionInset)
             }
         }
         .contentShape(Rectangle())
-        .onActivate { model.openConsoleTab(row.sessionKey) }  // action: session open
+        // A plain click opens it; ⇧ and ⌘ select and never open or resume (DL-247).
+        .onActivate { model.sessionRowClicked(row.sessionKey, list: model.projectSelectionList) { model.openConsoleTab(row.sessionKey) } }  // action: session open, view select
         .modifier(SessionOrganizeMenu(sessionKey: row.sessionKey))
         .accessibilityElement(children: .combine)
         .accessibilityLabel(rowLabel(kind))
+        .accessibilityAddTraits(model.selectionRun(row.sessionKey, list: model.projectSelectionList) != .none ? .isSelected : [])
         .accessibilityIdentifier("video.session.\(row.name)")   // anchors: the video cursor's target
         .overlay {   // anchors: the row a context menu is open on
             if model.contextMenuSession == row.sessionKey { Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Context menu row").accessibilityIdentifier("video.menu.row") }
@@ -1419,5 +1429,21 @@ struct NoticeMotion: ViewModifier {
         content
             .clipped()
             .animation((key != nil ? DuoMotionToken.noticeIn : .noticeOut).animation, value: key)
+    }
+}
+
+/// A selected row's fill (DL-247, board 01 A): `selected`, rounded only at the ends of a run of selected rows, so a
+/// range reads as one block. While the selection's menu is open it's `menuTarget` (Q-147).
+struct SelectionRunFill: View {
+    @Environment(AppModel.self) private var model
+    let run: SessionSelection.Run
+
+    var body: some View {
+        let r = DuoMetric.radiusSelection
+        let top: CGFloat = run == .single || run == .top ? r : 0
+        let bottom: CGFloat = run == .single || run == .bottom ? r : 0
+        let menuOpen = model.contextMenuSession.map { model.sessionSelection.isMulti($0) } ?? false
+        UnevenRoundedRectangle(topLeadingRadius: top, bottomLeadingRadius: bottom, bottomTrailingRadius: bottom, topTrailingRadius: top)
+            .fill(menuOpen ? DuoColor.menuTarget : DuoColor.selected)
     }
 }

@@ -150,6 +150,25 @@ public enum FixtureHarness {
                 if let f = c.fallback { c.fallback = nil; c.fallBack(f, rule: "unknown-screen") }
                 model.showFallbackReport(k)
             }
+        // Several sessions selected (DL-247, session-multiselect-handoff), by session name, `|` between names.
+        case "select":       // select:<name>|<name>…: ⌘-clicks, in that order, in the project pane
+            let list = model.projectSelectionList
+            for n in (parts.count > 1 ? parts[1].split(separator: "|").map(String.init) : []) {
+                if let k = (model.fixture.sessions + (model.fixture.archivedSessions ?? [])).first(where: { $0.name == n })?.tabKey { model.sessionRowClicked(k, .command, list: list) {} }
+            }
+        case "select-range": // select-range:<from>|<to>: the anchor (as a ⌘-click), then a ⇧-click
+            let names = parts.count > 1 ? parts[1].split(separator: "|").map(String.init) : []
+            let list = model.projectSelectionList
+            let keys = names.compactMap { n in model.fixture.sessions.first { $0.name == n }?.tabKey }
+            if keys.count == 2 { model.sessionRowClicked(keys[0], .command, list: list) {}; model.sessionRowClicked(keys[1], .shift, list: list) {} }
+        case "select-menu":  // the selection's menu open: every selected row in menuTarget
+            model.contextMenuSession = model.sessionSelection.keys.first
+        case "select-delete-sheet":   // Delete n Sessions…'s sheet on sample data (board 03; nothing is deleted)
+            let rows = model.selectedSessions
+            let items = rows.map { DuoQuestion.Item(what: $0.name, path: $0.state.spokenName + ($0.wait.map { " · \($0)" } ?? "")) }
+            var q = AppModel.deleteSessionsQuestion(names: rows.map(\.name), items: items, steps: rows.count * 3, bytes: "1.4 MB", outside: [])
+            q.choices = [.init(label: "Cancel", isCancel: true) {}, .init(label: "Move to Trash", isDefault: true) {}]
+            SheetCenter.shared.ask(q)
         case "sheet-new":    // sheet-new[:<name>]: the New project sheet
             model.showNewProject(name: parts.count > 1 ? parts[1] : "")
         case "sheet-goal": model.newProjectForm?.goal = parts.count > 1 ? parts[1] : ""
@@ -193,11 +212,11 @@ public enum FixtureHarness {
         case "trust-state":   // trust-state: what the bar says, to stderr
             if let k = model.visibleTerminal?.key { FileHandle.standardError.write(Data("trust-state: \(model.trustNotices[k].map { "\($0.path) \($0.phase) fork=\($0.forkLine ?? "-")" } ?? "none")\n".utf8)) }
         case "ask-legacy": LegacyPrompt.run()
-        case "ask-update":   // ask-update:writable|admin|no-sparkle|no-notes: the update question (DL-114) for 0.1.9 over 0.1.8, its buttons only logged
+        case "ask-update":   // ask-update:writable|admin|no-sparkle|no-notes|real: the update question (DL-114) for 0.1.9 over 0.1.8, its buttons only logged
             let form = parts.count > 1 ? parts[1] : "writable"
             let o = UpdateCheck.Offer(version: "0.1.9", current: "0.1.8", page: UpdateCheck.releasePage("0.1.9"), needsAdmin: form == "admin",
                                       canInstallNow: form != "no-sparkle", folder: "/Applications",
-                                      notes: form == "no-notes" ? "" : "## What's new\n\n**Tabs**\n- **Closing a tab where Claude is working asks first.** Detail.\n- **Files dropped on the tree move there, with Undo.** Detail.\n- **PowerPoint decks open in the right pane.** Detail.\n- **Narrow windows keep the side panes’ widths.** Detail.\n- **Search finds text inside Word files.** Detail.\n- **Chat remembers its scroll place.** Detail.\n- **Settings has a Updates tab.** Detail.\n- **A fix for the sidebar.** Detail.\n\n## Install\nOpen the DMG.\n")
+                                      notes: form == "real" ? ((try? String(contentsOf: URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("Fixtures/release-notes/0.2.21.md"), encoding: .utf8)) ?? "") : form == "no-notes" ? "" : "## What's new\n\n**Tabs**\n- **Closing a tab where Claude is working asks first.** Detail.\n- **Files dropped on the tree move there, with Undo.** Detail.\n- **PowerPoint decks open in the right pane.** Detail.\n- **Narrow windows keep the side panes’ widths.** Detail.\n- **Search finds text inside Word files.** Detail.\n- **Chat remembers its scroll place.** Detail.\n- **Settings has a Updates tab.** Detail.\n- **A fix for the sidebar.** Detail.\n\n## Install\nOpen the DMG.\n")
             func say(_ s: String) -> @MainActor () -> Void { { FileHandle.standardError.write(Data("ask-update: \(s)\n".utf8)) } }
             SheetCenter.shared.ask(UpdateCheck.question(o, openPage: say("Open Releases Page"), installNow: say("Install Now"), later: say("Later")))
         case "sheet-ok": if model.moveIntoHomeForm != nil { model.confirmMoveIntoHome() } else { model.commitNewProject() }
@@ -358,6 +377,9 @@ public enum FixtureHarness {
         case "review-comment":   // review-comment:<anchor text>=><comment>: a comment on that text, as the composer posts it
             let p = (parts.count > 1 ? parts[1] : "").components(separatedBy: "=>")
             if p.count == 2 { model.editor.run("const d = view_text(); const at = d.indexOf(a); return at < 0 ? null : duo.reviewComment(t.replace(/~/g, ' '), at, at + a.length)".replacingOccurrences(of: "view_text()", with: "duo.text()"), ["a": p[0].replacingOccurrences(of: "~", with: " "), "t": p[1]]) { _ in } }
+        case "review-at":   // review-at:<anchor>=><typed>=><keys, + between: tab down up esc return post>: a comment typed in the margin's composer (~ for spaces); the field and the @ menu go to stderr
+            let p = (parts.count > 1 ? parts[1] : "").components(separatedBy: "=>").map { $0.replacingOccurrences(of: "~", with: " ") }
+            if p.count == 3 { model.editor.run("return await duo.reviewDrive(a, t, k)", ["a": p[0], "t": p[1], "k": p[2]]) { v in FileHandle.standardError.write(Data("review-at: \(v as? String ?? "nil")\n".utf8)) } }
         case "review-op":   // review-op:<reply|close|reopen|delete>=<thread id>[=<text, ~ for spaces>]: what a margin button does
             let p = (parts.count > 1 ? parts[1] : "").components(separatedBy: "=")
             if p.count >= 2 { model.editor.run("return duo.reviewOp(o, i, t)", ["o": p[0], "i": p[1], "t": p.count > 2 ? p[2].replacingOccurrences(of: "~", with: " ") : ""]) { _ in } }

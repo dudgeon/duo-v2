@@ -64,6 +64,26 @@ expect "suggest: typing became a signed substitution" $A has "{~~early November~
 expect "suggest: Claude's doc replace became a signed mark" $A has "{~~nothing in the cloud~>nothing at all in the cloud~~}{>>@claude "
 expect "suggest: the switch is reported on" $out/suggest.log has "Suggest Edits is on"
 
+# 4b. Suggest Edits on: a comment-thread verb is a change to the thread, never a suggestion (F-398)
+fresh sug-reply
+run sug-reply "${open}$A,wait:2,verb:doc review on,wait:2,verb:comment reply c1 Done,wait:1,verb:comment close c1,wait:3"
+expect "suggest on: a reply is a thread comment" $A has "#c1.1: Done<<}"
+expect "suggest on: a reply is not a tracked insertion" $A lacks "{++{>>"
+expect "suggest on: close writes the closing line" $A has "#c1.2 closed<<}"
+expect "suggest on: close is not a suggestion either" $A lacks "{++{>>"
+fresh sug-delete
+run sug-delete "${open}$A,wait:2,verb:doc review on,wait:2,verb:comment delete c1,wait:3"
+expect "suggest on: delete takes the thread out" $A lacks "#c1"
+expect "suggest on: delete is not a tracked deletion" $A lacks "{--"
+fresh sug-accept
+run sug-accept "${open}$A,wait:2,verb:doc review on,wait:2,verb:suggestion accept s1,wait:3"
+expect "suggest on: accept resolves the mark" $A has "retries every 10 seconds"
+expect "suggest on: and is not itself a suggestion" $A lacks "{~~30~>10~~}"
+fresh sug-add
+run sug-add "${open}$A,wait:2,verb:doc review on,wait:2,verb:comment add ${A} --at Launch Is~it~ready,wait:3"
+expect "suggest on: a new comment is a comment" $A has "{==Launch"
+expect "suggest on: not wrapped as an insertion" $A lacks "{++{==Launch"
+
 fresh suggest-off
 run suggest-off "${open}$A,wait:2,verb:doc review on,wait:2,verb:doc review off,wait:3"
 expect "suggest off: the line is gone" $A lacks "suggest-edits"
@@ -133,6 +153,44 @@ fresh_c cl-draw
 run cl-draw "${open}$A,wait:3"
 fresh_c cl-draw-sent
 run cl-draw-sent "${open}$A,wait:3,verb:session new --project garden,wait:2,review-io:idle,review-send:c1,wait:2"
+# 7b. @ in the composer (comment-at): the menu opens with Claude first, filters, and Tab/↓/Esc work; a comment chosen
+#     from the menu is posted and reaches the stand-in session as an @claude turn.
+fresh_c at-open
+run at-open "${open}$A,wait:3,review-at:planned~for~early~November=>Please~@cl=>"
+expect "@ menu: typing @cl opens the menu with Claude" $out/at-open.log has "menu=claude"
+expect "@ menu: the field keeps what was typed" $out/at-open.log has 'field="Please @cl"'
+expect "@ menu: it floats, not a part of the card" $out/at-open.log has "popover=true"
+fresh at-look
+run at-look "${open}$A,wait:3,review-at:early~November=>Please~@cl=>"
+expect "@ menu: on a clean margin too" $out/at-look.log has "menu=claude"
+fresh_c at-tab
+run at-tab "${open}$A,wait:3,review-at:planned~for~early~November=>Please~@=>down+tab"
+expect "@ menu: Tab inserts @claude" $out/at-tab.log has 'field="Please @claude " menu=closed'
+fresh_c at-esc
+run at-esc "${open}$A,wait:3,review-at:planned~for~early~November=>Please~@c=>esc"
+expect "@ menu: Esc closes it and leaves the text" $out/at-esc.log has 'field="Please @c" menu=closed'
+fresh_c at-none
+run at-none "${open}$A,wait:3,review-at:planned~for~early~November=>Please~@zz=>"
+expect "@ menu: a name that matches nothing shows no menu" $out/at-none.log has 'menu=closed'
+fresh_c at-post
+run at-post "${open}$A,wait:3,verb:session new --project garden,wait:2,review-io:idle,review-at:planned~for~early~November=>Please~@cl=>return+post,wait:4,verb:comment status c2"
+expect "@ menu: Return inserts, then Post writes the signed @claude comment" $A has "Please @claude<<}"
+expect "@ menu: and the turn reaches the session" $out/at-post.log has "review-typed: <paste>@claude comment in"
+expect "@ menu: with the comment as data" $out/at-post.log has "Please @claude"
+# 7c. people in the @ menu (comment-at stage 2, DL-251): the names in the document below Claude, newest first (Sam as last
+#     written, once; not geoff, the person at the keyboard); a person's tag is text and sends nothing.
+pdoc=$'---\ntitle: Offline mode\n---\n\n# Offline mode\n\nLaunch is {==planned for early November==}{>>@sam 2026-10-26 #c1: when?<<}{>>@lena 2026-10-28 #c1.1: @Sam it slipped<<} and the {==sync==}{>>@geoff 2026-10-27 #c2: ok<<} engine retries.\n\nA new anchor here.\n'
+fresh_p() { fresh $1; print -rn -- "$pdoc" > $A; }
+fresh_p at-people
+run at-people "${open}$A,wait:3,review-at:A~new~anchor=>Hi~@=>"
+expect "@ people: Claude first, then the people newest first, each once" $out/at-people.log has "menu=claudeto a sessionlenaSam popover=true"
+fresh_p at-people-s
+run at-people-s "${open}$A,wait:3,review-at:A~new~anchor=>Hi~@s=>"
+expect "@ people: typing filters them" $out/at-people-s.log has 'field="Hi @s" menu=Sam popover=true'
+fresh_p at-person-post
+run at-person-post "${open}$A,wait:3,verb:session new --project garden,wait:2,review-io:idle,review-at:A~new~anchor=>Hi~@l=>tab+post,wait:4"
+expect "@ people: Tab writes the name as the comment's text" $A has "#c3: Hi @lena<<}"
+expect "@ people: a tag of a person sends nothing" $out/at-person-post.log lacks "review-typed:"
 # 8. what the Word converter writes (Q-283): a deletion inside a highlight, a comment over two paragraphs
 vdoc=$'---\ntitle: Converted\n---\n\nSome {=={--some old words--}{>>@morgan-editor 2026-09-06 #s2: <<}==}{>>@riley-reviewer 2026-09-06 #c3: Why cut these?<<} here.\n\n{==This paragraph is commented along with the next one.==}\n\n{==It carries the end of the comment.==}{>>@riley-reviewer 2026-09-05 #c5: Both paragraphs need a source.<<}{>>@dana-writer 2026-09-05 #c5.1: Added.<<}\n'
 fresh cv-draw; print -rn -- "$vdoc" > $A

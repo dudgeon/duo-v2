@@ -192,7 +192,7 @@ extension AppModel {
         if !runningHere && !runningElsewhere { run = .stopped }
         else { run = s.state == .working ? .working : s.state == .needsYou ? .needsYou : .idle }
         let beacon = Beacon.readAll().first { $0.sessionId == s.sessionId }
-        // The worker's permission class, from its transcript (F-397): messages cross only within one class.
+        // The worker's permission class, from its transcript (F-421): messages cross only within one class.
         let mode = s.sessionId.flatMap { id in ClaudeStorage.transcript(sessionId: id, cwd: cwd(of: s.tabKey) ?? liveFolders[s.project]?.path ?? "") }
             .flatMap { PermissionClass.latestMode(inTranscript: $0) }
         return WorkerFacts(place: place, run: run, peerName: beacon?.peerName, userTyping: paused, permissionClass: PermissionClass.of(mode: mode))
@@ -240,7 +240,7 @@ extension AppModel {
             lines.append(l)
         }
         lines.append("Hearing back: SendMessage a live worker (notify_when_idle: true); its reply or the idle notice wakes you. Where messaging can't carry (a class mismatch above, or no messaging), run `duo2 director watch` under Monitor as the fallback.")
-        let pending = reg.pending   // retired by DL-244; an older file may still hold some
+        let pending = reg.pending   // retired by DL-256; an older file may still hold some
         j["workers"] = tasks.map { t -> [String: Any] in
             var w: [String: Any] = ["task": t.note.path, "title": t.note.title, "status": t.note.status ?? "open", "state": t.stateWord, "noteModified": t.modified]
             if let s = t.worker { w["session"] = s.sessionId ?? ""; if let q = s.question { w["question"] = q } }
@@ -360,7 +360,7 @@ extension AppModel {
             adopted = !startedBy(director, id, task: path, folder: folder)
             sid = id; how = adopted ? "adopted \(s.name) (the user allowed it in Duo)" : "linked \(s.name)"
         } else if inv.has("background") || (!inv.has("in-duo") && caps.background != .no) {
-            // The default worker (DL-231, DL-244): in the background, reachable by SendMessage; Duo
+            // The default worker (DL-231, DL-256): in the background, reachable by SendMessage; Duo
             // carries no messages, so --in-duo, or a client without background sessions, starts it in Duo instead.
             // The director runs the command itself (its own flags, Remote Control, its model).
             // `claude --bg` picks its own session id (it ignores --session-id), so the worker is

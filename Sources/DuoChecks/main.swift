@@ -73,6 +73,7 @@ func repoFixture() throws -> Fixture {
     sessionRowChecks(f)
     sessionGlyphChecks(f)
     sidebarHierarchyChecks(f)
+    sessionSelectionChecks(f)
     sidebarSplitChecks()
     try forkChecks(f)
     try forkAdoptChecks()
@@ -239,13 +240,28 @@ func repoFixture() throws -> Fixture {
     print("update question: the release's notes in a box, Later at the left (DL-132 b)")
     do {
         let md = "## What's new\n\n**Group**\n- **Closing a busy tab asks first.** Detail here.\n* Drops use `Undo`. More words.\n1. See [the guide](https://x.y).\n\n## Install\n- not shown\n"
-        check(UpdateCheck.notesLines(md) == ["• Closing a busy tab asks first.", "• Drops use Undo.", "• See the guide."], "notes become the bullets' bold leads, or first sentences (\(UpdateCheck.notesLines(md)))")
+        check(UpdateCheck.notesLines(md) == ["• Closing a busy tab asks first.", "• Drops use Undo.", "• See [the guide](https://x.y)."], "notes become the bullets' bold leads, or first sentences (\(UpdateCheck.notesLines(md)))")
         let fx = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("Fixtures/release-notes")
         let real = ["0.2.18", "0.2.19", "0.2.20"].map { (try? String(contentsOf: fx.appendingPathComponent("\($0).md"), encoding: .utf8)) ?? "" }
         let lines = real.map(UpdateCheck.notesLines)
-        check(lines.allSatisfy { !$0.isEmpty && $0.count <= UpdateCheck.notesCap + 1 && !$0.contains { $0.contains("**") || $0.contains("macOS 26") || $0.contains("Open the DMG") } },
-              "real notes of 0.2.18-0.2.20 give at most \(UpdateCheck.notesCap) bullets plus a count, no Requirements or Install (\(lines.map(\.count)))")
-        check(lines[2].first == "• Directors work without Duo open." && lines[2].last == "and 3 more" && lines[2].count == 7, "0.2.20: first bold lead, then 'and 3 more' (\(lines[2]))")
+        check(lines.allSatisfy { !$0.isEmpty && !$0.contains { $0.contains("**") || $0.contains("macOS 26") || $0.contains("Open the DMG") || $0.hasPrefix("and ") } },
+              "real notes of 0.2.18-0.2.20 give every bullet, no Requirements or Install, no cap (\(lines.map(\.count)))")
+        check(lines[2].count == 9 && lines[2].first == "• Directors work without Duo open." && lines[2].last?.hasPrefix("• `duo2") == false && lines[2].last?.hasPrefix("• ") == true,
+              "0.2.20 lists all 9 bullets (\(lines[2]))")
+        do {   // links stay links (F-406)
+            let u = "https://e.x/a.mp4"
+            let one = UpdateCheck.notesLines("## What's new\n- **Review in Markdown** ([video](\(u))). Detail [ignored](https://no.pe).")
+            let two = UpdateCheck.notesLines("## What's new\n- **Both** ([video](\(u)), [page](https://e.x/p)). Detail.")
+            let inLead = UpdateCheck.notesLines("## What's new\n- **Read the [guide](\(u)) first.** Detail.")
+            let plain = UpdateCheck.notesLines("## What's new\n- **No links here** (just words). Detail [x](https://no.pe).")
+            check(one == ["• Review in Markdown ([video](\(u)))."] && UpdateCheck.noteLinks(one[0]).map(\.text) == ["video"], "a link after the bold lead stays (\(one))")
+            check(two == ["• Both ([video](\(u)), [page](https://e.x/p))."] && UpdateCheck.noteLinks(two[0]).count == 2, "two links stay (\(two))")
+            check(inLead == ["• Read the [guide](\(u)) first."], "a link in the bold lead stays (\(inLead))")
+            check(plain == ["• No links here."] && UpdateCheck.noteLinks(plain[0]).isEmpty, "no links, none drawn (\(plain))")
+            check(UpdateCheck.plainNote(one[0]) == "• Review in Markdown (video <\(u)>).", "duo2 prints text <url> (\(UpdateCheck.plainNote(one[0])))")
+            let rn = UpdateCheck.notesLines((try? String(contentsOf: fx.appendingPathComponent("0.2.21.md"), encoding: .utf8)) ?? "")
+            check(rn.first?.hasPrefix("• Review in Markdown ([video](https://github.com/dudgeon/duo-v2/releases/download/v0.2.21/") == true, "0.2.21's real notes keep the video link (\(rn.first ?? "none"))")
+        }
         check(UpdateCheck.notesLines("").isEmpty && UpdateCheck.notesLines("Fixed things.\nNo list here.").isEmpty && UpdateCheck.notesLines("## What's new\n**x** [broken](").count == 0
               && UpdateCheck.notesLines("- **\n- ****\n- ").isEmpty, "no notes, prose only or malformed give no lines, so the question reads as before")
         let r = UpdateCheck.Release(version: "0.1.9", page: URL(string: "https://example.com")!, notes: md)

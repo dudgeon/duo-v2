@@ -1,0 +1,132 @@
+gpu-lock: taken by gdocs-frame-probe (54453), shared slot 1 of 2
+pid 54476 socket /tmp/gdf/sup/Duo/duo.sock
+$ duo2 open gdocs
+Opened gdocs.
+  [26 ms]
+$ duo2 browser sites
+docs.google.com
+The list: /tmp/gdf/sup/Duo/allowed-sites.txt
+  [103 ms]
+$ duo2 browser open https://docs.google.com/document/d/1dCR2aEoBJj_Yqcs6GuM7lUPr0gag77L5OSgDa8bebsI/edit
+Opened https://docs.google.com/document/d/1dCR2aEoBJj_Yqcs6GuM7lUPr0gag77L5OSgDa8bebsI/edit in a browser tab.
+  [50 ms]
+$ duo2 browser wait .kix-canvas-tile-content --timeout 20
+.kix-canvas-tile-content is there.
+  [869 ms]
+$ duo2 browser tabs
+web:046029fa  gdocs  Features to Update for Out-of-Process iframes - Google Docs  https://docs.google.com/document/d/1dCR2aEoBJj_Yqcs6GuM7lUPr0gag77L5OSgDa8bebsI/edit?tab=t.0#heading=h.u0ns3vxg7nzt
+  [45 ms]
+$ duo2 browser read
+Features to Update for Out-of-Process iframes - Google Docs
+https://docs.google.com/document/d/1dCR2aEoBJj_Yqcs6GuM7lUPr0gag77L5OSgDa8bebsI/edit?tab=t.0#heading=h.u0ns3vxg7nzt
+
+Saved to Drive
+Request edit access
+Sign in
+
+Document tabs
+ 
+Features to Update for Out-of-Process iframes
+Features to Update for Out-of-Process iframes
+In progress:
+Not yet started:
+Turn on screen reader supportBanner hidden To enable screen reader support, press ⌘+Option+Z To learn about keyboard shortcuts, press ⌘slash
+  [57 ms]
+$ duo2 browser read .docs-title-input
+Features to Update for Out-of-Process iframes - Google Docs
+https://docs.google.com/document/d/1dCR2aEoBJj_Yqcs6GuM7lUPr0gag77L5OSgDa8bebsI/edit?tab=t.0#heading=h.u0ns3vxg7nzt
+
+  [50 ms]
+$ duo2 browser read .kix-canvas-tile-content
+Features to Update for Out-of-Process iframes - Google Docs
+https://docs.google.com/document/d/1dCR2aEoBJj_Yqcs6GuM7lUPr0gag77L5OSgDa8bebsI/edit?tab=t.0#heading=h.u0ns3vxg7nzt
+
+  [47 ms]
+$ duo2 browser read .navigation-widget-content
+Features to Update for Out-of-Process iframes - Google Docs
+https://docs.google.com/document/d/1dCR2aEoBJj_Yqcs6GuM7lUPr0gag77L5OSgDa8bebsI/edit?tab=t.0#heading=h.u0ns3vxg7nzt
+
+Document tabs
+ 
+Features to Update for Out-of-Process iframes
+Features to Update for Out-of-Process iframes
+In progress:
+Not yet started:
+  [55 ms]
+$ duo2 browser screenshot
+Saved the visible page: /tmp/gdf/sup/Duo/context/page-20261029-150936-954.png
+  [83 ms]
+$ duo2 browser screenshot --full-page
+Saved the whole page: /tmp/gdf/sup/Duo/context/page-20261029-150937-080.png
+  [92 ms]
+$ duo2 browser scroll down
+Scrolled to 0 of 789 px (the screen is 789 px tall).
+  [37 ms]
+$ duo2 browser scroll 2000
+Scrolled to 0 of 789 px (the screen is 789 px tall).
+  [39 ms]
+$ duo2 browser scroll top
+Scrolled to 0 of 789 px (the screen is 789 px tall).
+  [37 ms]
+$ duo2 browser click .kix-canvas-tile-content
+Clicked <div> .
+  [39 ms]
+$ duo2 browser click #docs-file-menu
+Clicked <div> File.
+  [98 ms]
+$ duo2 browser read [role=menu]
+Features to Update for Out-of-Process iframes - Google Docs
+https://docs.google.com/document/d/1dCR2aEoBJj_Yqcs6GuM7lUPr0gag77L5OSgDa8bebsI/edit?tab=t.0
+
+7 total viewersAnonymous CamelIdleAnonymous DinosaurIdleAnonymous DolphinIdleAnonymous GopherIdleAnonymous HippoIdleAnonymous LorisIdleAnonymous NarwhalIdle Join chat
+  [73 ms]
+$ duo2 browser click .docs-texteventtarget-iframe
+Clicked <iframe>  (synthetic: the page isn't on screen).
+  [64 ms]
+$ duo2 browser fill .docs-texteventtarget-iframe hello
+duo2: nothing matches .docs-texteventtarget-iframe
+  [112 ms]
+$ duo2 browser zoom 125
+Zoomed to 125%, remembered for docs.google.com.
+  [57 ms]
+$ duo2 browser zoom reset
+Zoomed to 100%, remembered for docs.google.com.
+  [49 ms]
+$ duo2 browser print --pdf /tmp/gdf/doc.pdf
+Saved the page as /tmp/gdf/doc.pdf.
+  [2059 ms]
+$ duo2 browser go https://docs.google.com/document/d/1dCR2aEoBJj_Yqcs6GuM7lUPr0gag77L5OSgDa8bebsI/export?format=md
+Going to https://docs.google.com/document/d/1dCR2aEoBJj_Yqcs6GuM7lUPr0gag77L5OSgDa8bebsI/export?format=md.
+  [55 ms]
+$ duo2 browser downloads
+No downloads since Duo started. They go to /tmp/gdf/dl.
+  [32 ms]
+$ duo2 browser back
+duo2: doc-14-7s-docstext.googleusercontent.com isn't on the allow list; the user can allow it in the tab (or `duo2 browser allow`)
+  [40 ms]
+$ duo2 browser go https://docs.google.com/document/d/1dCR2aEoBJj_Yqcs6GuM7lUPr0gag77L5OSgDa8bebsI/mobilebasic
+Going to https://docs.google.com/document/d/1dCR2aEoBJj_Yqcs6GuM7lUPr0gag77L5OSgDa8bebsI/mobilebasic.
+  [37 ms]
+$ duo2 browser read
+Features to Update for Out-of-Process iframes
+https://docs.google.com/document/d/1dCR2aEoBJj_Yqcs6GuM7lUPr0gag77L5OSgDa8bebsI/mobilebasic
+
+Features to Update for Out-of-Process iframes
+
+Features to Update for Out-of-Process iframes
+
+  9-30-2014
+  [27 ms]
+$ duo2 browser go https://accounts.google.com/
+duo2: accounts.google.com isn't on the allow list; the tab offers Allow or Open in Browser
+  [35 ms]
+$ duo2 browser allow accounts.google.com
+accounts.google.com is allowed: its pages open in Duo.
+  [42 ms]
+-rw-r--r--@ 1 geoff  wheel  65631 Oct 29 15:09 /tmp/gdf/doc.pdf
+
+/tmp/gdf/dl:
+total 0
+drwxr-xr-x@ 2 geoff  wheel   64 Oct 29 15:09 .
+drwxr-xr-x@ 8 geoff  wheel  256 Oct 29 15:09 ..
+done
