@@ -4365,3 +4365,16 @@ Geoff (work Mac, 2.1.284): `/ask-data`, his skill, autocompleted in the terminal
 - **Fix.** One mirror runs at a time; text typed meanwhile waits and only the latest is mirrored. Each mirror sends only the tail that differs (backspaces past the common prefix, then the rest) and waits until the prompt shows it (at most about a second).
 - Checks: `DUO_CHECKS=chat`: the 2.1.284 and 2.1.311 menus read; nine mirrors typed 30 ms apart into a fake TUI that repaints 120 ms after each key leave `/ask-data` (before the fix `///ask-data`), and backspacing fast leaves `/ask`. chat-live (100×34) types `/ask-data` the same way into the real TUI, with a user skill and a project skill installed in its scratch config, and checks Claude's prompt and the menu.
 - Not changed: chat mirrors only over an idle prompt, so `/` typed while Claude is working shows no menu in chat, though the TUI's does. Mirroring then is unsafe with 2.1.296's inline renderer, whose menu covers the busy row (F-284), so the chat would read the turn as ended; logged as Q-327.
+
+## F-421 · Chat's fallback rules ranked, and 2.1.284 verified (chat-reliability, 2026-10-29)
+
+No `chat-fallbacks.jsonl` exists on this Mac (Geoff's work Mac has the field log), so the ranking comes from the field reports (F-376, F-419), the code and runs on 2.1.284. From likeliest:
+
+1. **`unknown-screen`**: any screen chat can't name for 0.5 s, and since DL-154 it stays until Back to Chat. The work Mac's earlier photos (F-376) were this bar left over an idle prompt by one earlier unknown moment. Not changed here: making short ones come back by themselves reverses part of DL-154, so it's Q-326.
+2. **`dialog-request-mismatch`**: the report behind F-419. Its four paths are fixed there.
+3. **`dialog-unreadable`** (a dialog on a `newer` 2.1.x that doesn't read whole): on 2.1.284 the dialog tour's screens (`tour-2.1.284/`, captured against the mock in manual mode, `scenario-tour-2.1.284.json`) all read as their kind and whole, including its four-option Bash permission ("Yes, and switch to auto mode") and plan approval's "Yes, and use auto mode". The retry screen wasn't reached in that run. 2.1.284 is now in the verified list. That changes the report's trust word, not behaviour: DL-164 checks every version's dialogs the same way.
+4. **`command-screen`, `answer-refused`, `handover`**: chat chose these (a command you sent, an answer whose screen changed, Amend); they come back by themselves.
+5. **`version-unverified`, `picker-unverified-version`**: only off 2.1.x; never on the work Mac.
+
+- Proof on 2.1.284: chat-live 101 of 101 (AskUserQuestion at 100×34, 60×34, 80×20 and 60×53, with the two-question case) and 36 of 36 for the rest (stream, composer, `/` with skills, model and effort cards, mode chip, Bash, edit and plan cards). On the current CLI, 2.1.311: 37 of 37, and the two-question case at 60×53.
+- So the next count comes from the field: each line of `logs/chat-fallbacks.jsonl` now carries the request and the hook feed's state, and `duo2 session chat why --log` opens with the count by rule.

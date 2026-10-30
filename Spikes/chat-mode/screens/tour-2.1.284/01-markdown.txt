@@ -1,0 +1,34 @@
+ ▐▛███▛█   Claude Code v2.1.284
+▝▜██████▀  claude-haiku-5-5 · API Usage Billing
+ ▝▝   ▝▝   ~/work/sample/ws
+
+
+❯ SCENARIO:md                                                                                       
+
+⏺ Results
+
+  Here is bold, italic, code and a link (https://example.com).
+
+  ┌─────┬───────┐
+  │ Col │ Value │
+  ├─────┼───────┤
+  │ a   │ 1     │
+  ├─────┼───────┤
+  │ b   │ 2     │
+  └─────┴───────┘
+
+  let x = 1
+  print(x)
+
+  - one
+  - two
+    - nested
+
+  See /tmp/example.txt:12 for more.
+
+✻ Sautéed for 2s · done 10:07 PM
+                                                                                  ● high · /effort
+────────────────────────────────────────────────────────────────────────────────────────────────────
+❯  
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⏸ manual mode on · ? for shortcuts · ← for agents

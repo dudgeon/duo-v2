@@ -139,6 +139,22 @@ import Foundation
         check(ChatFallbackLog.read(from: url).count == 1, "a log line written by 0.2.21 still reads")
     }
 
+    print("chat mode: Claude Code 2.1.284, the version work pins now (F-421)")
+    do {
+        // The dialog tour on the real 2.1.284 against the mock, in manual mode (Spikes/chat-mode/scenario-tour-2.1.284.json).
+        let expect: [(String, ChatScreen.Kind)] = [("01-markdown", .idle), ("02-bash-permission", .permission), ("03-edit-permission", .permission),
+            ("04-question", .question), ("05-multi", .question), ("06-review", .questionReview), ("07-agent", .idle), ("08-plan-mode", .idle),
+            ("09-plan", .plan), ("10-streaming", .busy), ("11-interrupted", .idle), ("12-unknown-model-picker", .picker)]   // the retry screen wasn't reached
+        let read = expect.map { ($0.0, $0.1, ChatScreenReader.read(spikeScreen("tour-2.1.284/\($0.0).txt"))) }
+        let wrong = read.filter { $0.2.kind != $0.1 }.map { "\($0.0): \($0.2.kind)" }
+        check(wrong.isEmpty, "each 2.1.284 screen reads as its kind (\(wrong))")
+        let broken = read.filter { !ChatScreenReader.wellFormed($0.2) }.map(\.0)
+        check(broken.isEmpty, "and every dialog reads whole, so chat answers it (\(broken))")
+        check(ChatSignatures.trust(for: "2.1.284") == .verified && ChatSignatures.table(for: "2.1.284").verified, "2.1.284 is a verified version")
+        check(read[1].2.options.count == 4 && read[1].2.options.last?.label == "No" && read[8].2.options.first?.label.hasPrefix("Yes, and use auto mode") == true
+              && read[7].2.mode == .plan && read[0].2.mode == .manual, "2.1.284's own words: the Bash permission's four options, plan approval's auto mode, the modes")
+    }
+
     print("chat mode: the `/` menu on 2.1.284, with skills of the work Mac's shape (F-420)")
     do {
         let dir = "slash-2.1.284/"
