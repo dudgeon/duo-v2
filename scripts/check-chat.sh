@@ -43,6 +43,8 @@ for b in "${boards[@]}"; do
     chip-*) box=(300 0 680 860); target="chat-model-chip-handoff/chip" ;;
     # DL-188: no board draws your Markdown; these compare against the text board for the record.
     # md-composer: the composer against composer.html (B, C); the board stacks snippets, so the numbers come from the cropped composer.
+    # voice-input-handoff (DL-261): composer.html stacks every state; each compare is for the record and the numbers come from the cropped composer (docs/design/voice-input-handoff/proof/).
+    voice-*) box=(300 0 680 860); target="voice-input-handoff/composer" ;;
     md-composer) box=(300 0 680 860); target="chat-markdown-handoff/composer" ;;
     md-composer-wrap|md-composer-fence) box=(300 0 680 860); target="chat-markdown-handoff/composer" ;;
     md-*) box=(300 0 680 860); target="chat-mode-handoff/text" ;;

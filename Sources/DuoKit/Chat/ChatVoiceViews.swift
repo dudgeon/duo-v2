@@ -76,7 +76,7 @@ struct ChatVoiceLine: View {
                 Text("· once per Mac").duoText(.chatMeta).foregroundStyle(DuoColor.text2)
             case .denied:
                 Text(VoiceCopy.denied).duoText(.chatMeta).foregroundStyle(DuoColor.text)
-                Text("Open Privacy Settings").duoText(.chatMeta).foregroundStyle(DuoColor.text)
+                Text("Open Privacy Settings").duoText(.chatMeta).foregroundStyle(DuoColor.text2)
                     .padding(.horizontal, 8)
                     .overlay(Capsule().strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
                     .contentShape(Capsule())

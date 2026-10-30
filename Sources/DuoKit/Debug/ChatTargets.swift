@@ -28,13 +28,16 @@ public enum ChatTargets {
                                             // DL-188: your Markdown in your bubble, replayed, live, and cut by Show all.
                                             "md-history", "md-live", "md-long",
                                             // DL-188: your Markdown in the composer (composer.html B and C).
-                                            "md-composer", "md-composer-wrap", "md-composer-fence"]
+                                            "md-composer", "md-composer-wrap", "md-composer-fence",
+                                            // voice-input-handoff (DL-261): the mic and its states, drawn without a microphone.
+                                            "voice-rest", "voice-hover", "voice-listening", "voice-holding", "voice-finishing", "voice-done", "voice-download",
+                                            "voice-denied", "voice-restricted", "voice-nomic", "voice-nolang", "voice-stopped", "voice-lost"]
     nonisolated public static let screens = boards.map { "chat-" + $0 }
 
     public static func folder(_ board: String) -> URL? {
         if let r = Bundle.main.url(forResource: "chat-fixtures", withExtension: nil) { return r.appending(path: board) }
         var dir = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-        let handoff = board.hasPrefix("polish-") ? "chat-polish-handoff" : board.hasPrefix("slash-") ? "chat-slash-handoff" : board.hasPrefix("paste-") ? "chat-paste-handoff" : board.hasPrefix("chip-") ? "chat-model-chip-handoff" : board.hasPrefix("md-") ? "chat-markdown-handoff" : "chat-mode-handoff"
+        let handoff = board.hasPrefix("polish-") ? "chat-polish-handoff" : board.hasPrefix("slash-") ? "chat-slash-handoff" : board.hasPrefix("paste-") ? "chat-paste-handoff" : board.hasPrefix("chip-") ? "chat-model-chip-handoff" : board.hasPrefix("md-") ? "chat-markdown-handoff" : board.hasPrefix("voice-") ? "voice-input-handoff" : "chat-mode-handoff"
         for _ in 0..<6 {
             let c = dir.appending(path: "docs/design/\(handoff)/fixture-chat/\(board)")
             if FileManager.default.fileExists(atPath: c.path) { return c }
@@ -103,6 +106,24 @@ public enum ChatTargets {
         if meta["interruptAfterPlay"] as? Bool == true { chat.log.endStreaming(interrupted: true) }
         if let f = meta["fallback"] as? [String: String] {
             chat.fallback = ChatFallback(kind: f["kind"] == "handedOver" ? .handedOver : .automatic, message: f["message"] ?? ChatFallback.unknownScreen.message, command: f["command"])
+        }
+        // Voice input (voice-input-handoff): a state drawn with no microphone. `text` is the line a stopped state shows.
+        if let v = meta["voice"] as? [String: Any] {
+            var t = VoiceTranscript()
+            if let s = v["settled"] as? String { t.apply(s, isFinal: true) }
+            if let s = v["volatile"] as? String { t.apply(s, isFinal: false) }
+            let state: VoiceState = switch v["state"] as? String ?? "" {
+            case "listening": .listening
+            case "finishing": .finishing
+            case "preparing": .preparing(progress: v["progress"] as? Double)
+            case "denied": .denied
+            case "restricted": .restricted
+            case "unavailable": .unavailable(v["text"] as? String ?? "")
+            case "failed": .failed(v["text"] as? String ?? "")
+            default: .idle
+            }
+            model.voice.showFixture(state, target: .chat(tab), transcript: t, holding: v["holding"] as? Bool == true, level: 0.6)
+            if state == .listening { chat.ui.fixtureDictation = t }
         }
         model.fixtureChats[tab] = chat
     }

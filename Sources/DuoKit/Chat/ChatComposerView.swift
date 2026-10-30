@@ -284,7 +284,10 @@ struct ChatComposerField: NSViewRepresentable {
         if let fb = chat.ui.fixtureBlock {
             chat.ui.fixtureBlock = nil
             DispatchQueue.main.async { v.setFixture(fb) }
-        } else if v.plainText != chat.ui.composer { v.setPlain(chat.ui.composer) }
+        } else if let d = chat.ui.fixtureDictation {
+            chat.ui.fixtureDictation = nil
+            DispatchQueue.main.async { v.window?.makeFirstResponder(v); v.dictate(d, final: false) }
+        } else if v.dictation == nil, v.plainText != chat.ui.composer { v.setPlain(chat.ui.composer) }
         if context.coordinator.chooseSeen != chat.chooseMention {
             context.coordinator.chooseSeen = chat.chooseMention
             context.coordinator.chooseMention(in: v)
