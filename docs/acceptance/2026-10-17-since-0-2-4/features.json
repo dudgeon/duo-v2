@@ -230,7 +230,21 @@
    "commit": "e29af8ca158aa72863a74173494c4b9ef3d1556a",
    "group": "Before you open a project: install, updates and settings",
    "workMac": "as-is",
-   "workMacWhy": "Needs a newer release than his install; otherwise a menu check"
+   "workMacWhy": "Needs a newer release than his install; otherwise a menu check",
+   "links": [
+    {
+     "label": "standins2: design canvas",
+     "url": "https://claude.ai/artifact/3TTPpMG5scibGpopR14afr"
+    },
+    {
+     "label": "standins2: q47-writable",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/standins2-handoff/screens/q47-writable.html"
+    },
+    {
+     "label": "standins2: q47-admin",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/standins2-handoff/screens/q47-admin.html"
+    }
+   ]
   },
   {
    "id": "update-notes-scroll",
@@ -264,7 +278,17 @@
      "Walk the steps and judge the look and feel."
     ],
     "at": "2026-10-30"
-   }
+   },
+   "links": [
+    {
+     "label": "standins2: design canvas",
+     "url": "https://claude.ai/artifact/3TTPpMG5scibGpopR14afr"
+    },
+    {
+     "label": "standins2: q47-writable",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/standins2-handoff/screens/q47-writable.html"
+    }
+   ]
   },
   {
    "id": "sparkle-work-mac",
@@ -353,7 +377,29 @@
      "Walk the steps and judge the look and feel."
     ],
     "at": "2026-10-30"
-   }
+   },
+   "links": [
+    {
+     "label": "dark appearance: design canvas",
+     "url": "https://claude.ai/artifact/C5VkwLWwUPpEuVA23waNJG"
+    },
+    {
+     "label": "dark appearance: allprojects-dark",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/dark-appearance-handoff/screens/allprojects-dark.html"
+    },
+    {
+     "label": "dark appearance: project-dark",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/dark-appearance-handoff/screens/project-dark.html"
+    },
+    {
+     "label": "dark appearance: chat-dark",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/dark-appearance-handoff/screens/chat-dark.html"
+    },
+    {
+     "label": "Design system",
+     "url": "https://claude.ai/artifact/QMapKeLYS3TVV36QKEc6MH"
+    }
+   ]
   },
   {
    "id": "classic-appearance",
@@ -390,7 +436,25 @@
      "Walk the steps and judge the look and feel."
     ],
     "at": "2026-10-30"
-   }
+   },
+   "links": [
+    {
+     "label": "Classic build: overview",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/classic-build/compare-overview.png"
+    },
+    {
+     "label": "Classic build: project",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/classic-build/compare-project.png"
+    },
+    {
+     "label": "Classic build: terminal-editor",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/classic-build/compare-terminal-editor.png"
+    },
+    {
+     "label": "Design system",
+     "url": "https://claude.ai/artifact/QMapKeLYS3TVV36QKEc6MH"
+    }
+   ]
   },
   {
    "id": "classic-states",
@@ -423,7 +487,21 @@
      "Walk the steps and judge the look and feel."
     ],
     "at": "2026-10-30"
-   }
+   },
+   "links": [
+    {
+     "label": "Classic build: chat-needs-you",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/classic-build/compare-chat-needs-you.png"
+    },
+    {
+     "label": "Classic build: chat-text",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/classic-build/compare-chat-text.png"
+    },
+    {
+     "label": "Classic build: overview",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/classic-build/compare-overview.png"
+    }
+   ]
   },
   {
    "id": "classic-dock-icon",
@@ -579,7 +657,17 @@
    "commit": "e29c7c4adb94c353cbb47f9daa1e199149bf0052",
    "group": "Before you open a project: install, updates and settings",
    "workMac": "as-is",
-   "workMacWhy": "Look at the installed icon in Dock and Finder"
+   "workMacWhy": "Look at the installed icon in Dock and Finder",
+   "links": [
+    {
+     "label": "icon: design canvas",
+     "url": "https://claude.ai/artifact/LD3AaGRpx2JzDkRqpnLvXL"
+    },
+    {
+     "label": "icon: handoff README",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/icon-handoff/README.md"
+    }
+   ]
   },
   {
    "id": "dev-icon",
@@ -607,7 +695,17 @@
    "commit": "0aea4dcd278dd0173c1e18e4333db819a7e8d171",
    "group": "Before you open a project: install, updates and settings",
    "workMac": "home",
-   "workMacWhy": "Needs a dev build (scripts/bundle.sh) beside the release"
+   "workMacWhy": "Needs a dev build (scripts/bundle.sh) beside the release",
+   "links": [
+    {
+     "label": "icon: design canvas",
+     "url": "https://claude.ai/artifact/LD3AaGRpx2JzDkRqpnLvXL"
+    },
+    {
+     "label": "icon: handoff README",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/icon-handoff/README.md"
+    }
+   ]
   },
   {
    "id": "settings-macos-hidden",
@@ -797,7 +895,25 @@
    },
    "commit": "86d69afa68b13b33c755eb4f1472b2d7174ec0cd",
    "workMac": "as-is",
-   "workMacWhy": "Drag window narrower and toggle right pane in any project"
+   "workMacWhy": "Drag window narrower and toggle right pane in any project",
+   "links": [
+    {
+     "label": "narrow: design canvas",
+     "url": "https://claude.ai/artifact/Cn5T6UowtPnQR2Ezihnare"
+    },
+    {
+     "label": "narrow: narrow-overview",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/narrow-handoff/screens/narrow-overview.html"
+    },
+    {
+     "label": "narrow: narrow-project",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/narrow-handoff/screens/narrow-project.html"
+    },
+    {
+     "label": "narrow: narrow-toggle-options",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/narrow-handoff/screens/narrow-toggle-options.html"
+    }
+   ]
   },
   {
    "id": "zero-count",
@@ -859,14 +975,14 @@
    "id": "app-menus",
    "group": "All projects: the map",
    "title": "The menu bar",
-   "what": "Duo, File, Edit, Format, View, Project, Session, Go, Window, Help, as you chose on this page (DL-108). Project and Session act on what's in front of you.",
+   "what": "Duo, File, Edit, Format, View, Project, Session, Go, Window, Help, as you chose (DL-108). Project and Session act on what's in front of you.",
    "steps": [
     "At All projects, open each menu. Click a project tile, then open Project: its items act on that tile.",
     "Open `checkout`. Open Project and Session: Project acts on checkout, Session on the session in the console. Try Session › Copy Link and Project › Open Project File.",
     "Open `docs/prd.md`, click in the text, and try Format › Heading › Heading 2, then Format › Task, then select a word and press ⌘K. Undo each with ⌘Z.",
     "Help › duo2 Reference, What’s New in This Version and Report an Issue… each open a GitHub page; the issue isn't sent until you submit it there."
    ],
-   "expect": "Order, names and chords match the mockups you approved (m1–m4). Items that can't act on anything are dim. ⌘K makes the selection a link and waits for its address. View › Enter Full Screen (⌃⌘F) works and becomes Exit Full Screen.",
+   "expect": "Order, names and chords match what you approved (DL-108, m1–m4). Items that can't act on anything are dim. ⌘K makes the selection a link and waits for its address. View › Enter Full Screen (⌃⌘F) works and becomes Exit Full Screen.",
    "ref": "DL-108, F-91",
    "setup": [
     "go all"
@@ -941,7 +1057,21 @@
    ],
    "workMac": "as-is",
    "workMacWhy": "Works on his own projects and sessions.",
-   "new": true
+   "new": true,
+   "links": [
+    {
+     "label": "home evolution: design canvas",
+     "url": "https://claude.ai/artifact/UmuuYZdzroUbBDmY2UYRBY"
+    },
+    {
+     "label": "home evolution: board-1440",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/home-evolution-handoff/screens/board-1440.html"
+    },
+    {
+     "label": "home evolution: list-1440",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/home-evolution-handoff/screens/list-1440.html"
+    }
+   ]
   },
   {
    "id": "home-chat-default",
@@ -1268,7 +1398,17 @@
    ],
    "group": "All projects: what needs you",
    "workMac": "small",
-   "workMacWhy": "Open a session in his project; check its tile wording"
+   "workMacWhy": "Open a session in his project; check its tile wording",
+   "links": [
+    {
+     "label": "small features: design canvas",
+     "url": "https://claude.ai/artifact/2qhPnZG6qUpLWFsXKCYSzt"
+    },
+    {
+     "label": "small features: tile-open",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/small-features-handoff/screens/tile-open.html"
+    }
+   ]
   },
   {
    "id": "dock-menu",
@@ -1817,7 +1957,21 @@
    },
    "commit": "a63ecf88043c6bfe669f5d4975deae84e824bb3d",
    "workMac": "small",
-   "workMacWhy": "Drag a session and toggle Reduce Motion in System Settings"
+   "workMacWhy": "Drag a session and toggle Reduce Motion in System Settings",
+   "links": [
+    {
+     "label": "motion: design canvas",
+     "url": "https://claude.ai/artifact/G1bcwo5qQRZmNLfHehGbgj"
+    },
+    {
+     "label": "motion: Main.dc",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/motion-handoff/screens/Main.dc.html"
+    },
+    {
+     "label": "motion: DragDrop.dc",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/motion-handoff/screens/DragDrop.dc.html"
+    }
+   ]
   },
   {
    "id": "motion-sheets",
@@ -1988,7 +2142,21 @@
    "commit": "70869716d94f823f2c6efccd3dd50e5f090092a3",
    "workMac": "as-is",
    "workMacWhy": "Menu and sheet only; Cancel changes nothing.",
-   "new": true
+   "new": true,
+   "links": [
+    {
+     "label": "home evolution: design canvas",
+     "url": "https://claude.ai/artifact/UmuuYZdzroUbBDmY2UYRBY"
+    },
+    {
+     "label": "home evolution: list-1440",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/home-evolution-handoff/screens/list-1440.html"
+    },
+    {
+     "label": "home evolution: board-1440",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/home-evolution-handoff/screens/board-1440.html"
+    }
+   ]
   },
   {
    "id": "github-new-project",
@@ -2066,7 +2234,13 @@
     "open scratch"
    ],
    "workMac": "as-is",
-   "workMacWhy": "Open a folder without PROJECT.md on his map"
+   "workMacWhy": "Open a folder without PROJECT.md on his map",
+   "links": [
+    {
+     "label": "folder: folder-not-project",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/folder-handoff/screens/folder-not-project.html"
+    }
+   ]
   },
   {
    "id": "titles",
@@ -2535,7 +2709,21 @@
    },
    "commit": "f8a01101614503509f4b4850e4e8681a81582b2e",
    "workMac": "small",
-   "workMacWhy": "Needs a task row to hover; make a task first"
+   "workMacWhy": "Needs a task row to hover; make a task first",
+   "links": [
+    {
+     "label": "stand ins: design canvas",
+     "url": "https://claude.ai/artifact/JRX1VKzcgfTh5z3Da6eMqM"
+    },
+    {
+     "label": "stand ins: q43-hover",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/stand-ins-handoff/screens/q43-hover.html"
+    },
+    {
+     "label": "stand ins: q43-drafted",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/stand-ins-handoff/screens/q43-drafted.html"
+    }
+   ]
   },
   {
    "id": "sb-task-hover",
@@ -2565,7 +2753,17 @@
    ],
    "group": "In checkout: sessions and tasks",
    "workMac": "small",
-   "workMacWhy": "Needs a group-style task row with sessions folded under it"
+   "workMacWhy": "Needs a group-style task row with sessions folded under it",
+   "links": [
+    {
+     "label": "standins2: design canvas",
+     "url": "https://claude.ai/artifact/3TTPpMG5scibGpopR14afr"
+    },
+    {
+     "label": "standins2: q46-hover",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/standins2-handoff/screens/q46-hover.html"
+    }
+   ]
   },
   {
    "id": "task-menu",
@@ -2597,7 +2795,21 @@
    "commit": "28123ad6fb41ade54a8cbb182e2373ee8aa179ef",
    "group": "In checkout: sessions and tasks",
    "workMac": "small",
-   "workMacWhy": "Needs a task to right-click; Archive Task is reversible"
+   "workMacWhy": "Needs a task to right-click; Archive Task is reversible",
+   "links": [
+    {
+     "label": "task menu: design canvas",
+     "url": "https://claude.ai/artifact/6i7mSyfa771bvhcykczetN"
+    },
+    {
+     "label": "task menu: task-menu",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/task-menu-handoff/screens/task-menu.html"
+    },
+    {
+     "label": "task menu: task-menu-archived",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/task-menu-handoff/screens/task-menu-archived.html"
+    }
+   ]
   },
   {
    "id": "motion-rows",
@@ -2903,7 +3115,25 @@
    ],
    "workMac": "small",
    "workMacWhy": "Needs a few tasks; make two or three in a minute.",
-   "new": true
+   "new": true,
+   "links": [
+    {
+     "label": "task board: design canvas",
+     "url": "https://claude.ai/artifact/1yVhqtQsaXow8GGRQsUaYN"
+    },
+    {
+     "label": "task board: 04-where-c",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/task-board-handoff/screens/04-where-c.html"
+    },
+    {
+     "label": "task board: 06-cards",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/task-board-handoff/screens/06-cards.html"
+    },
+    {
+     "label": "task board: 07-drag",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/task-board-handoff/screens/07-drag.html"
+    }
+   ]
   },
   {
    "id": "task-board-drag",
@@ -2923,7 +3153,17 @@
    "commit": "ac801c9a25074b655f024e5205d4930b8fb0a437",
    "workMac": "small",
    "workMacWhy": "Any task; changes only its status.",
-   "new": true
+   "new": true,
+   "links": [
+    {
+     "label": "task board: design canvas",
+     "url": "https://claude.ai/artifact/1yVhqtQsaXow8GGRQsUaYN"
+    },
+    {
+     "label": "task board: 07-drag",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/task-board-handoff/screens/07-drag.html"
+    }
+   ]
   },
   {
    "id": "task-board-columns",
@@ -2986,7 +3226,21 @@
    "commit": "4b5223658a55c30467715efee8eb2be2a84651a0",
    "workMac": "small",
    "workMacWhy": "Writes a file in his project (undoable); Obsidian optional.",
-   "new": true
+   "new": true,
+   "links": [
+    {
+     "label": "task board: design canvas",
+     "url": "https://claude.ai/artifact/1yVhqtQsaXow8GGRQsUaYN"
+    },
+    {
+     "label": "task board: 09-obsidian",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/task-board-handoff/screens/09-obsidian.html"
+    },
+    {
+     "label": "task board: 12-columns",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/task-board-handoff/screens/12-columns.html"
+    }
+   ]
   },
   {
    "id": "task-explainer",
@@ -3023,7 +3277,17 @@
      "Hover + New task; Help ▸ Explain Tasks."
     ],
     "at": "2026-10-17"
-   }
+   },
+   "links": [
+    {
+     "label": "explanatory tooltips: design canvas",
+     "url": "https://claude.ai/artifact/6KHUj9hbPQLwqarUdWpcAc"
+    },
+    {
+     "label": "explanatory tooltips: 02-explainer-tasks",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/explanatory-tooltips-handoff/screens/02-explainer-tasks.html"
+    }
+   ]
   },
   {
    "id": "session-glyphs",
@@ -3281,7 +3545,21 @@
      "Walk the steps and judge the look and feel."
     ],
     "at": "2026-10-30"
-   }
+   },
+   "links": [
+    {
+     "label": "github issues: design canvas",
+     "url": "https://claude.ai/artifact/9jwpM4HimuucECDXNhA2Aq"
+    },
+    {
+     "label": "github issues: 07-cards",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/github-issues-handoff/screens/07-cards.html"
+    },
+    {
+     "label": "github issues: 03-link",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/github-issues-handoff/screens/03-link.html"
+    }
+   ]
   },
   {
    "id": "sidebar-split-short",
@@ -4162,6 +4440,24 @@
    "workMacWhy": "Insert and undo a table in his own doc",
    "alsoCommits": [
     "b792a6ff0e84e6004ef8879f5d345dda2d98cd10"
+   ],
+   "links": [
+    {
+     "label": "tables: design canvas",
+     "url": "https://claude.ai/artifact/AmLcw8SFba5CnqvymoCz2S"
+    },
+    {
+     "label": "tables: tables-bar",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/tables-handoff/screens/tables-bar.html"
+    },
+    {
+     "label": "tables: tables-menu",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/tables-handoff/screens/tables-menu.html"
+    },
+    {
+     "label": "tables: tables-insert",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/tables-handoff/screens/tables-insert.html"
+    }
    ]
   },
   {
@@ -4225,7 +4521,17 @@
    "commit": "8310b418a2f1829482b2633a72b25c2b766d08a0",
    "group": "In checkout: documents",
    "workMac": "as-is",
-   "workMacWhy": "Look at gaps above headings in his doc"
+   "workMacWhy": "Look at gaps above headings in his doc",
+   "links": [
+    {
+     "label": "slice3: design canvas",
+     "url": "https://claude.ai/artifact/GNXvk4CWjarrXeURrLcyVY"
+    },
+    {
+     "label": "slice3: editor-document",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/slice3-handoff/screens/editor-document.html"
+    }
+   ]
   },
   {
    "id": "s3-drawing",
@@ -4409,7 +4715,17 @@
     "view tab Project"
    ],
    "workMac": "as-is",
-   "workMacWhy": "Project tab of his own PROJECT.md"
+   "workMacWhy": "Project tab of his own PROJECT.md",
+   "links": [
+    {
+     "label": "frontmatter: frontmatter-look",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/frontmatter-handoff/screens/frontmatter-look.html"
+    },
+    {
+     "label": "frontmatter: frontmatter",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/frontmatter-handoff/screens/frontmatter.html"
+    }
+   ]
   },
   {
    "id": "props-tab",
@@ -5056,7 +5372,21 @@
    ],
    "group": "In checkout: files",
    "workMac": "small",
-   "workMacWhy": "Copies two of his docs to Desktop and drags them in"
+   "workMacWhy": "Copies two of his docs to Desktop and drags them in",
+   "links": [
+    {
+     "label": "standins2: design canvas",
+     "url": "https://claude.ai/artifact/3TTPpMG5scibGpopR14afr"
+    },
+    {
+     "label": "standins2: q50-clash",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/standins2-handoff/screens/q50-clash.html"
+    },
+    {
+     "label": "standins2: q50-highlight",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/standins2-handoff/screens/q50-highlight.html"
+    }
+   ]
   },
   {
    "id": "docx-markdown",
@@ -5091,6 +5421,24 @@
    "workMacWhy": "Needs a .docx in his project; copy one in",
    "alsoCommits": [
     "2d6fd8b620aa7224b8c748da66942623764ed4d4"
+   ],
+   "links": [
+    {
+     "label": "docx: design canvas",
+     "url": "https://claude.ai/artifact/YRWyEm4MHbxYYtnRVr55xp"
+    },
+    {
+     "label": "docx: docx-offer",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/docx-handoff/screens/docx-offer.html"
+    },
+    {
+     "label": "docx: docx-converting",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/docx-handoff/screens/docx-converting.html"
+    },
+    {
+     "label": "docx: docx-result",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/docx-handoff/screens/docx-result.html"
+    }
    ]
   },
   {
@@ -5127,7 +5475,21 @@
    ],
    "group": "In checkout: files",
    "workMac": "small",
-   "workMacWhy": "Needs a .pptx of his in the project"
+   "workMacWhy": "Needs a .pptx of his in the project",
+   "links": [
+    {
+     "label": "pptx: design canvas",
+     "url": "https://claude.ai/artifact/UXSLiK37uMERJEh1mNyevE"
+    },
+    {
+     "label": "pptx: pptx-viewer",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/pptx-handoff/screens/pptx-viewer.html"
+    },
+    {
+     "label": "pptx: pptx-picked",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/pptx-handoff/screens/pptx-picked.html"
+    }
+   ]
   },
   {
    "id": "sb-no-preview",
@@ -5158,7 +5520,21 @@
    ],
    "group": "In checkout: files",
    "workMac": "as-is",
-   "workMacWhy": "Click any unknown-kind file in his project"
+   "workMacWhy": "Click any unknown-kind file in his project",
+   "links": [
+    {
+     "label": "standins2: design canvas",
+     "url": "https://claude.ai/artifact/3TTPpMG5scibGpopR14afr"
+    },
+    {
+     "label": "standins2: q52-preview",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/standins2-handoff/screens/q52-preview.html"
+    },
+    {
+     "label": "standins2: q52-none",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/standins2-handoff/screens/q52-none.html"
+    }
+   ]
   },
   {
    "id": "motion-deck",
@@ -5220,7 +5596,25 @@
    ],
    "group": "In checkout: files",
    "workMac": "small",
-   "workMacWhy": "Needs a .pptx with no session running"
+   "workMacWhy": "Needs a .pptx with no session running",
+   "links": [
+    {
+     "label": "standins2: design canvas",
+     "url": "https://claude.ai/artifact/3TTPpMG5scibGpopR14afr"
+    },
+    {
+     "label": "standins2: q68-drawing",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/standins2-handoff/screens/q68-drawing.html"
+    },
+    {
+     "label": "standins2: q68-no-session",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/standins2-handoff/screens/q68-no-session.html"
+    },
+    {
+     "label": "standins2: q68-narrow",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/standins2-handoff/screens/q68-narrow.html"
+    }
+   ]
   },
   {
    "id": "docx-view",
@@ -5241,7 +5635,25 @@
    "commit": "2d6fd8b620aa7224b8c748da66942623764ed4d4",
    "workMac": "small",
    "workMacWhy": "Works on any .docx he has; the best test needs one with comments or tracked changes (fixture sample otherwise).",
-   "new": true
+   "new": true,
+   "links": [
+    {
+     "label": "docx viewer: design canvas",
+     "url": "https://claude.ai/artifact/F8PWth7cidMZvWjgh28ye4"
+    },
+    {
+     "label": "docx viewer: viewer",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/docx-viewer-handoff/screens/viewer.html"
+    },
+    {
+     "label": "docx viewer: markup",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/docx-viewer-handoff/screens/markup.html"
+    },
+    {
+     "label": "docx viewer: pages",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/docx-viewer-handoff/screens/pages.html"
+    }
+   ]
   },
   {
    "id": "files-root-menu",
@@ -5305,7 +5717,25 @@
    ],
    "workMac": "home",
    "workMacWhy": "Needs a git repo with GitHub credentials, ideally gh signed in; the push is real.",
-   "new": true
+   "new": true,
+   "links": [
+    {
+     "label": "github: design canvas",
+     "url": "https://claude.ai/artifact/76ZGzopVk1eLx9d2pnWA2i"
+    },
+    {
+     "label": "github: 04-status",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/github-handoff/screens/04-status.html"
+    },
+    {
+     "label": "github: 05-states",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/github-handoff/screens/05-states.html"
+    },
+    {
+     "label": "github: 06-push-pr",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/github-handoff/screens/06-push-pr.html"
+    }
+   ]
   },
   {
    "id": "github-get-latest",
@@ -5597,7 +6027,21 @@
    ],
    "group": "In checkout: HTML pages and the browser",
    "workMac": "as-is",
-   "workMacWhy": "Download a file and open a popup in a browser tab"
+   "workMacWhy": "Download a file and open a popup in a browser tab",
+   "links": [
+    {
+     "label": "standins2: design canvas",
+     "url": "https://claude.ai/artifact/3TTPpMG5scibGpopR14afr"
+    },
+    {
+     "label": "standins2: q66-downloading",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/standins2-handoff/screens/q66-downloading.html"
+    },
+    {
+     "label": "standins2: q67-popup",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/standins2-handoff/screens/q67-popup.html"
+    }
+   ]
   },
   {
    "id": "s1-shells",
@@ -5764,7 +6208,21 @@
    "commit": "7737be3c8b7e62ca2a749fc3a535ad7f8a44ef51",
    "group": "In checkout: shells and tabs",
    "workMac": "as-is",
-   "workMacWhy": "Hover and click tab × in his project"
+   "workMacWhy": "Hover and click tab × in his project",
+   "links": [
+    {
+     "label": "tab close: design canvas",
+     "url": "https://claude.ai/artifact/BcUBs8KZcpEpPF3EhHt6GT"
+    },
+    {
+     "label": "tab close: console-tabs-close",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/tab-close-handoff/screens/console-tabs-close.html"
+    },
+    {
+     "label": "tab close: right-pane-tabs-close",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/tab-close-handoff/screens/right-pane-tabs-close.html"
+    }
+   ]
   },
   {
    "id": "tab-drag-console",
@@ -5903,7 +6361,17 @@
    ],
    "group": "In checkout: shells and tabs",
    "workMac": "as-is",
-   "workMacWhy": "Hover console and right-pane tabs"
+   "workMacWhy": "Hover console and right-pane tabs",
+   "links": [
+    {
+     "label": "tab hover: design canvas",
+     "url": "https://claude.ai/artifact/PEPNt2XyjyuWxYjG3ZofKN"
+    },
+    {
+     "label": "tab hover: hover-fill-a",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/tab-hover-handoff/screens/hover-fill-a.html"
+    }
+   ]
   },
   {
    "id": "sb-outside-tab",
@@ -5934,7 +6402,17 @@
    ],
    "group": "In checkout: shells and tabs",
    "workMac": "as-is",
-   "workMacWhy": "Open a file outside the project and hover its tab"
+   "workMacWhy": "Open a file outside the project and hover its tab",
+   "links": [
+    {
+     "label": "standins2: design canvas",
+     "url": "https://claude.ai/artifact/3TTPpMG5scibGpopR14afr"
+    },
+    {
+     "label": "standins2: q39-hover",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/standins2-handoff/screens/q39-hover.html"
+    }
+   ]
   },
   {
    "id": "restore-relaunch",
@@ -6013,7 +6491,21 @@
    "alsoCommits": [],
    "workMac": "as-is",
    "workMacWhy": "Any project with two tabs open",
-   "new": true
+   "new": true,
+   "links": [
+    {
+     "label": "pane focus: design canvas",
+     "url": "https://claude.ai/artifact/QgL8pHUtYL8KqK2mUmqiEb"
+    },
+    {
+     "label": "pane focus: pane-console",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/pane-focus-handoff/screens/pane-console.html"
+    },
+    {
+     "label": "pane focus: pane-right",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/pane-focus-handoff/screens/pane-right.html"
+    }
+   ]
   },
   {
    "id": "chat-toggle",
@@ -6053,7 +6545,25 @@
    ],
    "group": "Claude running in checkout: chat mode",
    "workMac": "small",
-   "workMacWhy": "Start a Claude session in your project; the pinned CLI may fall back to the terminal"
+   "workMacWhy": "Start a Claude session in your project; the pinned CLI may fall back to the terminal",
+   "links": [
+    {
+     "label": "chat mode: design canvas",
+     "url": "https://claude.ai/artifact/FtWkK77NhsW5DAF8ZQ1KWd"
+    },
+    {
+     "label": "chat mode: toggle",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-mode-handoff/screens/toggle.html"
+    },
+    {
+     "label": "chat mode: window",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-mode-handoff/screens/window.html"
+    },
+    {
+     "label": "chat mode: text",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-mode-handoff/screens/text.html"
+    }
+   ]
   },
   {
    "id": "chat-strip",
@@ -6087,6 +6597,16 @@
    "workMacWhy": "Start a Claude session in your project; the pinned CLI may fall back to the terminal",
    "alsoCommits": [
     "7de680363303025ee5ac97d4114856a64f818180"
+   ],
+   "links": [
+    {
+     "label": "chat polish: design canvas",
+     "url": "https://claude.ai/artifact/SSkofLgbK2jdNCKonuXPT2"
+    },
+    {
+     "label": "chat polish: bar-thin",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-polish-handoff/screens/bar-thin.html"
+    }
    ]
   },
   {
@@ -6130,7 +6650,21 @@
    ],
    "group": "Claude running in checkout: chat mode",
    "workMac": "small",
-   "workMacWhy": "Start a Claude session in your project; the pinned CLI may fall back to the terminal"
+   "workMacWhy": "Start a Claude session in your project; the pinned CLI may fall back to the terminal",
+   "links": [
+    {
+     "label": "chat mode: design canvas",
+     "url": "https://claude.ai/artifact/FtWkK77NhsW5DAF8ZQ1KWd"
+    },
+    {
+     "label": "chat mode: composer",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-mode-handoff/screens/composer.html"
+    },
+    {
+     "label": "chat mode: status",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-mode-handoff/screens/status.html"
+    }
+   ]
   },
   {
    "id": "chat-md-composer",
@@ -6295,7 +6829,21 @@
    ],
    "group": "Claude running in checkout: chat mode",
    "workMac": "small",
-   "workMacWhy": "Start a Claude session in your project; the pinned CLI may fall back to the terminal"
+   "workMacWhy": "Start a Claude session in your project; the pinned CLI may fall back to the terminal",
+   "links": [
+    {
+     "label": "small features: design canvas",
+     "url": "https://claude.ai/artifact/2qhPnZG6qUpLWFsXKCYSzt"
+    },
+    {
+     "label": "small features: composer-at",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/small-features-handoff/screens/composer-at.html"
+    },
+    {
+     "label": "small features: composer-at-chosen",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/small-features-handoff/screens/composer-at-chosen.html"
+    }
+   ]
   },
   {
    "id": "chat-review",
@@ -6331,7 +6879,25 @@
    ],
    "group": "Claude running in checkout: chat mode",
    "workMac": "small",
-   "workMacWhy": "Start a Claude session in your project; the pinned CLI may fall back to the terminal"
+   "workMacWhy": "Start a Claude session in your project; the pinned CLI may fall back to the terminal",
+   "links": [
+    {
+     "label": "chat mode: design canvas",
+     "url": "https://claude.ai/artifact/FtWkK77NhsW5DAF8ZQ1KWd"
+    },
+    {
+     "label": "chat mode: permission-bash",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-mode-handoff/screens/permission-bash.html"
+    },
+    {
+     "label": "chat mode: plan",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-mode-handoff/screens/plan.html"
+    },
+    {
+     "label": "chat mode: question-multi",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-mode-handoff/screens/question-multi.html"
+    }
+   ]
   },
   {
    "id": "chat-fold",
@@ -6363,7 +6929,25 @@
    ],
    "group": "Claude running in checkout: chat mode",
    "workMac": "small",
-   "workMacWhy": "Start a Claude session in your project; the pinned CLI may fall back to the terminal"
+   "workMacWhy": "Start a Claude session in your project; the pinned CLI may fall back to the terminal",
+   "links": [
+    {
+     "label": "chat polish: design canvas",
+     "url": "https://claude.ai/artifact/SSkofLgbK2jdNCKonuXPT2"
+    },
+    {
+     "label": "chat polish: collapsed",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-polish-handoff/screens/collapsed.html"
+    },
+    {
+     "label": "chat polish: expanded",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-polish-handoff/screens/expanded.html"
+    },
+    {
+     "label": "chat polish: output",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-polish-handoff/screens/output.html"
+    }
+   ]
   },
   {
    "id": "chat-perf",
@@ -6434,7 +7018,21 @@
    ],
    "group": "Claude running in checkout: chat mode",
    "workMac": "small",
-   "workMacWhy": "Start a Claude session in your project; the pinned CLI may fall back to the terminal"
+   "workMacWhy": "Start a Claude session in your project; the pinned CLI may fall back to the terminal",
+   "links": [
+    {
+     "label": "standins2: design canvas",
+     "url": "https://claude.ai/artifact/3TTPpMG5scibGpopR14afr"
+    },
+    {
+     "label": "standins2: q57-home-pill",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/standins2-handoff/screens/q57-home-pill.html"
+    },
+    {
+     "label": "standins2: q57-link-status",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/standins2-handoff/screens/q57-link-status.html"
+    }
+   ]
   },
   {
    "id": "motion-chat-card",
@@ -6581,7 +7179,21 @@
    "commit": "e0195c81d89c08eec7d9092ac5d7d41b9ac15b17",
    "workMac": "as-is",
    "workMacWhy": "Any chat session.",
-   "new": true
+   "new": true,
+   "links": [
+    {
+     "label": "chat mode: design canvas",
+     "url": "https://claude.ai/artifact/FtWkK77NhsW5DAF8ZQ1KWd"
+    },
+    {
+     "label": "chat mode: text",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-mode-handoff/screens/text.html"
+    },
+    {
+     "label": "chat mode: window",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-mode-handoff/screens/window.html"
+    }
+   ]
   },
   {
    "id": "chat-return-sends",
@@ -6693,7 +7305,21 @@
    "commit": "891f7d4cc866a4ce0f4cdbb2d87054e7149e47ba",
    "workMac": "as-is",
    "workMacWhy": "Any chat session.",
-   "new": true
+   "new": true,
+   "links": [
+    {
+     "label": "chat slash: design canvas",
+     "url": "https://claude.ai/artifact/EGcF7Qx5ga6EXwkKZVh44a"
+    },
+    {
+     "label": "chat slash: output",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-slash-handoff/screens/output.html"
+    },
+    {
+     "label": "chat slash: context",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-slash-handoff/screens/context.html"
+    }
+   ]
   },
   {
    "id": "chat-pickers",
@@ -6718,6 +7344,20 @@
    "new": true,
    "alsoCommits": [
     "16f9e46026f90ce5dc42f9e5c54f9db033c00937"
+   ],
+   "links": [
+    {
+     "label": "chat slash: design canvas",
+     "url": "https://claude.ai/artifact/EGcF7Qx5ga6EXwkKZVh44a"
+    },
+    {
+     "label": "chat slash: model-card",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-slash-handoff/screens/model-card.html"
+    },
+    {
+     "label": "chat slash: effort-card",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-slash-handoff/screens/effort-card.html"
+    }
    ]
   },
   {
@@ -6892,7 +7532,17 @@
    "commit": "c230c924e1e6541ea4ab2f202303c7b6c231815a",
    "workMac": "home",
    "workMacWhy": "Needs a sign-in or OAuth screen to appear; hard to make on demand.",
-   "new": true
+   "new": true,
+   "links": [
+    {
+     "label": "chat mode: design canvas",
+     "url": "https://claude.ai/artifact/FtWkK77NhsW5DAF8ZQ1KWd"
+    },
+    {
+     "label": "chat mode: fallback",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-mode-handoff/screens/fallback.html"
+    }
+   ]
   },
   {
    "id": "chat-question-stays",
@@ -7054,7 +7704,21 @@
    ],
    "workMac": "as-is",
    "workMacWhy": "Any chat session with a picture on your clipboard; works on the pinned 2.1.219 (proved live).",
-   "new": true
+   "new": true,
+   "links": [
+    {
+     "label": "chat paste: design canvas",
+     "url": "https://claude.ai/artifact/9XConwuo9RTSvgzvd4njAj"
+    },
+    {
+     "label": "chat paste: picture",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-paste-handoff/screens/picture.html"
+    },
+    {
+     "label": "chat paste: sent",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-paste-handoff/screens/sent.html"
+    }
+   ]
   },
   {
    "id": "chat-paste-long",
@@ -7076,7 +7740,21 @@
    "commit": "131dd5b38e474778c08ba89fd065779e38931181",
    "workMac": "as-is",
    "workMacWhy": "Any chat session and any long text.",
-   "new": true
+   "new": true,
+   "links": [
+    {
+     "label": "chat paste: design canvas",
+     "url": "https://claude.ai/artifact/9XConwuo9RTSvgzvd4njAj"
+    },
+    {
+     "label": "chat paste: text",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-paste-handoff/screens/text.html"
+    },
+    {
+     "label": "chat paste: edges",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-paste-handoff/screens/edges.html"
+    }
+   ]
   },
   {
    "id": "askq-numbered-desc",
@@ -7841,7 +8519,17 @@
    ],
    "group": "Claude running: closing and ending",
    "workMac": "small",
-   "workMacWhy": "Needs a working session and a shell running sleep 30"
+   "workMacWhy": "Needs a working session and a shell running sleep 30",
+   "links": [
+    {
+     "label": "standins2: design canvas",
+     "url": "https://claude.ai/artifact/3TTPpMG5scibGpopR14afr"
+    },
+    {
+     "label": "standins2: close-busy",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/standins2-handoff/screens/close-busy.html"
+    }
+   ]
   },
   {
    "id": "rp-close",
@@ -8850,7 +9538,21 @@
      "Look at Board and List; Make a Project; ⌘Z."
     ],
     "at": "2026-10-17"
-   }
+   },
+   "links": [
+    {
+     "label": "home evolution: design canvas",
+     "url": "https://claude.ai/artifact/UmuuYZdzroUbBDmY2UYRBY"
+    },
+    {
+     "label": "home evolution: board-1440",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/home-evolution-handoff/screens/board-1440.html"
+    },
+    {
+     "label": "home evolution: list-1440",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/home-evolution-handoff/screens/list-1440.html"
+    }
+   ]
   },
   {
    "id": "new-project-any-folder",
@@ -8998,7 +9700,21 @@
      "desc": "A longer hint next to the button."
     }
    ],
-   "workMac": "small"
+   "workMac": "small",
+   "links": [
+    {
+     "label": "chat mode: design canvas",
+     "url": "https://claude.ai/artifact/FtWkK77NhsW5DAF8ZQ1KWd"
+    },
+    {
+     "label": "chat mode: fallback",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-mode-handoff/screens/fallback.html"
+    },
+    {
+     "label": "chat slash: fallback-named",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-slash-handoff/screens/fallback-named.html"
+    }
+   ]
   },
   {
    "id": "q136-parked-tab",
@@ -9022,7 +9738,21 @@
      "desc": "A small \"resumes when opened\" cue on the tab or in its tooltip. Needs a design pass on a canvas."
     }
    ],
-   "workMac": "as-is"
+   "workMac": "as-is",
+   "links": [
+    {
+     "label": "park: design canvas",
+     "url": "https://claude.ai/artifact/9bwgqT41HWbkg72ihZ943j"
+    },
+    {
+     "label": "park: keep-running-pin",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/park-handoff/screens/keep-running-pin.html"
+    },
+    {
+     "label": "park: menus",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/park-handoff/screens/menus.html"
+    }
+   ]
   },
   {
    "id": "q137-duo-files-push",
@@ -9050,7 +9780,17 @@
      "desc": "Needs a design pass on a canvas."
     }
    ],
-   "workMac": "home"
+   "workMac": "home",
+   "links": [
+    {
+     "label": "github: design canvas",
+     "url": "https://claude.ai/artifact/76ZGzopVk1eLx9d2pnWA2i"
+    },
+    {
+     "label": "github: 06-push-pr",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/github-handoff/screens/06-push-pr.html"
+    }
+   ]
   },
   {
    "id": "q138-github-standins",
@@ -9079,7 +9819,25 @@
      "desc": "Say which in the comment. Needs a design pass on a canvas."
     }
    ],
-   "workMac": "home"
+   "workMac": "home",
+   "links": [
+    {
+     "label": "github: design canvas",
+     "url": "https://claude.ai/artifact/76ZGzopVk1eLx9d2pnWA2i"
+    },
+    {
+     "label": "github: 10-failures",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/github-handoff/screens/10-failures.html"
+    },
+    {
+     "label": "github: 06-push-pr",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/github-handoff/screens/06-push-pr.html"
+    },
+    {
+     "label": "github: 09-get-latest",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/github-handoff/screens/09-get-latest.html"
+    }
+   ]
   },
   {
    "id": "q139-github-entry",
@@ -9126,7 +9884,17 @@
      "desc": "Use the free chord."
     }
    ],
-   "workMac": "as-is"
+   "workMac": "as-is",
+   "links": [
+    {
+     "label": "github: design canvas",
+     "url": "https://claude.ai/artifact/76ZGzopVk1eLx9d2pnWA2i"
+    },
+    {
+     "label": "github: 06-push-pr",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/github-handoff/screens/06-push-pr.html"
+    }
+   ]
   },
   {
    "id": "q141-empty-board",
@@ -9149,7 +9917,17 @@
      "desc": "Remove that line until the drop exists."
     }
    ],
-   "workMac": "as-is"
+   "workMac": "as-is",
+   "links": [
+    {
+     "label": "task board: design canvas",
+     "url": "https://claude.ai/artifact/1yVhqtQsaXow8GGRQsUaYN"
+    },
+    {
+     "label": "task board: 08-empty-narrow",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/task-board-handoff/screens/08-empty-narrow.html"
+    }
+   ]
   },
   {
    "id": "q142-session-onto-card",
@@ -9177,7 +9955,21 @@
      "desc": "From the All projects column or another window. Needs a design pass on a canvas."
     }
    ],
-   "workMac": "as-is"
+   "workMac": "as-is",
+   "links": [
+    {
+     "label": "task board: design canvas",
+     "url": "https://claude.ai/artifact/1yVhqtQsaXow8GGRQsUaYN"
+    },
+    {
+     "label": "task board: 07-drag",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/task-board-handoff/screens/07-drag.html"
+    },
+    {
+     "label": "task board: 11-sessions",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/task-board-handoff/screens/11-sessions.html"
+    }
+   ]
   },
   {
    "id": "q144a-add-column",
@@ -9200,7 +9992,21 @@
      "desc": "Beside + New task. Needs a design pass on a canvas."
     }
    ],
-   "workMac": "as-is"
+   "workMac": "as-is",
+   "links": [
+    {
+     "label": "task board: design canvas",
+     "url": "https://claude.ai/artifact/1yVhqtQsaXow8GGRQsUaYN"
+    },
+    {
+     "label": "task board: 04-where-c",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/task-board-handoff/screens/04-where-c.html"
+    },
+    {
+     "label": "task board: 12-columns",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/task-board-handoff/screens/12-columns.html"
+    }
+   ]
   },
   {
    "id": "q144b-lane-reorder",
@@ -9223,7 +10029,17 @@
      "desc": "A later slice."
     }
    ],
-   "workMac": "as-is"
+   "workMac": "as-is",
+   "links": [
+    {
+     "label": "task board: design canvas",
+     "url": "https://claude.ai/artifact/1yVhqtQsaXow8GGRQsUaYN"
+    },
+    {
+     "label": "task board: 12-columns",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/task-board-handoff/screens/12-columns.html"
+    }
+   ]
   },
   {
    "id": "q145-references-left",
@@ -9287,7 +10103,17 @@
      "desc": "Say lighter or darker in the comment."
     }
    ],
-   "workMac": "as-is"
+   "workMac": "as-is",
+   "links": [
+    {
+     "label": "task menu: design canvas",
+     "url": "https://claude.ai/artifact/6i7mSyfa771bvhcykczetN"
+    },
+    {
+     "label": "task menu: task-menu",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/task-menu-handoff/screens/task-menu.html"
+    }
+   ]
   },
   {
    "id": "q148-chat-paste",
@@ -9316,7 +10142,33 @@
      "desc": "Say which in the comment. Needs a design pass on a canvas."
     }
    ],
-   "workMac": "home"
+   "workMac": "home",
+   "links": [
+    {
+     "label": "chat paste: design canvas",
+     "url": "https://claude.ai/artifact/9XConwuo9RTSvgzvd4njAj"
+    },
+    {
+     "label": "chat paste: picture",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-paste-handoff/screens/picture.html"
+    },
+    {
+     "label": "chat paste: text",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-paste-handoff/screens/text.html"
+    },
+    {
+     "label": "chat paste: edges",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-paste-handoff/screens/edges.html"
+    },
+    {
+     "label": "chat paste: replay",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-paste-handoff/screens/replay.html"
+    },
+    {
+     "label": "chat paste: sent",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-paste-handoff/screens/sent.html"
+    }
+   ]
   },
   {
    "id": "q151-word-viewer",
@@ -9346,7 +10198,33 @@
      "desc": "Say which in the comment. Needs a design pass on a canvas for visual ones."
     }
    ],
-   "workMac": "small"
+   "workMac": "small",
+   "links": [
+    {
+     "label": "docx viewer: design canvas",
+     "url": "https://claude.ai/artifact/F8PWth7cidMZvWjgh28ye4"
+    },
+    {
+     "label": "docx viewer: viewer",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/docx-viewer-handoff/screens/viewer.html"
+    },
+    {
+     "label": "docx viewer: markup",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/docx-viewer-handoff/screens/markup.html"
+    },
+    {
+     "label": "docx viewer: ask",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/docx-viewer-handoff/screens/ask.html"
+    },
+    {
+     "label": "docx viewer: picked",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/docx-viewer-handoff/screens/picked.html"
+    },
+    {
+     "label": "docx viewer: pages",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/docx-viewer-handoff/screens/pages.html"
+    }
+   ]
   },
   {
    "id": "q152-select-text",
@@ -9396,7 +10274,17 @@
      "desc": "Show a notice for anything else."
     }
    ],
-   "workMac": "small"
+   "workMac": "small",
+   "links": [
+    {
+     "label": "task board: design canvas",
+     "url": "https://claude.ai/artifact/1yVhqtQsaXow8GGRQsUaYN"
+    },
+    {
+     "label": "task board: 13-documents",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/task-board-handoff/screens/13-documents.html"
+    }
+   ]
   },
   {
    "id": "q162-browse-up",
@@ -9426,7 +10314,17 @@
      "desc": "Beside the path. Needs a design pass on a canvas."
     }
    ],
-   "workMac": "as-is"
+   "workMac": "as-is",
+   "links": [
+    {
+     "label": "slice2: design canvas",
+     "url": "https://claude.ai/artifact/JSmkQh1Gsj9uyPSzkcuQFV"
+    },
+    {
+     "label": "slice2: project-sessions",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/slice2-handoff/screens/project-sessions.html"
+    }
+   ]
   },
   {
    "id": "q163-above-root-edit",
@@ -9483,7 +10381,17 @@
      "desc": "A new surface; needs a design pass on a canvas."
     }
    ],
-   "workMac": "small"
+   "workMac": "small",
+   "links": [
+    {
+     "label": "stand ins: design canvas",
+     "url": "https://claude.ai/artifact/JRX1VKzcgfTh5z3Da6eMqM"
+    },
+    {
+     "label": "stand ins: q43-drafted",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/stand-ins-handoff/screens/q43-drafted.html"
+    }
+   ]
   },
   {
    "id": "q165-pane-focus-look",
@@ -9516,7 +10424,29 @@
      "desc": "Most Mac-like, but adds a second accent beside the needs-you colour."
     }
    ],
-   "workMac": "as-is"
+   "workMac": "as-is",
+   "links": [
+    {
+     "label": "pane focus: design canvas",
+     "url": "https://claude.ai/artifact/QgL8pHUtYL8KqK2mUmqiEb"
+    },
+    {
+     "label": "pane focus: pane-console",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/pane-focus-handoff/screens/pane-console.html"
+    },
+    {
+     "label": "pane focus: pane-left",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/pane-focus-handoff/screens/pane-left.html"
+    },
+    {
+     "label": "pane focus: pane-right",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/pane-focus-handoff/screens/pane-right.html"
+    },
+    {
+     "label": "pane focus: pane-home",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/pane-focus-handoff/screens/pane-home.html"
+    }
+   ]
   },
   {
    "id": "q166a-pane-chord",
@@ -9616,7 +10546,21 @@
      "desc": "Every tab reachable by swiping; the active one may sit off-screen."
     }
    ],
-   "workMac": "as-is"
+   "workMac": "as-is",
+   "links": [
+    {
+     "label": "tabs: design canvas",
+     "url": "https://claude.ai/artifact/6c1sHmzDmboFzMoxgagWdm"
+    },
+    {
+     "label": "tabs: right-pane",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/tabs-handoff/screens/right-pane.html"
+    },
+    {
+     "label": "tabs: console-chat-home",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/tabs-handoff/screens/console-chat-home.html"
+    }
+   ]
   },
   {
    "id": "q177a-explainer-learn-more",
@@ -9758,7 +10702,17 @@
      "desc": "A proper round for chat Markdown, with Q-194 and Q-56."
     }
    ],
-   "workMac": "small"
+   "workMac": "small",
+   "links": [
+    {
+     "label": "chat markdown: design canvas",
+     "url": "https://claude.ai/artifact/HqqgRX8mpDfZjRLM14Btd9"
+    },
+    {
+     "label": "chat markdown: composer",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/chat-markdown-handoff/screens/composer.html"
+    }
+   ]
   },
   {
    "id": "q197-first-run-projects",
@@ -9781,7 +10735,21 @@
      "desc": "Design the empty state and the use-this-folder choice."
     }
    ],
-   "workMac": "small"
+   "workMac": "small",
+   "links": [
+    {
+     "label": "home evolution: design canvas",
+     "url": "https://claude.ai/artifact/UmuuYZdzroUbBDmY2UYRBY"
+    },
+    {
+     "label": "home evolution: board-1440",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/home-evolution-handoff/screens/board-1440.html"
+    },
+    {
+     "label": "home evolution: list-1440",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/home-evolution-handoff/screens/list-1440.html"
+    }
+   ]
   },
   {
    "id": "q325-pill-states",
@@ -9804,7 +10772,21 @@
      "desc": "A design round for the undrawn states before they're final."
     }
    ],
-   "workMac": "small"
+   "workMac": "small",
+   "links": [
+    {
+     "label": "new session: design canvas",
+     "url": "https://claude.ai/artifact/58jBVfGCNHjNcrFtaa2HVj"
+    },
+    {
+     "label": "new session: chosen-placement-4",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/new-session-handoff/screens/chosen-placement-4.html"
+    },
+    {
+     "label": "new session: pill-options",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/new-session-handoff/screens/pill-options.html"
+    }
+   ]
   }
  ],
  "groupNotes": {

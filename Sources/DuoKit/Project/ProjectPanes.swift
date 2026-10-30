@@ -706,7 +706,7 @@ struct FileRow: View {
     var body: some View {
         let selected = model.selectedFile == node.path
         let edited = model.fixture.focusDocument.path == node.path
-        // changed / new / conflict / kept out of git (DL-149), where "edited by Claude" sits.
+        // changed / new / conflict (DL-149; Duo's files too, DL-259), where "edited by Claude" sits.
         let mark = edited ? "edited by Claude" : model.currentRepo?.marks[node.children == nil ? node.path : node.path + "/"]
         VStack(alignment: .leading, spacing: 0) {
             let open = node.children != nil && model.isFolderOpen(node.path)

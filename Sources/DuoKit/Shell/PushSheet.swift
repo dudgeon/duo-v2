@@ -58,17 +58,12 @@ struct PushSheet: View {
     static let mono = Font(NSFont.monospacedSystemFont(ofSize: DuoTextStyle.mono.spec.size, weight: .regular))
 
     private var changes: some View {
-        let user = form.rows.filter { !$0.duo }, duo = form.rows.filter(\.duo)
+        // One list, Duo's files among the rest (DL-259).
+        let rows = form.rows
         return VStack(alignment: .leading, spacing: 2) {
-            ForEach(user) { row($0) }
-            if !duo.isEmpty {
-                // Duo's own files in a repo Duo didn't copy (DL-157): unticked; a stand-in until drawn (Q-137).
-                Text("Duo’s files").duoText(.control).foregroundStyle(DuoColor.text2).padding(.top, user.isEmpty ? 0 : 4)
-                ForEach(duo) { row($0) }
-            }
-            let tail = [form.commitsAhead > 0 ? "\(user.isEmpty ? "" : "Plus ")\(form.commitsAhead) commit\(form.commitsAhead == 1 ? "" : "s") already made here." : nil,
-                        duo.isEmpty ? "\(form.projectFileName) stays out." : nil].compactMap { $0 }.joined(separator: " ")
-            if user.isEmpty && duo.isEmpty && form.commitsAhead == 0 {
+            ForEach(rows) { row($0) }
+            let tail = form.commitsAhead > 0 ? "\(rows.isEmpty ? "" : "Plus ")\(form.commitsAhead) commit\(form.commitsAhead == 1 ? "" : "s") already made here." : ""
+            if rows.isEmpty && form.commitsAhead == 0 {
                 Text("Nothing changed: Duo pushes the branch as it is.").duoText(.control).foregroundStyle(DuoColor.text2)
             } else if !tail.isEmpty {
                 Text(tail.prefix(1).uppercased() + tail.dropFirst()).duoText(.control).foregroundStyle(DuoColor.text2).padding(.top, 2)

@@ -63,11 +63,6 @@ extension AppModel {
                 }
             }
         }
-        let ignored = ["_PROJECT.md", "PROJECT.md"].contains { file in
-            FileManager.default.fileExists(atPath: folder.appending(path: file).path)
-                && GitTool.git(["check-ignore", "-q", "--", folder.appending(path: file).path], in: status.root, timeout: 5).status == 0
-        }
-        v.duoFilesIgnored = ignored
         return v
     }
 
@@ -163,7 +158,6 @@ extension AppModel {
             lines.append("The user can push to \(origin.slug).")
         }
         if v.access?.protectedDefault == true { lines.append("\(v.base) is protected: never commit to it.") }
-        lines.append("_PROJECT.md and .duo/ are Duo's: don't add them to commits.")
         lines.append("To share work, the user presses Push in Duo's Files block; don't push or open pull requests unless asked.")
         return lines.joined(separator: "\n")
     }

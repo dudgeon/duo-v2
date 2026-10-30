@@ -45,10 +45,6 @@ struct GitHubProjectSheet: View {
             SheetRow("") {
                 VStack(alignment: .leading, spacing: 6) {
                     Toggle("Start a Claude session in it", isOn: $form.startSession).toggleStyle(.checkbox).duoText(.body)
-                    Toggle(isOn: $form.keepOutOfGit) {
-                        Text("Keep \(Text("PROJECT.md").font(PushSheet.mono)) out of git (listed in \(Text(".git/info/exclude").font(PushSheet.mono)))")
-                    }
-                    .toggleStyle(.checkbox).duoText(.body)
                 }
             }
             HStack(spacing: DuoSpace.gapButtonToButton) {

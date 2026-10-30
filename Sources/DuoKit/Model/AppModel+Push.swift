@@ -9,8 +9,7 @@ import Foundation
         public var path: String
         public var kind: FileChange.Kind
         public var stat: String      // "+18 −9", "new", "deleted"
-        public var ticked: Bool
-        public var duo = false       // one of Duo's own files (DL-157): unticked by default
+        public var ticked: Bool      // every change starts ticked, Duo's files too (DL-259)
         public var id: String { path }
     }
     public enum Mode: Equatable { case write, fork, browser }
@@ -34,8 +33,6 @@ import Foundation
     public var mode: Mode
     public let login: String?
     public var working = false
-    /// The project's own note, named in "… stays out."
-    public var projectFileName = "_PROJECT.md"
     public var problem: String?
     /// "Closes #n" for each task in the project that tracks an issue in this repo (DL-226, board 6).
     public struct Closes: Identifiable, Equatable {
@@ -92,10 +89,9 @@ extension AppModel {
             let stats = await Task.detached(priority: .userInitiated) { Self.numstat(root) }.value
             let bases = await Task.detached(priority: .utility) { Self.remoteBranches(root) }.value
             let rows: [PushForm.Row] = v.status.changes.filter { $0.kind != .conflict }.map { c in
-                let duo = c.kind == .new && RepoView.isDuoFile(c.path)
                 let stat = c.kind == .new ? "new" : (c.kind == .deleted ? "deleted" : (stats[c.path] ?? ""))
-                return PushForm.Row(path: c.path, kind: c.kind, stat: stat, ticked: !duo, duo: duo)
-            }.sorted { ($0.duo ? 1 : 0, $0.path) < ($1.duo ? 1 : 0, $1.path) }
+                return PushForm.Row(path: c.path, kind: c.kind, stat: stat, ticked: true)
+            }.sorted { $0.path < $1.path }
             do {
                 let mode: PushForm.Mode = (fork || v.access?.readOnly == true) ? .fork : (GitTool.ghPath == nil || v.access?.login == nil ? .browser : .write)
                 let message = goal.isEmpty ? (sessions.first ?? "Changes from \(name)") : goal
@@ -103,7 +99,6 @@ extension AppModel {
                 let form = PushForm(project: name, repo: origin, branch: branch, base: v.base, newOnGitHub: v.status.upstream == nil,
                                     commitsAhead: v.status.ahead, rows: rows, message: message, body: body, existingPR: v.pr, mode: mode, login: v.access?.login)
                 form.closes = self.closesCandidates(project: name, repo: origin)
-                form.projectFileName = self.projectFile ?? "_PROJECT.md"
                 form.bases = [v.base] + bases.filter { $0 != v.base && $0 != branch }
                 if sendNow, form.ticked.isEmpty, v.pr != nil, mode != .fork {
                     form.openPR = false

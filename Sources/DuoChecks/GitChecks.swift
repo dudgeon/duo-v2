@@ -83,9 +83,9 @@ private func stubGH(_ dir: URL, login: String?, permission: String, protected: B
     check(line { $0.status.branch = "main"; $0.status.upstream = "origin/main"; $0.status.ahead = 1 }.action == .moveToBranch, "on a protected main: Move to a Branch…")
     check(line { $0.lastFailure = .signedOut; $0.status.ahead = 1 }.action == .signIn, "signed out: Sign In…")
     check(line { $0.unreachable = true; $0.lastReach = Date().addingTimeInterval(-7200) }.fact == "can’t reach GitHub · checked 2 h ago", "can't reach GitHub, quietly")
-    check(line { $0.status.changes = [FileChange(path: "_PROJECT.md", kind: .new, staged: false)] }.fact == "up to date with GitHub", "Duo's own untracked files aren't the user's changes (DL-157)")
-    let inDocs = view { $0.projectPrefix = "docs/"; $0.status.changes = [FileChange(path: "docs/a.md", kind: .changed, staged: false), FileChange(path: "src/b.c", kind: .changed, staged: false)]; $0.duoFilesIgnored = true }
-    check(inDocs.marks == ["a.md": "changed", "_PROJECT.md": "kept out of git", "PROJECT.md": "kept out of git"], "marks are the project's files only, relative to it")
+    check(line { $0.status.changes = [FileChange(path: "_PROJECT.md", kind: .new, staged: false)] }.fact == "1 file changed", "Duo's own files are ordinary changes (DL-259)")
+    let inDocs = view { $0.projectPrefix = "docs/"; $0.status.changes = [FileChange(path: "docs/a.md", kind: .changed, staged: false), FileChange(path: "src/b.c", kind: .changed, staged: false), FileChange(path: "docs/_PROJECT.md", kind: .new, staged: false)] }
+    check(inDocs.marks == ["a.md": "changed", "_PROJECT.md": "new"], "marks are the project's files only, relative to it; Duo's file is marked new like any (DL-259)")
     check(AppModel.repoContext(view { $0.access?.permission = .read })?.contains("pushes go to the user's fork geoffd/website (remote `fork`)") == true, "Claude is told to push to the fork")
 
     // A sandbox: upstream (bare), a fork (bare), and Duo's copy.
@@ -126,14 +126,16 @@ private func stubGH(_ dir: URL, login: String?, permission: String, protected: B
     print("GitHub: copy a repo on a new branch (board 3)")
     let repo = RemoteRepo(host: "github.com", owner: "acme", name: "website")
     let dest = sand.appending(path: "Home/website/pricing-copy")
-    let c = RepoOps.clone(repo, into: dest, newBranch: "tester/pricing-copy", from: "main", existing: nil, excludeDuoFiles: true)
+    let c = RepoOps.clone(repo, into: dest, newBranch: "tester/pricing-copy", from: "main", existing: nil)
     check((try? c.get()) == dest.path, "copied into the project's folder")
     write(dest.appending(path: "_PROJECT.md"), "---\ntype: project\n---\n")
     var st = RepoProbe.status(of: dest)
     check(st?.branch == "tester/pricing-copy" && st?.origin?.slug == "acme/website", "on the new branch, origin is acme/website")
-    check(st?.changes.isEmpty == true, "_PROJECT.md is kept out of git (.git/info/exclude)")
+    check(st?.changes.map(\.path) == ["_PROJECT.md"] && st?.changes.first?.kind == .new, "_PROJECT.md is an ordinary new file (DL-259)")
+    check(!((try? String(contentsOf: RepoProbe.gitDir(dest).appending(path: "info/exclude"), encoding: .utf8)) ?? "").contains("PROJECT.md"), "Duo writes nothing to .git/info/exclude (DL-259)")
+    check(AppModel.repoContext(view { _ in }).map { !$0.contains("don't add them to commits") } == true, "Claude isn't told to leave Duo's files out of commits (DL-259)")
     check(st?.upstream == nil, "the new branch isn't on GitHub yet")
-    check(RepoOps.clone(repo, into: dest, newBranch: nil, from: nil, existing: nil, excludeDuoFiles: false).failureKind == .unknown, "a folder already there is refused")
+    check(RepoOps.clone(repo, into: dest, newBranch: nil, from: nil, existing: nil).failureKind == .unknown, "a folder already there is refused")
     let sub = dest.appending(path: "content")
     check(RepoProbe.root(of: sub)?.resolvingSymlinksInPath().path == dest.resolvingSymlinksInPath().path, "a project inside a repo finds its root (DL-157)")
 
@@ -141,12 +143,12 @@ private func stubGH(_ dir: URL, login: String?, permission: String, protected: B
     write(dest.appending(path: "content/faq.md"), "one\nTWO\n")
     write(dest.appending(path: "content/plans.json"), "{}\n")
     st = RepoProbe.status(of: dest)
-    check(Set(st?.changes.map(\.path) ?? []) == ["content/faq.md", "content/plans.json"] && st?.changes.first { $0.path == "content/plans.json" }?.kind == .new, "changed and new files")
-    let plan = RepoOps.PushPlan(files: ["content/faq.md", "content/plans.json"], message: "Pricing: FAQ", openPR: true, prTitle: "Pricing: FAQ", prBody: "Body", base: "main", draft: false, fork: false, browser: false)
+    check(Set(st?.changes.map(\.path) ?? []) == ["_PROJECT.md", "content/faq.md", "content/plans.json"] && st?.changes.first { $0.path == "content/plans.json" }?.kind == .new, "changed and new files")
+    let plan = RepoOps.PushPlan(files: ["_PROJECT.md", "content/faq.md", "content/plans.json"], message: "Pricing: FAQ", openPR: true, prTitle: "Pricing: FAQ", prBody: "Body", base: "main", draft: false, fork: false, browser: false)
     let pushed = RepoOps.push(dest, plan: plan, login: nil)
     check((try? pushed.get())?.compareURL?.absoluteString.contains("compare/main...tester/pricing-copy") == true, "without gh the PR is GitHub's compare page")
     st = RepoProbe.status(of: dest)
-    check(st?.upstream == "origin/tester/pricing-copy" && st?.ahead == 0 && st?.changes.isEmpty == true, "pushed with upstream, nothing left")
+    check(st?.upstream == "origin/tester/pricing-copy" && st?.ahead == 0 && st?.changes.isEmpty == true, "pushed with upstream, nothing left (the brief went too, DL-259)")
 
     print("GitHub: someone else pushed; Get Latest; a conflict and Put Back (board 9)")
     let other = sand.appending(path: "other")
