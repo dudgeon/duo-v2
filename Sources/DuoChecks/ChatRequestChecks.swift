@@ -194,4 +194,40 @@ import Foundation
         spin(2.5)
         check(prompt == "/ask", "and backspaced fast, /ask (\(prompt.debugDescription))")
     }
+
+    print("chat mode: `/` while Claude works (Q-329)")
+    do {
+        let inline = ChatScreenReader.read(spikeScreen("slash-2.1.296-inline/menu-tri.txt"))
+        // 2.1.284 drops "esc to interrupt" from its footer while the menu is up, though the menu is above the box.
+        let busy284 = ChatScreenReader.read(spikeScreen("slash-2.1.284/busy-long-100x34.txt"))
+        let menu284 = ChatScreenReader.read(spikeScreen("slash-2.1.284/menu-ask-busy-100x34.txt"))
+        check(busy284.kind == .busy && menu284.kind == .idle && menu284.commands.first?.name == "/ask-data",
+              "2.1.284 mid-turn: busy, then with `/ask` typed the busy row is gone (\(busy284.kind) → \(menu284.kind))")
+        let k = ChatSession(key: "slash-busy-284", mode: .chat)
+        k.apply(busy284)
+        k.apply(menu284)
+        check(k.screen.kind == .busy && k.screen.mode == .auto, "chat keeps the turn busy, and its mode, while the menu is up (\(k.screen.kind))")
+        // A running turn, then 2.1.296's inline menu hides its busy row: still busy, nothing ends the reply.
+        let busy = ChatScreenReader.read(spikeScreen("tour-2.1.284/10-streaming.txt"))
+        let c = ChatSession(key: "slash-busy", mode: .chat)
+        c.persistsFallbackLog = false
+        c.apply(busy)
+        c.apply(inline)
+        check(busy.kind == .busy && c.screen.kind == .busy && !c.screen.commands.isEmpty, "a menu over the busy row keeps the turn busy (\(c.screen.kind))")
+        c.apply(ChatScreenReader.read(spikeScreen("slash-2.1.296-inline/idle.txt")))
+        check(c.screen.kind == .idle, "and the prompt back without it reads idle again")
+        let idle = ChatSession(key: "slash-idle", mode: .chat)
+        idle.apply(ChatScreenReader.read(spikeScreen("slash-2.1.296-inline/idle.txt")))
+        idle.apply(inline)
+        check(idle.screen.kind == .idle, "the same menu at an idle prompt stays idle")
+        // Typed while busy: the TUI's prompt gets it, as in the terminal.
+        let tui = FakeTUI(spikeScreen("tour-2.1.284/10-streaming.txt"))
+        let m = ChatSession(key: "slash-busy-mirror", mode: .chat)
+        m.persistsFallbackLog = false
+        m.setVersion("2.1.284")
+        m.attach(tui)
+        Task { await m.mirrorSlash("/ask") }
+        spin(1.3)
+        check(m.screen.kind == .busy && tui.keys == ["/ask"], "`/ask` typed while Claude works goes to Claude's prompt (\(tui.keys))")
+    }
 }
