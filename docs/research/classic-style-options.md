@@ -4,11 +4,15 @@ Step 3 of task `classic-style-study`. A v1 user misses "the orange". Geoff wants
 - `docs/research/style-configurability.md` (style-audit, F-414 to F-417);
 - `docs/research/legacy-style-teardown.md` (legacy-teardown, F-408).
 
-**Research and design only: nothing in the app changes.** Records: F-418 (what the prototype showed), Q-317 (the decision).
+**Research and design only: nothing in the app changes.** Records: F-418 (what the prototype showed), Q-323 (the decision).
 
 - **Canvas:** https://claude.ai/artifact/58jBVfGCNHjNcrFtaa2HVj (10 boards: recommendation, the needs-you collision, options A, B, C′, C, invocation, icon, element ranking, reference).
 - **Captures:** `docs/research/classic-options/` (`<scheme>-<state>.jpg`, 1600 px wide; `crop-*` close-ups; `icon-*`; `c-settings.jpg`).
 - **Prototype:** scratch branch `scratch/classic-proof` (d9c35e80), never merged. `docs/research/classic-proof/` on that branch holds the overlay and the throwaway patches.
+
+## Geoff's decision (DL-252, 2026-10-29)
+
+C′, via Settings › General › Appearance › Classic, with the recoloured Dock icon (D), built after the style audit's fix list. While building it, also fix C-122: on his Mac, Appearance is pinned to Match System and choosing Light does nothing.
 
 ## Recommendation
 
@@ -61,7 +65,7 @@ Shapes and the words "needs you" don't change, so colour is never the only signa
 
 ## How she turns it on
 
-1. **Appearance › Classic** (recommended): Match System · Light · Dark · Classic, plus `duo2 settings appearance classic`. Classic is light-only, so it's an appearance value, not a second setting. It reuses the state field, the verb, `DUO_APPEARANCE` captures and AppearanceChecks. Rendered for real from the scratch build (`c-settings.jpg`). The help line under the picker needs a Classic sentence; that's stand-in copy, in Q-317.
+1. **Appearance › Classic** (recommended): Match System · Light · Dark · Classic, plus `duo2 settings appearance classic`. Classic is light-only, so it's an appearance value, not a second setting. It reuses the state field, the verb, `DUO_APPEARANCE` captures and AppearanceChecks. Rendered for real from the scratch build (`c-settings.jpg`). The help line under the picker needs a Classic sentence; that's stand-in copy, in Q-323.
 2. **Verb first, then visible:** the picker lists Classic only once the verb has chosen it. That makes it a real Easter egg, at the cost of one conditional.
 3. **A theme file** (not recommended): `theme.json` overrides any token. It turns tokens.json into a public API.
 
