@@ -13,7 +13,7 @@ The console is Geoff's default channel with the director (`docs/director/console
 
 ## No stranded workers (Geoff, 2026-10-30: "we CANNOT have stranded workers")
 
-- The director session runs in **Auto**, the workers' mode, so their SendMessage reports arrive (Bypass held and expired them). Check with `get_session self`.
+- The director session runs in **Auto**, never Bypass (PROJECT.md and delegating.md already said so; Geoff, 2026-10-30: "YOU ARE NOT SUPPOSED TO RUN IN BYPASS MODE"). First thing on every wake: `get_session self`. If `permissionMode` isn't `auto`, switch with `set_session_permission_mode self auto` before anything else.
 - Keep `~/.claude/skills/director-console/watch-workers.sh` running in the background at all times: it wakes the director when any duo-v2 worker stops, including ones started after it. Re-arm it on every wake.
 - On every wake, `worker-links.py` lists every worker's state. A `done` or `blocked` worker with no console row or task-note line is stranded: read its last report, act on it, and put it on the console.
 
