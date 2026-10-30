@@ -109,6 +109,8 @@ cat > "$app/Contents/Info.plist" <<PLIST
   ${url_types}
   <key>LSMinimumSystemVersion</key><string>26.0</string>
   <key>NSHighResolutionCapable</key><true/>
+  <key>NSMicrophoneUsageDescription</key><string>Duo turns what you say into text on this Mac when you press the mic. Nothing is recorded.</string>
+  <key>NSSpeechRecognitionUsageDescription</key><string>Duo turns what you say into text on this Mac. Nothing leaves it.</string>
   <key>NSPrincipalClass</key><string>NSApplication</string>
   <key>NSSupportsAutomaticTermination</key><false/>
   <key>SUFeedURL</key><string>https://github.com/dudgeon/duo-v2/releases/latest/download/appcast.xml</string>

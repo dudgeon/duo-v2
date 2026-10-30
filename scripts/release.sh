@@ -137,7 +137,8 @@ while IFS= read -r f; do
   file -b "$f" | grep -q Mach-O || continue
   codesign --force --options runtime --timestamp --keychain "$keychain" --sign "$identity" "$f"
 done < <(find "$app/Contents" -type f -perm +111 ! -path "$app/Contents/MacOS/*" ! -path "$app/Contents/Frameworks/*")
-codesign --force --options runtime --timestamp --keychain "$keychain" --sign "$identity" "$app"
+# The app alone carries an entitlement: audio input, for voice input (DL-260). Hardened Runtime blocks the microphone without it.
+codesign --force --options runtime --timestamp --entitlements "$work/src/scripts/Duo.entitlements" --keychain "$keychain" --sign "$identity" "$app"
 codesign --verify --deep --strict "$app" || die "the signed app doesn't verify"
 codesign -d --entitlements - --xml "$app" 2>/dev/null | grep -q get-task-allow && die "the app carries get-task-allow"
 echo "signed and verified"
