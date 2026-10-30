@@ -178,7 +178,7 @@ class Margin {
     return line;
   }
   // Who the `@` menu offers besides Claude: the names in this document (comment-at stage 2, DL-251).
-  people() { return atPeople(parseReview(this.view.state.doc.toString()), signatureName(reviewer(this.view))); }
+  people() { return atPeople(parseReview(this.view.state.doc.toString())); }
   body(text) {
     const d = el("div", "duo-mg-text");
     for (const p of text.split(/((?:^|(?<=\s))@[\w][\w-]*)/)) {

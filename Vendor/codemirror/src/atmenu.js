@@ -17,8 +17,8 @@ export function atQuery(value, caret) {
 /**
  * People named in the document, most recent first (comment-at stage 2, DL-251): the authors who sign comments and
  * suggestions and the `@name` mentions in their text, from parseReview's output. Each name is spelled as the latest
- * place it's written; names that differ only in case are one person. Claude and `self` are left out (Claude is the
- * menu's first item; you don't tag yourself). Newest by date, then later in the document, then a signer before
+ * place it's written; names that differ only in case are one person. Claude is left out (it's the menu's first item),
+ * and so is `self` when given (Geoff chose to list yourself too, Q-308, so the margin passes none). Newest by date, then later in the document, then a signer before
  * someone mentioned in the same comment. A person's tag is text: nothing routes to it.
  */
 export function atPeople(parsed, self) {
