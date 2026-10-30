@@ -1,0 +1,413 @@
+<title>Google Docs in Duo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Serif:wght@500;600&display=swap">
+<style>
+/* Layout: one reading column (about 66ch); evidence tags and decision cards are the only set-off objects. */
+:root {
+  --paper: #f7f8f6;
+  --ink: #1d2320;
+  --ink2: #56605b;
+  --rule: #d8ddd9;
+  --card: #ffffff;
+  --accent: #1f5f8b;
+  --tested: #2e7d4f;   --tested-bg: #e6f2ea;
+  --read: #2d5fa0;     --read-bg: #e7eef8;
+  --inferred: #8a5a12; --inferred-bg: #f6eddc;
+  --warn-bg: #fbf1e3;
+  --pick: #1f5f8b;     --pick-bg: #e3edf5;
+  --serif: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+  --sans: "IBM Plex Sans", -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #151917; --ink: #e4e8e5; --ink2: #a3ada7; --rule: #2e3532; --card: #1c211f; --accent: #7db4dc;
+  --tested: #7fcf9d; --tested-bg: #1d3326; --read: #8fb4e6; --read-bg: #1d2a3d; --inferred: #e0b46a; --inferred-bg: #3a2e1a;
+  --warn-bg: #33291b; --pick: #9cc6e6; --pick-bg: #1f3242; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --paper: #151917; --ink: #e4e8e5; --ink2: #a3ada7; --rule: #2e3532; --card: #1c211f; --accent: #7db4dc;
+  --tested: #7fcf9d; --tested-bg: #1d3326; --read: #8fb4e6; --read-bg: #1d2a3d; --inferred: #e0b46a; --inferred-bg: #3a2e1a;
+  --warn-bg: #33291b; --pick: #9cc6e6; --pick-bg: #1f3242; color-scheme: dark }
+
+body { background: var(--paper); color: var(--ink); font: 16px/1.6 var(--sans); }
+.wrap { max-width: 44rem; margin: 0 auto; padding-block: 2.5rem 4rem;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--serif); text-wrap: balance; line-height: 1.25; font-weight: 600; }
+h1 { font-size: 2.1rem; margin: 0 0 .4rem; }
+h2 { font-size: 1.45rem; margin: 3rem 0 .8rem; padding-top: 1.2rem; border-top: 1px solid var(--rule); }
+h3 { font-size: 1.1rem; margin: 1.6rem 0 .4rem; }
+p, li { max-width: 66ch; }
+a { color: var(--accent); }
+code { font-family: var(--mono); font-size: .86em; background: color-mix(in srgb, var(--rule) 45%, transparent); padding: .05em .3em; border-radius: 3px; overflow-wrap: anywhere; }
+.dek { color: var(--ink2); font-size: 1.05rem; margin: 0; }
+.meta { font: 500 .78rem/1.4 var(--mono); color: var(--ink2); letter-spacing: .02em; margin-top: 1rem; }
+.toc { display: flex; flex-wrap: wrap; gap: .4rem .9rem; margin: 1.2rem 0 0; padding: 0; list-style: none; font-size: .9rem; }
+.toc a { text-decoration: none; border-bottom: 1px solid var(--rule); }
+.quote { border-left: 3px solid var(--accent); padding: .2rem 0 .2rem 1rem; margin: 1rem 0; color: var(--ink); font-style: italic; }
+.note { background: var(--warn-bg); padding: .8rem 1rem; border-radius: 6px; margin: 1rem 0; }
+.gloss { color: var(--ink2); font-size: .92rem; }
+ul.tight li { margin: .3rem 0; }
+
+/* Evidence tags */
+.tag { display: inline-block; font: 500 .7rem/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; padding: .28rem .45rem; border-radius: 3px; vertical-align: .12em; margin-right: .35rem; white-space: nowrap; }
+.t-tested { color: var(--tested); background: var(--tested-bg); }
+.t-read { color: var(--read); background: var(--read-bg); }
+.t-inferred { color: var(--inferred); background: var(--inferred-bg); }
+.evidence { list-style: none; padding: 0; margin: .6rem 0; display: grid; gap: .7rem; }
+.evidence li { padding-left: 0; }
+.rec { font-family: var(--mono); font-size: .78rem; color: var(--ink2); }
+
+/* Diagram of A, B and C */
+.approaches { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .8rem; margin: 1.2rem 0; }
+@media (max-width: 640px) { .approaches { grid-template-columns: minmax(0, 1fr); } }
+.ap { background: var(--card); border: 1px solid var(--rule); border-radius: 8px; padding: .9rem; display: flex; flex-direction: column; gap: .55rem; min-width: 0; }
+.ap.lead { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.ap h3 { margin: 0; font-size: 1rem; }
+.ap .letter { font: 600 .8rem var(--mono); color: var(--accent); }
+.flow { display: grid; gap: .3rem; font-size: .84rem; }
+.row { display: grid; grid-template-columns: 5.2rem 1fr; gap: .4rem; align-items: center; }
+.who { font: 500 .72rem/1.2 var(--mono); color: var(--ink2); }
+.via { padding: .3rem .45rem; border-radius: 4px; background: color-mix(in srgb, var(--rule) 40%, transparent); line-height: 1.3; }
+.via.good { background: var(--tested-bg); color: var(--tested); }
+.via.bad { background: var(--inferred-bg); color: var(--inferred); }
+.doc { text-align: center; font: 500 .75rem var(--mono); border: 1px dashed var(--ink2); border-radius: 4px; padding: .3rem; color: var(--ink2); }
+.verdict { font-size: .84rem; color: var(--ink2); margin: 0; }
+
+/* Tests table */
+.tablewrap { overflow-x: auto; margin: 1rem 0; }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; min-width: 34rem; }
+th, td { text-align: left; vertical-align: top; padding: .55rem .6rem; border-bottom: 1px solid var(--rule); }
+th { font: 500 .72rem var(--mono); letter-spacing: .05em; text-transform: uppercase; color: var(--ink2); }
+td.n { font-family: var(--mono); white-space: nowrap; }
+
+/* Decisions */
+.qs { display: grid; gap: 1rem; margin-top: 1rem; }
+.q { background: var(--card); border: 1px solid var(--rule); border-radius: 8px; padding: 1rem; min-width: 0; }
+.q h3 { margin: 0 0 .3rem; font-size: 1.05rem; }
+.q .why { color: var(--ink2); font-size: .92rem; margin: 0 0 .7rem; }
+.opts { display: grid; gap: .45rem; }
+.opt { display: grid; grid-template-columns: 1.2rem 1fr; gap: .5rem; text-align: left; font: inherit; font-size: .93rem; color: var(--ink); background: transparent; border: 1px solid var(--rule); border-radius: 6px; padding: .55rem .7rem; cursor: pointer; line-height: 1.45; }
+.opt:hover { border-color: var(--ink2); }
+.opt:focus-visible, .btn:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.opt .dot { width: .9rem; height: .9rem; border-radius: 50%; border: 1.5px solid var(--ink2); margin-top: .25rem; }
+.opt[aria-pressed="true"] { border-color: var(--pick); background: var(--pick-bg); }
+.opt[aria-pressed="true"] .dot { border-color: var(--pick); background: radial-gradient(var(--pick) 45%, transparent 50%); }
+.opt b { font-weight: 600; }
+.recd { font: 500 .68rem var(--mono); color: var(--tested); background: var(--tested-bg); padding: .12rem .35rem; border-radius: 3px; margin-left: .3rem; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+.q textarea { width: 100%; box-sizing: border-box; margin-top: .6rem; font: inherit; font-size: .9rem; color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 6px; padding: .45rem .6rem; min-height: 2.4rem; resize: vertical; }
+.bar { position: sticky; bottom: 0; margin-top: 1.2rem; background: var(--paper); border-top: 1px solid var(--rule); padding: .8rem 0 calc(.8rem + env(safe-area-inset-bottom, 0px)); display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; }
+.btn { font: 500 .92rem var(--sans); border-radius: 6px; padding: .55rem .9rem; cursor: pointer; border: 1px solid var(--accent); background: transparent; color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--paper); }
+.btn:disabled { opacity: .5; cursor: default; }
+.status { font-size: .86rem; color: var(--ink2); flex: 1 1 12rem; min-width: 0; }
+@media (prefers-reduced-motion: no-preference) { .opt { transition: background .15s, border-color .15s; } }
+footer { margin-top: 3rem; font-size: .86rem; color: var(--ink2); }
+</style>
+
+<div class="wrap">
+<header>
+  <h1>Google Docs in Duo</h1>
+  <p class="dek">Where the research stands: the problem, what we've actually tested, what it means, and the eight decisions that start Phase 2.</p>
+  <p class="meta">Phase 1 of the Google Docs work · 30 Oct 2026 · Written by the gdocs-frame session for Geoff</p>
+  <ul class="toc">
+    <li><a href="#problem">The problem</a></li>
+    <li><a href="#approaches">Three ways to build it</a></li>
+    <li><a href="#evidence">What we know</a></li>
+    <li><a href="#means">What it means</a></li>
+    <li><a href="#plan">What I recommend</a></li>
+    <li><a href="#decide">Your decisions</a></li>
+  </ul>
+</header>
+
+<h2 id="problem">The problem</h2>
+<p>You asked for this on 29 October:</p>
+<p class="quote">"a user can open a Google Doc in Duo and view the document with nearly perfect rendering … use every single feature that Google Docs supports, including and especially low latency synchronous collaboration with other people … The user needs to be able to select text in the Google Doc and have Claude be aware of what text is selected. Claude needs to be able to go in and directly manipulate the Google Doc with tracked changes."</p>
+<p>That's two sets of needs pulling in different directions.</p>
+<ul class="tight">
+  <li><b>You and your colleagues need Google's editor itself.</b> Live typing, cursors, comments, version history, sharing and the hundred small features Docs has only exist in the real thing, and remote people are using the real thing in Chrome.</li>
+  <li><b>Claude needs a sharp, fast view of the doc and a way to change it.</b> It has to know exactly what text you've selected, and its edits have to arrive as tracked changes (Docs calls them <i>suggestions</i>) that you and everyone else can accept or reject.</li>
+</ul>
+<p>Google's editor draws the page on a canvas, so the text isn't sitting in the page where a script could read it. And Google's API (the official way for programs to read and change Docs) has no idea what you've selected. Each side is easy alone. The work is getting both at once.</p>
+
+<h2 id="approaches">Three ways to build it</h2>
+<p>You named the first two. The third is a mix that came out of the research.</p>
+<div class="approaches" role="group" aria-label="The three approaches">
+  <div class="ap">
+    <span class="letter">A</span>
+    <h3>Docs in Duo's browser</h3>
+    <div class="flow">
+      <div class="row"><span class="who">You + team</span><span class="via good">Google's editor in a Duo tab</span></div>
+      <div class="row"><span class="who">Claude</span><span class="via">reads and types in that same tab</span></div>
+      <div class="doc">the live Google Doc</div>
+    </div>
+    <p class="verdict">Real Docs for people. Claude's edits are typed into your session, so they're yours, and your caret moves.</p>
+  </div>
+  <div class="ap">
+    <span class="letter">B</span>
+    <h3>Duo's own editor, synced by API</h3>
+    <div class="flow">
+      <div class="row"><span class="who">You</span><span class="via bad">Duo's copy of the doc</span></div>
+      <div class="row"><span class="who">Team</span><span class="via">Google's editor, in Chrome</span></div>
+      <div class="row"><span class="who">Claude</span><span class="via">Duo's copy</span></div>
+      <div class="doc">synced to the Doc by API, seconds to minutes late</div>
+    </div>
+    <p class="verdict">Full control for Claude, but you'd lose live collaboration and Docs' own look. Out, on your terms.</p>
+  </div>
+  <div class="ap lead">
+    <span class="letter">C · recommended</span>
+    <h3>Browser for people, API for Claude's edits</h3>
+    <div class="flow">
+      <div class="row"><span class="who">You + team</span><span class="via good">Google's editor in a Duo tab</span></div>
+      <div class="row"><span class="who">Claude reads</span><span class="via">your selection, from that tab</span></div>
+      <div class="row"><span class="who">Claude writes</span><span class="via good">suggestions + comments by API</span></div>
+      <div class="doc">the live Google Doc</div>
+    </div>
+    <p class="verdict">Real Docs for people, real tracked changes from Claude, and your caret is never touched.</p>
+  </div>
+</div>
+
+<h2 id="evidence">What we know, and how we know it</h2>
+<div class="note"><b>Nothing has run in your Google account yet.</b> Every test so far was signed out, on public Docs anyone can view, in Duo's browser engine (WebKit, Safari's engine) on the Mac mini. Signing in, editing and live collaboration are all Phase 2.</div>
+<p>Two sessions did Phase 1 on 29 October. gdocs-landscape surveyed how other agents drive Google Docs. gdocs-frame (this one) took Duo's browser apart, probed a Doc and wrote the plan. Each fact below is tagged with how we know it.</p>
+<p class="gloss"><span class="tag t-tested">Tested</span> we ran it and measured it. <span class="tag t-read">Read</span> it's in Google's own docs or in other projects' code. <span class="tag t-inferred">Inferred</span> it's our reasoning or a second-hand report.</p>
+
+<h3>Tested here</h3>
+<p class="gloss">These ran on a test copy of Duo (its own folders, never your Duo) and on a bare WebKit view set up the way Duo's browser tab is. The Doc was a public Chromium design doc: 5,104 characters, with headings, nested lists and 22 links.</p>
+<ul class="evidence">
+  <li><span class="tag t-tested">Tested</span><b>Docs loads and looks right in Duo's browser engine.</b> There's no "unsupported browser" banner, and the page matches Chrome's. Duo's right pane is the problem: at 459 points wide, Docs' outline and a "Use Google Docs in Chrome" promo cover the page. <span class="rec">F-411</span></li>
+  <li><span class="tag t-tested">Tested</span><b>Duo's agent tools read none of a Doc today.</b> <code>duo2 browser read</code> returns Docs' menus and the outline's headings, no body text. Scrolling and full-page screenshots see one screen, typing with <code>fill</code> can't reach the editor, and printing makes a PDF of pictures with no text. <span class="rec">F-411</span></li>
+  <li><span class="tag t-tested">Tested</span><b>Docs hands any script in the page its whole text and your selection.</b> Docs' own page code has a function, <code>_docs_annotate_getAnnotatedText</code>, that it built for accessibility tools. Called from the page, it gave:
+    <ul class="tight">
+      <li>the whole document as text, in under 1 ms, including parts never scrolled to</li>
+      <li>every link and where it sits</li>
+      <li>the selection as character positions, which followed a real mouse drag and real Shift+arrow keys</li>
+      <li>a way to set the selection, which drew a real highlight on the page</li>
+    </ul>
+    It didn't ask for an extension id or any setup, and it was ready about half a second after the page loaded. <span class="rec">F-412</span></li>
+  <li><span class="tag t-tested">Tested</span><b>Real mouse and key events drive Docs' editor with Duo in the background.</b> A drag selected text and Shift+arrows extended it, from an app that never came to the front. So new duo2 verbs for keys and drags would work. <span class="rec">F-413</span></li>
+  <li><span class="tag t-tested">Tested</span><b>No test copy of Duo can stay signed in.</b> Test copies keep cookies only until they quit, and your Duo's cookies are shared by every Duo on this Mac. A test instance you sign into once needs a small change first. <span class="rec">F-411, Q-312</span></li>
+  <li><span class="tag t-tested">Tested</span><b>Other people's presence shows signed out.</b> The viewers list read "7 total viewers: Anonymous Camel, …", so Docs' live channel runs in Duo's browser. <span class="rec">F-411</span></li>
+</ul>
+
+<h3>Read in Google's docs or others' code</h3>
+<ul class="evidence">
+  <li><span class="tag t-read">Read</span><b>Since 30 September, Google's API can write real suggestions and anchored comments.</b> Edits sent in "suggest" mode show up as Docs suggestions anyone can accept or reject. Comments can be pinned to a passage and assigned to someone, and replies can resolve them. Before this, the API could only read suggestions. It covers personal accounts. I checked the announcement and Google's how-to page myself. <span class="rec">F-409 · workspaceupdates.googleblog.com, 30 Sep 2026; developers.google.com/workspace/docs/api/how-tos/suggestions</span></li>
+  <li><span class="tag t-read">Read</span><b>Nothing official tells a program what you've selected,</b> except a script installed in the doc itself (an Apps Script add-on), and that has to keep asking, since Docs has no "selection changed" event. Anthropic's own Claude add-on for Docs works this way. <span class="rec">developers.google.com/apps-script</span></li>
+  <li><span class="tag t-read">Read</span><b>Google offers no live feed of other people's edits.</b> The old Realtime API was shut down in January 2019. Today's change notices say only "this file changed", with no detail, so a Duo-drawn editor would always lag. <span class="rec">Drive push notifications; Workspace Events API</span></li>
+  <li><span class="tag t-read">Read</span><b>Google's policy discourages signing in inside an app's built-in browser.</b> Google's sign-in help says it "may" stop browsers "embedded in a different application", and its OAuth sign-in (the "let this app access your account" flow) refuses them outright. Duo's tab is such a browser. <span class="rec">support.google.com/accounts/answer/7675428; Google developers blog, 2021</span></li>
+  <li><span class="tag t-read">Read</span><b>Safari is a supported browser for Docs, except offline,</b> which needs Chrome or Edge. <span class="rec">Workspace supported browsers, Oct 2026</span></li>
+  <li><span class="tag t-read">Read</span><b>Other tools use the same page function.</b> Chromium's Reading Mode and the Harper grammar checker read text and the selection through it, and Harper edits by setting the selection and pasting. Browser agents (Claude in Chrome, ChatGPT's agent and others) have nothing special for Docs, and they work from screenshots. <span class="rec">agent-landscape.md, F-410</span></li>
+</ul>
+
+<h3>Inferred</h3>
+<ul class="evidence">
+  <li><span class="tag t-inferred">Inferred</span><b>The page function is unofficial and could change without notice.</b> Google documents none of it. Other sources describe it as gated by an allowlist of extension ids. It wasn't gated in our test, but it might be when signed in, in an editable doc, or later.</li>
+  <li><span class="tag t-inferred">Inferred</span><b>Suggestions Claude makes through the API will carry your name,</b> because they're made with your permission. Google's docs imply it but don't say so. Phase 2 checks.</li>
+  <li><span class="tag t-inferred">Inferred</span><b>Sign-in in Duo's tab may work, or may hit a "this browser may not be secure" wall.</b> Enforcement varies by account. A managed work account may also insist on Chrome.</li>
+  <li><span class="tag t-inferred">Inferred</span><b>A Duo-drawn editor (B) can't match Docs' live collaboration or look at any sensible cost.</b> It would mean rebuilding Docs' layout, tables, chips, comments and sync, against an API that has no live edits and no cursors.</li>
+</ul>
+
+<h2 id="means">What it means</h2>
+<ul class="tight">
+  <li><b>B is out.</b> It fails the two things you named first, near-perfect rendering and live collaboration. Its one advantage was full control over Claude's edits, and Google's new suggest mode now gives that to the browser approaches too.</li>
+  <li><b>C beats A on Claude's edits.</b> In A, Claude types into your tab, so its edits are your own suggestions, made in your session, and your cursor jumps around while you work. In C, Claude's suggestions and comments go in through the API. They're real Docs suggestions every collaborator sees, they merge with live typing, and your caret is never touched.</li>
+  <li><b>The page function is what makes "Claude knows my selection" possible without an add-on.</b> We'd use it for reading only: the text, your selection, and highlighting a passage to show you. If Google closes it, Duo loses live selection awareness, not editing, and falls back to an Apps Script add-on or to Send Selection by copy.</li>
+  <li><b>duo2 needs new verbs either way:</b>
+    <ul class="tight">
+      <li>a Docs read (text, links, selection)</li>
+      <li>keys and typing</li>
+      <li>drags</li>
+      <li>scrolling Docs' own scroller</li>
+      <li>export downloads</li>
+      <li>a test copy of Duo that stays signed in</li>
+    </ul>
+    Duo's own shortcuts also collide with some of Docs': ⇧⌘H is Home in Duo and find and replace in Docs, ⌥⌘0 is collapse pane and Normal text, and ⌘P prints a picture of the page.</li>
+  <li><b>The first gate is sign-in.</b> If Google won't let you sign in inside Duo's tab, both A and C need another way in, and the plan changes before anything else is built.</li>
+</ul>
+
+<h2 id="plan">What I recommend</h2>
+<p><b>Aim for C</b>: Google's editor in Duo's tab for you and your team, Claude reading the live tab for your selection, and Claude writing suggestions and comments through the API. Phase 2 tests it in this order, cheapest and most decisive first:</p>
+<div class="tablewrap"><table>
+  <thead><tr><th>Test</th><th>What runs</th><th>What it decides</th><th>Needs you</th></tr></thead>
+  <tbody>
+    <tr><td class="n">T-00</td><td>You sign in to Google in Duo's tab; we check it survives a relaunch and a day</td><td>Whether A or C can work at all</td><td>About 5 minutes</td></tr>
+    <tr><td class="n">T-02, T-03</td><td>The page function, signed in, in an editable doc: text, your selection, what it carries (comments? suggestions?)</td><td>Whether "Claude knows my selection" works for real, and how fast (bar: under ¼ second)</td><td>About 10 minutes of selecting</td></tr>
+    <tr><td class="n">T-10</td><td>Docs' shortcuts in Duo's tab</td><td>Which Duo shortcuts must give way on a Docs tab</td><td>A few minutes, on screen</td></tr>
+    <tr><td class="n">T-01</td><td>Duo's tab against Chrome, captured side by side at three pane widths</td><td>Whether rendering is near-perfect</td><td>A look at the images</td></tr>
+    <tr><td class="n">T-06</td><td>Claude suggesting by typing in your tab</td><td>A's way of editing, as the fallback</td><td>Nothing</td></tr>
+    <tr><td class="n">T-05, T-04</td><td>Claude's suggestions and comments by API, and mapping your selection to the API's positions</td><td>C's way of editing: credit, speed, exact placement</td><td>One API authorization</td></tr>
+    <tr><td class="n">T-08, T-09</td><td>A second person types and comments while you work; we time Duo against Chrome, and how fast Claude notices an @claude</td><td>Live collaboration and @claude in comments</td><td>A second collaborator, about 30 minutes</td></tr>
+  </tbody>
+</table></div>
+<p class="gloss">The full plan has 16 tests, with the steps and the bar each one has to clear, in <code>docs/research/google-docs-in-duo/test-plan.md</code>.</p>
+
+<h2 id="decide">Your decisions</h2>
+<p>Eight questions open Phase 2, each with my recommendation first. Your picks are saved as you tap. <b>Send to Claude</b> sends them all to me, and I pass them to the director.</p>
+<div class="qs" id="qs"></div>
+<div class="bar">
+  <button class="btn" id="takeAll" type="button">Take all the recommendations</button>
+  <button class="btn primary" id="send" type="button">Send to Claude</button>
+  <span class="status" id="status" role="status" aria-live="polite">Loading your saved answers…</span>
+</div>
+
+<footer>
+  <p>The research behind this page is in <code>docs/research/google-docs-in-duo/</code> in the duo-v2 repo: <code>jobs.md</code> (about 80 jobs people and Claude do on a Doc), <code>duo-browser-today.md</code>, <code>google-docs-surface.md</code> (Google's side, with sources), <code>comparison-frame.md</code>, <code>test-plan.md</code>, <code>checkpoint-1.md</code>, and gdocs-landscape's <code>agent-landscape.md</code>. Records F-409 to F-413 and Q-309 to Q-316.</p>
+</footer>
+</div>
+
+<script>
+const QUESTIONS = [
+  { id: "q310", rec: "Q-310", title: "Which jobs do we test?",
+    why: "I listed about 80 things you, Claude and colleagues do with a Doc, and marked each high, medium or low for a PM working with Claude.",
+    opts: [
+      "<b>Test every high and medium job</b>, high first. Offline, page setup, building blocks, doc chat and follow-the-presenter stay out.",
+      "<b>Just the core loop:</b> reading, your selection to Claude, Claude's suggestions and comments, @claude in comments, live collaboration, and \"what changed\".",
+      "<b>Widen it:</b> also offline (Google supports it only in Chrome) and templates." ] },
+  { id: "q312", rec: "Q-312", title: "Where do the tests run?",
+    why: "Test copies of Duo forget their sign-in when they quit, and your Duo's sign-in is shared by every Duo on this Mac.",
+    opts: [
+      "<b>A dedicated test Duo you sign into once.</b> A small scratch change gives it its own lasting sign-in. Your own Duo stays untouched.",
+      "<b>Your own Duo, signed in.</b> No change needed, and it's exactly what you'll use, but the tests drive your running Duo.",
+      "<b>Both:</b> the test copy for scripted runs, your own Duo for the hands-on feature sweep." ] },
+  { id: "q313", rec: "Q-313", title: "Who's the second collaborator for the live tests?",
+    why: "Live typing, presence and @claude in comments need someone else in the doc, for about 30 minutes in one sitting.",
+    opts: [
+      "<b>A second Google account of yours, on another device</b> (your phone or laptop), driven by you or by Claude in Chrome.",
+      "<b>A real colleague</b>, at a time you pick. Best for presence and @mentions.",
+      "<b>A second account on this Mac in Chrome</b>, fully scripted, but one machine makes the timing look better than it is." ] },
+  { id: "q314", rec: "Q-314", title: "May Phase 2 use Google's API with your permission?",
+    why: "Claude's suggestions and comments by API (approach C) can't be tested without it.",
+    opts: [
+      "<b>Yes, through your own Google Cloud project</b> in testing mode, with you as its only user. One consent screen in your normal browser. The key stays in this Mac's Keychain. A Duo-wide setup waits for Phase 3.",
+      "<b>Only through Google's Docs MCP server</b> (a preview Google runs for AI tools), in one test Claude session. It needs less code, but it can't download exports or versions.",
+      "<b>No API in Phase 2.</b> Test the browser-only route, and decide on C later." ] },
+  { id: "q309", rec: "Q-309", title: "May Duo use Docs' unofficial page function?",
+    why: "It's how Claude knows your selection without an add-on, and it's fast. But Google doesn't document it and could change it any day.",
+    opts: [
+      "<b>Test it fully, and use it for reading only</b> (text, your selection, highlighting a passage). Claude's edits go through the API. A nightly check catches breakage, and an add-on or copy-to-Claude is the fallback.",
+      "<b>Test it, but don't build on it.</b> Selection comes from an Apps Script add-on or a copy.",
+      "<b>Don't touch it.</b>" ] },
+  { id: "q315", rec: "Q-315", title: "Whose name goes on Claude's suggestions?",
+    why: "Suggestions and comments made through the API are credited to the account that gave permission: yours.",
+    opts: [
+      "<b>Yours for now,</b> with \"Claude:\" at the start of Claude's comments. Duo remembers which suggestions are Claude's, so you can reject only those. We'll see what Google actually shows.",
+      "<b>A separate Google account for Claude</b>, shared on the doc as an editor, so colleagues see \"Claude\". Clearer to them, but it's another account to run.",
+      "<b>Decide after the API test shows what Google displays.</b>" ] },
+  { id: "q316", rec: "Q-316", title: "Should Docs' shortcuts win over Duo's on a Docs tab?",
+    why: "⇧⌘H is Home in Duo and find and replace in Docs. ⌥⌘0 is collapse pane and Normal text. ⌘P is Duo's print, which makes a picture of the page.",
+    opts: [
+      "<b>Measure first, then let Docs have them</b> while a Docs tab has the keyboard. That changes Duo's locked shortcut map (DL-34), so it'd be a new decision.",
+      "<b>Leave Duo's shortcuts as they are.</b> Use Docs' menus for those." ] },
+  { id: "q311", rec: "Q-311", title: "Your work Google account",
+    why: "A managed work account can insist on Chrome, or block apps that aren't approved. That would block A and C at work whatever Phase 2 shows.",
+    opts: [
+      "<b>Phase 2 uses your personal account.</b> When it's convenient on the work Mac, you try one sign-in in Duo's tab and tell me what it says. No scripts run there.",
+      "<b>Personal account only;</b> work is a later question.",
+      "<b>Work account from the start</b>, on the Mac mini, if that's the one you'd really use." ] },
+];
+const state = {};    // id -> {choice, note}
+let db = null, comments = null;
+const $ = (s) => document.querySelector(s);
+const statusEl = $("#status");
+function say(t) { statusEl.textContent = t; }
+function plain(html) { const d = document.createElement("div"); d.innerHTML = html; return d.textContent; }
+
+function render() {
+  const box = $("#qs");
+  box.textContent = "";
+  for (const q of QUESTIONS) {
+    const card = document.createElement("section");
+    card.className = "q"; card.id = "card-" + q.id;
+    const h = document.createElement("h3"); h.textContent = q.title; card.append(h);
+    const why = document.createElement("p"); why.className = "why"; why.textContent = q.why + " (" + q.rec + ")"; card.append(why);
+    const opts = document.createElement("div"); opts.className = "opts";
+    q.opts.forEach((o, i) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "opt"; b.id = "opt-" + q.id + "-" + (i + 1);
+      b.setAttribute("aria-pressed", String(state[q.id]?.choice === i + 1));
+      const dot = document.createElement("span"); dot.className = "dot"; dot.setAttribute("aria-hidden", "true");
+      const t = document.createElement("span"); t.innerHTML = o;
+      if (i === 0) { const r = document.createElement("span"); r.className = "recd"; r.textContent = "Recommended"; t.append(r); }
+      b.append(dot, t);
+      b.addEventListener("click", () => choose(q.id, i + 1));
+      opts.append(b);
+    });
+    card.append(opts);
+    const ta = document.createElement("textarea");
+    ta.id = "note-" + q.id; ta.placeholder = "Anything to add (optional)"; ta.setAttribute("aria-label", "Note on: " + q.title);
+    ta.value = state[q.id]?.note || "";
+    ta.addEventListener("change", () => { state[q.id] = { ...(state[q.id] || {}), note: ta.value }; save(q.id); });
+    card.append(ta);
+    box.append(card);
+  }
+  count();
+}
+function count() {
+  const n = QUESTIONS.filter((q) => state[q.id]?.choice).length;
+  say(n === QUESTIONS.length ? "All eight answered. Send them when you're ready." : n + " of 8 answered" + (db ? ", saved as you go." : "."));
+}
+function choose(id, choice) {
+  state[id] = { ...(state[id] || {}), choice };
+  document.querySelectorAll("#card-" + id + " .opt").forEach((b, i) => b.setAttribute("aria-pressed", String(i + 1 === choice)));
+  save(id); count();
+}
+async function save(id) {
+  if (!db) return;
+  const q = QUESTIONS.find((x) => x.id === id);
+  const s = state[id] || {};
+  try {
+    await db.doc("answers/" + id).set({ question: q.rec, title: q.title, choice: s.choice || 0,
+      label: s.choice ? plain(q.opts[s.choice - 1]) : "", recommended: s.choice === 1, note: s.note || "", at: new Date().toISOString() });
+  } catch (e) { say("Couldn't save that answer (" + (e?.code || "error") + "). It's still picked here; Send includes it."); }
+}
+function summary() {
+  const lines = ["Checkpoint 1 answers from the Google Docs in Duo page:"];
+  for (const q of QUESTIONS) {
+    const s = state[q.id] || {};
+    const pick = s.choice ? "option " + s.choice + (s.choice === 1 ? " (recommended)" : "") + ": " + plain(q.opts[s.choice - 1]) : "not answered";
+    lines.push(q.rec + " " + q.title + " → " + pick + (s.note ? " Note: " + s.note : ""));
+  }
+  return lines.join("\n");
+}
+async function logDiag(row) { if (!db) return; try { await db.collection("diag").doc().set({ ...row, at: new Date().toISOString(), ua: navigator.userAgent.slice(0, 160) }); } catch (e) {} }
+
+$("#takeAll").addEventListener("click", () => { for (const q of QUESTIONS) choose(q.id, 1); say("All eight set to the recommendation" + (db ? " and saved." : ".") + " Send them when you're ready."); });
+$("#send").addEventListener("click", async () => {
+  const btn = $("#send");
+  if (!comments) { say(db ? "Sending isn't available here, but your answers are saved and Claude reads them." : "Sending isn't available in this view. Open the page in claude.ai to send."); await logDiag({ result: "no-comments" }); return; }
+  let can = "off";
+  try { can = await comments.canSendToClaude(); } catch (e) { can = "error"; }
+  if (can !== "available") {
+    const why = { writers_only: "only editors of this page can send to Claude", no_session: "no Claude session is listening right now", off: "sending to Claude is off in this view" }[can] || "sending isn't available";
+    say("Couldn't send: " + why + "." + (db ? " Your answers are saved, and Claude reads them." : ""));
+    await logDiag({ result: "cannot", can }); return;
+  }
+  btn.disabled = true; say("Sending…");
+  try {
+    const anchor = await comments.anchorFor(document.getElementById("decide"));
+    await comments.sendToClaude({ anchor, text: summary() });
+    say("Sent to Claude. The reply will appear in a comment on \"Your decisions\".");
+    await logDiag({ result: "sent" });
+  } catch (e) {
+    say("Couldn't send (" + (e?.code || "error") + ")." + (db ? " Your answers are saved, and Claude reads them." : ""));
+    await logDiag({ result: "error", code: String(e?.code || e) });
+  } finally { btn.disabled = false; }
+});
+
+render();
+(async () => {
+  try { db = await window.claude?.use?.("db"); } catch (e) { db = null; }
+  try { comments = await window.claude?.use?.("comments"); } catch (e) { comments = null; }
+  if (!db) { say("Answers can't be saved in this view, but Send still works where it's offered."); return; }
+  db.collection("answers").onSnapshot((snap) => {
+    for (const d of snap.docs) {
+      const v = d.data() || {};
+      const prev = state[d.id] || {};
+      state[d.id] = { choice: v.choice || prev.choice, note: typeof v.note === "string" ? v.note : prev.note };
+    }
+    const focused = document.activeElement?.id;
+    render();
+    if (focused) document.getElementById(focused)?.focus();
+  }, () => say("Couldn't load saved answers. Picks still work, and Send includes them."));
+})();
+</script>
