@@ -6,7 +6,7 @@
 #   <dir>/upstream.git, <dir>/fork.git   bare repos standing in for github.com/acme/website and tester/website
 #   <dir>/gitconfig                      git's global config: a user, and url.insteadOf mapping those URLs to the bare repos
 #   <dir>/gh                             a stub gh (logs to <dir>/gh.log), signed in as "tester" with the given access
-#   <dir>/ws                             a workspace: HOME.md, website/pricing-copy (a copy on a new branch, with changes)
+#   <dir>/ws                             a workspace: _HOME.md, website/pricing-copy (a copy on a new branch, with changes)
 #                                        and docs-in-repo/notes (a project inside a bigger repo Duo didn't copy, DL-157)
 #   <dir>/env                            KEY=value lines for DUO_EXTRA_ENV (scripts/run-live.sh)
 # The main branch of upstream refuses pushes (GH006) once the seed is in, like a protected branch.
@@ -46,16 +46,16 @@ EOF
 chmod +x "$dir/upstream.git/hooks/pre-receive"
 
 # Home and a project that is a copy of acme/website on its own branch, with changes.
-printf -- '---\ntype: home\ntitle: Home\n---\n# Home\n' > "$dir/ws/HOME.md"
+printf -- '---\ntype: home\ntitle: Home\n---\n# Home\n' > "$dir/ws/_HOME.md"
 git clone -q https://github.com/acme/website.git "$dir/ws/website/pricing-copy"
 cd "$dir/ws/website/pricing-copy"
 git switch -q -c tester/pricing-copy
-printf -- '---\ntype: project\ntitle: Pricing copy\ngoal: New pricing page copy, approved by marketing\n---\n# Pricing copy\n' > PROJECT.md
+printf -- '---\ntype: project\ntitle: Pricing copy\ngoal: New pricing page copy, approved by marketing\n---\n# Pricing copy\n' > _PROJECT.md
 printf '# Pricing\n\nPay for what you ship.\n' > content/pricing.md
 printf 'Q: Annual?\nA: Yes, with two months free.\n' > content/faq.md
 printf '{"plans": ["Free", "Team"]}\n' > content/plans.json
 
-# A project inside a bigger repo that Duo didn't copy (DL-157), with an untracked PROJECT.md.
+# A project inside a bigger repo that Duo didn't copy (DL-157), with an untracked PROJECT.md: the old name, still read (DL-259).
 mkdir -p "$dir/ws/docs-in-repo/notes"
 cd "$dir/ws/docs-in-repo"; git init -q; printf 'x\n' > top.txt; git add . && git commit -qm init
 printf -- '---\ntype: project\ntitle: Notes\n---\n# Notes\n' > notes/PROJECT.md

@@ -173,8 +173,8 @@ extension AppModel {
                 f.found = .problem(title: w.title, body: w.body)
                 reply?(w.title)
             case .success:
-                // The brief: DL-147 names new ones `_PROJECT.md`, but until the CX build Duo finds projects by `PROJECT.md` (C-62).
-                try? Data(starter.utf8).write(to: dest.appending(path: "PROJECT.md"), options: .withoutOverwriting)
+                // The brief, unless the repository has one (DL-259).
+                if !DuoFiles.isProject(dest) { try? Data(starter.utf8).write(to: dest.appending(path: DuoFiles.project), options: .withoutOverwriting) }
                 self.gitHubProjectForm = nil
                 self.liveFolders[name] = dest
                 self.registerUndo("New Project from GitHub") { model in

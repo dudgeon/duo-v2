@@ -16,16 +16,16 @@ extension AppModel {
         panel.canCreateDirectories = true
         panel.allowsMultipleSelection = false
         panel.prompt = "Make Home"
-        panel.message = "Home holds the projects you track. Duo adds a HOME.md to the folder if it has none."
+        panel.message = "Home holds the projects you track. Duo adds a _HOME.md to the folder if it has none."
         if let r = liveRoot { panel.directoryURL = r } else { panel.directoryURL = FileManager.default.homeDirectoryForCurrentUser }
         DuoFocus.take()
         guard panel.runModal() == .OK, let url = panel.url else { return }
         if let why = setHome(url) { info(why) }
     }
 
-    /// Makes `folder` Home: writes a HOME.md if there's none (DL-42: Duo helps create it), remembers
+    /// Makes `folder` Home: writes a _HOME.md if there's none (DL-42: Duo helps create it), remembers
     /// it, and rescans. Returns why it couldn't, or nil. Undo puts the previous Home back and
-    /// removes only a HOME.md this made.
+    /// removes only a _HOME.md this made.
     @discardableResult
     public func setHome(_ folder: URL) -> String? {
         let fm = FileManager.default
@@ -35,7 +35,7 @@ extension AppModel {
         if folder.path == fm.homeDirectoryForCurrentUser.standardizedFileURL.path {
             return "Your home folder can't be Home: every folder on the Mac would sit inside it. Choose or make a folder in it, like ~/work."
         }
-        let file = folder.appending(path: "HOME.md")
+        let file = DuoFiles.homeFileOrNew(in: folder)
         var made = false
         if !fm.fileExists(atPath: file.path) {
             let starter = "---\ntype: home\n---\n\n# Home\n\nThe projects I track live in this folder. Home's session sorts what comes in and sends it to them.\n"

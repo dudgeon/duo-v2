@@ -68,7 +68,7 @@ import Foundation
         }
         return []
     }
-    func file(_ folder: String) -> String { (try? String(contentsOf: home.appending(path: "\(folder)/PROJECT.md"), encoding: .utf8)) ?? "" }
+    func file(_ folder: String) -> String { (try? String(contentsOf: home.appending(path: "\(folder)/_PROJECT.md"), encoding: .utf8)) ?? "" }
     func indexed(_ folder: String, _ id: String) -> Bool { SessionIndex.load(project: home.appending(path: folder)).sessions.contains { $0.sessionId == id } }
 
     // The message: the whole instruction, in the open.
@@ -84,7 +84,7 @@ import Foundation
     check(m.makeProject(folder: home.appending(path: "Reading"), title: "Reading list") == nil && undos == ["Make Project"], "Make a Project succeeds, as one undo step")
     let id1 = m.lastInterview ?? ""
     let a1 = argsFor(id1)
-    check(file("Reading").contains("type: project") && file("Reading").contains("Reading list"), "PROJECT.md is the template, written before Claude starts (so it's a project at once and Undo works)")
+    check(file("Reading").contains("type: project") && file("Reading").contains("Reading list"), "_PROJECT.md is the template (DL-259's name), written before Claude starts (so it's a project at once and Undo works)")
     check(!id1.isEmpty && a1.contains("--session-id") && a1.last == ProjectInterview.prompt(title: "Reading list"),
           "a session starts in the folder with the interview sent as its first message (\(a1.last?.prefix(40) ?? "none"))")
     check(indexed("Reading", id1), "the interview session is in the project's session index")

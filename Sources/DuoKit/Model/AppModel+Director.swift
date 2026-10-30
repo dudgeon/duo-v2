@@ -266,7 +266,7 @@ extension AppModel {
         lines.append("Rules (the project's win where they disagree):")
         let rules = DirectorRules.sources(project: folder, home: home)
         lines += rules.map { "  - " + $0.report }
-        if home == nil { lines.append("  - No Home yet: rules for every director live in Home's HOME.md. Offer to set one up (`duo2 home set <folder>`), or keep a rule in this project (DL-207).") }
+        if home == nil { lines.append("  - No Home yet: rules for every director live in Home's _HOME.md. Offer to set one up (`duo2 home set <folder>`), or keep a rule in this project (DL-207).") }
         j["rules"] = rules.map { ["label": $0.label, "path": $0.path, "section": $0.section, "exists": $0.exists, "fileExists": $0.fileExists, "text": DirectorRules.text($0) ?? ""] }
         j["home"] = home?.path ?? ""
         lines.append("This client:")

@@ -1,6 +1,6 @@
 # The director console
 
-*Part of Duo's director procedures (`README.md`). The rule (the console is how Geoff hears from the director first) is in PROJECT.md's `## Director`; this is the collections table and how taps arrive. Moved from the project skill on 2026-10-17.*
+*Part of Duo's director procedures (`README.md`). The rule (the console is how Geoff hears from the director first) is in _PROJECT.md's `## Director`; this is the collections table and how taps arrive. Moved from the project skill on 2026-10-17.*
 
 ## 7. The director console
 

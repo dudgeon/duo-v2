@@ -378,7 +378,7 @@ public enum DirectorLog {
 // MARK: - Where the rules are (DL-193, amended by DL-207)
 
 /// The rules a director reads besides `CLAUDE.md` and project skills (DL-207): the user's rules for
-/// every director in Home's `HOME.md` under `## Director`, and a project's own in its `PROJECT.md`
+/// every director in Home's `_HOME.md` under `## Director`, and a project's own in its `_PROJECT.md`
 /// under `## Director`, which wins inside that project. Duo never writes either; the director
 /// proposes additions and writes them only on the user's yes.
 public enum DirectorRules {
@@ -390,7 +390,7 @@ public enum DirectorRules {
         public var section: String
         /// The file has that section.
         public var exists: Bool
-        /// The file itself is there (a project often has no PROJECT.md yet, DL-193).
+        /// The file itself is there (a project often has no _PROJECT.md yet, DL-193).
         public var fileExists: Bool = true
         /// Higher wins: the project's rules beat Home's (DL-207).
         public var precedence: Int
@@ -402,7 +402,7 @@ public enum DirectorRules {
         public var line: String {
             let file = URL(fileURLWithPath: path).lastPathComponent
             let state = exists ? "" : !fileExists
-                ? (file == "PROJECT.md" ? " (no PROJECT.md yet: offer Make a Project, `duo2 project make`)" : " (no \(file) yet)")
+                ? (DuoFiles.isProjectFileName(file) ? " (no \(file) yet: offer Make a Project, `duo2 project make`)" : " (no \(file) yet)")
                 : " (no ## \(section) section yet)"
             return "\(label): \(path) (## \(section))\(state)"
         }
@@ -426,9 +426,9 @@ public enum DirectorRules {
                           precedence: precedence, fileExists: text != nil)
         }
         var out: [Source] = []
-        if let home { out.append(source("your rules for every director (Home)", home.appending(path: "HOME.md"), 0)) }
+        if let home { out.append(source("your rules for every director (Home)", DuoFiles.homeFileOrNew(in: home), 0)) }
         if let project, project.standardizedFileURL != home?.standardizedFileURL {
-            out.append(source("this project's rules", project.appending(path: "PROJECT.md"), 1))
+            out.append(source("this project's rules", DuoFiles.projectFileOrNew(in: project), 1))
         }
         return out
     }
@@ -500,9 +500,9 @@ public enum DirectorTranscript {
 // MARK: - Which project, which Home
 
 /// Where a director stands, from the folder it runs in alone, the same way with or without Duo
-/// running: the project is the nearest folder at or above it with a `PROJECT.md`, not above Home;
-/// Home is the nearest folder at or above it with a `HOME.md`. A folder inside Home (or anywhere)
-/// with no `PROJECT.md` above it is a project without one yet (DL-193: that's normal), and Home's
+/// running: the project is the nearest folder at or above it with a `_PROJECT.md`, not above Home;
+/// Home is the nearest folder at or above it with a `_HOME.md` (either takes its old name too, DL-259).
+/// A folder inside Home (or anywhere) with no project file above it is a project without one yet (DL-193: that's normal), and Home's
 /// own folder is Home's project (a Home director, DL-197).
 /// A folder inside a git work tree stands for the work tree's main checkout: the director's
 /// own check work tree, or a worker's, belongs to the project the main checkout is.
@@ -514,8 +514,8 @@ public enum DirectorPlace {
         var project: URL?, home: URL?
         var d = start
         while true {
-            if home == nil, fm.fileExists(atPath: d.appending(path: "HOME.md").path) { home = d }
-            if project == nil, home == nil, fm.fileExists(atPath: d.appending(path: "PROJECT.md").path) { project = d }
+            if home == nil, DuoFiles.isHome(d) { home = d }
+            if project == nil, home == nil, DuoFiles.isProject(d) { project = d }
             let up = d.deletingLastPathComponent().standardizedFileURL
             if up.path == d.path || d.path == "/" { break }
             d = up
@@ -524,7 +524,7 @@ public enum DirectorPlace {
     }
 
     /// The Home Duo was told to use (`duo2 home set`, kept in its `state.json`), for when Duo is
-    /// closed and the folder has no `HOME.md` above it (a project outside Home). Nil if none.
+    /// closed and the folder has no `_HOME.md` above it (a project outside Home). Nil if none.
     public static func configuredHome() -> URL? {
         guard let data = try? Data(contentsOf: SupportFolder.duo.appending(path: "state.json")),
               let j = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any], let path = j["home"] as? String, !path.isEmpty,

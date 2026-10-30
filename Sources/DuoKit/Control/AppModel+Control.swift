@@ -196,11 +196,11 @@ extension AppModel {
             done(.ok(text, j))
         case .projectMake:
             // A folder in Home with no sessions yet (All projects' folders, DL-212): by name or path in Home.
-            // Each starts a session that interviews the user and fills PROJECT.md in, unless --no-interview (DL-223).
+            // Each starts a session that interviews the user and fills _PROJECT.md in, unless --no-interview (DL-223).
             let interview = !inv.has("no-interview")
             let made: (String) -> Reply = { name in
-                guard let id = self.lastInterview else { return .ok("\(name) is now a project (PROJECT.md written and opened). Undo: duo2 undo") }
-                return .ok("\(name) is now a project (PROJECT.md written and opened); Claude session \(id) is interviewing you to fill it in. Undo: duo2 undo",
+                guard let id = self.lastInterview else { return .ok("\(name) is now a project (_PROJECT.md written and opened). Undo: duo2 undo") }
+                return .ok("\(name) is now a project (_PROJECT.md written and opened); Claude session \(id) is interviewing you to fill it in. Undo: duo2 undo",
                            ["project": name, "session": id])
             }
             if let name = inv[0], project(named: name) == nil, !inv.has("not-now"), let place = homePlace(named: name), place.folder != liveRoot?.standardizedFileURL {
@@ -470,11 +470,11 @@ extension AppModel {
                 if let why = useFolderProblem(place.folder) ?? makeProject(folder: place.folder, title: inv[0] ?? "", goal: inv.flags["goal"] ?? "", interview: inv.has("session")) {
                     return done(.fail(why))
                 }
-                return done(.ok("Made \(Self.short(place.folder.path)) a project\(inv.has("session") ? ", with a Claude session in it interviewing you to fill in PROJECT.md" : ""). Undo: duo2 undo"))
+                return done(.ok("Made \(Self.short(place.folder.path)) a project\(inv.has("session") ? ", with a Claude session in it interviewing you to fill in _PROJECT.md" : ""). Undo: duo2 undo"))
             }
             guard let name = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
             if let why = createProject(named: name, goal: inv.flags["goal"] ?? "", in: place.folder, moving: [], startSession: inv.has("session")) { return done(.fail(why)) }
-            done(.ok("Made the project \(name) at \(Self.short(place.folder.appending(path: name).path))\(inv.has("session") ? ", with a Claude session in it interviewing you to fill in PROJECT.md" : ""). Undo: duo2 undo"))
+            done(.ok("Made the project \(name) at \(Self.short(place.folder.appending(path: name).path))\(inv.has("session") ? ", with a Claude session in it interviewing you to fill in _PROJECT.md" : ""). Undo: duo2 undo"))
         case .docRevert:
             guard editor.url != nil else { return done(.fail("no document is open in Duo")) }
             let finish: @MainActor (Int) -> Void = { n in done(n > 0 ? .ok("Reverted \(n) of Claude's change(s).") : .fail("no change of Claude's there to revert")) }
@@ -571,7 +571,7 @@ extension AppModel {
             if let why = newProjectProblem(name) { return done(.fail(why)) }
             let what = found.count == 1 ? "“\(s.name)”" : "\(found.count) sessions"
             confirm(title: "Move \(what) to a new project “\(name)”?",
-                    detail: "Duo makes \(name)'s folder in Home with a starter PROJECT.md. Files stay where they are; the session moves to the new folder the next time you resume it. You can undo this.",
+                    detail: "Duo makes \(name)'s folder in Home with a starter _PROJECT.md. Files stay where they are; the session moves to the new folder the next time you resume it. You can undo this.",
                     button: "Create and Move") { [weak self] ok in
                 guard let self else { return }
                 guard ok else { return done(.fail("Not moved: the user clicked Cancel in Duo. Nothing changed and nothing is pending.")) }

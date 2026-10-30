@@ -1,6 +1,6 @@
 # Lessons, and where things are
 
-*Part of Duo's director procedures (`README.md`): Duo dev's habits on top of the shared duo-director core. Moved here from the project skill (retired) on 2026-10-17; the rules are in PROJECT.md's `## Director`.*
+*Part of Duo's director procedures (`README.md`): Duo dev's habits on top of the shared duo-director core. Moved here from the project skill (retired) on 2026-10-17; the rules are in _PROJECT.md's `## Director`.*
 
 ## Lessons (2026-10-07/08: the 0.2.5–0.2.7 work-Mac freeze and a long night)
 

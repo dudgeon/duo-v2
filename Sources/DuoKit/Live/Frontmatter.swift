@@ -1,6 +1,6 @@
 import Foundation
 
-/// Reads YAML frontmatter from markdown files (`PROJECT.md`, `HOME.md`, `tasks/*.md`).
+/// Reads YAML frontmatter from markdown files (`_PROJECT.md`, `_HOME.md`, `tasks/*.md`).
 ///
 /// Read-only and deliberately small: flat `key: value` pairs, quoted strings, inline lists
 /// (`[a, b]`) and block lists (`- a`). That covers the Obsidian-compatible schema (DL-6,

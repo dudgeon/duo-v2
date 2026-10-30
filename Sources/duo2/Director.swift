@@ -155,7 +155,7 @@ func directorStatusOffline(_ rest: [String]) -> Int32 {
     let home = d.home
     // In Home: the projects inside it that have their own director (DL-197), two levels down.
     let inHome = home.map { $0.path == d.project.path } ?? false
-    print(home.map { "Home: \($0.path)\(d.above == nil ? " (Duo's Home; this project is outside it)" : "")." } ?? "No Home: no HOME.md above this folder, and Duo has none set.")
+    print(home.map { "Home: \($0.path)\(d.above == nil ? " (Duo's Home; this project is outside it)" : "")." } ?? "No Home: no _HOME.md above this folder, and Duo has none set.")
     if let home, inHome {
         let directed = projectDirectors(in: home)
         print(directed.isEmpty ? "No project here has its own director: you may direct work in any of them." : "Projects with their own director (ask it, never touch its workers): " + directed.map { "\($0.0) (\($0.1))" }.joined(separator: ", "))
@@ -180,7 +180,7 @@ func directorStatusOffline(_ rest: [String]) -> Int32 {
     print("Hearing back: SendMessage a live worker (notify_when_idle: true); its reply or the idle notice wakes you. Where messaging can't carry, run `duo2 director watch` under Monitor as the fallback.")
     print("Rules (the project's win where they disagree):")
     for s in DirectorRules.sources(project: d.project, home: home) { print("  - " + s.report) }
-    if home == nil { print("  - No Home: rules for every director live in Home's HOME.md. Offer to set one up (`duo2 home set <folder>`), or keep a rule in this project (DL-207).") }
+    if home == nil { print("  - No Home: rules for every director live in Home's _HOME.md. Offer to set one up (`duo2 home set <folder>`), or keep a rule in this project (DL-207).") }
     print("This client:")
     for l in d.caps.lines { print("  " + l) }
     return 0
