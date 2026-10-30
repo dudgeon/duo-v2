@@ -28,6 +28,7 @@ The console is Geoff's default channel with the director (`docs/director/console
 ```
 
 Rules (each is something Geoff asked for):
+- **A linked session must be running** (Geoff, 2026-10-30, about a card whose session "shows as disconnected so I can't work with it (I'm angry about this)"). `worker-links.py` gives `running`. Before linking a session, and on every Refresh, wake any linked session that isn't running: `claude --bg --resume <full-id> "<why, and what Geoff wants from it>"`, with no flags, so it keeps its Remote Control link. Never stop a session while a card links it.
 - **Every card links its worker's session** ("the decision panes should always include a clickable link to the worker session, esp when there are artifacts to review", 2026-10-30), and every artifact there is to review (canvas, page, film), first in `links`. No worker: link the record, release or page it's about.
 - **Recommendation first**, as an option with `recommended: true`; 2-4 options; labels are the button text. Questions a phone can answer in seconds; say the time ("10 s", "~5 min") in the title when it's more than a tap.
 - **Only what's true now.** Check the record on main, the worker's transcript and its pending question before writing "waits on you". Never a card for something already answered.
