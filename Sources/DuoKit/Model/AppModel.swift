@@ -109,6 +109,8 @@ public final class AppModel {
     /// `pressedTabClose` a press held for a capture (FixtureHarness `hover-tab`).
     public var hoveredTab: String?
     public var hoveredTabClose: String?
+    /// The pill segment under the pointer (`PillSegment`, DL-253): `new-claude` or `new-shell`; a fixture sets it for the target's hovered halves.
+    public var hoveredPill: String?
     public var pressedTabClose: String?
     public var consoleTab: String?              // Session.tabKey (id when live, else name)
     public var rightTab: String?                // "Project", a group name, or a document path

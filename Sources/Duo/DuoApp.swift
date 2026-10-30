@@ -58,6 +58,7 @@ struct DuoApp: App {
             else if GlyphTargets.screens.contains(screen) { GlyphTargets.apply(screen, to: model) }
             else if SidebarTargets.screens.contains(screen) { SidebarTargets.apply(screen, to: model) }
             else if ForkTargets.screens.contains(screen) { ForkTargets.apply(screen, to: model) }
+            else if NewSessionTargets.screens.contains(screen) { NewSessionTargets.apply(screen, to: model) }
             else { SearchTargets.apply(screen, to: model) }
         }
         if options.collapseLeft { model.leftCollapsed = true }

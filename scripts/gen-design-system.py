@@ -294,6 +294,9 @@ files = {"tokens.json": json.dumps(tokens, indent=2, ensure_ascii=False) + "\n"}
 for k, v in t["icon"].items():
     if k.startswith("$") or "svg" not in v:
         continue
+    if "fill" in v:   # a filled mark (the new-session robot, DL-253)
+        files[f"assets/Icons/{k}.svg"] = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{v["viewBox"]}" width="24" height="16" fill="{hexes[v["fill"]]}">{v["svg"].replace(chr(39), chr(34))}</svg>\n'
+        continue
     stroke = v.get("stroke", "text")
     stroke = stroke if stroke in hexes else "text2"
     attrs = f'fill="none" stroke="{hexes[stroke]}" stroke-width="{1.2 if k.startswith("property") else 1.5}" stroke-linecap="round" stroke-linejoin="round"'

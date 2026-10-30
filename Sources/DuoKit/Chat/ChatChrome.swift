@@ -34,46 +34,32 @@ struct ChatBubbleMark: Shape {
     }
 }
 
-/// The pill: two icon segments, 26×20 each, in a 1 pt `tuiInputBorder` box (handoff `toggle`).
-/// It belongs to the selected Claude tab; a shell tab doesn't show it.
+/// The mode pill: Terminal | Chat, riding on the selected Claude tab after its name (DL-253,
+/// new-session-handoff placement 4). Segments 20 × 16 on the console and 18 × 14 on the thin light strip
+/// over chat; the shown mode keeps its fill. A shell tab never shows it.
 struct ChatToggle: View {
     @Environment(AppModel.self) private var model
     let key: String
-    /// On the thin light strip over chat (DL-136): white, `controlEdge`, the shown one on `selected`, 22×16.
+    /// On the thin light strip over chat (DL-136): white, `controlEdge`, the shown one on `selected`.
     var light = false
 
     var body: some View {
         let chat = model.chat(for: key)
         let showing: ChatViewMode = chat?.showsChat == true ? .chat : .terminal
-        HStack(spacing: 0) {
-            segment(.terminal, on: showing == .terminal) {
-                TerminalMark().stroke(style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round)).frame(width: 13, height: 10)
+        let size = CGSize(width: light ? 18 : 20, height: light ? 14 : 16)
+        // The marks scale with the segment: 11 pt wide on the console, 10 on the light strip (the target's 22 / 20 at 2×).
+        let w: CGFloat = light ? 10 : 11
+        SegmentedPill(light: light) {
+            PillSegment(id: "mode-terminal", light: light, size: size, on: showing == .terminal, hovers: false, label: "Terminal", action: { model.setChatMode(.terminal, for: key) }) {  // action: session chat
+                TerminalMark().stroke(style: StrokeStyle(lineWidth: 1.5 * w / 13, lineCap: .round, lineJoin: .round)).frame(width: w, height: w * 10 / 13)
             }
-            segment(.chat, on: showing == .chat) {
-                ChatBubbleMark().stroke(style: StrokeStyle(lineWidth: 1.3, lineJoin: .round)).frame(width: 13, height: 11)
+            PillSegment(id: "mode-chat", light: light, size: size, on: showing == .chat, hovers: false, label: "Chat", action: { model.setChatMode(.chat, for: key) }) {  // action: session chat
+                ChatBubbleMark().stroke(style: StrokeStyle(lineWidth: 1.3 * w / 13, lineJoin: .round)).frame(width: w, height: w * 11 / 13)
             }
         }
-        // The light one's border is outside its segments (`bar-thin`: 22×16 inside a 1 border).
-        .padding(light ? DuoMetric.borderHairline : 0)
-        .background(light ? DuoColor.pane : .clear)
-        .clipShape(RoundedRectangle(cornerRadius: DuoMetric.radiusControl))
-        .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).strokeBorder(light ? DuoColor.controlEdge : DuoColor.tuiInputBorder, lineWidth: DuoMetric.borderHairline))
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Show session as")
         .accessibilityIdentifier("video.chat.toggle")   // anchors: the video cursor's target
-    }
-
-    func segment(_ mode: ChatViewMode, on: Bool, @ViewBuilder icon: () -> some View) -> some View {
-        let title = mode == .chat ? "Chat" : "Terminal"
-        return icon()
-            .foregroundStyle(light ? (on ? DuoColor.text : DuoColor.text2) : on ? DuoColor.consoleText : DuoColor.consoleText2)
-            .frame(width: light ? 22 : 26, height: light ? 16 : 20)
-            .background(on ? (light ? DuoColor.selected : DuoColor.consoleRule) : .clear)
-            .contentShape(Rectangle())
-            .onActivate { model.setChatMode(mode, for: key) }  // action: session chat
-            .help(title)
-            .accessibilityLabel(title)
-            .accessibilityAddTraits(on ? .isSelected : [])
     }
 }
 
@@ -116,6 +102,9 @@ extension AppModel {
         guard let key = consoleTab, !isShell(key), let c = chat(for: key) else { return false }
         return c.showsChat
     }
+
+    /// The mode toggle rides on a Claude tab that has a chat; a shell never shows it (DL-253).
+    public func showsModeToggle(_ key: String) -> Bool { !isShell(key) && chat(for: key) != nil }
 
     /// A tab's chat, live or a fixture target's.
     public func chat(for key: String) -> ChatSession? { chats.existing(key) ?? fixtureChats[key] }
