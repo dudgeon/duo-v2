@@ -33,7 +33,7 @@ Duo is SwiftUI, not a web app. There's no component library to mount, and `windo
 - **Sessions are the spine.** Every Claude Code session on the Mac is listed, from Claude's own logs, with no setup. Projects, tasks and groups organise sessions; none is required.
 - **Attention first.** Order lists by what needs the user: needs you → ready for review → working → idle → resolved, longest wait first. A group or task shows the state of its most urgent session.
 - **One accent, and it means "needs you".** `needsYou` (`needsYouOnConsole` on the dark pane) marks only sessions waiting on the user. Health (`At risk`, `Off track`) is plain text. Never use the accent for selection, links, brand or decoration.
-- **Plain files are the truth.** Projects are folders with `PROJECT.md`, Home a folder with `HOME.md`, tasks are Markdown notes. Duo never hides state the user can't see in Finder or Obsidian.
+- **Plain files are the truth.** Projects are folders with `_PROJECT.md`, Home a folder with `_HOME.md`, tasks are Markdown notes. Duo never hides state the user can't see in Finder or Obsidian.
 - **Never lose a session.** Destructive actions (Delete Session…, Move into Home…) confirm in a sheet. Everything else undoes with ⌘Z.
 
 ## Content

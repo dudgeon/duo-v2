@@ -49,6 +49,7 @@ func repoFixture() throws -> Fixture {
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "director" { return try directorChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "control" { return try controlPlaneChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "git" { return try gitChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "duo-files" { return try duoFilesMoveChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "pane" { return try paneFocusChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "docxlook" { return try docxLookChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "tabs" { return try tabOrderChecks() }
@@ -792,6 +793,7 @@ func repoFixture() throws -> Fixture {
     tabScrollChecks()
     shellTitleChecks()
     try gitChecks()
+    try duoFilesMoveChecks()   // DuoFilesMoveChecks.swift: DL-259, Q-330
     try issueChecks()   // IssueChecks.swift: DL-226
     dockMenuChecks()
 
