@@ -136,6 +136,7 @@ extension AppModel {
             if case .terminal = target, let t = terminals.existing(key) {
                 prompt = " Its last screen line: \"" + (voiceRows(t).last { !$0.trimmingCharacters(in: .whitespaces).isEmpty } ?? "").trimmingCharacters(in: .whitespaces) + "\""
             }
+            if let u = voice.unsentWords { prompt += " Unsent words (a question stopped it): \"\(u)\"" }
             done(.ok((mine || voice.state.isActive ? VoiceCopy.line(voice.state) : "Voice input is off.") + prompt,
                      ["state": String(describing: voice.state), "session": voice.target?.key ?? ""]))
         case .voiceStop:

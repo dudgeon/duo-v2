@@ -1,4 +1,5 @@
 import AppKit
+import DuoControl
 import SwiftUI
 
 /// The terminal mic (voice-input-handoff `terminal`, DL-261): a 24 × 18 patch on Claude's input box's bottom
@@ -18,10 +19,16 @@ final class TerminalMicView: NSView {
     private var timer: Timer?
     private var hovering = false
     private var lastRows: [String] = []
+    private var bottomRow = 0
+    private var lastDims = ""
     private var lastAnchor: VoiceMicAnchor?
     private var notice: NSHostingView<VoiceNoticeBox>?
     /// Where the mic last was in the slot, for the notice.
     private var lastFrame: NSRect?
+
+    /// `DUO_VOICE_MIC_ON_SHELL=1` draws the mic on a shell tab too, so a scripted run can feed recorded Claude screens
+    /// to a shell and watch the finder. Only an isolated Duo honours it: a release never does.
+    static let onShellForProofs = SupportFolder.isIsolated && ProcessInfo.processInfo.environment["DUO_VOICE_MIC_ON_SHELL"] == "1"
 
     override var isFlipped: Bool { true }
     override init(frame: NSRect) { super.init(frame: frame); isHidden = true; setAccessibilityLabel("Voice input"); setAccessibilityRole(.button) }
@@ -53,21 +60,26 @@ final class TerminalMicView: NSView {
     }
 
     func tick() {
-        guard let s = session, let sv = superview, s.isClaude, !s.exited, s.view.superview === sv, !s.view.isHidden else { return hide() }
+        guard let s = session, let sv = superview, s.isClaude || Self.onShellForProofs, !s.exited, s.view.superview === sv, !s.view.isHidden else { return hide() }
         let snap = s.view.terminalStateSnapshot()
         let rows = s.view.visibleRowsText(0..<snap.dimensions.rows)
         let cell = s.cellSize
         guard cell.width > 0, cell.height > 0 else { return hide() }
         let cells = Int(ceil(Self.size.width / cell.width))
-        let scrolled = s.view.subviews.compactMap { $0 as? NSScroller }.first.map { $0.knobProportion < 0.999 && $0.doubleValue < 0.999 } ?? false
+        // Scrolled back: the viewport's top row (SwiftTerm's yDisp) is below the highest it has been. The scroller's own
+        // position isn't kept up to date while output arrives, so it can't say (F-441).
+        let dims = "\(snap.dimensions.cols)x\(snap.dimensions.rows)"
+        if dims != lastDims { lastDims = dims; bottomRow = 0 }
+        if snap.viewportRow >= bottomRow { bottomRow = snap.viewportRow }
+        let scrolled = snap.viewportRow < bottomRow
         let cursor = (row: snap.cursor.row, col: snap.cursor.col)
         guard let a = InputBoxFinder.find(rows: rows, cursor: cursor, scrolledBack: scrolled, micCells: cells) else {
             updateNotice(); return hide()
         }
-        // The patch is centred on the cells it covers, so it breaks the rule and nothing else.
+        // The patch covers cells that are all rule characters (the finder checked), so it breaks the rule and nothing else.
         let tf = s.view.frame
-        let cellsWidth = CGFloat(a.lastCol - a.firstCol + 1) * cell.width
-        let x = tf.minX + CGFloat(a.firstCol) * cell.width + (cellsWidth - Self.size.width) / 2
+        // Right edge on the grid: 2 columns in from the rule's last character, which is the corner (DL-261).
+        let x = tf.minX + CGFloat(a.lastCol + 1) * cell.width - Self.size.width
         let y = tf.minY + CGFloat(a.row) * cell.height + (cell.height - Self.size.height) / 2
         let f = NSRect(x: x.rounded(), y: y.rounded(), width: Self.size.width, height: Self.size.height)
         if frame != f { frame = f }

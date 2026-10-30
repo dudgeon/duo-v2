@@ -97,6 +97,12 @@ public final class VoiceInput {
     /// Whether the app asks for the microphone itself: false in a scripted or isolated Duo.
     @ObservationIgnored public var isolated: () -> Bool = { SupportFolder.isIsolated }
 
+    /// The words a blocked dictation didn't send (always kept; on the clipboard only in the user's own Duo).
+    public private(set) var unsentWords: String?
+    @ObservationIgnored public var writeClipboard: (String) -> Void = { text in
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+    }
     @ObservationIgnored private var mic: MicCapture?
     @ObservationIgnored private var recognizer: AppleRecognizer?
     @ObservationIgnored private var runTask: Task<Void, Never>?
@@ -154,6 +160,7 @@ public final class VoiceInput {
         transcript = VoiceTranscript()
         sentPhrases = 0
         notice = nil
+        unsentWords = nil
         holding = false
         generation += 1
         let gen = generation
@@ -171,28 +178,35 @@ public final class VoiceInput {
         begin(source, gen: gen)
     }
 
-    /// Duo's sheet before macOS asks (first-press.html); Not Now asks nothing.
-    private func ask(gen: Int, then go: @escaping @MainActor () -> Void) {
-        SheetCenter.shared.ask(DuoQuestion(
+    /// Duo's sheet before macOS asks (first-press.html); Not Now asks nothing. Public so the harness draws it
+    /// without asking macOS.
+    public static func firstPressQuestion(notNow: @escaping @MainActor () -> Void, proceed: @escaping @MainActor () -> Void) -> DuoQuestion {
+        DuoQuestion(
             title: VoiceCopy.sheetTitle,
             paragraphs: [VoiceCopy.sheetBody],
             items: [.init(what: VoiceCopy.sheetBox, path: VoiceCopy.sheetBoxAside, sub: true)],
             choices: [
-                .init(label: "Not Now", isCancel: true) { [weak self] in
-                    guard let self, self.generation == gen else { return }
-                    self.set(.sheetAnswered(continueAsking: false)); self.finishedRun()
-                },
-                .init(label: "Continue", isDefault: true) { [weak self] in
-                    guard let self, self.generation == gen else { return }
-                    self.set(.sheetAnswered(continueAsking: true))
-                    AVCaptureDevice.requestAccess(for: .audio) { granted in
-                        DispatchQueue.main.async { MainActor.assumeIsolated {
-                            guard self.generation == gen else { return }
-                            if granted { go() } else { self.fail(AVCaptureDevice.authorizationStatus(for: .audio) == .restricted ? .restricted : .denied) }
-                        } }
-                    }
-                },
-            ]))
+                .init(label: "Not Now", isCancel: true, action: notNow),
+                .init(label: "Continue", isDefault: true, action: proceed),
+            ])
+    }
+
+    private func ask(gen: Int, then go: @escaping @MainActor () -> Void) {
+        SheetCenter.shared.ask(Self.firstPressQuestion(
+            notNow: { [weak self] in
+                guard let self, self.generation == gen else { return }
+                self.set(.sheetAnswered(continueAsking: false)); self.finishedRun()
+            },
+            proceed: { [weak self] in
+                guard let self, self.generation == gen else { return }
+                self.set(.sheetAnswered(continueAsking: true))
+                AVCaptureDevice.requestAccess(for: .audio) { granted in
+                    DispatchQueue.main.async { MainActor.assumeIsolated {
+                        guard self.generation == gen else { return }
+                        if granted { go() } else { self.fail(AVCaptureDevice.authorizationStatus(for: .audio) == .restricted ? .restricted : .denied) }
+                    } }
+                }
+            }))
     }
 
     private func begin(_ source: VoiceAudioSource, gen: Int) {
@@ -263,15 +277,17 @@ public final class VoiceInput {
         }
     }
 
-    /// One settled phrase into the terminal. A question on screen stops everything.
-    private func deliver(_ phrase: String, to target: VoiceTarget) {
+    /// One settled phrase into the terminal. A question on screen stops everything. Public for DuoChecks.
+    public func deliver(_ phrase: String, to target: VoiceTarget) {
         switch host?.paste(target, phrase, sentPhrases == 0) ?? .blocked("no terminal") {
         case .sent: sentPhrases += 1
         case .blocked:
             // The phrase wasn't sent: it and everything after go to the clipboard.
             let unsent = ([phrase] + [transcript.volatile].filter { !$0.isEmpty }).joined(separator: " ")
-            NSPasteboard.general.clearContents()
-            NSPasteboard.general.setString(unsent, forType: .string)
+            // An isolated or scripted Duo never writes the user's clipboard (Q-335): the words are kept here and
+            // `duo2 voice status` reports them.
+            unsentWords = unsent
+            if !isolated() { writeClipboard(unsent) }
             stopCapture()
             generation += 1
             runTask?.cancel()

@@ -44,6 +44,28 @@ import Foundation
     var u = VoiceTranscript(); u.apply("one", isFinal: true); u.apply("two", isFinal: true); u.apply("three", isFinal: false)
     check(VoiceTerminalText.unsent(u, sentCount: 1) == "two three", "paste: the unsent words are the unsent phrases and the tail")
 
+    // Q-335: a blocked dictation never writes the clipboard in an isolated or scripted Duo.
+    do {
+        var written: [String] = []
+        let v = VoiceInput()
+        v.writeClipboard = { written.append($0) }
+        v.host = VoiceInput.Host(update: { _, _, _ in }, paste: { _, _, _ in .blocked("Claude asked a question") }, ended: { _, _ in })
+        v.isolated = { true }
+        v.showFixture(.listening, target: .terminal("k"))
+        v.deliver("add the plan", to: .terminal("k"))
+        check(written.isEmpty, "voice: an isolated Duo never writes the clipboard when a question stops dictation")
+        check(v.unsentWords == "add the plan", "voice: the unsent words are kept for duo2 voice status")
+        check(v.notice?.text == VoiceTerminalText.questionNotice && v.state == .idle, "voice: the question notice shows and listening stops")
+        let w = VoiceInput()
+        var wrote: [String] = []
+        w.writeClipboard = { wrote.append($0) }
+        w.host = v.host
+        w.isolated = { false }
+        w.showFixture(.listening, target: .terminal("k"))
+        w.deliver("add the plan", to: .terminal("k"))
+        check(wrote == ["add the plan"], "voice: the user's own Duo puts the unsent words on the clipboard")
+    }
+
     // The input-box finder
     let cells = 4
     func rows(_ text: String) -> [String] { text.split(separator: "\n", omittingEmptySubsequences: false).map(String.init) }
