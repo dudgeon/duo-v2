@@ -9,11 +9,45 @@ Publish it with the Artifact tool (capabilities {"db": {}, "comments": {}}); see
 """
 import json
 import pathlib
+import re
 import subprocess
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 TEMPLATE = ROOT / ".claude/skills/acceptance-walk/walk-template.html"
+
+
+# A card or decision that points at a design thing (a board, canvas, handoff, screen, mock-up, film...)
+# has to link it, in `[label](https://...)` in its text or in `links` (Geoff, 2026-10-30: "this
+# acceptance walk artifact NEEDS to always contain links to artifacts that are referenced").
+REFERENCE = re.compile(
+    r"\b(boards?|canvas(?:es)?|handoffs?|mock-?ups?|films?|videos?|"
+    r"(?:the |approved |design |designed )screens?|(?:walk|review|decision|design) page|this page)\b", re.I)
+# Words that look like references but name a Duo feature or UI.
+NOT_REFERENCE = re.compile(r"task boards?|Obsidian boards?|boards? \| list|list \| board|boards?'s lanes?|"
+                           r"(?-i:Boards?(?:'s|,|`| and| or| \||\)))|`Board`|home page|design system|design-system", re.I)
+LINK = re.compile(r"\]\(https?://[^)\s]+\)")
+
+
+def texts(x):
+    if isinstance(x, str):
+        return [x]
+    if isinstance(x, list):
+        return [t for i in x for t in texts(i)]
+    if isinstance(x, dict):
+        return [t for k, v in x.items() if k not in ("mockup", "id", "recommended", "links") for t in texts(v)]
+    return []
+
+
+def unlinked_references(item, keys):
+    """The reference words in an item's text when it has no link at all (else [])."""
+    if item.get("links"):
+        return []
+    body = " ".join(t for k in keys for t in texts(item.get(k, ""))) + " " + item.get("title", "")
+    if LINK.search(body):
+        return []
+    body = NOT_REFERENCE.sub(" ", body)
+    return sorted({m.group(0).lower() for m in REFERENCE.finditer(body)})
 
 
 def main():
@@ -67,6 +101,20 @@ def main():
         missing = {"id", "title", "context", "options"} - q.keys()
         if missing:
             sys.exit(f"decision {q.get('id', '?')}: missing {sorted(missing)}")
+    for q in data.get("decisions", []):
+        for l in q.get("links", []):
+            if not (l.get("label") and str(l.get("url", "")).startswith("http")):
+                sys.exit(f"decision {q['id']}: each `links` entry needs a `label` and an http(s) `url`")
+    for f in data["features"]:
+        for l in f.get("links", []):
+            if not (l.get("label") and str(l.get("url", "")).startswith("http")):
+                sys.exit(f"{f['id']}: each `links` entry needs a `label` and an http(s) `url`")
+    bad = [(f["id"], w) for f in data["features"] for w in [unlinked_references(f, ("what", "steps", "expect"))] if w]
+    bad += [("decision " + q["id"], w) for q in data.get("decisions", []) for w in [unlinked_references(q, ("context", "options"))] if w]
+    if bad:
+        sys.exit("These mention a board, canvas, handoff, screen, design, mock-up, page, film or video without a link "
+                 "(add `links: [{label, url}]` or a [label](https://...) in the text):\n" +
+                 "\n".join(f"  {i}: {', '.join(w)}" for i, w in bad))
     # Embedded in a <script> block: keep "</" from closing it.
     payload = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
     html = TEMPLATE.read_text().replace("__TITLE__", data["title"]).replace("__DATA__", payload)

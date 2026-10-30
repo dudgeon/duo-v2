@@ -38,6 +38,10 @@ h1 { font-size: 17px; margin: 0; flex: 1 1 260px; }
 .filters { display: flex; gap: 6px; flex-wrap: wrap; }
 button { font: inherit; color: inherit; cursor: pointer; border: 1px solid var(--line); background: var(--card); border-radius: 7px; padding: 5px 11px; }
 button:hover { border-color: var(--muted); }
+.linkbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.linkbtn { display: inline-block; padding: 4px 10px; border: 1px solid var(--accent); border-radius: 6px; color: var(--accent); text-decoration: none; font-size: 13px; }
+.linkbtn:hover { text-decoration: underline; }
+a.lnk { color: var(--accent); }
 button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .filters button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
 .primary { background: var(--accent); color: #fff; border-color: var(--accent); }
@@ -312,8 +316,10 @@ function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.
 
 // Inline `code`, **bold** and *italic* in the walk's text.
 function rich(parent, text) {
-  text.split(/(`[^`]+`|\*\*[^*]+\*\*|\*[^*\s][^*]*\*)/).forEach(part => {
-    if (part.length > 2 && part.startsWith("`") && part.endsWith("`")) parent.append(el("code", null, part.slice(1, -1)));
+  text.split(/(\[[^\]]+\]\(https?:\/\/[^)\s]+\)|`[^`]+`|\*\*[^*]+\*\*|\*[^*\s][^*]*\*)/).forEach(part => {
+    const lk = part.match(/^\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)$/);
+    if (lk) { const a = el("a", "lnk", lk[1]); a.href = lk[2]; a.target = "_blank"; a.rel = "noopener"; parent.append(a); }
+    else if (part.length > 2 && part.startsWith("`") && part.endsWith("`")) parent.append(el("code", null, part.slice(1, -1)));
     else if (part.length > 4 && part.startsWith("**") && part.endsWith("**")) parent.append(el("strong", null, part.slice(2, -2)));
     else if (part.length > 2 && part.startsWith("*") && part.endsWith("*")) parent.append(el("em", null, part.slice(1, -1)));
     else parent.append(document.createTextNode(part));
@@ -327,6 +333,14 @@ rich($("#intro"), DATA.intro || "");
 (DATA.setup || []).forEach(s => $("#setup").append(rich(el("li"), s)));
 
 const cards = {};
+// A card's or decision's `links` as buttons that open in a new tab.
+function linkBar(links) {
+  if (!links || !links.length) return null;
+  const bar = el("div", "linkbar");
+  links.forEach(l => { const a = el("a", "linkbtn", l.label + " ↗"); a.href = l.url; a.target = "_blank"; a.rel = "noopener"; bar.append(a); });
+  return bar;
+}
+
 function build() {
   const list = $("#list");
   DATA.features.forEach(f => {
@@ -337,6 +351,7 @@ function build() {
     const pill = el("span", "pill"); top.append(pill);
     const wm = el("span", "wm " + f.workMac, WM_LABEL[f.workMac] || f.workMac); wm.title = f.workMacWhy || WM_LABEL[f.workMac] || ""; top.append(wm);
     c.append(top);
+    const lb = linkBar(f.links); if (lb) c.append(lb);
     if (f.workMacWhy) c.append(el("p", "wmwhy", f.workMacWhy));
     if (f.what) c.append(rich(el("p", "what"), f.what));
     c.append(commitLine(f));
@@ -607,6 +622,7 @@ function buildDecisions() {
     if (d.ref) top.append(el("span", "ref", d.ref));
     const state = el("span", "pill"); top.append(state);
     c.append(top);
+    const dlb = linkBar(d.links); if (dlb) c.append(dlb);
     const ctx = el("div", "context");
     (d.context || []).forEach(p => {
       if (Array.isArray(p)) { const ul = el("ul"); p.forEach(x => ul.append(rich(el("li"), x))); ctx.append(ul); }
