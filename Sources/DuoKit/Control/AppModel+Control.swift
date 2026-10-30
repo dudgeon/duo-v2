@@ -844,6 +844,8 @@ extension AppModel {
         // MARK: Send to Claude
         case .sendFile, .sendSession, .sendProject, .sendSelection, .sendElement, .sendText:
             sendVerb(id, inv, req, done)
+        case .voiceStart, .voiceStop, .voiceStatus, .voiceFile:
+            voiceVerb(id, inv, req, done)
         case .selection:
             var parts: [String] = []
             let group = DispatchGroup()

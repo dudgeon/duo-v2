@@ -51,6 +51,7 @@ cp -R "$root/docs/design/chat-model-chip-handoff/fixture-chat/." "$app/Contents/
 cp -R "$root/docs/design/chat-slash-handoff/fixture-chat/." "$app/Contents/Resources/chat-fixtures"   # and slash commands' (slash-<board>, DL-143)
 cp -R "$root/docs/design/chat-paste-handoff/fixture-chat/." "$app/Contents/Resources/chat-fixtures"   # and chat paste's (paste-<board>, DL-161)
 cp -R "$root/docs/design/chat-markdown-handoff/fixture-chat/." "$app/Contents/Resources/chat-fixtures"   # and your Markdown's (md-<board>, DL-188)
+cp -R "$root/docs/design/voice-input-handoff/fixture-chat/." "$app/Contents/Resources/chat-fixtures"   # and voice input's (voice-<board>, DL-261)
 # The document editor: vendored CodeMirror bundle and its page (F-34).
 rm -rf "$app/Contents/Resources/mods"; mkdir -p "$app/Contents/Resources/mods"
 cp -R "$root/Mods/duo-signal" "$app/Contents/Resources/mods/duo-signal"   # the sensor mod, used only with DUO_SIGNAL=1 (ENH-70 spike)
@@ -109,6 +110,8 @@ cat > "$app/Contents/Info.plist" <<PLIST
   ${url_types}
   <key>LSMinimumSystemVersion</key><string>26.0</string>
   <key>NSHighResolutionCapable</key><true/>
+  <key>NSMicrophoneUsageDescription</key><string>Duo turns what you say into text on this Mac when you press the mic. Nothing is recorded.</string>
+  <key>NSSpeechRecognitionUsageDescription</key><string>Duo turns what you say into text on this Mac. Nothing leaves it.</string>
   <key>NSPrincipalClass</key><string>NSApplication</string>
   <key>NSSupportsAutomaticTermination</key><false/>
   <key>SUFeedURL</key><string>https://github.com/dudgeon/duo-v2/releases/latest/download/appcast.xml</string>

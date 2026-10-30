@@ -471,16 +471,23 @@ public final class TerminalStore {
 /// Shows one session's terminal in a pane. The same view moves between slots (Home pane,
 /// console, later the peek), so it is re-parented, not recreated.
 struct TerminalSlot: NSViewRepresentable {
+    @Environment(AppModel.self) private var model
     let session: TerminalSession
 
     func makeNSView(context: Context) -> SlotView { SlotView() }
 
     func updateNSView(_ slot: SlotView, context: Context) {
         slot.show(session.view)
+        // Voice input's mic on Claude's input box (DL-261): a sibling above the terminal, never inside it.
+        let key = session.key
+        slot.mic.session = session
+        slot.mic.voice = model.voice
+        slot.mic.onClick = { [weak model] in model?.toggleVoice(.terminal(key)) }  // action: voice start
     }
 
     final class SlotView: NSView {
         private weak var current: NSView?
+        let mic = TerminalMicView(frame: NSRect(origin: .zero, size: TerminalMicView.size))
 
         override var isFlipped: Bool { true }
 
@@ -499,6 +506,7 @@ struct TerminalSlot: NSViewRepresentable {
             current?.removeFromSuperview()
             view.removeFromSuperview()
             addSubview(view)
+            addSubview(mic, positioned: .above, relativeTo: view)
             current = view
             needsLayout = true
             DispatchQueue.main.async { [weak self, weak view] in

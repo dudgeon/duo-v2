@@ -1,0 +1,31 @@
+target hover circle    seed fill (233, 236, 239): 30.0 x 30.0 pt, 2460 px
+build  hover circle    seed fill (233, 236, 239): 30.0 x 30.0 pt, 2399 px
+   build circle: right 32.0 pt from the crop's right edge
+target listening       seed fill (31, 35, 40): 30.0 x 30.0 pt, 2436 px
+build  listening       seed fill (31, 35, 40): 29.0 x 29.0 pt, 2360 px
+target dark mic        seed fill (230, 232, 235): 30.0 x 30.0 pt, 2436 px
+build  dark mic        seed fill (230, 232, 235): 29.0 x 29.0 pt, 2351 px
+target classic mic     seed fill (26, 20, 16): 30.0 x 30.0 pt, 2436 px
+build  classic mic     seed fill (26, 20, 16): 29.0 x 29.0 pt, 2360 px
+target light mic       seed fill (31, 35, 40): 30.0 x 30.0 pt, 2436 px
+a-219-idle     2.1.219 empty box                          mic shown (wanted shown) OK
+               rect 24x18 pt at (715,112); rule rows under it 4, stray ink pixels under it 0; mic centre 0.5 pt from the rule's centre; right edge 15.5 pt from the rule's end
+b-284-slash    2.1.284 slash menu open                    mic shown (wanted shown) OK
+               rect 24x18 pt at (715,562); rule rows under it 4, stray ink pixels under it 0; mic centre 0.5 pt from the rule's centre; right edge 15.5 pt from the rule's end
+c-paste        2.1.2xx pasted text                        mic shown (wanted shown) OK
+               rect 24x18 pt at (715,487); rule rows under it 4, stray ink pixels under it 0; mic centre 0.5 pt from the rule's centre; right edge 15.5 pt from the rule's end
+d-284-perm     2.1.284 permission question                mic hidden (wanted hidden) OK
+e-296-idle     2.1.296 empty box                          mic shown (wanted shown) OK
+               rect 24x18 pt at (715,112); rule rows under it 4, stray ink pixels under it 0; mic centre 0.5 pt from the rule's centre; right edge 15.5 pt from the rule's end
+f-296-slash    2.1.296 slash menu                         mic shown (wanted shown) OK
+               rect 24x18 pt at (715,112); rule rows under it 4, stray ink pixels under it 0; mic centre 0.5 pt from the rule's centre; right edge 15.5 pt from the rule's end
+g-296-effort   2.1.296 /effort picker                     mic hidden (wanted hidden) OK
+h-edge         text to the right edge, two-line box       mic shown (wanted shown) OK
+               rect 24x18 pt at (685,82); rule rows under it 4, stray ink pixels under it 0; mic centre 0.5 pt from the rule's centre; right edge 15.5 pt from the rule's end
+j-listen       listening: the mic filled, a phrase already in the prompt mic shown (wanted shown) OK
+               rect 24x18 pt at (685,82); rule rows under it 4, stray ink pixels under it 0; mic centre 0.5 pt from the rule's centre; right edge 15.5 pt from the rule's end
+i1             scrolled to the bottom (box in view)       mic shown (wanted shown) OK
+               rect 24x18 pt at (685,787); rule rows under it 4, stray ink pixels under it 0; mic centre 0.5 pt from the rule's centre; right edge 15.5 pt from the rule's end
+i2             scrolled back 3 lines (box in view)        mic hidden (wanted hidden) OK
+target box (y0,y1,h px@2x): [(211, 307, 96)]
+build  box (y0,y1,h px@2x): [(0, 59, 59), (261, 355, 94)]

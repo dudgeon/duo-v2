@@ -265,6 +265,10 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 send selection [--to <id> \| --new]` | Put the user's selection (document or HTML page) into a session's prompt. | Send Selection to Claude, Send Selection To, Send Image to Claude, Send Image To |
 | `duo2 send element [--to <id> \| --new]` | Put the picked HTML element, or the shape picked on a slide, into a session's prompt. | Send to Claude, Send To, New Session |
 | `duo2 send text <text> [--to <id> \| --new]` | Type text into a session's prompt for the user to finish and send. | — |
+| `duo2 voice start [<id> \| shell]` | Start voice input in a session (the one showing by default): words go into its chat composer, or its terminal prompt a phrase at a time; Return is never pressed. Needs the user to have allowed the microphone in Duo; never asks in a scripted or isolated Duo. | Start Voice Input, Voice Input |
+| `duo2 voice stop [<id> \| shell]` | Finish voice input: the last phrases land, nothing is sent. | Stop Voice Input |
+| `duo2 voice status [<id> \| shell]` | Whether voice input is listening, downloading Apple's speech model, or off, and why. | — |
+| `duo2 voice file <audio file> [<id> \| shell]` | Feed an audio file (absolute path or ~) through voice input into a session's composer or prompt, as if spoken. The scripted twin of the mic; never touches the microphone. | — |
 | `duo2 selection` | What the user has selected or picked right now, in the editor or an HTML page. | — |
 
 ## Search

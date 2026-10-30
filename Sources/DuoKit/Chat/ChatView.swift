@@ -41,6 +41,8 @@ public final class ChatUIState {
     /// Fixture boards: a long paste to fold into the composer when it first shows, and the text typed after it.
     public struct FixtureBlock { public var text: String; public var open: Bool; public var caretLine: Int?; public var typed: String }
     public var fixtureBlock: FixtureBlock?
+    /// Fixture boards: a dictation to show in the field when it first draws (voice-input-handoff).
+    public var fixtureDictation: VoiceTranscript?
     /// `@` in the composer (ENH-3, DL-133): the word after it and its matches (nil: no menu), and
     /// the row selected. Esc closes it until the caret leaves that `@` word.
     public var mention: (query: String, matches: [FileMention.Match])?

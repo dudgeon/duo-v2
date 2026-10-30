@@ -212,6 +212,75 @@ public enum FixtureHarness {
         case "trust-state":   // trust-state: what the bar says, to stderr
             if let k = model.visibleTerminal?.key { FileHandle.standardError.write(Data("trust-state: \(model.trustNotices[k].map { "\($0.path) \($0.phase) fork=\($0.forkLine ?? "-")" } ?? "none")\n".utf8)) }
         case "ask-legacy": LegacyPrompt.run()
+        case "voice-sheet":   // voice-sheet: the first-press sheet, its buttons only logged (macOS is never asked)
+            func say(_ s: String) -> @MainActor () -> Void { { FileHandle.standardError.write(Data("voice-sheet: \(s)\n".utf8)) } }
+            SheetCenter.shared.ask(VoiceInput.firstPressQuestion(notNow: say("Not Now"), proceed: say("Continue")))
+        case "voice-state":   // voice-state:denied|restricted|listening|…: a state on the visible session's mic, no microphone
+            let state: VoiceState = switch parts.count > 1 ? parts[1] : "" {
+            case "listening": .listening
+            case "denied": .denied
+            case "restricted": .restricted
+            case "preparing": .preparing(progress: 0.4)
+            default: .idle
+            }
+            if let k = model.visibleSessionId {
+                model.voice.showFixture(state, target: model.terminals.existing(k) != nil && model.fixtureChats[k] == nil ? .terminal(k) : .chat(k))
+            }
+        case "term-feed":   // term-feed:<file>: the file's text, drawn in the visible terminal as program output (a recorded Claude screen)
+            if parts.count > 1, let t = model.visibleTerminal, let text = try? String(contentsOfFile: parts[1], encoding: .utf8) {
+                t.view.feed(text: "\u{1b}[2J\u{1b}[H" + text.replacingOccurrences(of: "\n", with: "\r\n"))
+            }
+        case "term-scroll":   // term-scroll:up|down: scrolls the visible terminal back
+            if let t = model.visibleTerminal {   // term-scroll:up|down[:<lines>]
+                let w = (parts.count > 1 ? parts[1] : "up").split(separator: ":").map(String.init)
+                let n = w.count > 1 ? Int(w[1]) ?? 10 : 10
+                if w.first == "down" { t.view.scrollDown(lines: n) } else { t.view.scrollUp(lines: n) }
+            }
+        case "term-size":     // term-size:<cols>x<rows>: resizes the visible terminal's emulator
+            if parts.count > 1, let t = model.visibleTerminal {
+                let w = parts[1].split(separator: "x").compactMap { Int($0) }
+                if w.count == 2 { t.view.resize(cols: w[0], rows: w[1]) }
+            }
+        case "voice-shot":    // voice-shot:<png>: the visible terminal and its mic, drawn to <png>; <png>.bare.png without the mic; the mic's state to stderr
+            if parts.count > 1, let t = model.visibleTerminal, let slot = t.view.superview as? TerminalSlot.SlotView {
+                // SwiftTerm's pixels don't draw into a bitmap while the window is off screen (the pane captures white, F-25),
+                // so the proof draws the terminal's own cell grid: its visible rows, from the live terminal, on `console` in the
+                // view's font at its cell size, with the real mic view over it.
+                slot.mic.tick()   // what the 20 Hz timer does, once, so the shot is deterministic
+                let rows = model.voiceRows(t)
+                func draw(_ path: String, mic: Bool) {
+                    let size = slot.bounds.size
+                    guard let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(size.width * 2), pixelsHigh: Int(size.height * 2), bitsPerSample: 8, samplesPerPixel: 4,
+                                                     hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0), let bctx = NSGraphicsContext(bitmapImageRep: rep) else { return }
+                    rep.size = size
+                    let cg = bctx.cgContext
+                    cg.translateBy(x: 0, y: CGFloat(rep.pixelsHigh)); cg.scaleBy(x: 2, y: -2)
+                    let ctx = NSGraphicsContext(cgContext: cg, flipped: true)
+                    NSGraphicsContext.saveGraphicsState()
+                    NSGraphicsContext.current = ctx
+                    DuoNSColor.console.setFill(); NSRect(origin: .zero, size: size).fill()
+                    let cell = t.cellSize, tf = t.view.frame
+                    let attrs: [NSAttributedString.Key: Any] = [.font: t.view.font, .foregroundColor: DuoNSColor.consoleText]
+                    for (i, row) in rows.enumerated() {
+                        // One cell per character, so a wide or odd glyph can't push the rest of the row along.
+                        for (c, ch) in row.enumerated() where ch != " " {
+                            (String(ch) as NSString).draw(at: NSPoint(x: tf.minX + CGFloat(c) * cell.width, y: tf.minY + CGFloat(i) * cell.height), withAttributes: attrs)
+                        }
+                    }
+                    if mic, !slot.mic.isHidden, let mrep = slot.mic.bitmapImageRepForCachingDisplay(in: slot.mic.bounds) {
+                        slot.mic.cacheDisplay(in: slot.mic.bounds, to: mrep)
+                        let img = NSImage(size: slot.mic.bounds.size); img.addRepresentation(mrep)
+                        img.draw(in: slot.mic.frame, from: .zero, operation: .sourceOver, fraction: 1, respectFlipped: true, hints: nil)
+                    }
+                    NSGraphicsContext.restoreGraphicsState()
+                    if let png = rep.representation(using: .png, properties: [:]) { try? png.write(to: URL(fileURLWithPath: path)) }
+                }
+                draw(parts[1], mic: true)
+                draw(parts[1] + ".bare.png", mic: false)
+                let f = slot.mic.frame
+                let cells = Int(ceil(TerminalMicView.size.width / t.cellSize.width))
+                FileHandle.standardError.write(Data("voice-shot: rows=\(rows.count) hasBox=\(InputBoxFinder.hasInputBox(rows: rows)) question=\(InputBoxFinder.questionShowing(rows)) find=\(String(describing: InputBoxFinder.find(rows: rows, micCells: cells))) scroller=\(t.view.subviews.compactMap { $0 as? NSScroller }.first.map { "knob \($0.knobProportion) pos \($0.doubleValue)" } ?? "none") claude=\(t.isClaude) isolated=\(SupportFolder.isIsolated) shellEnv=\(TerminalMicView.onShellForProofs) mic hidden=\(slot.mic.isHidden) frame=\(Int(f.minX)),\(Int(f.minY)) \(Int(f.width))x\(Int(f.height)) terminal=\(Int(t.view.frame.minX)),\(Int(t.view.frame.minY)) \(Int(t.view.frame.width))x\(Int(t.view.frame.height)) cell=\(t.cellSize.width)x\(t.cellSize.height) slot=\(Int(slot.bounds.width))x\(Int(slot.bounds.height))\n".utf8))
+            }
         case "ask-update":   // ask-update:writable|admin|no-sparkle|no-notes|real: the update question (DL-114) for 0.1.9 over 0.1.8, its buttons only logged
             let form = parts.count > 1 ? parts[1] : "writable"
             let o = UpdateCheck.Offer(version: "0.1.9", current: "0.1.8", page: UpdateCheck.releasePage("0.1.9"), needsAdmin: form == "admin",
