@@ -776,7 +776,7 @@ extension ChatSession {
 
     /// ↑ or ↓ in the composer moves the TUI's own menu selection.
     public func moveCommandMenu(_ k: ChatKey) async {
-        guard commandMenuShown, !sending, screen.kind == .idle else { return }
+        guard commandMenuShown, !sending, screen.kind == .idle || screen.kind == .busy else { return }
         _ = await press(k)
     }
 
@@ -800,7 +800,8 @@ extension ChatSession {
 
     private func mirrorSlashOnce(_ text: String) async {
         let s = reread()
-        guard s.kind == .idle, !sending else { return }
+        // While Claude works too, as the TUI's own prompt takes `/` then (Q-329); `apply` keeps the turn busy while the menu hides its row.
+        guard s.kind == .idle || s.kind == .busy, !sending else { return }
         let current = s.input ?? ""
         let want = text.hasPrefix("/") && !text.contains(" ") && !text.contains("\n") ? text : ""
         guard current != want, current.isEmpty || current.hasPrefix("/") else { return }

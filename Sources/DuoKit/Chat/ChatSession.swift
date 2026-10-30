@@ -380,6 +380,9 @@ public final class ChatSession {
         var s = s
         // 2.1.296's inline renderer draws the `/` menu where the footer was (F-284): the mode is the one before it opened.
         if s.mode == nil, !s.commands.isEmpty, s.kind == .idle { s.mode = before.mode }
+        // With the menu up every renderer drops the busy row ("esc to interrupt"; 2.1.284 too, above the box): a turn
+        // still running isn't over because `/` was typed during it (Q-329). It ends when the menu closes, or by Stop.
+        if before.kind == .busy, s.kind == .idle, !s.commands.isEmpty { s.kind = .busy }
         if s != before { screen = s }
         if s.kind != before.kind {
             screenTrail.append(ChatTransition(at: Date(), event: "screen", reason: "\(before.kind.rawValue) → \(s.kind.rawValue) (\(s.sig.prefix(60))\(s.why.map { ", " + $0 } ?? ""))"))

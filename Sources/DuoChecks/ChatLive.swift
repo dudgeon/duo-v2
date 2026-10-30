@@ -366,6 +366,21 @@ struct AskCase {
     check(asks.contains("/ask-data") && asks.contains("/ask-docs"), "back to `/ask`: the user skill and the project skill (\(asks))")
     _ = await_ { await chat.mirrorSlash("") }
     spin(0.4)
+    // While Claude works (Q-329): the TUI takes `/` then too, and the turn stays busy under its menu.
+    prompt("long")
+    _ = until(10) { chat.reread().kind == .busy }
+    _ = await_ { await chat.mirrorSlash("/ask") }
+    _ = until(5) { chat.reread().commands.contains { $0.name == "/ask-data" } }
+    let busyMenu = chat.screen.commands.map(\.name)
+    check(busyMenu.contains("/ask-data") && chat.screen.kind == .busy,
+          "`/ask` while Claude works: the menu lists the skill and the turn is still busy (\(chat.screen.kind), \(busyMenu))")
+    _ = await_ { await chat.mirrorSlash("") }
+    _ = idle(); spin(1)
+    let whole = chat.log.items.compactMap { item -> String? in
+        guard case .claude(let t) = item else { return nil }
+        return t.segments.compactMap { if case .text(let x) = $0 { return x.markdown } else { return nil } }.joined()
+    }.last ?? ""
+    check(chat.reread().input == "" && whole.contains("Line 40 of a long answer."), "leaving it clears Claude's prompt; the whole reply arrived")
 
     // The model chip and the effort chip (DL-168): a click opens Claude Code's own /model, with no bubble.
     _ = idle(); spin(0.5)
