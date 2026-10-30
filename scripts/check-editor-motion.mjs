@@ -6,6 +6,7 @@
 // Chromium headless shell in ~/Library/Caches/ms-playwright, as check-editor-selection.mjs does.
 import fs from "fs";
 import { createRequire } from "module";
+import { addTypeVars } from "./editor-vars.mjs";
 const require = createRequire(import.meta.url);
 const { chromium } = require("playwright-core");
 const dist = (process.argv[2] || "Vendor/codemirror/dist").replace(/^(?!\/)/, process.cwd() + "/");
@@ -21,6 +22,7 @@ const b = await chromium.launch({ executablePath: `${cache}/${shell}/chrome-head
 for (const reduce of [false, true]) {
   const page = await b.newPage({ viewport: { width: 460, height: 400 }, reducedMotion: reduce ? "reduce" : "no-preference" });
   await page.goto("file://" + dist + "/editor.html");
+  await addTypeVars(page);
   await page.evaluate(([t, css]) => {
     document.documentElement.setAttribute("style", css);
     window.__folded = false; duo.create(t);

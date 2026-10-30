@@ -6,6 +6,7 @@
 // Needs playwright-core (NODE_PATH or a scratch node_modules) and Playwright's headless shell.
 import fs from "fs";
 import { createRequire } from "module";
+import { addTypeVars } from "./editor-vars.mjs";
 const require = createRequire(process.env.PW_REQUIRE || import.meta.url);
 const { chromium } = require("playwright-core");
 const dist = (process.argv[2] || "Vendor/codemirror/dist").replace(/^(?!\/)/, process.cwd() + "/");
@@ -29,6 +30,7 @@ const page = await b.newPage({ viewport: { width: 460, height: 900 } });
 // The page posts to Swift through WebKit's message handler; here it lands in a list.
 await page.addInitScript(() => { window.__posts = []; window.webkit = { messageHandlers: { duo: { postMessage: (m) => window.__posts.push(m) } } }; });
 await page.goto("file://" + dist + "/editor.html");
+await addTypeVars(page);
 await page.evaluate((t) => {
   document.documentElement.setAttribute("style", "--duo-pane:#fff;--duo-text:#1f2328;--duo-text2:#59636e;--duo-selected:#ddf;--duo-rule:#ddd;--duo-control-edge:#ccc;--duo-ground:#f6f8fa;--duo-needs-you:#c00;--duo-radius-card:8px;--duo-heading-above:4px;");
   window.__folded = false; duo.create(t);

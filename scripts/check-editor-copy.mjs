@@ -8,6 +8,7 @@
 // shell and WebKit in ~/Library/Caches/ms-playwright, as check-editor-selection.mjs does.
 import fs from "fs";
 import { createRequire } from "module";
+import { addTypeVars } from "./editor-vars.mjs";
 const require = createRequire(import.meta.url);
 const { chromium, webkit } = require("playwright-core");
 const dist = (process.argv[2] || "Vendor/codemirror/dist").replace(/^(?!\/)/, process.cwd() + "/");
@@ -26,6 +27,7 @@ async function run(name, launch) {
   const b = await launch();
   const page = await b.newPage({ viewport: { width: 460, height: 380 }, deviceScaleFactor: 2 });
   await page.goto("file://" + dist + "/editor.html");
+  await addTypeVars(page);
   await page.evaluate(([t, css]) => {
     document.documentElement.setAttribute("style", css);
     window.__posted = [];
