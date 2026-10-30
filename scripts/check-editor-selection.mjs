@@ -100,6 +100,8 @@ const driftAt = () => page.evaluate(() => {
   for (const el of document.querySelectorAll(".cm-content > *")) {
     const r = el.getBoundingClientRect();
     if (!r.height) continue;
+    // CodeMirror's own spacer for lines it hasn't drawn (a document longer than the render window, as Classic's taller lines make it): it is not a block of ours to compare.
+    if (el.classList.contains("cm-gap")) continue;
     const pos = V.posAtDOM(el, 0), blk = V.lineBlockAt(pos);
     if (el.classList.contains("cm-line")) {
       const d = textTop(blk) + V.documentTop - r.top;
