@@ -62,6 +62,8 @@ public final class AppModel {
     /// Mark Complete's "Close #n too" notice (github-issues-handoff board 6), for 5 s.
     public var issueOffer: IssueOffer?
     @ObservationIgnored var issueFetched: [String: Date] = [:]
+    /// Folders whose old-named files were looked at this launch (DL-259).
+    @ObservationIgnored var movesChecked: Set<String> = []
     @ObservationIgnored var issueFetching: Set<String> = []
     @ObservationIgnored var issueRepos: [String: RemoteRepo?] = [:]
     /// The project's layout fading up after a jump from another project (DL-130): the panes are
@@ -586,6 +588,7 @@ public final class AppModel {
         deliverReviewComments()     // @claude comments waiting for their session, and their replies (DL-236 10A)
         archiveListedSessions()  // after the snapshot is applied: it archives what's listed now
         GitIgnoreOffer.consider(folders, interactive: interactivePrompts && !SupportFolder.isIsolated)   // C-28: no first-run questions in an isolated instance
+        moveDuoFiles(folders)   // PROJECT.md → _PROJECT.md, once, quietly (DL-259, Q-330)
         refreshRepo()   // the open project's repository state (DL-149, DL-157)
         if let p = currentProject?.name { refreshIssues(project: p) }   // linked issues' live state (DL-226)
         // What was open when Duo last quit comes back once the sessions are known (LR-58).

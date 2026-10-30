@@ -6,7 +6,7 @@ restore file that reopens sessions as tabs in chat.
     scripts/make-scale-fixture.py <root> [--projects 40] [--sessions 600] [--long 4]
                                   [--tabs 20] [--home-view list|board|none] [--claude <stub>]
 
-<root>/ws is the workspace (HOME.md, then <topic>/<project>/PROJECT.md), <root>/cfg the Claude
+<root>/ws is the workspace (_HOME.md, then <topic>/<project>/_PROJECT.md), <root>/cfg the Claude
 config folder (CLAUDE_CONFIG_DIR) and <root>/sup Duo's support folder (DUO_SUPPORT_DIR; keep
 <root> short, the control socket's path must stay under 104 characters). Every word is
 generated; no real transcript text.
@@ -38,13 +38,13 @@ repo = pathlib.Path(__file__).resolve().parent.parent
 WORDS = ("checkout wallet ledger refund rollout pricing vendor interview draft review fixture onboarding "
          "dashboard migration billing report budget roadmap launch audit cleanup").split()
 
-(ws / "HOME.md").write_text("---\ngoal: \"Triage and the weekly status\"\n---\n\n# Home\n")
+(ws / "_HOME.md").write_text("---\ngoal: \"Triage and the weekly status\"\n---\n\n# Home\n")
 folders = [ws]
 topics = ["payments", "growth", "platform", "research", "ops"]
 for i in range(a.projects):
     f = ws / topics[i % len(topics)] / f"{r.choice(WORDS)}-{i + 1}"
     f.mkdir(parents=True, exist_ok=True)
-    (f / "PROJECT.md").write_text(f"---\ngoal: \"{' '.join(r.choice(WORDS) for _ in range(5))}\"\n---\n\n# {f.name}\n")
+    (f / "_PROJECT.md").write_text(f"---\ngoal: \"{' '.join(r.choice(WORDS) for _ in range(5))}\"\n---\n\n# {f.name}\n")
     folders.append(f)
 
 

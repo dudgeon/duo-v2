@@ -76,7 +76,7 @@ import Foundation
         check(withText.contains("(## Director)") && withText.contains("\n      max workers: 2\n      ask before publishing"), "status prints a Director section's text under its path, indented")
         check(DirectorRules.sources(project: proj, home: root)[0].report == DirectorRules.sources(project: proj, home: root)[0].line, "a section that isn't there prints just its line")
         let none = DirectorRules.sources(project: bare, home: root)
-        check(none[1].fileExists == false && none[1].line.contains("no PROJECT.md yet") && none[0].fileExists && !none[0].exists && none[0].line.contains("no ## Director section yet"),
+        check(none[1].fileExists == false && none[1].line.contains("no _PROJECT.md yet") && none[1].path.hasSuffix("/bare/_PROJECT.md") && none[0].fileExists && !none[0].exists && none[0].line.contains("no ## Director section yet"),
               "status tells no file (offer Make a Project) from a file with no Director section")
         let skill = DirectorSkill.text()
         check(skill.contains("**A yes counts only when the user gave it for that action**") && skill.contains("A worker's ask, your own reasoning") && skill.contains("standing line in a Director section")

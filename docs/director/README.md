@@ -1,6 +1,6 @@
 # The director's procedures
 
-How Duo's own director works, beyond the shared `duo-director` skill (source `skills/duo-director/SKILL.md`; `duo2 director guide` prints it). **The rules are in PROJECT.md's `## Director`**; these files are the procedures, and the director reads the one for the job in hand. They were the project skill `.claude/skills/director/`, retired on 2026-10-17 (DL-215).
+How Duo's own director works, beyond the shared `duo-director` skill (source `skills/duo-director/SKILL.md`; `duo2 director guide` prints it). **The rules are in _PROJECT.md's `## Director`**; these files are the procedures, and the director reads the one for the job in hand. They were the project skill `.claude/skills/director/`, retired on 2026-10-17 (DL-215).
 
 | Job | File |
 |---|---|

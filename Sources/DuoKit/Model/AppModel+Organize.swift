@@ -36,7 +36,7 @@ extension AppModel {
         showNewProject(moving: ids)
     }
 
-    /// Makes a project folder in Home (or one of its topic folders) with a PROJECT.md from the
+    /// Makes a project folder in Home (or one of its topic folders) with a _PROJECT.md from the
     /// template (DL-146) carrying the goal, files any sessions given in it, and starts a session there if asked, one
     /// that interviews the user and fills the file in (DL-223): one undo step. Returns why it couldn't, or nil.
     @discardableResult
@@ -52,12 +52,12 @@ extension AppModel {
         let starter = Templates.make(.project, title: name, project: nil, home: homeFolder, values: g.isEmpty ? [] : [("goal", .scalar(g))])
         do {
             try fm.createDirectory(at: folder, withIntermediateDirectories: false)
-            try Data(starter.utf8).write(to: folder.appending(path: "PROJECT.md"), options: .withoutOverwriting)
+            try Data(starter.utf8).write(to: folder.appending(path: DuoFiles.project), options: .withoutOverwriting)
         } catch { return error.localizedDescription }
         // Undo also trashes the folder made here, unless something else has been put in it since.
         let trashIfUntouched: @MainActor (AppModel) -> Void = { _ in
             let left = (try? FileManager.default.contentsOfDirectory(atPath: folder.path)) ?? []
-            if Set(left).isSubset(of: ["PROJECT.md", ".duo"]) { try? FileManager.default.trashItem(at: folder, resultingItemURL: nil) }
+            if Set(left).isSubset(of: [DuoFiles.project, ".duo"]) { try? FileManager.default.trashItem(at: folder, resultingItemURL: nil) }
         }
         if moving.isEmpty {
             registerUndo("New Project") { model in trashIfUntouched(model); model.refreshLive() }
@@ -150,7 +150,7 @@ extension AppModel {
         refreshLive()
     }
 
-    /// Makes a folder a documented project (DL-63): writes PROJECT.md from the template (DL-146)
+    /// Makes a folder a documented project (DL-63): writes _PROJECT.md from the template (DL-146)
     /// unless the folder has one, remembers the folder if it's outside the workspace, opens the file,
     /// and starts a Claude session there that interviews the user and fills it in (DL-223).
     public func makeProject(_ name: String) {
@@ -169,7 +169,7 @@ extension AppModel {
         var isDir: ObjCBool = false
         guard fm.fileExists(atPath: folder.path, isDirectory: &isDir), isDir.boolValue else { return "\(Self.short(folder.path)) isn't a folder." }
         if let root = liveRoot, folder.standardizedFileURL.path == root.standardizedFileURL.path { return "Home can't be a project: choose a folder in it." }
-        let file = folder.appending(path: "PROJECT.md")
+        let file = folder.appending(path: DuoFiles.project)
         let wrote: Bool
         do { wrote = try Self.writeProjectFile(in: folder, title: title, goal: goal, home: homeFolder) } catch { return error.localizedDescription }
         DuoState.update { s in if !s.projects.contains(folder.path) { s.projects.append(folder.path) } }
@@ -196,11 +196,11 @@ extension AppModel {
         return nil
     }
 
-    /// Writes a starter PROJECT.md in `folder` from the template (DL-146), titled `title` (the folder's
+    /// Writes a starter _PROJECT.md in `folder` from the template (DL-146), titled `title` (the folder's
     /// name when blank) and carrying the goal, unless it has one. Returns whether it wrote one.
     public static func writeProjectFile(in folder: URL, title: String, goal: String, home: URL?) throws -> Bool {
-        let file = folder.appending(path: "PROJECT.md")
-        guard !FileManager.default.fileExists(atPath: file.path) else { return false }
+        guard !DuoFiles.isProject(folder) else { return false }
+        let file = folder.appending(path: DuoFiles.project)
         let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
         let g = goal.trimmingCharacters(in: .whitespacesAndNewlines)
         let starter = Templates.make(.project, title: t.isEmpty ? folder.lastPathComponent : t, project: nil, home: home,

@@ -43,11 +43,11 @@ import Foundation
     check(AppModel.useFolderProblem(fm.temporaryDirectory.appending(path: "elsewhere"), root: root) != nil, "nor a folder outside Home")
     let reading = root.appending(path: "Reading")
     let wrote = (try? AppModel.writeProjectFile(in: reading, title: "Reading list", goal: "Read the ten best", home: nil)) ?? false
-    let text = (try? String(contentsOf: reading.appending(path: "PROJECT.md"), encoding: .utf8)) ?? ""
-    check(wrote && text.contains("Reading list") && text.contains("Read the ten best"), "the project file carries the sheet's Name as its title and the goal")
+    let text = (try? String(contentsOf: reading.appending(path: "_PROJECT.md"), encoding: .utf8)) ?? ""
+    check(wrote && text.contains("Reading list") && text.contains("Read the ten best"), "the project file, _PROJECT.md (DL-259), carries the sheet's Name as its title and the goal")
     check(fm.fileExists(atPath: reading.path) && reading.lastPathComponent == "Reading", "the folder keeps its name")
     check((try? AppModel.writeProjectFile(in: reading, title: "Other", goal: "", home: nil)) == false
-          && ((try? String(contentsOf: reading.appending(path: "PROJECT.md"), encoding: .utf8)) ?? "") == text, "an existing project file is never overwritten")
+          && ((try? String(contentsOf: reading.appending(path: "_PROJECT.md"), encoding: .utf8)) ?? "") == text, "an existing project file is never overwritten")
     check(!AppModel.homeFolders(root: root).contains { $0.lastPathComponent == "Reading" }, "once a project, it leaves the folders offered")
 
     // DL-212: All projects with no projects in Home offers Home's folders.

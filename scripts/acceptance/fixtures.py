@@ -43,7 +43,8 @@ def write(p, text, newline="\n", raw=None):
 
 
 def project(folder, goal, health="on-track", next_step=""):
-    write(folder / "PROJECT.md", "---\ngoal: \"%s\"\nhealth: %s\nnext: \"%s\"\n---\n\n# %s\n\n%s.\n" % (goal, health, next_step, folder.name, goal))
+    trash(folder / "PROJECT.md")   # the old name (DL-259): one file, _PROJECT.md
+    write(folder / "_PROJECT.md", "---\ngoal: \"%s\"\nhealth: %s\nnext: \"%s\"\n---\n\n# %s\n\n%s.\n" % (goal, health, next_step, folder.name, goal))
 
 
 planted = []
@@ -77,7 +78,8 @@ def session(folder, title, turns, days_ago=0, sid=None):
 
 def build():
     # Workspace: Home, four projects across three topics.
-    write(WS / "home" / "HOME.md", "---\ngoal: \"Triage, dispatch, weekly status\"\nnext: \"Weekly status Friday\"\n---\n\n# Home\n")
+    trash(WS / "home" / "HOME.md")
+    write(WS / "home" / "_HOME.md", "---\ngoal: \"Triage, dispatch, weekly status\"\nnext: \"Weekly status Friday\"\n---\n\n# Home\n")
     write(WS / "home" / "templates" / "decision-record.md", "# Decision: \n\n## Context\n\n## Options\n\n## Decision\n\n## Consequences\n")
 
     co = WS / "payments" / "checkout"
@@ -116,7 +118,7 @@ def build():
     session(rf, "Untitled scratch", [("Second scratch thought, same title.", "OK.")], days_ago=2)
     purge = session(rf, "Refund edge cases (purge test)", [("List refund edge cases: partial, duplicate, expired card.", "1. Partial refunds. 2. Duplicates. 3. Expired cards.")], days_ago=4)
 
-    # Folders with sessions but no PROJECT.md (DL-63), outside the workspace.
+    # Folders with sessions but no project file (DL-63), outside the workspace.
     scratch = ELSE / "scratch"
     side = ELSE / "side-project"
     scratch.mkdir(parents=True, exist_ok=True)
@@ -288,7 +290,7 @@ def recipe(name):
             if f.name != "exec-review-prep.md" and not f.name.startswith("."):
                 trash(f)   # tasks a test made or renamed
         for f in co.iterdir():
-            if f.name not in {"PROJECT.md", "docs", "prototypes", "templates", "tasks", ".duo"} and not f.name.startswith("."):
+            if f.name not in {"_PROJECT.md", "docs", "prototypes", "templates", "tasks", ".duo"} and not f.name.startswith("."):
                 trash(f)
         checkout_docs(co)
         synth = task_session()
@@ -331,15 +333,14 @@ def recipe(name):
     elif name == "add-missing":
         add()
     elif name == "first-run-home":
-        # A new user's Home: plain folders, no PROJECT.md anywhere (DL-211, DL-212). Never overwrites.
+        # A new user's Home: plain folders, no project file anywhere (DL-211, DL-212). Never overwrites.
         fr = ROOT / "first-run-home"
         for folder, note in {"ideas": "Things to try someday.", "reading-list": "Articles to read.", "trips": "Packing lists.",
                              "taxes-2025": "Receipts.", "recipes": "Pancakes."}.items():
             d = fr / folder
             if not (d / "notes.md").exists():
                 write(d / "notes.md", "# %s\n\n%s\n" % (folder, note))
-            pm = d / "PROJECT.md"
-            if pm.exists():
+            for pm in (d / "_PROJECT.md", d / "PROJECT.md"):
                 trash(pm)   # a project a test made goes back to a plain folder
     else:
         sys.exit("unknown recipe %r; known: %s" % (name, ", ".join(RECIPES)))

@@ -11,7 +11,7 @@ public struct Fixture: Codable, Sendable, Equatable {
         public var goal: String
         public var health: String?
         public var next: String?
-        /// "folder": a folder with Claude sessions but no PROJECT.md (DL-63); nil for projects.
+        /// "folder": a folder with Claude sessions but no _PROJECT.md (DL-63); nil for projects.
         public var kind: String?
         /// The folder has a CLAUDE.md: it was set up with intent, a likely project (DL-63).
         public var hasClaudeMD: Bool?

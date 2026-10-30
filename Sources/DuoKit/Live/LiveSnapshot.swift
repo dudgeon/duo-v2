@@ -88,7 +88,7 @@ public enum LiveSnapshot {
         var found = scanned?.projects ?? []
         let claudeFolders = scanned?.claudeFolders ?? []
         // Projects outside Home: made in Duo (DL-63), or any folder Claude ran in that has (or sits
-        // inside) a PROJECT.md (DL-82).
+        // inside) a _PROJECT.md (DL-82).
         var outside = ctx.extraProjects
         for cwd in Set(history.map { resolve($0.cwd) } + beacons.map { resolve($0.cwd) }).sorted() {
             if let p = ProjectDiscovery.enclosingProject(URL(fileURLWithPath: cwd)) { outside.append(p) }
@@ -99,7 +99,7 @@ public enum LiveSnapshot {
             found.append(f)
         }
         let (home, _) = ProjectDiscovery.chooseHome(found, remembered: ctx.rememberedHome)
-        // Other HOME.md folders appear as normal projects (DL-42).
+        // Other _HOME.md folders appear as normal projects (DL-42).
         let projects: [ProjectDiscovery.Found] = found.map { f in
             guard f.isHomeCandidate, f.folder != home?.folder else { return f }
             var g = f

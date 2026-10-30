@@ -296,7 +296,7 @@ extension AppModel {
     @discardableResult
     func setLanes(_ lanes: [String], project: String) -> String? {
         guard let folder = liveFolders[project] else { return "no project '\(project)'" }
-        let brief = ProjectBrief.url(in: folder) ?? folder.appending(path: "PROJECT.md")
+        let brief = ProjectBrief.url(in: folder) ?? folder.appending(path: DuoFiles.project)
         let data = FileManager.default.contents(atPath: brief.path)
         let text = data.flatMap { String(data: $0, encoding: .utf8) } ?? ""
         do { try Data(ProjectBrief.settingLanes(lanes, in: text).utf8).write(to: brief, options: .atomic) } catch { return error.localizedDescription }

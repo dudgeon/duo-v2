@@ -1,10 +1,11 @@
 import Foundation
+import DuoControl
 
 /// What a session is told about its project (ENH-16, F-146), beside its task (DL-116): the
-/// project's name and folder, and the goal, health and next step from `PROJECT.md`'s frontmatter,
+/// project's name and folder, and the goal, health and next step from `_PROJECT.md`'s frontmatter,
 /// the brief the user sees on the project's tile. Told in full at SessionStart (startup, resume,
 /// clear, compact); at UserPromptSubmit only what changed since, once. A project whose `CLAUDE.md`
-/// already imports `@PROJECT.md` (the guide's workaround) gets the name and folder only: Claude
+/// already imports `@_PROJECT.md` (the guide's workaround) gets the name and folder only: Claude
 /// has read the rest. Read from disk at each hook, never cached.
 public enum ProjectContext {
     public struct Brief: Codable, Sendable, Equatable {
@@ -15,27 +16,31 @@ public enum ProjectContext {
         /// The frontmatter's slug (`on-track`); shown in words.
         public var health: String
         public var next: String
-        /// The project's `CLAUDE.md` imports `@PROJECT.md`.
+        /// The project's `CLAUDE.md` imports `@_PROJECT.md`.
         public var imported: Bool
+        /// The project file's name: `_PROJECT.md`, or an old `PROJECT.md` (DL-259); nil in a brief told before.
+        public var file: String?
 
         public init(name: String, folder: String, goal: String = "", health: String = "", next: String = "", imported: Bool = false) {
             self.name = name; self.folder = folder; self.goal = goal; self.health = health; self.next = next; self.imported = imported
         }
     }
 
-    /// The brief of the project in `folder`, read now; nil without a `PROJECT.md`.
+    /// The brief of the project in `folder`, read now; nil without a project file.
     public static func brief(name: String, folder: URL) -> Brief? {
-        guard let text = try? String(contentsOf: folder.appending(path: "PROJECT.md"), encoding: .utf8) else { return nil }
+        guard let file = DuoFiles.projectFile(in: folder), let text = try? String(contentsOf: file, encoding: .utf8) else { return nil }
         let fm = Frontmatter.parse(text)
         func one(_ k: String) -> String { (fm.string(k) ?? "").trimmingCharacters(in: .whitespacesAndNewlines) }
-        return Brief(name: name, folder: folder.standardizedFileURL.path, goal: one("goal"), health: one("health"),
-                     next: fm.string("next") == nil ? one("milestone") : one("next"), imported: imports(folder))
+        var b = Brief(name: name, folder: folder.standardizedFileURL.path, goal: one("goal"), health: one("health"),
+                      next: fm.string("next") == nil ? one("milestone") : one("next"), imported: imports(folder))
+        b.file = file.lastPathComponent
+        return b
     }
 
     /// The project a session belongs to: the one Duo files it under, else the nearest folder at or
-    /// above Claude's folder with a `PROJECT.md` (a session in `repo/src` is `repo`'s, DL-82).
+    /// above Claude's folder with a `_PROJECT.md` (a session in `repo/src` is `repo`'s, DL-82).
     public static func folder(project: String?, cwd: String?, folders: [String: URL]) -> (name: String, folder: URL)? {
-        if let project, let f = folders[project], FileManager.default.fileExists(atPath: f.appending(path: "PROJECT.md").path) {
+        if let project, let f = folders[project], DuoFiles.isProject(f) {
             return (project, f)
         }
         guard let cwd, !cwd.isEmpty, let f = ProjectDiscovery.enclosingProject(URL(fileURLWithPath: cwd)) else { return nil }
@@ -44,11 +49,11 @@ public enum ProjectContext {
     }
 
     /// The project's own `CLAUDE.md` files (F-146: `CLAUDE.md`, `.claude/CLAUDE.md`, `CLAUDE.local.md`)
-    /// import `PROJECT.md` with an `@` line.
+    /// import the project file (`_PROJECT.md`, or the old `_PROJECT.md`) with an `@` line.
     static func imports(_ folder: URL) -> Bool {
         ["CLAUDE.md", ".claude/CLAUDE.md", "CLAUDE.local.md"].contains { name in
             guard let text = try? String(contentsOf: folder.appending(path: name), encoding: .utf8) else { return false }
-            return text.range(of: #"(^|\s)@(\./)?PROJECT\.md(?![\w.])"#, options: .regularExpression) != nil
+            return text.range(of: #"(^|\s)@(\./)?_?PROJECT\.md(?![\w.])"#, options: .regularExpression) != nil
         }
     }
 
@@ -62,7 +67,7 @@ public enum ProjectContext {
     /// At UserPromptSubmit: what changed since `told` (nil: never told, so say it all), once.
     public static func onPrompt(_ now: Brief?, told: Brief?) -> String? {
         guard let told else { return atStart(now) }
-        guard let now else { return "Duo: This session is no longer in a project with a PROJECT.md (it was in \(quoted(told.name)))." }
+        guard let now else { return "Duo: This session is no longer in a project with a _PROJECT.md (it was in \(quoted(told.name)))." }
         guard !same(now, told) else { return nil }
         if now.folder != told.folder || now.name != told.name {
             return "Duo: This session's project is now \(quoted(now.name)) (was \(quoted(told.name))).\n" + listing(now)
@@ -86,11 +91,12 @@ public enum ProjectContext {
 
     static func listing(_ b: Brief) -> String {
         let head = "This session is in the project \(quoted(b.name)) (\(b.folder))."
-        if b.imported { return head + " Its CLAUDE.md imports PROJECT.md, so you already have its goal, health and next step." }
+        let file = b.file ?? DuoFiles.project
+        if b.imported { return head + " Its CLAUDE.md imports \(file), so you already have its goal, health and next step." }
         let facts = [("Goal", b.goal), ("Health", healthWords(b.health)), ("Next step", b.next)].filter { !$0.1.isEmpty }
-        // A brand-new PROJECT.md says only `health: on-track`: no brief yet, so no lines.
-        guard !b.goal.isEmpty || !b.next.isEmpty else { return head + " Its PROJECT.md has no goal or next step yet." }
-        return head + " Its brief, from PROJECT.md (the user sees it on the project's tile in Duo):\n"
+        // A brand-new _PROJECT.md says only `health: on-track`: no brief yet, so no lines.
+        guard !b.goal.isEmpty || !b.next.isEmpty else { return head + " Its \(file) has no goal or next step yet." }
+        return head + " Its brief, from \(file) (the user sees it on the project's tile in Duo):\n"
             + facts.map { "- \($0.0): \($0.1)" }.joined(separator: "\n")
     }
 

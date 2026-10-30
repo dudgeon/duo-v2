@@ -237,7 +237,7 @@ extension Attention {
 /// Duo's own small state file (Q-13): seen marks now; the registry later (Phase E).
 public struct DuoState: Codable, Sendable, Equatable {
     public var seen: [String: Double] = [:]
-    /// The Home folder Duo chose (DL-42), so a second HOME.md never silently takes over.
+    /// The Home folder Duo chose (DL-42), so a second _HOME.md never silently takes over.
     public var home: String?
     /// "Not Now" on Home's prompt (DL-100): the pane stays collapsed at All projects until a Home is chosen.
     public var homePromptDismissed = false

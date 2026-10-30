@@ -1,4 +1,5 @@
 import AppKit
+import DuoControl
 import Foundation
 
 /// Documents and file verbs inside a project (DL-60–DL-62).
@@ -21,10 +22,10 @@ extension AppModel {
         return u
     }
 
-    /// The project's own file: `PROJECT.md`, or `HOME.md` for Home (DL-52, DL-60).
+    /// The project's own file: `_PROJECT.md`, or `_HOME.md` for Home (DL-52, DL-60; the old names too, DL-259).
     public var projectFile: String? {
         guard let folder = projectFolder else { return nil }
-        return ["PROJECT.md", "HOME.md"].first { FileManager.default.fileExists(atPath: folder.appending(path: $0).path) }
+        return (DuoFiles.projectFile(in: folder) ?? DuoFiles.homeFile(in: folder))?.lastPathComponent
     }
 
     /// Open document tabs for the current project, in the order they were opened.

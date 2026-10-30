@@ -1,3 +1,4 @@
+import DuoControl
 import DuoKit
 import Foundation
 
@@ -97,6 +98,24 @@ import Foundation
     check(ProjectBrief.url(in: root)?.lastPathComponent == "PROJECT.md", "PROJECT.md wins over a marked note")
     try Data("# p\n".utf8).write(to: root.appending(path: "_PROJECT.md"))
     check(ProjectBrief.url(in: root)?.lastPathComponent == "_PROJECT.md", "_PROJECT.md wins")
+
+    // One name, the underscore one, read both ways during the move (DL-259).
+    let old = root.appending(path: "old"), both = root.appending(path: "both"), home = root.appending(path: "home")
+    for d in [old, both, home] { try FileManager.default.createDirectory(at: d, withIntermediateDirectories: true) }
+    try Data("---\ngoal: Old name\n---\n".utf8).write(to: old.appending(path: "PROJECT.md"))
+    try Data("---\ngoal: Old\n---\n".utf8).write(to: both.appending(path: "PROJECT.md"))
+    try Data("---\ngoal: New\n---\n".utf8).write(to: both.appending(path: "_PROJECT.md"))
+    check(ProjectDiscovery.found(at: old, root: nil)?.project.goal == "Old name", "a project with only the old PROJECT.md is still found, its brief read")
+    check(ProjectDiscovery.found(at: both, root: nil)?.project.goal == "New" && ProjectContext.brief(name: "b", folder: both)?.file == "_PROJECT.md",
+          "with both names there, _PROJECT.md is the file")
+    check(ProjectContext.brief(name: "o", folder: old)?.file == "PROJECT.md", "Claude is told the file by the name it has")
+    check(ProjectDiscovery.enclosingProject(old.appending(path: "src"))?.path == old.standardizedFileURL.path, "a session below an old-named project is its")
+    check(try AppModel.writeProjectFile(in: old, title: "x", goal: "", home: nil) == false && !FileManager.default.fileExists(atPath: old.appending(path: "_PROJECT.md").path),
+          "Make a Project never writes a second file beside an old one")
+    check(DuoFiles.homeFile(in: home) == nil && DuoFiles.homeFileOrNew(in: home).lastPathComponent == "_HOME.md", "a new Home file is _HOME.md")
+    try Data("---\ntype: home\n---\n".utf8).write(to: home.appending(path: "HOME.md"))
+    check(DuoFiles.homeFile(in: home)?.lastPathComponent == "HOME.md" && DirectorPlace.resolve(from: home.appending(path: "a/b")).home?.lastPathComponent == "home",
+          "an old HOME.md is still Home, for Duo and for a director")
 
     // References (DL-150): links relative to the note, written only in their key.
     check(TaskReferences.link(projectPath: "docs/prd-v2.md", notePath: "tasks/prd-v2.md") == "[prd-v2](../docs/prd-v2.md)", "a file reference is relative to the note")
