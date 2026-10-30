@@ -66,15 +66,16 @@ struct ConsoleTabStrip: View {
     @ViewBuilder private var newSessionPill: some View {
         let size = CGSize(width: light ? 22 : 26, height: light ? 16 : 20)
         let plus: CGFloat = light ? 9 : 10
+        let hovered = model.hoveredPill
         HStack(spacing: 7) {
             PlusShape().stroke(dim, style: StrokeStyle(lineWidth: 1.5, lineCap: .round)).frame(width: plus, height: plus)
                 .accessibilityHidden(true)
             SegmentedPill(light: light) {
-                PillSegment(id: "new-claude", light: light, size: size, label: "New Claude session", help: newSessionHelp, action: { newSession() }) {  // action: session new
+                PillSegment(id: "new-claude", light: light, size: size, hovered: hovered == "new-claude", label: "New Claude session", help: newSessionHelp, action: { newSession() }) {  // action: session new
                     RobotMark().frame(width: light ? 12 : 13.5, height: light ? 8 : 9)
                 }
                 PillDivider(light: light)
-                PillSegment(id: "new-shell", light: light, size: size, label: "New shell", help: newShellHelp, action: { model.newShell() }) {  // action: shell new
+                PillSegment(id: "new-shell", light: light, size: size, hovered: hovered == "new-shell", label: "New shell", help: newShellHelp, action: { model.newShell() }) {  // action: shell new
                     ShellPromptShape().stroke(style: StrokeStyle(lineWidth: 1.5 * (light ? 11.0 : 12.0) / 12, lineCap: .round, lineJoin: .round))
                         .frame(width: light ? 11 : 12, height: light ? 9 : 10)
                 }

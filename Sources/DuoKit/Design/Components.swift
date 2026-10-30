@@ -273,13 +273,15 @@ struct PillSegment<Mark: View>: View {
     var on = false
     /// An action pill's segments fill under the pointer; a mode pill's show only the chosen one.
     var hovers = true
+    /// The pointer is on this segment (`AppModel.hoveredPill == id`, read by the caller so its body redraws with it).
+    var hovered = false
     let label: String
     var help: String? = nil
     let action: () -> Void
     @ViewBuilder let mark: () -> Mark
 
     var body: some View {
-        let lit = on || (hovers && model.hoveredPill == id)
+        let lit = on || (hovers && hovered)
         mark()
             .foregroundStyle(light ? (lit ? DuoColor.text : DuoColor.text2) : lit ? DuoColor.consoleText : DuoColor.consoleText2)
             .frame(width: size.width, height: size.height)

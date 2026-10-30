@@ -25,7 +25,7 @@ if [ "${DUO_TEST_FOREGROUND:-}" = 1 ]; then
 fi
 # The chat feed's proof mode (DUO_FEED=proof: cards drawn in pieces, C-85) reaches the app too; `open` passes no environment.
 # DUO_APPEARANCE=dark|light|system draws the run in that appearance (DL-224); UI_OUT writes elsewhere than build/ui.
-for v in DUO_FEED DUO_FEED_PIECE DUO_APPEARANCE; do
+for v in DUO_FEED DUO_FEED_PIECE DUO_APPEARANCE DUO_REDUCE_MOTION; do
   if [ -n "${!v:-}" ]; then fg+=(--env "$v=${!v}"); fi
 done
 
