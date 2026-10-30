@@ -3,7 +3,7 @@
 
     scripts/make-demo-workspace.py [root]      default: .build/ws
 
-Each project gets a PROJECT.md (HOME.md for Home) with the fixture's goal/health/next as
+Each project gets a _PROJECT.md (_HOME.md for Home) with the fixture's goal/health/next as
 Obsidian-compatible frontmatter, and a couple of docs. Sessions aren't faked: run Duo with
 `--workspace <root>` and start real ones. Existing folders are left alone.
 """
@@ -15,7 +15,7 @@ fixture = json.loads((repo / "docs/design/build-handoff/fixture.json").read_text
 
 for p in fixture["projects"]:
     folder = root / (p["name"] if p.get("isHome") else f'{p["topic"].lower()}/{p["name"]}')
-    marker = folder / ("HOME.md" if p.get("isHome") else "PROJECT.md")
+    marker = folder / ("_HOME.md" if p.get("isHome") else "_PROJECT.md")
     if marker.exists():
         continue
     folder.mkdir(parents=True, exist_ok=True)

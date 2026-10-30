@@ -31,8 +31,10 @@ extension AppModel {
     }
 
     /// One read of a repository (background). Carries over what GitHub said last time.
-    nonisolated static func readRepo(folder: URL, prev: RepoView?, fetch: Bool) -> RepoView? {
+    public nonisolated static func readRepo(folder: URL, prev: RepoView?, fetch: Bool) -> RepoView? {
         guard var status = RepoProbe.status(of: folder) else { return nil }
+        // Duo's files are ordinary files (DL-259): take back the exclude lines an older Duo wrote, and read again.
+        if RepoOps.removeOwnExcludes(in: status.root), let again = RepoProbe.status(of: folder) { status = again }
         let root = status.root.resolvingSymlinksInPath().path
         let f = folder.resolvingSymlinksInPath().path
         let prefix = f.hasPrefix(root + "/") ? String(f.dropFirst(root.count + 1)) + "/" : ""

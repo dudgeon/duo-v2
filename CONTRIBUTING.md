@@ -36,7 +36,7 @@ build/Duo.app/Contents/MacOS/Duo --state project
 
 States: `overview`, `flow-zoom-1`, `project`, `flow-zoom-2`, `flow-zoom-3`, `flow-zoom-4`.
 
-To run on real folders instead, point Duo at a workspace. A project is a folder with `PROJECT.md`, Home is the folder with `HOME.md`, and a topic is a project's parent folder. Sessions are real Claude Code sessions:
+To run on real folders instead, point Duo at a workspace. A project is a folder with `_PROJECT.md`, Home is the folder with `_HOME.md` (the old `PROJECT.md`/`HOME.md` still count, DL-259), and a topic is a project's parent folder. Sessions are real Claude Code sessions:
 
 ```bash
 scripts/make-demo-workspace.py

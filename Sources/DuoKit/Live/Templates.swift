@@ -1,6 +1,6 @@
 import Foundation
 
-/// The templates a new `PROJECT.md` and a new task note are made from (DL-146).
+/// The templates a new `_PROJECT.md` and a new task note are made from (DL-146).
 ///
 /// A template is a plain Markdown file that Obsidian's Templates plugin can use as it is: the only
 /// placeholders filled are Obsidian's own (`{{title}}`, `{{date}}`, `{{time}}`, `{{date:FORMAT}}`,

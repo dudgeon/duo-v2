@@ -628,7 +628,7 @@ struct ProjectTile: View {
                     .padding(.top, 8)
                 }
             } else if project.isFolderOnly {
-                // A folder with Claude sessions but no PROJECT.md (DL-63).
+                // A folder with Claude sessions but no _PROJECT.md (DL-63).
                 Text(project.path).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1).truncationMode(.middle)
                 Text(project.hasClaudeMD == true ? "Has CLAUDE.md · no project file" : "No project file")
                     .duoText(.body).foregroundStyle(DuoColor.text2)

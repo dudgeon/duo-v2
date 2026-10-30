@@ -31,7 +31,7 @@ Duo v2 tests one idea: once Claude is part of how you work, organise around your
 | What Duo tries | What we want to learn |
 |---|---|
 | **Every conversation in one list.** Duo reads Claude Code's own records, lists every session on your Mac by where it ran, and keeps a copy past the 30-day cleanup. | Does seeing all of them help you pick work back up, or is it noise? |
-| **A folder per piece of work.** A project is a folder with a one-page `PROJECT.md`: the goal, how it's going, the next step. | Will people keep a short brief current if it's what they see every day? |
+| **A folder per piece of work.** A project is a folder with a one-page `_PROJECT.md`: the goal, how it's going, the next step. | Will people keep a short brief current if it's what they see every day? |
 | **Context, once.** A `CLAUDE.md` at the top of your Home folder is read by every session in the projects inside it. | How much re-explaining does it save? |
 | **What needs you, first.** Every question and permission Claude is waiting on, across projects, longest wait first. | Does one queue beat checking tabs? |
 | **Documents beside the conversation.** Claude in the middle, the document on the right, Claude's additions highlighted. | Is reviewing Claude's work here better than in your usual editor? |

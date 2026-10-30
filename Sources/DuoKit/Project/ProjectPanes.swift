@@ -692,7 +692,7 @@ struct FileNode: Identifiable, Equatable {
         nodes.map { n in var n = n; n.children = n.children.map(sorted); return n }
             .sorted { a, b in
                 (a.children == nil) != (b.children == nil)
-                    ? a.children == nil   // the target lists PROJECT.md before docs/
+                    ? a.children == nil   // the target lists _PROJECT.md before docs/
                     : a.name.localizedStandardCompare(b.name) == .orderedAscending
             }
     }
@@ -1381,7 +1381,7 @@ struct FolderProjectTab: View {
     var body: some View {
         VStack(alignment: .leading, spacing: DuoSpace.gapGlyphToLabel) {
             Text("No project file").duoText(.bodyEmphasis)
-            Text("A \(Text("PROJECT.md").font(Font(NSFont.monospacedSystemFont(ofSize: DuoTextStyle.mono.spec.size, weight: .regular)))) holds this folder’s goal, health and next step. Duo shows them here and on the map.")
+            Text("A \(Text("_PROJECT.md").font(Font(NSFont.monospacedSystemFont(ofSize: DuoTextStyle.mono.spec.size, weight: .regular)))) holds this folder’s goal, health and next step. Duo shows them here and on the map.")
                 .duoText(.body).foregroundStyle(DuoColor.text2).fixedSize(horizontal: false, vertical: true)
             HStack(spacing: DuoSpace.gapButtonToButton) {
                 Button("Make a Project") { model.makeProject(project.name) }.buttonStyle(DefaultSheetButtonStyle())

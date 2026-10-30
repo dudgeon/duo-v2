@@ -1,4 +1,5 @@
 import AppKit
+import DuoControl
 import DuoSearch
 import Foundation
 import Observation
@@ -83,8 +84,7 @@ extension AppModel {
             let name = url.lastPathComponent
             return v?.isDirectory == true && v?.isPackage != true && !name.hasPrefix(".") && !ProtectedFolders.skip(url, root: root)
                 && !duoOwnFolders.contains(name.lowercased()) && !LiveSnapshot.neverListed.contains(name)
-                && !fm.fileExists(atPath: url.appending(path: "PROJECT.md").path)
-                && !fm.fileExists(atPath: url.appending(path: "HOME.md").path)
+                && !DuoFiles.isProject(url) && !DuoFiles.isHome(url)
         }
         .map(\.standardizedFileURL)
         .sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
@@ -130,7 +130,7 @@ extension AppModel {
                 ? "Home can't be a project: choose a folder in it." : "\(short(folder.path)) isn't in Home."
         }
         guard FileManager.default.fileExists(atPath: folder.path) else { return "\(short(folder.path)) isn't there." }
-        if FileManager.default.fileExists(atPath: folder.appending(path: "PROJECT.md").path) { return "\(folder.lastPathComponent) is already a project." }
+        if DuoFiles.isProject(folder) { return "\(folder.lastPathComponent) is already a project." }
         return nil
     }
 

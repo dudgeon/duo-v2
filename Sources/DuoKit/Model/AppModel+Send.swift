@@ -1,4 +1,5 @@
 import AppKit
+import DuoControl
 import Foundation
 
 /// Send to Claude (DL-67–DL-69): puts context into a Claude session's prompt without pressing
@@ -133,7 +134,7 @@ extension AppModel {
 
     public func projectPayload(_ name: String) -> String? {
         guard let p = fixture.projects.first(where: { $0.name == name }), let folder = liveFolders[name] else { return nil }
-        let file = ["PROJECT.md", "HOME.md"].map { folder.appending(path: $0) }.first { FileManager.default.fileExists(atPath: $0.path) }
+        let file = DuoFiles.projectFile(in: folder) ?? DuoFiles.homeFile(in: folder)
         return SendFormat.project(.init(name: name, folder: folder.path, projectFile: file?.path,
                                         goal: p.goal.isEmpty ? nil : p.goal, health: p.health, next: p.next, isFolderOnly: p.isFolderOnly))
     }

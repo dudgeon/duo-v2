@@ -40,6 +40,26 @@ public enum RepoOps {
         return .success(dest.path)
     }
 
+    /// The block an older Duo wrote to `.git/info/exclude` (DL-149, before DL-259).
+    static let ownExcludeHeader = "# Duo's files (DL-149): kept out of git on this Mac only"
+    static let ownExcludeLines: Set<String> = ["/_PROJECT.md", "/PROJECT.md", ".duo/"]
+
+    /// Removes that block and only it: its header and the lines right under it that Duo wrote. A line
+    /// the user added anywhere else stays, even the same pattern. Quiet; returns whether it changed the file.
+    @discardableResult
+    public static func removeOwnExcludes(in root: URL) -> Bool {
+        let file = RepoProbe.gitDir(root).appending(path: "info/exclude")
+        guard let text = try? String(contentsOf: file, encoding: .utf8), text.contains(ownExcludeHeader) else { return false }
+        var out: [Substring] = [], inBlock = false
+        for line in text.split(separator: "\n", omittingEmptySubsequences: false) {
+            if line == ownExcludeHeader { inBlock = true; continue }
+            if inBlock, ownExcludeLines.contains(String(line)) { continue }
+            inBlock = false
+            out.append(line)
+        }
+        return (try? out.joined(separator: "\n").write(to: file, atomically: true, encoding: .utf8)) != nil
+    }
+
     // MARK: push and PR (boards 6–8)
 
     public struct PushPlan: Sendable {

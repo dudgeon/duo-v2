@@ -20,7 +20,7 @@ extension AppModel {
         return row.flatMap { r in all.first { $0.id == r || $0.tabKey == r } }
     }
 
-    /// Project › Open Project File: the project's Project tab, which shows its PROJECT.md.
+    /// Project › Open Project File: the project's Project tab, which shows its _PROJECT.md.
     public func openProjectFile(_ name: String) {
         if currentProject?.name != name { open(project: name) }
         rightTab = "Project"

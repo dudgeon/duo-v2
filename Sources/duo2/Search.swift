@@ -1,3 +1,4 @@
+import DuoControl
 import DuoSearch
 import Foundation
 
@@ -69,11 +70,11 @@ func runSearch(_ name: String, _ argv: [String]) -> Int32 {
     }
 }
 
-/// The project the terminal is in: the nearest folder with PROJECT.md or HOME.md.
+/// The project the terminal is in: the nearest folder with a project or Home file (DL-259: either name).
 func currentProject() -> String? {
     var dir = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
     while dir.path != "/" {
-        if ["PROJECT.md", "HOME.md"].contains(where: { FileManager.default.fileExists(atPath: dir.appending(path: $0).path) }) {
+        if DuoFiles.isProject(dir) || DuoFiles.isHome(dir) {
             return dir.lastPathComponent
         }
         dir.deleteLastPathComponent()

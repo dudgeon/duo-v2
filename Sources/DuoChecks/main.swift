@@ -1795,7 +1795,7 @@ func repoFixture() throws -> Fixture {
     // Never told (a session started before ENH-16) hears it all on its next prompt; a session moving out of the project is told so.
     brief(tcProj, "goal: Ship it\nhealth: on-track\nnext: Review")
     check(pctx("prompt", sB) == pctx("start", sB + "-fresh"), "a session never told hears it all on its next prompt")
-    check(pctx("prompt", sB, cwd: tc.path) == "Duo: This session is no longer in a project with a PROJECT.md (it was in “proj”).", "left the project: told once")
+    check(pctx("prompt", sB, cwd: tc.path) == "Duo: This session is no longer in a project with a _PROJECT.md (it was in “proj”).", "left the project: told once")
     check(pctx("prompt", sB, cwd: tc.path) == "", "…and only once")
     brief(tcOther, "goal: Other goal\nhealth: on-track\nnext: Other next")
     check(pctx("prompt", sB, cwd: tcOther.path).hasPrefix("Duo: This session is in the project “other”"), "joined a project mid-session: told it in full")

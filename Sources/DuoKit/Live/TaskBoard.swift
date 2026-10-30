@@ -1,5 +1,6 @@
 import DuoSearch
 import Foundation
+import DuoControl
 
 /// A project's task board (DL-148, DL-150, `task-board-handoff/`): computed from the task notes
 /// every time, nothing stored for it. A lane is a `status` value; a project's lanes are the brief's
@@ -164,14 +165,12 @@ public enum TaskBoard {
     }
 }
 
-/// The project's brief (DL-147): `_PROJECT.md` for new projects, `PROJECT.md`, or a top-level note
+/// The project's brief (DL-147, DL-259): `_PROJECT.md` (or the old `PROJECT.md`), or a top-level note
 /// marked `project_brief: true`. `lanes:` lives in whichever it is (DL-150).
 public enum ProjectBrief {
     public static func url(in folder: URL) -> URL? {
         let fm = FileManager.default
-        for name in ["_PROJECT.md", "PROJECT.md"] where fm.fileExists(atPath: folder.appending(path: name).path) {
-            return folder.appending(path: name)
-        }
+        if let file = DuoFiles.projectFile(in: folder) { return file }
         let notes = (try? fm.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles])) ?? []
         return notes.filter { $0.pathExtension.lowercased() == "md" }.sorted { $0.path < $1.path }.first { url in
             guard let text = try? String(contentsOf: url, encoding: .utf8) else { return false }

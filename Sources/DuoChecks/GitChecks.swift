@@ -139,6 +139,17 @@ private func stubGH(_ dir: URL, login: String?, permission: String, protected: B
     let sub = dest.appending(path: "content")
     check(RepoProbe.root(of: sub)?.resolvingSymlinksInPath().path == dest.resolvingSymlinksInPath().path, "a project inside a repo finds its root (DL-157)")
 
+    print("Duo's files: the exclude block an older Duo wrote is taken back (DL-259)")
+    let exclude = RepoProbe.gitDir(dest).appending(path: "info/exclude")
+    let userLines = "# mine\n/PROJECT.md\nsecret.txt\n"
+    write(exclude, userLines + "# Duo's files (DL-149): kept out of git on this Mac only\n/_PROJECT.md\n/PROJECT.md\n.duo/\n")
+    check(RepoOps.removeOwnExcludes(in: dest) && (try? String(contentsOf: exclude, encoding: .utf8)) == userLines,
+          "only Duo's own block goes: its header and the lines under it; the user's lines stay, even the same pattern")
+    check(!RepoOps.removeOwnExcludes(in: dest), "nothing of Duo's left: the file isn't touched again")
+    write(exclude, "# Duo's files (DL-149): kept out of git on this Mac only\n/_PROJECT.md\n.duo/\n")
+    let reread = AppModel.readRepo(folder: dest, prev: nil, fetch: false)
+    check(reread?.status.changes.map(\.path) == ["_PROJECT.md"], "reading the repo state takes the block back and sees _PROJECT.md at once")
+
     print("GitHub: push and open a PR, with write access (board 6)")
     write(dest.appending(path: "content/faq.md"), "one\nTWO\n")
     write(dest.appending(path: "content/plans.json"), "{}\n")
