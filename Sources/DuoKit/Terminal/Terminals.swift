@@ -214,7 +214,7 @@ public final class TerminalSession {
         let chat = version.flatMap(ChatVersion.init).map { $0 >= ChatVersion.messageDisplay } ?? false
         let settings = (try? HookEvents.settingsFile(for: id, cli: editHook, chatEvents: chat)).map { ["--settings", $0.path] } ?? []
         // duo-signal (ENH-70 spike): only with DUO_SIGNAL=1, on a CLI with mods that validated it.
-        return settings + ["--append-system-prompt", DuoAction.primer()] + DuoSignal.launchArgs(id, claude: claude, cliVersion: version)
+        return settings + ["--append-system-prompt", DuoAction.primer(sessionID: id, cli: ChildEnvironment.cliDirectory.map { $0 + "/duo2" })] + DuoSignal.launchArgs(id, claude: claude, cliVersion: version)
     }
 
     /// A Claude session's environment: duo-signal's file only when `hookArgs` passed the mod.

@@ -643,8 +643,11 @@ extension DuoAction {
 
     /// What Duo tells each session it starts (`--append-system-prompt`, DL-15, DL-74): short,
     /// generated, so it never names a verb that doesn't exist.
-    public static func primer() -> String {
-        "You are running inside Duo, a Mac app that organizes the user's Claude Code sessions into projects and shows their documents. "
+    /// `sessionID` and `cli` (DL-256) add the session's `DUO_SESSION_ID` and the full path of its `duo2`,
+    /// which a `/fork` copy inherits with the rest (the daemon gives it none of Duo's environment, C-110).
+    /// No socket or token: `duo2` finds the running Duo through its endpoint file.
+    public static func primer(sessionID: String? = nil, cli: String? = nil) -> String {
+        var text = "You are running inside Duo, a Mac app that organizes the user's Claude Code sessions into projects and shows their documents. "
             + "The `duo2` command talks to Duo; it is on PATH and needs no approval. Everything the user can do in Duo, you can do with it "
             + "(`duo2 help`, then `duo2 help <family>`: " + ActionFamily.allCases.map(\.rawValue).joined(separator: ", ") + "). Everyday:\n"
             + all.filter(\.everyday).map { "- `\($0.usage)`: \($0.summary)" }.joined(separator: "\n")
@@ -657,5 +660,11 @@ extension DuoAction {
             + "\nTo check a Word document you made, fit the check to where it goes (for Google Docs, structure, not pixels): `duo2 doc outline` and `duo2 doc layout` (page and text width, tables and pictures against it), and `duo2 doc screenshot` to see it; the duo2 skill's \"Checking documents\" says more. Don't start soffice in the sandbox."
             + "\nTo track work, make Duo tasks (`duo2 task new`, one note each in the project's tasks/ folder) and set their status with `duo2 task status`; do not write a TASKS.md or a to-do list file."
             + "\nWhen you start substantial work, `duo2 session note \"<one line>\"`; when you hand back, `duo2 session next \"<one line>\"`."
+        if let sessionID {
+            let path = cli.map { "`\($0)`" } ?? "`duo2`"
+            text += "\nIf `DUO_SESSION_ID` is empty in your shell (a /fork copy), run duo2 as `DUO_SESSION_ID=\"${CLAUDE_CODE_SESSION_ID:-\(sessionID)}\" \(cli ?? "duo2") …` so Duo knows which session is calling"
+                + (cli != nil ? "; \(path) is the full path to duo2, for when it isn't on PATH." : ".")
+        }
+        return text
     }
 }

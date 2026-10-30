@@ -4438,3 +4438,10 @@ Bare WKWebView configured as a Duo tab (non-persistent store, Safari token), pag
 - `keyDown`/`keyUp` Shift+→ ×3 then Shift+↓ extended it to 381–419.
 - So a key/type verb and a drag verb would drive Docs as a person does.
 - The off-screen probe window needed WebKit's occlusion detection switched off (`_setWindowOcclusionDetectionEnabled:`), or the page counts as hidden. Duo's own hidden test window draws (F-227).
+
+## F-424 · The primer carries the session id and duo2's path (fork-env-build, 2026-10-30; C-110, DL-256)
+
+- **Built.** `DuoAction.primer(sessionID:cli:)` (`Sources/DuoControl/Actions.swift`) adds one line when Duo launches a session (`hookArgs`, `Terminals.swift`): run duo2 as `DUO_SESSION_ID="${CLAUDE_CODE_SESSION_ID:-<launch id>}" <full path>/duo2 …`. A `/fork` copy inherits the primer with the hooks. The launch id is the parent's, so the line prefers the copy's own `CLAUDE_CODE_SESSION_ID` (the id Claude gives its Bash children, F-364's note on `duo2 session note`) and falls back to the launch id. The full path is the app's `Contents/Helpers/duo2`, for a Mac with no `duo2` on PATH. No socket or token: `duo2` finds Duo through its endpoint file. With no id the primer is unchanged (the checks' no-argument calls).
+- **Checks.** Three DuoChecks lines: the primer carries the id and the path; it names no `DUO_TOKEN`, `DUO_SOCKET` or `endpoint.json`; unchanged without an id. 2386 pass; 3 fail, all in the composer-helper checks (`ChatChecks.swift:718-726`, the `duo2 compose` helper opening vi/subl/code), which this change doesn't touch.
+- **Not proved: the live fork run.** Claude Code 2.1.284 isn't installed here (only 2.1.309-311), and a real daemon `/fork` needs a logged-in CLI in an isolated config, which a scratch `CLAUDE_CONFIG_DIR` doesn't have. Whether a fork's Bash children have `CLAUDE_CODE_SESSION_ID` is F-364's reading, not re-run. Known gap kept (DL-256): a fork from an isolated Duo still reaches Geoff's Duo.
+

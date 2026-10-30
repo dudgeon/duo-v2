@@ -1554,6 +1554,12 @@ func repoFixture() throws -> Fixture {
     check(gaps.isEmpty, "every button, menu item, click and drag in the app names a duo2 action (or is listed in Parity.uiOnly)")
     let primerVerbs = DuoAction.primer().matches(of: /`duo2 ([a-z-]+(?: [a-z-]+)?)/).map { String($0.1) }
     check(!primerVerbs.isEmpty && primerVerbs.allSatisfy { DuoAction.resolve($0.split(separator: " ").map(String.init)) != nil }, "the primer names only verbs that exist")
+    let forkPrimer = DuoAction.primer(sessionID: "11111111-2222-3333-4444-555555555555", cli: "/Applications/Duo.app/Contents/Helpers/duo2")
+    check(forkPrimer.contains("11111111-2222-3333-4444-555555555555") && forkPrimer.contains("/Applications/Duo.app/Contents/Helpers/duo2") && forkPrimer.contains("CLAUDE_CODE_SESSION_ID"),
+          "the primer carries the session id and the full path of duo2 (DL-256)")
+    check(!forkPrimer.localizedCaseInsensitiveContains("DUO_TOKEN") && !forkPrimer.localizedCaseInsensitiveContains("DUO_SOCKET") && !forkPrimer.contains("endpoint.json"),
+          "the primer carries no socket or token (DL-256)")
+    check(DuoAction.primer() == DuoAction.primer(sessionID: nil, cli: nil) && !DuoAction.primer().contains("CLAUDE_CODE_SESSION_ID"), "without an id the primer is unchanged")
     check(DuoAction.resolve(["file", "rename", "a.md", "b.md"]).map { $0.0.id == .fileRename && $0.rest == ["a.md", "b.md"] } == true, "two-word verbs resolve")
     check(DuoAction.resolve(["doc-status", "x.md"])?.0.id == .docStatus && DuoAction.resolve(["needs-you"])?.0.id == .needsYou, "old spellings resolve")
     let inv = Invocation(["a.md", "--to", "abc", "--new", "--json", "b"])
