@@ -41,6 +41,24 @@ Write `build/release/<version>-notes.md` (beside the output folder, not inside i
 - Known gaps worth a warning (open C-n rows that bite users).
 - **A video or picture goes with the feature it shows** (Geoff, 2026-10-29): link it from that feature's bullet, e.g. `**Review in Markdown** ([watch it](<asset url>)).`. Never put it at the top of the notes, and never describe the asset itself (its length, who narrates it, how it was made): that isn't for the user.
 
+### The release brief (DL-240)
+
+Before Geoff's go, put this beside the notes. The director turns it into the console's release card.
+
+- **A launch tier for each user-visible change,** with a one-line reason. Read the feature catalogue, `docs/product/features.md`, to name the feature (FEAT-n) each change belongs to; a change to a feature's **How it works** is usually T2, and a new FEAT row usually T1.
+  - **T1:** a new way of working that a user would tell someone about, for example tracked changes and comments in Markdown. Expect about one a month.
+  - **T2:** a feature someone has to know about to use, such as a new menu, sheet or chord.
+  - **T3:** a fix or polish. It gets a line in the notes only.
+- **Docs for T1 and T2:** README.md and `docs/guide/` edits on a branch, `docs/release-<version>`, that the director merges under D2. Say "docs unchanged" when there's nothing to add. A release that's all T3 gets one line: "T3 only; docs unchanged."
+- **A film for each T1:** propose one rather than make it. Give:
+  - the story in three sentences;
+  - the states to capture;
+  - whether it stands alone or extends the intro film.
+
+  Geoff decides on the release card, and a film is then a `product-video` worker. When a film exists, the notes link it from its feature's bullet (above).
+- **Whether the intro film is out of date:** run `node video/build.mjs --check` in `video/`. It takes about 2 s and needs no app, voice or GPU. Its report names stale framing, and Shot: notes asking for something not built. Also list each T1 feature the film doesn't show. If anything is out of date, the brief says "Intro film out of date: <scenes>, <features not shown>" and suggests when to refresh it (at the next T1, or at a minor version). Otherwise it says "Intro film current".
+- **The design system:** whether `docs/design/system/` changed since the last tag (`git diff --stat <last-tag>..HEAD -- docs/design/system`). If it did, the director republishes it after the release.
+
 ## 4. Run it
 
 Run it in the background; it takes 10–20 minutes, most of it Apple's notary service:

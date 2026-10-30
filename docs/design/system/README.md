@@ -7,6 +7,8 @@ This system is the current state of Duo's design: what's approved, what's built,
 - the component you're working on;
 - **Working on Duo's design**: how to read the targets and hand work back.
 
+This system says how Duo looks. What each feature is for, and the rules it keeps, are in the feature catalogue, `docs/product/features.md` (FEAT-n, DL-240): read a feature's row beside its surface before you design for it.
+
 Every component README starts with a **Status** line:
 - **Designed**: built to an approved target screen.
 - **Designed, changed by decision**: a target, amended by a later decision (DL-n).

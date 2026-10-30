@@ -4331,6 +4331,25 @@ Research for DL-236 (8), "the things the users should feel familiar with". Googl
 - `duo2 update` prints a link as `text <url>` (`UpdateCheck.plainNote`), in its text and in `data.notes`.
 - DuoChecks: one link, two, a link in the bold lead, none, `plainNote`, and 0.2.21's real notes (`Fixtures/release-notes/0.2.21.md`). Capture: `ask-update:real` (new harness form reading that fixture) at `--state overview`, compared by eye with q47.
 
+## F-414 · How token-driven Duo's look is, counted (style-audit, 2026-10-29)
+
+- `docs/research/style-configurability.md`. Over 220 Swift files and 25 web files there are **0 raw colour literals** in view code and **3 system colours** in a chrome role (`GitHubProjectSheet.swift:168` `Color.accentColor`, `ProjectPanes.swift:1246` `.secondary`, `:1260` `.background(.bar)`; plus `NSColor.labelColor` in the About credits). Every chrome colour is one of the 39 generated `DuoColor`/`DuoNSColor` dynamic colours (977 `DuoColor.` uses in DuoKit).
+- Confirmed leaks (each line read by a second agent): about 800, of which 708 are padding, spacing, stroke and radius literals, 77 font literals (32 Swift, 44 web, mostly SF Symbol sizes and the web pages' hand-typed type), 15 opacity shades, 3 system colours. Palette-breaking: 11 lines. Type: 401 `.duoText` sites against 32 literal; the font family is hard-wired in `Typography.swift` and `tokenCSS()` exports no type token. Shape: radii 195 token uses to 18 literal; the selection fill is written inline at 20 sites; `Components.swift` has no shared card, pill, field or selection component (216 inline `RoundedRectangle(`).
+- Dead or unemitted tokens: `borderTileFocusOutline` (0 uses; `AllProjectsPanes.swift:447, 679` draw it as `1 + padding(-1)`), `DuoGlyphPath` (0 uses; the glyph geometry exists three times), `size.newTabMenu` and `size.propertiesBlock` (never emitted), `font.family` and `icon` (documentation only). `TaskBoardView.swift` dashes `[3, 3]` five times where the token is `[3, 2]`.
+
+## F-415 · The dark rails, and what a third palette needs (style-audit, 2026-10-29)
+
+- Dark (DL-224) is one `tokens.json` block, a two-argument `duoDynamic(light:dark:)` per colour, a provider switching on `NSAppearance.bestMatch([.aqua, .darkAqua])` (`ColorSupport.swift:17`), `NSApp.appearance` set from the setting, and three snapshot refreshes in `viewDidChangeEffectiveAppearance` (`Sheets.swift:227-239`, `Terminals.swift:305-313`, `DocumentEditor.swift:853-858`). No view reads `colorScheme` or caches a resolved colour.
+- A third palette fits the views with no per-view code (the proof, F-416) but not the pipeline: the only selector is `NSAppearance`, which has two usable values; `gen-tokens.py:24-26` reads exactly `light`, `console`, `dark` and a token missing from a palette silently falls back to light (`:35, 51`); a scheme flip that isn't an appearance change redraws nothing, so a scheme switch must re-apply the appearance (or need a relaunch): the one mechanism to spike first. `DuoTerminalPalette` is fixed and re-applied only on Increase Contrast; `consoleLiftColor` is fixed (`Tokens.swift:528`); `tokenCSS()` hand-lists 16 of 39 colours; the Word and deck pages take it once and pin to `.aqua`. A scheme is orthogonal to appearance, so it is a second setting and verb, not a fourth `AppearanceSetting`. About 12 plumbing files, none a view.
+
+## F-416 · Loud-palette proof: 99.8% of the pixels follow tokens.json (style-audit, 2026-10-29)
+
+- Branch `scratch/style-proof` (`2a13060a`, work tree `.claude/worktrees/style-proof`, never merged): ten chrome colours, the console colour, two radii and the body size changed in `tokens.json`, regenerated, built, and six fixture states captured in both appearances in the background. Light overview/project/flow-zoom states changed 99.8% of their pixels; the chat states 62 to 100%. Captures in `docs/research/style-proof/`.
+- What stayed, and why: the console tab's needs-you dot (`needsYouOnConsole`, its own token), the dark console (`color.dark.console`, its own key), pills and chat bubble corners (`Capsule()` at `ChatComposerView.swift:55, 110`, `Explainer.swift:393`, and `radiusPill`/`radiusChatBubble`/`radiusChatCard`/`radiusField` are separate tokens), the editor's 13 px body (typed at `duo-editor.js:1813`), and a 1 px title-bar edge. The only system colour the proof's grep found was the radio at `GitHubProjectSheet.swift:168`.
+
+## F-417 · The editor's narrow-mode popover and suggestion tooltip draw no shadow (style-audit, 2026-10-29)
+
+- `Vendor/codemirror/src/margin.js:432` and `critic.js:409` write `boxShadow: "var(--duo-shadow)"`, but `tokenCSS()` emits `--duo-shadow` as a bare `rgba(r, g, b, a)` colour (`DocumentEditor.swift:161`), so the declaration is invalid CSS and nothing is drawn. `duo-editor.js:1921, 1943` add `0 12px 32px` by hand and work. Fix: export the full shadow (or offset variables) and use it in all four places and `docx.html:90`, which invents its own. Not fixed here (research only).
 ## F-407: `@` autocomplete in the margin's comment fields (DL-251)
 
 - `Vendor/codemirror/src/atmenu.js` holds the trigger (`atQuery`: an `@` at the start or after whitespace, the word up to the caret), the filter, the keys and the insertion as pure functions (`test/atmenu.test.mjs`, run by `test/run.sh` and DuoChecks), and `attachAtMenu`, which draws the menu in the card under the field. `margin.js` attaches it to the composer and to a thread's reply field. The menu's keydown listener is registered first and stops the event, so Esc closes the menu without cancelling the comment and Return inserts instead of adding a line; ⌘Return still posts.
@@ -4378,3 +4397,81 @@ No `chat-fallbacks.jsonl` exists on this Mac (Geoff's work Mac has the field log
 
 - Proof on 2.1.284: chat-live 101 of 101 (AskUserQuestion at 100×34, 60×34, 80×20 and 60×53, with the two-question case) and 36 of 36 for the rest (stream, composer, `/` with skills, model and effort cards, mode chip, Bash, edit and plan cards). On the current CLI, 2.1.311: 37 of 37, and the two-question case at 60×53.
 - So the next count comes from the field: each line of `logs/chat-fallbacks.jsonl` now carries the request and the hook feed's state, and `duo2 session chat why --log` opens with the count by rule.
+## F-418 · Classic style prototype: a scheme is a tokens overlay, and where that stops (classic-options, 2026-10-29)
+
+- **Method:** `scratch/classic-proof` (d9c35e80, never merged). `docs/research/classic-proof/schemes.py` writes v1's values onto v2's roles in `tokens.json` (schemes A, B, C, C′); both generators run; five states are captured in the background (`project`, `overview`, `chat-text`, and the video fixture's `video-s2-middle-0` and `video-s7-tab-md`, the only states whose terminal and editor draw text). Captures: `docs/research/classic-options/`. Write-up and costs: `docs/research/classic-style-options.md`; the canvas: https://claude.ai/artifact/58jBVfGCNHjNcrFtaa2HVj.
+- **Palette only (A) moves 99.4–100% of pixels** in all five states (any channel off by more than 8), with only `tokens.json` and its generated files changed. A warm terminal palette needs only the `terminal` tokens.
+- **A serif document needs one font variable and more:** pointing the editor's body at `--duo-font-document` (5 rules in `duo-editor.js`) sets the PRD in New York 16/27, but list item "3." wraps, because the editor's list markers, tables and code blocks are px literals sized for the 13 px body.
+- **A strong (solid) selection colour isn't a token change:** secondary text (`text2`: "edited by Claude", wait times) and glyphs vanish on it; the Board, List and chat toggles use `selected` too; rows use `selected` for hover (`ProjectPanes.swift:280`). A pale selection (accent-soft) needs none of that.
+- **Needs you collides with a v1-orange selection:** a red needs-you glyph on a #C66A2E row is 1.7:1. On accent-soft it reads at 4.7:1.
+- **Native controls** (Settings' checkboxes, the GitHub sheet's radio) keep the system accent in any scheme.
+- **The app icon recolours** from `gen-app-icon.swift` by its colour values alone.
+## F-383 · Where Duo drifts without anyone noticing (recurring-jobs study, 2026-10-28)
+- Counted on origin/main from 09-28 to 10-28 (1,050 commits, 31 tags; the full counts are in `docs/research/recurring-jobs.md` §1).
+- `docs/design/README.md:29` still says chat mode is "not built". The 10-12 codebase review flagged that line, and it was still there 16 days later.
+- About 130 of 207 Q rows read open, and some of them already carry their answer in the notes (Q-167, Q-223, Q-229, Q-240; a first count also named Q-43 and Q-47, which are in fact closed).
+- 38 stand-in questions are still open; the oldest is Q-30, open for 24 days.
+- 24 task notes say `in-progress`, 19 of them with nothing after 10-20, several for work shipped in 0.2.18.
+- The README is silent on a dozen features shipped from 0.2.18 to 0.2.20.
+- No performance budget run is recorded after 10-12, and C-79's idle burn was found by a one-off review rather than a budget check.
+- There are 43 work trees.
+- Three CLI-version breaks were found in the field: F-176, F-306 and F-363.
+- What is guarded mechanically (duo2.md parity, the generated tokens, the video's `--check`) barely drifted. Drift happens where no brief or gate names the doc.
+
+## F-384 · What recurring maintenance jobs last elsewhere (recurring-jobs study, 2026-10-28)
+- Sources are in `docs/research/recurring-jobs.md` §2: GitHub Agentic Workflows, Codex automations, Google SRE, Dependabot and Renovate guidance, Airtable's flaky-test digest, the stale-bot critiques, launch tiers, fitness functions and living documentation.
+- The jobs teams keep share five traits: they run on a schedule; they write one output and stay silent when clean; they report while a person acts; they are narrow and capped; and they turn every rule that can be written down into a mechanical check instead of an LLM's opinion.
+- What gets muted or abandoned: broad AI reviewers, per-event bots, daily reports that repeat the same item, and auto-closing stale bots.
+## F-408 · Legacy Duo's look, torn down: "the orange" is mostly cream (legacy-teardown, 2026-10-29)
+
+- In v1 (0.13.8, the "Atelier" system), solid orange `#C66A2E` covers only **0.3 to 0.5 %** of a window, and the pale orange `accent-soft` another 0.4 to 1.7 %. The warm paper grounds (`#FBF8EE` / `#F0E9D6` / `#E5DCC1`) cover **about 55 to 66 %**, and the brown-black terminal `#1A1410` covers **19 to 41 %**. The most noticeable marks are the cream grounds, the serif editor body (New York 16 / 1.7), the solid orange file-tree selection, the orange "All" tile, the brown-black terminal, and the orange active-tab rule with a tinted focused tab strip. Full teardown, mapping and side-by-sides: `docs/research/legacy-style-teardown.md`, images in `docs/research/legacy-style/`.
+- v1's orange means "selected / focused / here". v2's single orange (`needsYou`) means "a session needs you". A classic look must put the orange on new selection and focus roles (`onSelected`, a colour for `paneFocusRule`) and keep `needsYou` distinct. Mapping it onto `needsYou` would make every selection look like an alarm.
+- v2's editor takes its colours from tokens (`DocumentEditor.tokenScript()` sets `--duo-*` CSS variables), but its font families are literals in `Vendor/codemirror/src/duo-editor.js` (about 25 `fontFamily:` strings). A serif document face needs one token-fed variable first.
+- Both apps have the same structure: about half light pane and half dark console (v2 `project`: `pane` 49 %, `console` 47 %). Most of the classic look is two large value swaps.
+- v1 runs hidden from a scratch copy: `electron-vite build`, `BrowserWindow` forced to `show:false`, `webContents.capturePage`, `HOME` overridden (v1 keeps all its state in `~/.claude/duo`), and a stub `claude`. `electron-rebuild` crashes on Node 26 (skip it; node-pty's prebuilds work after `chmod +x spawn-helper`). The prompt and `os.userInfo()` must be overridden or the captures show the real user and host.
+
+## F-409 · The Docs API makes suggestions and anchored comments (gdocs-landscape, 2026-10-29)
+
+- Since 2026-09-30 (GA; preview from 2026-07-07), `documents.batchUpdate` with `writeControl.writeMode: "SUGGEST"` turns every request in the batch into a Docs suggestion; `acceptSuggestion`, `rejectSuggestion` and `deleteSuggestion` exist. SUGGEST refuses tab, named-range, header/footer-delete and column-width requests. Personal accounts included, no admin switch.
+- `insertComment` takes a `range` (anchored, unlike Drive API comments, which Docs still shows unanchored); `addCommentReply` resolves or reopens. Google's Docs MCP server (developer preview) passes both through `update_doc` since 2026-10-01; MCP OAuth clients must be flagged "AI-powered agent" from 2026-11-11.
+- Nothing in the API or MCP server exposes the user's selection or cursor. Who a suggestion is credited to isn't documented (inferred: the OAuth user). Sources and the rest: `docs/research/google-docs-in-duo/agent-landscape.md`.
+
+## F-410 · Docs' annotated canvas gives text and selection in the page, behind an allowlist (gdocs-landscape, 2026-10-29)
+
+- With `window._docs_annotate_canvas_by_ext` set to an allowlisted extension ID at document start, Docs exposes `_docs_annotate_getAnnotatedText(id)`: `getText()`, `getSelection()` (offsets) and `setSelection(start, end)`. Harper's `google-docs-bridge.js` replaces a range by `setSelection` then a synthetic `paste` ClipboardEvent (`text/plain`) into `.docs-texteventtarget-iframe`'s contenteditable, then re-reads to confirm (read in its code, 2026-10-29). Chromium's Reading Mode sets the same flag.
+- The allowlist is undocumented (a 2021 form, no recorded answers); Harper uses an ID that isn't its own. Untested in WKWebView; borrowing an ID is a ToS/impersonation risk, so it's a question for Geoff, not a technique to ship.
+
+## F-411 · `duo2 browser` on a Google Doc gets the chrome, not the document (gdocs-frame, 2026-10-29)
+
+Isolated Duo (6d9d1e8f, own support folder and socket, `docs.google.com` on its allow list only), a public Doc signed out. Full table: `docs/research/google-docs-in-duo/duo-browser-today.md` §2; output `probes/duo2-verbs.out.txt`.
+- **`read` returns Docs' chrome and the outline's headings, none of the body.** Docs draws text on canvas. `read .kix-canvas-tile-content` is empty. `…/mobilebasic` is an HTML view whose text `read` does get.
+- **`scroll` and `screenshot --full-page` see one screen:** "Scrolled to 0 of 789 px" every time. A Doc scrolls `.kix-appview-editor`, not the document.
+- **`fill` can't type into a Doc:** the keyboard target is a contenteditable *inside* `.docs-texteventtarget-iframe`, a separate document. `click` on that iframe falls back to synthetic, because Docs parks it off screen.
+- **`click` lands real clicks on the canvas and the menus** (39–98 ms).
+- **`print --pdf` makes a picture-only PDF:** 4 pages, 8 images, no fonts.
+- **`go …/export?format=md` downloads nothing.** The export redirects to `doc-…-docstext.googleusercontent.com`, which isn't on the allow list, so the tab blocks it and `back` then fails.
+- **At a 459 pt pane, Docs' outline panel and its "Use Google Docs in Chrome" promo cover the view;** the page sits off to the right (`img/duo-pane-459.png`).
+- **Presence works signed out:** the viewers list reads "7 total viewers: Anonymous Camel, …".
+- **The isolated store is non-persistent (C-32), so a test instance can't stay signed in.** `WKWebsiteDataStore(forIdentifier:)` per support folder would allow it (Q-312).
+
+## F-412 · Docs' annotated-text hook answers any page script in WebKit, with no extension id (gdocs-frame, 2026-10-29)
+
+Bare WKWebView configured as a Duo tab (non-persistent store, Safari token), page world, a public Doc signed out (`probes/main.swift`, `ann*.js`).
+- Docs' boot script defines `_docs_annotate_getAnnotatedText = function(id) {return KX_kixApp.getAnnotatedText(id);}` in every Doc's HTML.
+- `await _docs_annotate_getAnnotatedText('duo-probe')`, and the same with `''`, resolved to `{getText, getAnnotations, getSelection, setSelection}`. This was **without** setting `_docs_annotate_canvas_by_ext`; the SVG `rect[aria-label]` overlay stayed absent.
+- **`getText()`:** the whole doc in under 1 ms (5,104 characters; `\u0003` at offset 0; parts never scrolled into view included).
+- **`getAnnotations()`:** `{link: [{range: {start, end}, value}]}`, all 22 links.
+- **`getSelection()`:** `[{start, end}]`; the caret alone is `{1, 1}`.
+- **`setSelection(381, 396)`:** drew a real selection on the canvas (`img/setselection.png`).
+- **Ready time:** the hook is there about 450 ms after navigation starts.
+- **Not reachable from duo2 today:** it's undefined in Duo's isolated world (`.defaultClient`), so duo2 would need a page-world call.
+- **This qualifies F-410** ("behind an allowlist"): the allowlist may gate the SVG overlay, or apply in Chrome or signed in, but the hook itself wasn't gated here. Signed in and editable is T-02.
+- **Undocumented,** so whether to use it is Geoff's call (Q-309).
+
+## F-413 · Real mouse and key events reach Docs' editor with the app in the background (gdocs-frame, 2026-10-29)
+
+- These were NSEvents sent straight to the web view, as `duo2 browser click` sends them (F-119), in an app that never activated, with a window that was never key.
+- A `leftMouseDown` → 8 × `leftMouseDragged` → `leftMouseUp` drag across "Session History" selected it: `getSelection()` = 381–396.
+- `keyDown`/`keyUp` Shift+→ ×3 then Shift+↓ extended it to 381–419.
+- So a key/type verb and a drag verb would drive Docs as a person does.
+- The off-screen probe window needed WebKit's occlusion detection switched off (`_setWindowOcclusionDetectionEnabled:`), or the page counts as hidden. Duo's own hidden test window draws (F-227).

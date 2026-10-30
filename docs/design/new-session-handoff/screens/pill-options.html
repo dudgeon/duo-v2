@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>New session buttons: options</title>
+<meta name="viewport" content="width=device-width">
+</head>
+<body>
+<style>
+body{margin:0}
+</style>
+<div style="width: 2000px; height: 1500px; box-sizing: border-box; padding: 48px 56px; background: #F3F4F6; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; display: flex; flex-direction: column; gap: 22px">
+  <div style="display: flex; align-items: center; gap: 10px">
+    <h1 style="margin: 0; font-size: 28px; line-height: 36px; font-weight: 600">A split pill for new Claude session | new shell, built like the Terminal / Chat toggle</h1>
+    <span style="font-size: 11px; line-height: 16px; padding: 1px 7px; border: 1px solid #8B939C; border-radius: 9px; color: #5B636D">[P]</span>
+  </div>
+  <p style="margin: 0; font-size: 15px; line-height: 22px; color: #5B636D; max-width: 1800px">Every option replaces <code>+ ⌄</code> and its menu with the same parts as the toggle: segments 26×20 on the console (22×16 on the light strip), a 1 pt <code>tuiInputBorder</code> / <code>controlEdge</code> border, radius 6, marks in <code>consoleText2</code> / <code>text2</code>. Because these are actions, no segment stays filled. Hover fills a segment (<code>consoleRule</code> / <code>selected</code>), and a hairline divides the two. Drawn at 2×. In each dark strip the Claude half is shown hovered.</p>
+
+  <div style="display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; align-items: baseline; gap: 12px"><div style="font-size: 18px; line-height: 24px; font-weight: 600">1 · Clawd | shell</div><div style="font-size: 14px; color: #5B636D">v1's pair, in v2's pill. Your Clawd drawing, filled in the mark colour, with its eyes cut out.</div></div>
+    <div style="width: 1680px; height: 64px; background: #15171B; display: flex; align-items: center; gap: 40px; padding: 0 32px; box-sizing: border-box; font-family: ui-monospace, 'SF Mono', monospace; font-size: 24px; border-radius: 6px">
+      <div style="display: flex; align-items: center; gap: 12px; color: #E6E8EB; font-weight: 500"><svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.6" fill="none" stroke="#E6E8EB" stroke-width="1.5"></circle></svg>Tighten PRD goals</div>
+      <div style="display: flex; align-items: center; gap: 12px; color: #9AA1AB"><svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5h6" stroke="#9AA1AB" stroke-width="1.6" stroke-linecap="round"></path></svg>Prototype scan review</div>
+      <div style="display: flex; align-items: center; border: 2px solid #4A4F57; border-radius: 12px; overflow: hidden">
+        <div style="width: 52px; height: 40px; display: flex; align-items: center; justify-content: center; background: #2B2F36; color: #E6E8EB"><svg width="27" height="18" viewBox="0 0 12 8" aria-label="New Claude session" role="img"><path fill="currentColor" fill-rule="evenodd" d="M10 8V4h2V2h-2V0H2v2H0v2h2v4h1V6h1v2h1V6h2v2h1V6h1v2z M3 1h1v1H3z M8 1h1v1H8z"></path></svg></div>
+        <div style="width: 2px; height: 24px; background: #4A4F57"></div>
+        <div style="width: 52px; height: 40px; display: flex; align-items: center; justify-content: center; color: #9AA1AB"><svg width="24" height="20" viewBox="0 0 12 10" aria-label="New shell" role="img"><path d="M1.5 2 5 5 1.5 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M6.5 8.5h4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg></div>
+      </div>
+      <div style="flex: 1 1 auto"></div>
+      <div style="display: flex; border: 2px solid #4A4F57; border-radius: 12px; overflow: hidden">
+        <div style="width: 52px; height: 40px; display: flex; align-items: center; justify-content: center; background: #2B2F36"><svg width="26" height="20" viewBox="0 0 13 10" aria-hidden="true"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h5" fill="none" stroke="#E6E8EB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+        <div style="width: 52px; height: 40px; display: flex; align-items: center; justify-content: center"><svg width="26" height="22" viewBox="0 0 13 11" aria-hidden="true"><path d="M2.5 1H10.5Q12 1 12 2.5V6.5Q12 8 10.5 8H6L3.5 10V8H2.5Q1 8 1 6.5V2.5Q1 1 2.5 1Z" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linejoin="round"></path></svg></div>
+      </div>
+    </div>
+    <div style="width: 1680px; height: 52px; background: #F3F4F6; border: 1px solid #C9CDD3; display: flex; align-items: center; gap: 40px; padding: 0 32px; box-sizing: border-box; font-size: 24px; border-radius: 6px">
+      <div style="color: #5B636D">Tighten PRD goals</div>
+      <div style="color: #1F2328; font-weight: 600; border-bottom: 3px solid #1F2328; padding-bottom: 2px">Auto-add decision</div>
+      <div style="display: flex; align-items: center; border: 2px solid #8B939C; border-radius: 12px; overflow: hidden; background: #FFFFFF">
+        <div style="width: 44px; height: 32px; display: flex; align-items: center; justify-content: center; color: #5B636D"><svg width="24" height="16" viewBox="0 0 12 8" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M10 8V4h2V2h-2V0H2v2H0v2h2v4h1V6h1v2h1V6h2v2h1V6h1v2z M3 1h1v1H3z M8 1h1v1H8z"></path></svg></div>
+        <div style="width: 2px; height: 20px; background: #C9CDD3"></div>
+        <div style="width: 44px; height: 32px; display: flex; align-items: center; justify-content: center; color: #5B636D"><svg width="22" height="18" viewBox="0 0 12 10" aria-hidden="true"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+      </div>
+      <div style="flex: 1 1 auto"></div>
+      <div style="display: flex; border: 2px solid #8B939C; border-radius: 12px; overflow: hidden; background: #FFFFFF">
+        <div style="width: 44px; height: 32px; display: flex; align-items: center; justify-content: center"><svg width="24" height="18" viewBox="0 0 13 10" aria-hidden="true"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h5" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+        <div style="width: 44px; height: 32px; display: flex; align-items: center; justify-content: center; background: #E9ECEF"><svg width="24" height="20" viewBox="0 0 13 11" aria-hidden="true"><path d="M2.5 1H10.5Q12 1 12 2.5V6.5Q12 8 10.5 8H6L3.5 10V8H2.5Q1 8 1 6.5V2.5Q1 1 2.5 1Z" fill="none" stroke="#1F2328" stroke-width="1.3" stroke-linejoin="round"></path></svg></div>
+      </div>
+    </div>
+    <div style="font-size: 14px; line-height: 21px; max-width: 1680px"><b>For:</b> closest to what she misses, and one click each. <b>Against:</b> two pills of the same build, each with a <code>›_</code> half, one meaning “make” and one meaning “show”. Also, a filled pictogram breaks the design system's icon rule (single-weight strokes only).</div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; align-items: baseline; gap: 12px"><div style="font-size: 18px; line-height: 24px; font-weight: 600">2 · + Clawd | shell</div><div style="font-size: 12px; line-height: 16px; font-weight: 600; padding: 2px 8px; border: 1.5px solid #1F2328; border-radius: 9px">Recommended</div><div style="font-size: 14px; color: #5B636D">The same pill, with a + leading it, so it reads as “new” and never as a second mode toggle.</div></div>
+    <div style="width: 1680px; height: 64px; background: #15171B; display: flex; align-items: center; gap: 40px; padding: 0 32px; box-sizing: border-box; font-family: ui-monospace, 'SF Mono', monospace; font-size: 24px; border-radius: 6px">
+      <div style="display: flex; align-items: center; gap: 12px; color: #E6E8EB; font-weight: 500"><svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.6" fill="none" stroke="#E6E8EB" stroke-width="1.5"></circle></svg>Tighten PRD goals</div>
+      <div style="display: flex; align-items: center; gap: 12px; color: #9AA1AB"><svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5h6" stroke="#9AA1AB" stroke-width="1.6" stroke-linecap="round"></path></svg>Prototype scan review</div>
+      <div style="display: flex; align-items: center; gap: 14px">
+        <svg width="20" height="20" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5v7 M1.5 5h7" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round"></path></svg>
+        <div style="display: flex; align-items: center; border: 2px solid #4A4F57; border-radius: 12px; overflow: hidden">
+          <div style="width: 52px; height: 40px; display: flex; align-items: center; justify-content: center; background: #2B2F36; color: #E6E8EB"><svg width="27" height="18" viewBox="0 0 12 8" aria-label="New Claude session" role="img"><path fill="currentColor" fill-rule="evenodd" d="M10 8V4h2V2h-2V0H2v2H0v2h2v4h1V6h1v2h1V6h2v2h1V6h1v2z M3 1h1v1H3z M8 1h1v1H8z"></path></svg></div>
+          <div style="width: 2px; height: 24px; background: #4A4F57"></div>
+          <div style="width: 52px; height: 40px; display: flex; align-items: center; justify-content: center; color: #9AA1AB"><svg width="24" height="20" viewBox="0 0 12 10" aria-label="New shell" role="img"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+        </div>
+      </div>
+      <div style="flex: 1 1 auto"></div>
+      <div style="display: flex; border: 2px solid #4A4F57; border-radius: 12px; overflow: hidden">
+        <div style="width: 52px; height: 40px; display: flex; align-items: center; justify-content: center; background: #2B2F36"><svg width="26" height="20" viewBox="0 0 13 10" aria-hidden="true"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h5" fill="none" stroke="#E6E8EB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+        <div style="width: 52px; height: 40px; display: flex; align-items: center; justify-content: center"><svg width="26" height="22" viewBox="0 0 13 11" aria-hidden="true"><path d="M2.5 1H10.5Q12 1 12 2.5V6.5Q12 8 10.5 8H6L3.5 10V8H2.5Q1 8 1 6.5V2.5Q1 1 2.5 1Z" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linejoin="round"></path></svg></div>
+      </div>
+    </div>
+    <div style="width: 1680px; height: 52px; background: #F3F4F6; border: 1px solid #C9CDD3; display: flex; align-items: center; gap: 40px; padding: 0 32px; box-sizing: border-box; font-size: 24px; border-radius: 6px">
+      <div style="color: #5B636D">Tighten PRD goals</div>
+      <div style="color: #1F2328; font-weight: 600; border-bottom: 3px solid #1F2328; padding-bottom: 2px">Auto-add decision</div>
+      <div style="display: flex; align-items: center; gap: 12px">
+        <svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5v7 M1.5 5h7" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round"></path></svg>
+        <div style="display: flex; align-items: center; border: 2px solid #8B939C; border-radius: 12px; overflow: hidden; background: #FFFFFF">
+          <div style="width: 44px; height: 32px; display: flex; align-items: center; justify-content: center; color: #5B636D"><svg width="24" height="16" viewBox="0 0 12 8" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M10 8V4h2V2h-2V0H2v2H0v2h2v4h1V6h1v2h1V6h2v2h1V6h1v2z M3 1h1v1H3z M8 1h1v1H8z"></path></svg></div>
+          <div style="width: 2px; height: 20px; background: #C9CDD3"></div>
+          <div style="width: 44px; height: 32px; display: flex; align-items: center; justify-content: center; color: #5B636D"><svg width="22" height="18" viewBox="0 0 12 10" aria-hidden="true"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+        </div>
+      </div>
+      <div style="flex: 1 1 auto"></div>
+      <div style="display: flex; border: 2px solid #8B939C; border-radius: 12px; overflow: hidden; background: #FFFFFF">
+        <div style="width: 44px; height: 32px; display: flex; align-items: center; justify-content: center"><svg width="24" height="18" viewBox="0 0 13 10" aria-hidden="true"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h5" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+        <div style="width: 44px; height: 32px; display: flex; align-items: center; justify-content: center; background: #E9ECEF"><svg width="24" height="20" viewBox="0 0 13 11" aria-hidden="true"><path d="M2.5 1H10.5Q12 1 12 2.5V6.5Q12 8 10.5 8H6L3.5 10V8H2.5Q1 8 1 6.5V2.5Q1 1 2.5 1Z" fill="none" stroke="#1F2328" stroke-width="1.3" stroke-linejoin="round"></path></svg></div>
+      </div>
+    </div>
+    <div style="font-size: 14px; line-height: 21px; max-width: 1680px"><b>For:</b> keeps v2's <code>+</code>, so nothing is relearned, and “+ [Claude | shell]” reads as a sentence: new, of which kind. One click each, and the Clawd she liked. <b>Against:</b> 12 pt wider than today's <code>+ ⌄</code>. Clawd is still a filled mark (Q below).</div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; align-items: baseline; gap: 12px"><div style="font-size: 18px; line-height: 24px; font-weight: 600">3 · + spark | shell</div><div style="font-size: 14px; color: #5B636D">Option 2 with Claude Code's own ✻ spark (what its TUI prints in “✻ Welcome”) drawn as a stroke mark, in place of Clawd.</div></div>
+    <div style="width: 1680px; height: 64px; background: #15171B; display: flex; align-items: center; gap: 40px; padding: 0 32px; box-sizing: border-box; font-family: ui-monospace, 'SF Mono', monospace; font-size: 24px; border-radius: 6px">
+      <div style="display: flex; align-items: center; gap: 12px; color: #E6E8EB; font-weight: 500"><svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.6" fill="none" stroke="#E6E8EB" stroke-width="1.5"></circle></svg>Tighten PRD goals</div>
+      <div style="display: flex; align-items: center; gap: 12px; color: #9AA1AB"><svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5h6" stroke="#9AA1AB" stroke-width="1.6" stroke-linecap="round"></path></svg>Prototype scan review</div>
+      <div style="display: flex; align-items: center; gap: 14px">
+        <svg width="20" height="20" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5v7 M1.5 5h7" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round"></path></svg>
+        <div style="display: flex; align-items: center; border: 2px solid #4A4F57; border-radius: 12px; overflow: hidden">
+          <div style="width: 52px; height: 40px; display: flex; align-items: center; justify-content: center; background: #2B2F36"><svg width="22" height="22" viewBox="0 0 12 12" aria-label="New Claude session" role="img"><path d="M6 1.2v9.6 M1.84 3.6l8.32 4.8 M1.84 8.4l8.32-4.8" fill="none" stroke="#E6E8EB" stroke-width="1.5" stroke-linecap="round"></path></svg></div>
+          <div style="width: 2px; height: 24px; background: #4A4F57"></div>
+          <div style="width: 52px; height: 40px; display: flex; align-items: center; justify-content: center; color: #9AA1AB"><svg width="24" height="20" viewBox="0 0 12 10" aria-label="New shell" role="img"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+        </div>
+      </div>
+      <div style="flex: 1 1 auto"></div>
+      <div style="display: flex; border: 2px solid #4A4F57; border-radius: 12px; overflow: hidden">
+        <div style="width: 52px; height: 40px; display: flex; align-items: center; justify-content: center; background: #2B2F36"><svg width="26" height="20" viewBox="0 0 13 10" aria-hidden="true"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h5" fill="none" stroke="#E6E8EB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+        <div style="width: 52px; height: 40px; display: flex; align-items: center; justify-content: center"><svg width="26" height="22" viewBox="0 0 13 11" aria-hidden="true"><path d="M2.5 1H10.5Q12 1 12 2.5V6.5Q12 8 10.5 8H6L3.5 10V8H2.5Q1 8 1 6.5V2.5Q1 1 2.5 1Z" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linejoin="round"></path></svg></div>
+      </div>
+    </div>
+    <div style="font-size: 14px; line-height: 21px; max-width: 1680px"><b>For:</b> a single-weight stroke, inside the design system's icon rule, and the mark Claude Code users already see every day. <b>Against:</b> not the Clawd she remembers.</div>
+  </div>
+</div>
+</body>
+</html>
