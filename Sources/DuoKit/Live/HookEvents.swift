@@ -312,6 +312,7 @@ public struct DuoState: Codable, Sendable, Equatable {
         archivedProjects = try c.decodeIfPresent([String].self, forKey: .archivedProjects) ?? []
         archivedSessions = try c.decodeIfPresent([String].self, forKey: .archivedSessions) ?? []
         mapSort = try c.decodeIfPresent(String.self, forKey: .mapSort)
+        appearance = try c.decodeIfPresent(String.self, forKey: .appearance)   // C-122: the one field this init forgot
         homeView = try c.decodeIfPresent(String.self, forKey: .homeView)
         showHiddenFiles = try c.decodeIfPresent(Bool.self, forKey: .showHiddenFiles) ?? false
         dismissedExplainers = try c.decodeIfPresent([String].self, forKey: .dismissedExplainers) ?? []
@@ -322,14 +323,46 @@ public struct DuoState: Codable, Sendable, Equatable {
         (try? Data(contentsOf: url)).flatMap { try? JSONDecoder().decode(DuoState.self, from: $0) } ?? DuoState()
     }
 
-    /// Read, change, write atomically. Throttled by the caller (once per refresh at most).
-    public static func update(_ url: URL = DuoPaths.state, _ change: (inout DuoState) -> Void) {
-        var s = load(url)
+    /// Why a write to the state file failed (C-122: this used to be swallowed).
+    public struct WriteError: Error, LocalizedError, Equatable {
+        public let reason: String
+        public var errorDescription: String? { reason }
+    }
+
+    /// The last write that failed, for anything that wants to say so; nil after a write that landed.
+    @MainActor public static var lastWriteFailure: String?
+
+    /// Read, change, write atomically; throws instead of dropping the change. A file that exists but can't be read as state is
+    /// left alone (writing over it would lose what it holds). Throttled by the caller (once per refresh at most).
+    public static func write(_ url: URL = DuoPaths.state, _ change: (inout DuoState) -> Void) throws {
+        var s = DuoState()
+        if let data = try? Data(contentsOf: url) {
+            do { s = try JSONDecoder().decode(DuoState.self, from: data) }
+            catch { throw WriteError(reason: "Duo's state file can’t be read (\(error.localizedDescription)); it was left as it is.") }
+        }
         let before = s
         change(&s)
-        guard s != before, let data = try? JSONEncoder().encode(s) else { return }
-        try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-        try? data.write(to: url, options: .atomic)
+        guard s != before else { return }
+        do {
+            let data = try JSONEncoder().encode(s)
+            try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try data.write(to: url, options: .atomic)
+        } catch {
+            throw WriteError(reason: "Duo couldn’t save its settings to \(url.path): \(error.localizedDescription)")
+        }
+    }
+
+    /// `write` for the many small changes nobody can do anything about: a failure goes to stderr and `lastWriteFailure`
+    /// rather than away. Returns whether the change landed.
+    @discardableResult
+    public static func update(_ url: URL = DuoPaths.state, _ change: (inout DuoState) -> Void) -> Bool {
+        do { try write(url, change); return true }
+        catch {
+            let why = (error as? WriteError)?.reason ?? error.localizedDescription
+            FileHandle.standardError.write(Data("duo: state not saved: \(why)\n".utf8))
+            Task { @MainActor in lastWriteFailure = why }
+            return false
+        }
     }
 }
 
