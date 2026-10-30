@@ -34,3 +34,7 @@ The console's header has a **Refresh** button (Geoff: "please make a refresh but
 5. **Recurring jobs:** check that their latest cards (problem discovery, the weekly tidy-up) aren't stale, and that no scheduled run is stuck on a permission prompt (`list_task_runs`). Each job has a row in `jobs` (Geoff, 2026-10-30: "a section that lets me jump to the output artifacts for the recurring agents … including the last run"): name, schedule, next, its page, its card, and `lastRun` {at, status, headline, link}, which each run updates itself. Mark a stuck run's status "stuck". A new recurring job gets its row when it's scheduled.
 
 The director also deletes needs cards as it goes, not only on Refresh: once a card is answered, and as soon as a release ships.
+
+## The director-console skill (Geoff, 2026-10-30)
+
+Geoff: "we are adding a lot of heuristics to the console; you should probably make a skill to ensure consistency, then the director can just call the skill; this is not a skill we will bundle with duo -- just one I'll use locally (but sync a copy to the repo)". The skill lives in `~/.claude/skills/director-console/` on Geoff's Mac; `docs/director/skills/director-console/` is its copy. It holds the card, row and link conventions (every card links its worker's session and the artifacts to review), and `worker-links.py`, which reads each background worker's Remote Control link and open artifacts from `~/.claude/jobs/*/state.json`. Change the skill first, then copy it here.
