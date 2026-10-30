@@ -22,3 +22,15 @@ A private claude.ai page Geoff opens on his phone or desktop: https://claude.ai/
 **Keeping it current.** After every merge, release, delegation or report: update the thread row, add a `done` row, set the answered need's `status: "closed"` (pin writes with `if_version`), bump `meta/console.updated`. Batch the writes (`ArtifactData batch`). Then the digest in chat is one line plus the console link.
 
 **Phone links.** Every session you start has Remote Control on, so it has a `https://claude.ai/code/session_…` URL. `session-links.py` (this folder) reads it from each transcript's `bridge_status` / `remote_session_change` line; put it in the thread's `link`. On Geoff's phone it opens in the browser, where the session works (F-259).
+
+## Refresh: a full scrub (Geoff, 2026-10-30)
+
+The console's header has a **Refresh** button (Geoff: "please make a refresh button that causes the duo director to do a full scrub of the page, clearing old content (like the outdated version cut question)"). It saves an `answers/refresh-<time>` row and sends "Console · Refresh: …" to the director. When it arrives, the director does all of this before replying:
+
+1. **Needs:** delete every card that's answered, done or out of date (the `answers` collection keeps the history), and delete a release card once that release ships. For each card left, check that its record is still open on main and that what it says is still true. Correct it or delete it.
+2. **In flight:** compare every `threads` row with `claude agents --json --all` and the task notes. Delete rows for finished work, add rows for workers that are running or waiting on Geoff, and fix each state and summary.
+3. **Release:** `release/current` gets the newest release, what's on main and unreleased, the last gate, and what's next.
+4. **Headline:** rewrite `meta/console`'s headline and `updated` with the date and what changed.
+5. **Recurring jobs:** check that their latest cards (problem discovery, the weekly tidy-up) aren't stale, and that no scheduled run is stuck on a permission prompt (`list_task_runs`). Each job has a row in `jobs` (Geoff, 2026-10-30: "a section that lets me jump to the output artifacts for the recurring agents … including the last run"): name, schedule, next, its page, its card, and `lastRun` {at, status, headline, link}, which each run updates itself. Mark a stuck run's status "stuck". A new recurring job gets its row when it's scheduled.
+
+The director also deletes needs cards as it goes, not only on Refresh: once a card is answered, and as soon as a release ships.

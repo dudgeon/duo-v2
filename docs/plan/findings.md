@@ -4350,3 +4350,19 @@ Research for DL-236 (8), "the things the users should feel familiar with". Googl
 - **Needs you collides with a v1-orange selection:** a red needs-you glyph on a #C66A2E row is 1.7:1. On accent-soft it reads at 4.7:1.
 - **Native controls** (Settings' checkboxes, the GitHub sheet's radio) keep the system accent in any scheme.
 - **The app icon recolours** from `gen-app-icon.swift` by its colour values alone.
+## F-383 · Where Duo drifts without anyone noticing (recurring-jobs study, 2026-10-28)
+- Counted on origin/main from 09-28 to 10-28 (1,050 commits, 31 tags; the full counts are in `docs/research/recurring-jobs.md` §1).
+- `docs/design/README.md:29` still says chat mode is "not built". The 10-12 codebase review flagged that line, and it was still there 16 days later.
+- About 130 of 207 Q rows read open, and some of them already carry their answer in the notes (Q-167, Q-223, Q-229, Q-240; a first count also named Q-43 and Q-47, which are in fact closed).
+- 38 stand-in questions are still open; the oldest is Q-30, open for 24 days.
+- 24 task notes say `in-progress`, 19 of them with nothing after 10-20, several for work shipped in 0.2.18.
+- The README is silent on a dozen features shipped from 0.2.18 to 0.2.20.
+- No performance budget run is recorded after 10-12, and C-79's idle burn was found by a one-off review rather than a budget check.
+- There are 43 work trees.
+- Three CLI-version breaks were found in the field: F-176, F-306 and F-363.
+- What is guarded mechanically (duo2.md parity, the generated tokens, the video's `--check`) barely drifted. Drift happens where no brief or gate names the doc.
+
+## F-384 · What recurring maintenance jobs last elsewhere (recurring-jobs study, 2026-10-28)
+- Sources are in `docs/research/recurring-jobs.md` §2: GitHub Agentic Workflows, Codex automations, Google SRE, Dependabot and Renovate guidance, Airtable's flaky-test digest, the stale-bot critiques, launch tiers, fitness functions and living documentation.
+- The jobs teams keep share five traits: they run on a schedule; they write one output and stay silent when clean; they report while a person acts; they are narrow and capped; and they turn every rule that can be written down into a mechanical check instead of an LLM's opinion.
+- What gets muted or abandoned: broad AI reviewers, per-event bots, daily reports that repeat the same item, and auto-closing stale bots.
