@@ -233,6 +233,40 @@
    "workMacWhy": "Needs a newer release than his install; otherwise a menu check"
   },
   {
+   "id": "update-notes-scroll",
+   "group": "Before you open a project: install, updates and settings",
+   "title": "The update question's notes: every bullet, scrolling, and links",
+   "what": "The update question's notes box keeps its drawn height (160) and scrolls, so it lists every bullet; a link in a bullet is drawn as a link and opens in your browser (DL-249, F-406).",
+   "steps": [
+    "On a release build that is behind, choose Duo › Check for Updates… and scroll the notes. Click the `video` link in the first bullet.",
+    "In Terminal: `duo2 update` prints the notes; a link reads `text <url>`."
+   ],
+   "expect": "No \"and n more\" and no cap at six; the box scrolls. The link is underlined, opens in the default browser, and the bullet stays one line. On this development build the question may not appear; `ask-update:real` shows it in a capture.",
+   "ref": "DL-249, F-392, F-406",
+   "commit": "cd439c19386e410dac52bfcca0cc3f646bdeaa56",
+   "alsoCommits": [
+    "42e1de1b3cbf1bf499fe71803ce2ea35cb4ce170"
+   ],
+   "workMac": "as-is",
+   "workMacWhy": "Check for Updates and duo2 update",
+   "setup": [
+    "go all"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup update-notes-scroll` ran to Ready against an isolated Duo (DUO_SOCKET and DUO_TOKEN both set, scratch config and support folder)."
+    ],
+    "didnt": [
+     "Driving the feature itself by pointer or keys."
+    ],
+    "human": [
+     "Walk the steps and judge the look and feel."
+    ],
+    "at": "2026-10-30"
+   }
+  },
+  {
    "id": "sparkle-work-mac",
    "group": "Before you open a project: install, updates and settings",
    "title": "In-app updates, on the work Mac too",
@@ -288,6 +322,171 @@
    "commit": "a3de9b3a81c3bb9e7f5b56ed0de87f92b11e4603",
    "workMac": "as-is",
    "workMacWhy": "Settings window, dock badge toggle and duo2 settings"
+  },
+  {
+   "id": "dark-appearance",
+   "group": "Before you open a project: install, updates and settings",
+   "title": "Dark appearance (Match System, Light, Dark)",
+   "what": "Settings › General › Appearance chooses Match System (the default), Light or Dark, live, no relaunch. Dark is \"Ink\": a near-black chrome, panes told apart by rules, the console a step darker (DL-224).",
+   "steps": [
+    "Open Settings (⌘,) › General › Appearance and choose Dark, then Light, then Match System.",
+    "With Dark on, look at Home, a project, a document, a chat and a sheet. In Terminal: `duo2 settings appearance dark`."
+   ],
+   "expect": "Everything of Duo's turns dark at once; HTML pages, Word documents and decks keep their author's colours. Needs-you is orange with dark text on its chip. Matches `dark-appearance-handoff`.",
+   "ref": "DL-224, F-345, F-351, F-352",
+   "commit": "4747f2c5afeef6d96cb521193ee663ee369d24f2",
+   "alsoCommits": [],
+   "workMac": "as-is",
+   "workMacWhy": "A setting and a look; any project",
+   "setup": [
+    "go all"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup dark-appearance` ran to Ready against an isolated Duo (DUO_SOCKET and DUO_TOKEN both set, scratch config and support folder)."
+    ],
+    "didnt": [
+     "Driving the feature itself by pointer or keys."
+    ],
+    "human": [
+     "Walk the steps and judge the look and feel."
+    ],
+    "at": "2026-10-30"
+   }
+  },
+  {
+   "id": "classic-appearance",
+   "group": "Before you open a project: install, updates and settings",
+   "title": "Classic appearance",
+   "what": "A fourth Appearance value, Classic: legacy Duo's warm paper look, always light (DL-252, option C′). A scheme is only a tokens block.",
+   "steps": [
+    "Open Settings (⌘,) › General › Appearance and choose Classic. Read the line under it.",
+    "Switch back to Light, then to Classic by `duo2 settings appearance classic`.",
+    "With Classic on, look at All projects and a project: the grounds, the document type, the console."
+   ],
+   "expect": "The line reads \"Classic: legacy Duo's warm paper look. Always light.\" (DL-254). Paper grounds and ink, the brown-black console, the document in New York 16/27, v1's warm terminal palette, the selected row in a soft accent, the focused pane edged in orange. Switching is live. Compare `docs/research/classic-build/` (five boards) and F-436.",
+   "ref": "DL-252, DL-254, F-433, F-436",
+   "commit": "aa364afd841f04bcd6f9c47dd159dfecc461b0de",
+   "alsoCommits": [
+    "152e0ca835a9d149f23d0cc5a00235ad1d22e844"
+   ],
+   "workMac": "as-is",
+   "workMacWhy": "A setting; any project",
+   "setup": [
+    "settings appearance classic",
+    "go all"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup classic-appearance` ran to Ready against an isolated Duo (DUO_SOCKET and DUO_TOKEN both set, scratch config and support folder).",
+     "`duo2 settings appearance classic` accepted."
+    ],
+    "didnt": [
+     "Driving the feature itself by pointer or keys."
+    ],
+    "human": [
+     "Walk the steps and judge the look and feel."
+    ],
+    "at": "2026-10-30"
+   }
+  },
+  {
+   "id": "classic-states",
+   "group": "Before you open a project: install, updates and settings",
+   "title": "Classic: the eight states, and needs you in red",
+   "what": "Under Classic, needs-you is red (#B91C1C, #DC2626 on the console) so orange never means two things; the focused pane takes the orange edge.",
+   "steps": [
+    "With Classic on, open `checkout` and look at: All projects, the project, a document beside the console, a terminal, chat mode, chat needing you, a sheet, and Settings.",
+    "Find a session that needs you (the `[fixture]` session with a question) in the action column and the strip."
+   ],
+   "expect": "Needs-you chips, dots and counts are red, never orange; orange only marks the focused pane. A deletion in a diff is red and also struck through, so its shape tells it from needs-you (DL-254). Matches the boards in `docs/research/classic-build/`.",
+   "ref": "DL-252, DL-254, F-436",
+   "commit": "aa364afd841f04bcd6f9c47dd159dfecc461b0de",
+   "alsoCommits": [],
+   "workMac": "small",
+   "workMacWhy": "Needs a session that needs you; the fixtures have one",
+   "setup": [
+    "settings appearance classic",
+    "open checkout"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup classic-states` ran to Ready against an isolated Duo (DUO_SOCKET and DUO_TOKEN both set, scratch config and support folder)."
+    ],
+    "didnt": [
+     "Driving the feature itself: a real Claude login can't be used in an isolated Duo (F-323, C-91), and the clicks, keys and looks are yours."
+    ],
+    "human": [
+     "Walk the steps and judge the look and feel."
+    ],
+    "at": "2026-10-30"
+   }
+  },
+  {
+   "id": "classic-dock-icon",
+   "group": "Before you open a project: install, updates and settings",
+   "title": "Classic: the recoloured Dock icon",
+   "what": "With Classic on, Duo's Dock icon is recoloured to match. It shows only in a real Duo, not a scripted test launch.",
+   "steps": [
+    "Open Duo normally (`scripts/acceptance/open-duo.sh`) and look at the Dock.",
+    "Choose Classic in Settings, look at the Dock icon, then choose Light and look again."
+   ],
+   "expect": "The icon changes to the Classic colours with Classic and back with any other value. Look at the Dock itself; a capture can't show it.",
+   "ref": "DL-252, F-436",
+   "commit": "aa364afd841f04bcd6f9c47dd159dfecc461b0de",
+   "alsoCommits": [],
+   "workMac": "as-is",
+   "workMacWhy": "Look at the Dock",
+   "setup": [
+    "settings appearance classic"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [],
+    "didnt": [
+     "A scripted launch is an accessory and shows no Dock icon."
+    ],
+    "human": [
+     "Look at the Dock, in Classic and out of it."
+    ],
+    "at": "2026-10-30"
+   }
+  },
+  {
+   "id": "appearance-sticks",
+   "group": "Before you open a project: install, updates and settings",
+   "title": "Appearance sticks across a relaunch",
+   "what": "A chosen Appearance is kept: choose Light, quit, reopen, still Light. Before, Appearance was pinned to Match System and Light was a no-op (C-122); a failed settings write is now reported.",
+   "steps": [
+    "Choose Light in Settings › Appearance (with macOS in dark mode, if you can). Quit Duo and reopen it.",
+    "Open Settings again; try the same with Dark and Classic."
+   ],
+   "expect": "Settings shows the value you chose, and Duo draws it. Nothing falls back to Match System.",
+   "ref": "C-122, DL-252",
+   "commit": "8cd6eb344acc1b390566820285706f08e16b91bd",
+   "alsoCommits": [],
+   "workMac": "as-is",
+   "workMacWhy": "Settings and a relaunch",
+   "setup": [
+    "settings appearance light"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup appearance-sticks` ran to Ready against an isolated Duo (DUO_SOCKET and DUO_TOKEN both set, scratch config and support folder).",
+     "`duo2 settings appearance light` accepted."
+    ],
+    "didnt": [
+     "Driving the feature itself by pointer or keys."
+    ],
+    "human": [
+     "Walk the steps and judge the look and feel."
+    ],
+    "at": "2026-10-30"
+   }
   },
   {
    "id": "app-privacy",
@@ -1812,6 +2011,38 @@
    "new": true
   },
   {
+   "id": "project-interview",
+   "group": "All projects: organising (each one undone)",
+   "title": "Make a Project interviews you",
+   "what": "Make a Project writes the base PROJECT.md, then starts a Claude session that looks at the folder, asks three to five questions one at a time and fills goal, next, Why, Done when and a Log line (DL-223).",
+   "steps": [
+    "In All projects choose Make a Project on a plain folder (`first-run-home`).",
+    "Answer the questions; open PROJECT.md."
+   ],
+   "expect": "The folder is a project at once, Undo works, and Claude asks its first question straight away. `status`, `health` and every other file stay alone; the file stays Obsidian-readable.",
+   "ref": "DL-223, F-337, F-338",
+   "commit": "85e34f458192b79499d2326536f5486c91d6c9bb",
+   "alsoCommits": [],
+   "workMac": "home",
+   "workMacWhy": "Needs Home on plain folders and a real session",
+   "setup": [
+    "go all"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup project-interview` ran to Ready against an isolated Duo (DUO_SOCKET and DUO_TOKEN both set, scratch config and support folder)."
+    ],
+    "didnt": [
+     "Driving the feature itself: a real Claude login can't be used in an isolated Duo (F-323, C-91), and the clicks, keys and looks are yours."
+    ],
+    "human": [
+     "Walk the steps and judge the look and feel."
+    ],
+    "at": "2026-10-30"
+   }
+  },
+  {
    "id": "folder-files",
    "group": "Other projects: scratch, reading and refunds",
    "title": "A folder that isn't a project lists its files",
@@ -2856,6 +3087,203 @@
    }
   },
   {
+   "id": "multi-select",
+   "group": "In checkout: sessions and tasks",
+   "title": "Select several sessions: ⇧-click and ⌘-click",
+   "what": "⇧-click selects a range of session rows and ⌘-click adds or removes one; neither opens, resumes or changes the console, parked sessions included (DL-247).",
+   "steps": [
+    "In `checkout`'s session list, click one session, then ⇧-click another a few rows down. ⌘-click one in the range to take it out and another outside to add it.",
+    "Press Esc, or click empty pane space. Then ⌘A in the list.",
+    "Try a parked session in the range. In Terminal: `duo2 view select --list project`."
+   ],
+   "expect": "Neighbouring selected rows join into one selected block, broken by rows that aren't sessions. Nothing opens or resumes. A plain click opens and clears the selection; Esc or a click on empty space clears it; ⌘A selects the showing session rows. The same works in Home's pane, All projects › List, the action column and the idle list; map tiles don't select.",
+   "ref": "DL-247, session-multiselect-handoff",
+   "commit": "2e2cd7f8708ca5cdabb0641e6bffd40eaaab0b1d",
+   "alsoCommits": [],
+   "workMac": "as-is",
+   "workMacWhy": "Selection in your own session lists",
+   "setup": [
+    "open checkout"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup multi-select` ran to Ready against an isolated Duo (DUO_SOCKET and DUO_TOKEN both set, scratch config and support folder)."
+    ],
+    "didnt": [
+     "Driving the feature itself by pointer or keys."
+    ],
+    "human": [
+     "Walk the steps and judge the look and feel."
+    ],
+    "at": "2026-10-30"
+   }
+  },
+  {
+   "id": "multi-select-menu",
+   "group": "In checkout: sessions and tasks",
+   "title": "The selection's menu",
+   "what": "⌃-click or right-click on a selected row opens a menu that acts on all selected: Make a Task, Add to Task ›, Move to Project ›, Archive, Unarchive, Park n Session(s) (DL-247).",
+   "steps": [
+    "Select three sessions, then right-click one of them.",
+    "Choose Make a Task; look at the new task, then ⌘Z or `duo2 undo`.",
+    "Open the menu again and choose Archive 3 Sessions, then Unarchive."
+   ],
+   "expect": "Every item counts what it will act on (\"Archive 3 Sessions\"). While the menu is open every selected row takes the menu-target look. Task items dim across projects. Each action is one undo. `duo2 session archive|unarchive|park|move` and `task add|make` take several ids.",
+   "ref": "DL-247",
+   "commit": "2e2cd7f8708ca5cdabb0641e6bffd40eaaab0b1d",
+   "alsoCommits": [],
+   "workMac": "small",
+   "workMacWhy": "Changes a few sessions; undoable",
+   "setup": [
+    "open checkout"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup multi-select-menu` ran to Ready against an isolated Duo (DUO_SOCKET and DUO_TOKEN both set, scratch config and support folder)."
+    ],
+    "didnt": [
+     "Driving the feature itself: a real Claude login can't be used in an isolated Duo (F-323, C-91), and the clicks, keys and looks are yours."
+    ],
+    "human": [
+     "Walk the steps and judge the look and feel."
+    ],
+    "at": "2026-10-30"
+   }
+  },
+  {
+   "id": "fork-thread-select",
+   "group": "In checkout: sessions and tasks",
+   "title": "A folded fork thread inside a selection",
+   "what": "A folded thread's row that is ⌘-clicked, inside a ⇧ range or in ⌘A unfolds and selects every session in it, the original and each fork (DL-250).",
+   "steps": [
+    "In a project with a fork thread (make one: in a running Claude session type `/branch`), fold the thread with its chevron.",
+    "⌘-click the folded row; then ⌘-click one fork to take it out.",
+    "Click the chevron on its own."
+   ],
+   "expect": "The thread unfolds with all its sessions selected, and ⌘-click on any takes it out. The chevron still only folds and unfolds. Deleting the original keeps the fork, listed as a plain session with its whole history (F-405).",
+   "ref": "DL-250, F-405",
+   "commit": "c17d04c03fcda755434c224e1ccdb69e53d67678",
+   "alsoCommits": [],
+   "workMac": "home",
+   "workMacWhy": "Needs a running Claude session to /branch",
+   "setup": [
+    "open checkout",
+    "session-running checkout"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup fork-thread-select` ran to Ready against an isolated Duo (DUO_SOCKET and DUO_TOKEN both set, scratch config and support folder)."
+    ],
+    "didnt": [
+     "Driving the feature itself: a real Claude login can't be used in an isolated Duo (F-323, C-91), and the clicks, keys and looks are yours."
+    ],
+    "human": [
+     "Walk the steps and judge the look and feel."
+    ],
+    "at": "2026-10-30"
+   }
+  },
+  {
+   "id": "fork-tabs",
+   "group": "In checkout: sessions and tasks",
+   "title": "Fork threads and fork tabs",
+   "what": "A /branch in a Duo session opens the fork in its own tab and the original reopens in its tab; a /fork opens an attach tab. Both show as a thread in the left pane, with a fork mark on each fork tab (DL-227, DL-228).",
+   "steps": [
+    "In a running session in `checkout` type `/branch`. Look at the left pane and the strip.",
+    "Fold and unfold the thread. Close an attached fork's tab."
+   ],
+   "expect": "A thread row: the original leads with a chevron, forks hang under it oldest first; folded it reads `thread · n`. The fork tab carries a fork mark after the state glyph, placed right after its original. A thread that needs you moves to NEEDS YOU with \"Fork of ‹original›\". No notice after a fork.",
+   "ref": "DL-227, DL-228, F-344",
+   "commit": "6fe235ef1eb49a396c0686006f29144fbcc342fa",
+   "alsoCommits": [],
+   "workMac": "home",
+   "workMacWhy": "Needs a real Claude session and /branch",
+   "setup": [
+    "open checkout",
+    "session-running checkout"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup fork-tabs` ran to Ready against an isolated Duo (DUO_SOCKET and DUO_TOKEN both set, scratch config and support folder)."
+    ],
+    "didnt": [
+     "Driving the feature itself: a real Claude login can't be used in an isolated Duo (F-323, C-91), and the clicks, keys and looks are yours."
+    ],
+    "human": [
+     "Walk the steps and judge the look and feel."
+    ],
+    "at": "2026-10-30"
+   }
+  },
+  {
+   "id": "trust-notice",
+   "group": "In checkout: sessions and tasks",
+   "title": "Trust this folder, after a /fork",
+   "what": "When /fork stops with \"Workspace not trusted\" and a folder above the repository is already trusted, a bar offers Trust This Folder… (DL-229).",
+   "steps": [
+    "Make a /fork in a session whose folder is under a trusted parent but not trusted itself (needs Claude Code 2.1.2xx where /fork fails this way).",
+    "Click Trust This Folder… and read the sheet; confirm; click Fork Again."
+   ],
+   "expect": "A bar under the terminal (or over the chat composer). The sheet names the folder, the file and the one key it will write; nothing is written until you confirm. After: \"Claude Code now trusts ‹folder›.\" with Fork Again and OK. `duo2 session trust-folder` does the same.",
+   "ref": "DL-229, F-361, F-362",
+   "commit": "f0db66c07788f575a44b280314b958e240673006",
+   "alsoCommits": [],
+   "workMac": "home",
+   "workMacWhy": "Needs a folder Claude Code doesn't trust and a /fork",
+   "setup": [
+    "open checkout"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup trust-notice` ran to Ready against an isolated Duo (DUO_SOCKET and DUO_TOKEN both set, scratch config and support folder)."
+    ],
+    "didnt": [
+     "Driving the feature itself: a real Claude login can't be used in an isolated Duo (F-323, C-91), and the clicks, keys and looks are yours."
+    ],
+    "human": [
+     "Walk the steps and judge the look and feel."
+    ],
+    "at": "2026-10-30"
+   }
+  },
+  {
+   "id": "github-issues",
+   "group": "In checkout: sessions and tasks",
+   "title": "GitHub issues on tasks",
+   "what": "A task note's `issue:` link shows the issue's live state on its card; Close, Reopen, New Issue from a task, and \"Closes #n\" in Push (DL-226).",
+   "steps": [
+    "Link a task to an issue with an `issue: \"https://github.com/…/issues/n\"` line, open the board.",
+    "Use Close, then Reopen; try New Issue; Push with a linked task."
+   ],
+   "expect": "The card shows the issue's state (open or closed). Nothing creates a task from an issue automatically. Duo writes only Close/Reopen, New Issue and \"Closes #n\". The Issues lane is v1.1.",
+   "ref": "DL-226, F-357, F-358",
+   "commit": "cf6755352bde4622ae998a0517ae832f63b498f0",
+   "alsoCommits": [],
+   "workMac": "home",
+   "workMacWhy": "Needs a GitHub repo and `gh` login",
+   "setup": [
+    "open checkout"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup github-issues` ran to Ready against an isolated Duo (DUO_SOCKET and DUO_TOKEN both set, scratch config and support folder)."
+    ],
+    "didnt": [
+     "Driving the feature itself: a real Claude login can't be used in an isolated Duo (F-323, C-91), and the clicks, keys and looks are yours."
+    ],
+    "human": [
+     "Walk the steps and judge the look and feel."
+    ],
+    "at": "2026-10-30"
+   }
+  },
+  {
    "id": "sidebar-split-short",
    "group": "In checkout: sessions and tasks",
    "title": "The sidebar gives sessions the white space when files are few",
@@ -3165,6 +3593,219 @@
      "Type `~~x~~` and press ⇧⌘X."
     ],
     "at": "2026-10-17"
+   }
+  },
+  {
+   "id": "list-indent",
+   "group": "In checkout: documents",
+   "title": "Indent and outdent a list item by its marker",
+   "what": "⌘] and Tab indent, ⌘[ and ⇧Tab outdent a list item with its sub-items by the parent marker's width, so it truly nests and renumbers (DL-244).",
+   "steps": [
+    "Open `docs/prd.md`. Put the caret in a list item under `Goals` and press ⌘].",
+    "Make a numbered list `1. a`, `2. b`, `3. c`; indent `b` with Tab, then outdent with ⇧Tab; ⌘Z.",
+    "Outside a list press ⌘] and Tab."
+   ],
+   "expect": "Under `- ` it moves 2 columns, under `1. ` 3, under `10. ` 4; the sub-list restarts at 1 and the parent renumbers. Each is one ⌘Z. A top-level item doesn't outdent. Outside lists ⌘] ⌘[ keep the two-space indent and Tab is unchanged.",
+   "ref": "DL-244, F-396, F-397",
+   "commit": "8482e01cf8617b3649b8a75c76dbb381aeb38c86",
+   "alsoCommits": [
+    "dfca85407c6ffe276aac338c74f8c9bd6c063c1a"
+   ],
+   "workMac": "as-is",
+   "workMacWhy": "A Markdown file of your own",
+   "setup": [
+    "open checkout",
+    "doc open docs/prd.md"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup list-indent` ran to Ready against an isolated Duo (DUO_SOCKET and DUO_TOKEN both set, scratch config and support folder)."
+    ],
+    "didnt": [
+     "Driving the feature itself by pointer or keys."
+    ],
+    "human": [
+     "Walk the steps and judge the look and feel."
+    ],
+    "at": "2026-10-30"
+   }
+  },
+  {
+   "id": "review-shortcuts",
+   "group": "In checkout: documents",
+   "title": "The review shortcuts ⇧⌘E and ⌥⌘M",
+   "what": "⇧⌘E turns Suggest Edits on and off for the document; ⌥⌘M adds a comment on the selection (DL-248).",
+   "steps": [
+    "Open `docs/prd.md`. Choose Edit and read the two items' shortcuts.",
+    "Press ⇧⌘E, type in the document, press ⇧⌘E again.",
+    "Select a phrase, press ⌥⌘M and type a comment in the margin."
+   ],
+   "expect": "Edit › Suggest Edits shows ⇧⌘E and Edit › Add Comment ⌥⌘M. With Suggest Edits on, your typing becomes tracked suggestions. The comment composes in the margin beside the selection. Not built: single keys in the margin (J, K, R, ⌘Return; Q-264).",
+   "ref": "DL-248, Q-245, Q-264",
+   "commit": "ad1322c6ac83c2abb4a60024996c4f6ca4ca9d4b",
+   "alsoCommits": [
+    "51a99918ec3209335651ad72241c2b2b92badaa0"
+   ],
+   "workMac": "small",
+   "workMacWhy": "Changes a document; undoable",
+   "setup": [
+    "open checkout",
+    "doc open docs/prd.md"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup review-shortcuts` ran to Ready against an isolated Duo (DUO_SOCKET and DUO_TOKEN both set, scratch config and support folder)."
+    ],
+    "didnt": [
+     "Driving the feature itself: a real Claude login can't be used in an isolated Duo (F-323, C-91), and the clicks, keys and looks are yours."
+    ],
+    "human": [
+     "Walk the steps and judge the look and feel."
+    ],
+    "at": "2026-10-30"
+   }
+  },
+  {
+   "id": "review-markdown",
+   "group": "In checkout: documents",
+   "title": "Review in Markdown: suggestions, comments, closing",
+   "what": "A Markdown file can carry tracked changes and comments as CriticMarkup, drawn in the editor with a margin column, a review bar and Markup modes (DL-236, DL-237).",
+   "steps": [
+    "Open `docs/prd.md`, press ⌥⌘M on a phrase and post a comment, reply to it, then Close and Keep.",
+    "Choose Markup › Show Closed Comments; the margin foot says \"1 closed · Show\". Reopen it; Delete another.",
+    "Turn Suggest Edits on and edit; accept one suggestion and reject one."
+   ],
+   "expect": "Comments sit inline in the file as `{>>@name date #id: …<<}`. Close and Keep and Delete are the foot's first two verbs and undo with ⌘Z. A closed comment is not drawn unless shown; shown it folds to \"› Closed · name: text\".",
+   "ref": "DL-236, DL-237, F-385, F-388, F-389",
+   "commit": "8bdbe012aba51173f5616e8fec9cf7e850164218",
+   "alsoCommits": [
+    "51a99918ec3209335651ad72241c2b2b92badaa0",
+    "36a7f5b8cc027e915fc4774dde77191a73875fc9"
+   ],
+   "workMac": "small",
+   "workMacWhy": "Make comments by hand",
+   "setup": [
+    "open checkout",
+    "doc open docs/prd.md"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup review-markdown` ran to Ready against an isolated Duo (DUO_SOCKET and DUO_TOKEN both set, scratch config and support folder)."
+    ],
+    "didnt": [
+     "Driving the feature itself: a real Claude login can't be used in an isolated Duo (F-323, C-91), and the clicks, keys and looks are yours."
+    ],
+    "human": [
+     "Walk the steps and judge the look and feel."
+    ],
+    "at": "2026-10-30"
+   }
+  },
+  {
+   "id": "at-autocomplete",
+   "group": "In checkout: documents",
+   "title": "@ autocomplete in margin comments",
+   "what": "Typing @ in a margin comment or reply opens a menu: Claude first, then the people named in the document, yourself included (DL-251).",
+   "steps": [
+    "In `docs/prd.md` select a phrase, press ⌥⌘M and type `@`.",
+    "Type `cl`, press ↓ ↑, then Return. Start another with `@` and press Esc, and one with a click.",
+    "Post a comment signed by someone else (type `@lena` in a first comment), then type `@` in a second."
+   ],
+   "expect": "Claude is first, in green, with its mark and \"to a session\". Typing filters; Return, Tab or a click inserts `@claude `; Esc closes the menu and leaves the text. Below Claude come the names in the document as written, newest first, yourself too, in semibold with no hint. A person's tag is plain text and routes nothing; only `@claude` does.",
+   "ref": "DL-251, F-407, Q-306, Q-307, Q-308",
+   "commit": "00dbb744ecb0658c66612e8c497ef8fc265300eb",
+   "alsoCommits": [
+    "ccbe56af9d2352b104ceefa417a5ce32181b4aff",
+    "4c3732e031144b67d3c5ac3cf4930486dacfad40",
+    "9a381ba62ca9519cd1901086709721650f92b94e"
+   ],
+   "workMac": "small",
+   "workMacWhy": "A comment composed by hand",
+   "setup": [
+    "open checkout",
+    "doc open docs/prd.md"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup at-autocomplete` ran to Ready against an isolated Duo (DUO_SOCKET and DUO_TOKEN both set, scratch config and support folder)."
+    ],
+    "didnt": [
+     "Driving the feature itself: a real Claude login can't be used in an isolated Duo (F-323, C-91), and the clicks, keys and looks are yours."
+    ],
+    "human": [
+     "Walk the steps and judge the look and feel."
+    ],
+    "at": "2026-10-30"
+   }
+  },
+  {
+   "id": "review-fixes",
+   "group": "In checkout: documents",
+   "title": "Review fixes: Claude's replies and the margin's closed foot",
+   "what": "With Suggest Edits on, Claude's `duo2 comment reply` lands as a reply, not a tracked insertion; and the margin's \"n closed · Show\" foot no longer draws over an open card (F-398, F-400, fixed by F-402).",
+   "steps": [
+    "Turn Suggest Edits on (⇧⌘E), post a comment with `@claude` and have Claude reply (`duo2 comment reply`), then close one thread.",
+    "Make the active card long (reply, open its field) with a closed thread below."
+   ],
+   "expect": "The reply appears in the thread, not as green text in the line. The foot sits below the active card at its live height. `duo2 comment|suggestion` verbs are thread changes, never suggestions, whether Suggest Edits is on or off; `doc replace` and Claude's content edits still suggest.",
+   "ref": "F-398, F-400, F-402",
+   "commit": "c7252891f1354a41853dbd955069c326f35cdd87",
+   "alsoCommits": [],
+   "workMac": "small",
+   "workMacWhy": "A comment and a reply by duo2",
+   "setup": [
+    "open checkout",
+    "doc open docs/prd.md"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup review-fixes` ran to Ready against an isolated Duo (DUO_SOCKET and DUO_TOKEN both set, scratch config and support folder)."
+    ],
+    "didnt": [
+     "Driving the feature itself: a real Claude login can't be used in an isolated Duo (F-323, C-91), and the clicks, keys and looks are yours."
+    ],
+    "human": [
+     "Walk the steps and judge the look and feel."
+    ],
+    "at": "2026-10-30"
+   }
+  },
+  {
+   "id": "word-defaults",
+   "group": "In checkout: documents",
+   "title": "The Word viewer reads like Google Docs",
+   "what": "A .docx that names no font or size now draws in Google Docs' defaults (Arial 11, 1.15 lines, Docs' heading sizes), and tracked changes and comments show in every view (DL-233).",
+   "steps": [
+    "Open `docs/vendor-brief.docx`.",
+    "Open a .docx of yours that has tracked changes and comments."
+   ],
+   "expect": "Unstyled text is sans-serif Arial 11, not serif; headings at 20/16/14 pt in Docs' greys. A document's own styles always win. Tracked changes and comments are drawn right in the page in every view.",
+   "ref": "DL-233, F-368, F-369",
+   "commit": "1b5d0628326f5fbe2aa064d0c559c82d69f92fdb",
+   "alsoCommits": [],
+   "workMac": "as-is",
+   "workMacWhy": "Any .docx of yours",
+   "setup": [
+    "open checkout",
+    "doc open docs/vendor-brief.docx"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup word-defaults` ran to Ready against an isolated Duo (DUO_SOCKET and DUO_TOKEN both set, scratch config and support folder)."
+    ],
+    "didnt": [
+     "Driving the feature itself by pointer or keys."
+    ],
+    "human": [
+     "Walk the steps and judge the look and feel."
+    ],
+    "at": "2026-10-30"
    }
   },
   {
@@ -4990,6 +5631,41 @@
    "workMacWhy": "New shell, sleep and exit in his project"
   },
   {
+   "id": "new-session-buttons",
+   "group": "In checkout: shells and tabs",
+   "title": "New session buttons: + and the split pill",
+   "what": "The console strip ends in `+` and a split pill: an 8-bit robot for a new Claude session (⌘T) and the shell mark for a new shell (⇧⌘T), one click each. The Terminal / Chat toggle rides on the selected Claude tab (DL-253).",
+   "steps": [
+    "In `checkout`, click the robot half of the pill: a Claude session opens. Click the shell half: a shell opens. Click `+`.",
+    "Select a Claude tab and find the Terminal / Chat toggle on it; select a shell tab and see it gone.",
+    "In Terminal: `duo2 session new` and `duo2 shell new`."
+   ],
+   "expect": "One click each, no menu. The toggle shows only on the selected Claude tab. A new session opens in the mode its setting says. The pill sits at the strip's end with many tabs. Not drawn (Q-325, the decision above): states with few tabs, a shell tab selected, and Home with no tabs use stand-ins.",
+   "ref": "DL-253, F-423, Q-324, Q-325",
+   "commit": "fcc8fcd56677005151c62c593ea8b13daf2ff9ac",
+   "alsoCommits": [
+    "ff336fc9150b8a66bfa7f8e0e24d8482c6f9ce56"
+   ],
+   "workMac": "small",
+   "workMacWhy": "Opens real sessions; a minute of clicking",
+   "setup": [
+    "open checkout"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup new-session-buttons` ran to Ready against an isolated Duo (DUO_SOCKET and DUO_TOKEN both set, scratch config and support folder)."
+    ],
+    "didnt": [
+     "Driving the feature itself: a real Claude login can't be used in an isolated Duo (F-323, C-91), and the clicks, keys and looks are yours."
+    ],
+    "human": [
+     "Walk the steps and judge the look and feel."
+    ],
+    "at": "2026-10-30"
+   }
+  },
+  {
    "id": "s1-palette",
    "group": "In checkout: shells and tabs",
    "title": "Terminal colours",
@@ -5020,6 +5696,42 @@
    "commit": "65695f2ae8a896b1b11dc0e7572e481c09b6481e",
    "workMac": "as-is",
    "workMacWhy": "Shell colours and Increase Contrast toggle in System Settings"
+  },
+  {
+   "id": "tab-strip-scroll",
+   "group": "In checkout: shells and tabs",
+   "title": "Many tabs scroll, with edge fades",
+   "what": "With many tabs open, the strip scrolls sideways under edge fades, the selected tab stays in view and an `n ⌄` menu lists every tab. Shells are titled by their command, else their folder (DL-225).",
+   "steps": [
+    "In `checkout`, open a dozen shells (`shell new` repeatedly, or ⇧⌘T) until the strip overflows.",
+    "Select the last tab, then the first; scroll with the trackpad; open the `n ⌄` menu and pick a tab.",
+    "Run `sleep 30` in one shell and look at its title."
+   ],
+   "expect": "The selected tab is always scrolled into view; fades show where there is more; the menu lists all tabs. A shell shows its running command, else its folder's name; twins take \" 2\". Same in the right pane and Home.",
+   "ref": "DL-225, F-346, F-347",
+   "commit": "5e646743c2a1129ee1937e3e07c3bc03fe52c3b3",
+   "alsoCommits": [],
+   "workMac": "small",
+   "workMacWhy": "Needs a dozen shells, made by hand",
+   "setup": [
+    "open checkout",
+    "shell new",
+    "shell new",
+    "shell new"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup tab-strip-scroll` ran to Ready against an isolated Duo (DUO_SOCKET and DUO_TOKEN both set, scratch config and support folder)."
+    ],
+    "didnt": [
+     "Driving the feature itself: a real Claude login can't be used in an isolated Duo (F-323, C-91), and the clicks, keys and looks are yours."
+    ],
+    "human": [
+     "Walk the steps and judge the look and feel."
+    ],
+    "at": "2026-10-30"
+   }
   },
   {
    "id": "tab-close",
@@ -6183,6 +6895,142 @@
    "new": true
   },
   {
+   "id": "chat-question-stays",
+   "group": "Claude running in checkout: chat mode",
+   "title": "A question no longer drops chat to the terminal",
+   "what": "On Claude Code 2.1.284, a long question could drop chat to the terminal with \"Can't match this dialog to what Claude asked\". Chat now reads the request however late (F-419).",
+   "steps": [
+    "In the chat session ask Claude for a question with long options: \"Use AskUserQuestion to ask me one long question (150+ characters) with three options\", straight after an earlier answer.",
+    "Answer it in chat."
+   ],
+   "expect": "The question shows as chat's card and stays in chat; no fallback bar. If a fallback still comes, its Debug report now carries a `hooks:` line naming the last event and whether the transcript was loading. Policy for a late-resolving mismatch is open (Q-326).",
+   "ref": "F-419, F-435, Q-326",
+   "commit": "74a8c3290ca5105a12e71427491f0252bbf91cd0",
+   "alsoCommits": [],
+   "workMac": "home",
+   "workMacWhy": "Needs Claude Code 2.1.284 and real turns",
+   "setup": [
+    "open checkout",
+    "session-running checkout"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup chat-question-stays` ran to Ready against an isolated Duo (DUO_SOCKET and DUO_TOKEN both set, scratch config and support folder)."
+    ],
+    "didnt": [
+     "Driving the feature itself: a real Claude login can't be used in an isolated Duo (F-323, C-91), and the clicks, keys and looks are yours."
+    ],
+    "human": [
+     "Walk the steps and judge the look and feel."
+    ],
+    "at": "2026-10-30"
+   }
+  },
+  {
+   "id": "chat-slash-skills",
+   "group": "Claude running in checkout: chat mode",
+   "title": "Skills show in chat's / menu",
+   "what": "A user or project skill missing from chat's `/` menu (fast typing garbled Claude's prompt) now autocompletes like in the terminal (F-420).",
+   "steps": [
+    "In chat type `/` and then the first letters of one of your skills, fast.",
+    "Type the whole name quickly; then backspace quickly."
+   ],
+   "expect": "The menu lists the skill with `(user)` or `(project)`, descriptions under the name. The prompt in the terminal tab holds exactly what you typed, never `///name`. While Claude is working `/` shows no menu in chat (Q-329).",
+   "ref": "F-420, Q-329",
+   "commit": "74a8c3290ca5105a12e71427491f0252bbf91cd0",
+   "alsoCommits": [],
+   "workMac": "small",
+   "workMacWhy": "Needs a skill and a running session",
+   "setup": [
+    "open checkout",
+    "session-running checkout"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup chat-slash-skills` ran to Ready against an isolated Duo (DUO_SOCKET and DUO_TOKEN both set, scratch config and support folder)."
+    ],
+    "didnt": [
+     "Driving the feature itself: a real Claude login can't be used in an isolated Duo (F-323, C-91), and the clicks, keys and looks are yours."
+    ],
+    "human": [
+     "Walk the steps and judge the look and feel."
+    ],
+    "at": "2026-10-30"
+   }
+  },
+  {
+   "id": "chat-why-log",
+   "group": "Claude running in checkout: chat mode",
+   "title": "Why chat fell back: Debug and `duo2 session chat why --log`",
+   "what": "The fallback bar has a Debug button opening a report you can copy; `duo2 session chat why` prints it and `--log` lists every automatic fallback (DL-234).",
+   "steps": [
+    "If chat has fallen to the terminal, click Debug and Copy Report. Otherwise run `duo2 session chat why` in Terminal.",
+    "Run `duo2 session chat why --log`."
+   ],
+   "expect": "The report names the rule that fired, the verdict and its evidence, the last 40 screen rows, versions, and the last 10 chat-state changes; nothing is sent anywhere. `--log` lists lines from `logs/chat-fallbacks.jsonl` (empty if none happened).",
+   "ref": "DL-234, F-375, F-376",
+   "commit": "5f9ccc1b0d2d3b975a8c5f823c7af81cfbb5811c",
+   "alsoCommits": [],
+   "workMac": "small",
+   "workMacWhy": "duo2 on any session; the bar only after a fallback",
+   "setup": [
+    "open checkout",
+    "session-running checkout"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup chat-why-log` ran to Ready against an isolated Duo (DUO_SOCKET and DUO_TOKEN both set, scratch config and support folder)."
+    ],
+    "didnt": [
+     "Driving the feature itself: a real Claude login can't be used in an isolated Duo (F-323, C-91), and the clicks, keys and looks are yours."
+    ],
+    "human": [
+     "Walk the steps and judge the look and feel."
+    ],
+    "at": "2026-10-30"
+   }
+  },
+  {
+   "id": "return-chords",
+   "group": "Claude running in checkout: chat mode",
+   "title": "Return chords: one table for chat and the terminal",
+   "what": "↩ sends; ⇧↩, ⌥↩ and ⌃J add a line; a trailing `\\` then ↩ adds a line; ⌘↩ sends; ⌃↩ while Claude works sends now (DL-241). ⌘] ⌘[ indent and outdent in the composer; stepping between your messages is ⌥⌘↑ / ⌥⌘↓ (DL-242).",
+   "steps": [
+    "In chat, try each: ⇧↩, ⌥↩, a `\\` then ↩, ⌘↩. Select two lines and press ⌘], then ⌘[.",
+    "Do ⌥⌘↑ and ⌥⌘↓ to step between your messages.",
+    "Repeat the Return chords in the terminal tab; with Claude working, press ⌃↩."
+   ],
+   "expect": "The same chord does the same in both modes. ⌥↩ and a trailing `\\` add a line in chat (they sent before). The composer's hint line shows ⌥⌘↑ / ⌥⌘↓. ⌃↩ sends the message and queue at once on Claude Code 2.1.275 and later, else sends.",
+   "ref": "DL-241, DL-242, F-395",
+   "commit": "174db3f0c2577c4e0750de964077f409d427cf5b",
+   "alsoCommits": [
+    "96aed8e0f1d3954b2dd10b0b114bc52aaab477ba",
+    "9fa5343dc489967b87d56b9402a2960617300998"
+   ],
+   "workMac": "small",
+   "workMacWhy": "Chat or terminal in a running session",
+   "setup": [
+    "open checkout",
+    "session-running checkout"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup return-chords` ran to Ready against an isolated Duo (DUO_SOCKET and DUO_TOKEN both set, scratch config and support folder)."
+    ],
+    "didnt": [
+     "Driving the feature itself: a real Claude login can't be used in an isolated Duo (F-323, C-91), and the clicks, keys and looks are yours."
+    ],
+    "human": [
+     "Walk the steps and judge the look and feel."
+    ],
+    "at": "2026-10-30"
+   }
+  },
+  {
    "id": "chat-paste-picture",
    "group": "Claude running in checkout: chat mode",
    "title": "Paste a picture into chat mode",
@@ -7276,6 +8124,41 @@
    "workMacWhy": "duo2 evidence is read-only on his folders"
   },
   {
+   "id": "fork-duo2",
+   "group": "The command line",
+   "title": "A fork calls duo2 as itself",
+   "what": "A /fork copy of a session gets its own `DUO_SESSION_ID` and the full path of `duo2` from the primer, so its `duo2` calls say which session they come from, on a Mac with no `duo2` on PATH. No token goes in (DL-256).",
+   "steps": [
+    "In a Duo Claude session type `/fork`, then ask the fork: \"run `duo2 doctor` and say which session id it reports\".",
+    "Check the fork reports its own id."
+   ],
+   "expect": "The fork runs `duo2` by its full path and its calls are attributed to the fork. `scripts/check-fork-primer.sh` proves the id reaches Bash on 2.1.284 and 2.1.311. A fork made by an isolated test Duo still reaches the user's running Duo (F-364).",
+   "ref": "DL-256, C-110, F-364, F-424",
+   "commit": "c6615070da1735ed9bd1383f4796a25db8f45607",
+   "alsoCommits": [
+    "7b595ddcff7bee67f2845ed0a35e5806a1aba985"
+   ],
+   "workMac": "home",
+   "workMacWhy": "Needs real turns and /fork",
+   "setup": [
+    "open checkout",
+    "session-running checkout"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup fork-duo2` ran to Ready against an isolated Duo (DUO_SOCKET and DUO_TOKEN both set, scratch config and support folder)."
+    ],
+    "didnt": [
+     "Driving the feature itself: a real Claude login can't be used in an isolated Duo (F-323, C-91), and the clicks, keys and looks are yours."
+    ],
+    "human": [
+     "Walk the steps and judge the look and feel."
+    ],
+    "at": "2026-10-30"
+   }
+  },
+  {
    "id": "doctor-mod-canary",
    "group": "The command line",
    "title": "`duo2 doctor` tells whether Claude Code mods can run here",
@@ -8053,6 +8936,38 @@
    "workMac": "small",
    "workMacWhy": "Make a throwaway session in Duo first; it deletes real session files, so use one you don't mind losing.",
    "new": true
+  },
+  {
+   "id": "session-delete-n",
+   "group": "Last: cards that change the fixtures",
+   "title": "Delete n Sessions… asks once",
+   "what": "The selection's Delete n Sessions… asks once, in a Duo sheet naming every session and its state; a session running outside Duo is left out and named (DL-247).",
+   "steps": [
+    "In `checkout`'s list select three of the `[fixture]` sessions (⇧-click) and choose Delete 3 Sessions… from the menu.",
+    "Read the sheet, then Cancel; do it again and confirm. In Terminal: `duo2 session delete <id> <id>`."
+   ],
+   "expect": "One sheet lists all three by name and state, with a named exception for any running outside Duo. Confirm moves them to the Trash; Cancel changes nothing. Run `python3 scripts/acceptance/fixtures.py --reset` afterwards.",
+   "ref": "DL-247",
+   "commit": "2e2cd7f8708ca5cdabb0641e6bffd40eaaab0b1d",
+   "alsoCommits": [],
+   "workMac": "small",
+   "workMacWhy": "Deletes fixture sessions",
+   "setup": [
+    "open checkout"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup session-delete-n` ran to Ready against an isolated Duo (DUO_SOCKET and DUO_TOKEN both set, scratch config and support folder)."
+    ],
+    "didnt": [
+     "Driving the feature itself: a real Claude login can't be used in an isolated Duo (F-323, C-91), and the clicks, keys and looks are yours."
+    ],
+    "human": [
+     "Walk the steps and judge the look and feel."
+    ],
+    "at": "2026-10-30"
+   }
   }
  ],
  "decisions": [
@@ -8864,6 +9779,29 @@
      "id": "design",
      "label": "A canvas round for both",
      "desc": "Design the empty state and the use-this-folder choice."
+    }
+   ],
+   "workMac": "small"
+  },
+  {
+   "id": "q325-pill-states",
+   "ref": "Q-325 · DL-253",
+   "title": "The new session pill's undrawn states: right as filled in?",
+   "context": [
+    "DL-253 put a split pill at the end of the console strip: an 8-bit robot for a new Claude session and the shell mark for a new shell, with the Terminal / Chat toggle on the selected Claude tab. Placement 4 was drawn only crowded and in dark.",
+    "Four states were filled in to the handoff's rules, not drawn: A (few tabs), C (a shell tab selected, so no toggle), F (Home with no tabs, the pill at the strip's start), and the light-strip sizes (18 × 14 toggle segments). The card `New session buttons` shows them."
+   ],
+   "options": [
+    {
+     "id": "as-filled",
+     "label": "Right as filled in",
+     "desc": "Keep the stand-ins as built.",
+     "recommended": true
+    },
+    {
+     "id": "redraw",
+     "label": "Draw A, C and F on the canvas",
+     "desc": "A design round for the undrawn states before they're final."
     }
    ],
    "workMac": "small"
