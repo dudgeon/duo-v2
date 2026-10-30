@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>New session buttons today</title>
+<meta name="viewport" content="width=device-width">
+</head>
+<body>
+<style>
+body{margin:0}
+</style>
+<div style="width: 1800px; height: 940px; box-sizing: border-box; padding: 48px 56px; background: #F3F4F6; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; display: flex; flex-direction: column; gap: 22px">
+  <h1 style="margin: 0; font-size: 28px; line-height: 36px; font-weight: 600">New Claude session and new shell: what v2 has, and what v1 had</h1>
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <div style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.66px; text-transform: uppercase; color: #5B636D">v2 today · the console strip (terminal), 2×</div>
+    <img src="../strip-v2-dark.png" alt="v2 console tab strip with a plus and a chevron after the tabs" style="width: 1680px; display: block; border: 1px solid #C9CDD3; border-radius: 6px">
+    <div style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.66px; text-transform: uppercase; color: #5B636D; margin-top: 8px">v2 today · the thin light strip over chat, with the Terminal / Chat toggle at its right, 2×</div>
+    <img src="../strip-v2-light.png" alt="v2 light strip with tabs, a plus and chevron, and the Terminal/Chat toggle" style="width: 1680px; display: block; border: 1px solid #C9CDD3; border-radius: 6px">
+  </div>
+  <div style="display: flex; gap: 32px; align-items: flex-start">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.66px; text-transform: uppercase; color: #5B636D">v1 · the tab strip's cluster, 2×</div>
+      <img src="../strip-v1-cluster.png" alt="v1 cluster: Clawd glyph, a chevron for shell, and the collapse button" style="width: 450px; display: block; border: 1px solid #C9CDD3; border-radius: 6px">
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; flex: 1 1 auto">
+      <div style="background: #FFFFFF; border: 1px solid #C9CDD3; border-radius: 6px; padding: 16px 18px; font-size: 14px; line-height: 21px">
+        <b>v2 (surfaces-handoff §139)</b>
+        <ul style="margin: 6px 0 0; padding-left: 18px">
+          <li><code>+</code> is a text character that starts a Claude session; the chevron beside it opens a native menu: New Claude Session ⌘T, New Shell ⇧⌘T.</li>
+          <li>A shell takes two clicks and a menu. Nothing says “Claude” until you open the menu.</li>
+          <li>The Terminal / Chat toggle sits at the strip's far edge: two 26×20 segments in a 1 pt border, radius 6.</li>
+        </ul>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #C9CDD3; border-radius: 6px; padding: 16px 18px; font-size: 14px; line-height: 21px">
+        <b>v1 (ENH-044, TabBar.tsx)</b>
+        <ul style="margin: 6px 0 0; padding-left: 18px">
+          <li>One cluster: <b>Clawd</b> (new Claude session) | <b>›</b> (new shell) | collapse the terminal column. One click each, no menu.</li>
+          <li>Clawd is your own Inkscape drawing, 14×9, in the strip's text colour, eyes cut out (“should not be orange”).</li>
+          <li>Tooltips named the chords and the folder: “New Claude session (⌘T) · in Garden Planner”.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
