@@ -51,7 +51,6 @@ git clone -q https://github.com/acme/website.git "$dir/ws/website/pricing-copy"
 cd "$dir/ws/website/pricing-copy"
 git switch -q -c tester/pricing-copy
 printf -- '---\ntype: project\ntitle: Pricing copy\ngoal: New pricing page copy, approved by marketing\n---\n# Pricing copy\n' > PROJECT.md
-printf '/PROJECT.md\n.duo/\n' >> .git/info/exclude
 printf '# Pricing\n\nPay for what you ship.\n' > content/pricing.md
 printf 'Q: Annual?\nA: Yes, with two months free.\n' > content/faq.md
 printf '{"plans": ["Free", "Team"]}\n' > content/plans.json

@@ -84,7 +84,6 @@ extension AppModel {
         if let n = inv[0] ?? inv.flags["name"] { f.name = n; f.nameTouched = true }
         if let g = inv.flags["goal"] { f.goal = g }
         f.startSession = inv.has("session")
-        f.keepOutOfGit = !inv.has("keep-in-git")
         // Wait for the lookup (the Found box), then create.
         func attempt(_ tries: Int) {
             guard let f = gitHubProjectForm else { return done(.fail("Cancelled.")) }
@@ -104,7 +103,7 @@ extension AppModel {
 
     private func pushFromCLI(_ id: ActionID, _ inv: Invocation, _ v: RepoView, _ done: @escaping @MainActor (Reply) -> Void) {
         guard let origin = v.status.origin, let branch = v.status.branch else { return done(.fail("No GitHub remote or no branch: nothing to push.")) }
-        var files = v.userChanges.filter { $0.kind != .conflict }.map(\.path)
+        var files = v.status.changes.filter { $0.kind != .conflict }.map(\.path)
         if let only = inv.flags["files"] { files = only.split(separator: ",").map { String($0).trimmingCharacters(in: .whitespaces) } }
         let message = inv.flags["message"] ?? inv.flags["title"] ?? currentProject?.goal ?? "Changes from \(currentProject?.name ?? "Duo")"
         let fork = inv.has("fork") || v.access?.readOnly == true
@@ -141,7 +140,7 @@ extension AppModel {
         var out = ["\(s.branch ?? "detached")" + (s.origin.map { " · \($0.slug)" } ?? " · no GitHub remote") + (s.upstream == nil ? " · not on GitHub yet" : "")]
         out.append("Line: \(line.fact)" + (line.action.map { " [\($0.rawValue)]" } ?? ""))
         if !line.all.isEmpty { out.append("All: " + line.all.joined(separator: " · ")) }
-        for c in v.userChanges { out.append("  \(c.kind.rawValue)\t\(c.path)") }
+        for c in v.status.changes { out.append("  \(c.kind.rawValue)\t\(c.path)") }
         if let a = v.access { out.append(describe(a, repo: s.origin)) }
         return out.joined(separator: "\n")
     }
@@ -164,7 +163,7 @@ extension AppModel {
         let s = v.status
         let line = RepoLine.of(v)
         var j: [String: Any] = ["root": s.root.path, "ahead": s.ahead, "behind": s.behind, "base": v.base, "line": line.fact,
-                                "changes": v.userChanges.map { ["path": $0.path, "kind": $0.kind.rawValue] }, "conflict": s.hasConflict || s.merging]
+                                "changes": v.status.changes.map { ["path": $0.path, "kind": $0.kind.rawValue] }, "conflict": s.hasConflict || s.merging]
         if let b = s.branch { j["branch"] = b }
         if let u = s.upstream { j["upstream"] = u }
         if let o = s.origin { j["repo"] = o.slug; j["host"] = o.host }
