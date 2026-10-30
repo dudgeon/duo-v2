@@ -94,7 +94,12 @@ struct AskCase {
     let version = run(claude, ["--version"]).split(separator: " ").first.map(String.init)
     print("chat mode, live: AskUserQuestion end to end against Claude Code \(version ?? "?") and the mock API (F-106)")
     let only = ProcessInfo.processInfo.environment["DUO_CHAT_LIVE_SIZES"].map { $0.split(separator: ",").map(String.init) }
-    for (i, size) in [(100, 34), (60, 34), (80, 20)].enumerated() where only?.contains("\(size.0)x\(size.1)") ?? true {
+    // Any WxH named in DUO_CHAT_LIVE_SIZES runs, beside the three (60x53: the work Mac's narrow pane, F-419).
+    let extra = (only ?? []).compactMap { s -> (Int, Int)? in
+        let p = s.split(separator: "x").compactMap { Int($0) }
+        return p.count == 2 ? (p[0], p[1]) : nil
+    }.filter { e in ![(100, 34), (60, 34), (80, 20)].contains { $0 == e } }
+    for (i, size) in ([(100, 34), (60, 34), (80, 20)] + extra).enumerated() where only?.contains("\(size.0)x\(size.1)") ?? true {
         print("  — \(size.0)×\(size.1)")
         let dir = "/tmp/duo-chat-live-\(size.0)x\(size.1)"
         try? FileManager.default.removeItem(atPath: dir)
@@ -136,6 +141,11 @@ struct AskCase {
                "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1", "DISABLE_AUTOUPDATER=1",
                "DUO_SESSION_ID=\(id)", "EDITOR=\(ProcessInfo.processInfo.environment["DUO_CHAT_LIVE_EDITOR"] ?? ChatComposer.editorCommand(cli: bin) ?? "")", "VISUAL=\(ProcessInfo.processInfo.environment["DUO_CHAT_LIVE_EDITOR"] ?? ChatComposer.editorCommand(cli: bin) ?? "")",
                "\(ChatCompose.dirVariable)=\(composeDir)", "\(ChatCompose.userEditor)=/usr/bin/true"]
+    // Skills of the shape the work Mac's `/ask-data` had (F-420): hyphenated, a user one and a project one.
+    for (root, name, about) in [(dir + "/cfg/skills", "ask-data", "Answer questions about the sample data set"), (ws + "/.claude/skills", "ask-docs", "Look things up in the docs")] {
+        try? FileManager.default.createDirectory(atPath: root + "/" + name, withIntermediateDirectories: true)
+        try? "---\nname: \(name)\ndescription: \(about)\n---\n\nInvented for a test.\n".write(toFile: root + "/" + name + "/SKILL.md", atomically: true, encoding: .utf8)
+    }
     let tui = HeadlessTUI(cols: size.0, rows: size.1)
     setenv("CLAUDE_CONFIG_DIR", dir + "/cfg", 1)   // where ChatFeed finds the transcript
     tui.process.startProcess(executable: claude, args: ["--session-id", id, "--settings", settings.path, "--model", devModel()],
@@ -153,6 +163,33 @@ struct AskCase {
     }
     let idle = { until(30) { chat.reread().kind == .idle } }
     check(idle(), "the TUI reaches its prompt (\(chat.screen.kind))")
+    // The work Mac's dialog-request-mismatch (F-419): a question answered, Claude's long text, then a second,
+    // long question with parentheses and a semicolon, in the same turn. Each must show its card, with no fallback.
+    func twoQuestions() {
+        let transcript = ClaudeStorage.transcript(sessionId: id, cwd: ws)
+        let before = transcript.flatMap { try? Data(contentsOf: $0) }?.count ?? 0
+        chat.fallback = nil
+        tui.sendKeys("\u{1b}[200~SCENARIO:asktwice go\u{1b}[201~"); spin(0.2); tui.sendKeys("\r")
+        var picked: [String] = []
+        for (n, label) in ["Postgres", "Stream rows"].enumerated() {
+            let shown = until(20) { chat.reread().kind == .question && chat.pendingRequest?.tool == "AskUserQuestion" && chat.questionIndex(chat.screen) != nil
+                && (chat.askedQuestions.first?["question"] as? String ?? "").contains(n == 0 ? "database" : "importer") }
+            spin(Double(ChatSession.requestGrace) + 0.3)   // past the request grace: a mismatch would have fallen back by now
+            let up = shown && chat.cardUp && chat.fallback == nil
+            check(up, "two questions: question \(n + 1)'s card is up, no fallback (screen \(chat.screen.kind), pending \(chat.pendingRequest?.tool ?? "none"), index \(chat.questionIndex(chat.screen).map(String.init) ?? "nil"), fallback \(chat.lastFallback?.rule ?? "none"))")
+            if !up { try? (tui.screenLines().joined(separator: "\n") + "\n---\n" + chat.debugReport()).write(toFile: "\(dir)/two-questions-\(n + 1).txt", atomically: true, encoding: .utf8); break }
+            var r: ChatAnswerResult?
+            let sig = chat.reread().sig
+            Task { r = await chat.ask(.pick(label), sig: sig) }
+            _ = until(20) { r != nil }
+            if r?.ok == true { picked.append(label) } else { check(false, "two questions: \(label) sent (\(r?.why ?? "no reply"))"); break }
+        }
+        _ = idle(); spin(0.6)
+        let got = lastAnswer(transcript ?? ClaudeStorage.transcript(sessionId: id, cwd: ws), after: before)
+        check(picked.count == 2 && got?.answers.values.contains("Stream rows") == true, "two questions: Claude got the second answer (\(String(describing: got?.answers)))")
+        chat.fallback = nil
+        if chat.reread().kind != .idle { tui.sendKeys("\u{1b}"); _ = idle() }
+    }
     let cases: [AskCase] = [
         AskCase(name: "single: pick", prompt: "ask1", steps: [(.pick("SQLite"), false)], answers: ["Which database should we use?": "SQLite"]),
         AskCase(name: "single: Other text", prompt: "ask1", steps: [(.other("DuckDB"), false)], answers: ["Which database should we use?": "DuckDB"]),
@@ -212,6 +249,7 @@ struct AskCase {
         check(ok, "\(c.name)" + (ok ? "" : "  (\(error ?? "") got \(String(describing: got)))"))
         if chat.reread().kind != .idle { tui.sendKeys("\u{1b}"); _ = idle() }
     }
+    if only.map({ "two questions".contains($0) }) ?? true { twoQuestions() }
     guard only == nil || only == "none", size.0 == 100 else { return }
 
     // A streamed reply: MessageDisplay draws it as it comes; the transcript's block matches it.
@@ -317,6 +355,17 @@ struct AskCase {
     _ = await_ { await chat.mirrorSlash("") }
     spin(0.4)
     check(chat.reread().input == "", "leaving `/` clears what it typed into Claude's prompt")
+    // Typed at speed, as the composer's field calls it: one mirror per keystroke, none awaited (F-420).
+    for n in 1...9 { let t = String("/ask-data".prefix(n)); Task { await chat.mirrorSlash(t) }; spin(0.03) }
+    _ = until(5) { chat.reread().input == "/ask-data" && chat.screen.commands.contains { $0.name == "/ask-data" } }
+    check(chat.screen.input == "/ask-data" && chat.screen.commands.contains { $0.name == "/ask-data" },
+          "`/ask-data` typed fast: Claude's prompt holds it and the menu lists the user skill (prompt \(chat.screen.input ?? "nil"), \(chat.screen.commands.map(\.name)))")
+    for n in (4...8).reversed() { let t = String("/ask-data".prefix(n)); Task { await chat.mirrorSlash(t) }; spin(0.03) }
+    _ = until(5) { chat.reread().input == "/ask" && chat.screen.commands.count >= 2 }
+    let asks = chat.screen.commands.map(\.name)
+    check(asks.contains("/ask-data") && asks.contains("/ask-docs"), "back to `/ask`: the user skill and the project skill (\(asks))")
+    _ = await_ { await chat.mirrorSlash("") }
+    spin(0.4)
 
     // The model chip and the effort chip (DL-168): a click opens Claude Code's own /model, with no bubble.
     _ = idle(); spin(0.5)

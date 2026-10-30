@@ -30,6 +30,8 @@ public struct ChatFallbackCapture: Sendable, Equatable {
     public var cliVersion: String?
     public var trust: String
     public var pending: String?
+    /// What the hook feed had read (F-419): "request pending: none" means little without it.
+    public var hooks: String?
     public var unknownFor: Double?
     public var footer: Bool
     public var dialog: Bool
@@ -39,11 +41,11 @@ public struct ChatFallbackCapture: Sendable, Equatable {
     public var trail: [ChatTransition]
 
     public init(at: Date, rule: String, message: String, automatic: Bool, kind: String, sig: String, why: String? = nil, evidence: [String],
-                lines: [String], cols: Int, cliVersion: String? = nil, trust: String, pending: String? = nil, unknownFor: Double? = nil,
+                lines: [String], cols: Int, cliVersion: String? = nil, trust: String, pending: String? = nil, hooks: String? = nil, unknownFor: Double? = nil,
                 trail: [ChatTransition] = [], footer: Bool, dialog: Bool, mods: [String], session: String) {
         self.trail = trail
         self.at = at; self.rule = rule; self.message = message; self.automatic = automatic; self.kind = kind; self.sig = sig; self.why = why
-        self.evidence = evidence; self.lines = lines; self.cols = cols; self.cliVersion = cliVersion; self.trust = trust; self.pending = pending
+        self.evidence = evidence; self.lines = lines; self.cols = cols; self.cliVersion = cliVersion; self.trust = trust; self.pending = pending; self.hooks = hooks
         self.unknownFor = unknownFor; self.footer = footer; self.dialog = dialog; self.mods = mods; self.session = session
     }
 }
@@ -115,6 +117,7 @@ public enum ChatFallbackReport {
             if let u = c.unknownFor { o.append(String(format: "  unknown for: %.2f s", u)) }
             o.append("  version trust: \(c.trust), Claude Code \(c.cliVersion ?? "unknown")")
             o.append("  request pending: \(c.pending ?? "none")")
+            if let h = c.hooks { o.append("  hooks: \(h)") }
             o.append("  screen shows: footer \(c.footer ? "yes" : "no"), dialog \(c.dialog ? "yes" : "no"), mods \(c.mods.isEmpty ? "none" : c.mods.joined(separator: " | "))")
             o.append("")
             o.append("Evidence")
@@ -163,6 +166,9 @@ public enum ChatFallbackLog {
         public var evidence: [String]
         public var cliVersion: String?
         public var trust: String
+        /// The request chat held, and what the hook feed had read (F-419); absent in older lines.
+        public var pending: String?
+        public var hooks: String?
         public var duo: String
         public var session: String
         public var rows: Int
@@ -181,7 +187,7 @@ public enum ChatFallbackLog {
 
     public static func record(_ c: ChatFallbackCapture) -> Record {
         Record(at: c.at, rule: c.rule, message: c.message, kind: c.kind, sig: c.sig, why: c.why, evidence: c.evidence,
-               cliVersion: c.cliVersion, trust: c.trust, duo: ChatFallbackReport.duoVersion, session: c.session,
+               cliVersion: c.cliVersion, trust: c.trust, pending: c.pending, hooks: c.hooks, duo: ChatFallbackReport.duoVersion, session: c.session,
                rows: c.lines.count, cols: c.cols, footer: c.footer, dialog: c.dialog, mods: c.mods,
                screenHash: ChatFallbackReport.hash(c.lines), nearRows: ChatFallbackReport.nearest(c.lines))
     }
@@ -206,10 +212,14 @@ public enum ChatFallbackLog {
     /// `duo2 session chat why --log`: the recent ones, two lines each.
     public static func report(_ records: [Record], last: Int = 20) -> String {
         guard !records.isEmpty else { return "No automatic chat fallbacks logged." }
-        var o = ["\(records.count) automatic fallback\(records.count == 1 ? "" : "s") logged; the latest \(min(last, records.count)):"]
+        var o = ["\(records.count) automatic fallback\(records.count == 1 ? "" : "s") logged."]
+        // How often each rule trips, most first: which to fix first (F-419).
+        let counts = Dictionary(grouping: records, by: \.rule).map { ($0.key, $0.value.count) }.sorted { $0.1 != $1.1 ? $0.1 > $1.1 : $0.0 < $1.0 }
+        o.append("By rule: " + counts.map { "\($0.0) \($0.1)" }.joined(separator: ", "))
+        o.append("The latest \(min(last, records.count)):")
         for r in records.suffix(last) {
             o.append("\(ChatFallbackReport.stamp(r.at))  [\(r.rule)] \(r.kind)/\(r.sig)  Claude Code \(r.cliVersion ?? "?")  session \(r.session.prefix(8))  screen \(r.screenHash)")
-            o.append("    \(r.message)")
+            o.append("    \(r.message)" + (r.rule == "dialog-request-mismatch" ? "  (request: \(r.pending ?? "none"); \(r.hooks ?? "hooks not recorded"))" : ""))
         }
         return o.joined(separator: "\n")
     }

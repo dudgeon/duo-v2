@@ -782,17 +782,38 @@ extension ChatSession {
 
     /// `/` in the composer: the same prefix in Claude's prompt, so its menu shows its own commands.
     /// Only over an empty prompt or one this already typed; the hand-over replaces it on send.
+    /// The field calls this on every keystroke, unawaited: one mirror runs at a time and the latest
+    /// text waits its turn, or two would both edit the prompt as last read and garble it (`//ask-`,
+    /// so the TUI's menu lists nothing, F-420).
     public func mirrorSlash(_ text: String) async {
+        if mirroring { mirrorNext = text; return }
+        mirroring = true
+        defer { mirroring = false }
+        var text = text
+        while true {
+            await mirrorSlashOnce(text)
+            guard let next = mirrorNext else { break }
+            mirrorNext = nil
+            text = next
+        }
+    }
+
+    private func mirrorSlashOnce(_ text: String) async {
         let s = reread()
         guard s.kind == .idle, !sending else { return }
         let current = s.input ?? ""
         let want = text.hasPrefix("/") && !text.contains(" ") && !text.contains("\n") ? text : ""
         guard current != want, current.isEmpty || current.hasPrefix("/") else { return }
-        for _ in current { terminal?.sendKeys(ChatKey.backspace.bytes) }
-        if !want.isEmpty { terminal?.sendKeys(want) }
+        // Only the tail that differs: fewer keys for the TUI to redraw its menu after.
+        let same = zip(current, want).prefix { $0 == $1 }.count
+        for _ in current.dropFirst(same) { terminal?.sendKeys(ChatKey.backspace.bytes) }
+        if want.count > same { terminal?.sendKeys(String(want.dropFirst(same))) }
         ui.composerBasis = want
-        await pause(150_000_000)
-        _ = reread()
+        // Until the prompt shows it (a 2.1.284 menu redraw can take longer than one pause), at most a second.
+        for _ in 0..<7 {
+            await pause(150_000_000)
+            if reread().input == want { break }
+        }
     }
 }
 

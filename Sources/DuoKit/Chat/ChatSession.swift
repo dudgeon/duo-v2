@@ -240,6 +240,9 @@ public final class ChatSession {
     public var fixtureScreenText: String?
     /// A video state set this chat up (VideoTargets): its tool rows carry `video.chat.tool.<n>` anchors.
     public var videoAnchors = false
+    /// `/` mirroring into Claude's prompt: one at a time, the latest text next (F-420).
+    @ObservationIgnored var mirroring = false
+    @ObservationIgnored var mirrorNext: String?
     @ObservationIgnored private var unknownSince: Date?
     @ObservationIgnored private var unknownTimer: Timer?
     @ObservationIgnored private var readPending = false
@@ -251,6 +254,16 @@ public final class ChatSession {
     public static let grace: TimeInterval = 0.5
     /// How long a dialog may wait for its PermissionRequest before the terminal shows (rule 2).
     public static let requestGrace: TimeInterval = 1.5
+    /// How long a dialog may wait for a feed still loading the transcript (F-160, F-419).
+    public static let loadingGrace: TimeInterval = 15
+    /// A dialog is on screen: the feed takes its request even while the transcript loads (F-419).
+    var dialogUp: Bool { [.permission, .plan, .question, .questionReview].contains(screen.kind) }
+    /// What the feed last read, for the Debug report: the request's absence means little without it.
+    var hooksState: String {
+        guard let f = feed else { return "no hook feed (not a live session)" }
+        let last = f.lastEvent.map { "last event \($0.name) \(String(format: "%.1f", now.timeIntervalSince($0.at))) s ago" } ?? "no event read yet"
+        return last + (f.isLoading ? ", transcript still loading" : "") + (isShown() ? "" : ", off screen")
+    }
     @ObservationIgnored private var disagreeSince: Date?
     @ObservationIgnored private var versionKnown = false
 
@@ -412,7 +425,19 @@ public final class ChatSession {
                         MainActor.assumeIsolated { self?.evaluateFallback() }
                     }
                 } else if now.timeIntervalSince(disagreeSince!) >= Self.requestGrace - 0.01 {
-                    fallBack(.automatic("Chat mode can’t match this dialog to what Claude asked, so here’s the terminal."), rule: "dialog-request-mismatch")
+                    // The feed may simply not have read the hook yet: off screen it reads every 2 s, a long
+                    // transcript holds it for seconds, and a stalled main thread can fire this timer first (F-419).
+                    feed?.catchUp()
+                    if requestAgrees {
+                        disagreeSince = nil
+                    } else if feed?.isLoading == true, now.timeIntervalSince(disagreeSince!) < Self.loadingGrace {
+                        unknownTimer?.invalidate()
+                        unknownTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
+                            MainActor.assumeIsolated { self?.evaluateFallback() }
+                        }
+                    } else {
+                        fallBack(.automatic("Chat mode can’t match this dialog to what Claude asked, so here’s the terminal."), rule: "dialog-request-mismatch")
+                    }
                 }
             } else { disagreeSince = nil }
         case .idle, .busy:
@@ -477,7 +502,7 @@ public final class ChatSession {
         return ChatFallbackCapture(
             at: Date(), rule: rule, message: f.message, automatic: f.kind == .automatic, kind: screen.kind.rawValue, sig: screen.sig,
             why: screen.why, evidence: ChatFallbackReport.evidence(lines, table: signatures), lines: t, cols: terminal?.columns ?? (t.map(\.count).max() ?? 0),
-            cliVersion: cliVersion, trust: versionTrust.rawValue, pending: pendingRequest?.tool,
+            cliVersion: cliVersion, trust: versionTrust.rawValue, pending: pendingRequest?.tool, hooks: hooksState,
             unknownFor: unknownSince.map { now.timeIntervalSince($0) }, trail: screenTrail, footer: screen.mode != nil,
             dialog: [.permission, .plan, .question, .questionReview, .picker].contains(screen.kind),
             mods: t.map { $0.chatTrim }.filter { $0.hasPrefix("⚠") }.map { String($0.prefix(80)) }, session: key)

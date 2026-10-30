@@ -207,6 +207,9 @@ public enum ChatIngest {
             log.display(message: "\(e["message_id"] ?? "m")", delta: e["delta"] as? String ?? "", final: e["final"] as? Bool ?? false, time: time)
         case "PreToolUse":
             if let id = e["tool_use_id"] as? String, let tool { log.toolUse(id: id, name: tool, input: input, time: time) }
+            // A question always asks, and its PreToolUse carries the same input a moment before the
+            // PermissionRequest: a request lost or late (a merged line, C-27) still finds it (F-419).
+            if tool == "AskUserQuestion" { chat?.pendingRequest = ChatRequest(tool: "AskUserQuestion", input: input, at: time ?? Date()) }
         case "PostToolUse":
             if let id = e["tool_use_id"] as? String {
                 log.toolResult(id: id, name: tool, input: input, result: e["tool_response"], content: e["tool_response"] as? String, isError: false, time: time)

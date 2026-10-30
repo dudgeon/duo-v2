@@ -152,14 +152,16 @@ func spikeScreen(_ name: String) -> String {
         let a = ChatSession(key: "s-ask-late", mode: .chat)
         a.attach(asking)
         ChatIngest.hook(["hook_event_name": "UserPromptSubmit", "prompt": "Ask me", "source": "user"], at: 1, into: a.log, chat: a)
-        ChatIngest.hook(["hook_event_name": "PreToolUse", "tool_use_id": "q1", "tool_name": "AskUserQuestion", "tool_input": ask], at: 2, into: a.log, chat: a)
         asking.show(spikeScreen("tour-2.1.291/04-question.txt")); spin(0.15)
         check(a.screen.kind == .question && !a.cardUp, "the question on screen before its request: no card yet")
         final class Told: @unchecked Sendable { var yes = false }
         let told = Told()
         withObservationTracking { _ = a.cardUp } onChange: { told.yes = true }
+        // The question's PreToolUse carries its input too, so it is the request's first word (F-419).
+        ChatIngest.hook(["hook_event_name": "PreToolUse", "tool_use_id": "q1", "tool_name": "AskUserQuestion", "tool_input": ask], at: 2, into: a.log, chat: a)
+        check(a.cardUp && told.yes, "its request lands by hook: the card is up and the view is told (cardUp \(a.cardUp), told \(told.yes))")
         ChatIngest.hook(["hook_event_name": "PermissionRequest", "tool_name": "AskUserQuestion", "tool_input": ask], at: 3, into: a.log, chat: a)
-        check(a.cardUp && told.yes, "its PermissionRequest lands: the card is up and the view is told (cardUp \(a.cardUp), told \(told.yes))")
+        check(a.cardUp, "and its PermissionRequest keeps it up")
         let v = ChatSession(key: "s-version", mode: .chat)
         v.setVersion(nil)
         check(v.versionTrust == .unverified, "a claude that gave no version: unverified, not the verified default")
@@ -1135,5 +1137,6 @@ func spikeScreen(_ name: String) -> String {
     chatChipChecks()
     chatFooterChecks()
     chatFallbackReportChecks()
+    try chatRequestChecks()
     duoSignalChecks()
 }
