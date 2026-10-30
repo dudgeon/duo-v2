@@ -29,6 +29,10 @@ func repoFixture() throws -> Fixture {
     ChatFallbackLog.override = FileManager.default.temporaryDirectory.appending(path: "duochecks-chat-fallbacks-\(getpid()).jsonl")
     try? FileManager.default.removeItem(at: ChatFallbackLog.file)
     // `DUO_CHECKS=chat swift run DuoChecks`: chat mode's checks alone (ChatChecks.swift).
+    // scripts/check-fork-primer.sh: the primer as Duo would launch session $DUO_PRIMER_ID with, on stdout.
+    if let id = ProcessInfo.processInfo.environment["DUO_PRIMER_ID"] {
+        print(DuoAction.primer(sessionID: id, cli: "/Applications/Duo.app/Contents/Helpers/duo2"), terminator: ""); exit(0)
+    }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "chat" { return try chatChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "chat-live" { return try chatLiveChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "task-send" { return try chatTaskSendChecks() }
