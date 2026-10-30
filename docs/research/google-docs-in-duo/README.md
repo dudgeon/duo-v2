@@ -2,6 +2,7 @@
 
 The task is [tasks/google-docs-in-duo.md](../../../tasks/google-docs-in-duo.md). Phase 1 is done; Checkpoint 1 is next.
 
+- [narrative.html](narrative.html): the readable story for Geoff, published at https://claude.ai/artifact/UgxMcFsUf512DRDkHXJmVz, with Checkpoint 1 answer buttons.
 - [checkpoint-1.md](checkpoint-1.md): what changed the plan, and Geoff's questions (Q-309 to Q-316).
 - [jobs.md](jobs.md): the jobs a person, Claude and remote people do on a Doc.
 - [duo-browser-today.md](duo-browser-today.md): Duo's browser and duo2 against a public Doc (F-411 to F-413).
