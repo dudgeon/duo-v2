@@ -208,6 +208,8 @@ public final class AppModel {
     @ObservationIgnored public let terminals = TerminalStore()
     /// Chat mode (DL-118 to DL-120): each Claude session's chat over its terminal.
     @ObservationIgnored public lazy var chats = ChatStore()
+    /// Voice input (DL-260): one dictation at a time, into a chat composer or a terminal's prompt.
+    @ObservationIgnored public lazy var voice: VoiceInput = { let v = VoiceInput(); wireVoice(v); return v }()
     /// The one document editor (live mode; fixture mode keeps the placeholder the targets exempt).
     @ObservationIgnored public lazy var editor: EditorController = { let e = EditorController(); editorIfLoaded = e; wireEditor(e); return e }()
     /// Local HTML pages in the right pane (created on first use).

@@ -17,6 +17,8 @@ public struct DuoQuestion: Identifiable {
         /// A caption over a mono value, as the trust question's box draws them (trust-notice-handoff `02`): `what` in `text2`,
         /// `path` under it in mono and `text`, wrapping rather than cutting.
         public var captioned = false
+        /// With a `what` and a `path`: the path under it in body type and `text2`, not mono (the voice sheet's box).
+        public var sub = false
     }
     /// A name to type, filled in with a suggestion (B of the .docx boards, DL-123). A class, so
     /// the choices read what was typed when they run.
@@ -244,8 +246,12 @@ struct QuestionSheet: View {
                             VStack(alignment: .leading, spacing: 0) {
                                 Text(i.what).duoText(.body).fixedSize(horizontal: false, vertical: true)
                                 if !i.path.isEmpty {
+                                    if i.sub {
+                                        Text(i.path).duoText(.body).foregroundStyle(DuoColor.text2).fixedSize(horizontal: false, vertical: true)
+                                    } else {
                                     Text(i.path).duoText(.mono, lineHeight: DuoTextStyle.body.spec.lineHeight).foregroundStyle(DuoColor.text2)
                                         .lineLimit(1).truncationMode(.middle)
+                                    }
                                 }
                             }
                         }

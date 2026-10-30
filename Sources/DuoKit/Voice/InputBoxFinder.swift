@@ -46,14 +46,9 @@ public enum InputBoxFinder {
         }
     }
 
-    /// The mic's cells, or nil when it must hide: no box, a question up, scrolled back, or any cell under
-    /// the mic holding something but a rule character.
-    /// - Parameters:
-    ///   - micCells: how many cells wide the mic is (24 pt over the cell width, rounded up).
-    ///   - cursor: where the terminal's cursor is; the mic hides over it.
-    public static func find(rows: [String], cursor: (row: Int, col: Int)? = nil, scrolledBack: Bool = false, micCells: Int) -> VoiceMicAnchor? {
-        guard !scrolledBack, micCells > 0, !questionShowing(rows) else { return nil }
-        let grid = rows.map { Array($0) }
+    /// The bottom rule's row and its last rule character's column, for the lowest input box; nil with none
+    /// (a question up counts as none).
+    static func locate(_ grid: [[Character]]) -> (row: Int, corner: Int)? {
         var r = grid.count - 1
         while r >= 2 {
             let row = r
@@ -64,11 +59,28 @@ public enum InputBoxFinder {
             while top >= 0, !isRuleRow(grid[top]) { top -= 1 }
             guard top >= 0, top + 1 < row, startsWithPrompt(grid[top + 1]) else { continue }
             guard let corner = grid[row].lastIndex(where: isRuleChar) else { continue }
-            let last = corner - 2, first = last - micCells + 1
-            guard first >= 1, (first...last).allSatisfy({ isRuleChar(grid[row][$0]) }) else { return nil }
-            if let c = cursor, c.row == row, (first...last).contains(c.col) { return nil }
-            return VoiceMicAnchor(row: row, firstCol: first, lastCol: last)
+            return (row, corner)
         }
         return nil
+    }
+
+    /// Whether Claude's input box is on screen with no question over it (a paste may go in).
+    public static func hasInputBox(rows: [String]) -> Bool {
+        !questionShowing(rows) && locate(rows.map { Array($0) }) != nil
+    }
+
+    /// The mic's cells, or nil when it must hide: no box, a question up, scrolled back, or any cell under
+    /// the mic holding something but a rule character.
+    /// - Parameters:
+    ///   - micCells: how many cells wide the mic is (24 pt over the cell width, rounded up).
+    ///   - cursor: where the terminal's cursor is; the mic hides over it.
+    public static func find(rows: [String], cursor: (row: Int, col: Int)? = nil, scrolledBack: Bool = false, micCells: Int) -> VoiceMicAnchor? {
+        guard !scrolledBack, micCells > 0, !questionShowing(rows) else { return nil }
+        let grid = rows.map { Array($0) }
+        guard let (row, corner) = locate(grid) else { return nil }
+        let last = corner - 2, first = last - micCells + 1
+        guard first >= 1, (first...last).allSatisfy({ isRuleChar(grid[row][$0]) }) else { return nil }
+        if let c = cursor, c.row == row, (first...last).contains(c.col) { return nil }
+        return VoiceMicAnchor(row: row, firstCol: first, lastCol: last)
     }
 }

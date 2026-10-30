@@ -92,6 +92,8 @@ public enum ActionID: String, CaseIterable, Sendable {
     // Send to Claude
     case sendFile = "send file", sendSession = "send session", sendProject = "send project", sendSelection = "send selection"
     case sendElement = "send element", sendText = "send text", selection
+    // Voice input (DL-260, DL-261)
+    case voiceStart = "voice start", voiceStop = "voice stop", voiceStatus = "voice status", voiceFile = "voice file"
     // Search
     case search, searchStatus = "search-status", searchRebuild = "search-rebuild"
 }
@@ -472,6 +474,12 @@ extension DuoAction {
               ui: ["Send Selection to Claude", "Send Selection To", "Send Image to Claude", "Send Image To"]),
         .init(.sendElement, .send, "[--to <id> | --new]", "Put the picked HTML element, or the shape picked on a slide, into a session's prompt.", ui: ["Send to Claude", "Send To", "New Session"]),
         .init(.sendText, .send, "<text> [--to <id> | --new]", "Type text into a session's prompt for the user to finish and send."),
+        // Voice input (DL-260): Apple's on-device recognizer; words land in the prompt, never sent
+        .init(.voiceStart, .send, "[<id>]", "Start voice input in a session (the one showing by default): words go into its chat composer, or its terminal prompt a phrase at a time; Return is never pressed. Needs the user to have allowed the microphone in Duo; never asks in a scripted or isolated Duo.",
+              ui: ["Start Voice Input", "Voice Input"]),
+        .init(.voiceStop, .send, "[<id>]", "Finish voice input: the last phrases land, nothing is sent.", ui: ["Stop Voice Input"]),
+        .init(.voiceStatus, .send, "[<id>]", "Whether voice input is listening, downloading Apple's speech model, or off, and why."),
+        .init(.voiceFile, .send, "<audio file> [<id>]", "Feed an audio file (absolute path or ~) through voice input into a session's composer or prompt, as if spoken. The scripted twin of the mic; never touches the microphone.", timeout: 180),
         .init(.selection, .send, "", "What the user has selected or picked right now, in the editor or an HTML page.", everyday: true),
 
         // Director (DL-193 to DL-206): the exact parts of the duo-director skill. Each writes a line to

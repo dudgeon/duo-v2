@@ -26,7 +26,7 @@ struct ChatComposerArea: View {
                     if !chat.ui.attachedTokens.isEmpty || chat.ui.addingPicture {
                         ChatPictureRow(chat: chat).padding(EdgeInsets(top: 11.5, leading: 15.5, bottom: 0, trailing: 14))
                     }
-                    ChatComposerField(chat: chat)
+                    ChatComposerField(chat: chat).padding(.trailing, ChatMicButton.reserved)   // the text stops 8 short of the mic
                 }
                     .overlay {   // anchors: the video camera's target, a sibling of the pictures and the paste block so they keep their own
                         Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Composer").accessibilityIdentifier("video.composer")
@@ -34,6 +34,8 @@ struct ChatComposerArea: View {
                     .background(RoundedRectangle(cornerRadius: DuoMetric.radiusComposer).fill(DuoColor.pane))
                     .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusComposer)
                         .strokeBorder(focused ? DuoColor.text : DuoColor.controlEdge, lineWidth: focused ? 1.5 : DuoMetric.borderHairline))
+                    // Voice input (DL-261): the mic inside the field at its trailing end, bottom-aligned, so it stays at the last line.
+                    .overlay(alignment: .bottomTrailing) { ChatMicButton(chat: chat).padding(.trailing, 8).padding(.bottom, 7) }
                 // Stop sits beside the field once a message is waiting on Claude (handoff `composer`); Esc stops any time.
                 if s.kind == .busy, chat.log.items.contains(where: { if case .you(let y) = $0 { return y.queued } else { return false } }) {
                     ChatKeyedButton(title: "Stop", key: "esc") { Task { await chat.interrupt() } }  // action: session chat
@@ -44,8 +46,9 @@ struct ChatComposerArea: View {
                 Text("Claude is told you want to clarify; it asks again when it’s ready.").duoText(.chatMeta).foregroundStyle(DuoColor.text2)
                     .padding(.horizontal, 4)
             } else {
+            let voiceLine = model.voice.target == .chat(chat.key) && ChatVoiceLine.shows(model.voice.state)
             HStack(spacing: 8) {
-                if let mode = s.mode {
+                if let mode = s.mode, !voiceLine {
                     HStack(spacing: 4) {
                         ChatModeMark(mode: mode)
                         Text(mode.chip)
@@ -64,7 +67,9 @@ struct ChatComposerArea: View {
                 let hints = chat.ui.mention?.matches.isEmpty == false ? ["↑↓ choose · ⏎ or tab adds it · esc closes"]
                     : ["⏎ send · ⇧⏎ new line · ⇧⇥ mode · / commands · @ files · ⌥⌘↑ ⌥⌘↓ your messages", "⏎ send · ⇧⏎ new line · ⇧⇥ mode · / commands · @ files",
                        "⏎ send · ⇧⏎ new line · ⇧⇥ mode · / commands", "⏎ send · ⇧⏎ new line · ⇧⇥ mode", "⏎ send · ⇧⏎ new line"]
-                if let notice = chat.ui.pasteNotice {
+                if voiceLine {
+                    ChatVoiceLine(voice: model.voice)
+                } else if let notice = chat.ui.pasteNotice {
                     ChatPasteNoticeLine(chat: chat, notice: notice)
                 } else {
                 FirstFit {
@@ -84,6 +89,9 @@ struct ChatComposerArea: View {
                 ChatConfigChip(chat: chat, id: "model", text: chat.log.model ?? "Model", kind: .model, working: s.kind == .busy)
             }
             .padding(.horizontal, 4)
+            }
+            if model.voice.target == .chat(chat.key), model.voice.state == .restricted {
+                HStack { Spacer(minLength: 0); VoiceNoticeBox(text: VoiceCopy.restricted) }
             }
         }
         .task(id: chat.ui.composerFocused) { if chat.ui.composerFocused { chat.prefillComposer() } }
@@ -388,6 +396,11 @@ final class ComposerTextView: NSTextView, @preconcurrency NSLayoutManagerDelegat
     var baseAttributes: [NSAttributedString.Key: Any] = [:]
     /// What the Markdown pass found, kept for drawing the fences, quote rules and bullets.
     var md = ComposerMarkdown.Analysis()
+    /// A dictation in progress (voice input): where its words start and how long they are now, the space before
+    /// them, and keys typed meanwhile, held until it finishes.
+    var dictation: (start: Int, length: Int)?
+    var heldKeys: [NSEvent] = []
+    var leading = ""
 
     init() {
         let storage = NSTextStorage(), layout = NSLayoutManager(), container = NSTextContainer(size: NSSize(width: 400, height: CGFloat.greatestFiniteMagnitude))
@@ -628,6 +641,7 @@ final class ComposerTextView: NSTextView, @preconcurrency NSLayoutManagerDelegat
     }
 
     override func keyDown(with e: NSEvent) {
+        if voiceKey(e) { return }
         // ⇧⇥: Claude Code's own mode cycle (manual, accept edits, plan, auto …, whatever this claude
         // offers); the chip follows its footer (F-179).
         if e.keyCode == 48, e.modifierFlags.intersection([.shift, .command, .option, .control]) == .shift, let c = coordinator?.chat {

@@ -59,6 +59,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case actualSize         // ⌘0
     // All projects' middle (DL-142): no chords until Q-100 is decided
     case showBoard, showList
+    case voiceInput         // ⇧⌘D: Edit › Start / Stop Voice Input (DL-261, amends DL-34): tap toggles, held past 0.3 s is hold-to-talk
 
     public var title: String {
         switch self {
@@ -122,6 +123,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .actualSize: "Actual Size"
         case .showBoard: "Show Board"
         case .showList: "Show List"
+        case .voiceInput: "Voice Input"
         }
     }
 
@@ -149,6 +151,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .suggestEdits: KeyboardShortcut("e", modifiers: [.command, .shift])
         case .addComment: KeyboardShortcut("m", modifiers: [.command, .option])
         case .sendSelection: KeyboardShortcut("d", modifiers: .command)
+        case .voiceInput: KeyboardShortcut("d", modifiers: [.command, .shift])
         case .link: KeyboardShortcut("k", modifiers: .command)  // DL-108
         case .revertChange, .revertAllChanges, .chooseHome, .newTask, .newProject, .newProjectFromGitHub, .code, .heading1, .heading2, .heading3,
              .task, .addProperties, .duo2Reference, .whatsNew, .reportIssue, .explainTasks, .tableInsert, .tableRowAbove, .tableRowBelow,
@@ -200,6 +203,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .zoomIn, .zoomOut, .actualSize: model.webFocus == .html && model.visibleWebTab.map { $0.blocked == nil } == true
         case .showBoard: !(model.altitude.isAllProjects && model.homeView == .board)
         case .showList: !(model.altitude.isAllProjects && model.homeView == .list)
+        case .voiceInput: model.voiceFocusTarget != nil
         }
     }
 
@@ -284,6 +288,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .zoomIn: if let t = model.visibleWebTab { t.zoom(ZoomStore.zoomIn(t.zoom)) }
         case .zoomOut: if let t = model.visibleWebTab { t.zoom(ZoomStore.zoomOut(t.zoom)) }
         case .actualSize: model.visibleWebTab?.zoom(1.0)
+        case .voiceInput: model.toggleVoice()  // action: voice start
         case .showBoard, .showList:
             model.setHomeView(self == .showBoard ? .board : .list)
             if !model.altitude.isAllProjects { model.zoomOut() }
@@ -372,6 +377,11 @@ public struct DuoCommands: Commands {
         CommandGroup(after: .pasteboard) {
             Divider()
             item(.sendSelection)
+            Divider()
+            // Voice input (DL-261): named apart from macOS's own Start Dictation…
+            Button(model.voiceMenuTitle) { DuoCommand.voiceInput.perform(in: model) }  // action: voice start
+                .keyboardShortcut("d", modifiers: [.command, .shift])
+                .disabled(!DuoCommand.voiceInput.isEnabled(in: model))
             Divider()
             item(.revertChange)
             item(.revertAllChanges)
