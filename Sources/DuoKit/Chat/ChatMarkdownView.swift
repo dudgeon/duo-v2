@@ -118,7 +118,7 @@ struct ChatInlineText: View {
     var body: some View {
         let t = Text(Self.styled(text, style: style))
         Group {
-            if caret { Text("\(t)\(Text(Image(systemName: "poweron")).font(.system(size: 13, weight: .regular)).foregroundStyle(DuoColor.text))") } else { t }
+            if caret { Text("\(t)\(Text(Image(systemName: "poweron")).font(.system(size: DuoTextStyle.body.spec.size, weight: .regular)).foregroundStyle(DuoColor.text))") } else { t }
         }
         .duoText(style)
         .foregroundStyle(color)

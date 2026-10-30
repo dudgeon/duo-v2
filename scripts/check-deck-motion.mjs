@@ -9,6 +9,7 @@ import http from "http";
 import os from "os";
 import path from "path";
 import { createRequire } from "module";
+import { addTypeVars } from "./editor-vars.mjs";
 const require = createRequire(import.meta.url);
 const { chromium } = require("playwright-core");
 const repo = process.cwd();
@@ -36,6 +37,7 @@ for (const reduce of [false, true]) {
   page.on("pageerror", (e) => console.log("page error: " + e.message));
   page.on("console", (m) => { if (m.type() === "error") console.log("console: " + m.text()); });
   await page.goto(`http://localhost:${port}/deck.html`);
+  await addTypeVars(page);
   await page.evaluate((css) => document.documentElement.setAttribute("style", css), tokens);
   await page.waitForFunction(() => window.__duo, null, { timeout: 8000 });
   const opened = await page.evaluate(() => window.__duo.open("garden.pptx", 1, 1));

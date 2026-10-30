@@ -433,7 +433,7 @@ extension AppModel {
                 SettingsInfo.shared.revision += 1
             case "appearance":
                 guard let a = AppearanceSetting(rawValue: value) else { return done(.fail("usage: \(id.action.usage)")) }
-                AppearanceSetting.set(a)
+                do { try AppearanceSetting.set(a) } catch { return done(.fail((error as? DuoState.WriteError)?.reason ?? error.localizedDescription)) }
                 SettingsInfo.shared.revision += 1
             case "explainers":
                 guard value == "reset" else { return done(.fail("usage: \(id.action.usage)")) }

@@ -6,127 +6,133 @@ import SwiftUI
 /// Semantic colours (handoff §4.1). Every colour follows the appearance: light, or Dark B "Ink" (DL-224).
 public enum DuoColor {
     /// Toolbar, sheet backgrounds
-    public static let ground = Color(nsColor: NSColor.duoDynamic(light: 0xF3F4F6, dark: 0x131518, name: "ground"))
+    public static let ground = Color(nsColor: NSColor.duoDynamic(light: 0xF3F4F6, dark: 0x131518, classic: 0xF0E9D6, name: "ground"))
     /// Light panes, cards, popover, buttons
-    public static let pane = Color(nsColor: NSColor.duoDynamic(light: 0xFFFFFF, dark: 0x181A1E, name: "pane"))
+    public static let pane = Color(nsColor: NSColor.duoDynamic(light: 0xFFFFFF, dark: 0x181A1E, classic: 0xFBF8EE, name: "pane"))
     /// Selected row
-    public static let selected = Color(nsColor: NSColor.duoDynamic(light: 0xE9ECEF, dark: 0x262A30, name: "selected"))
+    public static let selected = Color(nsColor: NSColor.duoDynamic(light: 0xE9ECEF, dark: 0x262A30, classic: 0xF2D9B8, name: "selected"))
     /// Behind text Claude just changed in the editor, and Claude's-additions block: the diff-add green, a step darker than selected (Geoff, 2026-10-13)
-    public static let claudeEdit = Color(nsColor: NSColor.duoDynamic(light: 0xD6EDDC, dark: 0x1F3A28, name: "claudeEdit"))
+    public static let claudeEdit = Color(nsColor: NSColor.duoDynamic(light: 0xD6EDDC, dark: 0x1F3A28, classic: 0xD6EDDC, name: "claudeEdit"))
     /// Behind a session row, card or tab while its right-click menu is open, darker than selected so it's clear which item the menu acts on (Q-147, undrawn stand-in)
-    public static let menuTarget = Color(nsColor: NSColor.duoDynamic(light: 0xD8DCE1, dark: 0x2E3238, name: "menuTarget"))
+    public static let menuTarget = Color(nsColor: NSColor.duoDynamic(light: 0xD8DCE1, dark: 0x2E3238, classic: 0xD4C8A6, name: "menuTarget"))
     /// Pane dividers, card borders, field border
-    public static let rule = Color(nsColor: NSColor.duoDynamic(light: 0xC9CDD3, dark: 0x2B2F36, name: "rule"))
+    public static let rule = Color(nsColor: NSColor.duoDynamic(light: 0xC9CDD3, dark: 0x2B2F36, classic: 0xD4C8A6, name: "rule"))
     /// Button and pill borders, dashed borders, group rule, files rule
-    public static let controlEdge = Color(nsColor: NSColor.duoDynamic(light: 0x8B939C, dark: 0x6E7681, name: "controlEdge"))
+    public static let controlEdge = Color(nsColor: NSColor.duoDynamic(light: 0x8B939C, dark: 0x6E7681, classic: 0xB8AB8E, name: "controlEdge"))
     /// Primary text; review and working glyphs; selected-card border
-    public static let text = Color(nsColor: NSColor.duoDynamic(light: 0x1F2328, dark: 0xE6E8EB, name: "text"))
+    public static let text = Color(nsColor: NSColor.duoDynamic(light: 0x1F2328, dark: 0xE6E8EB, classic: 0x1A1410, name: "text"))
     /// Secondary text; idle and resolved glyphs; chevrons
-    public static let text2 = Color(nsColor: NSColor.duoDynamic(light: 0x5B636D, dark: 0x9AA1AB, name: "text2"))
+    public static let text2 = Color(nsColor: NSColor.duoDynamic(light: 0x5B636D, dark: 0x9AA1AB, classic: 0x7B6F58, name: "text2"))
     /// The one accent: needs-you glyph, label, chip, question box
-    public static let needsYou = Color(nsColor: NSColor.duoDynamic(light: 0xC2410C, dark: 0xF97316, name: "needsYou"))
+    public static let needsYou = Color(nsColor: NSColor.duoDynamic(light: 0xC2410C, dark: 0xF97316, classic: 0xB91C1C, name: "needsYou"))
+    /// The 2 pt rule over the active pane's top edge (DL-165). Today the text colour; a scheme may give it a colour of its own (Classic: orange).
+    public static let paneFocus = Color(nsColor: NSColor.duoDynamic(light: 0x1F2328, dark: 0xE6E8EB, classic: 0xC66A2E, name: "paneFocus"))
     /// Text and glyph on the open (filled) chip
-    public static let onNeedsYou = Color(nsColor: NSColor.duoDynamic(light: 0xFFFFFF, dark: 0x0C0D10, name: "onNeedsYou"))
+    public static let onNeedsYou = Color(nsColor: NSColor.duoDynamic(light: 0xFFFFFF, dark: 0x0C0D10, classic: 0xFFFFFF, name: "onNeedsYou"))
     /// Placeholder in the targets; not built
-    public static let placeholderBar = Color(nsColor: NSColor.duoDynamic(light: 0xD5D9DE, dark: 0x2B2F36, name: "placeholderBar"))
+    public static let placeholderBar = Color(nsColor: NSColor.duoDynamic(light: 0xD5D9DE, dark: 0x2B2F36, classic: 0xE5DCC1, name: "placeholderBar"))
     /// Placeholder in the targets; not built
-    public static let placeholderBarOnSelected = Color(nsColor: NSColor.duoDynamic(light: 0xC3C8CE, dark: 0x363B42, name: "placeholderBarOnSelected"))
+    public static let placeholderBarOnSelected = Color(nsColor: NSColor.duoDynamic(light: 0xC3C8CE, dark: 0x363B42, classic: 0xD4C8A6, name: "placeholderBarOnSelected"))
     /// Dims the whole window behind the search modal. The text colour at 32% (search-handoff).
-    public static let scrim = Color(nsColor: NSColor.duoDynamic(light: 0x1F2328, dark: 0x000000, name: "scrim", lightAlpha: 0.32, darkAlpha: 0.55))
+    public static let scrim = Color(nsColor: NSColor.duoDynamic(light: 0x1F2328, dark: 0x000000, classic: 0x1A1410, name: "scrim", lightAlpha: 0.32, darkAlpha: 0.55))
     /// Behind unselected sessions that have a terminal open in Duo, which also read `at prompt` or `working`, so it's easy to jump back in (ENH-7, DL-133).
-    public static let activeTint = Color(nsColor: NSColor.duoDynamic(light: 0xE8F0FA, dark: 0x18222E, name: "activeTint"))
+    public static let activeTint = Color(nsColor: NSColor.duoDynamic(light: 0xE8F0FA, dark: 0x18222E, classic: 0xF0E9D6, name: "activeTint"))
     /// The chat transcript's ground, so chat mode stands apart from the white panes beside it (chat-mode-handoff, Sep 1b). Same value as ground.
-    public static let chatGround = Color(nsColor: NSColor.duoDynamic(light: 0xF3F4F6, dark: 0x0C0D10, name: "chatGround"))
+    public static let chatGround = Color(nsColor: NSColor.duoDynamic(light: 0xF3F4F6, dark: 0x0C0D10, classic: 0xF0E9D6, name: "chatGround"))
     /// Your messages' bubble and your answers to review cards (You chose …); 12.6:1 with text. Not the accent: needsYou keeps its one meaning (chat-mode-handoff).
-    public static let chatYou = Color(nsColor: NSColor.duoDynamic(light: 0xDCE6F7, dark: 0x22344F, name: "chatYou"))
+    public static let chatYou = Color(nsColor: NSColor.duoDynamic(light: 0xDCE6F7, dark: 0x22344F, classic: 0xF2D9B8, name: "chatYou"))
     /// Added lines in a diff (chat-mode-handoff)
-    public static let diffAddFill = Color(nsColor: NSColor.duoDynamic(light: 0xE6F4EA, dark: 0x15291C, name: "diffAddFill"))
+    public static let diffAddFill = Color(nsColor: NSColor.duoDynamic(light: 0xE6F4EA, dark: 0x15291C, classic: 0xE6F4EA, name: "diffAddFill"))
     /// Added-line text and +n counts; 4.5:1 on diffAddFill, 5.1:1 on pane (chat-mode-handoff)
-    public static let diffAddText = Color(nsColor: NSColor.duoDynamic(light: 0x2F7D32, dark: 0x7CC98A, name: "diffAddText"))
+    public static let diffAddText = Color(nsColor: NSColor.duoDynamic(light: 0x2F7D32, dark: 0x7CC98A, classic: 0x2F7D32, name: "diffAddText"))
     /// Removed lines in a diff (chat-mode-handoff)
-    public static let diffDelFill = Color(nsColor: NSColor.duoDynamic(light: 0xFDECEA, dark: 0x331A1D, name: "diffDelFill"))
+    public static let diffDelFill = Color(nsColor: NSColor.duoDynamic(light: 0xFDECEA, dark: 0x331A1D, classic: 0xFDECEA, name: "diffDelFill"))
     /// Removed-line text, −n counts, a failed tool's status and error text; 5.7:1 on diffDelFill, 6.6:1 on pane (chat-mode-handoff)
-    public static let diffDelText = Color(nsColor: NSColor.duoDynamic(light: 0xB42318, dark: 0xF2959E, name: "diffDelText"))
+    public static let diffDelText = Color(nsColor: NSColor.duoDynamic(light: 0xB42318, dark: 0xF2959E, classic: 0xB42318, name: "diffDelText"))
     /// The border of a failed tool's output box; decoration, the text says failed (chat-mode-handoff)
-    public static let toolErrorEdge = Color(nsColor: NSColor.duoDynamic(light: 0xF4C7C1, dark: 0x5E2A30, name: "toolErrorEdge"))
+    public static let toolErrorEdge = Color(nsColor: NSColor.duoDynamic(light: 0xF4C7C1, dark: 0x5E2A30, classic: 0xF4C7C1, name: "toolErrorEdge"))
     /// A Bash step's output box (chat-mode-handoff `tools`; read from the approved board, not in its token additions)
-    public static let toolOutputFill = Color(nsColor: NSColor.duoDynamic(light: 0xF8F9FA, dark: 0x131518, name: "toolOutputFill"))
+    public static let toolOutputFill = Color(nsColor: NSColor.duoDynamic(light: 0xF8F9FA, dark: 0x131518, classic: 0xF0E9D6, name: "toolOutputFill"))
     /// The first person in a Word document's tracked changes and comments (docx-viewer-handoff): their marks, name and dot. Assigned in the order people first appear, then repeating after five.
-    public static let reviewAuthor1 = Color(nsColor: NSColor.duoDynamic(light: 0xB0244F, dark: 0xF38BA8, name: "reviewAuthor1"))
+    public static let reviewAuthor1 = Color(nsColor: NSColor.duoDynamic(light: 0xB0244F, dark: 0xF38BA8, classic: 0xB0244F, name: "reviewAuthor1"))
     /// The second person in a Word document's review (docx-viewer-handoff).
-    public static let reviewAuthor2 = Color(nsColor: NSColor.duoDynamic(light: 0x1D5FA8, dark: 0x7FB0EE, name: "reviewAuthor2"))
+    public static let reviewAuthor2 = Color(nsColor: NSColor.duoDynamic(light: 0x1D5FA8, dark: 0x7FB0EE, classic: 0x1D5FA8, name: "reviewAuthor2"))
     /// The third person in a Word document's review (docx-viewer-handoff).
-    public static let reviewAuthor3 = Color(nsColor: NSColor.duoDynamic(light: 0x2E7A3A, dark: 0x7CC98A, name: "reviewAuthor3"))
+    public static let reviewAuthor3 = Color(nsColor: NSColor.duoDynamic(light: 0x2E7A3A, dark: 0x7CC98A, classic: 0x2E7A3A, name: "reviewAuthor3"))
     /// The fourth person in a Word document's review. Not on a board: picked to stay 4.5:1 or more on pane and apart from the first three (docx-viewer slice 1, a stand-in).
-    public static let reviewAuthor4 = Color(nsColor: NSColor.duoDynamic(light: 0x7B3FB5, dark: 0xC39BEB, name: "reviewAuthor4"))
+    public static let reviewAuthor4 = Color(nsColor: NSColor.duoDynamic(light: 0x7B3FB5, dark: 0xC39BEB, classic: 0x7B3FB5, name: "reviewAuthor4"))
     /// The fifth person in a Word document's review. Not on a board: a darker amber, 4.5:1 or more on pane (docx-viewer slice 1, a stand-in).
-    public static let reviewAuthor5 = Color(nsColor: NSColor.duoDynamic(light: 0x9A5A00, dark: 0xE0A64A, name: "reviewAuthor5"))
+    public static let reviewAuthor5 = Color(nsColor: NSColor.duoDynamic(light: 0x9A5A00, dark: 0xE0A64A, classic: 0x9A5A00, name: "reviewAuthor5"))
     /// The range a Word comment covers in the viewer (docx-viewer-handoff).
-    public static let commentHighlight = Color(nsColor: NSColor.duoDynamic(light: 0xFBE7A1, dark: 0x4F4112, name: "commentHighlight"))
+    public static let commentHighlight = Color(nsColor: NSColor.duoDynamic(light: 0xFBE7A1, dark: 0x4F4112, classic: 0xFBE7A1, name: "commentHighlight"))
     /// A comment's range while its card is hovered or active (markdown-review-handoff, DL-237). Light value provisional (Q-265); the dark one is a stand-in.
-    public static let commentHighlightActive = Color(nsColor: NSColor.duoDynamic(light: 0xF5D565, dark: 0x6B5A1A, name: "commentHighlightActive"))
+    public static let commentHighlightActive = Color(nsColor: NSColor.duoDynamic(light: 0xF5D565, dark: 0x6B5A1A, classic: 0xF0CB6A, name: "commentHighlightActive"))
 
     // Console chrome: light values here, and in dark the console sinks (DL-224).
     /// Console pane, console tab strips, terminal background
-    public static let console = Color(nsColor: NSColor.duoDynamic(light: 0x15171B, dark: 0x0C0D10, name: "console"))
+    public static let console = Color(nsColor: NSColor.duoDynamic(light: 0x15171B, dark: 0x0C0D10, classic: 0x1A1410, name: "console"))
     /// Rules on the console
-    public static let consoleRule = Color(nsColor: NSColor.duoDynamic(light: 0x2B2F36, dark: 0x24272D, name: "consoleRule"))
+    public static let consoleRule = Color(nsColor: NSColor.duoDynamic(light: 0x2B2F36, dark: 0x24272D, classic: 0x352D23, name: "consoleRule"))
     /// Behind a console tab while its right-click menu is open, stronger than consoleHover (Q-147, undrawn stand-in)
-    public static let consoleMenuTarget = Color(nsColor: NSColor.duoDynamic(light: 0x2D3138, dark: 0x262A30, name: "consoleMenuTarget"))
+    public static let consoleMenuTarget = Color(nsColor: NSColor.duoDynamic(light: 0x2D3138, dark: 0x262A30, classic: 0x352D23, name: "consoleMenuTarget"))
     /// Behind a console or Home tab under the pointer, holding its × and name (DL-134)
-    public static let consoleHover = Color(nsColor: NSColor.duoDynamic(light: 0x202329, dark: 0x17191D, name: "consoleHover"))
+    public static let consoleHover = Color(nsColor: NSColor.duoDynamic(light: 0x202329, dark: 0x17191D, classic: 0x26201A, name: "consoleHover"))
     /// Text on the console, terminal foreground
-    public static let consoleText = Color(nsColor: NSColor.duoDynamic(light: 0xE6E8EB, dark: 0xE6E8EB, name: "consoleText"))
+    public static let consoleText = Color(nsColor: NSColor.duoDynamic(light: 0xE6E8EB, dark: 0xE6E8EB, classic: 0xF0E9D6, name: "consoleText"))
     /// Secondary text and inactive tabs on the console
-    public static let consoleText2 = Color(nsColor: NSColor.duoDynamic(light: 0x9AA1AB, dark: 0x9AA1AB, name: "consoleText2"))
+    public static let consoleText2 = Color(nsColor: NSColor.duoDynamic(light: 0x9AA1AB, dark: 0x9AA1AB, classic: 0x8A7E66, name: "consoleText2"))
     /// Needs-you glyph on the console
-    public static let needsYouOnConsole = Color(nsColor: NSColor.duoDynamic(light: 0xF97316, dark: 0xF97316, name: "needsYouOnConsole"))
+    public static let needsYouOnConsole = Color(nsColor: NSColor.duoDynamic(light: 0xF97316, dark: 0xF97316, classic: 0xDC2626, name: "needsYouOnConsole"))
+    /// The active-pane rule over a dark console (consoleText today).
+    public static let paneFocusOnConsole = Color(nsColor: NSColor.duoDynamic(light: 0xE6E8EB, dark: 0xE6E8EB, classic: 0xE08F4A, name: "paneFocusOnConsole"))
     /// Placeholder in the targets; not built
-    public static let placeholderBarOnConsole = Color(nsColor: NSColor.duoDynamic(light: 0x2F333A, dark: 0x24272D, name: "placeholderBarOnConsole"))
+    public static let placeholderBarOnConsole = Color(nsColor: NSColor.duoDynamic(light: 0x2F333A, dark: 0x24272D, classic: 0x26201A, name: "placeholderBarOnConsole"))
     /// In the targets only: stands for the TUI's own input box, which Claude Code draws
-    public static let tuiInputBorder = Color(nsColor: NSColor.duoDynamic(light: 0x4A4F57, dark: 0x3F444C, name: "tuiInputBorder"))
+    public static let tuiInputBorder = Color(nsColor: NSColor.duoDynamic(light: 0x4A4F57, dark: 0x3F444C, classic: 0x5A5142, name: "tuiInputBorder"))
 }
 
 public enum DuoNSColor {
-    public static let ground = NSColor.duoDynamic(light: 0xF3F4F6, dark: 0x131518, name: "ground")
-    public static let pane = NSColor.duoDynamic(light: 0xFFFFFF, dark: 0x181A1E, name: "pane")
-    public static let selected = NSColor.duoDynamic(light: 0xE9ECEF, dark: 0x262A30, name: "selected")
-    public static let claudeEdit = NSColor.duoDynamic(light: 0xD6EDDC, dark: 0x1F3A28, name: "claudeEdit")
-    public static let menuTarget = NSColor.duoDynamic(light: 0xD8DCE1, dark: 0x2E3238, name: "menuTarget")
-    public static let rule = NSColor.duoDynamic(light: 0xC9CDD3, dark: 0x2B2F36, name: "rule")
-    public static let controlEdge = NSColor.duoDynamic(light: 0x8B939C, dark: 0x6E7681, name: "controlEdge")
-    public static let text = NSColor.duoDynamic(light: 0x1F2328, dark: 0xE6E8EB, name: "text")
-    public static let text2 = NSColor.duoDynamic(light: 0x5B636D, dark: 0x9AA1AB, name: "text2")
-    public static let needsYou = NSColor.duoDynamic(light: 0xC2410C, dark: 0xF97316, name: "needsYou")
-    public static let onNeedsYou = NSColor.duoDynamic(light: 0xFFFFFF, dark: 0x0C0D10, name: "onNeedsYou")
-    public static let placeholderBar = NSColor.duoDynamic(light: 0xD5D9DE, dark: 0x2B2F36, name: "placeholderBar")
-    public static let placeholderBarOnSelected = NSColor.duoDynamic(light: 0xC3C8CE, dark: 0x363B42, name: "placeholderBarOnSelected")
-    public static let scrim = NSColor.duoDynamic(light: 0x1F2328, dark: 0x000000, name: "scrim", lightAlpha: 0.32, darkAlpha: 0.55)
-    public static let activeTint = NSColor.duoDynamic(light: 0xE8F0FA, dark: 0x18222E, name: "activeTint")
-    public static let chatGround = NSColor.duoDynamic(light: 0xF3F4F6, dark: 0x0C0D10, name: "chatGround")
-    public static let chatYou = NSColor.duoDynamic(light: 0xDCE6F7, dark: 0x22344F, name: "chatYou")
-    public static let diffAddFill = NSColor.duoDynamic(light: 0xE6F4EA, dark: 0x15291C, name: "diffAddFill")
-    public static let diffAddText = NSColor.duoDynamic(light: 0x2F7D32, dark: 0x7CC98A, name: "diffAddText")
-    public static let diffDelFill = NSColor.duoDynamic(light: 0xFDECEA, dark: 0x331A1D, name: "diffDelFill")
-    public static let diffDelText = NSColor.duoDynamic(light: 0xB42318, dark: 0xF2959E, name: "diffDelText")
-    public static let toolErrorEdge = NSColor.duoDynamic(light: 0xF4C7C1, dark: 0x5E2A30, name: "toolErrorEdge")
-    public static let toolOutputFill = NSColor.duoDynamic(light: 0xF8F9FA, dark: 0x131518, name: "toolOutputFill")
-    public static let reviewAuthor1 = NSColor.duoDynamic(light: 0xB0244F, dark: 0xF38BA8, name: "reviewAuthor1")
-    public static let reviewAuthor2 = NSColor.duoDynamic(light: 0x1D5FA8, dark: 0x7FB0EE, name: "reviewAuthor2")
-    public static let reviewAuthor3 = NSColor.duoDynamic(light: 0x2E7A3A, dark: 0x7CC98A, name: "reviewAuthor3")
-    public static let reviewAuthor4 = NSColor.duoDynamic(light: 0x7B3FB5, dark: 0xC39BEB, name: "reviewAuthor4")
-    public static let reviewAuthor5 = NSColor.duoDynamic(light: 0x9A5A00, dark: 0xE0A64A, name: "reviewAuthor5")
-    public static let commentHighlight = NSColor.duoDynamic(light: 0xFBE7A1, dark: 0x4F4112, name: "commentHighlight")
-    public static let commentHighlightActive = NSColor.duoDynamic(light: 0xF5D565, dark: 0x6B5A1A, name: "commentHighlightActive")
-    public static let console = NSColor.duoDynamic(light: 0x15171B, dark: 0x0C0D10, name: "console")
-    public static let consoleRule = NSColor.duoDynamic(light: 0x2B2F36, dark: 0x24272D, name: "consoleRule")
-    public static let consoleMenuTarget = NSColor.duoDynamic(light: 0x2D3138, dark: 0x262A30, name: "consoleMenuTarget")
-    public static let consoleHover = NSColor.duoDynamic(light: 0x202329, dark: 0x17191D, name: "consoleHover")
-    public static let consoleText = NSColor.duoDynamic(light: 0xE6E8EB, dark: 0xE6E8EB, name: "consoleText")
-    public static let consoleText2 = NSColor.duoDynamic(light: 0x9AA1AB, dark: 0x9AA1AB, name: "consoleText2")
-    public static let needsYouOnConsole = NSColor.duoDynamic(light: 0xF97316, dark: 0xF97316, name: "needsYouOnConsole")
-    public static let placeholderBarOnConsole = NSColor.duoDynamic(light: 0x2F333A, dark: 0x24272D, name: "placeholderBarOnConsole")
-    public static let tuiInputBorder = NSColor.duoDynamic(light: 0x4A4F57, dark: 0x3F444C, name: "tuiInputBorder")
+    public static let ground = NSColor.duoDynamic(light: 0xF3F4F6, dark: 0x131518, classic: 0xF0E9D6, name: "ground")
+    public static let pane = NSColor.duoDynamic(light: 0xFFFFFF, dark: 0x181A1E, classic: 0xFBF8EE, name: "pane")
+    public static let selected = NSColor.duoDynamic(light: 0xE9ECEF, dark: 0x262A30, classic: 0xF2D9B8, name: "selected")
+    public static let claudeEdit = NSColor.duoDynamic(light: 0xD6EDDC, dark: 0x1F3A28, classic: 0xD6EDDC, name: "claudeEdit")
+    public static let menuTarget = NSColor.duoDynamic(light: 0xD8DCE1, dark: 0x2E3238, classic: 0xD4C8A6, name: "menuTarget")
+    public static let rule = NSColor.duoDynamic(light: 0xC9CDD3, dark: 0x2B2F36, classic: 0xD4C8A6, name: "rule")
+    public static let controlEdge = NSColor.duoDynamic(light: 0x8B939C, dark: 0x6E7681, classic: 0xB8AB8E, name: "controlEdge")
+    public static let text = NSColor.duoDynamic(light: 0x1F2328, dark: 0xE6E8EB, classic: 0x1A1410, name: "text")
+    public static let text2 = NSColor.duoDynamic(light: 0x5B636D, dark: 0x9AA1AB, classic: 0x7B6F58, name: "text2")
+    public static let needsYou = NSColor.duoDynamic(light: 0xC2410C, dark: 0xF97316, classic: 0xB91C1C, name: "needsYou")
+    public static let paneFocus = NSColor.duoDynamic(light: 0x1F2328, dark: 0xE6E8EB, classic: 0xC66A2E, name: "paneFocus")
+    public static let onNeedsYou = NSColor.duoDynamic(light: 0xFFFFFF, dark: 0x0C0D10, classic: 0xFFFFFF, name: "onNeedsYou")
+    public static let placeholderBar = NSColor.duoDynamic(light: 0xD5D9DE, dark: 0x2B2F36, classic: 0xE5DCC1, name: "placeholderBar")
+    public static let placeholderBarOnSelected = NSColor.duoDynamic(light: 0xC3C8CE, dark: 0x363B42, classic: 0xD4C8A6, name: "placeholderBarOnSelected")
+    public static let scrim = NSColor.duoDynamic(light: 0x1F2328, dark: 0x000000, classic: 0x1A1410, name: "scrim", lightAlpha: 0.32, darkAlpha: 0.55)
+    public static let activeTint = NSColor.duoDynamic(light: 0xE8F0FA, dark: 0x18222E, classic: 0xF0E9D6, name: "activeTint")
+    public static let chatGround = NSColor.duoDynamic(light: 0xF3F4F6, dark: 0x0C0D10, classic: 0xF0E9D6, name: "chatGround")
+    public static let chatYou = NSColor.duoDynamic(light: 0xDCE6F7, dark: 0x22344F, classic: 0xF2D9B8, name: "chatYou")
+    public static let diffAddFill = NSColor.duoDynamic(light: 0xE6F4EA, dark: 0x15291C, classic: 0xE6F4EA, name: "diffAddFill")
+    public static let diffAddText = NSColor.duoDynamic(light: 0x2F7D32, dark: 0x7CC98A, classic: 0x2F7D32, name: "diffAddText")
+    public static let diffDelFill = NSColor.duoDynamic(light: 0xFDECEA, dark: 0x331A1D, classic: 0xFDECEA, name: "diffDelFill")
+    public static let diffDelText = NSColor.duoDynamic(light: 0xB42318, dark: 0xF2959E, classic: 0xB42318, name: "diffDelText")
+    public static let toolErrorEdge = NSColor.duoDynamic(light: 0xF4C7C1, dark: 0x5E2A30, classic: 0xF4C7C1, name: "toolErrorEdge")
+    public static let toolOutputFill = NSColor.duoDynamic(light: 0xF8F9FA, dark: 0x131518, classic: 0xF0E9D6, name: "toolOutputFill")
+    public static let reviewAuthor1 = NSColor.duoDynamic(light: 0xB0244F, dark: 0xF38BA8, classic: 0xB0244F, name: "reviewAuthor1")
+    public static let reviewAuthor2 = NSColor.duoDynamic(light: 0x1D5FA8, dark: 0x7FB0EE, classic: 0x1D5FA8, name: "reviewAuthor2")
+    public static let reviewAuthor3 = NSColor.duoDynamic(light: 0x2E7A3A, dark: 0x7CC98A, classic: 0x2E7A3A, name: "reviewAuthor3")
+    public static let reviewAuthor4 = NSColor.duoDynamic(light: 0x7B3FB5, dark: 0xC39BEB, classic: 0x7B3FB5, name: "reviewAuthor4")
+    public static let reviewAuthor5 = NSColor.duoDynamic(light: 0x9A5A00, dark: 0xE0A64A, classic: 0x9A5A00, name: "reviewAuthor5")
+    public static let commentHighlight = NSColor.duoDynamic(light: 0xFBE7A1, dark: 0x4F4112, classic: 0xFBE7A1, name: "commentHighlight")
+    public static let commentHighlightActive = NSColor.duoDynamic(light: 0xF5D565, dark: 0x6B5A1A, classic: 0xF0CB6A, name: "commentHighlightActive")
+    public static let console = NSColor.duoDynamic(light: 0x15171B, dark: 0x0C0D10, classic: 0x1A1410, name: "console")
+    public static let consoleRule = NSColor.duoDynamic(light: 0x2B2F36, dark: 0x24272D, classic: 0x352D23, name: "consoleRule")
+    public static let consoleMenuTarget = NSColor.duoDynamic(light: 0x2D3138, dark: 0x262A30, classic: 0x352D23, name: "consoleMenuTarget")
+    public static let consoleHover = NSColor.duoDynamic(light: 0x202329, dark: 0x17191D, classic: 0x26201A, name: "consoleHover")
+    public static let consoleText = NSColor.duoDynamic(light: 0xE6E8EB, dark: 0xE6E8EB, classic: 0xF0E9D6, name: "consoleText")
+    public static let consoleText2 = NSColor.duoDynamic(light: 0x9AA1AB, dark: 0x9AA1AB, classic: 0x8A7E66, name: "consoleText2")
+    public static let needsYouOnConsole = NSColor.duoDynamic(light: 0xF97316, dark: 0xF97316, classic: 0xDC2626, name: "needsYouOnConsole")
+    public static let paneFocusOnConsole = NSColor.duoDynamic(light: 0xE6E8EB, dark: 0xE6E8EB, classic: 0xE08F4A, name: "paneFocusOnConsole")
+    public static let placeholderBarOnConsole = NSColor.duoDynamic(light: 0x2F333A, dark: 0x24272D, classic: 0x26201A, name: "placeholderBarOnConsole")
+    public static let tuiInputBorder = NSColor.duoDynamic(light: 0x4A4F57, dark: 0x3F444C, classic: 0x5A5142, name: "tuiInputBorder")
 }
 
 /// Radii, borders and fixed sizes (handoff §4.3), in points.
@@ -342,14 +348,17 @@ public enum DuoSpace {
     public static let gapAboveDocumentHeading: CGFloat = 4.0
 }
 
-/// The terminal's colours (surfaces-handoff DB-2): the 16 ANSI colours, an Increase Contrast set,
-/// cursor and selection. Contrast is against `console`.
+/// One scheme's terminal colours (surfaces-handoff DB-2): the 16 ANSI colours, an Increase Contrast set, cursor and selection.
+public struct DuoTerminalColors: Sendable {
+    public let ansi: [NSColor], ansiIncreaseContrast: [NSColor], cursor: NSColor, textUnderCursor: NSColor, selection: NSColor
+}
+
+/// The terminal's colours per scheme. `terminal` in tokens.json is the base; `terminal.scheme.<name>` overrides parts of it for
+/// that scheme (a scheme with no entry takes the base). Contrast is against `console`. `DuoScheme.palette` picks one.
 public enum DuoTerminalPalette {
-    public static let ansi: [NSColor] = [.duoFixed(0x2B2F36), .duoFixed(0xE27A85), .duoFixed(0x8CC08A), .duoFixed(0xD6C26B), .duoFixed(0x7FA8E6), .duoFixed(0xC792D8), .duoFixed(0x74C2C9), .duoFixed(0xC9CDD3), .duoFixed(0x7D8590), .duoFixed(0xF09AA3), .duoFixed(0xA9D7A6), .duoFixed(0xE8D98E), .duoFixed(0xA4C3F3), .duoFixed(0xDAB1E7), .duoFixed(0x9BDBE0), .duoFixed(0xFFFFFF)]
-    public static let ansiIncreaseContrast: [NSColor] = [.duoFixed(0x4A4F57), .duoFixed(0xF09AA3), .duoFixed(0xA9D7A6), .duoFixed(0xE8D98E), .duoFixed(0xA4C3F3), .duoFixed(0xDAB1E7), .duoFixed(0x9BDBE0), .duoFixed(0xE6E8EB), .duoFixed(0x9AA1AB), .duoFixed(0xF8BDC3), .duoFixed(0xC6E6C3), .duoFixed(0xF2E5B4), .duoFixed(0xC3D8F8), .duoFixed(0xE8CDF0), .duoFixed(0xBEE9EC), .duoFixed(0xFFFFFF)]
-    public static let cursor = NSColor.duoFixed(0xE6E8EB)
-    public static let textUnderCursor = NSColor.duoFixed(0x15171B)
-    public static let selection = NSColor.duoFixed(0x3A4250)
+    public static let light = DuoTerminalColors(ansi: [.duoFixed(0x2B2F36), .duoFixed(0xE27A85), .duoFixed(0x8CC08A), .duoFixed(0xD6C26B), .duoFixed(0x7FA8E6), .duoFixed(0xC792D8), .duoFixed(0x74C2C9), .duoFixed(0xC9CDD3), .duoFixed(0x7D8590), .duoFixed(0xF09AA3), .duoFixed(0xA9D7A6), .duoFixed(0xE8D98E), .duoFixed(0xA4C3F3), .duoFixed(0xDAB1E7), .duoFixed(0x9BDBE0), .duoFixed(0xFFFFFF)], ansiIncreaseContrast: [.duoFixed(0x4A4F57), .duoFixed(0xF09AA3), .duoFixed(0xA9D7A6), .duoFixed(0xE8D98E), .duoFixed(0xA4C3F3), .duoFixed(0xDAB1E7), .duoFixed(0x9BDBE0), .duoFixed(0xE6E8EB), .duoFixed(0x9AA1AB), .duoFixed(0xF8BDC3), .duoFixed(0xC6E6C3), .duoFixed(0xF2E5B4), .duoFixed(0xC3D8F8), .duoFixed(0xE8CDF0), .duoFixed(0xBEE9EC), .duoFixed(0xFFFFFF)], cursor: NSColor.duoFixed(0xE6E8EB), textUnderCursor: NSColor.duoFixed(0x15171B), selection: NSColor.duoFixed(0x3A4250))
+    public static let dark = DuoTerminalColors(ansi: [.duoFixed(0x2B2F36), .duoFixed(0xE27A85), .duoFixed(0x8CC08A), .duoFixed(0xD6C26B), .duoFixed(0x7FA8E6), .duoFixed(0xC792D8), .duoFixed(0x74C2C9), .duoFixed(0xC9CDD3), .duoFixed(0x7D8590), .duoFixed(0xF09AA3), .duoFixed(0xA9D7A6), .duoFixed(0xE8D98E), .duoFixed(0xA4C3F3), .duoFixed(0xDAB1E7), .duoFixed(0x9BDBE0), .duoFixed(0xFFFFFF)], ansiIncreaseContrast: [.duoFixed(0x4A4F57), .duoFixed(0xF09AA3), .duoFixed(0xA9D7A6), .duoFixed(0xE8D98E), .duoFixed(0xA4C3F3), .duoFixed(0xDAB1E7), .duoFixed(0x9BDBE0), .duoFixed(0xE6E8EB), .duoFixed(0x9AA1AB), .duoFixed(0xF8BDC3), .duoFixed(0xC6E6C3), .duoFixed(0xF2E5B4), .duoFixed(0xC3D8F8), .duoFixed(0xE8CDF0), .duoFixed(0xBEE9EC), .duoFixed(0xFFFFFF)], cursor: NSColor.duoFixed(0xE6E8EB), textUnderCursor: NSColor.duoFixed(0x15171B), selection: NSColor.duoFixed(0x3A4250))
+    public static let classic = DuoTerminalColors(ansi: [.duoFixed(0x26201A), .duoFixed(0xD9694F), .duoFixed(0x86A65D), .duoFixed(0xD4A24A), .duoFixed(0x6F95B5), .duoFixed(0xB581A3), .duoFixed(0x74A89F), .duoFixed(0xC8BD9E), .duoFixed(0x7B6F58), .duoFixed(0xE9836B), .duoFixed(0x9DBA73), .duoFixed(0xE5B765), .duoFixed(0x8DAEC8), .duoFixed(0xC997B5), .duoFixed(0x88BBB1), .duoFixed(0xFBF8EE)], ansiIncreaseContrast: [.duoFixed(0x4A4F57), .duoFixed(0xF09AA3), .duoFixed(0xA9D7A6), .duoFixed(0xE8D98E), .duoFixed(0xA4C3F3), .duoFixed(0xDAB1E7), .duoFixed(0x9BDBE0), .duoFixed(0xE6E8EB), .duoFixed(0x9AA1AB), .duoFixed(0xF8BDC3), .duoFixed(0xC6E6C3), .duoFixed(0xF2E5B4), .duoFixed(0xC3D8F8), .duoFixed(0xE8CDF0), .duoFixed(0xBEE9EC), .duoFixed(0xFFFFFF)], cursor: NSColor.duoFixed(0xC66A2E), textUnderCursor: NSColor.duoFixed(0x1A1410), selection: NSColor.duoFixed(0x3F2A18))
 }
 
 /// Type styles (handoff §4.2).
@@ -517,6 +526,24 @@ public enum DuoMotionToken: String, CaseIterable, Sendable {
     }
 }
 
+/// SF Symbol and glyph sizes (style-audit fix list 9): `.font(.system(size: DuoSymbolSize.x))`.
+public enum DuoSymbolSize {
+    public static let chevronSmall: CGFloat = 8.0
+    public static let chevron: CGFloat = 9.0
+    public static let modeGlyph: CGFloat = 9.0
+    public static let searchIcon: CGFloat = 10.0
+    public static let toolbarGlyph: CGFloat = 11.0
+    public static let barIcon: CGFloat = 12.0
+    public static let toolbarIcon: CGFloat = 14.0
+    public static let badgeNumber: CGFloat = 10.0
+}
+
+/// State strengths (style-audit fix list 7): the one place an opacity is a convention.
+public enum DuoOpacity {
+    public static let disabled: Double = 0.5
+    public static let pressed: Double = 0.2
+}
+
 /// The popover shadow (handoff §4.5): search, the action menu, the idle list, drag cards.
 public enum DuoShadow {
     public static let popoverColor = Color(nsColor: NSColor.duoDynamicRGBA(light: (31, 35, 40, 0.22), dark: (0, 0, 0, 0.5), name: "popoverShadow"))
@@ -525,7 +552,7 @@ public enum DuoShadow {
     public static let popoverX: CGFloat = 0.0
     public static let popoverY: CGFloat = 12.0
     /// A console tab lifted by a drag (DL-220): the popover's shape on the dark console.
-    public static let consoleLiftColor = Color(.sRGB, red: 0/255, green: 0/255, blue: 0/255, opacity: 0.5)
+    public static let consoleLiftColor = Color(nsColor: NSColor.duoDynamicRGBA(light: (0, 0, 0, 0.5), dark: (0, 0, 0, 0.5), name: "consoleLiftShadow"))
     public static let consoleLiftRadius: CGFloat = 16.0
     public static let consoleLiftY: CGFloat = 12.0
     /// Dashed borders (New project tile, drop targets): on, off.
@@ -549,4 +576,111 @@ public enum DuoGlyphPath {
     public static let working = "<circle cx='5' cy='5' r='4.2' fill='none' stroke-width='1.5'/>"
     public static let idle = "<path d='M1 5h8' fill='none' stroke-width='1.6' stroke-linecap='round'/>"
     public static let resolved = "<path d='M1.5 5.4 4 7.8 8.5 2.4' fill='none' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/>"
+}
+
+/// What web pages (the editor, the Word and deck viewers) get as CSS variables: every colour, the radii, the faces, the
+/// document's type and the type sizes. Generated, so a token reaches the web without anyone listing it by hand.
+public enum DuoWebTokens {
+    public static let colors: [(name: String, color: NSColor)] = [
+        ("ground", DuoNSColor.ground),
+        ("pane", DuoNSColor.pane),
+        ("selected", DuoNSColor.selected),
+        ("claude-edit", DuoNSColor.claudeEdit),
+        ("menu-target", DuoNSColor.menuTarget),
+        ("rule", DuoNSColor.rule),
+        ("control-edge", DuoNSColor.controlEdge),
+        ("text", DuoNSColor.text),
+        ("text2", DuoNSColor.text2),
+        ("needs-you", DuoNSColor.needsYou),
+        ("pane-focus", DuoNSColor.paneFocus),
+        ("on-needs-you", DuoNSColor.onNeedsYou),
+        ("placeholder-bar", DuoNSColor.placeholderBar),
+        ("placeholder-bar-on-selected", DuoNSColor.placeholderBarOnSelected),
+        ("scrim", DuoNSColor.scrim),
+        ("active-tint", DuoNSColor.activeTint),
+        ("chat-ground", DuoNSColor.chatGround),
+        ("chat-you", DuoNSColor.chatYou),
+        ("diff-add-fill", DuoNSColor.diffAddFill),
+        ("diff-add-text", DuoNSColor.diffAddText),
+        ("diff-del-fill", DuoNSColor.diffDelFill),
+        ("diff-del-text", DuoNSColor.diffDelText),
+        ("tool-error-edge", DuoNSColor.toolErrorEdge),
+        ("tool-output-fill", DuoNSColor.toolOutputFill),
+        ("review-1", DuoNSColor.reviewAuthor1),
+        ("review-2", DuoNSColor.reviewAuthor2),
+        ("review-3", DuoNSColor.reviewAuthor3),
+        ("review-4", DuoNSColor.reviewAuthor4),
+        ("review-5", DuoNSColor.reviewAuthor5),
+        ("comment-highlight", DuoNSColor.commentHighlight),
+        ("comment-highlight-active", DuoNSColor.commentHighlightActive),
+        ("console", DuoNSColor.console),
+        ("console-rule", DuoNSColor.consoleRule),
+        ("console-menu-target", DuoNSColor.consoleMenuTarget),
+        ("console-hover", DuoNSColor.consoleHover),
+        ("console-text", DuoNSColor.consoleText),
+        ("console-text2", DuoNSColor.consoleText2),
+        ("needs-you-on-console", DuoNSColor.needsYouOnConsole),
+        ("pane-focus-on-console", DuoNSColor.paneFocusOnConsole),
+        ("placeholder-bar-on-console", DuoNSColor.placeholderBarOnConsole),
+        ("tui-input-border", DuoNSColor.tuiInputBorder),
+    ]
+    public static let fonts: [(name: String, css: String)] = [
+        ("font-ui", "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif"),
+        ("font-mono", "ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace"),
+        ("font-serif", "ui-serif, 'New York', Charter, Georgia, serif"),
+    ]
+    /// The document's type (font.document), by scheme: a key into `fonts`, sizes in points, the heading weight.
+    public struct DuoDocumentType: Sendable {
+        public let family: String; public let size: CGFloat; public let lineHeight: CGFloat; public let headingWeight: Int
+        public let h1Size: CGFloat; public let h1Line: CGFloat; public let h2Size: CGFloat
+    }
+    public static let documentLight = DuoDocumentType(family: "font-ui", size: 13.0, lineHeight: 20.0, headingWeight: 600, h1Size: 18.0, h1Line: 24.0, h2Size: 14.0)
+    public static let documentDark = DuoDocumentType(family: "font-ui", size: 13.0, lineHeight: 20.0, headingWeight: 600, h1Size: 18.0, h1Line: 24.0, h2Size: 14.0)
+    public static let documentClassic = DuoDocumentType(family: "font-serif", size: 16.0, lineHeight: 27.0, headingWeight: 500, h1Size: 28.0, h1Line: 36.0, h2Size: 21.0)
+    /// Scalar radii in points, as `--duo-radius-<name>`.
+    public static let radii: [(name: String, value: CGFloat)] = [
+        ("control", 6.0),
+        ("card", 6.0),
+        ("selection", 6.0),
+        ("field", 6.0),
+        ("pill", 9.0),
+        ("popover", 10.0),
+        ("placeholder-bar", 3.0),
+        ("review-card", 14.0),
+        ("composer", 12.0),
+        ("chat-inline-code", 4.0),
+        ("chat-step-body", 8.0),
+        ("chat-code-block", 10.0),
+        ("chat-checkbox", 3.0),
+        ("chat-preview-code", 6.0),
+        ("chat-thumb", 8.0),
+    ]
+    /// Type styles, as `--duo-size-<name>` and `--duo-line-<name>` in points.
+    public static let sizes: [(name: String, size: CGFloat, line: CGFloat)] = [
+        ("body", 13.0, 20.0),
+        ("body-emphasis", 13.0, 20.0),
+        ("title", 14.0, 20.0),
+        ("heading1", 18.0, 24.0),
+        ("control", 12.0, 16.0),
+        ("chip", 12.0, 20.0),
+        ("section-label", 11.0, 16.0),
+        ("pill", 11.0, 16.0),
+        ("mono", 12.0, 19.0),
+        ("mono-active-tab", 12.0, 19.0),
+        ("mono-path", 11.0, 20.0),
+        ("search-field", 17.0, 24.0),
+        ("chat-body", 14.0, 22.0),
+        ("chat-body-emphasis", 14.0, 22.0),
+        ("chat-heading", 16.0, 24.0),
+        ("chat-heading1", 18.0, 26.0),
+        ("chat-heading3", 14.0, 22.0),
+        ("chat-meta", 12.0, 16.0),
+        ("chat-inline-code", 12.5, 22.0),
+        ("chat-diff", 11.5, 18.0),
+        ("chat-preview", 10.5, 14.0),
+        ("chat-plan-heading", 15.0, 22.0),
+        ("card-title", 13.0, 18.0),
+    ]
+    public static let documentPaddingY: CGFloat = 22.0
+    public static let documentPaddingX: CGFloat = 28.0
 }

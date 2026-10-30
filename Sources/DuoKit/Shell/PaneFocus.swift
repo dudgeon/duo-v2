@@ -2,8 +2,8 @@ import AppKit
 import SwiftUI
 
 /// The mark of the active pane (DL-165, option A): a 2 pt rule across the top edge of the pane,
-/// drawn over the top of its tab strip or header so nothing moves. `consoleText` on a dark console,
-/// `text` on a light pane. Always shown, whether or not the window is key.
+/// drawn over the top of its tab strip or header so nothing moves. `paneFocusOnConsole` on a dark console,
+/// `paneFocus` on a light pane (the text colours, until a scheme gives it its own: Classic's orange). Always shown, whether or not the window is key.
 struct PaneFocusRule: View {
     @Environment(AppModel.self) private var model
     let pane: DuoPane
@@ -14,7 +14,7 @@ struct PaneFocusRule: View {
         if model.activePane == pane {
             let light = pane == .left ? model.homeShowsChat : model.consoleShowsChat
             let dark = onConsole && !light
-            (dark ? DuoColor.consoleText : DuoColor.text)
+            (dark ? DuoColor.paneFocusOnConsole : DuoColor.paneFocus)
                 .frame(height: DuoMetric.borderPaneFocusRule)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 .allowsHitTesting(false)

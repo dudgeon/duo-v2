@@ -177,12 +177,12 @@ private struct DefaultSheetButtonBody: View {
     var body: some View {
         configuration.label
             .duoText(.control, weight: .semibold)
-            .foregroundStyle(enabled ? DuoColor.text : DuoColor.text2.opacity(0.5))
+            .foregroundStyle(enabled ? DuoColor.text : DuoColor.text2.opacity(DuoOpacity.disabled))
             .lineLimit(1)
             .padding(.horizontal, DuoSpace.buttonPadding.leading + DuoMetric.borderHairline)
             .padding(.vertical, DuoSpace.buttonPadding.top + DuoMetric.borderHairline)
             .background(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).fill(configuration.isPressed ? DuoColor.selected : DuoColor.pane))
-            .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).strokeBorder(enabled ? DuoColor.text : DuoColor.controlEdge.opacity(0.5), lineWidth: DuoMetric.borderHairline))
+            .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).strokeBorder(enabled ? DuoColor.text : DuoColor.controlEdge.opacity(DuoOpacity.disabled), lineWidth: DuoMetric.borderHairline))
             .contentShape(Rectangle())
     }
 }

@@ -5,6 +5,7 @@
 // Needs playwright-core (NODE_PATH) with Chromium headless shell and WebKit installed.
 import fs from "fs";
 import { createRequire } from "module";
+import { addTypeVars } from "./editor-vars.mjs";
 const require = createRequire(import.meta.url);
 const { chromium, webkit } = require("playwright-core");
 const dist = (process.argv[2] || "Vendor/codemirror/dist").replace(/^(?!\/)/, process.cwd() + "/");
@@ -46,6 +47,7 @@ async function run(name, launch) {
   const page = await b.newPage({ viewport: { width: 460, height: 640 }, deviceScaleFactor: 2 });
   await page.addInitScript(() => { window.duoFlags = { noPost: true }; });
   await page.goto("file://" + dist + "/editor.html");
+  await addTypeVars(page);
   await page.evaluate((t) => document.documentElement.setAttribute("style", t), tokens);
   const dom = () => page.evaluate(() => ({
     table: !!document.querySelector(".duo-table"), figure: !!document.querySelector(".duo-figure"), props: !!document.querySelector(".duo-fm-head"),

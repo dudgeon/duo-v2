@@ -406,12 +406,12 @@ export const reviewTheme = EditorView.baseTheme({
   ".duo-rv-hl:hover": { backgroundColor: "var(--duo-comment-highlight-active)" },
   ".duo-rv-closed": { textDecoration: "underline dotted var(--duo-control-edge)", textDecorationThickness: "1.5px", textUnderlineOffset: "3px" },
   ".duo-rv-bar": { boxShadow: "inset 2px 0 0 var(--duo-text2)" },
-  ".duo-rv-tip": { backgroundColor: "var(--duo-pane)", border: "none !important", borderRadius: "10px", boxShadow: "var(--duo-shadow)", padding: "6px 10px 8px", font: "12px/16px -apple-system, sans-serif", color: "var(--duo-text)", maxWidth: "260px" },
+  ".duo-rv-tip": { backgroundColor: "var(--duo-pane)", border: "none !important", borderRadius: "10px", boxShadow: "var(--duo-shadow-popover)", padding: "6px 10px 8px", font: "12px/16px var(--duo-font-ui)", color: "var(--duo-text)", maxWidth: "260px" },
   ".duo-rv-tip-head": { color: "var(--duo-text2)" },
   ".duo-rv-who": { fontWeight: "600" },
   ".duo-rv-tip-note": { color: "var(--duo-text)", marginTop: "4px" },
   ".duo-rv-tip-row": { display: "flex", gap: "6px", marginTop: "6px" },
-  ".duo-rv-btn": { font: "12px/16px -apple-system, sans-serif", padding: "4px 10px", border: "1px solid var(--duo-control-edge)", borderRadius: "6px", backgroundColor: "var(--duo-pane)", color: "var(--duo-text)", cursor: "default" },
+  ".duo-rv-btn": { font: "12px/16px var(--duo-font-ui)", padding: "4px 10px", border: "1px solid var(--duo-control-edge)", borderRadius: "6px", backgroundColor: "var(--duo-pane)", color: "var(--duo-text)", cursor: "default" },
 });
 
 // Always on: the parse, the switch and the signing of edits. Drawing is the live preview's (`reviewDrawing`).

@@ -374,7 +374,7 @@ struct LaneMenu: View {
 
     var body: some View {
         Menu { LaneMenuItems(project: project, lane: lane) } label: {
-            Text("···").font(.system(size: 11, weight: .bold)).foregroundStyle(DuoColor.text2)
+            Text("···").font(.system(size: DuoTextStyle.pill.spec.size, weight: .bold)).foregroundStyle(DuoColor.text2)
                 .frame(width: 22, height: 18)
                 .background(RoundedRectangle(cornerRadius: 4).fill(DuoColor.selected))
         }
@@ -669,7 +669,7 @@ struct CardSessions: View {
         VStack(alignment: .leading, spacing: DuoMetric.taskBoardSessionRowGap) {
             HStack(spacing: 5) {
                 BoardGlyph(.bubble)
-                Text("Sessions").font(.system(size: 11)).foregroundStyle(DuoColor.text2)
+                Text("Sessions").font(.system(size: DuoTextStyle.pill.spec.size)).foregroundStyle(DuoColor.text2)
             }
             .frame(height: 14)
             .padding(.leading, 2)

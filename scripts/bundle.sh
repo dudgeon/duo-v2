@@ -41,6 +41,7 @@ else
   icon="AppIconDev"; name="Duo Dev"
 fi
 cp "$root/docs/design/icon-handoff/$icon.icns" "$app/Contents/Resources/AppIcon.icns"
+cp "$root/docs/design/icon-handoff/AppIconClassic.icns" "$app/Contents/Resources/AppIconClassic.icns"   # the Dock icon while Appearance is Classic (DL-252)
 cp "$root/docs/design/build-handoff/fixture.json" "$app/Contents/Resources/fixture.json"
 cp "$root/docs/design/many-projects-handoff/fixture.json" "$app/Contents/Resources/fixture-many.json"
 rm -rf "$app/Contents/Resources/chat-fixtures"

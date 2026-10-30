@@ -121,8 +121,8 @@ export function attachAtMenu(field, card, onInput, people) {
 // The popover's shadow and ring are composer-at's; the page's --duo-shadow is only the colour.
 export const atTheme = {
   ".duo-mg-at": { position: "absolute", zIndex: "5", boxSizing: "border-box", backgroundColor: "var(--duo-pane)", borderRadius: "10px", boxShadow: "0 8px 24px var(--duo-shadow), 0 0 0 1px color-mix(in srgb, var(--duo-text) 8%, transparent)", padding: "5px" },
-  ".duo-mg-at-row": { display: "flex", alignItems: "center", gap: "8px", padding: "4px 10px", borderRadius: "6px", font: "13px/20px -apple-system, BlinkMacSystemFont, sans-serif", cursor: "default" },
+  ".duo-mg-at-row": { display: "flex", alignItems: "center", gap: "8px", padding: "4px 10px", borderRadius: "6px", font: "13px/20px var(--duo-font-ui)", cursor: "default" },
   ".duo-mg-at-sel": { backgroundColor: "var(--duo-selected)" },
-  ".duo-mg-at-name": { fontFamily: "'SF Mono', ui-monospace, monospace", fontSize: "12px" },
+  ".duo-mg-at-name": { fontFamily: "var(--duo-font-mono)", fontSize: "12px" },
   ".duo-mg-at-hint": { color: "var(--duo-text2)", marginLeft: "auto", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: "0" },
 };

@@ -14,7 +14,10 @@ const out = process.argv[2];
 const v = (k) => dark[k].value;
 const vars = [["pane", "pane"], ["text", "text"], ["text2", "text2"], ["selected", "selected"], ["claude-edit", "claudeEdit"], ["rule", "rule"],
   ["control-edge", "controlEdge"], ["ground", "ground"], ["needs-you", "needsYou"]].map(([c, k]) => `--duo-${c}:${v(k)};`).join("")
-  + "--duo-shadow:rgba(0, 0, 0, 0.5);--duo-radius-card:8px;--duo-heading-above:4px;--duo-motion-highlight-in-ms:0;--duo-motion-highlight-out-ms:0;";
+  + `--duo-font-ui:${t.font.family.ui.css};--duo-font-mono:${t.font.family.mono.css};--duo-font-document:${t.font.family[t.font.document.family].css};`
+  + `--duo-document-size:${t.font.document.size}px;--duo-document-line:${t.font.document.lineHeight}px;--duo-document-heading-weight:${t.font.document.headingWeight};`
+  + `--duo-document-padding-y:${t.space.documentPadding.vertical}px;--duo-document-padding-x:${t.space.documentPadding.horizontal}px;`
+  + "--duo-shadow:rgba(0, 0, 0, 0.5);--duo-shadow-popover:0 12px 32px rgba(0, 0, 0, 0.5);--duo-radius-card:8px;--duo-heading-above:4px;--duo-motion-highlight-in-ms:0;--duo-motion-highlight-out-ms:0;";
 const doc = `---\ntitle: Release plan\nstatus: open\n---\n\n# Release plan\n\nCut guest-checkout abandonment 15% by Q1.\n\n- [ ] A task\n- [x] Done task\n\n| Path | Limit |\n|---|---|\n| a | 1 |\n\n\`\`\`js\nconst a = 1;\n\`\`\`\n`;
 const fails = [];
 const ok = (c, m) => { if (!c) fails.push(m); };

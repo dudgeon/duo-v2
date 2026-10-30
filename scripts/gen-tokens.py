@@ -10,7 +10,10 @@ import re
 
 root = pathlib.Path(__file__).resolve().parent.parent
 src = root / "docs/design/build-handoff/tokens.json"
+import sys
 dst = root / "Sources/DuoKit/Design/Tokens.swift"
+if "--out" in sys.argv:   # DuoChecks regenerates to a temp file and compares
+    dst = pathlib.Path(sys.argv[sys.argv.index("--out") + 1])
 t = json.loads(src.read_text())
 
 
@@ -24,6 +27,14 @@ def hex6(v):
 light = t["color"]["light"]
 console = t["color"]["console"]
 dark = t["color"]["dark"]   # DL-224: Dark B, "Ink"
+# A palette is complete or generation fails (style-audit fix list 10): no silent fall-back to the light value.
+classic = {k: v for k, v in t["color"]["classic"].items() if not k.startswith("$")}   # DL-252: Classic overrides, light only
+for _name in classic:
+    if _name not in light and _name not in console:
+        raise SystemExit(f"color.classic has {_name!r}, which is no colour token")
+for _name in list(light) + list(console):
+    if not _name.startswith("$") and _name not in dark:
+        raise SystemExit(f"color.dark has no value for {_name!r}")
 
 def alphas(name, spec):
     la = float(spec.get("alpha", 1))
@@ -31,9 +42,13 @@ def alphas(name, spec):
     return f", lightAlpha: {la!r}, darkAlpha: {da!r}" if (la, da) != (1.0, 1.0) else ""
 
 
+def classic_hex(name, spec):
+    return hex6(classic.get(name, {}).get("value", spec["value"]))   # a token Classic doesn't list is its light value
+
+
 def dyn(name, spec):
     d = dark.get(name, {}).get("value", spec["value"])
-    return f'NSColor.duoDynamic(light: {hex6(spec["value"])}, dark: {hex6(d)}, name: "{name}"{alphas(name, spec)})'
+    return f'NSColor.duoDynamic(light: {hex6(spec["value"])}, dark: {hex6(d)}, classic: {classic_hex(name, spec)}, name: "{name}"{alphas(name, spec)})'
 
 
 lines = []
@@ -51,7 +66,7 @@ for name, spec in light.items():
     d = dark.get(name, {}).get("value", spec["value"])
     use = spec.get("use", "")
     w(f"    /// {use}" if use else f"    /// {name}")
-    w(f"    public static let {name} = Color(nsColor: NSColor.duoDynamic(light: {hex6(spec['value'])}, dark: {hex6(d)}, name: \"{name}\"{alphas(name, spec)}))")
+    w(f"    public static let {name} = Color(nsColor: NSColor.duoDynamic(light: {hex6(spec['value'])}, dark: {hex6(d)}, classic: {classic_hex(name, spec)}, name: \"{name}\"{alphas(name, spec)}))")
 w("")
 w("    // Console chrome: light values here, and in dark the console sinks (DL-224).")
 for name, spec in console.items():
@@ -167,17 +182,34 @@ for k, v in sp["gap"].items():
     w(f"    public static let gap{k[0].upper() + k[1:]}: CGFloat = {num(v)}")
 w("}")
 w("")
-w("/// The terminal's colours (surfaces-handoff DB-2): the 16 ANSI colours, an Increase Contrast set,")
-w("/// cursor and selection. Contrast is against `console`.")
+w("/// One scheme's terminal colours (surfaces-handoff DB-2): the 16 ANSI colours, an Increase Contrast set, cursor and selection.")
+w("public struct DuoTerminalColors: Sendable {")
+w("    public let ansi: [NSColor], ansiIncreaseContrast: [NSColor], cursor: NSColor, textUnderCursor: NSColor, selection: NSColor")
+w("}")
+w("")
+w("/// The terminal's colours per scheme. `terminal` in tokens.json is the base; `terminal.scheme.<name>` overrides parts of it for")
+w("/// that scheme (a scheme with no entry takes the base). Contrast is against `console`. `DuoScheme.palette` picks one.")
 w("public enum DuoTerminalPalette {")
 tp = t["terminal"]
 order = ["black", "red", "green", "yellow", "blue", "magenta", "cyan", "white",
          "brightBlack", "brightRed", "brightGreen", "brightYellow", "brightBlue", "brightMagenta", "brightCyan", "brightWhite"]
-w("    public static let ansi: [NSColor] = [" + ", ".join(f".duoFixed({hex6(tp['ansi'][k]['value'])})" for k in order) + "]")
-w("    public static let ansiIncreaseContrast: [NSColor] = [" + ", ".join(f".duoFixed({hex6(tp['ansiIncreaseContrast'][k]['value'])})" for k in order) + "]")
-w(f"    public static let cursor = NSColor.duoFixed({hex6(tp['cursor']['value'])})")
-w(f"    public static let textUnderCursor = NSColor.duoFixed({hex6(tp['cursor']['textUnderCursor'])})")
-w(f"    public static let selection = NSColor.duoFixed({hex6(tp['selection']['value'])})")
+
+
+def terminal_colors(scheme):
+    o = tp.get("scheme", {}).get(scheme, {})
+    ansi = {**tp["ansi"], **o.get("ansi", {})}
+    hc = {**tp["ansiIncreaseContrast"], **o.get("ansiIncreaseContrast", {})}
+    cur = {**tp["cursor"], **o.get("cursor", {})}
+    sel = {**tp["selection"], **o.get("selection", {})}
+    return (
+        "[" + ", ".join(f".duoFixed({hex6(ansi[k]['value'])})" for k in order) + "]",
+        "[" + ", ".join(f".duoFixed({hex6(hc[k]['value'])})" for k in order) + "]",
+        f"NSColor.duoFixed({hex6(cur['value'])})", f"NSColor.duoFixed({hex6(cur['textUnderCursor'])})", f"NSColor.duoFixed({hex6(sel['value'])})")
+
+
+for scheme in ["light", "dark"] + [s for s in tp.get("scheme", {}) if s not in ("light", "dark")]:
+    a, hc, cur, tuc, sel = terminal_colors(scheme)
+    w(f"    public static let {scheme} = DuoTerminalColors(ansi: {a}, ansiIncreaseContrast: {hc}, cursor: {cur}, textUnderCursor: {tuc}, selection: {sel})")
 w("}")
 w("")
 w("/// Type styles (handoff §4.2).")
@@ -227,6 +259,20 @@ w("        }")
 w("    }")
 w("}")
 w("")
+w("/// SF Symbol and glyph sizes (style-audit fix list 9): `.font(.system(size: DuoSymbolSize.x))`.")
+w("public enum DuoSymbolSize {")
+for k, v in t["font"]["symbol"].items():
+    if not k.startswith("$"):
+        w(f"    public static let {k}: CGFloat = {num(v)}")
+w("}")
+w("")
+w("/// State strengths (style-audit fix list 7): the one place an opacity is a convention.")
+w("public enum DuoOpacity {")
+for k, v in t["opacity"].items():
+    if not k.startswith("$"):
+        w(f"    public static let {k}: Double = {v!r}")
+w("}")
+w("")
 w("/// The popover shadow (handoff §4.5): search, the action menu, the idle list, drag cards.")
 w("public enum DuoShadow {")
 sh = t["shadow"]["popover"]
@@ -240,7 +286,8 @@ w(f"    public static let popoverY: CGFloat = {num(sh['y'])}")
 cl = t["shadow"]["consoleLift"]   # DL-220: a console tab lifted by a drag
 m = re.fullmatch(r"rgba\((\d+),\s*(\d+),\s*(\d+),\s*([0-9.]+)\)", cl["color"].replace(" ", ""))
 w(f"    /// A console tab lifted by a drag (DL-220): the popover's shape on the dark console.")
-w(f"    public static let consoleLiftColor = Color(.sRGB, red: {int(m.group(1))}/255, green: {int(m.group(2))}/255, blue: {int(m.group(3))}/255, opacity: {float(m.group(4))!r})")
+mcd = re.fullmatch(r"rgba\((\d+),\s*(\d+),\s*(\d+),\s*([0-9.]+)\)", cl["colorDark"].replace(" ", ""))
+w(f"    public static let consoleLiftColor = Color(nsColor: NSColor.duoDynamicRGBA(light: ({m.group(1)}, {m.group(2)}, {m.group(3)}, {float(m.group(4))!r}), dark: ({mcd.group(1)}, {mcd.group(2)}, {mcd.group(3)}, {float(mcd.group(4))!r}), name: \"consoleLiftShadow\"))")
 w(f"    public static let consoleLiftRadius: CGFloat = {num(cl['blur'] / 2)}")
 w(f"    public static let consoleLiftY: CGFloat = {num(cl['y'])}")
 w(f"    /// Dashed borders (New project tile, drop targets): on, off.")
@@ -268,6 +315,62 @@ for k, v in t["glyph"].items():
 w("}")
 w("")
 
+def kebab(k):
+    m = re.fullmatch(r"reviewAuthor(\d)", k)
+    if m:
+        return f"review-{m.group(1)}"
+    return re.sub(r"([a-z0-9])([A-Z])", r"\1-\2", k).lower()
+
+
+w("/// What web pages (the editor, the Word and deck viewers) get as CSS variables: every colour, the radii, the faces, the")
+w("/// document's type and the type sizes. Generated, so a token reaches the web without anyone listing it by hand.")
+w("public enum DuoWebTokens {")
+web_colors = [k for k in list(light) + list(console) if not k.startswith("$")]
+w("    public static let colors: [(name: String, color: NSColor)] = [")
+for k in web_colors:
+    w(f'        ("{kebab(k)}", DuoNSColor.{k}),')
+w("    ]")
+fam = t["font"]["family"]
+w("    public static let fonts: [(name: String, css: String)] = [")
+for k in fam:
+    w(f'        ("font-{k}", {json.dumps(fam[k]["css"])}),')
+w("    ]")
+dc = t["font"]["document"]
+
+
+def doc_spec(scheme):
+    o = dc.get("scheme", {}).get(scheme, {})
+    pick = lambda k: o.get(k, dc[k])
+    h1 = {**dc["h1"], **o.get("h1", {})}
+    h2 = {**dc["h2"], **o.get("h2", {})}
+    return (f'DuoDocumentType(family: "font-{pick("family")}", size: {num(pick("size"))}, lineHeight: {num(pick("lineHeight"))}, '
+            f'headingWeight: {int(pick("headingWeight"))}, h1Size: {num(h1["size"])}, h1Line: {num(h1["lineHeight"])}, h2Size: {num(h2["size"])})')
+
+
+w("    /// The document's type (font.document), by scheme: a key into `fonts`, sizes in points, the heading weight.")
+w("    public struct DuoDocumentType: Sendable {")
+w("        public let family: String; public let size: CGFloat; public let lineHeight: CGFloat; public let headingWeight: Int")
+w("        public let h1Size: CGFloat; public let h1Line: CGFloat; public let h2Size: CGFloat")
+w("    }")
+for scheme in ["light", "dark"] + [s for s in dc.get("scheme", {}) if s not in ("light", "dark")]:
+    w(f"    public static let document{scheme[0].upper() + scheme[1:]} = {doc_spec(scheme) if scheme in dc.get('scheme', {}) else doc_spec('base')}")
+w("    /// Scalar radii in points, as `--duo-radius-<name>`.")
+w("    public static let radii: [(name: String, value: CGFloat)] = [")
+for k, v in t["radius"].items():
+    if isinstance(v, (int, float)):
+        w(f'        ("{kebab(k)}", {num(v)}),')
+w("    ]")
+w("    /// Type styles, as `--duo-size-<name>` and `--duo-line-<name>` in points.")
+w("    public static let sizes: [(name: String, size: CGFloat, line: CGFloat)] = [")
+for k, v in t["font"]["style"].items():
+    w(f'        ("{kebab(k)}", {num(v["size"])}, {num(v["lineHeight"])}),')
+w("    ]")
+dp = t["space"]["documentPadding"]
+w(f"    public static let documentPaddingY: CGFloat = {num(dp['vertical'])}")
+w(f"    public static let documentPaddingX: CGFloat = {num(dp['horizontal'])}")
+w("}")
+w("")
+
 dst.parent.mkdir(parents=True, exist_ok=True)
 dst.write_text("\n".join(lines))
-print(f"wrote {dst.relative_to(root)}")
+print(f"wrote {dst}")

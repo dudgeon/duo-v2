@@ -32,7 +32,7 @@ struct MarkdownReviewBar: View {
     }
 
     private func chevron(_ title: String) -> some View {
-        HStack(spacing: 1) { Text(title); Image(systemName: "chevron.down").font(.system(size: 8, weight: .semibold)) }
+        HStack(spacing: 1) { Text(title); Image(systemName: "chevron.down").font(.system(size: DuoSymbolSize.chevronSmall, weight: .semibold)) }
     }
 
     private func row(_ r: ReviewSummary, compact: Bool) -> some View {
@@ -138,8 +138,8 @@ private struct ReviewMenuFrame: ViewModifier {
             .padding(5)
             .frame(width: DuoMetric.docxMenuWidth, alignment: .leading)
             .background(RoundedRectangle(cornerRadius: DuoMetric.radiusPopover).fill(DuoColor.pane))
-            .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusPopover).strokeBorder(DuoColor.text.opacity(0.08), lineWidth: DuoMetric.borderHairline))
-            .shadow(color: DuoColor.text.opacity(0.18), radius: 12, x: 0, y: 8)
+            .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusPopover).strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
+            .duoPopoverShadow()
     }
 }
 

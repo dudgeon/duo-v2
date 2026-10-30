@@ -55,7 +55,7 @@ extension ChatNeedsYouHeader where Trailing == EmptyView {
 struct ChatKeyCap: View {
     let n: Int?
     var body: some View {
-        Text(n.map(String.init) ?? "").font(Font(NSFont.monospacedSystemFont(ofSize: 11, weight: .regular))).foregroundStyle(DuoColor.text2)
+        Text(n.map(String.init) ?? "").font(Font(NSFont.monospacedSystemFont(ofSize: DuoTextStyle.pill.spec.size, weight: .regular))).foregroundStyle(DuoColor.text2)
             .frame(width: 18, height: 18)
             .background(RoundedRectangle(cornerRadius: DuoMetric.radiusChatInlineCode).fill(DuoColor.ground))
             .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusChatInlineCode).strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))

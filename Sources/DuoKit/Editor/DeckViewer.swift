@@ -53,6 +53,10 @@ public final class DeckViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         webView.appearance = NSAppearance(named: .aqua)   // a page keeps its author's colours in dark too (DL-224)
         super.init()
         proxy.owner = self
+        // These pages sit out appearance changes (they keep a document's own colours), so a change of scheme (Classic, DL-252) reaches their chrome here.
+        NotificationCenter.default.addObserver(forName: DuoScheme.didChange, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.webView.evaluateJavaScript(EditorController.tokenCSS(), completionHandler: nil) }
+        }
         webView.configuration.userContentController.add(self, name: "duoDeck")
         webView.navigationDelegate = self
         webView.load(URLRequest(url: URL(string: "\(Self.scheme)://app/deck.html")!))

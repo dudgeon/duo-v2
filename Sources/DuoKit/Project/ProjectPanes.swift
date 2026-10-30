@@ -423,7 +423,7 @@ struct SidebarLeafRow: View {
                 .padding(.top, row.showsOrigin ? 3 : 0)
                 // The second line (DL-228, board 05): "Fork of ‹original›" in text2, 12 on a 16 line.
                 if row.showsOrigin, let of = row.forkOf {
-                    Text("Fork of \(of)").font(.system(size: 12)).foregroundStyle(DuoColor.text2).lineLimit(1)
+                    Text("Fork of \(of)").font(.system(size: DuoTextStyle.control.spec.size)).foregroundStyle(DuoColor.text2).lineLimit(1)
                         .padding(.leading, DuoMetric.glyph + DuoSpace.gapRowItems).frame(height: 16, alignment: .leading)
                         .padding(.bottom, 3)
                 }
@@ -727,7 +727,7 @@ struct FileRow: View {
                 if let mark {
                     Spacer(minLength: 8)
                     // git's marks are 11 pt mono (github-handoff 04-status B); "edited by Claude" stays as built.
-                    Text(mark).font(edited ? .system(size: 12) : Font(NSFont.monospacedSystemFont(ofSize: 11, weight: .regular))).lineHeight(.exact(points: 20)).offset(y: 2)
+                    Text(mark).font(edited ? .system(size: DuoTextStyle.control.spec.size) : Font(NSFont.monospacedSystemFont(ofSize: DuoTextStyle.pill.spec.size, weight: .regular))).lineHeight(.exact(points: 20)).offset(y: 2)
                         .foregroundStyle(DuoColor.text2).fixedSize()
                 }
             }
@@ -1222,7 +1222,7 @@ struct PickerBar: View {
         if let v = model.visiblePage, v.picking {
             VStack(alignment: .leading, spacing: 6) {
                 if let e = v.picked {
-                    Text("<\(e.label)>").font(.system(.callout, design: .monospaced)).lineLimit(1).truncationMode(.middle)
+                    Text("<\(e.label)>").duoText(.mono).lineLimit(1).truncationMode(.middle)
                     HStack(spacing: 8) {
                         switch model.sendTarget {
                         case .success(let t): Button("Send to Claude") { model.sendPickedElement(to: t.key) }.keyboardShortcut(.defaultAction)
@@ -1243,22 +1243,22 @@ struct PickerBar: View {
                         Button("Cancel") { v.stopPicking() }.keyboardShortcut(.cancelAction)
                     }
                     if case .failure(let why) = model.sendTarget {
-                        Text("\(why.reason): use Send To.").font(.caption).foregroundStyle(.secondary)
+                        Text("\(why.reason): use Send To.").duoText(.chatMeta).foregroundStyle(DuoColor.text2)
                     }
                 } else {
                     HStack {
-                        Text("Click an element to select it. Esc to stop.").font(.callout)
+                        Text("Click an element to select it. Esc to stop.").duoText(.body)
                         Spacer(minLength: 8)
                         Button("Cancel") { v.stopPicking() }.keyboardShortcut(.cancelAction)
                     }
                 }
             }
-            .controlSize(.small)
+            .buttonStyle(.duo)
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.bar)
-            .overlay(alignment: .top) { Divider() }
+            .background(DuoColor.ground)
+            .overlay(alignment: .top) { Rectangle().fill(DuoColor.rule).frame(height: DuoMetric.borderHairline) }
         }
     }
 }

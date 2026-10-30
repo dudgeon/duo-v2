@@ -45,7 +45,7 @@ struct RightPaneToggle: View {
             model.rightCollapsed.toggle()  // action: view right
         } label: {
             Image(systemName: "sidebar.right")
-                .font(.system(size: 14))
+                .font(.system(size: DuoSymbolSize.toolbarIcon))
                 .foregroundStyle(DuoColor.text2)
         }
         .buttonStyle(.plain)
@@ -62,7 +62,7 @@ struct SidebarToggle: View {
             model.leftCollapsed.toggle()
         } label: {
             Image(systemName: "sidebar.left")
-                .font(.system(size: 14))
+                .font(.system(size: DuoSymbolSize.toolbarIcon))
                 .foregroundStyle(DuoColor.text2)
         }
         .buttonStyle(.plain)
@@ -121,14 +121,14 @@ struct ProjectBreadcrumb: View {
             .buttonStyle(.plain)
             .accessibilityIdentifier("video.crumb.all")   // anchors: the video cursor's target
             Image(systemName: "chevron.right")
-                .font(.system(size: 9, weight: .semibold))
+                .font(.system(size: DuoSymbolSize.chevron, weight: .semibold))
                 .foregroundStyle(DuoColor.text2)
                 .accessibilityHidden(true)
             // The folder the project sits in, when it has one (DL-92): All projects › payments › checkout.
             if let topic = model.currentProject?.topic, !topic.isEmpty, model.currentProject?.isHome != true {
                 Text(topic).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1)
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 9, weight: .semibold))
+                    .font(.system(size: DuoSymbolSize.chevron, weight: .semibold))
                     .foregroundStyle(DuoColor.text2)
                     .accessibilityHidden(true)
             }
@@ -198,7 +198,7 @@ struct SearchField: View {
     var body: some View {
         HStack(spacing: DuoSpace.gapGlyphToLabel) {
             Image(systemName: "magnifyingglass")
-                .font(.system(size: 11, weight: .medium))
+                .font(.system(size: DuoSymbolSize.toolbarGlyph, weight: .medium))
             Text("Search all projects")
                 .duoText(.body)
             Spacer(minLength: 4)

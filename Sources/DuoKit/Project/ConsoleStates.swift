@@ -140,7 +140,7 @@ struct ConsoleButtonStyle: ButtonStyle {
             .lineLimit(1)
             .padding(.horizontal, DuoSpace.buttonPadding.leading + DuoMetric.borderHairline)
             .padding(.vertical, DuoSpace.buttonPadding.top + DuoMetric.borderHairline)
-            .background(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).fill(configuration.isPressed ? DuoColor.consoleText2.opacity(0.2) : .clear))
+            .background(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).fill(configuration.isPressed ? DuoColor.consoleText2.opacity(DuoOpacity.pressed) : .clear))
             .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).strokeBorder(bold ? DuoColor.consoleText : DuoColor.consoleText2, lineWidth: DuoMetric.borderHairline))
             .contentShape(Rectangle())
     }

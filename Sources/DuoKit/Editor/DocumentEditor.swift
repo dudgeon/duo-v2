@@ -153,21 +153,32 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     }
 
     private static func tokenScript() -> String {
-        func hex(_ c: NSColor) -> String {
+        func css(_ c: NSColor) -> String {
             let s = c.usingColorSpace(.sRGB) ?? c
-            return String(format: "#%02X%02X%02X", Int(round(s.redComponent * 255)), Int(round(s.greenComponent * 255)), Int(round(s.blueComponent * 255)))
+            let (r, g, b) = (Int(round(s.redComponent * 255)), Int(round(s.greenComponent * 255)), Int(round(s.blueComponent * 255)))
+            return s.alphaComponent < 1 ? String(format: "rgba(%d, %d, %d, %g)", r, g, b, s.alphaComponent) : String(format: "#%02X%02X%02X", r, g, b)
         }
         let shadow = NSColor(DuoShadow.popoverColor).usingColorSpace(.sRGB) ?? .black
         let shadowCSS = String(format: "rgba(%d, %d, %d, %g)", Int(round(shadow.redComponent * 255)), Int(round(shadow.greenComponent * 255)), Int(round(shadow.blueComponent * 255)), shadow.alphaComponent)
-        let vars = [("pane", DuoNSColor.pane), ("text", DuoNSColor.text), ("text2", DuoNSColor.text2), ("selected", DuoNSColor.selected), ("claude-edit", DuoNSColor.claudeEdit),
-                    ("rule", DuoNSColor.rule), ("review-1", DuoNSColor.reviewAuthor1), ("review-2", DuoNSColor.reviewAuthor2), ("review-3", DuoNSColor.reviewAuthor3), ("review-4", DuoNSColor.reviewAuthor4), ("review-5", DuoNSColor.reviewAuthor5), ("comment-highlight", DuoNSColor.commentHighlight), ("comment-highlight-active", DuoNSColor.commentHighlightActive), ("control-edge", DuoNSColor.controlEdge), ("ground", DuoNSColor.ground), ("needs-you", DuoNSColor.needsYou)]
-            .map { "--duo-\($0.0): \(hex($0.1));" }.joined(separator: " ")
+        // Every colour, the radii, the faces, the document's type and the type sizes, from the generated DuoWebTokens: a token
+        // reaches the web without anyone listing it by hand.
+        var vars = DuoWebTokens.colors.map { "--duo-\($0.name): \(css($0.color));" }
+        vars += DuoWebTokens.fonts.map { "--duo-\($0.name): \($0.css);" }
+        vars += DuoWebTokens.radii.map { "--duo-radius-\($0.name): \(Int($0.value))px;" }
+        vars += DuoWebTokens.sizes.map { "--duo-size-\($0.name): \(Int($0.size))px; --duo-line-\($0.name): \(Int($0.line))px;" }
+        let doc = DuoScheme.resolved(NSApp.effectiveAppearance).document
+        let family = DuoWebTokens.fonts.first { $0.name == doc.family }?.css ?? "sans-serif"
+        vars.append("--duo-font-document: \(family); --duo-document-size: \(Int(doc.size))px; --duo-document-line: \(Int(doc.lineHeight))px; --duo-document-heading-weight: \(doc.headingWeight);")
+        vars.append("--duo-document-h1: \(Int(doc.h1Size))px; --duo-document-h1-line: \(Int(doc.h1Line))px; --duo-document-h2: \(Int(doc.h2Size))px;")
+        vars.append("--duo-document-padding-y: \(Int(DuoWebTokens.documentPaddingY))px; --duo-document-padding-x: \(Int(DuoWebTokens.documentPaddingX))px;")
         // Motion (DL-130): Claude's highlight fading in and out, in ms (zero with Reduce Motion).
         // The deck (same token script): a slide change's scroll and the picker outline's glide.
         let motion = [("highlight-in", DuoMotionToken.highlightIn), ("highlight-out", .highlightOut), ("slide", .slide), ("outline", .outline)]
             .map { "--duo-motion-\($0.0)-ms: \(Int(($0.1.duration * 1000).rounded()));" }.joined(separator: " ")
-        let css = ":root { \(vars) --duo-shadow: \(shadowCSS); --duo-radius-card: \(Int(DuoMetric.radiusCard))px; --duo-heading-above: \(Int(DuoSpace.gapAboveDocumentHeading))px; \(motion) }"
-        return "document.documentElement.setAttribute('style', \(String(reflecting: css)).replace(/^:root \\{ | \\}$/g, ''));"
+        // `--duo-shadow` is the bare colour; `--duo-shadow-popover` is the whole `box-shadow` value (F-417).
+        let popover = "\(Int(DuoShadow.popoverX))px \(Int(DuoShadow.popoverY))px \(Int(DuoShadow.popoverRadius * 2))px \(shadowCSS)"
+        let rootCSS = ":root { \(vars.joined(separator: " ")) --duo-shadow: \(shadowCSS); --duo-shadow-popover: \(popover); --duo-radius-card: \(Int(DuoMetric.radiusCard))px; --duo-heading-above: \(Int(DuoSpace.gapAboveDocumentHeading))px; \(motion) }"
+        return "document.documentElement.setAttribute('style', \(String(reflecting: rootCSS)).replace(/^:root \\{ | \\}$/g, ''));"
     }
 
     public func webView(_ w: WKWebView, didFinish n: WKNavigation!) {

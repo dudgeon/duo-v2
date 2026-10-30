@@ -6,12 +6,33 @@
 // Writes docs/design/icon-handoff/AppIcon.iconset/, AppIconDev.iconset/ and their .icns (iconutil). bundle.sh
 // copies AppIcon.icns into `release` builds and AppIconDev.icns into dev builds, so run this only when the
 // drawing changes, and commit the outputs.
+// AppIconClassic.icns (DL-252) is the same drawing in Classic's colours, read from tokens.json (color.classic), so it follows the
+// tokens: Duo shows it in the Dock while Settings › Appearance is Classic (NSApplication.applicationIconImage).
 // The geometry is the canvas's 1024 grid (the squircle is 824 at 100,100, as macOS icons are). 16 and 32 pt, at
 // 1x and 2x, use the simplified small art; 128 pt and up use the full art.
 import CoreGraphics
 import Foundation
 import ImageIO
 import UniformTypeIdentifiers
+
+/// The drawing's colours. v2's are the approved icon's own; Classic's come from tokens.json.
+struct Palette {
+    var shadowBase, consoleTop, consoleBottom, pageTop, pageBottom, stroke, ink, rule, dimPill, highlight, page2, prompt: UInt32
+    static let v2 = Palette(shadowBase: 0x121418, consoleTop: 0x24272d, consoleBottom: 0x121418, pageTop: 0xffffff, pageBottom: 0xe9edf1,
+                            stroke: 0xe6e8eb, ink: 0x1f2328, rule: 0xc9cdd3, dimPill: 0x9aa1ab, highlight: 0xdfe3e8, page2: 0x8b939c, prompt: 0xe6e8eb)
+    static func classic(root: URL) -> Palette {
+        let t = try! JSONSerialization.jsonObject(with: Data(contentsOf: root.appendingPathComponent("docs/design/build-handoff/tokens.json"))) as! [String: Any]
+        let color = t["color"] as! [String: Any]
+        let c = color["classic"] as! [String: Any]
+        func hex(_ k: String) -> UInt32 {
+            let v = ((c[k] ?? (color["light"] as! [String: Any])[k] ?? (color["console"] as! [String: Any])[k]) as! [String: Any])["value"] as! String
+            return UInt32(v.dropFirst(), radix: 16)!
+        }
+        return Palette(shadowBase: hex("console"), consoleTop: hex("consoleHover"), consoleBottom: hex("console"), pageTop: hex("pane"), pageBottom: hex("ground"),
+                       stroke: hex("consoleText"), ink: hex("text"), rule: hex("rule"), dimPill: hex("consoleText2"), highlight: hex("selected"), page2: hex("text2"),
+                       prompt: hex("paneFocusOnConsole"))
+    }
+}
 
 func rgb(_ hex: UInt32, _ a: CGFloat = 1) -> CGColor {
     CGColor(srgbRed: CGFloat((hex >> 16) & 0xff) / 255, green: CGFloat((hex >> 8) & 0xff) / 255,
@@ -38,12 +59,12 @@ func gradient(_ cg: CGContext, _ rect: CGRect, _ top: UInt32, _ bottom: UInt32) 
     cg.restoreGState()
 }
 
-func draw(_ cg: CGContext, small: Bool, dev: Bool) {
+func draw(_ cg: CGContext, small: Bool, dev: Bool, _ pal: Palette) {
     // Drop shadow under the squircle, as macOS icons carry.
     cg.saveGState()
     cg.setShadow(offset: CGSize(width: 0, height: 10), blur: 20, color: rgb(0x000000, 0.28))
     cg.addPath(squircle())
-    cg.setFillColor(rgb(0x121418))
+    cg.setFillColor(rgb(pal.shadowBase))
     cg.fillPath()
     cg.restoreGState()
 
@@ -51,36 +72,36 @@ func draw(_ cg: CGContext, small: Bool, dev: Bool) {
     cg.saveGState()
     cg.addPath(squircle())
     cg.clip()
-    gradient(cg, CGRect(x: 100, y: 100, width: 372, height: 824), 0x24272d, 0x121418)
-    gradient(cg, CGRect(x: 472, y: 100, width: 452, height: 824), 0xffffff, 0xe9edf1)
+    gradient(cg, CGRect(x: 100, y: 100, width: 372, height: 824), pal.consoleTop, pal.consoleBottom)
+    gradient(cg, CGRect(x: 472, y: 100, width: 452, height: 824), pal.pageTop, pal.pageBottom)
     cg.setFillColor(rgb(0x000000, small ? 0.2 : 0.18))
     cg.fill(CGRect(x: 472, y: 100, width: small ? 8 : 6, height: 824))
     cg.restoreGState()
 
     cg.setLineCap(.round)
     cg.setLineJoin(.round)
-    cg.setStrokeColor(rgb(0xe6e8eb))
+    cg.setStrokeColor(rgb(pal.prompt))
     if small {
         cg.setLineWidth(66)
         cg.addLines(between: [CGPoint(x: 228, y: 418), CGPoint(x: 344, y: 512), CGPoint(x: 228, y: 606)])
         cg.strokePath()
-        pill(cg, 566, 367, 264, 66, 33, rgb(0x1f2328))
-        pill(cg, 566, 491, 264, 54, 27, rgb(0xc9cdd3))
-        pill(cg, 566, 603, 200, 54, 27, rgb(0xc9cdd3))
+        pill(cg, 566, 367, 264, 66, 33, rgb(pal.ink))
+        pill(cg, 566, 491, 264, 54, 27, rgb(pal.rule))
+        pill(cg, 566, 603, 200, 54, 27, rgb(pal.rule))
     } else {
         cg.setLineWidth(30)
         cg.addLines(between: [CGPoint(x: 206, y: 364), CGPoint(x: 270, y: 416), CGPoint(x: 206, y: 468)])
         cg.strokePath()
-        pill(cg, 206, 538, 176, 26, 13, rgb(0x9aa1ab))
-        pill(cg, 206, 594, 128, 26, 13, rgb(0x9aa1ab))
-        pill(cg, 206, 650, 156, 26, 13, rgb(0x9aa1ab))
-        pill(cg, 556, 317, 240, 34, 17, rgb(0x1f2328))
-        pill(cg, 556, 395, 268, 24, 12, rgb(0xc9cdd3))
-        pill(cg, 556, 447, 226, 24, 12, rgb(0xc9cdd3))
-        pill(cg, 538, 509, 320, 126, 16, rgb(0xdfe3e8))   // Claude's highlight
-        pill(cg, 556, 537, 252, 24, 12, rgb(0x8b939c))
-        pill(cg, 556, 585, 182, 24, 12, rgb(0x8b939c))
-        pill(cg, 556, 683, 240, 24, 12, rgb(0xc9cdd3))
+        pill(cg, 206, 538, 176, 26, 13, rgb(pal.dimPill))
+        pill(cg, 206, 594, 128, 26, 13, rgb(pal.dimPill))
+        pill(cg, 206, 650, 156, 26, 13, rgb(pal.dimPill))
+        pill(cg, 556, 317, 240, 34, 17, rgb(pal.ink))
+        pill(cg, 556, 395, 268, 24, 12, rgb(pal.rule))
+        pill(cg, 556, 447, 226, 24, 12, rgb(pal.rule))
+        pill(cg, 538, 509, 320, 126, 16, rgb(pal.highlight))   // Claude's highlight
+        pill(cg, 556, 537, 252, 24, 12, rgb(pal.page2))
+        pill(cg, 556, 585, 182, 24, 12, rgb(pal.page2))
+        pill(cg, 556, 683, 240, 24, 12, rgb(pal.rule))
     }
 
     if dev { hazard(cg, small: small) }
@@ -114,7 +135,7 @@ func hazard(_ cg: CGContext, small: Bool) {
     cg.restoreGState()
 }
 
-func render(pixels: Int, small: Bool, dev: Bool, to url: URL) {
+func render(pixels: Int, small: Bool, dev: Bool, _ pal: Palette, to url: URL) {
     let cg = CGContext(data: nil, width: pixels, height: pixels, bitsPerComponent: 8, bytesPerRow: 0,
                        space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
     let s = CGFloat(pixels) / 1024
@@ -122,7 +143,7 @@ func render(pixels: Int, small: Bool, dev: Bool, to url: URL) {
     cg.translateBy(x: 0, y: CGFloat(pixels))
     cg.scaleBy(x: s, y: -s)
     cg.interpolationQuality = .high
-    draw(cg, small: small, dev: dev)
+    draw(cg, small: small, dev: dev, pal)
     let dest = CGImageDestinationCreateWithURL(url as CFURL, UTType.png.identifier as CFString, 1, nil)!
     CGImageDestinationAddImage(dest, cg.makeImage()!, nil)
     guard CGImageDestinationFinalize(dest) else { fatalError("could not write \(url.path)") }
@@ -130,14 +151,15 @@ func render(pixels: Int, small: Bool, dev: Bool, to url: URL) {
 
 let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
 let out = root.appendingPathComponent("docs/design/icon-handoff")
-for (name, dev) in [("AppIcon", false), ("AppIconDev", true)] {
+let classicPalette = Palette.classic(root: root)
+for (name, dev, pal) in [("AppIcon", false, Palette.v2), ("AppIconDev", true, Palette.v2), ("AppIconClassic", false, classicPalette)] {
     let set = out.appendingPathComponent("\(name).iconset")
     try? FileManager.default.removeItem(at: set)
     try FileManager.default.createDirectory(at: set, withIntermediateDirectories: true)
     for pt in [16, 32, 128, 256, 512] {
         for scale in [1, 2] {
             let file = scale == 1 ? "icon_\(pt)x\(pt).png" : "icon_\(pt)x\(pt)@2x.png"
-            render(pixels: pt * scale, small: pt <= 32, dev: dev, to: set.appendingPathComponent(file))
+            render(pixels: pt * scale, small: pt <= 32, dev: dev, pal, to: set.appendingPathComponent(file))
         }
     }
     let iconutil = Process()

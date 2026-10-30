@@ -1325,7 +1325,12 @@ const clearOnUserEdit = EditorView.updateListener.of((u) => {
 // too short for that is padded to it, so nothing below moves when the caret enters or leaves.
 // A row draws 29 (4 + 20 + 4 + its rule) and the table one more for the last rule, in Chromium and WebKit alike.
 const TABLE_BAR = 28;
-const tableHeight = (rows) => Math.max(29 * rows + 1, 20 * (rows + 1) + TABLE_BAR);
+// A row is a line plus its cell padding and rule (29 at the 13/20 page); the page's size and line height are the app's tokens.
+const docVar = (name, fallback) => parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || fallback;
+const tableHeight = (rows) => {
+  const line = docVar("--duo-document-line", 20), pad = 8 * docVar("--duo-document-size", 13) / 13;   // a cell's padding, 4 above and below
+  return Math.max((line + pad + 1) * rows + 1, line * (rows + 1) + TABLE_BAR);
+};
 class TableWidget extends WidgetType {
   constructor(rows, align) { super(); this.rows = rows; this.align = align; }
   eq(o) { return JSON.stringify(o.rows) === JSON.stringify(this.rows) && o.align.join() === this.align.join(); }
@@ -1809,25 +1814,32 @@ function setSource(on) {
 
 // Duo's look (handoff §3.4: body 13/20, headings 14 semibold, padding 22 28, pane background).
 // Colours and sizes come from Duo's tokens as CSS variables set by the app; nothing is hard-coded.
+// The document's type (font.document): its size, line height and heading weight come from the app as
+// --duo-document-size / -line / -heading-weight, and everything that belongs to the page scales with them,
+// as calc() over the 13/20 the geometry was drawn for, so a different document size keeps its markers,
+// tables and code in proportion (a list marker never wraps at 16).
+const DOC_SIZE = "var(--duo-document-size)", DOC_LINE = "var(--duo-document-line)";
+const S = (px) => `calc(${DOC_SIZE} * ${px} / 13)`;
+const L = (px) => `calc(${DOC_LINE} * ${px} / 20)`;
 const duoTheme = EditorView.theme({
-  "&": { height: "100%", backgroundColor: "var(--duo-pane)", color: "var(--duo-text)", fontSize: "13px" },
+  "&": { height: "100%", backgroundColor: "var(--duo-pane)", color: "var(--duo-text)", fontSize: DOC_SIZE },
   "&.cm-focused": { outline: "none" },
-  ".cm-scroller": { fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", lineHeight: "20px" },
-  ".cm-content": { padding: "22px 28px", caretColor: "var(--duo-text)" },
+  ".cm-scroller": { fontFamily: "var(--duo-font-document)", lineHeight: DOC_LINE },
+  ".cm-content": { padding: "var(--duo-document-padding-y) var(--duo-document-padding-x)", caretColor: "var(--duo-text)" },
   ".cm-line": { padding: "0" },
   // How documents are drawn (S3-5, DL-101): H1 18/24, H2 14/20, the rest 13/20, all semibold.
-  ".duo-h": { fontSize: "13px", fontWeight: "600" },
-  ".duo-h1": { fontSize: "18px", lineHeight: "24px" },
-  ".duo-h2": { fontSize: "14px" },
+  ".duo-h": { fontSize: DOC_SIZE, fontWeight: "var(--duo-document-heading-weight)" },
+  ".duo-h1": { fontSize: "var(--duo-document-h1)", lineHeight: "var(--duo-document-h1-line)" },
+  ".duo-h2": { fontSize: "var(--duo-document-h2)" },
   // H2 and smaller sit 4 lower than the 10 between blocks, as editor-document draws them (C-22):
   // space.gap.aboveDocumentHeading, set by the app as --duo-heading-above. Padding, not margin, so
   // CodeMirror measures the line's height with it.
   ".cm-line.duo-hl2, .cm-line.duo-hl3, .cm-line.duo-hl4, .cm-line.duo-hl5, .cm-line.duo-hl6": { paddingTop: "var(--duo-heading-above)" },
-  ".cm-line.duo-li": { paddingLeft: "20px", textIndent: "-20px" },
-  ".duo-li-mark": { display: "inline-block", width: "12px", marginRight: "8px", textAlign: "right", textIndent: "0", color: "var(--duo-text2)" },
+  ".cm-line.duo-li": { paddingLeft: S(20), textIndent: `calc(${S(20)} * -1)` },
+  ".duo-li-mark": { display: "inline-block", width: S(12), marginRight: S(8), textAlign: "right", textIndent: "0", color: "var(--duo-text2)" },
   ".duo-done": { color: "var(--duo-text2)" },
   ".cm-line.duo-quote": { borderLeft: "2px solid var(--duo-control-edge)", paddingLeft: "12px", color: "var(--duo-text2)" },
-  ".cm-line.duo-codeblock": { position: "relative", padding: "0 12px", backgroundColor: "var(--duo-ground)", fontFamily: "'SF Mono', ui-monospace, monospace", fontSize: "12px", lineHeight: "19px", whiteSpace: "pre-wrap" },
+  ".cm-line.duo-codeblock": { position: "relative", padding: "0 12px", backgroundColor: "var(--duo-ground)", fontFamily: "var(--duo-font-mono)", fontSize: S(12), lineHeight: L(19), whiteSpace: "pre-wrap" },
   ".cm-line.duo-codeblock-first": { borderTopLeftRadius: "6px", borderTopRightRadius: "6px" },
   ".cm-line.duo-codeblock-last": { borderBottomLeftRadius: "6px", borderBottomRightRadius: "6px" },
   // A fence line is 8 high; with the caret on it the marker shrinks to 11, it doesn't grow the line (DL-167).
@@ -1836,68 +1848,68 @@ const duoTheme = EditorView.theme({
   // No margin: the blank lines around it give the 10 between blocks, as the target draws it (C-22).
   ".duo-table": { overflowX: "auto" },
   ".duo-table-src": { boxSizing: "border-box" },
-  ".duo-table table": { borderCollapse: "collapse", width: "100%", fontSize: "13px", lineHeight: "20px" },
+  ".duo-table table": { borderCollapse: "collapse", width: "100%", fontSize: DOC_SIZE, lineHeight: DOC_LINE },
   ".cm-line.duo-blank": { height: "10px", lineHeight: "10px" },
   ".duo-hr": { display: "inline-block", width: "100%", height: "1px", verticalAlign: "middle", backgroundColor: "var(--duo-rule)" },
-  ".duo-table th, .duo-table td": { padding: "4px 8px", border: "1px solid var(--duo-rule)", whiteSpace: "nowrap" },
+  ".duo-table th, .duo-table td": { padding: `${S(4)} ${S(8)}`, border: "1px solid var(--duo-rule)", whiteSpace: "nowrap" },
   ".duo-table-bar": { display: "flow-root", boxSizing: "border-box", height: `${TABLE_BAR}px`, paddingBottom: "6px" },
-  ".duo-table-bar button": { font: "inherit", fontSize: "12px", lineHeight: "16px", padding: "2px 8px", border: "1px solid var(--duo-control-edge)",
+  ".duo-table-bar button": { fontFamily: "var(--duo-font-ui)", fontSize: "12px", lineHeight: "16px", padding: "2px 8px", border: "1px solid var(--duo-control-edge)",
                              borderRadius: "6px", background: "var(--duo-pane)", color: "var(--duo-text)", cursor: "default", whiteSpace: "nowrap" },
-  ".duo-table th": { backgroundColor: "var(--duo-ground)", fontWeight: "600" },
+  ".duo-table th": { backgroundColor: "var(--duo-ground)", fontWeight: "var(--duo-document-heading-weight)" },
   ".duo-figure": { display: "flow-root", padding: "4px 0" },
   ".duo-img": { maxWidth: "100%", borderRadius: "6px", border: "1px solid var(--duo-rule)" },
   ".duo-caption": { fontSize: "12px", color: "var(--duo-text2)" },
   ".duo-img-missing": { display: "flex", alignItems: "center", justifyContent: "center", height: "72px", border: "1px dashed var(--duo-control-edge)", borderRadius: "6px", color: "var(--duo-text2)" },
-  ".duo-img-missing code": { fontFamily: "'SF Mono', ui-monospace, monospace", fontSize: "12px" },
+  ".duo-img-missing code": { fontFamily: "var(--duo-font-mono)", fontSize: "12px" },
   ".duo-deleted": { display: "inline-flex", alignItems: "center", gap: "8px", fontSize: "12px", lineHeight: "16px", color: "var(--duo-text2)", flexWrap: "wrap" },
   ".duo-deleted-block": { display: "flex", padding: "2px 0" },
   ".duo-deleted-rule": { flex: "1", minWidth: "12px", height: "1px", backgroundColor: "var(--duo-rule)" },
   ".duo-deleted a": { color: "var(--duo-text2)", textDecoration: "underline", textDecorationColor: "var(--duo-control-edge)", textUnderlineOffset: "3px", cursor: "default" },
-  ".duo-deleted-body": { flexBasis: "100%", whiteSpace: "pre-wrap", textDecoration: "line-through", fontSize: "13px", lineHeight: "20px" },
+  ".duo-deleted-body": { flexBasis: "100%", whiteSpace: "pre-wrap", textDecoration: "line-through", fontSize: DOC_SIZE, lineHeight: DOC_LINE },
   // The head: the language alone at rest (10 in, 6 down); under the pointer it moves left of Copy, the two 6 in and 5 down (code-hover).
-  ".duo-code-head": { position: "absolute", right: "10px", top: "6px", display: "flex", alignItems: "center", gap: "8px", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", zIndex: "1" },
+  ".duo-code-head": { position: "absolute", right: "10px", top: "6px", display: "flex", alignItems: "center", gap: "8px", fontFamily: "var(--duo-font-ui)", zIndex: "1" },
   ".cm-line.duo-code-hover .duo-code-head, .duo-code-head.duo-code-copied": { right: "6px", top: "5px" },
   ".duo-code-lang": { fontSize: "11px", lineHeight: "16px", color: "var(--duo-text2)" },
   ".duo-code-copy": { display: "none", boxSizing: "border-box", height: "22px", margin: "0", alignItems: "center", gap: "4px", padding: "0 8px", border: "1px solid var(--duo-control-edge)", borderRadius: "6px",
-    backgroundColor: "var(--duo-pane)", color: "var(--duo-text)", font: "12px/16px -apple-system, BlinkMacSystemFont, sans-serif", whiteSpace: "nowrap", cursor: "default" },
+    backgroundColor: "var(--duo-pane)", color: "var(--duo-text)", font: "12px/16px var(--duo-font-ui)", whiteSpace: "nowrap", cursor: "default" },
   ".cm-line.duo-code-hover .duo-code-copy, .duo-code-copied .duo-code-copy": { display: "inline-flex" },
   ".duo-code-copy-icon": { stroke: "var(--duo-text2)" },
   ".duo-code-copied-icon": { stroke: "var(--duo-text)" },
   ".duo-strong": { fontWeight: "600" },
   ".duo-em": { fontStyle: "italic" },
   ".duo-strike": { textDecoration: "line-through" },
-  ".duo-code": { fontFamily: "'SF Mono', ui-monospace, monospace", fontSize: "12px", backgroundColor: "var(--duo-ground)", borderRadius: "4px", padding: "1px 4px" },
+  ".duo-code": { fontFamily: "var(--duo-font-mono)", fontSize: S(12), backgroundColor: "var(--duo-ground)", borderRadius: "4px", padding: "1px 4px" },
   ".duo-link": { color: "var(--duo-text)", textDecoration: "underline", textDecorationColor: "var(--duo-control-edge)" },
   ".duo-fs": { boxShadow: "inset 1.5px 0 0 var(--duo-text), inset -1.5px 0 0 var(--duo-text)", paddingLeft: "12px", paddingRight: "12px", marginLeft: "-12px", marginRight: "-12px" },
   ".duo-fs-first": { boxShadow: "inset 1.5px 0 0 var(--duo-text), inset -1.5px 0 0 var(--duo-text), inset 0 1.5px 0 var(--duo-text)", borderTopLeftRadius: "6px", borderTopRightRadius: "6px", paddingTop: "8px", position: "relative" },
   ".duo-fs-last": { boxShadow: "inset 1.5px 0 0 var(--duo-text), inset -1.5px 0 0 var(--duo-text), inset 0 -1.5px 0 var(--duo-text)", borderBottomLeftRadius: "6px", borderBottomRightRadius: "6px", paddingBottom: "8px" },
   ".duo-fs-first.duo-fs-last": { boxShadow: "inset 0 0 0 1.5px var(--duo-text)" },
-  ".duo-fs-first::after": { content: "attr(data-label)", position: "absolute", right: "12px", top: "8px", color: "var(--duo-text2)", fontFamily: "-apple-system, sans-serif", fontSize: "13px" },
+  ".duo-fs-first::after": { content: "attr(data-label)", position: "absolute", right: "12px", top: "8px", color: "var(--duo-text2)", fontFamily: "var(--duo-font-ui)", fontSize: "13px" },
   ".duo-added": { backgroundColor: "var(--duo-claude-edit)", borderRadius: "var(--duo-radius-card)" },
   ".duo-added-new": { animation: "duo-highlight-in calc(var(--duo-motion-highlight-in-ms, 0) * 1ms) ease-out both" },
   ".duo-added-fading": { borderRadius: "var(--duo-radius-card)", animation: "duo-highlight-out calc(var(--duo-motion-highlight-out-ms, 0) * 1ms) ease-in-out both" },
   ".duo-task": { display: "inline-flex", margin: "0 8px 0 0", verticalAlign: "-1px", cursor: "default", textIndent: "0" },
   // The properties block (frontmatter-handoff §2, slice2 task-note): sizes from tokens size.propertiesBlock.
   "&.duo-has-fm .cm-content, .cm-content.duo-has-fm": { paddingTop: "14px" },
-  ".duo-fm-head": { display: "flex", alignItems: "center", gap: "6px", margin: "0 -8px", paddingBottom: "6px", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "13px", lineHeight: "20px", color: "var(--duo-text2)" },
+  ".duo-fm-head": { display: "flex", alignItems: "center", gap: "6px", margin: "0 -8px", paddingBottom: "6px", fontFamily: "var(--duo-font-ui)", fontSize: "13px", lineHeight: "20px", color: "var(--duo-text2)" },
   ".duo-fm-label": { fontSize: "11px", lineHeight: "16px", fontWeight: "600", letterSpacing: "0.06em" },
   ".duo-fm-plus": { marginLeft: "auto", cursor: "default" },
-  ".duo-fm-note": { float: "right", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "11px", color: "var(--duo-text2)" },
-  ".duo-tmpl-code": { fontFamily: "ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace", fontSize: "11px" },
+  ".duo-fm-note": { float: "right", fontFamily: "var(--duo-font-ui)", fontSize: "11px", color: "var(--duo-text2)" },
+  ".duo-tmpl-code": { fontFamily: "var(--duo-font-mono)", fontSize: "11px" },
   ".duo-ph": { padding: "0 4px", border: "1px solid var(--duo-rule)", borderRadius: "4px", backgroundColor: "var(--duo-pane)" },
-  ".duo-ph-h": { backgroundColor: "var(--duo-ground)", fontFamily: "ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace", fontSize: "0.8em", fontWeight: "400" },
-  ".cm-line:not(.duo-fm) .duo-ph:not(.duo-ph-h)": { fontFamily: "ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace", fontSize: "12px" },
+  ".duo-ph-h": { backgroundColor: "var(--duo-ground)", fontFamily: "var(--duo-font-mono)", fontSize: "0.8em", fontWeight: "400" },
+  ".cm-line:not(.duo-fm) .duo-ph:not(.duo-ph-h)": { fontFamily: "var(--duo-font-mono)", fontSize: "12px" },
   ".duo-ph.duo-ph-tp": { border: "1px dashed var(--duo-control-edge)", backgroundColor: "transparent" },
   "&.duo-tmpl-preview .duo-fm-plus, .duo-tmpl-preview .duo-fm-plus": { display: "none" },
-  ".cm-line.duo-fm": { position: "relative", zIndex: "0", margin: "0 -12px", padding: "1.5px 12px 1.5px 32px", minHeight: "19px", backgroundColor: "var(--duo-ground)", fontFamily: "'SF Mono', ui-monospace, monospace", fontSize: "12px", lineHeight: "19px" },
+  ".cm-line.duo-fm": { position: "relative", zIndex: "0", margin: "0 -12px", padding: "1.5px 12px 1.5px 32px", minHeight: "19px", backgroundColor: "var(--duo-ground)", fontFamily: "var(--duo-font-mono)", fontSize: "12px", lineHeight: "19px" },
   ".cm-line.duo-fm-first": { paddingTop: "9.5px", borderTopLeftRadius: "var(--duo-radius-card)", borderTopRightRadius: "var(--duo-radius-card)" },
   ".cm-line.duo-fm-last": { paddingBottom: "9.5px", borderBottomLeftRadius: "var(--duo-radius-card)", borderBottomRightRadius: "var(--duo-radius-card)" },
   ".cm-line.duo-fm-active::before": { content: "''", position: "absolute", left: "6px", right: "6px", top: "0", bottom: "0", backgroundColor: "var(--duo-pane)", borderRadius: "4px", zIndex: "-1" },
   ".cm-line.duo-fm-first.duo-fm-active::before": { top: "8px" },
   ".cm-line.duo-fm-last.duo-fm-active::before": { bottom: "8px" },
   ".duo-fm-key": { color: "var(--duo-text2)" },
-  ".duo-fm-popup": { display: "inline-flex", alignItems: "center", gap: "4px", height: "20px", padding: "0 6px", border: "1px solid var(--duo-rule)", borderRadius: "var(--duo-radius-card)", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "13px", lineHeight: "20px", verticalAlign: "top", margin: "-1.5px 0", cursor: "default" },  // 22 tall in a 22 line
-  ".duo-fm-add": { float: "right", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "12px", color: "var(--duo-text2)", cursor: "default" },
+  ".duo-fm-popup": { display: "inline-flex", alignItems: "center", gap: "4px", height: "20px", padding: "0 6px", border: "1px solid var(--duo-rule)", borderRadius: "var(--duo-radius-card)", fontFamily: "var(--duo-font-ui)", fontSize: "13px", lineHeight: "20px", verticalAlign: "top", margin: "-1.5px 0", cursor: "default" },  // 22 tall in a 22 line
+  ".duo-fm-add": { float: "right", fontFamily: "var(--duo-font-ui)", fontSize: "12px", color: "var(--duo-text2)", cursor: "default" },
   ".cm-line.duo-fm-item": { paddingLeft: "32px" },
   ".duo-fm-head.duo-fm-head-chev": { lineHeight: "16px" },
   ".duo-fm-chev": { display: "flex", alignItems: "center", cursor: "default" },
@@ -1913,15 +1925,15 @@ const duoTheme = EditorView.theme({
   ".duo-fm-issue-detail": { color: "var(--duo-text2)", fontSize: "12px", marginLeft: "4px" },
   ".duo-fm-link": { textDecoration: "underline", textDecorationColor: "var(--duo-control-edge)", textUnderlineOffset: "3px" },
   ".cm-line.duo-fm-claude::before": { content: "''", position: "absolute", left: "6px", right: "6px", top: "0", bottom: "0", backgroundColor: "var(--duo-claude-edit)", borderRadius: "4px", zIndex: "-1" },
-  ".duo-fm-claude-label": { float: "right", paddingLeft: "8px", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "12px", color: "var(--duo-text2)", whiteSpace: "nowrap" },
+  ".duo-fm-claude-label": { float: "right", paddingLeft: "8px", fontFamily: "var(--duo-font-ui)", fontSize: "12px", color: "var(--duo-text2)", whiteSpace: "nowrap" },
   ".cm-line.duo-fm-error::after": { content: "''", position: "absolute", left: "6px", right: "6px", top: "0", bottom: "0", boxShadow: "inset 0 0 0 1.5px var(--duo-text)", borderRadius: "4px", pointerEvents: "none" },
-  ".duo-fm-message": { margin: "8px -8px 0", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "12px", lineHeight: "16px", color: "var(--duo-text2)" },
+  ".duo-fm-message": { margin: "8px -8px 0", fontFamily: "var(--duo-font-ui)", fontSize: "12px", lineHeight: "16px", color: "var(--duo-text2)" },
   ".duo-fm-rule.duo-fm-rule-folded": { margin: "6px -28px 22px" },
   // Suggestions (§4): pane, rule border, radius 10, the popover shadow; rows 26, radius 6.
-  ".cm-tooltip.cm-tooltip-autocomplete": { backgroundColor: "var(--duo-pane)", border: "1px solid var(--duo-rule)", borderRadius: "10px", boxShadow: "0 12px 32px var(--duo-shadow)", padding: "6px", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "13px" },
+  ".cm-tooltip.cm-tooltip-autocomplete": { backgroundColor: "var(--duo-pane)", border: "1px solid var(--duo-rule)", borderRadius: "10px", boxShadow: "var(--duo-shadow-popover)", padding: "6px", fontFamily: "var(--duo-font-ui)", fontSize: "13px" },
   ".cm-tooltip.duo-sugg-names > ul": { width: "286px" },
   ".cm-tooltip.duo-sugg-values > ul": { width: "266px" },
-  ".cm-tooltip.cm-tooltip-autocomplete > ul": { fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", maxHeight: "260px" },
+  ".cm-tooltip.cm-tooltip-autocomplete > ul": { fontFamily: "var(--duo-font-ui)", maxHeight: "260px" },
   ".cm-tooltip.cm-tooltip-autocomplete > ul > li": { display: "flex", alignItems: "center", gap: "8px", height: "26px", lineHeight: "26px", padding: "0 8px", borderRadius: "6px", color: "var(--duo-text)" },
   ".cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected]": { backgroundColor: "var(--duo-selected)", color: "var(--duo-text)" },
   ".cm-tooltip.cm-tooltip-autocomplete.cm-tooltip > ul > completion-section": { display: "none" },
@@ -1933,23 +1945,23 @@ const duoTheme = EditorView.theme({
   ".duo-sugg-icon": { display: "inline-flex", width: "14px", justifyContent: "center", flex: "none" },
   ".duo-fm-ref": { display: "inline-flex", alignItems: "center", gap: "6px", maxWidth: "100%", verticalAlign: "top", color: "var(--duo-text)" },
   ".duo-fm-ref-icon": { display: "inline-flex", flex: "none", color: "var(--duo-text2)" },
-  ".duo-fm-ref-name": { textDecoration: "underline", textDecorationColor: "var(--duo-control-edge)", textUnderlineOffset: "3px", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", whiteSpace: "nowrap", cursor: "default" },
+  ".duo-fm-ref-name": { textDecoration: "underline", textDecorationColor: "var(--duo-control-edge)", textUnderlineOffset: "3px", fontFamily: "var(--duo-font-ui)", whiteSpace: "nowrap", cursor: "default" },
   ".duo-fm-ref-path": { color: "var(--duo-text2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
-  ".duo-fm-reffield-row": { display: "flex", alignItems: "center", gap: "10px", margin: "0 -12px", padding: "2px 12px 4px 32px", position: "relative", zIndex: "1", backgroundColor: "var(--duo-ground)", fontFamily: "'SF Mono', ui-monospace, monospace", fontSize: "12px", lineHeight: "19px" },
+  ".duo-fm-reffield-row": { display: "flex", alignItems: "center", gap: "10px", margin: "0 -12px", padding: "2px 12px 4px 32px", position: "relative", zIndex: "1", backgroundColor: "var(--duo-ground)", fontFamily: "var(--duo-font-mono)", fontSize: "12px", lineHeight: "19px" },
   ".duo-fm-reffield-key": { color: "var(--duo-text2)", flex: "none" },
   ".duo-fm-reffield": { position: "relative", display: "block", flex: "1", maxWidth: "340px", minWidth: "0" },
-  ".duo-fm-reffield input": { width: "100%", height: "22px", boxSizing: "border-box", border: "1px solid var(--duo-rule)", borderRadius: "6px", padding: "0 8px", font: "12px -apple-system, BlinkMacSystemFont, sans-serif", color: "var(--duo-text)", background: "var(--duo-pane)", outline: "none" },
+  ".duo-fm-reffield input": { width: "100%", height: "22px", boxSizing: "border-box", border: "1px solid var(--duo-rule)", borderRadius: "6px", padding: "0 8px", font: "12px var(--duo-font-ui)", color: "var(--duo-text)", background: "var(--duo-pane)", outline: "none" },
   ".duo-fm-reffield input:focus": { borderColor: "var(--duo-text)" },
-  ".duo-fm-refmenu": { position: "absolute", top: "26px", left: "0", right: "0", zIndex: "20", backgroundColor: "var(--duo-pane)", border: "1px solid var(--duo-rule)", borderRadius: "10px", boxShadow: "0 12px 32px var(--duo-shadow)", padding: "6px", font: "13px -apple-system, BlinkMacSystemFont, sans-serif" },
+  ".duo-fm-refmenu": { position: "absolute", top: "26px", left: "0", right: "0", zIndex: "20", backgroundColor: "var(--duo-pane)", border: "1px solid var(--duo-rule)", borderRadius: "10px", boxShadow: "var(--duo-shadow-popover)", padding: "6px", font: "13px var(--duo-font-ui)" },
   ".duo-fm-refitem": { display: "flex", alignItems: "center", gap: "8px", height: "26px", padding: "0 8px", borderRadius: "6px", color: "var(--duo-text)" },
   ".duo-fm-refitem-on": { backgroundColor: "var(--duo-selected)" },
   ".duo-fm-refitem-name": { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
   ".duo-fm-refitem-name b": { fontWeight: "600" },
-  ".duo-fm-refitem-dir": { marginLeft: "auto", flex: "none", fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontSize: "12px", color: "var(--duo-text2)" },
+  ".duo-fm-refitem-dir": { marginLeft: "auto", flex: "none", fontFamily: "var(--duo-font-mono)", fontSize: "12px", color: "var(--duo-text2)" },
   ".duo-fm-refhint": { display: "flex", alignItems: "center", gap: "8px", height: "26px", padding: "0 8px", marginTop: "4px", borderTop: "1px solid var(--duo-rule)", color: "var(--duo-text2)", fontSize: "12px" },
   ".duo-fm-session": { display: "inline-flex", alignItems: "center", gap: "6px", width: "100%", verticalAlign: "top" },
   ".duo-fm-session-name": { textDecoration: "underline", textDecorationColor: "var(--duo-control-edge)", textUnderlineOffset: "3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", cursor: "default" },
-  ".duo-fm-wait": { marginLeft: "auto", flex: "none", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "12px", color: "var(--duo-text2)" },
+  ".duo-fm-wait": { marginLeft: "auto", flex: "none", fontFamily: "var(--duo-font-ui)", fontSize: "12px", color: "var(--duo-text2)" },
   ".duo-glyph": { display: "inline-flex", width: "9px", height: "9px", flex: "none" },
   ".duo-link-glyph": { marginRight: "4px", verticalAlign: "-0.5px" },
   ".duo-fm-rule": { height: "1px", margin: "14px -28px 22px", backgroundColor: "var(--duo-rule)" },
@@ -1957,13 +1969,13 @@ const duoTheme = EditorView.theme({
   // Find panel: a stub in Duo's tokens until it has a design (Q-20).
   ".cm-panels": { backgroundColor: "var(--duo-pane)", color: "var(--duo-text)", borderColor: "var(--duo-rule)" },
   ".cm-panels-top": { borderBottom: "1px solid var(--duo-rule)" },
-  ".cm-search": { fontFamily: "-apple-system, sans-serif", fontSize: "12px", padding: "6px 28px" },
+  ".cm-search": { fontFamily: "var(--duo-font-ui)", fontSize: "12px", padding: "6px 28px" },
   ".cm-panels.cm-panels-top": { borderBottom: "1px solid var(--duo-rule)", backgroundColor: "var(--duo-pane)" },
-  ".duo-find": { display: "flex", alignItems: "center", gap: "6px", padding: "6px 20px", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "13px" },
+  ".duo-find": { display: "flex", alignItems: "center", gap: "6px", padding: "6px 20px", fontFamily: "var(--duo-font-ui)", fontSize: "13px" },
   ".duo-find-field": { display: "flex", alignItems: "center", gap: "6px", flex: "1", height: "24px", boxSizing: "border-box", padding: "0 8px", border: "1px solid var(--duo-rule)", borderRadius: "6px", backgroundColor: "var(--duo-pane)" },
   ".duo-find-field input": { flex: "1", minWidth: "0", border: "0", outline: "none", background: "transparent", font: "inherit", color: "var(--duo-text)" },
   ".duo-find-count": { color: "var(--duo-text2)", whiteSpace: "nowrap" },
-  ".duo-find-btn": { font: "12px/16px -apple-system, BlinkMacSystemFont, sans-serif", padding: "4px 10px", border: "1px solid var(--duo-control-edge)", borderRadius: "6px", backgroundColor: "var(--duo-pane)", color: "var(--duo-text)", cursor: "default" },
+  ".duo-find-btn": { font: "12px/16px var(--duo-font-ui)", padding: "4px 10px", border: "1px solid var(--duo-control-edge)", borderRadius: "6px", backgroundColor: "var(--duo-pane)", color: "var(--duo-text)", cursor: "default" },
 });
 
 let view = null;

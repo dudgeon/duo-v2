@@ -83,9 +83,9 @@ public struct SettingsView: View {
                 group("General") {
                     // DL-224 (dark-appearance-handoff): the first row; `duo2 settings appearance`.
                     row("Appearance", value: Picker("", selection: Binding(get: { AppearanceSetting.current },
-                                                                           set: { AppearanceSetting.set($0); info.revision += 1 })) {
+                                                                           set: { do { try AppearanceSetting.set($0) } catch { AppearanceSetting.report(error) }; info.revision += 1 })) {
                         ForEach(AppearanceSetting.allCases, id: \.self) { Text($0.label).tag($0) }
-                    }.labelsHidden().fixedSize(), sub: "Light or dark, as macOS is set. Light and Dark keep Duo one way whatever macOS does.") { EmptyView() }
+                    }.labelsHidden().fixedSize(), sub: AppearanceSetting.current == .classic ? "Classic: legacy Duo's warm paper look. Always light." : "Light or dark, as macOS is set. Light and Dark keep Duo one way whatever macOS does.") { EmptyView() }
                     ruleLine
                     row("Explanations", value: Text(state.dismissedExplainers.isEmpty ? "None dismissed" : "\(state.dismissedExplainers.count) dismissed"),
                         sub: "Short pictures that explain a feature after a long hover. Don’t show again hides one.") {

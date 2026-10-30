@@ -596,9 +596,9 @@ struct BrowserTabView: View {
     }
 
     private func barItem(_ symbol: String, _ label: String, enabled: Bool, _ action: @escaping () -> Void) -> some View {
-        Button(action: action) { Image(systemName: symbol).font(.system(size: 12, weight: .medium)) }
+        Button(action: action) { Image(systemName: symbol).font(.system(size: DuoSymbolSize.barIcon, weight: .medium)) }
             .buttonStyle(.plain)
-            .foregroundStyle(enabled ? DuoColor.text : DuoColor.text2.opacity(0.5))
+            .foregroundStyle(enabled ? DuoColor.text : DuoColor.text2.opacity(DuoOpacity.disabled))
             .disabled(!enabled)
             .help(label)
             .accessibilityLabel(label)
@@ -711,7 +711,7 @@ struct AddressField: NSViewRepresentable {
     func makeNSView(context: Context) -> Field {
         let f = Field()
         f.placeholderString = "Address"
-        f.font = .systemFont(ofSize: 12)
+        f.font = .systemFont(ofSize: DuoTextStyle.control.spec.size)
         f.bezelStyle = .roundedBezel
         f.lineBreakMode = .byTruncatingMiddle
         f.cell?.isScrollable = true

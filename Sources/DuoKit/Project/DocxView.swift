@@ -59,7 +59,7 @@ struct DocxBar: View {
         let _ = model.pickerRevision
         HStack(spacing: DuoSpace.gapButtonToButton) {
             Button { model.docxMenuOpen.toggle() } label: {   // action: doc markup
-                HStack(spacing: 1) { Text("Markup"); Image(systemName: "chevron.down").font(.system(size: 8, weight: .semibold)) }
+                HStack(spacing: 1) { Text("Markup"); Image(systemName: "chevron.down").font(.system(size: DuoSymbolSize.chevronSmall, weight: .semibold)) }
             }
             .buttonStyle(DuoButtonStyle(on: model.docxMenuOpen)).fixedSize().disabled(viewer.state != .ready)
             Spacer(minLength: 0)
@@ -117,9 +117,8 @@ struct MarkupMenu: View {
         .padding(5)
         .frame(width: DuoMetric.docxMenuWidth, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: DuoMetric.radiusPopover).fill(DuoColor.pane))
-        // The board's shadow: a soft drop and a hairline edge, both the text colour.
-        .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusPopover).strokeBorder(DuoColor.text.opacity(0.08), lineWidth: DuoMetric.borderHairline))
-        .shadow(color: DuoColor.text.opacity(0.18), radius: 12, x: 0, y: 8)
+        .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusPopover).strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
+        .duoPopoverShadow()
     }
 
     /// A person's mark colour: `reviewAuthor1…5`.

@@ -9,6 +9,7 @@
 // with the drawn lines at every caret position, and no click may land on another line (DL-167).
 import fs from "fs";
 import { createRequire } from "module";
+import { addTypeVars } from "./editor-vars.mjs";
 const require = createRequire(import.meta.url);
 const { chromium, webkit } = require("playwright-core");
 const dist = (process.argv[2] || "Vendor/codemirror/dist").replace(/^(?!\/)/, process.cwd() + "/");
@@ -76,9 +77,10 @@ A paragraph after the tall table.
 async function run(name, launch) {
 const fails = [];
 const b = await launch();
-const page = await b.newPage({ viewport: { width: 460, height: 900 }, deviceScaleFactor: 2 });
+const page = await b.newPage({ viewport: { width: 460, height: Number(process.env.DUO_VIEWPORT_H) || 900 }, deviceScaleFactor: 2 });
 await page.addInitScript(() => { window.duoFlags = { noPost: true }; });
 await page.goto("file://" + dist + "/editor.html");
+await addTypeVars(page);
 await page.evaluate((t) => {
   document.documentElement.setAttribute("style", "--duo-pane:#fff;--duo-text:#1f2328;--duo-text2:#59636e;--duo-selected:#ddf;--duo-rule:#ddd;--duo-control-edge:#ccc;--duo-ground:#f6f8fa;--duo-needs-you:#c00;--duo-radius-card:8px;--duo-heading-above:4px;");
   window.__folded = false; duo.create(t);
@@ -98,6 +100,8 @@ const driftAt = () => page.evaluate(() => {
   for (const el of document.querySelectorAll(".cm-content > *")) {
     const r = el.getBoundingClientRect();
     if (!r.height) continue;
+    // CodeMirror's own spacer for lines it hasn't drawn (a document longer than the render window, as Classic's taller lines make it): it is not a block of ours to compare.
+    if (el.classList.contains("cm-gap")) continue;
     const pos = V.posAtDOM(el, 0), blk = V.lineBlockAt(pos);
     if (el.classList.contains("cm-line")) {
       const d = textTop(blk) + V.documentTop - r.top;
