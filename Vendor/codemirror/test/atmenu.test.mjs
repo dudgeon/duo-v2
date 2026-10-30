@@ -42,7 +42,7 @@ const names = atPeople(parsed, "geoff").map((p) => p.name);
 check(names.join(",") === "lena,Sam,pat,Dana-Ops", "people: newest first, signers and mentions, no Claude, not yourself, none from code (" + names.join(",") + ")");
 check(names.includes("Sam") && !names.includes("sam"), "names that differ in case are one person, spelled as last written");
 check(!names.includes("b.com") && !names.includes("b"), "an @ inside a word (an email) names nobody");
-check(atPeople(parsed, "").some((p) => p.name === "geoff"), "with no name of your own, you are listed too");
+check(atPeople(parsed).map((p) => p.name).join(",") === "lena,Sam,geoff,pat,Dana-Ops", "listing yourself too (what the margin does, Q-308): geoff comes in at his comment's date");
 check(atPeople(parsed, "geoff").every((p) => p.hint === ""), "a person's row has no hint");
 const items = AT_ITEMS.concat(atPeople(parsed, "geoff"));
 check(atFilter("", items)[0].name === "claude" && atFilter("", items).length === 5, "the menu is Claude, then the people");
