@@ -11,6 +11,12 @@ The console is Geoff's default channel with the director (`docs/director/console
 
 `python3 -I ~/.claude/skills/director-console/worker-links.py [name|id-prefix …]` prints, for each background worker, its state, its **Remote Control link** (`https://claude.ai/code/session_…`, which opens the session on Geoff's phone) and the **artifacts it has open** (canvases, pages, review pages). Use it for every card and row below. A worker in state `blocked` is usually waiting on Geoff: read its screen (`claude logs <id>`) or transcript before you say so (memory: verify before "needs you").
 
+## No stranded workers (Geoff, 2026-10-30: "we CANNOT have stranded workers")
+
+- The director session runs in **Auto**, never Bypass (PROJECT.md and delegating.md already said so; Geoff, 2026-10-30: "YOU ARE NOT SUPPOSED TO RUN IN BYPASS MODE"). First thing on every wake: `get_session self`. If `permissionMode` isn't `auto`, switch with `set_session_permission_mode self auto` before anything else.
+- Keep `~/.claude/skills/director-console/watch-workers.sh` running in the background at all times: it wakes the director when any duo-v2 worker stops, including ones started after it. Re-arm it on every wake.
+- On every wake, `worker-links.py` lists every worker's state. A `done` or `blocked` worker with no console row or task-note line is stranded: read its last report, act on it, and put it on the console.
+
 ## needs: what Geoff decides or looks at
 
 ```json
@@ -22,6 +28,7 @@ The console is Geoff's default channel with the director (`docs/director/console
 ```
 
 Rules (each is something Geoff asked for):
+- **A linked session must be running** (Geoff, 2026-10-30, about a card whose session "shows as disconnected so I can't work with it (I'm angry about this)"). `worker-links.py` gives `running`. Before linking a session, and on every Refresh, wake any linked session that isn't running: `claude --bg --resume <full-id> "<why, and what Geoff wants from it>"`, with no flags, so it keeps its Remote Control link. Never stop a session while a card links it.
 - **Every card links its worker's session** ("the decision panes should always include a clickable link to the worker session, esp when there are artifacts to review", 2026-10-30), and every artifact there is to review (canvas, page, film), first in `links`. No worker: link the record, release or page it's about.
 - **Recommendation first**, as an option with `recommended: true`; 2-4 options; labels are the button text. Questions a phone can answer in seconds; say the time ("10 s", "~5 min") in the title when it's more than a tap.
 - **Only what's true now.** Check the record on main, the worker's transcript and its pending question before writing "waits on you". Never a card for something already answered.
