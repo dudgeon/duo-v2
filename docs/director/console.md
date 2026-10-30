@@ -31,6 +31,6 @@ The console's header has a **Refresh** button (Geoff: "please make a refresh but
 2. **In flight:** compare every `threads` row with `claude agents --json --all` and the task notes. Delete rows for finished work, add rows for workers that are running or waiting on Geoff, and fix each state and summary.
 3. **Release:** `release/current` gets the newest release, what's on main and unreleased, the last gate, and what's next.
 4. **Headline:** rewrite `meta/console`'s headline and `updated` with the date and what changed.
-5. **Recurring jobs:** check that their latest cards (problem discovery, the weekly tidy-up) aren't stale, and that no scheduled run is stuck on a permission prompt (`list_task_runs`).
+5. **Recurring jobs:** check that their latest cards (problem discovery, the weekly tidy-up) aren't stale, and that no scheduled run is stuck on a permission prompt (`list_task_runs`). Each job has a row in `jobs` (Geoff, 2026-10-30: "a section that lets me jump to the output artifacts for the recurring agents … including the last run"): name, schedule, next, its page, its card, and `lastRun` {at, status, headline, link}, which each run updates itself. Mark a stuck run's status "stuck". A new recurring job gets its row when it's scheduled.
 
 The director also deletes needs cards as it goes, not only on Refresh: once a card is answered, and as soon as a release ships.
