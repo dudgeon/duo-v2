@@ -1,6 +1,6 @@
 # Session-to-session messaging for the director, tested
 
-Geoff, 2026-10-28: "update for the director skill: the work machine now supports direct session to session/agent to agent messaging in claude code; are there opportunities to simplify the director skill to use this primative instead?" This note says what the messaging primitives actually do on the work Mac's Claude Code (**2.1.284**) and this Mac's (**2.1.311**), and proposes what the director can drop. Records: F-421 (what messaging does), F-398 (Duo bugs found on the way), Q-290 to Q-292 (Geoff's picks), C-121, DL-256.
+Geoff, 2026-10-28: "update for the director skill: the work machine now supports direct session to session/agent to agent messaging in claude code; are there opportunities to simplify the director skill to use this primative instead?" This note says what the messaging primitives actually do on the work Mac's Claude Code (**2.1.284**) and this Mac's (**2.1.311**), and proposes what the director can drop. Records: F-421 (what messaging does), F-422 (Duo bugs found on the way), Q-290 to Q-292 (Geoff's picks), C-121, DL-257.
 
 **How it was tested.** These were real `claude` sessions on Haiku 5.5, about a dozen short turns, in a scratch folder (`build/dm-scratch` in this work tree). The scratch sessions were `claude --bg` in `auto` and in `default`, one `--bg --remote-control`, and one 2.1.284 run interactively in a pseudo-terminal, the way a Duo terminal runs Claude. They used the real `~/.claude`, because a scratch config isn't logged in and credentials are never copied. The tester was this session (`claude --bg`, auto, 2.1.311). Where a case couldn't be run (a bypass session: auto mode refused to start one; a second Desktop session), the rule comes from the CLI's own code, read in both binaries, and from director-duo-v2's transcript. The two binaries agree.
 
@@ -25,7 +25,7 @@ Geoff, 2026-10-28: "update for the director skill: the work machine now supports
 
 Its transcript's latest entries (60d72656, 2026-10-28) still say `permissionMode: bypassPermissions`. Every worker runs in `auto`. That is a class mismatch, so every report to it is held, and its sends to workers are held too ("held by that session … not approved before expiry", 10-19). Messaging itself is fine: **switch director-duo-v2 to Auto** (or start a fresh `claude -n director-duo-v2` in Auto) and messages flow both ways. Address workers by their `-n` names (`ListAgents` shows them); workers send to `director-duo-v2` by name.
 
-## 3. Duo bugs found on the way (F-398)
+## 3. Duo bugs found on the way (F-422)
 
 1. **`send`'s background resume makes a copy.** Both `AppModel+DirectorSend.carry` and `directorSendOffline` pass `--remote-control <name>` with `--bg --resume`, so the CLI starts a renamed copy instead of waking the worker. The worker's name and its `.duo/director.json` link no longer match the session that got the message. Fix: no flags; its saved options already keep Remote Control.
 2. **The `2.1.285+` gate on background resume is wrong.** 2.1.284 has it, so the work Mac fell through to a headless turn.
@@ -66,7 +66,7 @@ Its transcript's latest entries (60d72656, 2026-10-28) still say `permissionMode
 
 ## 5. Geoff's picks (2026-10-28, by buttons)
 
-He took every recommendation: retire Duo's typing and queue (Q-290), messages first (Q-291), `watch` as a fallback, and director-duo-v2 to Auto (Q-292). The decision is DL-256. Duo's guarded Enter (`guardedSubmit`, `SubmitGuard`) stays, because Markdown review's @claude comments use it on the person's say-so (F-390). Only the director stops using it.
+He took every recommendation: retire Duo's typing and queue (Q-290), messages first (Q-291), `watch` as a fallback, and director-duo-v2 to Auto (Q-292). The decision is DL-257. Duo's guarded Enter (`guardedSubmit`, `SubmitGuard`) stays, because Markdown review's @claude comments use it on the person's say-so (F-390). Only the director stops using it.
 
 ## 6. For director-duo-v2: how to start using it
 

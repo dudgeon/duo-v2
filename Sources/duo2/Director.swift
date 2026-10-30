@@ -365,7 +365,7 @@ func directorSendOffline(_ rest: [String]) -> Int32 {
             caps.cliLogin = ClientCaps.cliLogin(env: env)
             if let why = Director.backgroundRefusal(caps) { d.log("refused", task: hit.path, worker: sid, rung: rung.rawValue, why); return offlineFail(why) }
         }
-        // No other flags: the resumed worker keeps its saved name, Remote Control, mode and model (F-398).
+        // No other flags: the resumed worker keeps its saved name, Remote Control, mode and model (F-422).
         let args = SendLadder.resumeArgs(rung, session: sid, message: tagged)
         let cwd = DirectorOffline.transcript(sessionId: sid).flatMap(DirectorOffline.filedCwd).flatMap { FileManager.default.fileExists(atPath: $0) ? $0 : nil } ?? d.project.path
         let log = d.project.appending(path: ".duo/director-runs/\(sid.prefix(8))-\(Int(Date().timeIntervalSince1970)).log")

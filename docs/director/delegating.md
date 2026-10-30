@@ -25,6 +25,6 @@
 - the director runs in **Auto**, the workers' mode, so SendMessage reports arrive;
 - it keeps `docs/director/skills/director-console/watch-workers.sh` (its local copy in `~/.claude/skills/director-console/`) running in the background, which wakes it when any duo-v2 worker stops, including workers started later; it re-arms the watcher on every wake;
 - on every wake, `worker-links.py` lists every worker's state, and a stopped worker with no console row or task-note line gets read and acted on at once.
-- Then subscribe: `SendMessage(to: "<name>", notify_when_idle: true)`. Its report and the idle notice wake you. Both sessions must be in the same permission class (Auto; DL-256); across classes messages are held and expire in about 16 minutes (F-421).
+- Then subscribe: `SendMessage(to: "<name>", notify_when_idle: true)`. Its report and the idle notice wake you. Both sessions must be in the same permission class (Auto; DL-257); across classes messages are held and expire in about 16 minutes (F-421).
 - **A worker's SendMessage address is the name `ListAgents` shows.** For `claude --bg -n <name>` that's its `-n` name. A session started in Duo may show a peer name (`duo-v2-xx`) instead, so look it up. If it isn't listed, it has stopped: `duo2 director send` resumes it.
 - **Nothing relies on `bypassPermissions`** (the work Mac disables it). Workers run in `auto`; run the director in Auto too, never the workers in bypass.

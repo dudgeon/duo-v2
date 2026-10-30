@@ -240,7 +240,7 @@ extension AppModel {
             lines.append(l)
         }
         lines.append("Hearing back: SendMessage a live worker (notify_when_idle: true); its reply or the idle notice wakes you. Where messaging can't carry (a class mismatch above, or no messaging), run `duo2 director watch` under Monitor as the fallback.")
-        let pending = reg.pending   // retired by DL-256; an older file may still hold some
+        let pending = reg.pending   // retired by DL-257; an older file may still hold some
         j["workers"] = tasks.map { t -> [String: Any] in
             var w: [String: Any] = ["task": t.note.path, "title": t.note.title, "status": t.note.status ?? "open", "state": t.stateWord, "noteModified": t.modified]
             if let s = t.worker { w["session"] = s.sessionId ?? ""; if let q = s.question { w["question"] = q } }
@@ -360,7 +360,7 @@ extension AppModel {
             adopted = !startedBy(director, id, task: path, folder: folder)
             sid = id; how = adopted ? "adopted \(s.name) (the user allowed it in Duo)" : "linked \(s.name)"
         } else if inv.has("background") || (!inv.has("in-duo") && caps.background != .no) {
-            // The default worker (DL-231, DL-256): in the background, reachable by SendMessage; Duo
+            // The default worker (DL-231, DL-257): in the background, reachable by SendMessage; Duo
             // carries no messages, so --in-duo, or a client without background sessions, starts it in Duo instead.
             // The director runs the command itself (its own flags, Remote Control, its model).
             // `claude --bg` picks its own session id (it ignores --session-id), so the worker is

@@ -578,7 +578,7 @@ public final class AppModel {
         pushNoteContext()
         Notifier.shared.model = self
         notifyNeedsYou()
-        pruneDirectorRegistries()   // workers whose task is done; messages an older Duo queued (DL-256)
+        pruneDirectorRegistries()   // workers whose task is done; messages an older Duo queued (DL-257)
         deliverReviewComments()     // @claude comments waiting for their session, and their replies (DL-236 10A)
         archiveListedSessions()  // after the snapshot is applied: it archives what's listed now
         GitIgnoreOffer.consider(folders, interactive: interactivePrompts && !SupportFolder.isIsolated)   // C-28: no first-run questions in an isolated instance

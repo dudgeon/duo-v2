@@ -3,7 +3,7 @@ import Foundation
 /// The director's exact parts (DL-193 to DL-205), Foundation only, so `duo2`, the app and the checks
 /// share them: who directs a project (`.duo/director.json`, DL-200), the log every `duo2 director`
 /// verb writes (the metrics in `docs/research/director-product.md` are counted from it), where the
-/// rules are (DL-193), what the calling client can do, the ladder `send` walks (DL-199, DL-256), and
+/// rules are (DL-193), what the calling client can do, the ladder `send` walks (DL-199, DL-257), and
 /// the guards on Duo pressing Enter in a session (`SubmitGuard`, kept for @claude review comments).
 public enum Director {
     /// A director's fixed name (DL-200): `director-<project>`, given with `claude -n`, which survives
@@ -174,7 +174,7 @@ public struct DirectorRegistry: Codable, Equatable, Sendable {
     public var schema = 1
     public var current: Entry?
     public var retired: [Entry] = []
-    /// Retired by DL-256: Duo no longer carries a director's messages, so nothing adds to this. Kept so
+    /// Retired by DL-257: Duo no longer carries a director's messages, so nothing adds to this. Kept so
     /// an older file still loads; the app turns what it finds into a Progress line and empties it.
     public var pending: [Pending] = []
 
@@ -577,7 +577,7 @@ public struct ClientCaps: Codable, Equatable, Sendable {
     public var hooks: Tri = .unknown
     /// Monitor: offered only when the account's flag is on (F-310) and nothing denies it.
     public var monitor: Tri = .unknown
-    /// Resuming a stopped background session with a message (2.1.284+, F-398).
+    /// Resuming a stopped background session with a message (2.1.284+, F-422).
     public var backgroundResume: Tri = .unknown
     /// The session's permission mode (`default`, `acceptEdits`, `auto`, `bypassPermissions`, …), from the
     /// tail of its transcript; nil if unread. Messages cross only between sessions of one `PermissionClass`.
@@ -753,10 +753,10 @@ public enum PermissionClass: String, Codable, Sendable {
     }
 }
 
-// MARK: - The ladder `send` walks (DL-199, DL-256)
+// MARK: - The ladder `send` walks (DL-199, DL-257)
 
 /// The ways to reach a worker, best first (director-product.md, "Commitments"). Duo types nothing into
-/// a worker for a director (DL-256): old log lines may still name the retired rungs `duo-submit` and
+/// a worker for a director (DL-257): old log lines may still name the retired rungs `duo-submit` and
 /// `queued`, as strings.
 public enum SendRung: String, Codable, CaseIterable, Sendable {
     /// SendMessage, where both sessions have messaging and share a permission class: the director sends it itself.
@@ -813,7 +813,7 @@ public enum SendLadder {
 
     /// The `claude` arguments that deliver `message` to a stopped worker. Nothing else is passed: a
     /// resumed background session keeps its saved name, Remote Control, mode and model, and any flag
-    /// makes the CLI start a renamed copy instead of waking it (F-398). `--` ends the options, so a
+    /// makes the CLI start a renamed copy instead of waking it (F-422). `--` ends the options, so a
     /// message starting with "-" is never read as a flag.
     public static func resumeArgs(_ rung: SendRung, session: String, message: String) -> [String] {
         (rung == .headless ? ["-p", "--resume", session] : ["--bg", "--resume", session]) + ["--", message]
@@ -823,7 +823,7 @@ public enum SendLadder {
 // MARK: - When Duo may press Enter (DL-199)
 
 /// Duo presses Enter in a session's prompt for a person's say-so (an @claude review comment) only when
-/// every one of these holds. It no longer guards directors (DL-256): their messages go by SendMessage.
+/// every one of these holds. It no longer guards directors (DL-257): their messages go by SendMessage.
 /// Each refusal says which, so the director (and the log) know why; DuoChecks proves each one.
 public enum SubmitGuard {
     /// How long after the user's last keystroke in a worker Duo keeps out (DL-199 "recently").

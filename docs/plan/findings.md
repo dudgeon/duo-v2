@@ -4311,7 +4311,7 @@ Research for DL-236 (8), "the things the users should feel familiar with". Googl
 
 ## F-421 · Session messaging works within a permission class, on 2.1.284 as on 2.1.311 (director-messaging, 2026-10-28)
 
-- Renumbered at the merge with main on 2026-10-30: this branch's DL-244 and F-397 are now DL-256 and F-421, because main had already used DL-244 and F-397 for list indent.
+- Renumbered at the merges with main on 2026-10-30, because main had used the reserved numbers: this branch's DL-244 → DL-256 → DL-257 (main's list indent, then its fork decision for C-110), F-397 → F-421 (list indent), and F-398 → F-422 (the @claude-suggest bug).
 - Tested with real Haiku turns between scratch sessions on this Mac: `claude --bg` in `auto` and `default`, one with `--remote-control`, and 2.1.284 run interactively in a pty (as a Duo terminal runs Claude). Details and the test list: `docs/research/director-messaging.md`.
 - **Two permission classes, read from the CLI's code in both binaries:** `bypass` (`bypassPermissions`, or plan entered from bypass) and `prompting` (everything else, `auto` and `default` included). Within a class a message is delivered: an idle receiver wakes, and a busy one reads it at its next tool round. Across classes it's held for the receiver's user, then expires: about 16 minutes on director-duo-v2's 10-19 transcript. `crossSessionInbound` (`accept`/`hold`/`refuse`) overrides this, and managed or repo settings can only tighten it. Messages are tagged `from-mode="prompting"` or `"bypass"`.
 - **This is DL-222's root cause, and it is still live:** director-duo-v2 (the Claude app, 60d72656) still ran in `bypassPermissions` on 2026-10-28, against workers in `auto`. Switching it to Auto ends the holds.
@@ -4321,7 +4321,7 @@ Research for DL-236 (8), "the things the users should feel familiar with". Googl
 - **Waking a stopped `--bg` session:** `claude --bg --resume <full id> -- "<msg>"` wakes the same session "with its saved options (--remote-control, -n, --permission-mode, --model)". Any extra flag starts a renamed copy instead, and a short id opens the resume picker. 2.1.284 has the same `--bg --resume` and the same notes.
 - A `--bg` launch from another binary goes to the running background daemon, so testing an old CLI's background sessions on this Mac really tests the current one. Run the old binary interactively in a pty instead, with a clean environment: a child of a Claude session inherits `CLAUDE_CODE_CHILD_SESSION` and the parent's name, and saves no transcript.
 
-## F-398 · `duo2 director send` resumed workers as copies, and gated resume at the wrong version (director-messaging, 2026-10-28)
+## F-422 · `duo2 director send` resumed workers as copies, and gated resume at the wrong version (director-messaging, 2026-10-28)
 
 - Both `send` paths (the app's `carry`, and duo2's `directorSendOffline`) ran `claude --bg --resume <id> --remote-control <name> -- <msg>`. The extra flag makes the CLI start a copy with a new id and name (F-421), so the worker's `.duo/director.json` link and its name no longer pointed at the session that got the message. Now `SendLadder.resumeArgs` passes no flags, and the saved options keep Remote Control.
 - `ClientCaps.backgroundResume` required 2.1.285, but 2.1.284 (the work Mac) has `--bg --resume`, so the work Mac fell through to a headless turn. The gate is 2.1.284 now.
