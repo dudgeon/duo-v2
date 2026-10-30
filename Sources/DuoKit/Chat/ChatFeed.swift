@@ -116,34 +116,75 @@ final class ChatFeed {
         let lines = data.split(separator: UInt8(ascii: "\n"), omittingEmptySubsequences: false)
         var offset = start, from = size
         var openTurn = false
+        var asking: (e: ChatJSON, at: Double?)?
         for (i, l) in lines.enumerated() {
             if i == 0, start > 0 { offset += UInt64(l.count + 1); continue }
             if let obj = try? JSONSerialization.jsonObject(with: Data(l)) as? ChatJSON, let e = obj["e"] as? ChatJSON {
                 let name = e["hook_event_name"] as? String
                 if name == "UserPromptSubmit" { from = offset; openTurn = true }
-                if name == "Stop" || name == "SessionStart" { openTurn = false }
+                if name == "Stop" || name == "SessionStart" { openTurn = false; asking = nil }
+                if name == "PermissionRequest" { asking = (e, (obj["at"] as? NSNumber)?.doubleValue) }
+                if name == "PostToolUse" || name == "PostToolUseFailure", e["tool_name"] as? String == asking?.e["tool_name"] as? String { asking = nil }
             }
             offset += UInt64(l.count + 1)
         }
         eventsPos = openTurn ? from : size
+        // A long turn's events (MessageDisplay above all) can push its prompt out of the window: the
+        // dialog Claude is waiting on is still owed its request, or chat falls back (F-419).
+        if !openTurn, let a = asking, let tool = a.e["tool_name"] as? String {
+            chat?.pendingRequest = ChatRequest(tool: tool, input: a.e["tool_input"] as? ChatJSON ?? [:], at: a.at.map { Date(timeIntervalSince1970: $0) } ?? Date())
+        }
     }
 
-    private var ticks = 0
+    /// When the feed last read a hook event, and which: the Debug report's evidence (F-419).
+    private(set) var lastEvent: (name: String, at: Date)?
+    var isLoading: Bool { loading }
 
-    private func tick() {
-        guard let chat else { return stop() }
-        guard !loading else { return }
-        // Off screen, every 2 s (ENH-45); on screen, every tick, after reading what it skipped.
-        ticks += 1
-        if chat.isShown() { chat.wake() } else if ticks % 13 != 0 { return }
+    /// Reads the hooks now, shown or not (a dialog's request is due). While the transcript loads,
+    /// only the request is taken: the rest waits for the log the load builds (F-419).
+    func catchUp() {
+        guard let chat else { return }
+        if loading { peekRequest(); return }
+        readEvents(chat)
+    }
+
+    /// The newest unanswered request among the events not yet read, without reading them.
+    private func peekRequest() {
+        guard let chat, let h = try? FileHandle(forReadingFrom: eventsURL) else { return }
+        defer { try? h.close() }
+        try? h.seek(toOffset: eventsPos)
+        let data = (try? h.read(upToCount: 4 << 20)) ?? Data()
+        for e in ChatIngest.lines(eventsRest + data) {
+            guard let p = e["e"] as? ChatJSON, let name = p["hook_event_name"] as? String else { continue }
+            if name == "PermissionRequest", let tool = p["tool_name"] as? String {
+                chat.pendingRequest = ChatRequest(tool: tool, input: p["tool_input"] as? ChatJSON ?? [:],
+                                                  at: (e["at"] as? NSNumber).map { Date(timeIntervalSince1970: $0.doubleValue) } ?? Date())
+            } else if name == "Stop" { chat.pendingRequest = nil }
+        }
+    }
+
+    private func readEvents(_ chat: ChatSession) {
         for e in read(eventsURL, &eventsPos, &eventsRest) {
             if let p = e["e"] as? ChatJSON {
                 if p["hook_event_name"] as? String == "SessionStart", let t = p["transcript_path"] as? String, transcript == nil {
                     transcript = URL(fileURLWithPath: t)
                 }
                 ChatIngest.hook(p, at: (e["at"] as? NSNumber)?.doubleValue, into: chat.log, chat: chat)
+                if let n = p["hook_event_name"] as? String { lastEvent = (n, Date()) }
             }
         }
+    }
+
+    private var ticks = 0
+
+    private func tick() {
+        guard let chat else { return stop() }
+        // Off screen, every 2 s (ENH-45); on screen, every tick, after reading what it skipped.
+        ticks += 1
+        // A long transcript loads for seconds (F-160): the request a dialog waits on can't wait that long (F-419).
+        if loading { if chat.isShown(), chat.dialogUp { peekRequest() }; return }
+        if chat.isShown() { chat.wake() } else if ticks % 13 != 0 { return }
+        readEvents(chat)
         if transcript == nil { transcript = ClaudeStorage.transcript(sessionId: sessionId, cwd: cwd) }
         if let t = transcript {
             for r in read(t, &transcriptPos, &transcriptRest) { ChatIngest.record(r, into: chat.log, chat: chat) }

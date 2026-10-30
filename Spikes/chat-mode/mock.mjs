@@ -62,6 +62,12 @@ const scenarios = {
   agent: () => [{ tool: 'Agent', input: { description: 'Look around', prompt: 'SUBAGENT: summarise the folder', subagent_type: 'general-purpose' } }],
   long: () => [{ text: Array.from({ length: 40 }, (_, i) => `Line ${i + 1} of a long answer.`).join('\n'), slow: true }],
   err: () => 'error',
+  // A question, Claude's long reply once it's answered, then a second long question with parentheses and a
+  // semicolon (the work Mac's dialog-request-mismatch report, invented text).
+  asktwice: () => scenarios.ask1(),
+  asktwice2: () => [{ text: 'Thanks, that settles the first part. Before I write anything I want to check one more thing about the layout of the import step, because the two choices lead to quite different code paths and I would rather not guess.' },
+    { tool: 'AskUserQuestion', input: { questions: [{ question: 'Should the importer read the whole export file into memory first (simpler, fine for small files) or stream it row by row (more code; safer for large exports from older accounts)?', header: 'Importer', multiSelect: false, options: [
+      { label: 'Read it whole', description: 'Simpler; fine below a few MB' }, { label: 'Stream rows', description: 'More code; handles any size' }] }] } }],
 };
 
 function plan(body) {
@@ -92,6 +98,10 @@ function plan(body) {
   const sname = promptIdx >= 0 ? [...blocks(msgs[promptIdx])[blockIdx].text.matchAll(/SCENARIO:(\w+)/g)].pop()?.[1] : null;
   // readask and permask: the question comes once their tool has run, and only once.
   if ((body.tools || []).length && (sname === 'readask' || sname === 'permask') && ranTool && !asked) return scenarios.ask1();
+  if ((body.tools || []).length && sname === 'asktwice' && ranTool) {
+    const n = after.filter(b => b.type === 'tool_use' && b.name === 'AskUserQuestion').length;
+    if (n === 1) return scenarios.asktwice2();
+  }
   // Title requests (no tools) and anything after a tool result skip the scenario.
   const sc = ranTool || !(body.tools || []).length || !sname ? null : ['SCENARIO', sname];
   if (sc && scenarios[sc[1]]) return scenarios[sc[1]](body);

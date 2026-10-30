@@ -1,0 +1,314 @@
+[
+{
+"comment": "Tour steps for Claude Code 2.1.284 (copy of scenario-tour.json). Differences: idle wait matches the input box's ❯ with no 'esc to interrupt' (2.1.284's idle footer shows no reliable '← for agents'-only marker we rely on); after the plan screen a second shift-tab returns from auto to manual. Setup: scratch.sh /tmp/t284 (short path; a scratch under ~/.claude makes Bash dialogs say 'sensitive file'); write {\"permissions\":{\"defaultMode\":\"default\"}} to /tmp/t284/cfg/settings.json; start mock.mjs with MOCK_PORT=<random 8800-8890> MOCK_CWD=/tmp/t284/ws; run from /tmp/t284/ws: env -i HOME PATH TERM=xterm-256color LANG=en_US.UTF-8 COLS=100 ROWS=34 CLAUDE_BIN=<2.1.284 claude> CLAUDE_CONFIG_DIR=/tmp/t284/cfg ANTHROPIC_BASE_URL=http://127.0.0.1:<port> ANTHROPIC_API_KEY=sk-ant-mock-key-0000000000000000000 CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 DISABLE_AUTOUPDATER=1 node drive.mjs <this file> <out> --model claude-haiku-5-5 --session-id <uuid>. drive.mjs ignores unknown keys, so this leading step is inert."
+},
+{
+"wait": "^(?![\\s\\S]*esc to interrupt)[\\s\\S]*❯",
+"timeout": 150
+},
+{
+"type": "SCENARIO:md"
+},
+{
+"key": "enter"
+},
+{
+"wait": "more\\.",
+"timeout": 200
+},
+{
+"wait": "^(?![\\s\\S]*esc to interrupt)[\\s\\S]*❯",
+"timeout": 150
+},
+{
+"dump": "01-markdown"
+},
+{
+"type": "SCENARIO:bash"
+},
+{
+"key": "enter"
+},
+{
+"wait": "Do you want",
+"timeout": 100
+},
+{
+"sleep": 500
+},
+{
+"dump": "02-bash-permission"
+},
+{
+"key": "1"
+},
+{
+"wait": "^(?![\\s\\S]*esc to interrupt)[\\s\\S]*❯",
+"timeout": 150
+},
+{
+"type": "SCENARIO:read"
+},
+{
+"key": "enter"
+},
+{
+"wait": "Do you want to make this edit",
+"timeout": 100
+},
+{
+"sleep": 500
+},
+{
+"dump": "03-edit-permission"
+},
+{
+"key": "3"
+},
+{
+"wait": "^(?![\\s\\S]*esc to interrupt)[\\s\\S]*❯",
+"timeout": 150
+},
+{
+"type": "SCENARIO:ask"
+},
+{
+"key": "enter"
+},
+{
+"wait": "Which colour",
+"timeout": 100
+},
+{
+"sleep": 500
+},
+{
+"dump": "04-question"
+},
+{
+"key": "down"
+},
+{
+"sleep": 200
+},
+{
+"key": "enter"
+},
+{
+"wait": "^(?![\\s\\S]*esc to interrupt)[\\s\\S]*❯",
+"timeout": 150
+},
+{
+"type": "SCENARIO:askmulti"
+},
+{
+"key": "enter"
+},
+{
+"wait": "Which platforms",
+"timeout": 100
+},
+{
+"sleep": 500
+},
+{
+"dump": "05-multi"
+},
+{
+"key": "space"
+},
+{
+"sleep": 150
+},
+{
+"key": "down"
+},
+{
+"sleep": 150
+},
+{
+"key": "down"
+},
+{
+"sleep": 150
+},
+{
+"key": "space"
+},
+{
+"sleep": 300
+},
+{
+"key": "right"
+},
+{
+"sleep": 400
+},
+{
+"key": "down"
+},
+{
+"sleep": 150
+},
+{
+"key": "down"
+},
+{
+"sleep": 150
+},
+{
+"type": "After the beta"
+},
+{
+"sleep": 300
+},
+{
+"key": "enter"
+},
+{
+"wait": "Review your answers",
+"timeout": 50
+},
+{
+"sleep": 300
+},
+{
+"dump": "06-review"
+},
+{
+"key": "enter"
+},
+{
+"wait": "^(?![\\s\\S]*esc to interrupt)[\\s\\S]*❯",
+"timeout": 150
+},
+{
+"type": "SCENARIO:agent"
+},
+{
+"key": "enter"
+},
+{
+"wait": "finished",
+"timeout": 100
+},
+{
+"wait": "^(?![\\s\\S]*esc to interrupt)[\\s\\S]*❯",
+"timeout": 150
+},
+{
+"dump": "07-agent"
+},
+{
+"key": "shift-tab"
+},
+{
+"sleep": 300
+},
+{
+"key": "shift-tab"
+},
+{
+"sleep": 300
+},
+{
+"dump": "08-plan-mode"
+},
+{
+"type": "SCENARIO:plan"
+},
+{
+"key": "enter"
+},
+{
+"wait": "Ready to code",
+"timeout": 100
+},
+{
+"sleep": 800
+},
+{
+"dump": "09-plan"
+},
+{
+"key": "esc"
+},
+{
+"wait": "^(?![\\s\\S]*esc to interrupt)[\\s\\S]*❯",
+"timeout": 150
+},
+{
+"key": "shift-tab"
+},
+{
+"sleep": 300
+},
+{
+"key": "shift-tab"
+},
+{
+"sleep": 300
+},
+{
+"type": "SCENARIO:long"
+},
+{
+"key": "enter"
+},
+{
+"sleep": 1800
+},
+{
+"dump": "10-streaming"
+},
+{
+"key": "esc"
+},
+{
+"wait": "^(?![\\s\\S]*esc to interrupt)[\\s\\S]*❯",
+"timeout": 150
+},
+{
+"dump": "11-interrupted"
+},
+{
+"type": "/model"
+},
+{
+"sleep": 400
+},
+{
+"key": "enter"
+},
+{
+"sleep": 800
+},
+{
+"dump": "12-unknown-model-picker"
+},
+{
+"key": "esc"
+},
+{
+"wait": "^(?![\\s\\S]*esc to interrupt)[\\s\\S]*❯",
+"timeout": 150
+},
+{
+"type": "SCENARIO:err"
+},
+{
+"key": "enter"
+},
+{
+"sleep": 5000
+},
+{
+"dump": "13-retrying"
+},
+{
+"key": "esc"
+},
+{
+"sleep": 500
+}
+]

@@ -1,0 +1,34 @@
+
+  ⎿  /plan to preview
+▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔ ● high · /effort ▔
+
+  ────────────────────────────────────────────────────────────────────────────────────────────────
+   Ready to code?
+
+   Here is Claude's plan:
+  ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+   Plan
+
+   1. Read the code
+   2. Change foo
+   3. Run the checks
+  ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+
+
+
+
+
+
+
+
+
+
+  ────────────────────────────────────────────────────────────────────────────────────────────────
+   Claude has written up a plan and is ready to execute. Would you like to proceed?
+
+   ❯ 1. Yes, and use auto mode
+     2. Yes, manually approve edits                                               
+     3. Tell Claude what to change
+        shift+tab to approve with this feedback
+
+   ctrl+g to edit in Vim · ~/work/sample/cfg/plans/scenario-plan-adaptive-ripple.md
