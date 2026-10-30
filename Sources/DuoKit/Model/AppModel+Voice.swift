@@ -116,7 +116,11 @@ extension AppModel {
     func voiceVerb(_ id: ActionID, _ inv: Invocation, _ req: ControlRequest, _ done: @escaping @MainActor (Reply) -> Void) {
         let idWord = id == .voiceFile ? (inv.positional.count > 1 ? inv.positional[1] : nil) : inv.positional.first
         var key = visibleSessionId
-        if let w = idWord {
+        if idWord == "shell" {
+            // The shell opened last: a shell has no session id (`duo2 shell new`).
+            guard let k = shellTabs.values.flatMap({ $0 }).last(where: { terminals.existing($0) != nil }) else { return done(.fail("no shell is open; `duo2 shell new` opens one")) }
+            key = k
+        } else if let w = idWord {
             guard let s = findSession(w, in: nil) else { return done(.fail("no session '\(w)'")) }
             key = s.tabKey
         }
@@ -127,7 +131,12 @@ extension AppModel {
         switch id {
         case .voiceStatus:
             let mine = voice.target == target
-            done(.ok(mine || voice.state.isActive ? VoiceCopy.line(voice.state) : "Voice input is off.",
+            // For a terminal, the line the words land on: what its prompt holds now (scripted checks read it).
+            var prompt = ""
+            if case .terminal = target, let t = terminals.existing(key) {
+                prompt = " Its last screen line: \"" + (voiceRows(t).last { !$0.trimmingCharacters(in: .whitespaces).isEmpty } ?? "").trimmingCharacters(in: .whitespaces) + "\""
+            }
+            done(.ok((mine || voice.state.isActive ? VoiceCopy.line(voice.state) : "Voice input is off.") + prompt,
                      ["state": String(describing: voice.state), "session": voice.target?.key ?? ""]))
         case .voiceStop:
             guard voice.state.isActive else { return done(.ok("Voice input wasn't on.")) }
@@ -145,6 +154,7 @@ extension AppModel {
             guard !voice.state.isActive else { return done(.fail("voice input is already on; stop it first")) }
             voice.start(target, source: .file(url)) { state in
                 switch state {
+                case .idle where self.voice.notice != nil: done(.fail("\(self.voice.notice?.text ?? "") (\(name))"))
                 case .idle: done(.ok("Said into \(name): \(self.voice.transcript.settledText.isEmpty ? "(nothing recognised)" : self.voice.transcript.settledText). Nothing was sent.",
                                      ["said": self.voice.transcript.settledText]))
                 default: done(.fail(VoiceCopy.line(state)))
