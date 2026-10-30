@@ -247,13 +247,14 @@ struct QuestionSheet: View {
                                 Text(i.what).duoText(.body).fixedSize(horizontal: false, vertical: true)
                                 if !i.path.isEmpty {
                                     if i.sub {
-                                        Text(i.path).duoText(.body).foregroundStyle(DuoColor.text2).fixedSize(horizontal: false, vertical: true)
+                                        Text(i.path).duoText(.control).foregroundStyle(DuoColor.text2).fixedSize(horizontal: false, vertical: true).padding(.top, 4)
                                     } else {
                                     Text(i.path).duoText(.mono, lineHeight: DuoTextStyle.body.spec.lineHeight).foregroundStyle(DuoColor.text2)
                                         .lineLimit(1).truncationMode(.middle)
                                     }
                                 }
                             }
+                            .padding(.vertical, i.sub ? 6 : 0)
                         }
                     }
                 }
