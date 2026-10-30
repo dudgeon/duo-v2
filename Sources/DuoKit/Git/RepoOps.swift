@@ -9,10 +9,10 @@ public enum RepoOps {
 
     // MARK: copy (board 3)
 
-    /// Copies a repository into `dest` (which must not exist) on a new or existing branch, then keeps
-    /// Duo's files out of git through `.git/info/exclude` when asked (the sheet's checkbox, DL-149).
+    /// Copies a repository into `dest` (which must not exist) on a new or existing branch. Duo's files
+    /// are ordinary files there (DL-259): nothing is excluded.
     public static func clone(_ repo: RemoteRepo, into dest: URL, newBranch: String?, from base: String?, existing: String?,
-                             excludeDuoFiles: Bool, cloneURL: String? = nil, progress: (@Sendable (String) -> Void)? = nil) -> Outcome {
+                             cloneURL: String? = nil, progress: (@Sendable (String) -> Void)? = nil) -> Outcome {
         guard !FileManager.default.fileExists(atPath: dest.path) else {
             return .failure(GitFailure(kind: .unknown, details: "A folder already exists at \(dest.path)."))
         }
@@ -37,20 +37,7 @@ public enum RepoOps {
             let b = GitTool.git(["switch", "-c", newBranch], in: dest)
             guard b.ok else { return fail(b) }
         }
-        if excludeDuoFiles { excludeDuo(in: dest) }
         return .success(dest.path)
-    }
-
-    /// Adds Duo's files to the repository's own `.git/info/exclude`, which stays on this Mac.
-    public static func excludeDuo(in root: URL) {
-        let file = RepoProbe.gitDir(root).appending(path: "info/exclude")
-        try? FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
-        var text = (try? String(contentsOf: file, encoding: .utf8)) ?? ""
-        let lines = ["/_PROJECT.md", "/PROJECT.md", ".duo/"].filter { !text.contains($0) }
-        guard !lines.isEmpty else { return }
-        if !text.isEmpty && !text.hasSuffix("\n") { text += "\n" }
-        text += "# Duo's files (DL-149): kept out of git on this Mac only\n" + lines.joined(separator: "\n") + "\n"
-        try? text.write(to: file, atomically: true, encoding: .utf8)
     }
 
     // MARK: push and PR (boards 6–8)

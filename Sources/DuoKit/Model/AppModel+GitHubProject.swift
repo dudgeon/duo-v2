@@ -35,7 +35,6 @@ import Foundation
     public var places: [HomePlace]
     public var into: HomePlace
     public var startSession = true
-    public var keepOutOfGit = true
     public var working = false
     public var choices: [(slug: String, isPrivate: Bool, pushed: String)] = []
 
@@ -159,13 +158,13 @@ extension AppModel {
         let dest = f.into.folder.appending(path: name)
         let newBranch = f.useExisting ? nil : f.newBranch
         let existing = f.useExisting ? f.existing : nil
-        let base = f.base, keep = f.keepOutOfGit, goal = f.goal.trimmingCharacters(in: .whitespacesAndNewlines)
+        let base = f.base, goal = f.goal.trimmingCharacters(in: .whitespacesAndNewlines)
         let start = f.startSession
         let starter = Templates.make(.project, title: name, project: nil, home: homeFolder, values: goal.isEmpty ? [] : [("goal", .scalar(goal))])
         f.working = true
         Task { @MainActor in
             let r = await Task.detached(priority: .userInitiated) {
-                RepoOps.clone(repo, into: dest, newBranch: newBranch, from: newBranch == nil ? nil : base, existing: existing, excludeDuoFiles: keep)
+                RepoOps.clone(repo, into: dest, newBranch: newBranch, from: newBranch == nil ? nil : base, existing: existing)
             }.value
             switch r {
             case .failure(let e):
@@ -188,8 +187,7 @@ extension AppModel {
                     MainActor.assumeIsolated {
                         self.open(project: name)
                         if let started { self.consoleTab = started }
-                        self.repoNotice = RepoNotice(text: "Copied \(repo.slug) into \(Self.short(dest.path)), on \(newBranch != nil ? "a new branch, " : "")\(branch). Nothing changes on GitHub until you push."
-                                                     + (keep ? " PROJECT.md is listed in .git/info/exclude, so it stays out of git." : ""), button: nil, url: nil)
+                        self.repoNotice = RepoNotice(text: "Copied \(repo.slug) into \(Self.short(dest.path)), on \(newBranch != nil ? "a new branch, " : "")\(branch). Nothing changes on GitHub until you push.", button: nil, url: nil)
                     }
                 }
                 reply?(nil)

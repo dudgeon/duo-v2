@@ -13,19 +13,9 @@ public struct RepoView: Equatable, Sendable {
     public var lastFailure: GitFailure.Kind?
     public var pr: Int?
     public var prURL: URL?
-    public var duoFilesIgnored = false     // `_PROJECT.md` is excluded or ignored
     public var busy: String?               // "Pushing…", "Getting the latest…"
 
     public init(status: RepoStatus, projectPrefix: String) { self.status = status; self.projectPrefix = projectPrefix }
-
-    /// Untracked files that are Duo's own never count as the user's changes (DL-157).
-    public static func isDuoFile(_ path: String) -> Bool {
-        let name = (path as NSString).lastPathComponent
-        return name == "_PROJECT.md" || name == "PROJECT.md" || name == "_HOME.md" || name == "HOME.md"
-            || path.hasPrefix(".duo/") || path.contains("/.duo/") || path == ".duo"
-    }
-    public var userChanges: [FileChange] { status.changes.filter { !($0.kind == .new && Self.isDuoFile($0.path)) } }
-    public var duoChanges: [FileChange] { status.changes.filter { $0.kind == .new && Self.isDuoFile($0.path) } }
 
     /// The base a pull request goes into: what GitHub says is default, else origin's HEAD, else main.
     public var base: String { access?.defaultBranch ?? status.defaultBranch ?? "main" }
@@ -37,11 +27,7 @@ public struct RepoView: Equatable, Sendable {
         for c in status.changes {
             guard c.path.hasPrefix(projectPrefix) else { continue }
             let rel = String(c.path.dropFirst(projectPrefix.count))
-            if c.kind == .new && Self.isDuoFile(c.path) { continue }
             m[rel] = c.kind == .conflict ? "conflict" : (c.kind == .new ? "new" : (c.kind == .deleted ? "deleted" : "changed"))
-        }
-        if duoFilesIgnored {
-            for f in ["_PROJECT.md", "PROJECT.md"] where m[f] == nil { m[f] = "kept out of git" }
         }
         return m
     }
@@ -66,7 +52,7 @@ public struct RepoLine: Equatable, Sendable {
 
     public static func of(_ v: RepoView, now: Date = Date()) -> RepoLine {
         let s = v.status
-        let changed = v.userChanges.filter { $0.kind != .conflict }.count
+        let changed = s.changes.filter { $0.kind != .conflict }.count
         let n = { (k: Int, one: String, many: String) in k == 1 ? "1 \(one)" : "\(k) \(many)" }
         var facts: [String] = []
         if s.hasConflict || s.merging { facts.append(n(max(1, s.conflicts.count), "file in conflict", "files in conflict")) }
