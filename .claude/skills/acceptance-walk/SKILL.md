@@ -24,7 +24,8 @@ Write `docs/acceptance/<YYYY-MM-DD>-<slug>/features.json`:
   "features": [ { "id": "kebab-id", "group": "Editor", "title": "…", "what": "one line: what it does",
                   "steps": ["…"], "expect": "what he should see", "ref": "DL-n, F-n",
                   "commit": "<full sha of the commit that built it>", "alsoCommits": ["<later commits that changed it>"],
-                  "workMac": "as-is | small | home", "workMacWhy": "short reason" } ] }
+                  "workMac": "as-is | small | home", "workMacWhy": "short reason",
+                  "links": [ { "label": "chat mode: fallback screen", "url": "https://…" } ] } ] }
 ```
 
 ### Every feature is rated for the work Mac (required)
@@ -35,6 +36,13 @@ Geoff often walks on his phone and on his work Mac (DL-166): a stock Duo from th
 - `home`: needs the fixtures, scripts, `duo2 walk setup`, legacy config, GitHub setup, a newer Claude Code, or destructive steps.
 
 `build-page.py` refuses a card without it. The page shows it as a chip. On a phone (≤ 760 px) the page puts open decisions first, then `as-is` cards, then `small`, then `home`, each in walk order, with the intro folded under them; on a desktop it keeps walk order and offers a "Work Mac: as-is" filter and a "Mobile order" toggle. Decisions take an optional `workMac` too.
+
+### Every reference is a link (required)
+
+Geoff can't answer a card about "the board" or "the canvas" without opening it (2026-10-30: "this acceptance walk artifact NEEDS to always contain links to artifacts that are referenced"). So:
+- In `what`, `steps`, `expect`, and a decision's `context` and options, write links as `[label](https://…)`. The page renders them, opening in a new tab.
+- A card or decision also takes `"links": [{"label": "…", "url": "https://…"}]`, drawn as buttons under its title. Put the things it points at there: the handoff's screen on GitHub (`https://github.com/dudgeon/duo-v2/blob/main/docs/design/<handoff>/screens/<file>.html`), the design canvas artifact (the handoff README and the DL row name it, e.g. DL-119's https://claude.ai/artifact/FtWkK77NhsW5DAF8ZQ1KWd for chat mode), a rendered preview in the design-system artifact when one exists, a session's or film's link.
+- `build-page.py` refuses to build when a card or decision mentions a board, canvas, handoff, screen, mock-up, film, video or "this page" with no link in its text and no `links`, and names the ids. Feature names that only look like references (the task board, `Board | List`) are exempt; the pattern is `REFERENCE` / `NOT_REFERENCE` in `scripts/acceptance/build-page.py`.
 
 ### Every feature is tied to its commit (required)
 

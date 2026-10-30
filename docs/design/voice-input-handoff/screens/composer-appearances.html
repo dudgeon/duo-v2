@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="1440x560">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-261">
+<!--
+Chat listening in Light, Dark and Classic
+APPROVED BOARD. Geoff, 2026-10-30 (DL-261). Exported from the Design canvas
+https://claude.ai/artifact/3JgWhruXuK21r826nGG4JW (board Themes.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Words in Claude's TUI are illustrative.
+-->
+<title>Duo · Voice input · Listening in three appearances</title>
+<style>
+body{margin:0}
+.bd{box-sizing:border-box;background:#F3F4F6;color:#1F2328;font:14px/22px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif}
+.bd *{box-sizing:border-box}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.cap{color:#5B636D;font-size:12px;line-height:17px;margin:0}
+.col{width:440px;flex:none;display:flex;flex-direction:column;gap:8px}
+.chat{border-radius:6px;padding:16px 16px 12px;display:flex;flex-direction:column;gap:8px}
+.field{display:flex;align-items:flex-end;gap:8px;border-radius:12px;padding:6px 6px 6px 14px;min-height:44px}
+.txt{flex:1;padding:4px 0;min-width:0}
+.caret{display:inline-block;width:1.5px;height:17px;vertical-align:-3px;margin-left:1px}
+.mic{flex:none;width:30px;height:30px;border-radius:15px;border:0;display:flex;align-items:center;justify-content:center;padding:0}
+.hint{display:flex;align-items:center;gap:8px;font-size:12px;line-height:16px;padding:0 4px;white-space:nowrap}
+.lv{display:inline-flex;align-items:flex-end;gap:2px;height:12px}
+.lv span{display:block;width:3px;border-radius:1px}
+.you{align-self:flex-end;border-radius:14px 14px 3px 14px;padding:6px 12px;font-size:14px;line-height:22px}
+.card{border-radius:12px;padding:8px 14px;font-size:14px;line-height:22px;margin-right:36px}
+</style>
+</head>
+<body>
+<div class="bd" style="width: 1440px; height: 560px; padding: 24px 28px; display: flex; flex-direction: column; gap: 16px">
+<div>
+<h1 style="margin: 0; font: 600 20px/26px -apple-system, system-ui, sans-serif">Listening, in Light, Dark and Classic [P]</h1>
+<p class="cap" style="margin-top: 4px">Every colour is an existing token: <b>pane</b>, <b>text</b>, <b>text2</b>, <b>controlEdge</b>, <b>chatGround</b>, <b>chatYou</b>. No new tokens. The filled mic takes <b>text</b> with a <b>pane</b> glyph, so it inverts by itself in Dark and turns ink-on-paper in Classic.</p>
+</div>
+<div style="display: flex; gap: 24px; align-items: flex-start">
+
+<div class="col">
+<div class="lbl">Light</div>
+<div class="chat" style="background: #F3F4F6; border: 1px solid #C9CDD3">
+<div class="card" style="background: #FFFFFF; color: #1F2328">Done. The fold now reads “Later · 5”.</div>
+<div class="field" style="background: #FFFFFF; border: 1.5px solid #1F2328; color: #1F2328"><div class="txt">Now rename it to <span style="color: #5B636D">Earlier and keep</span><span class="caret" style="background: #1F2328"></span></div><button type="button" class="mic" style="background: #1F2328" aria-label="Finish voice input"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5" fill="none" stroke="#FFFFFF" stroke-width="1.4"></rect><path d="M3 7.8a5 5 0 0 0 10 0M8 12.8v1.9" fill="none" stroke="#FFFFFF" stroke-width="1.4" stroke-linecap="round"></path></svg></button></div>
+<div class="hint" style="color: #5B636D"><span class="lv"><span style="height: 5px; background: #1F2328"></span><span style="height: 11px; background: #1F2328"></span><span style="height: 8px; background: #1F2328"></span><span style="height: 4px; background: #1F2328"></span></span><span style="color: #1F2328">Listening</span><span>· ⇧⌘D or the mic finishes · esc discards</span></div>
+</div>
+</div>
+
+<div class="col">
+<div class="lbl">Dark (Ink, DL-224)</div>
+<div class="chat" style="background: #0C0D10; border: 1px solid #2B2F36">
+<div class="card" style="background: #181A1E; color: #E6E8EB">Done. The fold now reads “Later · 5”.</div>
+<div class="field" style="background: #181A1E; border: 1.5px solid #E6E8EB; color: #E6E8EB"><div class="txt">Now rename it to <span style="color: #9AA1AB">Earlier and keep</span><span class="caret" style="background: #E6E8EB"></span></div><button type="button" class="mic" style="background: #E6E8EB" aria-label="Finish voice input"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5" fill="none" stroke="#181A1E" stroke-width="1.4"></rect><path d="M3 7.8a5 5 0 0 0 10 0M8 12.8v1.9" fill="none" stroke="#181A1E" stroke-width="1.4" stroke-linecap="round"></path></svg></button></div>
+<div class="hint" style="color: #9AA1AB"><span class="lv"><span style="height: 5px; background: #E6E8EB"></span><span style="height: 11px; background: #E6E8EB"></span><span style="height: 8px; background: #E6E8EB"></span><span style="height: 4px; background: #E6E8EB"></span></span><span style="color: #E6E8EB">Listening</span><span>· ⇧⌘D or the mic finishes · esc discards</span></div>
+</div>
+</div>
+
+<div class="col">
+<div class="lbl">Classic (DL-252)</div>
+<div class="chat" style="background: #F0E9D6; border: 1px solid #D4C8A6">
+<div class="card" style="background: #FBF8EE; color: #1A1410">Done. The fold now reads “Later · 5”.</div>
+<div class="field" style="background: #FBF8EE; border: 1.5px solid #1A1410; color: #1A1410"><div class="txt">Now rename it to <span style="color: #7B6F58">Earlier and keep</span><span class="caret" style="background: #1A1410"></span></div><button type="button" class="mic" style="background: #1A1410" aria-label="Finish voice input"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5" fill="none" stroke="#FBF8EE" stroke-width="1.4"></rect><path d="M3 7.8a5 5 0 0 0 10 0M8 12.8v1.9" fill="none" stroke="#FBF8EE" stroke-width="1.4" stroke-linecap="round"></path></svg></button></div>
+<div class="hint" style="color: #7B6F58"><span class="lv"><span style="height: 5px; background: #1A1410"></span><span style="height: 11px; background: #1A1410"></span><span style="height: 8px; background: #1A1410"></span><span style="height: 4px; background: #1A1410"></span></span><span style="color: #1A1410">Listening</span><span>· ⇧⌘D or the mic finishes · esc discards</span></div>
+</div>
+<p class="cap">Orange stays a surface in Classic (DL-252): the mic is ink, not orange.</p>
+</div>
+
+</div>
+</div>
+</body>
+</html>

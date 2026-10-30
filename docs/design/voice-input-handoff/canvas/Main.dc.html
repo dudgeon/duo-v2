@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Voice input: what's settled</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.bd{box-sizing:border-box;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif}
+.bd *{box-sizing:border-box}
+.t2{color:#5B636D}
+.cap{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;margin:0 0 8px}
+.card{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:14px 16px}
+.p{margin:0 0 6px;font-size:12px;line-height:18px}
+.mono{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:11.5px}
+ol,ul{margin:0;padding-left:18px}
+li{margin:0 0 6px;font-size:12px;line-height:18px}
+</style>
+</helmet>
+<div class="bd" style="width: 1100px; height: 1180px; padding: 28px 32px; display: flex; flex-direction: column; gap: 14px">
+<div>
+<h1 style="margin: 0; font: 600 20px/26px -apple-system, system-ui, sans-serif">Voice input: a mic for chat, and for the terminal</h1>
+<p class="t2" style="margin: 4px 0 0; font-size: 12px; line-height: 18px">Geoff, 2026-10-30 [G]: “a mic button in the duo chat composition ui (and the terminal ui if possible/practical); leverage the on-device transcription service, not include a custom model.” Everything else here is [P].</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+<div class="card">
+<div class="cap">The engine [G]</div>
+<p class="p"><b>Apple’s on-device recognizer.</b> SpeechAnalyzer with SpeechTranscriber (macOS 26). Duo needs macOS 26, so every Mac that runs Duo has it. When SpeechTranscriber has no model for your language, Duo falls back to SFSpeechRecognizer with on-device recognition required.</p>
+<p class="p"><b>Nothing downloaded by Duo,</b> no model in the app. macOS fetches its own speech model the first time, which Duo shows as “Getting the speech model from Apple”.</p>
+<p class="p t2">Measured Oct 12: 13.5 % of words wrong on technical prompts (Parakeet was 10.2 %), 2.2 % on your own voice reading plain sentences (level with Parakeet). Text arrives about 0.1 s after you stop.</p>
+</div>
+<div class="card">
+<div class="cap">Duo asks for permissions now [P]</div>
+<p class="p">Duo has asked for none so far (F-53, F-54). Voice input needs the <b>microphone</b>, and <b>Speech Recognition</b> only if the fallback runs (SpeechTranscriber needed no speech prompt in the Oct 12 tests).</p>
+<ul>
+<li>Asked only when you first press the mic, after a Duo sheet says why. Never at launch.</li>
+<li>Never in scripted or isolated runs: they say the microphone isn’t available.</li>
+<li>No audio is kept: nothing is written to disk, nothing leaves the Mac.</li>
+<li>Release builds get the audio-input entitlement and a usage string.</li>
+</ul>
+</div>
+<div class="card">
+<div class="cap">Where the words go [P]</div>
+<ul>
+<li><b>Chat:</b> at the caret in the composer. Words still being heard show grey and settle to ink as Apple confirms them. One ⌘Z takes back one dictation.</li>
+<li><b>Terminal:</b> straight into Claude’s own prompt, a phrase at a time as Apple settles each one, each a bracketed paste (as <span class="mono">duo2 send text</span>). No bar, no Paste step. The mic sits on Claude’s input box’s bottom rule, where typed text never goes (chosen, DL-261); nothing is added to the console strip.</li>
+<li><b>Duo never presses Return.</b> You send it.</li>
+</ul>
+</div>
+<div class="card">
+<div class="cap">Keys and duo2 [P]</div>
+<ul>
+<li><b>⇧⌘D, Start Voice Input</b> (Edit menu, beside macOS’s own Start Dictation). Free in DL-34’s map; needs a DL. Tap it to start and tap again to finish; hold it past 0.3 s and it’s hold-to-talk, ending when you let go.</li>
+<li><b>Esc</b> discards in chat. In the terminal Esc stays Claude’s.</li>
+<li><span class="mono">duo2 voice start|stop|status [id]</span> does what the mic does (it needs the microphone, so isolated runs refuse it).</li>
+<li><span class="mono">duo2 voice file &lt;audio&gt; [id]</span> transcribes a file into the session’s prompt: the scripted twin the checks use.</li>
+</ul>
+</div>
+<div class="card">
+<div class="cap">The work Mac [P]</div>
+<p class="p">It runs macOS 26 or later (Duo’s minimum) and Claude Code 2.1.284. A managed Mac can:</p>
+<ul>
+<li>deny the microphone to an app by profile (MDM can deny the microphone, never grant it);</li>
+<li>allow or deny Speech Recognition;</li>
+<li>turn Dictation off (Restrictions). Not known yet whether that also stops SpeechTranscriber;</li>
+<li>block Apple’s model download.</li>
+</ul>
+<p class="p t2">Duo tells these apart where macOS does (denied vs restricted) and shows each, on the board “The first press, and when it’s off”. A one-minute check by hand once a build has it (Q-180).</p>
+</div>
+<div class="card">
+<div class="cap">Decided [G], 2026-10-30 (DL-261)</div>
+<ol>
+<li><b>The chat mic:</b> inside the field at its trailing end (recommended), or in the hint row.</li>
+<li><b>Toggle and hold-to-talk on one chord</b> (recommended), toggle only, or hold only.</li>
+<li><b>The chord:</b> ⇧⌘D (recommended), or another.</li>
+<li><b>The terminal:</b> the mic on Claude’s input box (C3), words into Claude’s prompt a phrase at a time (A). See “Terminal · chosen”.</li>
+<li><b>Return while listening</b> finishes and keeps the text, never sends (recommended), or finishes and sends.</li>
+</ol>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1100,"height":1180}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
