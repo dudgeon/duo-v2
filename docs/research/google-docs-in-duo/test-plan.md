@@ -264,6 +264,23 @@ Each test gives:
 - **Pass:** every change found, with who made it.
 - **From Geoff:** the collaborator (folded into T-08's session).
 
+### T-16 · One-tap Google access (Q-314, added 2026-10-30)
+- **Jobs:** J-E1, J-G4, J-H1, all API-backed jobs.
+- **Steps:**
+  1. Register Duo's own Google app in testing mode, with Geoff as its only test user. That's one Cloud project for Duo, made by us, not by users.
+  2. Give it the `drive.file` scope and a desktop client with loopback redirect and PKCE.
+  3. From a Doc open in Duo, run "Let Claude suggest in this doc?": Google's sign-in kit for Mac shows consent and the Picker, preselected to that doc.
+  4. Make one `SUGGEST` batch and one `insertComment`.
+  5. Revoke access, and repeat on a second doc.
+- **Needs:** W-7 on Duo's own client; a scratch build with the consent and picker step.
+- **Measure:**
+  - Taps and seconds from the question to the first suggestion.
+  - Whether the picker can preselect the open doc.
+  - What Google's consent screen says.
+  - Whether the key survives a relaunch.
+- **Pass:** at most two taps per doc, under 15 s, and no browser switch.
+- **From Geoff:** the taps.
+
 ### T-15 · Many Docs open: restore and memory
 - **Jobs:** J-A8.
 - **Steps:**
