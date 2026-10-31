@@ -118,7 +118,8 @@ import SwiftTerm
     let path = NSTemporaryDirectory() + "duo-prompt-keys-\(UUID().uuidString.prefix(8))"
     defer { try? FileManager.default.removeItem(atPath: path) }
     let v = GuardedTerminalView(frame: frame)
-    let w = NSWindow(contentRect: frame, styleMask: [.borderless], backing: .buffered, defer: true)   // never shown
+    // Never shown; not deferred, so it has a window number and AppKit routes a key event to it.
+    let w = NSWindow(contentRect: frame, styleMask: [.borderless], backing: .buffered, defer: false)
     w.isReleasedWhenClosed = false
     w.contentView = v
     _ = w.makeFirstResponder(v)
