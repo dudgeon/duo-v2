@@ -281,5 +281,5 @@ No canvas yet. Strategies 1 and 2 add no Duo marks: strategy 2's highlight is Cl
     - set `WS`, `CLAUDE_CONFIG_DIR`, `ANTHROPIC_API_KEY=sk-ant-mock-key-0000000000000000000` and `ANTHROPIC_BASE_URL=http://127.0.0.1:9`;
     - for `probe2.mjs`, also `EDITOR=VISUAL=probe/peek.sh` and `PEEK_OUT`;
     - then `node probe.mjs <claude> kitty|legacy <cases.json> <out.json>`.
-  - `keybytes/` builds with `swift build`, under the GPU lock `--shared`. Its `Package.swift` names the main checkout's SwiftTerm checkout.
+  - `keybytes/` builds with `swift build`, under the GPU lock `--shared`. Its `Package.swift` uses the repo's own SwiftTerm checkout (`.build/checkouts`, after a `swift build` at the root).
 - `results/`: the summarised runs quoted above.
