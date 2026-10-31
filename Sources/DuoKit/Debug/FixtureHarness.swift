@@ -230,6 +230,37 @@ public enum FixtureHarness {
             if parts.count > 1, let t = model.visibleTerminal, let text = try? String(contentsOfFile: parts[1], encoding: .utf8) {
                 t.view.feed(text: "\u{1b}[2J\u{1b}[H" + text.replacingOccurrences(of: "\n", with: "\r\n"))
             }
+        case "voice-press":   // voice-press: ⇧⌘D, as the menu item or `duo2 voice start` does, on the session showing
+            model.toggleVoice()
+        case "voice-file":    // voice-file:<audio>: dictate a file into the session showing (its composer or prompt), no microphone
+            if parts.count > 1, let target = model.voiceFocusTarget {
+                model.voice.start(target, source: .file(URL(fileURLWithPath: parts[1])))
+            }
+        case "voice-log":     // voice-log: the dictation's state and target, and the composer's text, to stderr
+            let field = model.visibleSessionId.flatMap { (model.chats.existing($0) ?? model.fixtureChats[$0])?.composerView }
+            FileHandle.standardError.write(Data("voice-log: state=\(model.voice.state) target=\(model.voice.target.map { "\($0)" } ?? "-") field=\((field?.plainText ?? "-").debugDescription) dictation=\(field?.dictation.map { "\($0.start)+\($0.length)" } ?? "none")\n".utf8))
+        case "voice-key":   // voice-key:return|escape: that key, as a person presses it in the session showing (its composer in chat,
+                      // its terminal otherwise): voice input's key monitor decides first, then the focused view takes it
+            let name = parts.count > 1 ? parts[1] : "return"
+            let (code, chars): (UInt16, String) = name == "escape" ? (53, "\u{1b}") : (36, "\r")
+            let key = model.visibleSessionId
+            let chat = key.flatMap { model.chats.existing($0) ?? model.fixtureChats[$0] }
+            let responder: NSView? = chat?.showsChat == true ? chat?.composerView : key.flatMap { model.terminals.existing($0)?.view }
+            if let responder, let w = responder.window ?? NSApp.windows.first,
+               let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                                        windowNumber: w.windowNumber, context: nil, characters: chars, charactersIgnoringModifiers: chars,
+                                        isARepeat: false, keyCode: code) {
+                w.makeFirstResponder(responder)
+                let took = model.voiceTakesKey(e, responder: responder)
+                if !took { responder.keyDown(with: e) }
+                FileHandle.standardError.write(Data("voice-key: \(name) to the \(chat?.showsChat == true ? "composer" : "terminal"), \(took ? "taken by voice input" : "delivered")\n".utf8))
+            }
+        case "voice-hover":   // voice-hover:on|off: the terminal mic drawn as under the pointer
+            if let t = model.visibleTerminal, let slot = t.view.superview as? TerminalSlot.SlotView { slot.mic.forceHover = parts.count > 1 ? parts[1] == "on" : true; slot.mic.needsDisplay = true }
+        case "term-dump":     // term-dump:<file>: the visible terminal's rows as text (a recording of what a program drew)
+            if parts.count > 1, let t = model.visibleTerminal {
+                try? model.voiceRows(t).joined(separator: "\n").write(toFile: parts[1], atomically: true, encoding: .utf8)
+            }
         case "term-scroll":   // term-scroll:up|down: scrolls the visible terminal back
             if let t = model.visibleTerminal {   // term-scroll:up|down[:<lines>]
                 let w = (parts.count > 1 ? parts[1] : "up").split(separator: ":").map(String.init)
@@ -272,6 +303,12 @@ public enum FixtureHarness {
                         let img = NSImage(size: slot.mic.bounds.size); img.addRepresentation(mrep)
                         img.draw(in: slot.mic.frame, from: .zero, operation: .sourceOver, fraction: 1, respectFlipped: true, hints: nil)
                     }
+                    // The notice at the mic (a hosted SwiftUI view), when one is up.
+                    if mic, let n = slot.subviews.first(where: { $0 is NSHostingView<VoiceNoticeBox> }), let nrep = n.bitmapImageRepForCachingDisplay(in: n.bounds) {
+                        n.cacheDisplay(in: n.bounds, to: nrep)
+                        let img = NSImage(size: n.bounds.size); img.addRepresentation(nrep)
+                        img.draw(in: n.frame, from: .zero, operation: .sourceOver, fraction: 1, respectFlipped: true, hints: nil)
+                    }
                     NSGraphicsContext.restoreGraphicsState()
                     if let png = rep.representation(using: .png, properties: [:]) { try? png.write(to: URL(fileURLWithPath: path)) }
                 }
@@ -279,7 +316,7 @@ public enum FixtureHarness {
                 draw(parts[1] + ".bare.png", mic: false)
                 let f = slot.mic.frame
                 let cells = Int(ceil(TerminalMicView.size.width / t.cellSize.width))
-                FileHandle.standardError.write(Data("voice-shot: rows=\(rows.count) hasBox=\(InputBoxFinder.hasInputBox(rows: rows)) question=\(InputBoxFinder.questionShowing(rows)) find=\(String(describing: InputBoxFinder.find(rows: rows, micCells: cells))) scroller=\(t.view.subviews.compactMap { $0 as? NSScroller }.first.map { "knob \($0.knobProportion) pos \($0.doubleValue)" } ?? "none") claude=\(t.isClaude) isolated=\(SupportFolder.isIsolated) shellEnv=\(TerminalMicView.onShellForProofs) mic hidden=\(slot.mic.isHidden) frame=\(Int(f.minX)),\(Int(f.minY)) \(Int(f.width))x\(Int(f.height)) terminal=\(Int(t.view.frame.minX)),\(Int(t.view.frame.minY)) \(Int(t.view.frame.width))x\(Int(t.view.frame.height)) cell=\(t.cellSize.width)x\(t.cellSize.height) slot=\(Int(slot.bounds.width))x\(Int(slot.bounds.height))\n".utf8))
+                FileHandle.standardError.write(Data("voice-shot: mic=\(model.voice.microphoneAvailable ? (model.voice.microphoneName ?? "yes") : "none") state=\(model.voice.state) rows=\(rows.count) hasBox=\(InputBoxFinder.hasInputBox(rows: rows)) question=\(InputBoxFinder.questionShowing(rows)) find=\(String(describing: InputBoxFinder.find(rows: rows, micCells: cells))) scroller=\(t.view.subviews.compactMap { $0 as? NSScroller }.first.map { "knob \($0.knobProportion) pos \($0.doubleValue)" } ?? "none") claude=\(t.isClaude) isolated=\(SupportFolder.isIsolated) shellEnv=\(TerminalMicView.onShellForProofs) mic hidden=\(slot.mic.isHidden) frame=\(Int(f.minX)),\(Int(f.minY)) \(Int(f.width))x\(Int(f.height)) terminal=\(Int(t.view.frame.minX)),\(Int(t.view.frame.minY)) \(Int(t.view.frame.width))x\(Int(t.view.frame.height)) cell=\(t.cellSize.width)x\(t.cellSize.height) slot=\(Int(slot.bounds.width))x\(Int(slot.bounds.height))\n".utf8))
             }
         case "ask-update":   // ask-update:writable|admin|no-sparkle|no-notes|real: the update question (DL-114) for 0.1.9 over 0.1.8, its buttons only logged
             let form = parts.count > 1 ? parts[1] : "writable"
@@ -504,8 +541,8 @@ public enum FixtureHarness {
             }
         case "type": model.visibleTerminal?.view.send(txt: parts.count > 1 ? parts[1] : "")
         case "enter": model.visibleTerminal?.view.send(txt: "\r")
-        case "key":   // key:down|up|esc|tab: one key into the visible terminal (menus such as the trust prompt)
-            let codes = ["down": "\u{1b}[B", "up": "\u{1b}[A", "esc": "\u{1b}", "tab": "\t"]
+        case "key":   // key:down|up|esc|tab|enter: one key into the visible terminal (menus such as the trust prompt)
+            let codes = ["down": "\u{1b}[B", "up": "\u{1b}[A", "esc": "\u{1b}", "tab": "\t", "enter": "\r"]
             if parts.count > 1, let c = codes[parts[1]] { model.visibleTerminal?.view.send(txt: c) }
         case "event":  // event:esc|return|cmd-v: a real key event through the app's queue (local monitors, key window, field editor); cmd-v reads the real clipboard
             let codes: [String: (UInt16, String)] = ["esc": (53, "\u{1b}"), "return": (36, "\r"), "cmd-v": (9, "v"), "ctrl-tab": (48, "\t"), "ctrl-shift-tab": (48, "\t")]

@@ -203,7 +203,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .zoomIn, .zoomOut, .actualSize: model.webFocus == .html && model.visibleWebTab.map { $0.blocked == nil } == true
         case .showBoard: !(model.altitude.isAllProjects && model.homeView == .board)
         case .showList: !(model.altitude.isAllProjects && model.homeView == .list)
-        case .voiceInput: model.voiceFocusTarget != nil
+        case .voiceInput: model.voiceFocusTarget != nil && !model.voiceBlockedByNoMic
         }
     }
 

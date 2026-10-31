@@ -87,11 +87,47 @@ extension AppModel {
             MainActor.assumeIsolated { self?.voice.keyUp() }
             return e
         }
-        VoiceKeys.monitors = [down, up].compactMap { $0 }
+        VoiceKeys.monitors = [down, up, voiceReturnMonitor()].compactMap { $0 }
+    }
+
+    /// Esc and Return while a dictation runs; the local key monitor's decision, also called by the harness (a background
+    /// run's window is never key, so its keys never reach a monitor). `responder` is where the key would go.
+    /// - Esc ends the dictation wherever the keyboard is (V-10, Geoff: "escape does not end transcription and it should"):
+    ///   the words already placed stay, and the key doesn't reach Claude. The chat composer keeps its own Esc (discard).
+    /// - Return in the terminal being dictated into (DL-263): finish, let the last phrase land in Claude's prompt, then
+    ///   press the Return the user pressed. Before, Return reached Claude at once and the last phrase landed after it.
+    /// True when it took the key.
+    func voiceTakesKey(_ e: NSEvent, responder: NSResponder?) -> Bool {
+        guard e.modifierFlags.intersection([.command, .shift, .option, .control]).isEmpty,
+              let target = voice.target, voice.state.isActive else { return false }
+        if e.keyCode == 53 {
+            if case .chat(let key) = target, let field = (chats.existing(key) ?? fixtureChats[key])?.composerView, responder === field { return false }
+            voice.finishWhenDone { _ in }
+            return true
+        }
+        guard e.keyCode == 36 || e.keyCode == 76, case .terminal(let key) = target,
+              let t = terminals.existing(key), responder === t.view else { return false }
+        voice.finishWhenDone { [weak self] _ in
+            guard let self, let t = self.terminals.existing(key), !t.exited else { return }
+            // Not when the dictation stopped for a question: Return would answer it.
+            if t.isClaude, t.notReadyReason != nil || InputBoxFinder.questionShowing(self.voiceRows(t)) { return }
+            t.view.send(txt: "\r")
+        }
+        return true
+    }
+
+    func voiceReturnMonitor() -> Any? {
+        NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] e in
+            guard e.keyCode == 53 || e.keyCode == 36 || e.keyCode == 76 else { return e }
+            let took = MainActor.assumeIsolated { self?.voiceTakesKey(e, responder: e.window?.firstResponder) ?? false }
+            return took ? nil : e
+        }
     }
 
     /// The Edit menu item's title.
-    public var voiceMenuTitle: String { voice.state.isActive ? "Stop Voice Input" : "Start Voice Input" }
+    public var voiceMenuTitle: String { voice.state.isActive ? "Stop Voice Input" : voiceBlockedByNoMic ? "Start Voice Input · no microphone" : "Start Voice Input" }
+    /// With no microphone, options 1 and 2 disable the menu item with its reason (NoMic.dc.html); ⇧⌘D still shows the line.
+    public var voiceBlockedByNoMic: Bool { !voice.microphoneAvailable && VoiceNoMicStyle.current != .ordinary && !voice.state.isActive }
 }
 
 @MainActor enum VoiceKeys {
@@ -137,7 +173,7 @@ extension AppModel {
                 prompt = " Its last screen line: \"" + (voiceRows(t).last { !$0.trimmingCharacters(in: .whitespaces).isEmpty } ?? "").trimmingCharacters(in: .whitespaces) + "\""
             }
             if let u = voice.unsentWords { prompt += " Unsent words (a question stopped it): \"\(u)\"" }
-            done(.ok((mine || voice.state.isActive ? VoiceCopy.line(voice.state) : "Voice input is off.") + prompt,
+            done(.ok((mine || voice.state.isActive ? VoiceCopy.line(voice.state) : voice.microphoneLine) + prompt,
                      ["state": String(describing: voice.state), "session": voice.target?.key ?? ""]))
         case .voiceStop:
             guard voice.state.isActive else { return done(.ok("Voice input wasn't on.")) }

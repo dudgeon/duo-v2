@@ -26,7 +26,7 @@ struct ChatComposerArea: View {
                     if !chat.ui.attachedTokens.isEmpty || chat.ui.addingPicture {
                         ChatPictureRow(chat: chat).padding(EdgeInsets(top: 11.5, leading: 15.5, bottom: 0, trailing: 14))
                     }
-                    ChatComposerField(chat: chat).padding(.trailing, ChatMicButton.reserved)   // the text stops 8 short of the mic
+                    ChatComposerField(chat: chat).padding(.trailing, ChatMicButton.reserved(for: model.voice))   // the text stops 8 short of the mic
                 }
                     .overlay {   // anchors: the video camera's target, a sibling of the pictures and the paste block so they keep their own
                         Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Composer").accessibilityIdentifier("video.composer")
@@ -53,6 +53,8 @@ struct ChatComposerArea: View {
                         ChatModeMark(mode: mode)
                         Text(mode.chip)
                     }
+                    // One line, its own width: in a narrow pane (Home's 340) the hints give way, not the chip (V-11).
+                    .lineLimit(1).fixedSize()
                     .duoText(.chatMeta).foregroundStyle(DuoColor.text2)
                     .padding(.horizontal, 8)
                     .background(Capsule().fill(DuoColor.pane))
@@ -277,10 +279,26 @@ struct ChatComposerField: NSViewRepresentable {
         return s
     }
 
+    /// The composer goes away (Terminal chosen, or chat falling back to the terminal) while a dictation fills it
+    /// (V-6, V-8): the dictation stops and its words stay in the composer as they are. Before this it kept listening
+    /// with nothing on screen, and each new composer took the whole text again (Geoff's passage, three times).
+    static func dismantleNSView(_ s: NSScrollView, coordinator: Coordinator) {
+        guard let v = s.documentView as? ComposerTextView else { return }
+        let chat = coordinator.chat
+        if chat.composerView === v { chat.composerView = nil }
+        v.dropDictation()
+        if let voice = VoiceInput.current, voice.target == .chat(chat.key), voice.state.isActive { voice.discard() }
+    }
+
     func updateNSView(_ s: NSScrollView, context: Context) {
         guard let v = s.documentView as? ComposerTextView else { return }
         context.coordinator.chat = chat
         chat.composerView = v
+        // A dictation range left open with no dictation running for this chat would stop the field from taking the
+        // model's text, so a send wouldn't clear it (V-5).
+        if v.dictation != nil, !(VoiceInput.current.map { $0.target == .chat(chat.key) && $0.state.isActive } ?? false) {
+            v.dropDictation()
+        }
         if let fb = chat.ui.fixtureBlock {
             chat.ui.fixtureBlock = nil
             DispatchQueue.main.async { v.setFixture(fb) }

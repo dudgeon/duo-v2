@@ -6,6 +6,8 @@ The four boards in `screens/` are the target, rendered at 2× in `screens/png/`.
 
 There are no new tokens. Everything uses `pane`, `ground`, `selected`, `rule`, `controlEdge`, `text`, `text2`, `chatGround`, `console`, `consoleRule`, `consoleText`, `consoleText2` and `tuiInputBorder`. The mic is SF Symbol `mic` (the boards draw a stand-in stroke), 14 pt in chat and 12 pt on the console.
 
+> **Amended by DL-264 (Geoff, 2026-10-30).** The terminal mic is not on the bottom rule: it is today's subtle mark in a 4-column margin Duo keeps beside Claude's input box, centred on the box's text rows (`proof/dl264-*.png` are the target captures; `screens/terminal.html` is kept as drawn, for its states and failure modes). With no microphone, the mic stays, faint and struck through, with the tooltip "No mic detected · connect one to use transcription" (DL-265, which replaced DL-264's hidden). Return and Esc while dictating: DL-263.
+
 ## Screens
 
 | Screen | What it settles |
@@ -26,11 +28,11 @@ There are no new tokens. Everything uses `pane`, `ground`, `selected`, `rule`, `
 **Chat.**
 - Words go in at the caret: settled text in `text`, the volatile tail in `text2` (replaced in place as it changes). The whole dictation is one undo group.
 - Typing while listening finishes the dictation, then types.
-- Return while listening finishes and keeps the text. Esc discards the dictation (not Claude's turn). Stop still stops Claude.
+- Return while listening finishes, lets the last words land, then sends (DL-263, amending DL-261's "Return keeps the text"); in the terminal it presses Claude's Return after the last phrase is pasted. Esc discards the dictation (not Claude's turn). Stop still stops Claude.
 
 **Terminal.**
 - Each settled phrase is one bracketed paste (`TerminalSession.bracketed()`, as `duo2 send text`), with a space between phrases. The volatile tail is never sent.
-- Duo never presses Return. Esc stays Claude's.
+- Duo never presses Return on its own: Return pressed while dictating finishes, lets the last phrase land, then presses Claude's Return (DL-263). Esc ends the dictation and doesn't reach Claude (DL-263).
 - Before each paste Duo reads the screen. Claude's input box must be on screen; a question or picker must not be.
 - When a question appears, listening stops, the unsent words go to the clipboard, and a tooltip-style notice shows at the mic's last place for 6 s: "Voice input stopped: Claude asked a question. Your words are on the clipboard."
 - While Claude works with its prompt on screen, phrases go in as typing does.

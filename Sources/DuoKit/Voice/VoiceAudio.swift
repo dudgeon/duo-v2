@@ -121,21 +121,24 @@ final class MicCapture: @unchecked Sendable {
     }
 }
 
-/// A file read in order, as fast as the recognizer takes it.
+/// A file read in order, as fast as the recognizer takes it; or, `realtime`, at the pace it was spoken, as a
+/// microphone delivers it (live checks that act mid-dictation: switching modes, pressing Return or Esc).
 enum FileFeed {
-    static func stream(_ url: URL) throws -> AsyncStream<VoiceBuffer> {
+    static func stream(_ url: URL, realtime: Bool = false) throws -> (stream: AsyncStream<VoiceBuffer>, stop: @Sendable () -> Void) {
         let file: AVAudioFile
         do { file = try AVAudioFile(forReading: url) } catch { throw VoiceAudioError.unreadable(url.lastPathComponent) }
         let (stream, continuation) = AsyncStream<VoiceBuffer>.makeStream(bufferingPolicy: .unbounded)
         let format = file.processingFormat
         // Read here, off the caller's actor, then close the stream: the file is short or the recognizer waits.
-        Task.detached {
-            while file.framePosition < file.length {
+        let reader = Task.detached {
+            while file.framePosition < file.length, !Task.isCancelled {
                 guard let buf = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 4096) else { break }
                 do { try file.read(into: buf, frameCount: 4096) } catch { break }
                 if buf.frameLength == 0 { break }
                 continuation.yield(VoiceBuffer(buffer: buf))
+                if realtime { try? await Task.sleep(nanoseconds: UInt64(Double(buf.frameLength) / format.sampleRate * 1_000_000_000)) }
             }
+            if Task.isCancelled { return continuation.finish() }
             // Half a second of silence, so the last word is followed by a pause the recognizer can end on.
             if let tail = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(format.sampleRate / 2)) {
                 tail.frameLength = tail.frameCapacity
@@ -143,7 +146,8 @@ enum FileFeed {
             }
             continuation.finish()
         }
-        return stream
+        continuation.onTermination = { _ in reader.cancel() }
+        return (stream, { reader.cancel(); continuation.finish() })
     }
 }
 

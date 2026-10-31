@@ -85,6 +85,35 @@ import Foundation
         check(SheetCenter.shared.current == nil, "voice: with no microphone the first-press sheet never shows")
     }
 
+    // No microphone: a simulated device change flips microphoneAvailable and the state, through an injectable source.
+    do {
+        final class Fake: VoiceDeviceSource {
+            var usable = true, name: String? = "AirPods Pro"
+            var fire: (@MainActor () -> Void)?
+            func current() -> (name: String?, usable: Bool) { (name, usable) }
+            func observe(_ changed: @escaping @MainActor () -> Void) { fire = changed }
+        }
+        let dev = Fake()
+        let v = VoiceInput()
+        v.deviceSource = dev
+        check(v.microphoneAvailable && v.microphoneName == "AirPods Pro", "voice device: a microphone is known and named at rest")
+        check(v.microphoneLine == "Voice input is off. Microphone: AirPods Pro.", "voice device: status names the microphone")
+        dev.usable = false; dev.fire?()
+        check(!v.microphoneAvailable && v.microphoneName == nil, "voice device: unplugging flips microphoneAvailable")
+        check(v.microphoneLine == "Voice input is off: no microphone connected.", "voice device: status says no microphone is connected")
+        v.showFixture(.unavailable(VoiceCopy.noMic), target: .chat("k"))
+        dev.usable = true; dev.name = "MacBook Pro Microphone"; dev.fire?()
+        check(v.microphoneAvailable && v.microphoneName == "MacBook Pro Microphone" && v.state == .idle, "voice device: connecting one flips it back and clears the no-microphone line")
+        v.showFixture(.listening, target: .chat("k"), onMicrophone: true)
+        dev.usable = false; dev.fire?()
+        check(v.state == .failed("Stopped: the microphone went away."), "voice device: losing the microphone ends a dictation that was using it")
+        v.showFixture(.listening, target: .chat("k"), onMicrophone: false)
+        dev.usable = true; dev.fire?(); dev.usable = false; dev.fire?()
+        check(v.state == .listening, "voice device: losing the microphone does not end a file dictation")
+        let real = VoiceInput()
+        check(real.microphoneAvailable == VoiceDevice.hasMicrophone, "voice device: the CoreAudio source agrees with the device lookup")
+    }
+
     // The input-box finder
     let cells = 4
     func rows(_ text: String) -> [String] { text.split(separator: "\n", omittingEmptySubsequences: false).map(String.init) }
@@ -146,6 +175,19 @@ import Foundation
     // Named screens
     func recorded(_ rel: String) -> [String]? {
         (try? String(contentsOf: dir.appending(path: rel), encoding: .utf8))?.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+    }
+    // 2.1.311 draws rules only: no side borders, no corners (Geoff's Duo Dev). One screen recorded from the real claude (haiku, not logged in,
+    // no turn sent), one rebuilt from it and his description (effort line above, placeholder in the prompt).
+    for name in ["claude-2.1.311-real", "claude-2.1.311-geoff"] {
+        if let s = recorded("docs/design/voice-input-handoff/fixture-screens/\(name).txt") {
+            let a = InputBoxFinder.find(rows: s, micCells: 6)
+            check(a != nil, "finder: \(name) (rules only) has the mic")
+            if let a {
+                let line = Array(s[a.row])
+                check((a.firstCol...a.lastCol).allSatisfy { InputBoxFinder.isRuleChar(line[$0]) } && a.lastCol == line.count - 3, "finder: \(name): 6 rule cells, ending 2 columns in from the rule's end")
+                check(a.promptRow == a.row - 1 && s[a.promptRow].hasPrefix("❯"), "finder: \(name): the prompt row is the one above the bottom rule")
+            }
+        }
     }
     if let idle219 = recorded("docs/research/chat-model-chip-screens/idle-2.1.219.txt") {
         check(InputBoxFinder.find(rows: idle219, micCells: cells) != nil, "finder: 2.1.219 idle screen has the mic")

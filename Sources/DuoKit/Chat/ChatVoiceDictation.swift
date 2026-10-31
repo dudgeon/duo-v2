@@ -59,21 +59,30 @@ extension ComposerTextView {
         for e in keys { keyDown(with: e) }
     }
 
-    /// Voice input's keys while it listens: Esc discards, Return finishes and keeps the text (never sends), anything
-    /// typed finishes first, then types. True when it took the key.
+    /// The composer's text was sent (DL-263): close the dictation without undoing it, so the field clears with the
+    /// send. While a dictation was open the field wouldn't take the model's empty text, and the sent words stayed.
+    func dropDictation() {
+        guard dictation != nil else { return }
+        undoManager?.endUndoGrouping()
+        undoManager?.groupsByEvent = true
+        dictation = nil
+        heldKeys = []
+    }
+
+    /// Voice input's keys while it listens: Esc discards; Return finishes and then sends, once the last words have
+    /// landed (DL-263: it's held and played after them, so it goes through the composer's own send); anything typed
+    /// finishes first, then types. True when it took the key.
     func voiceKey(_ e: NSEvent) -> Bool {
         guard let v = VoiceInput.current, let chat = coordinator?.chat, v.target == .chat(chat.key) else { return false }
         let mods = e.modifierFlags.intersection([.shift, .command, .option, .control])
         switch v.state {
         case .listening:
             if e.keyCode == 53 { v.discard(); return true }
-            if e.keyCode == 36 || e.keyCode == 76, mods.isEmpty { v.finish(); return true }
             if mods.contains(.command) { return false }
             if let c = e.characters, !c.isEmpty { heldKeys.append(e); v.finish(); return true }
             return false
         case .finishing:
             if e.keyCode == 53 || mods.contains(.command) { return false }
-            if e.keyCode == 36 || e.keyCode == 76, mods.isEmpty { return true }
             if let c = e.characters, !c.isEmpty { heldKeys.append(e); return true }
             return false
         case .denied, .restricted, .unavailable, .failed:

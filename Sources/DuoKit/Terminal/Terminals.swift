@@ -527,6 +527,11 @@ struct TerminalSlot: NSViewRepresentable {
             // made Claude Code redraw (F-208).
             guard let current, current.superview === self else { return }
             current.frame = bounds.insetBy(dx: 12, dy: 8)
+            // DL-264: a Claude terminal gives up 4 columns for a margin Duo keeps, where the mic sits beside the prompt row,
+            // so nothing is drawn over Claude's TUI (study C keeps the same margin).
+            if VoiceMicStyle.current.keepsMargin, let s = mic.session, s.isClaude || TerminalMicView.onShellForProofs {
+                current.frame.size.width = max(0, current.frame.width - 4 * s.cellSize.width)
+            }
         }
     }
 }
