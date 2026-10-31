@@ -225,6 +225,16 @@ source format ──► parser/checker ──► skill text, diff story, Obsidia
 
 ## 6. Phases, each usable on its own
 
+**Now, and after split view (Geoff, 2026-10-31).** Geoff: "split view is the correct way to handle the side-by-side of source editing and rendered preview". The split view study is the session split-view (e357a951, `tasks/split-view.md`). Duo Decks' viewer waits for it; what Duo Decks needs from it is in `split-view-requirements.md`. Everything that doesn't depend on how the viewer is laid out goes ahead now.
+
+| | Now | After split view |
+|---|---|---|
+| **Decisions** | Q-348 source format, Q-352 slot syntax, Q-349 template model, Q-351 export engine and verbs, Q-354 the exported pptx in git, Q-356 fonts, Q-355 the Google test, Q-353 Google re-export (for P4) | Q-350 the viewer and editor, in split view's terms |
+| **Work** | P0 spike; P1 convention, parser, checker, writer, `duo2 deck templates · check · export · render`, the skill, the built-in pack; P2 extraction | P3 the viewer: the provider in split view, live re-render, two-way sync, slot picking, problems on slides, comment marks; `duo2 deck`, `deck go`, `deck pick` |
+| **Seeing slides in the meantime** | Export, then open the pptx in the existing deck viewer (board 8, F′). No new UI; the export verb is all P1 adds | |
+
+The P1 writer and parser expose the anchor map (slide and slot → source lines) from the start, so the P3 viewer plugs into split view without reworking them.
+
 **P0, spike (Sonnet, about S; nothing visible).**
 - The Swift writer: the Northwind pack plus the sample deck gives a pptx, drawn by pptx-renderer and opened by LibreOffice.
 - The Google test finished over a byte-exact upload path (Q-355): template, both decks, a table, a chart and a gradient, then the re-export diffed.
@@ -234,7 +244,7 @@ source format ──► parser/checker ──► skill text, diff story, Obsidia
 - The convention, parser and checker.
 - `duo2 deck templates|check|export`, all local.
 - The skill section and the built-in plain pack.
-- A deck file opens as source beside its slides, drawn from the export.
+- No new viewer yet: Export, then the existing deck viewer shows the pptx. The writer exposes the anchor map for P3.
 - A hand-written definition works for any pptx whose layouts already have placeholders.
 - You can write a deck with Claude, read it as slides, review it in a PR, and hand a pptx to Google.
 
@@ -244,7 +254,7 @@ source format ──► parser/checker ──► skill text, diff story, Obsidia
 - The skill's template steps.
 - The way most templates will arrive, per Geoff's request.
 
-**P3, "the viewer earns its keep" (about M; design first, DL-26).**
+**P3, "the viewer", after split view (about M; design first, DL-26).** The deck's preview provider inside split view (`split-view-requirements.md`), with live re-render and two-way sync. Then:
 - Click a slide's text to go to its line.
 - Select Shape names the slot, and Send to Claude says `slide 3 (kpi), slot value`.
 - Problems shown on their slides.
@@ -323,11 +333,14 @@ Each lists the recommendation first. The narrative page sets out the trade-offs,
   - (B) A sample slide that is cloned.
   - (C) Duo-native geometry.
   - (D) A and B both, from the start.
-- **Q-350 → DL-269. The viewer and editor.**
-  - (A) Source beside slides, where the slides are the export drawn by the existing renderer [recommended].
-  - (B) A separate HTML preview, live per keystroke.
-  - (C) Slides only, with text edited on the slide.
-  - (D) Source only, plus Export.
+- **Q-350 → DL-269. The viewer and editor. After split view.**
+  - Redrawn as split view variants on board 8, all drawing the export with the existing renderer:
+    - (S1) source and slides as the two sides of a split in the right pane [recommended, pending split-view's framing];
+    - (S2) slides in a pane of their own beside the right pane;
+    - (S3) stacked, slides over source, for narrow widths;
+    - (F) no split view yet: a Source / Slides toggle in one tab.
+  - The interim (F′) needs no decision: export, and open the pptx in the existing viewer.
+  - The rejected options are kept for the record: a separate HTML preview (a second engine that drifts) and typing on slides (ENH-296).
 - **Q-351 → DL-270. Export and Google.**
   - (A) Own Swift writer as a local `duo2` verb; upload by hand until Duo's Google app exists [recommended].
   - (B) The same, but wait for Google upload before shipping.

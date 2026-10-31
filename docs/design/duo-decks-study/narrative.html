@@ -91,6 +91,15 @@ footer{font-size:14px;color:var(--ink2);border-top:1px solid var(--rule);padding
     <a href="https://claude.ai/code/session_01LhGdJZnN9sQtm8a81Pamo1">This study's session</a>
     <a href="https://claude.ai/artifact/UgxMcFsUf512DRDkHXJmVz">Google Docs in Duo (related)</a>
   </div>
+  <div style="background:var(--accent-soft);border-radius:8px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;max-width:78ch">
+    <b>Updated 31 October: the viewer now waits for split view</b>
+    <p style="font-size:15px">You said split view is the right way to show a deck's source beside its slides, so this page splits in two.</p>
+    <ul style="font-size:15px">
+      <li><b>Decide now:</b> the format, the template model, the export engine and its <code>duo2</code> verbs, fonts and the Google test. None of these depend on how the viewer is laid out.</li>
+      <li><b>After split view:</b> the viewer itself (Q-350), and anything about keeping source and slides in step.</li>
+    </ul>
+    <p style="font-size:15px">Duo Decks has sent split view its requirements. Split view's study is the <a href="https://claude.ai/code/session_01LhGdJWtnnUWeRUroZZDmyc">split-view session</a>; its canvas will be linked here when it exists.</p>
+  </div>
   <p class="muted" style="font-size:15px">Nothing is built and none of it is for 0.2.22. The study is <code>docs/design/duo-decks-study/</code> on branch <code>research/duo-decks</code>: <code>plan.md</code>, four research reports, samples and a working prototype. Every sample is synthetic. No work decks were used.</p>
 </header>
 
@@ -163,8 +172,8 @@ Up from 61% in the spring trial, over 431 rows on three farms.
 
 <section>
   <span class="eyebrow">The decisions</span>
-  <h2>Four choices, in the order they bind</h2>
-  <p class="col">Each has a recommendation first. Pick one, add a note if you like, and save; your answers are stored on this page for the director. Your picks become DL-267 to DL-270.</p>
+  <h2>Decide now: three choices, in the order they bind</h2>
+  <p class="col">None of these depend on split view. Each has a recommendation first. Pick one, add a note if you like, and save. Your answers are stored on this page for the director, and become DL-267, DL-268 and DL-270. The viewer (Q-350, DL-269) is further down, under "After split view".</p>
 
   <div class="dec" data-q="Q-349">
     <div class="dec-head"><span class="qid">Q-349 → DL-268</span><h3>What is a template?</h3></div>
@@ -188,18 +197,6 @@ Up from 61% in the spring trial, over 431 rows on three farms.
       <button class="opt" data-v="D"><span class="t">D · Teach Claude to run python-pptx</span><span class="b">No app work. But it breaks on the work Mac and on Macs without Python, and gives different bytes every run.</span></button>
     </div>
     <div class="save"><input type="text" aria-label="Note on Q-351" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div>
-  </div>
-
-  <div class="dec" data-q="Q-350">
-    <div class="dec-head"><span class="qid">Q-350 → DL-269</span><h3>What do you see when you open a deck?</h3></div>
-    <p class="dep">Option A needs the writer in the first slice. In return, the preview can never disagree with the file. Board <a href="https://claude.ai/artifact/Sk28K1tkHgwk6gHs7RFGqQ">8</a> sketches all four. The chosen one gets a full design round before it's built.</p>
-    <div class="opts">
-      <button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · The source beside the slides, drawn from the export</span><span class="b">Source, Both or Slides. Click a slide's text to reach its line. Problems show on their slides. No WYSIWYG.</span></button>
-      <button class="opt" data-v="B"><span class="t">B · The source beside an HTML preview</span><span class="b">Live at every keystroke and ships sooner. But it's a second engine, so the preview is wrong wherever the two differ.</span></button>
-      <button class="opt" data-v="C"><span class="t">C · Slides only, typing on the slide</span><span class="b">Closest to PowerPoint. It's the start of the editor you don't want; possible later on top of A (ENH-296).</span></button>
-      <button class="opt" data-v="D"><span class="t">D · The source only, plus Export</span><span class="b">The smallest build: you see slides by opening the exported file. A cheap first step towards A.</span></button>
-    </div>
-    <div class="save"><input type="text" aria-label="Note on Q-350" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div>
   </div>
 
   <div class="dec" data-q="Q-348">
@@ -252,12 +249,39 @@ Up from 61% in the spring trial, over 431 rows on three farms.
 </section>
 
 <section>
+  <span class="eyebrow">After split view</span>
+  <h2>The viewer: source and slides side by side</h2>
+  <p class="col">You said split view is the right way to put a deck's source beside its slides. So the viewer waits for the split view design, and Duo Decks has sent it what decks need (<code>split-view-requirements.md</code>):</p>
+  <ul class="col">
+    <li>one file shown twice from one buffer;</li>
+    <li>live redraw as you type;</li>
+    <li>the caret's slide shows, and clicking a slide finds its line;</li>
+    <li>comments stay in the source;</li>
+    <li>the formatting bar and mic on the source side only;</li>
+    <li><code>duo2 split</code> verbs.</li>
+  </ul>
+  <p class="col">The split-view session (<a href="https://claude.ai/code/session_01LhGdJWtnnUWeRUroZZDmyc">split-view</a>) agreed the shape. Until then you can still see slides: export, and the deck viewer Duo already has opens the file.</p>
+  <div class="dec" data-q="Q-350">
+    <div class="dec-head"><span class="qid">Q-350 → DL-269 · after split view</span><h3>How should source and slides sit together?</h3></div>
+    <p class="dep">Every variant draws the exported file with the renderer Duo ships, so the preview can't disagree with the file. Board <a href="https://claude.ai/artifact/Sk28K1tkHgwk6gHs7RFGqQ">8</a> sketches them. Pick a leaning if you have one; the final choice comes with split view's own options.</p>
+    <div class="opts">
+      <button class="opt" data-v="S1"><span class="rec">Recommended</span><span class="t">S1 · Two sides of a split in the right pane</span><span class="b">The deck's tab holds source and slides with a divider. The formatting bar sits over the source; the slides keep their own bar with Export.</span></button>
+      <button class="opt" data-v="S2"><span class="t">S2 · Slides in a pane of their own</span><span class="b">More room for slides. It's doc beside doc (legacy Split View) with the second pane bound to the first.</span></button>
+      <button class="opt" data-v="S3"><span class="t">S3 · Stacked, slides over source</span><span class="b">For narrow panes; S1 could fold to it on its own. Split view decides how splits fold.</span></button>
+      <button class="opt" data-v="F"><span class="t">F · A Source / Slides toggle in one tab</span><span class="b">No split view needed. The fallback if split view slips, and what the narrowest panes fold to.</span></button>
+    </div>
+    <div class="save"><input type="text" aria-label="Note on Q-350" placeholder="Note (optional)"><button class="btn" disabled>Save leaning</button><span class="status" role="status"></span></div>
+  </div>
+</section>
+
+<section>
   <span class="eyebrow">Path dependencies</span>
   <h2>What each early choice locks in</h2>
   <div class="tbl"><pre class="mermaid" style="background:transparent">flowchart LR
   T["Template = a layout in a real pptx (Q-349)"] --> W["Swift writer fills placeholders (Q-351)"]
   T --> X["Extraction: inventory, promote, specimen"]
   W --> V["Viewer draws the export (Q-350)"]
+  SV["Split view (its own study)"] --> V
   V --> P["Picker names slots, problems on slides"]
   P -.-> E["Typing on slides, later (ENH-296)"]
   W --> G["Upload to Google (after Google sign-in)"]
@@ -267,7 +291,7 @@ Up from 61% in the spring trial, over 431 rows on three farms.
   S --> L["Skill text, diffs, Obsidian"]</pre></div>
   <ol class="col">
     <li><b>The template model</b> decides the writer, Google fidelity and whether Duo needs a template editor. It's the hardest to undo.</li>
-    <li><b>The viewer:</b> drawing the export means the writer comes first. A separate preview means building every template feature twice, and keeping both in step.</li>
+    <li><b>The viewer</b> waits for split view. Drawing the export means the writer comes first, which suits the order anyway. The writer gives out the slide-and-slot map that split view needs to keep the two sides in step.</li>
     <li><b>The writer</b> is what everything later builds on: the fit check, the picker naming slots, Google upload.</li>
     <li><b>The source format</b> is the cheapest to change, because the parser is deterministic. Settle it before decks pile up.</li>
     <li><b>Google upload</b> waits on Duo's Google sign-in. Nothing above waits on it.</li>
@@ -279,9 +303,9 @@ Up from 61% in the spring trial, over 431 rows on three farms.
   <h2>Each one usable on its own</h2>
   <div class="col">
     <div class="phase"><span class="p">P0</span><div><b>Spike.</b> The Swift writer turns the Northwind pack and the sample deck into a pptx that Duo's renderer and LibreOffice both draw. The full Google test. Settles the font policy. Nothing visible.</div></div>
-    <div class="phase"><span class="p">P1</span><div><b>Write a deck, see it, export it.</b><ul><li>The convention, parser and checker.</li><li><code>duo2 deck templates · check · export</code>.</li><li>The skill section and the built-in pack.</li><li>A deck opens as source beside its slides.</li></ul>A pack whose layouts already have placeholders works from a hand-written definition. <b>This is the first useful slice:</b> write a deck with Claude, read it as slides, review it in a PR, hand a pptx to Google.</div></div>
+    <div class="phase"><span class="p">P1</span><div><b>Write a deck, see it, export it.</b><ul><li>The convention, parser and checker.</li><li><code>duo2 deck templates · check · export</code>.</li><li>The skill section and the built-in pack.</li><li>No new viewer yet: export, and the deck viewer Duo already has shows the slides.</li></ul>A pack whose layouts already have placeholders works from a hand-written definition. <b>This is the first useful slice:</b> write a deck with Claude, check it, see it, review it in a PR, hand a pptx to Google.</div></div>
     <div class="phase"><span class="p">P2</span><div><b>Templates from your decks.</b> Inventory, build (turning slide-only templates into layouts), specimen. A fit check measured against each placeholder's real box. This is how most templates will arrive.</div></div>
-    <div class="phase"><span class="p">P3</span><div><b>The viewer earns its keep.</b> Designed first, then built.<ul><li>Click a slide's text to go to its line.</li><li>Select Shape names the slot, and Send to Claude says which.</li><li>Problems show on their slides.</li><li><code>duo2 deck diff</code> lists changed slides.</li><li>Pictures dropped onto a slide land in <code>assets/</code>.</li></ul></div></div>
+    <div class="phase"><span class="p">P3</span><div><b>The viewer, after split view.</b> Source and slides side by side in split view, redrawn as you type, each following the other. Designed first, then built.<ul><li>Click a slide's text to go to its line.</li><li>Select Shape names the slot, and Send to Claude says which.</li><li>Problems show on their slides.</li><li><code>duo2 deck diff</code> lists changed slides.</li><li>Pictures dropped onto a slide land in <code>assets/</code>.</li></ul></div></div>
     <div class="phase"><span class="p">P4</span><div><b>To Google.</b> Upload from Duo, once Duo's Google sign-in exists.</div></div>
     <div class="phase"><span class="p">Later</span><div class="muted">Typing on a slide (ENH-296). Bringing a deck back from Google (ENH-297). Cloning a sample slide as a template (ENH-298). Charts from a table (ENH-299). SmartArt never.</div></div>
   </div>
@@ -342,7 +366,12 @@ Up from 61% in the spring trial, over 431 rows on three farms.
 <section class="col">
   <span class="eyebrow">Next</span>
   <h2>After you decide</h2>
-  <p>Your answers here go to the director, who records them as DL-267 to DL-270. Then P0 goes to a Sonnet build session as a spike, and P1 follows with its own brief. The viewer gets a design round on the canvas before P3, as every new surface does.</p>
+  <p>Your answers to the "Decide now" questions go to the director, who records them. Then:</p>
+  <ul>
+    <li>P0 goes to a Sonnet build session as a spike.</li>
+    <li>P1 and P2 follow with their own briefs. None of them waits on split view.</li>
+    <li>The viewer (Q-350, P3) is decided with split view's options and built once split view exists. Its design round folds Duo Decks' requirements in.</li>
+  </ul>
   <p class="muted">Records from this study: F-460 to F-466 (findings), Q-348 to Q-356 (these questions), C-130 to C-132 (concerns), ENH-296 to ENH-299 (later ideas).</p>
 </section>
 
