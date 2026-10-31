@@ -708,8 +708,10 @@ final class LiveChatTerminal: ChatTerminal {
 
     func screenLines() -> [String] {
         guard let v = view else { return [] }
-        let rows = v.terminalStateSnapshot().dimensions.rows
-        return v.visibleRowsText(0..<rows)
+        let d = v.terminalStateSnapshot().dimensions
+        // SwiftTerm keeps a row's cells past the width when the terminal narrows, and returns the whole row:
+        // only what fits is on screen (F-449).
+        return v.visibleRowsText(0..<d.rows).map { ChatScreenReader.clip($0, cols: d.cols) }
     }
     var columns: Int { view?.terminalStateSnapshot().dimensions.cols ?? 80 }
     func sendKeys(_ text: String) { view?.send(txt: text) }

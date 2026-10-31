@@ -4624,3 +4624,18 @@ Measured with the real TUIs against the mock API, a scratch `CLAUDE_CONFIG_DIR` 
 - **Yes** (↓, Return): Claude Code writes `projects["‹key›"].hasTrustDialogAccepted = true` and reaches its prompt. The key is the folder itself, or the **repository's top folder** for a folder inside a git repository (`repo`, though the screen named `repo/sub`). **No:** Claude Code exits.
 - **The home folder:** Claude Code asks there too, and keeps the trust for that session only, so it asks again next time; the sheet says so and shows no key.
 - The question names the session's working folder even inside a repository, so the sheet compares the screen's folder with the session's own.
+
+## F-449 · A refused hand-over, then a terminal narrowed under the reader: two fallbacks in one second (chat-trust, 2026-10-30; DL-258)
+
+Geoff's Debug report (Duo Dev voice test, dd2b8e8c, Claude Code 2.1.311). The words on screen were his own dictation and aren't recorded. At 22:42:30 the history shows `answer-refused` ("Claude's prompt changed in the terminal (it holds "")") and then `unknown-screen`, in the same second. The screen judged was 42 columns, but many of its rows were longer: text from a wider drawing went on past column 42. Only one full-width rule was found, so there was no input box. Row 35 was a 42-dash rule with old text after it; row 37, the old 87-column bottom rule, was the one rule found.
+
+1. **The first fallback was the refusal.** Sending from the composer hands the text to Claude's prompt through Ctrl+G (`duo2 compose`, F-112). The hand-over carries what chat believes the prompt holds (`composerBasis`), and the helper refuses if Claude's real prompt differs, so text typed in the terminal is never overwritten. Here chat expected words, and the prompt was empty: it had been sent or cleared since chat last read it, after the chat ⇄ terminal switches Geoff was testing. An empty prompt has nothing to protect. **Now** a refusal whose prompt is empty is handed over once more onto the empty prompt, and the message goes. A prompt holding other words is still refused, as before.
+2. **What resized the terminal: the switch to it.** While chat shows, the terminal view isn't in the layout (`ConsoleChatBody` shows only `ChatPane`), so the PTY keeps the size of its last time on screen, about 87 columns here. The refusal's fallback put the terminal back in the 42-column pane, and it narrowed. The voice bar played no part.
+3. **Why the screen held two widths.** SwiftTerm trims rows on narrowing only as part of reflow, and reflows only a buffer with scrollback (`Buffer.isReflowEnabled`). The alternate screen, where a full-screen TUI draws, has none. So its rows keep their old cells past the new width. The view's row text (`visibleRowsText`, `end: -1`) hands chat the whole row, cells nobody can see included, and Claude's redraw never clears them. Waiting longer for the redraw (the brief's question 2) wouldn't have helped: the stale cells stay. **Now** chat clips each row to the terminal's width, counting a wide glyph as two cells (`ChatScreenReader.clip`), so it reads what the screen shows.
+- Checks: `DUO_CHECKS=chat` "a terminal that narrows, and a hand-over onto a prompt that emptied":
+  - a SwiftTerm terminal on the alternate screen, narrowed from 87 to 42, keeps rows of 87 and 82 cells;
+  - the clip, wide glyphs included;
+  - 2.1.284's idle prompt with the old tails reads unknown whole, and idle clipped;
+  - a hand-over refused with an empty prompt goes again (two Ctrl+G) and sends, with no fallback;
+  - one refused with other words is refused once, as before.
+- Not changed: the hidden terminal still keeps its last size while chat shows (Q-341).

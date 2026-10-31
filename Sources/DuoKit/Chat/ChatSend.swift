@@ -47,32 +47,44 @@ extension ChatSession {
         if usesExternalEditor, let dir = composeDir {
             // What Claude's prompt really holds: known when the composer opened on it; empty when the
             // screen shows nothing there; otherwise asked (a dim suggestion reads as text, F-108).
-            var basis = ui.composerBasis ?? ((s.input ?? "").isEmpty ? "" : nil)
-            if basis == nil { basis = await peekPrompt() }
-            guard let basis else { return finish(.refused("couldn’t read Claude’s prompt")) }
-            // The composer opened on this prompt, or it holds words the composer never showed (the task
-            // path drafted into a New Session in Task, DL-112): those stay ahead of the text (F-254).
-            let carried = composerShowedPrompt ? "" : ChatPaste.carried(prompt: basis, text: plan.paste)
-            if !carried.isEmpty { echo = carried + " " + echo; shown = carried + " " + shown }
-            do { try ChatCompose.leave(.init(text: echo, basis: basis), in: dir, session: composeKey) } catch { return finish(.refused("couldn’t hand the text over (\(error.localizedDescription))")) }
-            composing = true
-            terminal?.sendKeys(ChatKey.ctrlG.bytes)
-            // The TUI runs the editor (its screen goes blank), then redraws with the new input.
-            var back = false
-            for _ in 0..<50 {
-                await pause(100_000_000)
-                let gone = !FileManager.default.fileExists(atPath: ChatCompose.handoverFile(dir, composeKey).path)
-                let now = reread()
-                if gone, now.kind == .idle || now.kind == .busy { back = true; break }
-            }
-            composing = false
-            if let held = try? String(contentsOf: ChatCompose.refusedFile(dir, composeKey), encoding: .utf8) {
-                try? FileManager.default.removeItem(at: ChatCompose.refusedFile(dir, composeKey))
-                return finish(.refused("Claude’s prompt changed in the terminal (it holds “\(held.prefix(40))”), so your text wasn’t put in"))
-            }
-            guard back else {
-                try? FileManager.default.removeItem(at: ChatCompose.handoverFile(dir, composeKey))
-                return finish(.refused("Claude Code didn’t open its editor"))
+            var known = ui.composerBasis ?? ((s.input ?? "").isEmpty ? "" : nil)
+            if known == nil { known = await peekPrompt() }
+            guard var basis = known else { return finish(.refused("couldn’t read Claude’s prompt")) }
+            var retried = false
+            while true {
+                echo = plan.message; shown = plan.paste
+                // The composer opened on this prompt, or it holds words the composer never showed (the task
+                // path drafted into a New Session in Task, DL-112): those stay ahead of the text (F-254).
+                let carried = composerShowedPrompt ? "" : ChatPaste.carried(prompt: basis, text: plan.paste)
+                if !carried.isEmpty { echo = carried + " " + echo; shown = carried + " " + shown }
+                do { try ChatCompose.leave(.init(text: echo, basis: basis), in: dir, session: composeKey) } catch { return finish(.refused("couldn’t hand the text over (\(error.localizedDescription))")) }
+                composing = true
+                terminal?.sendKeys(ChatKey.ctrlG.bytes)
+                // The TUI runs the editor (its screen goes blank), then redraws with the new input.
+                var back = false
+                for _ in 0..<50 {
+                    await pause(100_000_000)
+                    let gone = !FileManager.default.fileExists(atPath: ChatCompose.handoverFile(dir, composeKey).path)
+                    let now = reread()
+                    if gone, now.kind == .idle || now.kind == .busy { back = true; break }
+                }
+                composing = false
+                if let held = try? String(contentsOf: ChatCompose.refusedFile(dir, composeKey), encoding: .utf8) {
+                    try? FileManager.default.removeItem(at: ChatCompose.refusedFile(dir, composeKey))
+                    // Claude's prompt is empty after all (sent or cleared since chat last read it): nothing of yours
+                    // is there to keep, so the text goes onto the empty prompt instead of the terminal coming up (F-449).
+                    if !retried, held.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, back {
+                        retried = true
+                        basis = ""
+                        continue
+                    }
+                    return finish(.refused("Claude’s prompt changed in the terminal (it holds “\(held.prefix(40))”), so your text wasn’t put in"))
+                }
+                guard back else {
+                    try? FileManager.default.removeItem(at: ChatCompose.handoverFile(dir, composeKey))
+                    return finish(.refused("Claude Code didn’t open its editor"))
+                }
+                break
             }
         } else {
             // Pictures this composer attached are in the prompt as tokens: the removed ones are deleted,

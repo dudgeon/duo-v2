@@ -1139,5 +1139,6 @@ func spikeScreen(_ name: String) -> String {
     chatFallbackReportChecks()
     try chatRequestChecks()
     try trustStartChecks()
+    try chatResizeChecks()
     duoSignalChecks()
 }

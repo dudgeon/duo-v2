@@ -466,6 +466,31 @@ public enum ChatScreenReader {
         return r
     }
 
+    /// A row as the terminal shows it at `cols` cells: anything past the width is cut. A wide glyph takes two cells
+    /// (SwiftTerm skips its continuation cell in the text), so it is counted as two (F-449).
+    public static func clip(_ row: String, cols: Int) -> String {
+        guard cols > 0, row.count > cols / 2 else { return row }
+        var used = 0, end = row.startIndex
+        for i in row.indices {
+            let w = cellWidth(row[i])
+            if used + w > cols { break }
+            used += w
+            end = row.index(after: i)
+        }
+        return String(row[..<end])
+    }
+
+    /// East Asian wide and emoji-presentation glyphs take two cells; the rest one (wcwidth(3) needs a locale Duo doesn't set).
+    static func cellWidth(_ c: Character) -> Int {
+        guard let u = c.unicodeScalars.first else { return 1 }
+        let v = u.value
+        if v < 0x1100 { return 1 }
+        if c.unicodeScalars.contains(where: { $0.properties.isEmojiPresentation }) { return 2 }
+        let wide: [ClosedRange<UInt32>] = [0x1100...0x115F, 0x2E80...0x303E, 0x3041...0x33FF, 0x3400...0x4DBF, 0x4E00...0x9FFF, 0xA000...0xA4CF,
+                                           0xAC00...0xD7A3, 0xF900...0xFAFF, 0xFE30...0xFE4F, 0xFF00...0xFF60, 0xFFE0...0xFFE6, 0x20000...0x3FFFD]
+        return wide.contains { $0.contains(v) } ? 2 : 1
+    }
+
     /// Whether two folder paths are the same once the screen's wrapping is taken out (it breaks a long path anywhere).
     public static func samePath(_ a: String, _ b: String) -> Bool {
         let squash = { (x: String) in x.filter { !$0.isWhitespace } }
