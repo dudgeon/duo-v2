@@ -97,7 +97,7 @@ public enum Pptx {
     }
 
     /// Paragraphs joined by newlines, runs by nothing (a:p, a:t).
-    static func text(_ el: Node) -> String {
+    public static func text(_ el: Node) -> String {
         el.all("p").map { $0.all("t").map(\.value).joined() }.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
@@ -112,7 +112,7 @@ public enum Pptx {
     }
 
     /// A part's relationships: id → part path inside the zip.
-    static func rels(_ zip: Zip, _ part: String) throws -> [String: String] {
+    public static func rels(_ zip: Zip, _ part: String) throws -> [String: String] {
         let dir = (part as NSString).deletingLastPathComponent
         guard let r = try zip.xml("\(dir)/_rels/\((part as NSString).lastPathComponent).rels") else { return [:] }
         var out: [String: String] = [:]
@@ -134,20 +134,20 @@ public enum Pptx {
     // MARK: XML
 
     /// A parsed element: local name (prefix dropped), attributes as written, children, text.
-    final class Node {
-        let name: String
-        let attrs: [String: String]
-        var children: [Node] = []
-        var value = ""
+    public final class Node {
+        public let name: String
+        public let attrs: [String: String]
+        public var children: [Node] = []
+        public var value = ""
         init(_ name: String, _ attrs: [String: String]) { self.name = name; self.attrs = attrs }
 
-        func attr(_ k: String) -> String? { attrs[k] }
-        func first(_ name: String, deep: Bool = false) -> Node? {
+        public func attr(_ k: String) -> String? { attrs[k] }
+        public func first(_ name: String, deep: Bool = false) -> Node? {
             if let c = children.first(where: { $0.name == name }) { return c }
             return deep ? children.lazy.compactMap { $0.first(name, deep: true) }.first : nil
         }
         /// Every descendant with this name, in document order.
-        func all(_ name: String) -> [Node] {
+        public func all(_ name: String) -> [Node] {
             children.flatMap { ($0.name == name ? [$0] : []) + $0.all(name) }
         }
     }
@@ -175,13 +175,13 @@ public enum Pptx {
 
     /// Reads entries of a zip (stored or deflated) through its central directory. Foundation can't
     /// unzip; Compression's ZLIB is raw DEFLATE, which is what zip uses. No zip64, no encryption.
-    struct Zip {
-        struct Entry { let method: UInt16; let compressed: Int; let size: Int; let offset: Int }
+    public struct Zip {
+        public struct Entry { let method: UInt16; let compressed: Int; let size: Int; public let offset: Int }
         let data: Data
-        var entries: [String: Entry] = [:]
+        public var entries: [String: Entry] = [:]
         static let maxEntry = 64 * 1024 * 1024
 
-        init(_ url: URL) throws {
+        public init(_ url: URL) throws {
             data = try Data(contentsOf: url, options: .mappedIfSafe)
             let d = data
             func u16(_ i: Int) -> Int { Int(d[d.startIndex + i]) | Int(d[d.startIndex + i + 1]) << 8 }
@@ -206,7 +206,7 @@ public enum Pptx {
             }
         }
 
-        func read(_ name: String) throws -> Data? {
+        public func read(_ name: String) throws -> Data? {
             guard let e = entries[name] else { return nil }
             let d = data
             func u16(_ i: Int) -> Int { Int(d[d.startIndex + i]) | Int(d[d.startIndex + i + 1]) << 8 }
@@ -231,6 +231,6 @@ public enum Pptx {
             }
         }
 
-        func xml(_ name: String) throws -> Node? { try read(name).flatMap(Parser.parse) }
+        public func xml(_ name: String) throws -> Node? { try read(name).flatMap(Parser.parse) }
     }
 }

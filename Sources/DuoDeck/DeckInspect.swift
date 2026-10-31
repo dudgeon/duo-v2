@@ -1,3 +1,4 @@
+import DuoSearch
 import Foundation
 
 extension Deck {

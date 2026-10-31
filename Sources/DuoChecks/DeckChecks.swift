@@ -1,4 +1,5 @@
 import CryptoKit
+import DuoDeck
 import DuoSearch
 import Foundation
 

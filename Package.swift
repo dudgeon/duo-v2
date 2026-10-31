@@ -23,16 +23,20 @@ let package = Package(
         // Cross-project search (SRCH, Phase M): index, Core ML embedder, hybrid ranking. Foundation,
         // SQLite, Core ML and Accelerate only, so the read-only CLI can use it in Claude's sandbox.
         .target(name: "DuoSearch", dependencies: ["DuoControl"], linkerSettings: [.linkedLibrary("sqlite3")]),
+        // Duo Decks (DL-267 to DL-290): the deck parser, checker, remap and pptx writer. Foundation and
+        // Compression only besides DuoControl (Review marks) and DuoSearch (the read-only pptx reader), so
+        // `duo2 deck` runs with Duo closed and inside Claude's sandbox.
+        .target(name: "DuoDeck", dependencies: ["DuoControl", "DuoSearch"]),
         // One Objective-C function: catching the NSExceptions AVFoundation raises, which Swift can't (F-447).
         .target(name: "DuoObjC"),
-        .target(name: "DuoKit", dependencies: ["DuoControl", "DuoSearch", "DuoObjC", .product(name: "SwiftTerm", package: "SwiftTerm")]),
-        .executableTarget(name: "duo2", dependencies: ["DuoControl", "DuoSearch"]),
+        .target(name: "DuoKit", dependencies: ["DuoControl", "DuoSearch", "DuoDeck", "DuoObjC", .product(name: "SwiftTerm", package: "SwiftTerm")]),
+        .executableTarget(name: "duo2", dependencies: ["DuoControl", "DuoSearch", "DuoDeck"]),
         .executableTarget(name: "Duo", dependencies: ["DuoKit"],
                           swiftSettings: [.unsafeFlags(["-F", sparkle])],
                           linkerSettings: [.unsafeFlags(["-F", sparkle, "-framework", "Sparkle",
                                                          "-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks"])]),
         // Checks run as an executable (`swift run DuoChecks`): the Command Line Tools ship neither
         // XCTest nor the Swift Testing macro plugin. Move these to a test target once Xcode is installed.
-        .executableTarget(name: "DuoChecks", dependencies: ["DuoKit", "DuoControl", "DuoSearch", .product(name: "SwiftTerm", package: "SwiftTerm")]),
+        .executableTarget(name: "DuoChecks", dependencies: ["DuoKit", "DuoControl", "DuoSearch", "DuoDeck", .product(name: "SwiftTerm", package: "SwiftTerm")]),
     ]
 )

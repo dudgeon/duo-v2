@@ -1,4 +1,5 @@
 import DuoControl
+import DuoSearch
 import Foundation
 
 /// Duo Decks (DL-267, DL-268): a deck is one Markdown file, a template pack is a pptx plus a
