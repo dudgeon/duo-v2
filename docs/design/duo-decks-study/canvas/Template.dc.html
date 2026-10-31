@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A template pack</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.mono{font:12px/19px "SF Mono",Menlo,monospace}
+.t2{color:#5b636d}
+.cap{font-size:12px;line-height:18px;color:#5b636d}
+.thumb{display:flex;flex-direction:column;gap:4px}
+.thumb img{width:100%;display:block;border:1px solid #c9cdd3}
+.duo{color:#5b636d}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;box-sizing:border-box;padding:32px 40px;background:#f3f4f6;color:#1f2328;font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;display:flex;gap:28px">
+  <div style="width:560px;flex:none;display:flex;flex-direction:column;gap:10px">
+    <span class="cap">[P] <span class="mono">templates/decks/northwind/northwind.md</span> open in Duo's editor. It's an ordinary Markdown note: it reads properly in Obsidian and on GitHub.</span>
+    <div class="mono" style="flex:1;background:#ffffff;border:1px solid #c9cdd3;border-radius:6px;padding:14px 16px;font-size:11.5px;line-height:18px;white-space:pre;overflow:hidden">---
+type: deck-template
+title: Northwind Labs
+pptx: northwind.pptx
+heading-font: Avenir Next
+body-font: Inter
+google-heading-font: Nunito Sans
+footer: Northwind Labs · Internal
+---
+
+# Northwind Labs deck templates
+
+Every slide in a Northwind deck uses one of the
+templates below. Lines marked # duo are written by
+duo2 deck template build and checked against the pptx.
+
+## kpi
+
+One number that matters, what it measures, and one
+line of context. Not for comparing numbers; use a table.
+
+```yaml
+layout: Big Number                    <span class="duo"># duo</span>
+fingerprint: title@0 body@13 body@14 body@15  <span class="duo"># duo</span>
+slots:
+  title:   {idx: 0,  kind: text,   max: 40, lines: 1}
+  value:   {idx: 13, kind: number, max: 7}
+  label:   {idx: 14, kind: text,   max: 45, lines: 1}
+  context: {idx: 15, kind: text,   max: 140, lines: 2,
+            default: true}
+```
+
+## quote
+…</div>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;gap:14px;min-width:0">
+    <span class="cap">[P] The specimen deck: every template once. <span class="mono">duo2 deck template specimen northwind</span> writes it; you review it in the viewer like any deck.</span>
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 12px">
+      <div class="thumb"><img src="/_blob/5ffd0cc6da6d1cfaf973c3c84325d8f3" alt="title template"><span><b>title</b> <span class="t2">title, subtitle</span></span></div>
+      <div class="thumb"><img src="/_blob/414829d99da25c76ec6da48fda940cc9" alt="section template"><span><b>section</b> <span class="t2">title, number</span></span></div>
+      <div class="thumb"><img src="/_blob/6efe542afd1ac269ac055eb0cdc50034" alt="bullets template"><span><b>bullets</b> <span class="t2">title, body ×6</span></span></div>
+      <div class="thumb"><img src="/_blob/b483f9c8d2a80b1440c6fc4a99b49a66" alt="two-column template"><span><b>two-column</b> <span class="t2">title, left, right</span></span></div>
+      <div class="thumb"><img src="/_blob/693221054a4d386f6deaf182d6216c40" alt="kpi template"><span><b>kpi</b> <span class="t2">title, value, label, context</span></span></div>
+      <div class="thumb"><img src="/_blob/5fdd134cd41712ecf577a8d525304a74" alt="quote template"><span><b>quote</b> <span class="t2">quote, who</span></span></div>
+      <div class="thumb"><img src="/_blob/78424957935e5da232361333568d6c74" alt="image template"><span><b>image</b> <span class="t2">title, image, caption</span></span></div>
+      <div class="thumb"><img src="/_blob/06e6d8d69b57ed9960bd30054e705295" alt="table template"><span><b>table</b> <span class="t2">title, table</span></span></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:6px">
+      <div style="background:#ffffff;border:1px solid #c9cdd3;border-radius:6px;padding:10px 12px;display:flex;flex-direction:column;gap:4px">
+        <b>What's in the pack</b>
+        <span class="t2"><span class="mono">northwind.pptx</span>: the theme, masters and these 8 layouts, no slides. <span class="mono">northwind.md</span>: one section per template.</span>
+      </div>
+      <div style="background:#ffffff;border:1px solid #c9cdd3;border-radius:6px;padding:10px 12px;display:flex;flex-direction:column;gap:4px">
+        <b>Where it's edited</b>
+        <span class="t2">Looks: in PowerPoint, Keynote or Google Slides, then <span class="mono">duo2 deck template build</span>. Names, purposes and limits: in this note, by you or Claude.</span>
+      </div>
+      <div style="background:#ffffff;border:1px solid #c9cdd3;border-radius:6px;padding:10px 12px;display:flex;flex-direction:column;gap:4px">
+        <b>Where packs live</b>
+        <span class="t2">The project's <span class="mono">templates/decks/</span>, then Home's, then Duo's plain built-in pack. A deck names its pack in <span class="mono">template:</span>.</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

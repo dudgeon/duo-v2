@@ -4,6 +4,11 @@ Status: **proposed, waiting on Geoff** (Q-348 to Q-356). Every mark on the canva
 
 Geoff, 2026-10-31 (the full request is in `tasks/duo-decks.md`): templates for PowerPoint slide styles, scoped to a project or to the user; decks written in Markdown that may only use defined templates; a rendered viewer and editor in Duo; export to PowerPoint that survives Google Slides; Claude knowing the standard; and as little application and UI as will do.
 
+## For Geoff
+
+- **The walk-through page**: https://claude.ai/artifact/7H6wxTs26LW1DvAfSZCsyi (source `narrative.html`). The decisions are buttons; answers are saved in the page's `answers` collection.
+- **The canvas**: https://claude.ai/artifact/Sk28K1tkHgwk6gHs7RFGqQ, with the Duo design system and 8 boards (sources in `canvas/`). The boards are: 1 the three layers, 2 a deck in Duo, 3 problems, 4 a template pack, 5 extraction, 6 export and Google, 7 a PR, 8 the viewer options.
+
 ## Read in this order
 
 | File | What it holds |

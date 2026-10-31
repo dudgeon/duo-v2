@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Templates from your own deck</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.mono{font:11.5px/18px "SF Mono",Menlo,monospace}
+.t2{color:#5b636d}
+.cap{font-size:12px;line-height:18px;color:#5b636d}
+.step{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0}
+.who{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#5b636d}
+.card{background:#ffffff;border:1px solid #c9cdd3;border-radius:6px;padding:12px}
+.term{background:#15171b;color:#e6e8eb;border-radius:6px;padding:12px}
+.box{position:absolute;border:1px dashed #5b636d;font:11px/14px -apple-system,system-ui,sans-serif;color:#1f2328;padding:3px 5px;box-sizing:border-box}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;box-sizing:border-box;padding:32px 40px;background:#f3f4f6;color:#1f2328;font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;display:flex;flex-direction:column;gap:18px">
+  <div style="display:flex;flex-direction:column;gap:4px">
+    <span style="font-size:18px;line-height:24px;font-weight:600">"Turn slides 3, 7 and 12 of grower-update.pptx into templates"</span>
+    <span class="cap">[P] Four steps. Duo does the parts that must be exact; Claude does the naming and judging, with you. No template editor anywhere.</span>
+  </div>
+  <div style="flex:1;display:flex;gap:18px;min-height:0">
+    <div class="step">
+      <span class="who">1 · Duo · inventory</span>
+      <div class="term mono" style="white-space:pre;flex:1;overflow:hidden"><span style="color:#9aa1ab">$ duo2 deck template inventory \
+    grower-update.pptx</span>
+theme: Grower Co
+  fonts: Avenir Next ⚠ not in Google
+         Fonts; Source Sans 3
+layouts: 11
+  Title and Content
+    title@0  body@1 (bullets)
+  Blank
+    —
+slides: 18
+  3  Title and Content
+     title "Season at a glance"
+     body  4 bullets
+  7  Blank
+     "Quote Mark"  1.1×1.1 in
+     "TextBox 4"   9.6×2.0 in  28pt
+     "TextBox 5"   9.6×0.5 in  14pt
+  12 Blank
+     "TextBox 2" 2.5×1.6 in 96pt
+     …</div>
+      <span class="cap">Exact facts from the XML: layouts, placeholders and idx, boxes, sizes, fonts Google lacks. Claude reads this, not the pptx.</span>
+    </div>
+    <div class="step">
+      <span class="who">2 · Claude, with you · proposal</span>
+      <div class="term mono" style="flex:1;overflow:hidden;display:flex;flex-direction:column;gap:10px">
+        <div>Three templates from grower-update.pptx:</div>
+        <div><b>bullets</b> ← slide 3's layout, Title and Content. Already has placeholders; slots title, body (up to 6 points, from the box's size at 20pt).</div>
+        <div><b>quote</b> ← slide 7. Free text boxes on Blank, so Duo will make it a layout: TextBox 4 → quote (≈200 chars), TextBox 5 → who. The quote mark is decoration.</div>
+        <div><b>kpi</b> ← slide 12, the same way: value, label, context.</div>
+        <div style="color:#9aa1ab">Avenir Next isn't in Google Fonts. Use Nunito Sans when it goes to Google?</div>
+      </div>
+      <span class="cap">Judgement: which shapes are slots, what they're called, how much they hold, what's decoration. Claude writes <span class="mono">grower.md</span>.</span>
+    </div>
+    <div class="step">
+      <span class="who">3 · Duo · build</span>
+      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:10px">
+        <span class="t2" style="font-size:12px">Slide 7 before: text boxes on Blank</span>
+        <div style="position:relative;aspect-ratio:16/9;background:#fbfbfb;border:1px solid #c9cdd3">
+          <div class="box" style="left:6%;top:12%;width:9%;height:16%">“</div>
+          <div class="box" style="left:16%;top:30%;width:72%;height:30%">TextBox 4</div>
+          <div class="box" style="left:16%;top:66%;width:72%;height:8%">TextBox 5</div>
+        </div>
+        <span class="t2" style="font-size:12px">After: a new layout, "quote", in grower.pptx</span>
+        <div style="position:relative;aspect-ratio:16/9;background:#fbfbfb;border:1px solid #c9cdd3">
+          <div class="box" style="left:6%;top:12%;width:9%;height:16%;border-style:solid;border-color:#c9cdd3;color:#5b636d">“ layout art</div>
+          <div class="box" style="left:16%;top:30%;width:72%;height:30%;border:1.5px solid #1f2328">quote · body@13</div>
+          <div class="box" style="left:16%;top:66%;width:72%;height:8%;border:1.5px solid #1f2328">who · body@14</div>
+        </div>
+        <span class="t2" style="font-size:12px">Slot boxes become placeholders (idx 13 up) with the slide's type; the rest moves onto the layout. Duo fills the <span class="mono"># duo</span> lines and checks Claude's against the pptx.</span>
+      </div>
+    </div>
+    <div class="step">
+      <span class="who">4 · You · specimen</span>
+      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:8px">
+        <span class="t2" style="font-size:12px">Each template once, filled to its limits</span>
+        <img style="width:100%;display:block;border:1px solid #c9cdd3" src="/_blob/6efe542afd1ac269ac055eb0cdc50034" alt="bullets specimen">
+        <img style="width:100%;display:block;border:1px solid #c9cdd3" src="/_blob/5fdd134cd41712ecf577a8d525304a74" alt="quote specimen">
+        <img style="width:100%;display:block;border:1px solid #c9cdd3" src="/_blob/693221054a4d386f6deaf182d6216c40" alt="kpi specimen">
+        <span class="t2" style="font-size:12px">Something wrong? Say so; Claude edits <span class="mono">grower.md</span> and step 3 runs again. Layout looks change in PowerPoint, Keynote or Google.</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

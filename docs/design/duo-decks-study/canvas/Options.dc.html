@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Viewer options</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.t2{color:#5b636d}
+.opt{background:#ffffff;border:1px solid #c9cdd3;border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.rec{border:1.5px solid #1f2328}
+.pane{height:230px;border:1px solid #c9cdd3;border-radius:4px;display:flex;overflow:hidden;background:#f3f4f6}
+.src{background:#ffffff;padding:8px;display:flex;flex-direction:column;gap:5px}
+.bar{height:5px;border-radius:2px;background:#d5d9de}
+.sl{background:#ffffff;border:1px solid #c9cdd3;aspect-ratio:16/9;display:flex;flex-direction:column;gap:4px;padding:6px;box-sizing:border-box}
+.h{font:600 15px/20px -apple-system,system-ui,sans-serif}
+ul{margin:0;padding-left:16px}
+li{margin:2px 0}
+.dep{font-size:12px;line-height:18px;color:#5b636d;border-top:1px solid #c9cdd3;padding-top:8px}
+</style>
+</helmet>
+<div style="width:1600px;height:900px;box-sizing:border-box;padding:32px 40px;background:#f3f4f6;color:#1f2328;font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;display:flex;flex-direction:column;gap:16px">
+  <div><span class="h" style="font-size:18px">Q-350: what you see when you open a deck</span> <span class="t2">· [P] sketches, not designs; the chosen one gets a full design round (DL-26)</span></div>
+  <div style="flex:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px">
+    <div class="opt rec">
+      <span class="h">A · Source beside slides (recommended)</span>
+      <div class="pane">
+        <div class="src" style="width:42%"><div class="bar" style="width:60%"></div><div class="bar" style="width:80%;background:#1f2328;opacity:.5"></div><div class="bar" style="width:40%"></div><div class="bar" style="width:70%"></div><div class="bar" style="width:55%"></div><div class="bar" style="width:75%"></div></div>
+        <div style="flex:1;padding:8px;display:flex;flex-direction:column;gap:6px"><div class="sl"><div class="bar" style="width:50%;background:#1f2328;opacity:.5"></div><div class="bar" style="width:30%"></div></div><div class="sl"></div></div>
+      </div>
+      <ul><li>The slides are the exported pptx, drawn by the renderer Duo already ships</li><li>Click text on a slide, land on its line; Source / Both / Slides</li><li>Redraws on save (about 20 ms a deck), not per keystroke</li></ul>
+      <div class="dep">Needs the writer in the first slice. One engine: the preview can't drift from the file.</div>
+    </div>
+    <div class="opt">
+      <span class="h">B · Source beside an HTML preview</span>
+      <div class="pane">
+        <div class="src" style="width:42%"><div class="bar" style="width:60%"></div><div class="bar" style="width:80%"></div><div class="bar" style="width:40%"></div><div class="bar" style="width:70%"></div></div>
+        <div style="flex:1;padding:8px;display:flex;flex-direction:column;gap:6px"><div class="sl" style="border-style:dashed"><div class="bar" style="width:50%"></div></div><span class="t2" style="font-size:11px">HTML, may differ from the pptx</span></div>
+      </div>
+      <ul><li>Live per keystroke; ships before the writer</li><li>Every template feature built twice (HTML and pptx) and kept in step</li><li>Where they differ, the preview is wrong</li></ul>
+      <div class="dep">html2pptx's failure mode; Anthropic's skill dropped it in 2026.</div>
+    </div>
+    <div class="opt">
+      <span class="h">C · Slides only, type on the slide</span>
+      <div class="pane">
+        <div style="flex:1;padding:8px;display:flex;flex-direction:column;gap:6px"><div class="sl"><div style="display:flex;gap:2px;align-items:center"><div class="bar" style="width:40%;background:#1f2328;opacity:.5"></div><div style="width:1px;height:10px;background:#1f2328"></div></div><div class="bar" style="width:30%"></div></div><div class="sl"></div></div>
+      </div>
+      <ul><li>Closest to PowerPoint</li><li>Editing text on a drawn slide means mapping every keystroke back to Markdown</li><li>The start of the WYSIWYG editor Geoff doesn't want</li></ul>
+      <div class="dep">Possible later on top of A (ENH-296), not instead of it.</div>
+    </div>
+    <div class="opt">
+      <span class="h">D · Source only, plus Export</span>
+      <div class="pane">
+        <div class="src" style="flex:1"><div class="bar" style="width:60%"></div><div class="bar" style="width:80%"></div><div class="bar" style="width:40%"></div><div class="bar" style="width:70%"></div><div class="bar" style="width:55%"></div></div>
+      </div>
+      <ul><li>Smallest build: the editor as it is, and an Export button</li><li>See slides by opening the exported pptx in the existing viewer</li><li>Two tabs to see one deck</li></ul>
+      <div class="dep">A cheap first step towards A, since A is D plus the existing viewer side by side.</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1600,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

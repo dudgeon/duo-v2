@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>When a slide breaks its template</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.mono{font:12px/19px "SF Mono",Menlo,monospace}
+.t2{color:#5b636d}
+.btn{font:12px/16px -apple-system,system-ui,sans-serif;padding:4px 10px;border:1px solid #8b939c;border-radius:6px;background:#ffffff;color:#1f2328}
+.ln{display:inline-block;width:26px;color:#8b939c;text-align:right;margin-right:10px}
+.cap{font-size:12px;line-height:18px;color:#5b636d}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;box-sizing:border-box;padding:32px 40px;background:#f3f4f6;color:#1f2328;font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;display:flex;gap:32px">
+  <div style="width:780px;flex:none;display:flex;flex-direction:column;gap:10px">
+    <span class="cap">[P] The deck tab when the checker finds problems. Slides still draw; a broken slot draws as far as it can.</span>
+    <div style="flex:1;background:#ffffff;border:1px solid #c9cdd3;border-radius:6px;display:flex;flex-direction:column;overflow:hidden">
+      <div style="height:44px;flex:none;display:flex;align-items:center;gap:8px;padding:0 20px;border-bottom:1px solid #c9cdd3">
+        <button class="btn" aria-label="Previous slide">‹</button><button class="btn" aria-label="Next slide">›</button>
+        <span>Slide 3 of 9</span><span class="t2">· kpi</span>
+        <span style="margin-left:14px;display:inline-flex;align-items:center;gap:6px;font-weight:600"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1.5 11 10.5H1Z" fill="none" stroke="#1f2328" stroke-width="1.4" stroke-linejoin="round"/><path d="M6 5v2.6" stroke="#1f2328" stroke-width="1.4" stroke-linecap="round"/></svg>3 problems ⌄</span>
+        <span style="flex:1"></span>
+        <button class="btn">Select Shape</button><button class="btn">Export ⌄</button>
+      </div>
+      <div style="flex:1;display:flex;min-height:0">
+        <div class="mono" style="width:300px;flex:none;border-right:1px solid #c9cdd3;padding:12px 0;font-size:11.5px">
+          <div><span class="ln">24</span><span class="t2">&lt;!-- slide: kpi --&gt;</span></div>
+          <div><span class="ln">25</span># Unattended rows</div>
+          <div><span class="ln">26</span></div>
+          <div><span class="ln">27</span>## value</div>
+          <div style="background:#fdecea"><span class="ln" style="color:#b42318">28</span>86 percent</div>
+          <div style="padding-left:36px;color:#b42318;font:11px/16px -apple-system,system-ui,sans-serif;padding-bottom:4px">10 characters; kpi's value takes 7</div>
+          <div><span class="ln">29</span></div>
+          <div><span class="ln">30</span>## label</div>
+          <div><span class="ln">31</span>of rows finished with no</div>
+          <div><span class="ln"></span>one stepping in</div>
+          <div><span class="ln">32</span></div>
+          <div><span class="ln">33</span>## context</div>
+          <div><span class="ln">34</span>Up from 61% in the spring</div>
+          <div><span class="ln"></span>trial, over 412 rows…</div>
+          <div><span class="ln">35</span></div>
+          <div><span class="ln">36</span><span class="t2">---</span></div>
+          <div><span class="ln">37</span></div>
+          <div style="background:#fdecea"><span class="ln" style="color:#b42318">38</span><span class="t2">&lt;!-- slide: comparison --&gt;</span></div>
+          <div style="padding-left:36px;color:#b42318;font:11px/16px -apple-system,system-ui,sans-serif">northwind has no "comparison"</div>
+        </div>
+        <div style="flex:1;background:#f3f4f6;padding:16px 20px;display:flex;flex-direction:column;gap:6px;min-width:0">
+          <span style="font-size:11px;line-height:16px;font-weight:600">3 · kpi</span>
+          <img style="width:100%;display:block;border:1px solid #c9cdd3" src="/_blob/693221054a4d386f6deaf182d6216c40" alt="Slide 3 as drawn">
+          <div style="background:#ffffff;border:1px solid #c9cdd3;border-radius:6px;padding:10px 12px;display:flex;flex-direction:column;gap:8px">
+            <span><b>value</b> is 10 characters; kpi takes 7. Shorten it, or split the slide.</span>
+            <span style="display:flex;gap:6px"><button class="btn">Go to Line 28</button><button class="btn">Send to Claude</button></span>
+          </div>
+          <span style="font-size:11px;line-height:16px;margin-top:12px" class="t2">4 · comparison</span>
+          <div style="aspect-ratio:16/9;border:1px dashed #8b939c;border-radius:2px;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px" class="t2">No template "comparison" in northwind.<br>Use one of title, section, bullets, two-column, kpi, quote, image, table.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;gap:10px;min-width:0">
+    <span class="cap">What Claude runs and reads. The same checker runs in the CLI with Duo closed, inside Claude's sandbox.</span>
+    <div class="mono" style="background:#15171b;color:#e6e8eb;border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:12px;font-size:11.5px;line-height:18px">
+      <div><span style="color:#9aa1ab">$</span> duo2 deck check decks/field-trial-review.md</div>
+      <div style="color:#e6e8eb">decks/field-trial-review.md:18: slide 2 (bullets), body: has 7 points; the template allows 6. Split the slide; never shrink the text<br>decks/field-trial-review.md:28: slide 3 (kpi), value: is 10 characters; the template allows 7. Shorten it, or split the slide<br>decks/field-trial-review.md:38: slide 4 (comparison): no template "comparison" in northwind.md; use one of title, section, bullets, two-column, kpi, quote, image, table<br>3 problems</div>
+      <div style="border-top:1px solid #2b2f36"></div>
+      <div><span style="color:#9aa1ab">$</span> duo2 deck templates decks/field-trial-review.md</div>
+      <div style="white-space:pre;color:#e6e8eb">northwind  (templates/decks/northwind)
+  title       title ≤60, subtitle ≤80 (default)
+  section     title ≤40, number ≤3
+  bullets     title ≤60, body: bullets ×6 ≤110 (default)
+  two-column  title ≤60, left: bullets ×5, right: bullets ×5
+  kpi         title ≤40, value: number ≤7, label ≤45,
+              context ≤140 (default)
+  quote       quote ≤200 (default), who ≤60
+  image       title ≤50, image, caption ≤220 (default)
+  table       title ≤60, table: 7 rows × 5 cols (default)</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <span style="font-weight:600">Why the checker, not the eye</span>
+      <span class="t2">Claude doesn't have to look at slides to keep inside the templates: every rule is a line it can read and fix. Claude's own Slides type works the same way ("nothing shrinks; split the slide", errors that name the fix). Looking is a separate verb, <span class="mono">duo2 deck render</span>, for when you ask.</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

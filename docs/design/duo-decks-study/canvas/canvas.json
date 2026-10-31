@@ -1,0 +1,19 @@
+{"v":3,"createdOnFiles":{"v":1,"at":"2026-10-31T17:30:00Z"},"title":"Duo Decks — study canvas","launch":{"view":"canvas"},"pages":[],
+"boards":{
+"Main.dc.html":{"x":0,"y":0,"w":1600,"h":900,"title":"1 · The system in three layers"},
+"Viewer.dc.html":{"x":1680,"y":0,"w":1440,"h":900,"title":"2 · A deck in Duo: source beside slides (Q-350 A)"},
+"Problems.dc.html":{"x":3200,"y":0,"w":1440,"h":900,"title":"3 · When a slide breaks its template"},
+"Template.dc.html":{"x":0,"y":1300,"w":1440,"h":900,"title":"4 · A template pack on disk (Q-349 A)"},
+"Extract.dc.html":{"x":1520,"y":1300,"w":1440,"h":900,"title":"5 · Templates from your own deck"},
+"Export.dc.html":{"x":3040,"y":1300,"w":1440,"h":900,"title":"6 · Export, and what Google keeps (Q-351 A)"},
+"PR.dc.html":{"x":0,"y":2600,"w":1440,"h":900,"title":"7 · What a reviewer sees in a PR"},
+"Options.dc.html":{"x":1520,"y":2600,"w":1600,"h":900,"title":"8 · The viewer options side by side (Q-350)"}
+},
+"order":["Main.dc.html","Viewer.dc.html","Problems.dc.html","Template.dc.html","Extract.dc.html","Export.dc.html","PR.dc.html","Options.dc.html"],
+"notes":{
+"t1":{"x":0,"y":-280,"text":"Duo Decks · how it works","kind":"title1","maxW":4640},
+"t2":{"x":0,"y":1020,"text":"Templates and export","kind":"title1","maxW":4480},
+"t3":{"x":0,"y":2320,"text":"Collaboration and the choice of viewer","kind":"title1","maxW":3120},
+"s1":{"x":4720,"y":0,"w":360,"text":"Every mark on this canvas is [P], proposed. Slides are the study's sample deck (synthetic content, the synthetic Northwind pack) exported by the prototype and drawn by LibreOffice. Plan: docs/design/duo-decks-study/plan.md on research/duo-decks.","fill":"gray"}
+},
+"designSystems":[{"title":"Duo","namespace":"duo","artifact":"https://claude.ai/artifact/QMapKeLYS3TVV36QKEc6MH","version":"1793461311-42e2","copiedAt":"2026-10-31T17:30:00Z"}]}
