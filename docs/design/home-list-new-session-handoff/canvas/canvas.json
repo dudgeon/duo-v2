@@ -1,0 +1,90 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-10-30T20:30:00Z"
+  },
+  "title": "Home list: New session",
+  "launch": {
+    "view": "canvas"
+  },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 2760,
+      "h": 1180,
+      "title": "0 \u00b7 Today: how you start a session from the list"
+    },
+    "OptionA.dc.html": {
+      "x": 0,
+      "y": 1300,
+      "w": 2760,
+      "h": 1700,
+      "title": "A \u00b7 The pill in the list's header"
+    },
+    "OptionB.dc.html": {
+      "x": 0,
+      "y": 3120,
+      "w": 2760,
+      "h": 1700,
+      "title": "B \u00b7 A New session row with where it starts (recommended)"
+    },
+    "OptionB-NoHome.dc.html": {
+      "x": 0,
+      "y": 4940,
+      "w": 2760,
+      "h": 1180,
+      "title": "B \u00b7 With no Home folder, a pick that's gone, or no projects"
+    },
+    "OptionB-Tilde.dc.html": {
+      "x": 0,
+      "y": 6240,
+      "w": 2760,
+      "h": 1700,
+      "title": "B as picked (DL-262): Home by default, else ~/Documents"
+    },
+    "OptionC.dc.html": {
+      "x": 0,
+      "y": 8060,
+      "w": 2760,
+      "h": 1700,
+      "title": "C \u00b7 + on a row, under the pointer"
+    },
+    "Compare.dc.html": {
+      "x": 0,
+      "y": 9880,
+      "w": 2760,
+      "h": 900,
+      "title": "Side by side, and the recommendation"
+    },
+    "ListPane.dc.html": {
+      "x": 2880,
+      "y": 0,
+      "w": 860,
+      "h": 440,
+      "title": "Component: the list pane (used by every board)"
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "OptionA.dc.html",
+    "OptionB.dc.html",
+    "OptionB-NoHome.dc.html",
+    "OptionB-Tilde.dc.html",
+    "OptionC.dc.html",
+    "Compare.dc.html",
+    "ListPane.dc.html"
+  ],
+  "notes": {},
+  "designSystems": [
+    {
+      "title": "Duo",
+      "namespace": "duo",
+      "artifact": "https://claude.ai/artifact/QMapKeLYS3TVV36QKEc6MH",
+      "version": "1793389933-398d",
+      "copiedAt": "2026-10-30T20:30:00Z"
+    }
+  ]
+}

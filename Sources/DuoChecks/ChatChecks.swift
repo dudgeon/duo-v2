@@ -58,7 +58,7 @@ func spikeScreen(_ name: String) -> String {
         check(review.kind == .questionReview && review.options.map(\.label) == ["Submit answers", "Cancel"], "the review page")
         check(ChatScreenReader.read(spikeScreen("tour-2.1.291/12-unknown-model-picker.txt")).kind == .picker, "/model reads as its picker (a card, DL-143)")
         check(ChatScreenReader.read(spikeScreen("slash-2.1.292/help.txt")).kind == .unknown, "/help reads as unknown: the terminal")
-        check(ChatScreenReader.read(spikeScreen("real-cli-login-2.1.291/01-trust-folder-unknown.txt")).kind == .unknown, "the trust prompt reads as unknown")
+        check(ChatScreenReader.read(spikeScreen("real-cli-login-2.1.291/01-trust-folder-unknown.txt")).kind == .trust, "the trust prompt reads as the trust question, answered from Duo's sheet (F-444)")
         check(ChatScreenReader.read(spikeScreen("unknown-api-key-prompt.txt")).kind == .unknown, "the API-key prompt reads as unknown")
         let named = ChatScreenReader.read(spikeScreen("real-cli-login-2.1.291/08-named-rule-was-unknown.txt"))
         check(named.kind == .busy, "a named session's rule still reads (busy) (\(named.kind))")
@@ -1138,5 +1138,7 @@ func spikeScreen(_ name: String) -> String {
     chatFooterChecks()
     chatFallbackReportChecks()
     try chatRequestChecks()
+    try trustStartChecks()
+    try chatResizeChecks()
     duoSignalChecks()
 }

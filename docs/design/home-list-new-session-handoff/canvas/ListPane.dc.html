@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Home list pane</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 860px; height: 440px; display: flex; overflow: hidden; border: 1px solid {{c.rule}}; border-radius: 8px; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 13px; line-height: 20px; white-space: nowrap; background: {{c.pane}}; color: {{c.text}}">
+  <div aria-label="Home pane, its right end" style="width: 150px; flex: none; display: flex; flex-direction: column; background: {{c.chat}}; border-right: 1px solid {{c.rule}}">
+    <div style="height: 36px; flex: none; display: flex; align-items: center; padding: 0 10px; background: {{c.ground}}; color: {{c.text2}}; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 11px">…/work/home</div>
+    <div style="height: 28px; flex: none; display: flex; align-items: center; justify-content: flex-end; gap: 6px; padding: 0 8px; background: {{c.ground}}; border-top: 1px solid {{c.rule}}; border-bottom: 1px solid {{c.rule}}">
+      <sc-if value="{{hasHomeTab}}" hint-placeholder-val="{{ true }}"><span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 12px; line-height: 16px; color: {{c.text}}; font-weight: 600">triage</span></sc-if>
+      <svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5v7 M1.5 5h7" stroke="{{c.text2}}" stroke-width="1.5" stroke-linecap="round"></path></svg>
+      <span style="display: flex; align-items: center; border: 1px solid {{c.controlEdge}}; border-radius: 6px; overflow: hidden; background: {{c.pane}}">
+        <span style="width: 22px; height: 16px; display: flex; align-items: center; justify-content: center"><svg width="12" height="8" viewBox="0 0 12 8" role="img" aria-label="New Claude session"><path fill="{{c.text2}}" d="M5 0h1v1h-1zM2 1h8v1h-8zM2 2h1v1h-1zM4 2h4v1h-4zM9 2h1v1h-1zM2 3h8v2h-8zM1 5h10v1h-10zM3 6h2v1h-2zM7 6h2v1h-2zM3 7h2v1h-2zM7 7h2v1h-2z"></path></svg></span>
+        <span style="width: 1px; height: 10px; background: {{c.rule}}"></span>
+        <span style="width: 22px; height: 16px; display: flex; align-items: center; justify-content: center"><svg width="12" height="10" viewBox="0 0 12 10" role="img" aria-label="New shell"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h4" fill="none" stroke="{{c.text2}}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+      </span>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 10px; padding: 16px 12px">
+      <sc-if value="{{noHome}}" hint-placeholder-val="{{ false }}"><span style="white-space: normal; font-size: 12px; line-height: 16px; color: {{c.text}}; font-weight: 600">Choose a Home folder</span><span style="white-space: normal; font-size: 11px; line-height: 15px; color: {{c.text2}}">(Home's pane today, DL-84)</span></sc-if>
+      <span style="height: 10px; width: 90px; border-radius: 3px; background: {{c.bar}}; align-self: flex-end"></span>
+      <span style="height: 10px; width: 110px; border-radius: 3px; background: {{c.bar}}"></span>
+      <span style="height: 10px; width: 80px; border-radius: 3px; background: {{c.bar}}"></span>
+    </div>
+  </div>
+
+  <div style="flex: 1; min-width: 0; position: relative; display: flex; flex-direction: column; background: {{c.pane}}">
+    <div style="display: flex; align-items: center; gap: 8px; height: 22px; padding: 16px 16px 8px; flex: none; box-shadow: {{headRule}}">
+      <span style="display: inline-flex; height: 22px; border: 1px solid {{c.controlEdge}}; border-radius: 6px; overflow: hidden; font-size: 12px; line-height: 16px; flex: none">
+        <span style="display: flex; align-items: center; padding: 0 8px; color: {{c.text2}}">Board</span>
+        <span style="display: flex; align-items: center; padding: 0 8px; background: {{c.selected}}; color: {{c.text}}; font-weight: 600; border-left: 1px solid {{c.rule}}">List</span>
+      </span>
+      <span style="display: inline-flex; align-items: center; gap: 6px; height: 22px; width: 150px; padding: 0 8px; box-sizing: border-box; border: 1px solid {{c.rule}}; border-radius: 6px; color: {{c.text2}}; font-size: 12px; flex: none">
+        <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="4.2" cy="4.2" r="3" fill="none" stroke="{{c.text2}}" stroke-width="1.3"></circle><path d="M6.5 6.5 9 9" stroke="{{c.text2}}" stroke-width="1.3" stroke-linecap="round"></path></svg>Filter sessions</span>
+      <span style="flex: 1"></span>
+      <span style="display: inline-flex; align-items: center; height: 22px; padding: 0 7px; box-sizing: border-box; border: 1px dashed {{c.controlEdge}}; border-radius: 6px; color: {{c.text2}}; font-size: 12px; flex: none">+ New project</span>
+      <span style="color: {{c.text2}}; font-size: 12px">Group</span>
+      <span style="display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 6px 0 8px; box-sizing: border-box; border: 1px solid {{c.rule}}; border-radius: 6px; font-size: 12px; flex: none">Recent<svg width="7" height="10" viewBox="0 0 7 10" aria-hidden="true"><path d="M1 3.5 3.5 1 6 3.5 M1 6.5 3.5 9 6 6.5" fill="none" stroke="{{c.text2}}" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+      <sc-if value="{{showA}}" hint-placeholder-val="{{ false }}">
+        <span style="display: inline-flex; align-items: center; gap: 6px; margin-left: 4px; flex: none">
+          <svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5v7 M1.5 5h7" stroke="{{c.text2}}" stroke-width="1.5" stroke-linecap="round"></path></svg>
+          <span style="display: flex; align-items: center; border: 1px solid {{c.controlEdge}}; border-radius: 6px; overflow: hidden; background: {{c.pane}}">
+            <span style="width: 22px; height: 16px; display: flex; align-items: center; justify-content: center; background: {{aRobotBg}}"><svg width="12" height="8" viewBox="0 0 12 8" role="img" aria-label="New Claude session"><path fill="{{aRobotInk}}" d="M5 0h1v1h-1zM2 1h8v1h-8zM2 2h1v1h-1zM4 2h4v1h-4zM9 2h1v1h-1zM2 3h8v2h-8zM1 5h10v1h-10zM3 6h2v1h-2zM7 6h2v1h-2zM3 7h2v1h-2zM7 7h2v1h-2z"></path></svg></span>
+            <span style="width: 1px; height: 10px; background: {{c.rule}}"></span>
+            <span style="width: 22px; height: 16px; display: flex; align-items: center; justify-content: center"><svg width="12" height="10" viewBox="0 0 12 10" role="img" aria-label="New shell"><path d="M1.5 2 5 5 1.5 8 M6.5 8.5h4" fill="none" stroke="{{c.text2}}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+          </span>
+          <span style="font-size: 10px; line-height: 14px; padding: 0 5px; border: 1px solid {{c.controlEdge}}; border-radius: 7px; color: {{c.text2}}">[P]</span>
+        </span>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{showB}}" hint-placeholder-val="{{ true }}">
+      <div style="margin: 0 16px 8px; height: 28px; flex: none; box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding: 0 6px 0 10px; border: 1px dashed {{c.controlEdge}}; border-radius: 6px; background: {{bRowBg}}">
+        <svg width="12" height="8" viewBox="0 0 12 8" aria-hidden="true"><path fill="{{bInk}}" d="M5 0h1v1h-1zM2 1h8v1h-8zM2 2h1v1h-1zM4 2h4v1h-4zM9 2h1v1h-1zM2 3h8v2h-8zM1 5h10v1h-10zM3 6h2v1h-2zM7 6h2v1h-2zM3 7h2v1h-2zM7 7h2v1h-2z"></path></svg>
+        <span style="color: {{c.text}}">New session</span>
+        <span style="color: {{c.text2}}">in</span>
+        <span style="display: inline-flex; align-items: center; gap: 5px; height: 20px; padding: 0 6px 0 7px; box-sizing: border-box; border: 1px solid {{c.rule}}; border-radius: 5px; background: {{bPopBg}}; font-size: 12px; line-height: 16px; color: {{bPickInk}}"><sc-if value="{{bStar}}" hint-placeholder-val="{{ true }}"><span style="font-size: 11px">★</span></sc-if>{{bPick}}<svg width="7" height="10" viewBox="0 0 7 10" aria-hidden="true"><path d="M1 3.5 3.5 1 6 3.5 M1 6.5 3.5 9 6 6.5" fill="none" stroke="{{c.text2}}" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+        <span style="flex: 1"></span>
+        <span style="font-size: 10px; line-height: 14px; padding: 0 5px; border: 1px solid {{c.controlEdge}}; border-radius: 7px; color: {{c.text2}}">[P]</span>
+        <span style="color: {{c.text2}}; font-size: 12px">⌘T</span>
+      </div>
+      <sc-if value="{{bNote}}" hint-placeholder-val="{{ false }}">
+        <div style="margin: -4px 16px 8px; padding-left: 10px; display: flex; align-items: center; gap: 6px; font-size: 12px; line-height: 16px; color: {{c.text2}}">{{bNote}}<span style="font-size: 10px; line-height: 14px; padding: 0 5px; border: 1px solid {{c.controlEdge}}; border-radius: 7px">[P]</span></div>
+      </sc-if>
+    </sc-if>
+
+    <sc-if value="{{isEmpty}}" hint-placeholder-val="{{ false }}">
+      <div style="padding: 28px 16px; display: flex; flex-direction: column; gap: 4px; white-space: normal">
+        <span style="color: {{c.text}}">No sessions yet</span>
+        <span style="color: {{c.text2}}; font-size: 12px; line-height: 16px">{{emptyHint}}</span>
+        <sc-if value="{{showCEmpty}}" hint-placeholder-val="{{ false }}">
+          <span style="margin-top: 10px; align-self: flex-start; display: inline-flex; align-items: center; gap: 7px; height: 26px; padding: 0 10px; box-sizing: border-box; border: 1px solid {{c.controlEdge}}; border-radius: 6px; background: {{c.pane}}; font-size: 12px; line-height: 16px"><svg width="12" height="8" viewBox="0 0 12 8" aria-hidden="true"><path fill="{{c.text2}}" d="M5 0h1v1h-1zM2 1h8v1h-8zM2 2h1v1h-1zM4 2h4v1h-4zM9 2h1v1h-1zM2 3h8v2h-8zM1 5h10v1h-10zM3 6h2v1h-2zM7 6h2v1h-2zM3 7h2v1h-2zM7 7h2v1h-2z"></path></svg>New session in home<span style="font-size: 10px; line-height: 14px; padding: 0 5px; border: 1px solid {{c.controlEdge}}; border-radius: 7px; color: {{c.text2}}">[P]</span></span>
+        </sc-if>
+        <span style="margin-top: 6px; font-size: 10px; line-height: 14px; padding: 0 5px; border: 1px solid {{c.controlEdge}}; border-radius: 7px; color: {{c.text2}}; align-self: flex-start">[P] the words</span>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{showNeeds}}" hint-placeholder-val="{{ true }}">
+      <div style="margin: 0 16px 8px; height: 28px; flex: none; box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding: 0 10px; border: 1px solid {{c.needsYou}}; border-radius: 6px">
+        <svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.5" fill="{{c.needsYou}}"></circle></svg>
+        <span style="color: {{c.needsYou}}; font-weight: 600">3 need you</span><span style="flex: 1"></span><span style="color: {{c.text2}}">in the column</span>
+        <svg width="6" height="9" viewBox="0 0 6 10" aria-hidden="true"><path d="M1.5 1.5 5 5 1.5 8.5" fill="none" stroke="{{c.needsYou}}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </div>
+    </sc-if>
+
+    <sc-for list="{{rows}}" as="r" hint-placeholder-count="10">
+      <sc-if value="{{r.label}}" hint-placeholder-val="{{ false }}">
+        <div style="padding: 10px 16px 4px; font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.66px; color: {{c.text2}}">{{r.label}}</div>
+      </sc-if>
+      <sc-if value="{{r.fold}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; align-items: center; gap: 8px; height: 26px; padding: 0 16px; color: {{c.text2}}"><svg width="6" height="9" viewBox="0 0 6 10" aria-hidden="true"><path d="{{r.chev}}" fill="none" stroke="{{c.text2}}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>{{r.fold}}</div>
+      </sc-if>
+      <sc-if value="{{r.title}}" hint-placeholder-val="{{ true }}">
+        <div style="display: flex; align-items: center; gap: 8px; height: 26px; padding: 0 8px; margin: 0 8px; border-radius: 6px">
+          <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="{{r.glyph}}" fill="{{r.gFill}}" stroke="{{r.gStroke}}" stroke-width="1.5" stroke-linecap="round"></path></svg>
+          <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis">{{r.title}}</span>
+          <span style="width: 140px; flex: none; overflow: hidden; text-overflow: ellipsis; color: {{c.text2}}">{{r.proj}}</span>
+          <span style="width: 120px; flex: none; overflow: hidden; text-overflow: ellipsis; color: {{c.text2}}; display: flex; align-items: center; gap: 5px"><sc-if value="{{r.task}}" hint-placeholder-val="{{ false }}"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="1.5" fill="none" stroke="{{c.text2}}" stroke-width="1.3"></rect></svg></sc-if>{{r.task}}</span>
+          <span style="width: 64px; flex: none; display: flex; justify-content: flex-end; color: {{c.text2}}">
+            <sc-if value="{{r.plus}}" hint-placeholder-val="{{ false }}">
+              <span style="display: inline-flex; align-items: center; gap: 3px; height: 18px; padding: 0 5px; box-sizing: border-box; border: 1px solid {{c.controlEdge}}; border-radius: 6px; background: {{r.plusBg}}"><svg width="8" height="8" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5v7 M1.5 5h7" stroke="{{c.text}}" stroke-width="1.6" stroke-linecap="round"></path></svg><svg width="12" height="8" viewBox="0 0 12 8" role="img" aria-label="New session here"><path fill="{{c.text}}" d="M5 0h1v1h-1zM2 1h8v1h-8zM2 2h1v1h-1zM4 2h4v1h-4zM9 2h1v1h-1zM2 3h8v2h-8zM1 5h10v1h-10zM3 6h2v1h-2zM7 6h2v1h-2zM3 7h2v1h-2zM7 7h2v1h-2z"></path></svg></span>
+            </sc-if>
+            <sc-if value="{{r.showWait}}" hint-placeholder-val="{{ true }}">{{r.wait}}</sc-if>
+          </span>
+        </div>
+      </sc-if>
+    </sc-for>
+
+    <sc-if value="{{isScrolled}}" hint-placeholder-val="{{ false }}">
+      <span style="position: absolute; right: 3px; top: 160px; width: 6px; height: 120px; border-radius: 3px; background: {{c.controlEdge}}; opacity: 0.6"></span>
+    </sc-if>
+
+    <sc-if value="{{showTip}}" hint-placeholder-val="{{ false }}">
+      <span style="position: absolute; {{tipPos}}; padding: 2px 7px; background: {{c.pane}}; border: 1px solid {{c.rule}}; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.18); font-size: 11px; line-height: 16px; color: {{c.text}}">{{tipText}}</span>
+    </sc-if>
+
+    <sc-if value="{{isMenu}}" hint-placeholder-val="{{ false }}">
+      <div style="position: absolute; top: 76px; left: 120px; width: 210px; padding: 5px; background: {{c.pane}}; border: 1px solid {{c.rule}}; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.18); font-size: 13px; line-height: 20px; display: flex; flex-direction: column">
+        <sc-for list="{{menu}}" as="m" hint-placeholder-count="9">
+          <sc-if value="{{m.rule}}" hint-placeholder-val="{{ false }}"><span style="height: 1px; margin: 4px 8px; background: {{c.rule}}"></span></sc-if>
+          <sc-if value="{{m.t}}" hint-placeholder-val="{{ true }}"><span style="display: flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: 5px; background: {{m.bg}}; color: {{m.ink}}"><span style="width: 12px; color: {{c.text}}">{{m.check}}</span>{{m.t}}</span></sc-if>
+        </sc-for>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark","classic"],"default":"light"},"opt":{"editor":"enum","options":["today","A","B","C"],"default":"B"},"st":{"editor":"enum","options":["rest","hover","pressed","menu","empty","scrolled","nohome","gone","noprojects","trust","choose","nohomemenu","tcc","nodocs"]},"dflt":{"editor":"enum","options":["home","tilde","docs"],"default":"home","default":"rest"},"$preview":{"width":860,"height":440}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const P = {
+      light: { ground: '#F3F4F6', pane: '#FFFFFF', selected: '#E9ECEF', menuTarget: '#D8DCE1', rule: '#C9CDD3', controlEdge: '#8B939C', text: '#1F2328', text2: '#5B636D', needsYou: '#C2410C', bar: '#D5D9DE', chat: '#F3F4F6' },
+      dark: { ground: '#131518', pane: '#181A1E', selected: '#262A30', menuTarget: '#2E3238', rule: '#2B2F36', controlEdge: '#6E7681', text: '#E6E8EB', text2: '#9AA1AB', needsYou: '#F97316', bar: '#2B2F36', chat: '#0C0D10' },
+      classic: { ground: '#F0E9D6', pane: '#FBF8EE', selected: '#F2D9B8', menuTarget: '#D4C8A6', rule: '#D4C8A6', controlEdge: '#B8AB8E', text: '#1A1410', text2: '#7B6F58', needsYou: '#B91C1C', bar: '#E5DCC1', chat: '#F0E9D6' }
+    };
+    const theme = this.props.theme ?? 'light';
+    const opt = this.props.opt ?? 'B';
+    const st = this.props.st ?? 'rest';
+    const c = P[theme] || P.light;
+    const isEmpty = st === 'empty';
+    const isScrolled = st === 'scrolled';
+    const hot = st === 'hover' || st === 'pressed';
+    const hotBg = st === 'pressed' ? c.menuTarget : c.selected;
+    const RING = 'M5 1.6a3.4 3.4 0 1 1 0 6.8a3.4 3.4 0 1 1 0-6.8z';
+    const DASH = 'M2 5h6';
+    const DIAMOND = 'M5 1 9 5 5 9 1 5z';
+    const g = (k) => k === 'ring' ? { glyph: RING, gFill: 'none', gStroke: c.text } : k === 'diamond' ? { glyph: DIAMOND, gFill: c.text, gStroke: 'none' } : { glyph: DASH, gFill: 'none', gStroke: c.text2 };
+    const row = (title, proj, task, wait, k) => ({ title, proj, task, wait, ...g(k), showWait: true, plus: false, plusBg: c.pane });
+    const top = [
+      { label: 'OPEN · 5' },
+      row('Teardown research', 'checkout-redesign', 'Exec review prep', 'working', 'ring'),
+      row('Edge-case matrix', 'refunds-api-spec', '', 'working', 'ring'),
+      row('Rule audit', 'fraud-rules-review', 'Simplify rules', 'working', 'ring'),
+      row('Weekly status draft', '★ home', '', 'at prompt', 'dash'),
+      row('Fix footer links', '~/repos/site', '', 'at prompt', 'dash'),
+      { label: 'TODAY' },
+      row('Results readout', 'pricing-experiment-q4', 'Q4 readout', '25m', 'diamond'),
+      row('Funnel SQL', 'onboarding-v3', '', '40m', 'diamond'),
+      row('Buyer synthesis', 'buyer-interviews', 'Synthesis memo', '2h', 'dash')
+    ];
+    const scrolled = [
+      row('Vendor shortlist', 'vendor-review', '', '5h', 'dash'),
+      { label: 'THIS WEEK' },
+      row('Checkout copy audit', 'checkout-redesign', '', '2d', 'dash'),
+      row('Deprecation email', 'api-deprecations', 'Sunset comms', '3d', 'dash'),
+      row('“Summarise the six buyer interviews”', 'buyer-interviews', '', '4d', 'dash'),
+      { fold: 'Earlier · 9', chev: 'M1 2.5 4.5 6 8 2.5' },
+      row('Pricing page copy', 'pricing-experiment-q4', '', '6d', 'dash'),
+      row('Refund states', 'refunds-api-spec', '', '8d', 'dash'),
+      row('Churn interviews', 'buyer-interviews', 'Synthesis memo', '9d', 'dash'),
+      row('Launch checklist', 'growth-launch', '', '12d', 'dash'),
+      row('Ops runbook', '★ home', '', '2w', 'dash')
+    ];
+    const docs = (this.props.dflt ?? 'home') === 'docs';
+    const noHome = st === 'nohome' || st === 'noprojects' || st === 'nohomemenu' || st === 'tcc' || st === 'nodocs';
+    const folderOnly = [
+      { label: 'OPEN · 1' },
+      row('Fix footer links', '~/repos/site', '', 'at prompt', 'dash'),
+      { label: 'TODAY' },
+      row('Trip notes', '~/notes', '', '3h', 'dash'),
+      row('“Read the brief and list the risks”', '~/Downloads/brief', '', '5h', 'dash'),
+      { label: 'THIS WEEK' },
+      row('Resume tweaks', '~/notes', '', '2d', 'dash')
+    ];
+    let rows = isEmpty ? [] : (isScrolled ? scrolled : (st === 'noprojects' ? folderOnly : top));
+    if (noHome) rows = rows.filter((r) => r.proj !== '★ home');
+    rows = rows.map((r) => ({ label: r.label || '', fold: r.fold || '', chev: r.chev || 'M1.5 1.5 5 5 1.5 8.5', title: r.title || '', proj: r.proj || '', task: r.task || '', wait: r.wait || '', glyph: r.glyph || DASH, gFill: r.gFill || 'none', gStroke: r.gStroke || c.text2, showWait: r.showWait !== false, plus: false, plusBg: c.pane }));
+    let tipText = '', tipPos = '', showTip = false;
+    if (opt === 'C' && (hot || isScrolled)) {
+      const idx = isScrolled ? 3 : 3;
+      const r = rows[idx];
+      if (r) { r.plus = true; r.showWait = false; r.plusBg = st === 'pressed' ? c.menuTarget : c.selected; }
+      if (st === 'hover' || isScrolled) {
+        showTip = true;
+        tipText = isScrolled ? 'New session in task Sunset comms · api-deprecations' : 'New session in task Simplify rules · fraud-rules-review';
+        tipPos = isScrolled ? 'top: 184px; right: 14px' : 'top: 220px; right: 14px';
+      }
+    }
+    if (opt === 'A' && st === 'hover') { showTip = true; tipText = 'New Claude session ⌘T · in home'; tipPos = 'top: 44px; right: 40px'; }
+    if (opt === 'B' && st === 'hover') { showTip = true; tipText = 'New Claude session ⌘T · in home'; tipPos = 'top: 80px; left: 40px'; }
+    const showA = opt === 'A';
+    const showB = opt === 'B';
+    const projects = [{ t: 'checkout-redesign' }, { t: 'refunds-api-spec' }, { t: 'fraud-rules-review' }, { t: 'pricing-experiment-q4' }, { t: 'onboarding-v3' }];
+    const tilde = (this.props.dflt ?? 'home') === 'tilde';
+    const tail = [{ t: '~/repos/site' }, { rule: true }, { t: 'Choose Another Folder…', hi: st === 'choose' }, { t: 'New Project…' }];
+    const menuSrc = docs
+      ? (noHome
+        ? [...(st === 'nodocs' ? [{ t: 'Choose where it starts', dis: true }] : [{ t: '~/Documents', check: '✓' }]), { rule: true }, ...projects, ...tail, { t: 'Choose Home Folder…' }]
+        : [{ t: 'home', check: '✓' }, { rule: true }, { t: '~/Documents' }, ...projects, ...tail])
+      : tilde
+      ?[{ t: '~   Your home folder', check: st === 'gone' ? '' : '✓' }, { rule: true }, { t: 'home' }, ...projects, { t: '~/repos/site' }, { rule: true }, { t: 'Choose Another Folder…', hi: st === 'choose' }, { t: 'New Project…' }]
+      : st === 'nohome'
+      ? [{ t: 'Choose where it starts', dis: true }, ...projects, { rule: true }, { t: 'New Project…' }, { t: 'Choose Home Folder…' }]
+      : st === 'noprojects'
+        ? [{ t: 'No projects yet', dis: true }, { rule: true }, { t: 'New Project…', hi: true }, { t: 'Choose Home Folder…' }]
+        : [{ t: 'home', check: '✓' }, { rule: true }, ...projects, { rule: true }, { t: 'New Project…' }];
+    const menu = menuSrc.map((m, i) => ({ t: m.t ? (m.t === 'home' ? '★ home' : m.t) : '', check: m.check || '', rule: !!m.rule, ink: m.dis ? c.text2 : c.text, bg: (!tilde && !docs && st === 'menu' && i === 3) || (!docs && st === 'nohome' && i === 2) || m.hi ? c.selected : 'transparent' }));
+    const docsNote = st === 'tcc' ? 'The first start here, macOS asks: “Duo” would like to access files in your Documents folder.'
+      : st === 'nodocs' ? 'There’s no ~/Documents on this Mac, so choose where it starts.' : '';
+    if (tilde && st === 'hover') tipText = 'New Claude session ⌘T · in ~';
+    const tildeNote = st === 'gone' ? 'refunds-api-spec isn’t there any more, so this starts in ~.'
+      : st === 'trust' ? 'Claude asks you to trust ~ each time: it never saves trust for your home folder.' : '';
+    return {
+      c, rows, menu, showA, showB, isEmpty, isScrolled, noHome,
+      isMenu: showB && (st === 'menu' || st === 'choose' || st === 'nohomemenu' || (!docs && noHome)),
+      showNeeds: !isEmpty && !isScrolled && st !== 'noprojects',
+      hasHomeTab: !isEmpty && !noHome,
+      bStar: docs ? !noHome : (!noHome && !tilde),
+      bPick: docs ? (st === 'nodocs' ? 'Choose…' : (noHome ? '~/Documents' : 'home')) : (tilde ? '~' : (noHome ? 'Choose…' : 'home')),
+      bPickInk: (docs ? st === 'nodocs' : (noHome && !tilde)) ? c.text2 : c.text,
+      bNote: docs ? docsNote : (tilde ? tildeNote : (st === 'gone' ? 'refunds-api-spec isn’t there any more, so this starts in Home.' : '')),
+      showCEmpty: opt === 'C' && isEmpty,
+      emptyHint: opt === 'C' ? 'Sessions you start show here, newest first.' : (opt === 'A' ? 'Start one with the robot above, or ⌘T. Sessions show here, newest first.' : 'Start one above, or ⌘T. Sessions show here, newest first.'),
+      headRule: isScrolled ? ('0 1px 0 ' + c.rule) : 'none',
+      aRobotBg: showA && hot ? hotBg : 'transparent',
+      aRobotInk: showA && hot ? c.text : c.text2,
+      bRowBg: showB && hot ? hotBg : 'transparent',
+      bInk: showB && hot ? c.text : c.text2,
+      bPopBg: showB && (st === 'menu' || st === 'choose' || st === 'nohomemenu' || (!docs && noHome)) ? c.selected : c.pane,
+      showTip, tipText, tipPos
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Option B with no Home folder</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+code{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px}
+</style>
+</helmet>
+<div style="width: 2760px; height: 1180px; box-sizing: border-box; padding: 48px; background: #F3F4F6; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; display: flex; flex-direction: column; gap: 28px">
+  <div style="display: flex; flex-direction: column; gap: 6px">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <h1 style="margin: 0; font-size: 28px; line-height: 36px; font-weight: 600">B · With no Home folder, a pick that's gone, or no projects</h1>
+      <span style="font-size: 11px; line-height: 16px; padding: 1px 7px; border: 1px solid #8B939C; border-radius: 9px; color: #5B636D">[P]</span>
+    </div>
+    <p style="margin: 0; font-size: 16px; line-height: 24px; color: #5B636D">Geoff: “what is populated in the dropdown if no home folder is selected? what is a safe default?” Home is optional (DL-82). With no Home, B has no default: the popup says <i>Choose…</i> and opens on the row's click or ⌘T, so Claude never starts somewhere you didn't pick.</p>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px 40px">
+    <div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.66px; color: #5B636D">NO HOME FOLDER: THE ROW (OR ⌘T) OPENS THE POPUP · LIGHT</span><dc-import name="ListPane" theme="light" opt="B" st="nohome" hint-size="860px,440px"></dc-import></div>
+    <div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.66px; color: #5B636D">LAST PICK GONE: BACK TO HOME, SAID ONCE · LIGHT</span><dc-import name="ListPane" theme="light" opt="B" st="gone" hint-size="860px,440px"></dc-import></div>
+    <div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.66px; color: #5B636D">NO HOME AND NO PROJECTS: ONLY MAKE ONE · LIGHT</span><dc-import name="ListPane" theme="light" opt="B" st="noprojects" hint-size="860px,440px"></dc-import></div>
+    <div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.66px; color: #5B636D">NO HOME FOLDER · DARK</span><dc-import name="ListPane" theme="dark" opt="B" st="nohome" hint-size="860px,440px"></dc-import></div>
+    <div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.66px; color: #5B636D">NO HOME AND NO PROJECTS · CLASSIC</span><dc-import name="ListPane" theme="classic" opt="B" st="noprojects" hint-size="860px,440px"></dc-import></div>
+    <div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.66px; color: #5B636D">THE RULES</span>
+      <div style="height: 440px; box-sizing: border-box; background: #FFFFFF; border: 1px solid #C9CDD3; border-radius: 8px; padding: 16px 20px; font-size: 13px; line-height: 19px; white-space: normal; display: flex; flex-direction: column; gap: 9px">
+        <div><b>When there's no Home.</b> Before you choose one (first launch, or Not Now), and when the chosen folder is moved or deleted: the scan finds no <code>_HOME.md</code> there, and Home's pane says “Choose a Home folder”. Every session is still listed (DL-82). The work Mac follows the same code.</div>
+        <div><b>The popup lists</b> ★ home when there is one; then the projects Duo knows (in Home, made in Duo, or a folder with a <code>_PROJECT.md</code> that Claude ran in), by last activity; then New Project… and, with no Home, Choose Home Folder…. Plain folders aren't listed: make one a project first.</div>
+        <div><b>The default:</b> your last pick if it's still there; else Home; else none. With none the row reads <i>Choose…</i>, and the row and ⌘T open the popup instead of starting anything. Never <code>~</code>, never a folder you didn't pick, and never silently another project.</div>
+        <div><b>Trust.</b> Whatever is picked, the start goes through the same trust check as every new session (DL-229; the trust-before-start sheet chat-reliability is building). An untrusted folder asks first, and nothing starts until you say yes.</div>
+        <div><b>duo2.</b> <code>duo2 session new</code> with no <code>--project</code> at All projects and no pick refuses with “Choose a project: --project &lt;name&gt;”.</div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":2760,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

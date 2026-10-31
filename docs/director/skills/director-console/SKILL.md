@@ -11,6 +11,10 @@ The console is Geoff's default channel with the director (`docs/director/console
 
 `python3 -I ~/.claude/skills/director-console/worker-links.py [name|id-prefix …]` prints, for each background worker, its state, its **Remote Control link** (`https://claude.ai/code/session_…`, which opens the session on Geoff's phone) and the **artifacts it has open** (canvases, pages, review pages). Use it for every card and row below. A worker in state `blocked` is usually waiting on Geoff: read its screen (`claude logs <id>`) or transcript before you say so (memory: verify before "needs you").
 
+## Every question carries its links (Geoff, 2026-10-31: "Always ALWAYS … repeat the link to artifacts if accessing those artifacts is necessary to answer your questions — do this immediately before asking the question")
+
+Whenever Geoff needs to see something to answer (a canvas, board, page, film, session), put its link in the chat text **immediately before** the question: a line like "Open the voice canvas: <url> (boards: …)" right above the AskUserQuestion call, and the link inside the question text too. Opening the artifact for him (`Artifact open`) doesn't replace this: he may be on his phone, or the pane may show something else. Console cards already carry `links`; this is for chat and AskUserQuestion.
+
 ## No stranded workers (Geoff, 2026-10-30: "we CANNOT have stranded workers")
 
 - The director session runs in **Auto**, never Bypass (_PROJECT.md and delegating.md already said so; Geoff, 2026-10-30: "YOU ARE NOT SUPPOSED TO RUN IN BYPASS MODE"). First thing on every wake: `get_session self`. If `permissionMode` isn't `auto`, switch with `set_session_permission_mode self auto` before anything else.

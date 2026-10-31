@@ -128,7 +128,7 @@ struct AddToTaskMenu: View {
     let id: String
 
     var body: some View {
-        let tasks = model.taskNotes(in: session.project)
+        let tasks = model.taskSummaries(in: session.project)
         if tasks.isEmpty {
             Button("Add to Task") {}.disabled(true)  // no task notes in the project yet
         } else {
@@ -167,7 +167,7 @@ struct SelectionMenuItems: View {
         let sessions = model.selectedSessions
         let keys = sessions.map(\.tabKey)
         let c = model.selectionCounts(sessions)
-        let tasks = c.project.map { model.taskNotes(in: $0) } ?? []
+        let tasks = c.project.map { model.taskSummaries(in: $0) } ?? []
         // Counted labels ("Archive 3 Sessions"); the actions' `ui:` name them as "Archive n Sessions".
         let archive = "Archive " + Self.sessions(c.archive.count), unarchive = "Unarchive " + Self.sessions(c.unarchive.count)
         let delete = "Delete " + Self.sessions(keys.count) + "…", park = "Park " + Self.sessions(c.park.count)

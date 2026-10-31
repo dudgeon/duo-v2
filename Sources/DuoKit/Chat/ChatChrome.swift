@@ -157,6 +157,11 @@ extension AppModel {
         }
         let c = chats.session(t.key, home: isHomeTerminal(t))
         c.isShown = { [weak self, key = t.key] in self?.chatIsShown(key) ?? true }
+        // Claude Code's folder trust question at the start: Duo's sheet, then your answer on its screen (F-444).
+        c.onTrustQuestion = { [weak self, weak c, cwd = t.cwd] path in
+            guard let self, let c else { return false }
+            return self.askTrustAtStart(c, folder: cwd, path: path)
+        }
         if (c.terminal as? LiveChatTerminal)?.view !== t.view { c.attach(LiveChatTerminal(t.view)) }
         // Live sessions are keyed by their id; demo and fixture terminals have no hooks to read.
         if terminalsMode == .live { c.follow(sessionId: t.key, cwd: t.cwd) }
@@ -196,6 +201,12 @@ struct ConsoleChatBody: View {
     var body: some View {
         if chat.showsChat {
             ChatPane(chat: chat)
+                // The terminal behind it keeps this pane's size, so it comes back at the width it was drawn at (Q-341).
+                .background(GeometryReader { g in
+                    Color.clear
+                        .onAppear { terminal?.holdHiddenSize(g.size) }
+                        .onChange(of: g.size) { _, size in terminal?.holdHiddenSize(size) }
+                })
         } else {
             VStack(spacing: 0) {
                 if chat.mode == .chat, let f = chat.fallback { ChatFallbackBar(chat: chat, message: f.message, command: f.command) }

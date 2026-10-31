@@ -65,17 +65,18 @@ import Foundation
         return r?.ok == true
     }
 
-    // 1. The trust prompt: a screen chat mode can't show. It falls back, the user answers it in the
-    //    terminal, and chat comes back by itself.
+    // 1. The trust prompt (F-444): chat reads it and doesn't fall back; the app's sheet would ask, and its Trust
+    //    Folder gives Claude Code the answer on its own screen (this check answers as the sheet does).
     _ = until(30) { chat.reread().kind != .starting }
     spin(1.5)
-    if chat.reread().kind == .unknown {
-        check(chat.fallback == .unknownScreen, "the trust prompt reads as unknown and shows the terminal")
+    if chat.reread().kind == .trust {
+        check(chat.fallback == nil && ChatScreenReader.wellFormed(chat.screen), "the trust prompt reads whole and keeps chat (no fallback)")
         dump("trust")
-        tui.sendKeys("\r")
+        let path = chat.screen.title ?? ""
+        let r = await_ { await chat.answerTrust(true, path: path) }
         _ = until(30) { chat.reread().kind == .idle }
         spin(0.6)
-        check(chat.showsChat && chat.fallback == nil, "answered in the terminal, chat comes back by itself")
+        check(r?.ok == true && chat.showsChat && chat.fallback == nil, "Trust Folder answered it on Claude's screen; chat stayed (\(r?.why ?? "ok"))")
     } else {
         print("    (no trust prompt: \(chat.screen.kind))")
     }
