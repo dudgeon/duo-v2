@@ -91,6 +91,8 @@ public final class VoiceInput {
     public private(set) var target: VoiceTarget?
     /// 0...1, smoothed, for the level meter.
     public private(set) var level: Double = 0
+    /// The last three levels, oldest first: the bars in both mics (DL-272).
+    public private(set) var levels: [Double] = [0, 0, 0]
     public private(set) var notice: VoiceNotice?
     /// ⇧⌘D is held (hold-to-talk): the hint reads "Listening while you hold ⇧⌘D".
     public var holding = false
@@ -330,7 +332,18 @@ public final class VoiceInput {
 
     // MARK: Results
 
-    private func take(level l: Float) { level = level * 0.5 + Double(l) * 0.5 }
+    private func take(level l: Float) {
+        level = level * 0.5 + Double(l) * 0.5
+        levels = Array((levels + [level]).suffix(3))
+    }
+
+    /// The three bars' heights, 0…1, left to right: the newest level in the middle, the older two either side a
+    /// little shorter, so a voice reads as a moving shape. Reduce Motion holds them at a middle height (DL-271, DL-272).
+    public static func barHeights(_ levels: [Double], still: Bool) -> [Double] {
+        if still { return [0.5, 0.8, 0.6] }
+        let l = levels.count == 3 ? levels : [0, 0, 0]
+        return [l[0] * 0.8, l[2], l[1] * 0.9].map { min(1, max(0, $0)) }
+    }
 
     private func progress(_ p: Double?, gen: Int) {
         guard generation == gen, case .preparing = state else { return }
@@ -455,6 +468,7 @@ public final class VoiceInput {
         mic?.stop(); mic = nil
         fileStop?(); fileStop = nil
         level = 0
+        levels = [0, 0, 0]
         holding = false
     }
 

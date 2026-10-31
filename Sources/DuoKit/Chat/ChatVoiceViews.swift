@@ -29,9 +29,14 @@ struct ChatMicButton: View {
             if dashed {
                 Circle().strokeBorder(DuoColor.rule, style: StrokeStyle(lineWidth: DuoMetric.borderHairline, dash: DuoShadow.dashPattern))
             }
-            Image(systemName: slashed ? "mic.slash" : "mic")
-                .font(.system(size: DuoSymbolSize.toolbarIcon, weight: .regular))
-                .foregroundStyle(slashed ? DuoColor.controlEdge : listening ? DuoColor.pane : hover ? DuoColor.text : DuoColor.text2)
+            if listening {
+                // DL-272: the terminal's level bars in chat too, in place of the mic, `pane` on the `text` circle.
+                VoiceBars(levels: voice.levels, color: DuoColor.pane)
+            } else {
+                Image(systemName: slashed ? "mic.slash" : "mic")
+                    .font(.system(size: DuoSymbolSize.toolbarIcon, weight: .regular))
+                    .foregroundStyle(slashed ? DuoColor.controlEdge : hover ? DuoColor.text : DuoColor.text2)
+            }
         }
         .frame(width: ChatMicButton.diameter, height: ChatMicButton.diameter)
         .contentShape(Circle())
@@ -72,13 +77,11 @@ struct ChatVoiceLine: View {
         HStack(spacing: 6) {
             switch voice.state {
             case .listening:
-                LevelMeter(level: voice.level).frame(width: 15, height: 14)
+                // DL-272: the mic's bars say it's listening; the hint row keeps only the keys.
                 if voice.holding {
-                    Text("Listening while you hold ⇧⌘D").duoText(.chatMeta).foregroundStyle(DuoColor.text)
-                    Text("· let go to finish").duoText(.chatMeta).foregroundStyle(DuoColor.text2)
+                    Text("Let go of ⇧⌘D to finish").duoText(.chatMeta).foregroundStyle(DuoColor.text2)
                 } else {
-                    Text("Listening").duoText(.chatMeta).foregroundStyle(DuoColor.text)
-                    Text(voice.target.map { if case .chat = $0 { "· ⇧⌘D or the mic finishes · esc discards" } else { "· ⇧⌘D finishes" } } ?? "")
+                    Text(voice.target.map { if case .chat = $0 { "⇧⌘D or the mic finishes · esc discards" } else { "⇧⌘D finishes" } } ?? "")
                         .duoText(.chatMeta).foregroundStyle(DuoColor.text2)
                 }
             case .finishing:
@@ -108,18 +111,18 @@ struct ChatVoiceLine: View {
     }
 }
 
-/// Four bars, 3 wide, moving with the voice (still under Reduce Motion), in `text`.
-struct LevelMeter: View {
-    let level: Double
-    private let shape: [Double] = [0.55, 1.0, 0.75, 0.45]
+/// The terminal mic's three level bars (DL-271), for chat's mic while it listens (DL-272): 2 wide, 2 apart, centred,
+/// each 2 pt (quiet, a dot) to 12 pt (loud), from `VoiceInput.barHeights`.
+struct VoiceBars: View {
+    let levels: [Double]
+    let color: Color
     var body: some View {
-        HStack(alignment: .bottom, spacing: 1) {
-            ForEach(0..<4, id: \.self) { i in
-                let h = MotionSettings.shared.reduce ? 7.0 : 3.0 + 9.0 * min(1, level * shape[i] * 1.4)
-                RoundedRectangle(cornerRadius: 0.5).fill(DuoColor.text).frame(width: 3, height: h)
+        HStack(alignment: .center, spacing: 2) {
+            ForEach(Array(VoiceInput.barHeights(levels, still: MotionSettings.shared.reduce).enumerated()), id: \.offset) { _, h in
+                RoundedRectangle(cornerRadius: 1).fill(color).frame(width: 2, height: 2 + 10 * h)
             }
         }
-        .frame(maxHeight: .infinity, alignment: .bottom)
+        .frame(height: 12)
     }
 }
 
