@@ -1,0 +1,33 @@
+"claude-haiku-5-5" isn't described by this version's model c
+atalog; update Claude Code, or map it with behavesAs on a mo
+delPicker row (or modelOverrides, if it is a provider id of 
+a model this version knows). Until then auto-compact keeps t
+his session within 200k tokens (the context window it assume
+s); if the model accepts more, append [1m] to the model name
+ for 1M; CLAUDE_CODE_DISABLE_UNKNOWN_MODEL_WINDOW_ENFORCEMEN
+T=1 restores the previous wait-for-the-API behavior.
+
+────────────────────────────────────────────────────────────
+ Accessing workspace:
+
+ /private/tmp/sample/a-rather-long-folder-name/with-ano
+ ther-level/and-a-third-one
+
+ Quick safety check: Is this a project you created or one
+ you trust? (Like your own code, a well-known open source
+ project, or work from your team). If not, take a moment to
+ review what's in this folder first.
+
+ Claude Code'll be able to read, edit, and execute files
+ here.
+
+ Security guide
+
+ ❯ No, exit
+   Yes, I trust this folder
+
+ Enter to confirm · Esc to cancel
+
+
+
+

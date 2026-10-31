@@ -107,6 +107,28 @@ extension ChatSession {
         return .done
     }
 
+    /// Claude Code's folder trust question (F-444): moves its cursor to the choice and presses Return, re-reading the screen
+    /// before each key (DL-118). `path` is the folder the sheet named; the screen must still be asking about it.
+    public func answerTrust(_ trust: Bool, path: String) async -> ChatAnswerResult {
+        guard terminal != nil else { return finish(.refused("the terminal isn't running")) }
+        var s = reread()
+        guard s.kind == .trust, ChatScreenReader.wellFormed(s) else { return finish(.refused("Claude Code isn’t asking about the folder any more")) }
+        guard ChatScreenReader.samePath(s.title ?? "", path) else { return finish(.refused("Claude Code is asking about another folder now")) }
+        let label = trust ? signatures.trustYes : signatures.trustNo
+        guard let target = s.rows.firstIndex(where: { $0.label == label }) else { return finish(.refused("“\(label)” isn’t on Claude Code’s screen")) }
+        sending = true
+        defer { sending = false }
+        for _ in 0..<4 {
+            guard let at = s.rows.firstIndex(where: \.cursor) else { break }
+            if at == target { break }
+            s = await press(at < target ? .down : .up)
+            guard s.kind == .trust, ChatScreenReader.samePath(s.title ?? "", path) else { return finish(.refused("Claude Code’s folder question changed")) }
+        }
+        guard s.rows.firstIndex(where: \.cursor) == target else { return finish(.refused("couldn’t reach “\(label)”")) }
+        _ = await press(.enter)
+        return .done
+    }
+
     /// The pending request in words, for `You chose …` (`the edit to prd-v2.md`).
     var requestSummary: String? {
         guard let r = pendingRequest else { return nil }

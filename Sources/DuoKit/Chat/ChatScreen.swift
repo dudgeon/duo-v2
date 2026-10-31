@@ -26,6 +26,14 @@ public struct ChatSignatures: Sendable, Equatable {
     public var permissionQuestion = #"^\s*(Do you want to|Allow|Trust|Would you like to) .*\?\s*$"#
     public var permissionCancel = #"Esc to cancel"#
     public var amend = #"Tab to amend"#
+    /// Claude Code's folder trust question at the start of a session in a folder it hasn't trusted (2.1.284 to 2.1.311, F-444):
+    /// "Accessing workspace:", the folder (wrapped at the terminal's width, one space in), "Quick safety check: …", and two
+    /// unnumbered choices with "No, exit" first and selected.
+    public var trustTitle = #"^\s*Accessing workspace:\s*$"#
+    public var trustBodyStart = #"^\s*Quick safety check:"#
+    public var trustYes = "Yes, I trust this folder"
+    public var trustNo = "No, exit"
+    public var trustFooter = #"^\s*Enter to confirm · Esc to cancel"#
     public var reviewTitle = #"^Review your answers"#
     public var reviewQuestion = #"Ready to submit your answers\?"#
     public var questionNav = #"^Enter to select · "#
@@ -224,7 +232,7 @@ public struct ChatScreenRow: Sendable, Equatable {
 /// What the screen shows, read.
 public struct ChatScreen: Sendable, Equatable {
     public enum Kind: String, Sendable {
-        case starting, idle, busy, permission, plan, question, questionReview = "question-review", picker, unknown
+        case starting, idle, busy, permission, plan, question, questionReview = "question-review", picker, trust, unknown
         /// Chat mode can draw this (or it is about to settle): no fallback.
         public var known: Bool { self != .unknown }
     }
@@ -357,6 +365,8 @@ public enum ChatScreenReader {
         let effort = t.last { $0.chatIs(s.effort) }.flatMap { $0.chatMatch(s.effort) }.map { ChatEffort(glyph: $0[1] ?? "", word: $0[2] ?? "") }
         func find(_ p: String) -> Int { t.firstIndex { $0.chatIs(p) } ?? -1 }
 
+        // The folder trust question (F-444): the folder, and the two choices with their cursor.
+        if let r = trust(t, s) { return r }
         // Plan approval.
         let ready = find(s.planTitle), proceed = find(s.planQuestion)
         if ready >= 0, proceed > ready {
@@ -438,6 +448,55 @@ public enum ChatScreenReader {
         return ChatScreen(kind: .unknown, sig: "unknown")
     }
 
+    /// "Accessing workspace:" with its folder and both choices on screen, else nil. `title` is the folder as drawn,
+    /// its wrapped rows joined; `rows` the two choices in screen order.
+    static func trust(_ t: [String], _ s: ChatSignatures) -> ChatScreen? {
+        guard let top = t.lastIndex(where: { $0.chatIs(s.trustTitle) }),
+              let body = t.indices.first(where: { $0 > top && t[$0].chatIs(s.trustBodyStart) }),
+              let foot = t.indices.first(where: { $0 > body && t[$0].chatIs(s.trustFooter) }) else { return nil }
+        let path = t[(top + 1)..<body].map(\.chatTrim).joined()
+        var rows: [ChatScreenRow] = []
+        for l in t[(body + 1)..<foot] {
+            guard let m = l.chatMatch(#"^\s*(❯)?\s*(\S.*?)\s*$"#), let label = m[2], label == s.trustYes || label == s.trustNo else { continue }
+            rows.append(ChatScreenRow(kind: .option, n: rows.count + 1, label: label, cursor: m[1] != nil))
+        }
+        var r = ChatScreen(kind: .trust, sig: "trust:" + path)
+        r.title = path
+        r.rows = rows
+        return r
+    }
+
+    /// A row as the terminal shows it at `cols` cells: anything past the width is cut. A wide glyph takes two cells
+    /// (SwiftTerm skips its continuation cell in the text), so it is counted as two (F-449).
+    public static func clip(_ row: String, cols: Int) -> String {
+        guard cols > 0, row.count > cols / 2 else { return row }
+        var used = 0, end = row.startIndex
+        for i in row.indices {
+            let w = cellWidth(row[i])
+            if used + w > cols { break }
+            used += w
+            end = row.index(after: i)
+        }
+        return String(row[..<end])
+    }
+
+    /// East Asian wide and emoji-presentation glyphs take two cells; the rest one (wcwidth(3) needs a locale Duo doesn't set).
+    static func cellWidth(_ c: Character) -> Int {
+        guard let u = c.unicodeScalars.first else { return 1 }
+        let v = u.value
+        if v < 0x1100 { return 1 }
+        if c.unicodeScalars.contains(where: { $0.properties.isEmojiPresentation }) { return 2 }
+        let wide: [ClosedRange<UInt32>] = [0x1100...0x115F, 0x2E80...0x303E, 0x3041...0x33FF, 0x3400...0x4DBF, 0x4E00...0x9FFF, 0xA000...0xA4CF,
+                                           0xAC00...0xD7A3, 0xF900...0xFAFF, 0xFE30...0xFE4F, 0xFF00...0xFF60, 0xFFE0...0xFFE6, 0x20000...0x3FFFD]
+        return wide.contains { $0.contains(v) } ? 2 : 1
+    }
+
+    /// Whether two folder paths are the same once the screen's wrapping is taken out (it breaks a long path anywhere).
+    public static func samePath(_ a: String, _ b: String) -> Bool {
+        let squash = { (x: String) in x.filter { !$0.isWhitespace } }
+        return !a.isEmpty && squash(a) == squash(b)
+    }
+
     /// A dialog read whole by the signatures (DL-145): what a newer CLI's dialog must be before chat
     /// answers it. Options numbered 1…n, one cursor, and the parts each kind has.
     public static func wellFormed(_ s: ChatScreen) -> Bool {
@@ -451,6 +510,8 @@ public enum ChatScreenReader {
             return numbered(s.options.map(\.n)) && s.rows.filter(\.cursor).count == 1
         case .question:
             return numbered(s.rows.map(\.n).filter { $0 != nil }) && s.question?.isEmpty == false && s.rows.filter(\.cursor).count == 1
+        case .trust:
+            return s.rows.count == 2 && Set(s.rows.map(\.label)).count == 2 && s.rows.filter(\.cursor).count == 1 && s.title?.isEmpty == false
         case .picker:
             guard let p = s.picker else { return false }
             switch p.kind {
