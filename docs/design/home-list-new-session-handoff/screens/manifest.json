@@ -1,0 +1,16 @@
+[
+ {
+  "name": "list-1440-new-session",
+  "size": "1440x900",
+  "kind": "target",
+  "title": "All projects \u203a List with B's New session row (DL-262)",
+  "from": "home-evolution-handoff/screens/list-1440.html + the row"
+ },
+ {
+  "name": "states",
+  "size": "1600x2000",
+  "kind": "board",
+  "title": "B's row: with a Home (rest, hover, pressed, popup, Choose Another Folder\u2026) and without (~/Documents, popup, macOS's Documents prompt, no ~/Documents); Light, Dark, Classic",
+  "from": "ListPane.dc.html (dflt docs)"
+ }
+]
