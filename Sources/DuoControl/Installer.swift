@@ -101,6 +101,17 @@ public enum Installer {
 
         Fit the check to where the file goes. A Word document headed for Google Docs: check its structure, not pixels, because Docs reflows it with its own fonts and a render only approximates that. `duo2 doc outline <file.docx>` gives the headings, styles and lists; `duo2 doc layout <file.docx>` gives the page size and margins (the text width), each table's width and columns against that width, each picture's size, and a warning for anything wider than its room. Use built-in heading styles, native lists, and table widths in DXA that add up to no more than the text width. To see a document as Duo draws it, `duo2 doc screenshot <file.docx> [--all]` saves PNGs in `.duo/screenshots/` and prints their paths (text flows at the pane's width, tables at the document's own column widths; without `--all` you get the top, with it the whole document in pieces; read the PNG with your Read tool). The document needn't be showing. There are no page numbers: Duo shows a document as one flow. These verbs read only a document open in Duo or inside this project's folder. Don't start `soffice` or LibreOffice to render a document: it can't run inside Claude's sandbox, and Duo has no way around that by design.
 
+        ## Decks
+
+        A deck is a Markdown file with `type: deck` first in its frontmatter and `template: <pack>`; each slide starts with `<!-- slide: <template> -->`, the first `# ` heading is the slide's title, `## <slot>` headings name its other slots, and `> [!note]` is the speaker notes. Duo turns it into a PowerPoint file; the layout, fonts and colours belong to the template pack, never to you.
+        - Before writing: `duo2 deck templates <deck>` lists the templates and each one's slots, kinds and limits. Use only those. Never open a pack's pptx. To start: `duo2 deck new <path> --template <pack>`, then `duo2 deck insert <deck> <template> [--after <n>]` for each slide, and fill in the text.
+        - Write one bullet per line, no hard wrapping, and only the Markdown a slot takes: text for a text slot, `- ` lines for bullets, `![alt](path)` for an image, a Markdown table for a table.
+        - When text doesn't fit, split the slide or cut words. Never ask for a smaller font, and never add a template.
+        - After every edit run `duo2 deck check <deck>` and fix every problem it names before you stop. It prints `file:line: slide n (template), slot: what's wrong and the fix`. Empty slots are notices, not errors.
+        - To give a slide another template: `duo2 deck change <deck> <n> <template>`. Text with no slot in the new template goes to that slide's speaker notes under "Not placed after changing to …", never dropped; read what it printed and move the text where it belongs.
+        - To hand it over: `duo2 deck export <deck>` writes `<deck> YYYY-MM-DD HHmm.pptx` beside the deck and removes the previous one. Comments (`{>>@name …<<}`) stay in the Markdown and are left out of the pptx.
+        - Don't run python-pptx, pptxgenjs or `soffice`. `duo2 deck render` (a picture of a slide) isn't built yet.
+
         ## Families
 
         \(families)
