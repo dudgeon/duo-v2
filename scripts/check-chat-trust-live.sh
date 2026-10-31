@@ -27,7 +27,7 @@ port=$((8900 + RANDOM % 90))
 mock=$!
 sleep 0.5
 label="Trust Folder"; [[ $answer == no ]] && label="Don’t Trust"
-png=$out/$answer.png
+png=$out/$answer.png; rm -f $png
 then="wait:8,chat:on,wait:3,chat-state,answer:$label,wait:6,chat-state"
 err=$out/stderr-$answer.txt
 env -u DUO_SUPPORT_DIR -u DUO_SOCKET -u DUO_TOKEN -u DUO_SIGNAL -u DUO_AUTOCONFIRM DUO_SUPPORT_DIR=$fx/sup CLAUDE_CONFIG_DIR=$fx/cfg \
