@@ -212,8 +212,8 @@ public final class AppModel {
     @ObservationIgnored public lazy var chats = ChatStore()
     /// Voice input (DL-260): one dictation at a time, into a chat composer or a terminal's prompt.
     @ObservationIgnored public lazy var voice: VoiceInput = { let v = VoiceInput(); wireVoice(v); return v }()
-    /// The one document editor (live mode; fixture mode keeps the placeholder the targets exempt).
-    @ObservationIgnored public lazy var editor: EditorController = { let e = EditorController(); editorIfLoaded = e; wireEditor(e); return e }()
+    /// The document editors, one per side of a split (C-135, DL-278): `editor` is the active one.
+    @ObservationIgnored public lazy var editors: EditorSet = makeEditorSet()
     /// Local HTML pages in the right pane (created on first use).
     @ObservationIgnored public lazy var htmlViewer: HTMLViewer = { let v = HTMLViewer(); htmlViewerIfLoaded = v; wireHTMLViewer(v); return v }()
     @ObservationIgnored public var htmlViewerIfLoaded: HTMLViewer?
@@ -253,8 +253,6 @@ public final class AppModel {
     public var treeDropTarget: String?
     /// Bumped when the editor's document goes into or out of conflict or removed-on-disk.
     public var editorRevision = 0
-    /// The editor if it has been created (doc-status mustn't create one).
-    @ObservationIgnored public var editorIfLoaded: EditorController?
     /// A Markdown document's review view while Duo runs, by file path (DL-162, DL-237): the markup mode and Show Closed Comments.
     @ObservationIgnored public var markdownMarkup: [String: MarkdownMarkup] = [:]
     /// Set once, when the editor first shows a document. Observed, so commands that depend on the

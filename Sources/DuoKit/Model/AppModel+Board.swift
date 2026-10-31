@@ -174,7 +174,7 @@ extension AppModel {
             }
         } else { return "nothing to add" }
         let note = folder.appending(path: path)
-        if let e = editorIfLoaded, e.url?.standardizedFileURL == note.standardizedFileURL {
+        if let e = editorShowing(note) {
             e.applyNoteEdit(.addReference(link: link))
             return nil
         }
@@ -191,7 +191,7 @@ extension AppModel {
     public func removeReference(project: String, path: String, target: String) -> String? {
         guard let folder = liveFolders[project] else { return "no project '\(project)'" }
         let note = folder.appending(path: path)
-        if let e = editorIfLoaded, e.url?.standardizedFileURL == note.standardizedFileURL {
+        if let e = editorShowing(note) {
             e.applyNoteEdit(.removeReference(target: target))
             return nil
         }

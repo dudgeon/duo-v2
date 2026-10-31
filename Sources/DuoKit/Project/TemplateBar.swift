@@ -5,11 +5,12 @@ import SwiftUI
 /// what it's for, whose it is, and Insert ▾, Preview and Reset… (Use Home's… on a project's own).
 struct TemplateBar: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.editorSide) private var side
     let info: AppModel.TemplateInfo
 
     var body: some View {
         let _ = model.editorRevision
-        let previewing = model.editorIfLoaded?.previewing ?? false
+        let previewing = model.editorIfLoaded(side)?.previewing ?? false
         VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: DuoSpace.gapButtonToButton) {
                 // Too narrow for one line (a project's own: Use Home's… is wider), the title wraps (board A3).
@@ -18,14 +19,14 @@ struct TemplateBar: View {
                 Spacer(minLength: DuoSpace.gapButtonToButton)
                 Menu {
                     ForEach(["{{title}}", "{{date}}", "{{time}}"], id: \.self) { p in
-                        Button(p) { model.editorIfLoaded?.insertAtCaret(p) }   // action: doc insert
+                        Button(p) { model.editorIfLoaded(side)?.insertAtCaret(p) }   // action: doc insert
                     }
                 } label: { Text("Insert ▾") }
                     .menuStyle(.button).buttonStyle(.duo).menuIndicator(.hidden).fixedSize()
                     .disabled(previewing)
-                Button("Preview") { model.toggleTemplatePreview() }
+                Button("Preview") { model.onSide(side) { model.toggleTemplatePreview() } }
                     .buttonStyle(DuoButtonStyle(on: previewing, boldWhenOn: true)).fixedSize()
-                Button(info.project == nil ? "Reset…" : "Use Home's…") { model.resetTemplate(info) }
+                Button(info.project == nil ? "Reset…" : "Use Home's…") { model.onSide(side) { model.resetTemplate(info) } }
                     .buttonStyle(.duo).fixedSize()
             }
             line(previewing)

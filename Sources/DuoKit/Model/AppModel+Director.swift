@@ -427,7 +427,7 @@ extension AppModel {
         guard DirectorRegistry.isTaskPath(path) else { return "\(path) isn't a note in tasks/" }
         guard let folder = liveFolders[project] else { return "no project '\(project)'" }
         let file = folder.appending(path: path)
-        if let e = editorIfLoaded, e.url?.standardizedFileURL == file.standardizedFileURL {
+        if let e = editorShowing(file) {
             e.applyNoteEdit(edit)
             return nil
         }

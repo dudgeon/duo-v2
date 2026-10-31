@@ -109,10 +109,12 @@ struct DuoApp: App {
             model.walkSetup(id) { r in FileHandle.standardError.write(Data("walk-setup \(id): \(r.text)\n".utf8)) }
         }
         AppDelegate.flush = { done in
-            guard let e = model.editorIfLoaded else { return done() }
+            let all = model.loadedEditors
+            guard !all.isEmpty else { return done() }
             let once = Once()
+            var pending = all.count
             let finish: @MainActor () -> Void = { if !once.fired { once.fired = true; done() } }
-            e.flush(finish)
+            for e in all { e.flush { pending -= 1; if pending == 0 { finish() } } }
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) { MainActor.assumeIsolated { finish() } }  // never hang a quit
         }
         NotificationCenter.default.addObserver(forName: NSApplication.didFinishLaunchingNotification, object: nil, queue: .main) { _ in

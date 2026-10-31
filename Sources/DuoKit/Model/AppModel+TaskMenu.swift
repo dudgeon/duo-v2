@@ -46,7 +46,7 @@ extension AppModel {
 
     /// Saves the note first if it's open in the editor, so nothing typed is lost to a move or rewrite.
     func flushTask(_ file: URL, then: @escaping @MainActor () -> Void) {
-        if let e = editorIfLoaded, e.url?.standardizedFileURL == file.standardizedFileURL { e.saveNow(force: true, completion: then) } else { then() }
+        if let e = editorShowing(file) { e.saveNow(force: true, completion: then) } else { then() }
     }
 
     /// Why a note can't be rewritten on disk right now, or nil when it can: it is open in the editor
@@ -54,7 +54,7 @@ extension AppModel {
     /// The writers below refuse with this as a last resort; menus and `duo2` verbs go through
     /// `afterNoteSaved` first, so they wait for the save instead.
     func noteBusy(_ file: URL) -> String? {
-        guard let e = editorIfLoaded, e.url?.standardizedFileURL == file.standardizedFileURL, e.dirty || e.conflict else { return nil }
+        guard let e = editorShowing(file), e.dirty || e.conflict else { return nil }
         return e.conflict ? "\(file.lastPathComponent) is open with changes in conflict with the file on disk. Resolve that first."
                           : "\(file.lastPathComponent) has changes that aren't saved yet."
     }
@@ -62,7 +62,7 @@ extension AppModel {
     /// Runs `then` once the note's open editor has saved (at most about 2 s), or at once when the
     /// editor isn't showing it. A save that fails or stalls leaves the writer to refuse with its reason (C-81).
     public func afterNoteSaved(project: String, path: String, _ then: @escaping @MainActor () -> Void) {
-        guard let file = taskFile(project, path), let e = editorIfLoaded, e.url?.standardizedFileURL == file.standardizedFileURL else { return then() }
+        guard let file = taskFile(project, path), let e = editorShowing(file) else { return then() }
         var ran = false
         let once: @MainActor () -> Void = { if !ran { ran = true; then() } }
         e.saveNow(force: true, completion: once)
@@ -76,7 +76,7 @@ extension AppModel {
         } else {
             openDocumentsByProject[project] = openDocumentsByProject[project]?.map { $0 == old ? new : $0 }
             if lastRightTab[project] == old { lastRightTab[project] = new }
-            if let folder = liveFolders[project], let e = editorIfLoaded, e.url?.standardizedFileURL == folder.appending(path: old).standardizedFileURL {
+            if let folder = liveFolders[project], let e = editorShowing(folder.appending(path: old)) {
                 e.fileMoved(to: folder.appending(path: new))
             }
         }
@@ -143,7 +143,7 @@ extension AppModel {
             guard let before = seen[t.id] else { seen[t.id] = t.title; continue }
             guard before != t.title, let folder = liveFolders[t.project] else { continue }
             let file = folder.appending(path: t.path)
-            if let e = editorIfLoaded, e.url?.standardizedFileURL == file.standardizedFileURL,
+            if let e = editorShowing(file),
                e.dirty || e.conflict || Date().timeIntervalSince(e.lastTyped) < 3 { continue }   // still being typed: next time
             let new = TaskNotes.pathForTitle(t.title, current: t.path) { FileManager.default.fileExists(atPath: folder.appending(path: $0).path) }
             seen[t.id] = t.title
@@ -295,7 +295,7 @@ extension AppModel {
         var trashed: NSURL?
         do {
             if currentProject?.name == project { closeDocumentsUnder(path) }
-            else if let e = editorIfLoaded, e.url?.standardizedFileURL == file.standardizedFileURL { e.closeFile() }
+            else if let e = editorShowing(file) { e.closeFile() }
             openDocumentsByProject[project]?.removeAll { $0 == path }
             try FileManager.default.trashItem(at: file, resultingItemURL: &trashed)
         } catch { return .failure(error) }
@@ -342,7 +342,7 @@ extension AppModel {
             do {
                 try FileManager.default.createDirectory(at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
                 if currentProject?.name == project { closeDocumentsUnder(path) }
-                else if let e = editorIfLoaded, e.url?.standardizedFileURL == file.standardizedFileURL { e.closeFile() }
+                else if let e = editorShowing(file) { e.closeFile() }
                 openDocumentsByProject[project]?.removeAll { $0 == path }
                 try FileManager.default.moveItem(at: file, to: dest)
             } catch { failed = error; return }

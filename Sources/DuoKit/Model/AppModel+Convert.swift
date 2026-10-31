@@ -241,13 +241,13 @@ extension AppModel {
         let fm = FileManager.default
         let tab = relative(c.markdown) ?? Self.outsideFilePrefix + c.markdown.standardizedFileURL.path
         guard fm.fileExists(atPath: c.markdown.path) else { return }
-        let unsaved = editorIfLoaded.map { $0.dirty && $0.url?.standardizedFileURL == c.markdown.standardizedFileURL } ?? false
+        let unsaved = editorShowing(c.markdown)?.dirty ?? false
         guard !unsaved, (try? String(contentsOf: c.markdown, encoding: .utf8)) == c.written else {
             return info("\(c.markdown.lastPathComponent) has changed since Duo made it, so Undo left it as it is.")
         }
         let source = relative(c.source) ?? Self.outsideFilePrefix + c.source.standardizedFileURL.path
         if let i = openDocuments.firstIndex(of: tab) {
-            if let e = editorIfLoaded, e.url?.standardizedFileURL == c.markdown.standardizedFileURL { e.closeFile() }
+            if let e = editorShowing(c.markdown) { e.closeFile() }
             if openDocuments.contains(source) {
                 // The viewer's tab is still there (the copy opened beside it): the copy's tab just goes.
                 openDocuments = openDocuments.filter { $0 != tab }

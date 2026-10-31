@@ -128,7 +128,7 @@ extension AppModel {
     private func writeIssueKey(project: String, path: String, _ value: String?, undoName: String) -> String? {
         guard let file = taskFile(project, path) else { return "no task '\(path)' in \(project)" }
         let edit = TaskNotes.NoteEdit.setKey("issue", value)
-        if let e = editorIfLoaded, e.url?.standardizedFileURL == file.standardizedFileURL {
+        if let e = editorShowing(file) {
             let old = loadTask(project, path)?.issue
             e.applyNoteEdit(edit)
             registerUndo(undoName) { model in

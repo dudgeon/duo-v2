@@ -2680,6 +2680,25 @@ window.duo = {
   // What the margin's buttons do, for scripted runs: the same functions, the same transactions.
   reviewOp: (op, id, text) => ({ reply: () => replyTo(view, id, text || ""), close: () => closeThread(view, id), reopen: () => reopenThread(view, id), delete: () => deleteThread(view, id) }[op] || (() => false))(),
   reviewActivate: (id) => { activate(view, id); return true; },
+  // From a preview (Duo Decks R11, R12): neither moves the caret or takes the keyboard.
+  // Add Comment on source lines a..b, composed in the margin; `quiet` leaves focus where it is.
+  reviewAddCommentAt: (a, b, quiet) => {
+    const doc = view.state.doc, clamp = (n) => Math.min(Math.max(1, n), doc.lines);
+    const from = doc.line(clamp(a)).from, to = doc.line(clamp(b ?? a)).to;
+    if (!composeComment(view, { from, to: Math.max(to, from + 1) }, quiet !== false)) return false;
+    view.dispatch({ effects: EditorView.scrollIntoView(from, { y: "center" }) });
+    return true;
+  },
+  // Opens a thread by id, or the first one anchored on line `line`, and scrolls it into view: its id, or null.
+  reviewOpenThread: (id, line) => {
+    const threads = view.state.field(reviewField).parsed.threads, doc = view.state.doc;
+    const t = id ? threads.find((x) => x.id === id)
+      : threads.find((x) => line >= doc.lineAt(x.from).number && line <= doc.lineAt(Math.max(x.from, x.to - 1)).number);
+    if (!t) return null;
+    activate(view, t.id);
+    view.dispatch({ effects: EditorView.scrollIntoView(t.from, { y: "center" }) });
+    return t.id;
+  },
   reviewComment: (text, from, to) => addThread(view, text, { from, to }),
   // A comment typed in the margin's composer as a person would (comment-at): select the anchor, type, press keys
   // (tab|down|up|esc|return|post = ⌘Return), and say what the field and the @ menu hold after.
