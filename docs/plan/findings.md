@@ -4593,3 +4593,10 @@ Geoff (2026-10-30): Duo's files go in git like any other file, under one name, t
 - **Left as they are:** the design fixture, handoff screens and the intro film (C-123); the notice Geoff's chosen option described (Q-332).
 - Live, isolated (`scripts/github-fixture.sh`, `DUO_MOVE_FILES=1`): the `notes` project's untracked `PROJECT.md` became `_PROJECT.md` on launch and the project stayed as it was, its file marked `new` (`build/ui/stage4-move-notes.png`).
 - Checks: `DUO_CHECKS=duo-files` (12: renames, git mv, both names, F-186, each link kind, a second run), GitChecks (Duo's files as changes, no exclude, the exclude block taken back with the user's lines kept), TaskBoardChecks (read both, underscore wins, Claude told the file's name, no second file beside an old one, `_HOME.md`). Push sheet captured live, light and dark, from `scripts/github-fixture.sh`.
+
+## F-446 · Starting a session from Home's list, as built (2026-10-30; Q-339)
+
+Captured on main 32dada0a (`list-1440`, Light, Dark, Classic; isolated, background) for the Home list design study.
+- **The only button is Home's pill.** At All projects › List, the one way to start a Claude session is DL-253's `+ [robot | shell]` at the end of Home's tab strip in the left pane; it starts a Home session. To start one in a project you click one of its rows to jump in, then press the console's pill or ⌘T.
+- **⌘T does nothing at All projects.** New Claude Session stays enabled (`terminalsMode == .live`), but `AppModel.newSession()` returns at `guard let project = currentProject?.name`, and `currentProject` is nil outside a project. ⇧⌘T already falls back: `newShell()` uses Home at All projects. So with the left pane hidden (⌃⌘S) the list can't start a Claude session at all.
+- **An empty list draws nothing.** With no sessions, `SessionListPane` shows the header and a blank pane (no words, no button), unless Home has no projects yet (DL-212's folders).
