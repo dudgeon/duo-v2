@@ -23,7 +23,7 @@ A file that has a preview (a deck, a Markdown file, an HTML file) can show its s
 
 - **In the strip:** one tab, its two names joined by the split mark: an 11 × 9 outline, radius 2, stroke 1.2, divided at 3.5, in `text2`. The names are `body`. The active side's name is semibold in `text`; the other is `text2`. Example: `field-trial-review.md ⫼ Slides`. For Markdown the preview side is named `Preview`; for HTML, `Page`.
   - Each name has its own hover × (DL-126's look). Closing the preview leaves the source as an ordinary tab. Closing the source closes the whole split, because the preview has no file of its own.
-  - The tab's menu (DL-108's names): Close Tab, Close Preview, Swap Sides, then the usual Move Tab Left / Right and the file verbs.
+  - The tab's menu (DL-108's names): Close Tab, Close Split View, Swap Sides, then the usual Move Tab Left / Right and the file verbs.
   - ⌃Tab steps over the split as one tab. Dragging moves the pair together (DL-220).
 - **Sides:** the source on the left by default; Swap Sides puts it on the right. A 1 pt `rule` divider runs between them, the same as the pane dividers.
   - Drag it to resize; the ratio is clamped so neither side goes under `splitSideMin` 340 (new token; Q-366's stand-in). Double-click evens it.
@@ -40,19 +40,32 @@ A file that has a preview (a deck, a Markdown file, an HTML file) can show its s
 ## Making room (`making-room`, DL-276)
 
 - Opening a split narrows the console to its 480 minimum.
-- If the sidebar, the console's 480 and two 340 sides don't fit (under about 1,464 pt with a 300 sidebar), the sidebar folds away. Both use `motionPaneToggle` (200 ms, the terminal resized once at the end, LR-14).
-- While the split folded the sidebar, ⌃⌘S and the sidebar button **peek**: the sidebar slides in over the console, from the left edge, at its own width, with `shadowPopover`, over `motionPaneToggle`. The split does not move.
-  - Picking a session or file, Esc or a click outside closes it.
-  - It never changes the split's widths.
-- Closing the split (or Close Preview) gives back exactly what it took: the console's width and the sidebar's shown state as they were.
-- Results: at 1440 × 900, console 480 and sides of 479; at 1280 × 800, console 480 and sides of 399.
+- If the sidebar, the console's 480 and two 340 sides don't fit (under about 1,464 pt with a 300 sidebar), the sidebar **folds to a rail**. Both use `motionPaneToggle` (200 ms, the terminal resized once at the end, LR-14).
+- **The rail** (Geoff, on board 8: "we need an affordance to make the collapsed left pane not fully invisible, and a mouse clickable way to peek"):
+  - 16 wide (new token `sidebarRail`), on `pane`, with a 1 `rule` on its right.
+  - At its top, 10 down: the sidebar glyph, 12, in `text2` (`sidebar.left`).
+  - Under it, 8 below: the 6 pt `needsYou` dot, shown while any session needs you, so a folded sidebar never hides a needs-you. A stand-in; it says "needs you" to VoiceOver.
+  - The whole rail is one button: `selected` fill under the pointer, tooltip "Show Sidebar ⌃⌘S". A click peeks; a second click, Esc or a click away closes the peek.
+  - Action: `duo2 view sidebar peek`.
+- **Peek:** a click on the rail, ⌃⌘S or the toolbar's sidebar button slides the sidebar in over the console, from the rail's right edge, at its own width, with `shadowPopover`, over `motionPaneToggle`. The split does not move.
+  - Picking a session or file, Esc, a click outside or the rail closes it.
+  - It never changes the split's widths. The PNG of this state is `making-room-peek.png`.
+- Closing the split (or Close Split View) gives back exactly what it took: the console's width and the sidebar's shown state as they were.
+- Results: at 1440 × 900, rail 16, console 480 and sides of 470; at 1280 × 800, rail 16, console 480 and sides of 391.
 
 ## Making a split
 
-- **Preview Beside** (View menu, the tab's menu, ⌥⌘P: DL-277, joining DL-34's map) toggles the showing file's preview. Before building it, check ⌥⌘P against 1Password, Raycast, Rectangle and macOS defaults, and record the result as a finding.
+**The words** (Geoff, on the canvas: "I don't like the 'beside' language. slack and even claude have established language for 'split view'"). The layout is **Split View** in menus (Title Case, DL-108) and "split view" in prose, as Slack, the Claude desktop app and Chrome call it. Slack's item is "Open in split view"; Chrome uses "New split view with current tab" and "Add tab to new split view".
+- **Open in Split View** on a file in the tree, a tab's menu (▸ the open tabs) or a search result. This is slice 2, apart from a file's own preview.
+- **Show Preview in Split View** ⌥⌘P for a file with a preview.
+- **Close Split View** ends the split and keeps both as tabs (for a preview, the source tab stays).
+- **Swap Sides.**
+- Nothing says "beside".
+
+- **Show Preview in Split View** (View menu, the tab's menu, ⌥⌘P: DL-277, joining DL-34's map) toggles the showing file's preview. Before building it, check ⌥⌘P against 1Password, Raycast, Rectangle and macOS defaults, and record the result as a finding.
 - **A deck opens split** when there's room, and folded on the source when there isn't (Q-367, duo-decks).
 - `duo2 split <file>`.
-- Search's ⌥⌘↩ "Open in split view" (DL-79 e) waits for slice 2. In slice 1 it stays dimmed, or it does Preview Beside when the result has a preview. The builder should log a stand-in and a question.
+- Search's ⌥⌘↩ "Open in split view" (DL-79 e) waits for slice 2. In slice 1 it stays dimmed, or it does Show Preview in Split View when the result has a preview. The builder should log a stand-in and a question.
 
 ## What acts on what (`routing-verbs`)
 
@@ -70,7 +83,7 @@ A file that has a preview (a deck, a Markdown file, an HTML file) can show its s
 - `duo2 split <file>` makes a split.
 - `duo2 split` reports the sides, active side, ratio, folded, and whether the split folded the sidebar.
 - `duo2 split close [--side left|right]`, `split focus left|right`, `split swap`, `split ratio <0.2–0.8>`.
-- `split --beside` and `split separate` are slice 2.
+- `split --with` and `split separate` are slice 2.
 
 Every control names one. Regenerate `docs/cli/duo2.md`.
 
@@ -115,7 +128,7 @@ Every control names one. Regenerate `docs/cli/duo2.md`.
 
 ## Tokens (new, [P])
 
-`splitSideMin` 340. The split mark's size (11 × 9). The source-lines mark: 2 wide, `controlEdge`, 8 in. Everything else reuses existing tokens: `rule`, `paneFocus`, `selected`, `shadowPopover`, `motionPaneToggle`.
+`splitSideMin` 340; `sidebarRail` 16. The split mark's size (11 × 9). The source-lines mark: 2 wide, `controlEdge`, 8 in. Everything else reuses existing tokens: `rule`, `paneFocus`, `selected`, `shadowPopover`, `motionPaneToggle`.
 
 ## Open
 

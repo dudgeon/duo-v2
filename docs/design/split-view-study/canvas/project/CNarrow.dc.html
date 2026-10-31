@@ -10,10 +10,12 @@
 <helmet>
 <style>
 body{margin:0}
-@keyframes sb{0%,16%{width:300px}26%,84%{width:0px}94%,100%{width:300px}}
-@keyframes rp{0%,16%{width:460px}26%,84%{width:799px}94%,100%{width:460px}}
-@keyframes s2{0%,18%{opacity:0;flex-basis:0px}26%,82%{opacity:1;flex-basis:399px}90%,100%{opacity:0;flex-basis:0px}}
-@keyframes peek{0%,48%{transform:translateX(-310px)}54%,70%{transform:translateX(0px)}76%,100%{transform:translateX(-310px)}}
+@keyframes sb{0%,16%{width:300px}26%,84%{width:16px}94%,100%{width:300px}}
+@keyframes rl{0%,18%{opacity:0}26%,84%{opacity:1}90%,100%{opacity:0}}
+@keyframes rh{0%,45%{background:#FFFFFF}46%,72%{background:#E9ECEF}74%,100%{background:#FFFFFF}}
+@keyframes rp{0%,16%{width:460px}26%,84%{width:783px}94%,100%{width:460px}}
+@keyframes s2{0%,18%{opacity:0;flex-basis:0px}26%,82%{opacity:1;flex-basis:391px}90%,100%{opacity:0;flex-basis:0px}}
+@keyframes peek{0%,48%{transform:translateX(-330px)}54%,70%{transform:translateX(0px)}76%,100%{transform:translateX(-330px)}}
 @keyframes ptr{0%,44%{opacity:0}46%,72%{opacity:1}74%,100%{opacity:0}}
 @keyframes c1{0%,15%{opacity:1}17%,95%{opacity:0}97%,100%{opacity:1}}
 @keyframes c2{0%,16%{opacity:0}18%,45%{opacity:1}47%,100%{opacity:0}}
@@ -32,18 +34,19 @@ body{margin:0}
 </style>
 </helmet>
 <div style="width:1900px;height:1000px;box-sizing:border-box;padding:28px 36px;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;display:flex;flex-direction:column;gap:16px">
-  <div><span class="h" style="font-size:20px;line-height:28px">Making room for a split: the sidebar folds away, the console narrows, the sidebar peeks</span><br><span class="t2">Geoff’s proposal, 2026-10-31. Low fidelity, a 1280 × 800 window, looping every 14 s. Every mark [P].</span></div>
+  <div><span class="h" style="font-size:20px;line-height:28px">Making room for a split: the sidebar folds to a rail, the console narrows, the sidebar peeks</span><br><span class="t2">Geoff’s proposal, 2026-10-31. Low fidelity, a 1280 × 800 window, looping every 14 s. Every mark [P].</span></div>
   <div style="display:flex;gap:8px">
     <span class="step anim" style="animation-name:st1">1 · One document</span>
-    <span class="step anim" style="animation-name:st2">2 · Preview Beside: the sidebar folds, the console narrows to 480, the right pane splits</span>
-    <span class="step anim" style="animation-name:st3">3 · Peek: the sidebar slides over the console</span>
+    <span class="step anim" style="animation-name:st2">2 · Show Preview in Split View: the sidebar folds to a rail, the console narrows to 480, the right pane splits</span>
+    <span class="step anim" style="animation-name:st3">3 · Peek: click the rail; the sidebar slides over the console</span>
     <span class="step anim" style="animation-name:st4">4 · Close the split: everything comes back</span>
   </div>
   <div style="display:flex;gap:32px;align-items:flex-start">
     <div style="position:relative;width:1280px;height:760px;flex:none;border:1px solid #C9CDD3;border-radius:10px;overflow:hidden;background:#F3F4F6;display:flex;flex-direction:column">
       <div style="height:34px;flex:none;border-bottom:1px solid #C9CDD3;display:flex;align-items:center;gap:8px;padding:0 14px"><span style="width:11px;height:11px;border-radius:6px;background:#C9CDD3"></span><span style="width:11px;height:11px;border-radius:6px;background:#C9CDD3"></span><span style="width:11px;height:11px;border-radius:6px;background:#C9CDD3"></span><span style="margin-left:40px;width:18px;height:14px;border:1.3px solid #5B636D;border-radius:3px;box-sizing:border-box"></span><span class="blk" style="width:180px;margin-left:12px"></span></div>
       <div style="flex:1;display:flex;min-height:0;position:relative">
-        <div class="anim" style="animation-name:sb;width:300px;flex:none;overflow:hidden;background:#FFFFFF;border-right:1px solid #C9CDD3">
+        <div class="anim" style="animation-name:sb;width:300px;flex:none;overflow:hidden;background:#FFFFFF;border-right:1px solid #C9CDD3;position:relative">
+          <div class="anim" style="animation-name:rl,rh;opacity:0;position:absolute;left:0;top:0;bottom:0;width:16px;z-index:1;background:#FFFFFF;display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:10px;box-sizing:border-box"><span style="width:11px;height:9px;border:1.2px solid #5B636D;border-left-width:4px;border-radius:2px;box-sizing:border-box"></span><span style="width:6px;height:6px;border-radius:3px;background:#C2410C"></span></div>
           <div style="width:300px;padding:16px;box-sizing:border-box;display:flex;flex-direction:column;gap:10px"><span style="font:600 13px/20px system-ui">Sessions</span><span class="blk" style="width:70%"></span><span class="blk" style="width:55%"></span><span class="blk" style="width:62%"></span><span style="font:600 13px/20px system-ui;margin-top:12px">Files</span><span class="blk" style="width:60%"></span><span class="blk" style="width:48%"></span></div>
         </div>
         <div style="flex:1;min-width:0;background:#15171B;border-right:1px solid #C9CDD3;display:flex;flex-direction:column;gap:10px;padding:16px;box-sizing:border-box;color:#9AA1AB"><span style="font:12px/19px 'SF Mono',Menlo,monospace">console</span><span class="blk" style="width:80%;background:#2B2F36"></span><span class="blk" style="width:65%;background:#2B2F36"></span><span class="blk" style="width:72%;background:#2B2F36"></span></div>
@@ -56,15 +59,15 @@ body{margin:0}
             </div>
           </div>
         </div>
-        <div class="anim" style="animation-name:peek;position:absolute;left:0;top:0;bottom:0;width:300px;background:#FFFFFF;border-right:1px solid #C9CDD3;box-shadow:0 8px 28px rgba(0,0,0,.22);transform:translateX(-310px);padding:16px;box-sizing:border-box;display:flex;flex-direction:column;gap:10px"><span style="font:600 13px/20px system-ui">Sessions</span><span class="blk" style="width:70%"></span><span class="blk" style="width:55%"></span><span class="blk" style="width:62%"></span><span style="font:600 13px/20px system-ui;margin-top:12px">Files</span><span class="blk" style="width:60%"></span><span class="blk" style="width:48%"></span><span class="t2" style="margin-top:auto;font:12px/16px system-ui">Over the console, not beside it: the split keeps its width. Esc, a click outside or picking something closes it.</span></div>
-        <div class="anim" style="animation-name:ptr;position:absolute;left:6px;top:-24px;opacity:0;font:12px/16px system-ui;background:#1F2328;color:#FFFFFF;border-radius:4px;padding:2px 6px">⌃⌘S or the sidebar button</div>
+        <div class="anim" style="animation-name:peek;position:absolute;left:17px;top:0;bottom:0;width:300px;background:#FFFFFF;border-right:1px solid #C9CDD3;box-shadow:0 8px 28px rgba(0,0,0,.22);transform:translateX(-330px);padding:16px;box-sizing:border-box;display:flex;flex-direction:column;gap:10px"><span style="font:600 13px/20px system-ui">Sessions</span><span class="blk" style="width:70%"></span><span class="blk" style="width:55%"></span><span class="blk" style="width:62%"></span><span style="font:600 13px/20px system-ui;margin-top:12px">Files</span><span class="blk" style="width:60%"></span><span class="blk" style="width:48%"></span><span class="t2" style="margin-top:auto;font:12px/16px system-ui">Over the console, not beside it: the split keeps its width. Esc, a click outside or picking something closes it.</span></div>
+        <div class="anim" style="animation-name:ptr;position:absolute;left:22px;top:8px;z-index:2;opacity:0;font:12px/16px system-ui;background:#1F2328;color:#FFFFFF;border-radius:4px;padding:2px 6px">◂ click the rail (or ⌃⌘S)</div>
       </div>
     </div>
     <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:12px">
       <div style="position:relative;height:120px">
         <div class="cap anim" style="animation-name:c1"><b>One document.</b> Sidebar 300 · console 518 · right pane 460, as DL-129 draws a 1280 window.</div>
-        <div class="cap anim" style="animation-name:c2;opacity:0"><b>Preview Beside.</b> The sidebar folds away, the console narrows to its 480 minimum, and the right pane takes the rest: 799, two sides of 399. Same motion as a pane hiding (<code>motionPaneToggle</code>, 200 ms; the terminal is resized once, at the end).</div>
-        <div class="cap anim" style="animation-name:c3;opacity:0"><b>Peek.</b> ⌃⌘S or the sidebar button slides the sidebar <i>over</i> the console. The split doesn’t move. Picking a session or a file, Esc or a click outside closes it.</div>
+        <div class="cap anim" style="animation-name:c2;opacity:0"><b>Show Preview in Split View.</b> The sidebar folds to a 16 pt rail, the console narrows to its 480 minimum, and the right pane takes the rest: 783, two sides of 391. Same motion as a pane hiding (<code>motionPaneToggle</code>, 200 ms; the terminal is resized once, at the end).</div>
+        <div class="cap anim" style="animation-name:c3;opacity:0"><b>Peek.</b> Click the rail (or press ⌃⌘S, or the toolbar’s sidebar button): the sidebar slides <i>over</i> the console. The split doesn’t move. Picking a session or a file, Esc or a click outside closes it.</div>
         <div class="cap anim" style="animation-name:c4;opacity:0"><b>Close the split.</b> Duo gives back exactly what it took: the sidebar and the console return to the widths you had.</div>
       </div>
       <div style="border-top:1px solid #C9CDD3;padding-top:12px;display:flex;flex-direction:column;gap:8px">
@@ -73,6 +76,7 @@ body{margin:0}
         <span><b>Why it’s acceptable:</b> a split is focused work on a document. The sidebar is a click (or ⌃⌘S) away and never reflows the split.</span>
         <span><b>Still too narrow</b> (you dragged things narrower): the split folds to the active side, and the split tab’s two names become a toggle. Nothing squeezes under 340.</span>
         <span><b>Decided (DL-276):</b> ⌃⌘S while split peeks, as drawn.</span>
+        <span><b>The rail</b> (Geoff, on this board): the folded sidebar never vanishes. 16 wide on <code>pane</code>, a <code>rule</code> on its right; the sidebar glyph (12, <code>text2</code>) at its top, and the 6 pt <code>needsYou</code> dot under it while any session needs you, so nothing that needs you hides. The whole rail is the click target: <code>selected</code> fill under the pointer, tooltip “Show Sidebar ⌃⌘S”; a click peeks, a second click or a click away closes. At 1440: rail 16 · console 480 · sides of 471.</span>
       </div>
     </div>
   </div>

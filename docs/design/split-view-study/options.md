@@ -50,7 +50,7 @@ At 1440 × 900: console 480 · right pane 959, two sides of 479. At 1280 × 800:
 | What can be a side | Only a file's own preview | Anything, any tabs | A file and its preview, or any two right-pane items | Anything, one item |
 | Deck (source + slides) | Yes, the best fit | Yes | Yes | Yes, but the pair is split across two panes |
 | Doc beside doc | No | Yes | Yes (slice 2) | Yes |
-| How you make one | Both in the bar; a deck opens in Both | Drag a tab to the other side; Move to Other Side | Preview Beside (bar, menu, ⌥⌘P [P]); Open Beside (tree, tab menu, search ⌥⌘↩); drag a tab onto the pane's right half | Open in Companion (menus, search ⌥⌘↩) |
+| How you make one | Both in the bar; a deck opens in Both | Drag a tab to the other side; Move to Other Side | Show Preview in Split View (bar, menu, ⌥⌘P [P]); Open in Split View (tree, tab menu, search ⌥⌘↩); drag a tab onto the pane's right half | Open in Companion (menus, search ⌥⌘↩) |
 | Narrow | Folds to Source or Preview | Two strips at ~340 each: cramped; folds one group away | Folds to one side; the tab becomes a two-way toggle | The companion collapses like a pane |
 | Active side | Inside the tab (no pane rule change) | The pane rule over the active group's strip | The pane rule shortens to the active side | It's a pane: DL-165 as is |
 | ⌃Tab | Unchanged | Cycles the active group | The split is one tab | Unchanged per pane |
@@ -71,10 +71,10 @@ The right pane holds up to two groups, each with its own strip, like an editor's
 **One tab, two sides.** The right pane's strip shows a split as one tab with two names joined by the split mark: `field-trial-review.md ⫼ Slides`, `interview-notes.md ⫼ synthesis.md`. Selecting it shows both sides with a 1 pt `rule` divider between them. The tab model stays one key per tab, a file stays in one place, ⌃Tab steps over the split as one tab, and the pair travels as a unit through close, drag and restore.
 
 - **Making one.**
-  - *A file beside its own preview:* **Preview Beside** in View, on the tab's right-click menu, in the deck bar, and on ⌥⌘P [P] (a new chord, DL-34; Q-364). A deck opens split by default when there's room (Duo Decks' call, Q-367).
-  - *Two items:* **Open Beside** on a file in the tree, a right-click on a tab (Open Beside ▸ open tabs), search's existing ⌥⌘↩ (DL-79 e), or by dragging a tab onto the right half of the pane, where a dashed `controlEdge` half-pane shows where it lands.
+  - *A file beside its own preview:* **Show Preview in Split View** in View, on the tab's right-click menu, in the deck bar, and on ⌥⌘P [P] (a new chord, DL-34; Q-364). A deck opens split by default when there's room (Duo Decks' call, Q-367).
+  - *Two items:* **Open in Split View** on a file in the tree, a right-click on a tab (Open in Split View ▸ open tabs), search's existing ⌥⌘↩ (DL-79 e), or by dragging a tab onto the right half of the pane, where a dashed `controlEdge` half-pane shows where it lands.
 - **Sides.** The left side is the tab's original item; the right side is what was put beside it. **Swap Sides** is on the tab's menu.
-- **Closing.** Each name in the split tab has its own hover × (DL-126's look): closing a side leaves the other as an ordinary tab. ⌘W closes the **active side**. Right-click › Separate makes them two tabs; Close Tab closes both.
+- **Closing.** Each name in the split tab has its own hover × (DL-126's look): closing a side leaves the other as an ordinary tab. ⌘W closes the **active side**. Right-click › Close Split View makes them two tabs; Close Tab closes both.
 - **Active side.** Clicking or typing in a side makes it active. When the right pane is the active pane, DL-165's 2 pt rule spans **only the active side**, across the top of the strip, so the rule moves with the keyboard and nothing else changes. In the split tab, the active side's name is semibold.
 - **Divider.** Drag it to resize. Double-click evens it. Each side's minimum is 340 [P] (Q-366); the ratio is kept per split.
 - **Folded.** Under 2 × 340, only the active side shows. The split tab's two names become a two-way toggle (the selected name with `selected` fill). Widening the pane or the window unfolds it.
@@ -107,7 +107,7 @@ C serves all four uses with one tab model. Slice 1 unblocks Duo Decks in about a
 
 ## duo2 (DL-71)
 
-`duo2 split <file> [--beside <file|url|preview>]` makes a split (`--beside preview` is the default for a file with a preview); `duo2 split` reports the sides, the active side, the ratio and whether it's folded; `duo2 split close [--side left|right]`; `duo2 split swap`; `duo2 split separate`; `duo2 split focus left|right`; `duo2 split ratio <0.2–0.8>`. Verbs that act on "the showing document" (`doc read`, `doc screenshot`, `slide …`, `status`) take `--side`. `duo2 deck …` and `deck go <n>` stay Duo Decks'. Every control above names one; `Parity.uiOnly` gets nothing new.
+`duo2 split <file> [--with <file|url|preview>]` makes a split (`--with preview` is the default for a file with a preview); `duo2 split` reports the sides, the active side, the ratio and whether it's folded; `duo2 split close [--side left|right]`; `duo2 split swap`; `duo2 split focus left|right`; `duo2 split ratio <0.2–0.8>`. Verbs that act on "the showing document" (`doc read`, `doc screenshot`, `slide …`, `status`) take `--side`. `duo2 deck …` and `deck go <n>` stay Duo Decks'. Every control above names one; `Parity.uiOnly` gets nothing new.
 
 ## The interface with Duo Decks (proposed, sent to duo-decks)
 
@@ -133,7 +133,7 @@ Duo Decks' proposal (requirements R1 to R10, `SourcePreview`) stands, with these
 | 1 | The preview drew over the editor or a sheet after a reload or a modal | BUG-195, 209, 270: a second native view positioned by hand | Each side is an ordinary subview in the right pane's AppKit split; sheets cover it like any view. A DuoCheck walks the view tree for a side outside its pane |
 | 2 | ⌘W, ⌘S or Send acted on the wrong side | ENH-084, `isActive` false in the aux, ⌘W always main | `activeSide` is model state; one routing table; a DuoCheck per command × side |
 | 3 | The focus mark lied | ENH-084 v1–v4, three failed fixes | The mark is drawn from `activeSide`, not inferred from DOM focus; a capture per side |
-| 4 | Two copies of one file disagreed | Reopening from the tree made a second editor | One document per file; Open Beside on a file already in a split selects it |
+| 4 | Two copies of one file disagreed | Reopening from the tree made a second editor | One document per file; Open in Split View on a file already in a split selects it |
 | 5 | The split was unusably narrow | "squished" image viewer, BUG-209 at small windows | Make room, then fold at 2 × 340; never squeezes |
 | 6 | The shortcut never fired | BUG-075, 1Password owns ⌘\ | No backslash; ⌥⌘P checked against macOS, 1Password, Raycast and Rectangle defaults before DL-277 |
 | 7 | The width came back wrong | ENH-126 overrode the saved ratio; three clamps | One `SplitGeometry` owns ratio and clamp; restore reproduces what was saved; Duo returns only what it took |
@@ -150,7 +150,7 @@ Duo Decks' proposal (requirements R1 to R10, `SourcePreview`) stands, with these
 
 - **DL-275 (Q-362): which option.** C, split tab, in two slices (recommended) · A, paired view only · B, two tab groups · D, companion pane.
 - **DL-276 (Q-363): making room.** Geoff's rule as drawn on board 8: the console narrows to 480, the sidebar folds below about 1,464 pt and peeks over the console, and everything comes back on close (recommended) · the same, but ⌃⌘S brings the sidebar back for good and the split folds · split only today's right pane and fold more often.
-- **DL-277 (Q-364): the chord.** ⌥⌘P Preview Beside, plus search's ⌥⌘↩ as approved (recommended) · menus, right-click and drag only.
+- **DL-277 (Q-364): the chord.** ⌥⌘P Show Preview in Split View, plus search's ⌥⌘↩ as approved (recommended) · menus, right-click and drag only.
 - **DL-278 (Q-365): the same file twice.** One editable view per file, its preview as the second view (recommended) · two editable views of one buffer now.
 
 Smaller open questions, stand-ins until answered: Q-366 (side minimum 340 or 360), Q-367 (a deck opens split by default: Duo Decks' call, recommended yes), Q-368 (⌥⌘← → stepping into sides: recommended yes). Scope: C's slice 2 brings DL-11's "side-by-side later" forward; build plan §3a needs a line when Geoff picks.
