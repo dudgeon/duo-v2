@@ -4762,3 +4762,12 @@ From `research-agentic-landscape.md`: Anthropic's pptx skill dropped html2pptx i
 ## F-466 · New slides don't get footer or slide-number placeholders unless the writer copies them (duo-decks, 2026-10-31)
 
 python-pptx's `add_slide` leaves a layout's date, footer and slide-number placeholders off the new slide (PowerPoint adds them when "show footer" is on), so a deck loses its footer and numbers. The prototype (`docs/design/duo-decks-study/prototypes/compile/deck.py`) clones them from the layout. Slide → layout placeholders inherit by `idx`, layout → master by `type`; custom body slots should use idx 13 and up because 10–12 are date, footer and number.
+
+## F-488 · A byte-exact upload to Drive through Claude in Chrome (duo-decks, 2026-10-31)
+
+Drive's own uploader opens a native file picker, which Claude in Chrome can't drive. What worked in Geoff's Chrome:
+1. A script added a file `<input>` to the Drive folder page.
+2. `file_upload` filled it.
+3. A synthetic `dragenter`/`dragover`/`drop` on the file list, carrying those files in a `DataTransfer`, set Drive's own uploader going. The three pptx files arrived at their exact sizes.
+
+File › Save as Google Slides then made converted copies, each opening in a new tab outside the automation's tab group, so it can't close them. Use it only with the account owner's OK, as here (Q-355).

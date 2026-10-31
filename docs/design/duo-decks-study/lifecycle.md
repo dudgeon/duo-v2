@@ -1,0 +1,325 @@
+# Duo Decks, end to end: the key moments
+
+Status: **proposed** (every new mark [P]). Geoff asked for this on 2026-10-31:
+- an explainer film, "kind of like a PRFAQ", that walks the whole Duo Decks life cycle in one shot, with real or simulated UI;
+- real errors along the way;
+- a feature definition updated for the issues the walk-through surfaces, such as a layout change that breaks the content mapping;
+- things not yet discussed but likely needed, such as quick selection or autocomplete of template names.
+
+This document is the source for that film. It also extends `plan.md`: each moment below says what is on screen, who does what (you, Claude, Duo), what goes wrong, and how it resolves. New questions are Q-377 to Q-386. Decided so far: DL-267 (format), DL-268 (templates), DL-270 (writer, verbs, always commit the pptx). The viewer is open (Q-350) and waits for split view. Here it is drawn as S1, source and slides side by side, because that's the leaning.
+
+## The world (synthetic)
+
+- **Northwind Labs**, an orchard-robotics company, and its field team's Duo project `orchard-robotics`.
+- **The person** is a product lead on that team (unnamed in the film; "you").
+- **The source deck** is `northwind-q2-review.pptx`, a 14-slide company deck made by hand in PowerPoint. Some slides sit on proper layouts; others are loose text boxes on Blank.
+- **The notes** are `notes/autumn-trial-log.md`, field notes from the autumn trial.
+- **The new deck** is `decks/autumn-trial.md`.
+- **A teammate** sends a pull request later. Shown by role, never named.
+
+All of it is generated from one data file (`video/fixture/world.json`, made by the film's worker). Nothing is real work content.
+
+## The press release (the film's opening, about 15 s)
+
+> **Duo Decks.** Write slide decks with Claude in plain Markdown, held to your own company templates, reviewed in pull requests like code, and shipped as a PowerPoint file that opens properly in Google Slides. You never draw a template, and Claude never draws a slide.
+
+The FAQ is the rest of the film. Each moment answers one question a sceptical reader would ask.
+
+## The moments
+
+### M1 · "Where do templates come from?" Pick a template deck
+
+**On screen.** The project, with `northwind-q2-review.pptx` in Files. You open it: the existing deck viewer (DL-125), slides down the pane.
+
+**New [P]: Make Templates…** in the deck viewer's bar, next to Select Shape. It turns on **slide selection**:
+- each slide gets a check box at its top left;
+- the bar reads "Pick the slides to make into templates · 3 picked";
+- the buttons are **Make Templates with Claude** (default), Cancel.
+
+You tick slides 3 (bullets), 7 (a quote) and 12 (a big number).
+
+**What happens.** Make Templates with Claude pastes into Claude's prompt, without Return, as Select Shape does:
+- the file and the picked slides;
+- the line `duo2 deck template inventory "northwind-q2-review.pptx" --slides 3,7,12`.
+
+You add "call the pack northwind" and press Return.
+
+**Verbs.** `duo2 deck template pick` turns selection on. `duo2 deck template picked` lists the picked slides. (DL-71)
+
+**Q-377.** Is Make Templates… a deck-viewer action (proposed), a Files context-menu item, or only something you ask Claude for? Proposed: the viewer action, because you choose slides by seeing them.
+
+### M2 · "How does a slide become a template?" Inventory and mapping
+
+**On screen.** Claude's session beside the deck. Claude runs the inventory. The output scrolls: layouts, slide 3 on "Title and Content" with placeholders, slides 7 and 12 on Blank with loose boxes, fonts.
+
+**Error 1: a font Google lacks.** The inventory flags `Avenir Next (heading): not in Google Fonts`.
+- Claude asks you, by its own question card in chat, with buttons: Nunito Sans (closest, recommended), Montserrat, or keep Avenir Next and accept substitution.
+- You pick Nunito Sans. This is DL-268's recorded substitute.
+
+**Error 2: an ambiguous slide.** On slide 12, two text boxes are the same size and the same 18 pt: "of rows finished…" and "Up from 61%…". The XML can't say which is the label and which is the context.
+- Claude says which it thinks is which, from position and wording, and asks to confirm.
+- The rule: **Claude never guesses silently. Anything it can't decide from the XML or the words is a question to you.**
+
+**What happens.** Claude writes `templates/decks/northwind/northwind.md`, three sections, each with a purpose line, slot names, kinds and limits.
+
+**Q-378.** When the mapping is ambiguous, does Claude always ask, or decide and list its guesses for review? Proposed: ask when two readings would change what goes where; list when it's naming only.
+
+### M3 · "What does Duo do that Claude doesn't?" Build and specimen
+
+**On screen.** Claude runs `duo2 deck template build northwind`. Duo:
+- copies the theme and masters;
+- promotes slides 7 and 12 to real layouts ("Quote", "Big Number");
+- removes the 14 original slides;
+- fills the `# duo` lines.
+
+Then `duo2 deck template specimen northwind` opens a three-slide specimen deck in the viewer, every slot filled to its limit.
+
+**Error 3: a limit that doesn't fit.** Duo's fit check measures each slot's limit text against the placeholder's real box (CoreText, in the template's font):
+
+```
+northwind.md:41: kpi.label: 45 characters at 18 pt takes 2 lines; the box holds 1. Largest that fits: 34.
+```
+
+The specimen shows the label wrapping into the context line. Claude sets `max: 34`, and build and specimen run again clean.
+
+**New [P]:**
+- **The fit check** (plan.md P2) runs at build and at `deck check`. Its finding names the largest value that fits.
+- **The specimen tab** carries a bar: "Specimen for northwind · 3 templates · Rebuild".
+
+**Q-379.** Are limits only characters (DL-268's definition), or does the checker measure every slot's real text against its box on every check? Proposed: both. Limits are for Claude to plan with; the measured fit is what the checker enforces, and what it reports.
+
+### M4 · "How do I start a deck?" A new deck from a pack
+
+**On screen.** **New [P]: New Deck…** in File › New and in Files' **+** menu (⇧⌘N stays "new folder"; no new shortcut, DL-34). It opens a Duo sheet:
+- **Name:** `autumn-trial`.
+- **Folder:** `decks/`.
+- **Template pack:** a pop-up listing packs by scope. "northwind (this project)", then Home's packs, then "Duo Plain (built in)". Each has a strip of its templates' thumbnails.
+- **Start with:** the title slide only (default), or one slide of every template (a specimen to edit).
+- Buttons: Cancel, **Create**.
+
+Duo writes `decks/autumn-trial.md` with the frontmatter and a title slide, and opens it as source beside slides. The same thing from Claude: `duo2 deck new decks/autumn-trial.md --template northwind`.
+
+**Q-380.** Should New Deck be a sheet (proposed), or a file template under DL-146's `templates/new-deck.md` (no new UI, but no pack picker)? Proposed: the sheet. Picking the pack is the one choice that matters, and it's visual.
+
+### M5 · "Can Claude write it for me?" Drafting from notes
+
+**On screen.** You ask, in the session: "draft the autumn trial review from notes/autumn-trial-log.md, about 8 slides". Claude:
+1. runs `duo2 deck templates decks/autumn-trial.md` (the catalogue, about 300 tokens);
+2. reads the notes;
+3. writes the deck.
+
+The slides fill in beside the source as the file changes: split view's live redraw, R2.
+
+**Error 4: too much for a slide.** Claude runs `duo2 deck check`:
+
+```
+decks/autumn-trial.md:31: slide 4 (bullets), body: has 8 points; the template allows 6. Split the slide; never shrink the text
+```
+
+Claude splits slide 4 into "What worked" and "What didn't". The check comes back clean. You watch the extra slide appear.
+
+**What it shows.** Claude never looks at the slides to stay inside the template. The checker tells it what's wrong, in words it can act on.
+
+### M6 · "Can I edit it myself?" Typing, with autocomplete
+
+**On screen.** You click into the source between two slides and start a new one.
+
+**New [P]: template autocomplete.** Typing `<!-- slide:` (or `/slide` at the start of a line, the slash-command habit from chat) opens a completion list at the caret, as the editor's other pop-ups do. Each row has:
+- the template's thumbnail;
+- its name in mono;
+- its purpose line in `text2`.
+
+Typing filters (`k` → kpi). Return inserts the marker **and a skeleton**:
+
+```markdown
+<!-- slide: kpi -->
+# |
+
+## value
+
+
+## label
+
+
+## context
+
+```
+
+The caret sits in the title. Tab moves slot to slot. Empty slots are allowed while you work, and the checker counts them as one notice, not errors.
+
+**New [P]: slot autocomplete.** Typing `## ` inside a slide lists that template's slots not yet used.
+
+**New [P]: + between slides** in the slides side. Hover a gap and a small + appears. It opens the same template list as a pop-over gallery of thumbnails, and inserts the skeleton at that point in the source.
+
+**Error 5: a typo.** You type `<!-- slide: kip -->` by hand, past the list. The checker:
+
+```
+autumn-trial.md:58: slide 6: no template "kip" in northwind; did you mean "kpi"?
+```
+
+The slide draws as a dashed frame with the message and a **Use kpi** button (a fix with exactly one answer, applied by Duo).
+
+**Verbs.** `duo2 deck insert <deck> <template> [--after <n>]` writes the skeleton. Autocomplete itself is UI-only (`Parity.uiOnly`), because Claude has `deck templates`.
+
+**Q-381.** The trigger. Is it `<!-- slide:` only, `/slide` too, or the + in the slides only? Proposed: all three, one list.
+**Q-382.** Should a fix with exactly one answer ("did you mean kpi") be a button Duo applies? Proposed: yes, only for unambiguous fixes. Anything that needs judgement goes to Claude.
+
+### M7 · "What if I change a slide's layout?" Remapping, and when it breaks
+
+The issue Geoff named.
+
+**On screen.** Slide 5 is `bullets` (title, body with 5 points). You want it as two columns. You put the caret on its marker and use **Change Template…**:
+- **New [P]:** this is in the slide's context menu on the slides side, and in the editor's context menu on a marker line;
+- it opens the same autocomplete list;
+- or you just retype the name.
+
+**What Duo does, deterministically: the remap rules [P].**
+1. `title` stays `title`.
+2. A slot whose **name** exists in the new template keeps its content.
+3. The **default slot** moves to the new template's default slot, if both have one and the kinds match.
+4. Otherwise a slot moves to the new template's **only** unused slot of the same kind, if there's exactly one.
+5. Anything left over is **not placed**. It is never deleted.
+
+`bullets` → `two-column`:
+- `title` stays;
+- `body` (bullets) has no same-named slot;
+- `two-column` has no default;
+- there are two bullet slots (`left`, `right`), so rule 4 doesn't apply;
+- so `body` is **not placed**.
+
+**The break, on screen.**
+- **In the source,** `## body` and its five points stay where they were. A notice line sits under the heading: `not placed: two-column has no "body"; its slots are left, right`.
+- **In the slides,** slide 5 draws with its title and two empty columns. A strip under the slide reads "5 points not placed". The buttons:
+  - **Move to left**, **Move to right**: they rename the heading, deterministic;
+  - **Split with Claude**: it sends the slide and the problem to Claude;
+  - **Undo Change** (⌘Z also works).
+- **The checker,** for Claude and the CLI:
+
+```
+autumn-trial.md:44: slide 5 (two-column): body is not placed; two-column has left, right. Move it to one of them, or split it.
+```
+
+You press Split with Claude. Claude splits the five points into left ("Spring") and right ("Autumn") by meaning, and the checker is clean.
+
+**A worse break: the kinds don't match.** `kpi` → `bullets`:
+- `value`, `label` and `context` have no home;
+- rule 3 doesn't apply, because `context` is text and `body` is bullets.
+
+So three slots are not placed, and the strip offers only **Split with Claude** and Undo Change, since no rename would make sense.
+
+**Export with content not placed.** The export refuses:
+
+```
+autumn-trial.md: 1 slide has content not placed (slide 5). Place it, or remove it.
+```
+
+Nothing is ever silently dropped from a deck that goes out.
+
+**Q-383.** The remap rules: is this order right, and should rule 4 (the only slot of the same kind) apply, or only name matches? Proposed: as listed, so the common moves (bullets ↔ image caption, kpi ↔ kpi variants) carry over without a prompt.
+**Q-384.** Content that isn't placed: stays in the source with a notice (proposed), moves to the speaker notes, or blocks the change? Proposed: it stays. The export refuses until it's placed.
+**Q-384.** Does Change Template ask Claude by default when the rules leave content behind, or wait for you to press Split with Claude? Proposed: wait. The change is yours, and Claude only rewrites when you ask.
+
+### M8 · "What happens when the template changes?" A pack update under live decks
+
+**On screen.** A month later someone improves the pack: kpi's `context` slot is renamed `note`, and a new template `timeline` is added. They rebuild. Every deck in the project that uses kpi now fails the check. The project's Files show a problem badge on `autumn-trial.md` [P].
+
+**Error 6:**
+
+```
+autumn-trial.md:23: slide 3 (kpi): no slot "context"; northwind renamed it "note" (northwind.md). Rename the heading.
+```
+
+**New [P]: a rename map in the definition.** `renamed: {context: note}` under kpi's yaml. Duo uses it:
+- to say "renamed", not "unknown";
+- to offer **Rename in All Decks**: one edit per deck, shown as a diff before it's applied.
+
+Claude can do the same with `duo2 deck migrate --pack northwind`.
+
+**Q-385.** Does a pack carry a rename map (proposed), or a version number decks pin (`template: northwind@3`), or neither, so decks just break and get fixed? Proposed: the rename map. Pinning versions means keeping old layouts around, and decks in one project should move together.
+**Q-385.** Does a pack change in Home (user level) warn every project that uses it? Proposed: each project's check reports its own decks. Duo doesn't scan other projects.
+
+### M9 · "How do others change it?" A pull request
+
+**On screen.** A teammate's PR on GitHub: "Autumn numbers and a slide on what still breaks". The reviewer sees:
+- the Markdown diff, as on board 7;
+- the exported pptx as a binary change, because the pptx is always committed (DL-270).
+
+**Error 7: a stale export.** The teammate edited the Markdown but didn't export, so the committed pptx is from before the edit. Nothing on GitHub can tell. In Duo, the deck's bar says **Changed since export**. `duo2 deck check` reports:
+
+```
+autumn-trial.pptx is older than autumn-trial.md (exported from a different source). Export again.
+```
+
+**New [P]:**
+- **Export on commit.** When Duo commits a change to a deck (its Commit sheet), it exports the deck first, so the pptx in a commit always matches the Markdown.
+- For commits made elsewhere, the exported pptx carries the source's hash in a custom document property (`duoSourceSha`). `deck check` compares the two.
+
+**Error 8: a merge conflict on the pptx.** Two branches both exported, and the merge conflicts on `autumn-trial.pptx`, a binary file nobody can merge.
+
+**New [P]:**
+- Duo writes `*.pptx merge=ours` for decks' exports into `.gitattributes`, once, with your OK as DL-50's `.gitignore` offer does.
+- After a merge, Duo re-exports from the merged Markdown.
+- In other words, the pptx is never merged, only rebuilt.
+
+**Q-386.** Always committing the pptx (DL-270) brings stale exports and binary merge conflicts. Does Geoff want:
+- export on commit plus `.gitattributes` (proposed);
+- a check that only warns;
+- or to revisit Q-354 ("never commit" makes both problems vanish)?
+
+### M10 · "And then it's PowerPoint?" Export and Google Slides
+
+**On screen.** Export ⌄ › Export as PowerPoint… The notice: "Exported autumn-trial.pptx · 9 slides".
+
+You open the pptx in the deck viewer, then (by hand, v1) upload it to Google Drive and open it in Slides:
+- Slides' Layout menu lists Title, Bullets, Quote, Big Number…, the pack's own layouts (tested, F-460);
+- the headings are in Nunito Sans, the substitute from M2;
+- every slide is editable text in its placeholder.
+
+**What it shows.** The deck didn't become a picture of a deck. It is a real presentation on your company's master.
+
+**Later [P]:** Upload to Google Slides… (P4), making a new dated presentation each time (DL-270).
+
+### M11 · The FAQ card (the film's close, about 20 s)
+
+A motion graphic listing the questions the film answered, each with its moment's frame as a thumbnail:
+- where templates come from;
+- what Duo does and what Claude does;
+- how to start;
+- how to edit;
+- what happens when a layout changes;
+- what happens when a template changes;
+- how others contribute;
+- what Google keeps.
+
+The final line: "Decks as text. Templates as PowerPoint. Claude in between."
+
+## What this adds to the feature definition
+
+| Area | Addition [P] | Layer | Phase |
+|---|---|---|---|
+| Templates from a deck | Make Templates… slide selection in the deck viewer; `deck template pick/picked` | Application (viewer) | P2 |
+| Extraction questions | Claude asks when a mapping is ambiguous (Q-378); a font substitute question | Agent (skill text) | P2 |
+| Fit | Measured fit at build and check; findings name the largest value that fits (Q-379) | Application | P2 |
+| New deck | New Deck… sheet with a pack picker; `duo2 deck new` (Q-380) | Application | P1 (verb), P3 (sheet) |
+| Editing | Template autocomplete with skeletons; slot autocomplete; + between slides; `duo2 deck insert` (Q-381) | Application (editor) | P3 |
+| One-answer fixes | "Use kpi", "Move to left": Duo applies them (Q-382) | Application | P3 |
+| Changing a layout | Change Template…; deterministic remap rules; "not placed" content kept, never dropped; export refuses until it's placed (Q-383, Q-384, Q-384) | Application (rules, checker) plus the agent (Split with Claude) | P1 (rules in the checker), P3 (UI) |
+| Pack changes | Rename map in definitions; Rename in All Decks; `duo2 deck migrate` (Q-385) | Context plus application | P2 |
+| Git | Export on commit; `duoSourceSha` in the pptx; `*.pptx merge=ours` and re-export after merge (Q-386) | Application | P1 |
+| Problems in Files | A problem badge on a deck that fails its check | Application | P3 |
+
+**The rule these share.** Duo applies a fix itself only when it has exactly one right answer. Anything that needs judgement goes to Claude, and only when you ask. Content is never dropped.
+
+## For the film's worker
+
+- **Length:** about 4 minutes; 11 moments; about 650 to 700 words of narration.
+- **Look:** the intro film's grammar (`video/style/`, shot-grammar.md, taste.md):
+  - no cuts;
+  - every change of scene is navigation in the app or a motion graphic;
+  - real-looking UI on sample data.
+- **Simulated UI:** Duo Decks isn't built. Each state is an HTML page drawn with the Duo design system's tokens (the canvas boards in `canvas/` are the starting point), captured headless at a fixed size with anchors from `data-video` elements. That's the skill's "web product" capture path.
+  - Real Duo chrome where it exists (sidebar, console, tabs, the deck viewer bar) is copied from the design system's previews.
+  - Slides are real renders of the fixture decks: the prototype `prototypes/compile/deck.py` exports them, LibreOffice draws them.
+- **Errors** are the real messages above, produced by running the prototype checker on the fixture decks wherever it can make them. Errors 1 to 3 and 6 to 8 need P2/P3 features the prototype doesn't have; their text is from this document.
+- **Voice:** Geoff's own (his project; access confirmed by `gh repo view dudgeon/geoff-voice`). Renders run under the exclusive GPU lock.
+- **A Shot: note is a spec.** The script Doc is the source of truth once Geoff edits it.
