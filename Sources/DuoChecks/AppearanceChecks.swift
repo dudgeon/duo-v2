@@ -96,7 +96,7 @@ import Foundation
     full.homeView = "board"; full.showHiddenFiles = true; full.dismissedExplainers = ["e"]; full.keepRunning = ["k"]
     let again = try? JSONDecoder().decode(DuoState.self, from: JSONEncoder().encode(full))
     check(again == full, "every stored field of the state survives encode and decode")
-    check(Mirror(reflecting: DuoState()).children.count == 26, "a field added to DuoState is added to this check (and to its decoder) too")
+    check(Mirror(reflecting: DuoState()).children.count == 27, "a field added to DuoState is added to this check (and to its decoder) too")
     check(AppearanceSetting.resolve(environment: "system", isolated: false, saved: "light") == .light, "DUO_APPEARANCE in the user's own Duo does not pin the picker")
     check(AppearanceSetting.resolve(environment: "dark", isolated: true, saved: "light") == .dark, "in a scripted, isolated run it still wins, for captures")
     // A failed write is reported, not swallowed; an unreadable file is left alone rather than written over.

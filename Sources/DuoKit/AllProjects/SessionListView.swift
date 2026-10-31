@@ -47,6 +47,9 @@ struct SessionListPane: View {
                                 .padding(.horizontal, DuoSpace.panePadding)
                                 .padding(.bottom, 8)
                         }
+                        if list.needsYou.isEmpty, list.sections.isEmpty, list.earlier.isEmpty, model.firstRunFolders == nil {
+                            EmptySessionList()   // DL-262: the words (not drawn: a stand-in, C-127)
+                        }
                         if model.rightCollapsedAllProjects {
                             // N1 with the column hidden: the line opens into the rows themselves.
                             if !list.needsYou.isEmpty {
@@ -100,6 +103,21 @@ struct SessionListPane: View {
         .foregroundStyle(DuoColor.text)
         .background(DuoColor.pane)
         .accessibilityIdentifier("video.s3.list")   // anchors: the video camera's target
+    }
+}
+
+/// An empty List (DL-262): where to start one. Not drawn; centred under the New session row as a stand-in (C-127).
+struct EmptySessionList: View {
+    var body: some View {
+        VStack(spacing: 4) {
+            Text("No sessions yet").duoText(.body).foregroundStyle(DuoColor.text)
+            Text("Start one above, or ⌘T. Sessions show here, newest first.").duoText(.control).foregroundStyle(DuoColor.text2)
+        }
+        .multilineTextAlignment(.center)
+        .frame(maxWidth: .infinity)
+        .padding(.top, 48)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("list-empty")
     }
 }
 

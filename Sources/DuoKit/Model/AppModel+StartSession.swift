@@ -130,13 +130,13 @@ extension AppModel {
 
 /// The popup on the row (DL-262): a system menu. The default first and ticked, a rule, the others, a rule,
 /// Choose Another Folder…, New Project…, and Choose Home Folder… when there's no Home.
-@MainActor enum NewSessionPopup {
+@MainActor public enum NewSessionPopup {
     final class Item: NSMenuItem {
         var run: () -> Void = {}
         @objc func fire() { run() }
     }
 
-    static func menu(_ model: AppModel) -> NSMenu {
+    public static func menu(_ model: AppModel) -> NSMenu {
         let menu = NSMenu()
         func add(_ title: String, ticked: Bool = false, _ run: @escaping () -> Void) {
             let i = Item(title: title, action: #selector(Item.fire), keyEquivalent: "")

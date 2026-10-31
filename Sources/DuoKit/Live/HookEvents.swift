@@ -319,6 +319,7 @@ public struct DuoState: Codable, Sendable, Equatable {
         showHiddenFiles = try c.decodeIfPresent(Bool.self, forKey: .showHiddenFiles) ?? false
         dismissedExplainers = try c.decodeIfPresent([String].self, forKey: .dismissedExplainers) ?? []
         keepRunning = try c.decodeIfPresent([String].self, forKey: .keepRunning) ?? []
+        startFolders = try c.decodeIfPresent([String].self, forKey: .startFolders) ?? []
     }
 
     public static func load(_ url: URL = DuoPaths.state) -> DuoState {

@@ -5,7 +5,8 @@ import Foundation
 /// `WINDOW=1280x800`.
 @MainActor
 public enum HomeListTargets {
-    nonisolated public static let screens = ["list-1440", "list-1280", "board-1440", "list-filter", "list-nothing"]
+    nonisolated public static let screens = ["list-1440", "list-1280", "board-1440", "list-filter", "list-nothing",
+                                             "list-1440-new-session", "list-new-session-hover", "list-new-session-pressed", "list-new-session-nohome", "list-new-session-none", "list-new-session-empty"]
 
     public static func apply(_ screen: String, to model: AppModel) {
         TargetState.overview.apply(to: model)
@@ -26,6 +27,14 @@ public enum HomeListTargets {
         } else if screen == "list-nothing" {
             model.listFilter = "stripe webhooks"
         }
+        // DL-262, home-list-new-session-handoff/states.html: the New session row in its states.
+        model.documentsExists = screen == "list-new-session-nohome"
+        model.newSessionRowHover = screen == "list-new-session-hover"
+        model.newSessionRowPressed = screen == "list-new-session-pressed"
+        if screen == "list-new-session-nohome" || screen == "list-new-session-none" {
+            for i in model.fixture.projects.indices { model.fixture.projects[i].isHome = nil }
+        }
+        if screen == "list-new-session-empty" { model.fixture.sessions = [] }
     }
 
     /// The boards' Home chat (`list-1440`, `home-chat`): one question, Claude's answer after six reads

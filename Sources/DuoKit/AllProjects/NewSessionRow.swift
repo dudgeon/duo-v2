@@ -44,7 +44,7 @@ struct NewSessionRow: View {
         HStack(spacing: 5) {
             if let place {
                 if place.kind == .home {
-                    Text("★").font(.system(size: 11)).foregroundStyle(DuoColor.text)
+                    Text("★").duoText(.pill).foregroundStyle(DuoColor.text)
                     Text("home").duoText(.control, lineHeight: 16).foregroundStyle(DuoColor.text)
                 } else {
                     Text(place.label).duoText(.control, lineHeight: 16).foregroundStyle(DuoColor.text).lineLimit(1).truncationMode(.middle)

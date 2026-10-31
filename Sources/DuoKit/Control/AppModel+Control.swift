@@ -254,7 +254,7 @@ extension AppModel {
         case .sessionNew:
             if let raw = inv.flags["folder"] {
                 // A plain folder (DL-262): same trust check as the row; a project's own folder is that project.
-                if inv.has("project") { return done(.fail("Pass --project or --folder, not both.")) }
+                if inv.flags["project"] != nil { return done(.fail("Pass --project or --folder, not both.")) }
                 if raw.trimmingCharacters(in: .whitespaces).isEmpty { return done(.fail("--folder needs a path.")) }
                 let url = URL(fileURLWithPath: (raw as NSString).expandingTildeInPath, relativeTo: req.cwd.map { URL(fileURLWithPath: $0) }).standardizedFileURL
                 var isDir: ObjCBool = false
