@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Option C: split tab, deck</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.light{--ground:#F3F4F6;--pane:#FFFFFF;--text:#1F2328;--text2:#5B636D;--rule:#C9CDD3;--controlEdge:#8B939C;--selected:#E9ECEF;--console:#15171B;--consoleText:#E6E8EB;--consoleText2:#9AA1AB;--consoleRule:#2B2F36;--paneFocus:#1F2328;--needsYou:#C2410C}
+.win{position:relative;width:1440px;height:900px;display:flex;flex-direction:column;background:var(--ground);color:var(--text);font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.tb{height:40px;flex:none;background:var(--ground);border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:12px;padding:0 16px;color:var(--text2)}
+.dots{display:flex;gap:8px}.dots i{width:12px;height:12px;border-radius:6px;background:var(--rule);display:block}
+.cols{flex:1;display:flex;min-height:0}
+.side{background:var(--pane);border-right:1px solid var(--rule);padding:16px;box-sizing:border-box;display:flex;flex-direction:column;gap:6px;flex:none}
+.con{background:var(--console);color:var(--consoleText);display:flex;flex-direction:column;border-right:1px solid var(--rule);flex:none}
+.cstrip{height:36px;border-bottom:1px solid var(--consoleRule);display:flex;align-items:center;gap:18px;padding:0 14px;font:12px/19px 'SF Mono',Menlo,monospace;color:var(--consoleText2)}
+.term{padding:14px;font:12px/19px 'SF Mono',Menlo,monospace;color:var(--consoleText2);display:flex;flex-direction:column;gap:2px}
+.right{background:var(--pane);display:flex;flex-direction:column;min-width:0;flex:1}
+.strip{position:relative;height:36px;flex:none;border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:24px;padding:0 16px;color:var(--text2);white-space:nowrap}
+.rulef{position:absolute;top:0;height:2px;background:var(--paneFocus)}
+.split{display:flex;align-items:center;gap:6px;color:var(--text2)}
+.split b{color:var(--text);font-weight:600}
+.smark{display:inline-block;width:11px;height:9px;border:1.2px solid var(--text2);border-radius:2px;position:relative;box-sizing:border-box}
+.smark:after{content:"";position:absolute;left:3.5px;top:-1px;bottom:-1px;width:1.2px;background:var(--text2)}
+.sides{flex:1;display:flex;min-height:0}
+.dv{width:1px;background:var(--rule);flex:none}
+.ed{position:relative;background:var(--pane);box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column}
+.fbar{height:24px;flex:none;display:flex;align-items:center;gap:4px;padding:0 10px;color:var(--text2);font:12px/16px -apple-system,system-ui,sans-serif;border-bottom:1px solid var(--rule)}
+.fbar span{min-width:20px;text-align:center}
+.doc{padding:16px 22px;display:flex;flex-direction:column;gap:2px;font:14px/22px -apple-system,system-ui,sans-serif}
+.mk{color:var(--text2);font:12px/22px 'SF Mono',Menlo,monospace}
+.h1{font:600 20px/28px -apple-system,system-ui,sans-serif}
+.h2{font:600 15px/24px -apple-system,system-ui,sans-serif}
+.cur{position:absolute;left:8px;width:2px;background:var(--controlEdge);border-radius:1px}
+.deckbar{height:44px;flex:none;border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:6px;padding:0 14px;box-sizing:border-box}
+.btn{height:26px;box-sizing:border-box;padding:4px 10px;border:1px solid var(--controlEdge);border-radius:6px;background:var(--pane);font:12px/16px -apple-system,system-ui,sans-serif;color:var(--text);white-space:nowrap}
+.slides{flex:1;background:var(--ground);padding:14px 16px;display:flex;flex-direction:column;gap:6px;overflow:hidden}
+.num{font:11px/16px -apple-system,system-ui,sans-serif;color:var(--text2)}
+.slide{aspect-ratio:16/9;background:#FFFFFF;border:1px solid var(--rule);box-sizing:border-box;padding:14px 16px;display:flex;flex-direction:column;gap:4px;color:#1F2328;flex:none}
+.badge{position:absolute;width:26px;height:26px;border-radius:13px;background:#1F2328;color:#FFFFFF;font:600 13px/26px -apple-system,system-ui,sans-serif;text-align:center}
+.notes{display:flex;flex-direction:column;gap:10px}
+.n{display:grid;grid-template-columns:26px minmax(0,1fr);gap:10px;align-items:start}
+.n i{width:22px;height:22px;border-radius:11px;background:#1F2328;color:#FFFFFF;font:600 12px/22px -apple-system,system-ui,sans-serif;text-align:center;font-style:normal;display:block}
+.t2{color:#5B636D}
+.h{font:600 15px/20px -apple-system,system-ui,sans-serif}
+</style>
+</helmet>
+<div style="width:1900px;height:1000px;box-sizing:border-box;padding:28px 36px;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;display:flex;gap:28px">
+  <div style="zoom:.78;flex:none">
+    <div class="win light">
+      <div class="tb"><div class="dots"><i></i><i></i><i></i></div><span style="margin-left:60px">All projects › work ›</span><b style="color:var(--text)">orchard-robotics</b><span style="margin-left:auto;border:1px solid var(--rule);border-radius:6px;padding:2px 10px;width:300px;background:var(--pane)">Search all projects ⇧⌘A</span></div>
+      <div class="cols">
+        <div class="side" style="width:240px;display:none"><b>orchard-robotics</b><span class="t2" style="font:600 11px/16px system-ui;letter-spacing:.06em;margin-top:10px">SESSIONS</span><span>Field trial deck</span><span class="t2">Gripper pad test plan · 2d</span><span class="t2" style="font:600 11px/16px system-ui;letter-spacing:.06em;margin-top:14px">FILES</span><span style="font:12px/24px 'SF Mono',Menlo,monospace">decks/</span><span style="font:12px/24px 'SF Mono',Menlo,monospace;background:var(--selected);border-radius:6px;padding:0 6px">field-trial-review.md</span><span style="font:12px/24px 'SF Mono',Menlo,monospace">templates/</span></div>
+        <div class="con" style="width:480px">
+          <div class="cstrip"><span style="color:var(--consoleText);font-weight:500">○ Field trial deck</span><span>+</span></div>
+          <div class="term"><span style="color:var(--consoleText)">&gt; the 86% is now 88%, over 431 rows</span><span>● Update(decks/field-trial-review.md)</span><span>  ⎿ Updated slide 3 (kpi)</span><span>● Bash(duo2 deck check …)  ⎿ no problems</span></div>
+        </div>
+        <div class="right">
+          <div class="strip">
+            <div class="rulef" style="left:0;width:479px"></div>
+            <span>Project</span>
+            <span class="split"><b>field-trial-review.md</b><span class="smark"></span><span>Slides</span></span>
+            <span>notes.md</span>
+            <span style="margin-left:auto">+</span>
+          </div>
+          <div class="sides">
+            <div class="ed" style="width:479px;flex:none">
+              <div class="fbar"><span>Style ⌄</span><span style="font-weight:700">B</span><span style="font-style:italic">I</span><svg width="20" height="14" viewBox="0 0 20 14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><path d="M8.5 9.5l3-5"/><path d="M7 5H5.5a2.5 2.5 0 000 5H7M13 5h1.5a2.5 2.5 0 010 5H13"/></svg><svg width="20" height="14" viewBox="0 0 20 14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="4" y="2" width="12" height="10" rx="1.5"/><path d="M4 6h12M10 2v10"/></svg><span>⋯</span><span style="margin-left:auto;width:20px;height:20px;border:1px solid var(--controlEdge);border-radius:10px;box-sizing:border-box"></span></div>
+              <div class="doc">
+                <span class="mk">---</span>
+                <span class="mk">&lt;!-- slide: kpi --&gt;</span>
+                <span class="h1">Unattended rows</span>
+                <span class="h2">value</span>
+                <span>88%<span style="display:inline-block;width:1.5px;height:17px;background:var(--text);vertical-align:-3px;margin-left:1px"></span></span>
+                <span class="h2">label</span>
+                <span>of rows finished with no one stepping in</span>
+                <span class="h2">context</span>
+                <span>Up from 61% in the spring trial, over 431 rows on three farms.</span>
+                <span class="mk">---</span>
+                <span class="mk">&lt;!-- slide: two-column --&gt;</span>
+                <span class="h1">Spring and autumn</span>
+              </div>
+              <div class="cur" style="top:62px;height:228px"></div>
+            </div>
+            <div class="dv"></div>
+            <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+              <div class="deckbar"><span class="btn">‹</span><span class="btn">›</span><span style="margin-left:4px">3/10</span><span style="margin-left:auto" class="btn">Select Shape</span><span class="btn">Export ⌄</span></div>
+              <div class="slides">
+                <span class="num">2</span>
+                <div class="slide" style="height:110px;aspect-ratio:auto"><b style="font-size:13px">What we set out to test</b></div>
+                <span class="num" style="color:var(--text);font-weight:600">3</span>
+                <div class="slide"><b style="font-size:13px">Unattended rows</b><span style="font:600 34px/40px system-ui">88%</span><span style="font-size:10px;line-height:14px">of rows finished with no one stepping in</span><span style="font-size:9px;line-height:12px;color:#5B636D">Up from 61% in the spring trial, over 431 rows on three farms.</span></div>
+                <span class="num">4</span>
+                <div class="slide" style="height:120px;aspect-ratio:auto"><b style="font-size:13px">Spring and autumn</b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <span class="badge" style="left:830px;top:46px">1</span>
+      <span class="badge" style="left:700px;top:28px">2</span>
+      <span class="badge" style="left:720px;top:84px">3</span>
+      <span class="badge" style="left:500px;top:240px">4</span>
+      <span class="badge" style="left:1170px;top:122px">5</span>
+      <span class="badge" style="left:1080px;top:470px">6</span>
+    </div>
+  </div>
+  <div class="notes" style="flex:1;min-width:0">
+    <div><span class="h" style="font-size:20px;line-height:28px">C · Split tab: a deck’s source beside its slides</span><br><span class="t2">Recommended. 1440 × 900: the sidebar folds away and the console narrows to 480 (board 8, Geoff’s rule), so the right pane is 959: two sides of 479. Every mark [P].</span></div>
+    <div class="n"><i>1</i><span><b>One tab, two sides.</b> The strip shows the split as one tab, its two names joined by the split mark. The active side’s name is semibold. A file stays in one place, ⌃Tab steps over the split as one tab, and the pair closes, drags and restores together.</span></div>
+    <div class="n"><i>2</i><span><b>The active-pane rule (DL-165) spans only the active side.</b> It moves to the slides when you click them. Nothing else changes and nothing moves.</span></div>
+    <div class="n"><i>3</i><span><b>The formatting bar and its mic (DL-266) sit over the source side only</b>, and only while it has the keyboard. Dictation goes into the source.</span></div>
+    <div class="n"><i>4</i><span><b>The caret in slide 3’s lines makes slide 3 current.</b> A quiet 2 pt <code>controlEdge</code> mark in the margin shows which lines belong to it. Clicking text on a slide puts the caret in its slot. Scroll-follow is off by default (Duo Decks R3).</span></div>
+    <div class="n"><i>5</i><span><b>The preview keeps its own bar</b>: ‹ › n/N, problems, Select Shape, Export ⌄ and the export state (R6). Under 460 the deck bar already reads <code>3/10</code>. Split view draws no bar of its own.</span></div>
+    <div class="n"><i>6</i><span><b>The slides redraw about 250 ms after typing pauses, from the unsaved buffer</b>: the new deck is drawn first, then swapped in, keeping the scroll position (R1, R2). Rendering never writes a file.</span></div>
+    <div style="border-top:1px solid #C9CDD3;padding-top:10px;display:flex;flex-direction:column;gap:6px">
+      <span><b>Make it:</b> the deck opens split when there’s room (Q-367). For any file with a preview: Preview Beside in View, on the tab’s menu, or ⌥⌘P (a new chord, Q-364).</span>
+      <span><b>Close:</b> the hover × on a name closes that side, and ⌘W closes the active side. The other side stays as an ordinary tab. Separate makes two tabs.</span>
+      <span><b>Divider:</b> drag it; double-click evens it. Each side’s minimum is 340 (Q-366). The ratio is kept with the split.</span>
+      <span><b>Cost:</b> slice 1 (pairs: deck, Markdown, HTML) about 5 days, on today’s single viewers. Slice 2 (doc beside doc) about 5 more.</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1900,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Focus, commands and verbs</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.t2{color:#5B636D}
+.h{font:600 15px/20px -apple-system,system-ui,sans-serif}
+table{border-collapse:collapse;width:100%;background:#FFFFFF;border:1px solid #C9CDD3}
+td,th{border-bottom:1px solid #E9ECEF;padding:7px 10px;text-align:left;vertical-align:top}
+th{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#5B636D;background:#F3F4F6}
+code{font:12px/18px 'SF Mono',Menlo,monospace}
+</style>
+</helmet>
+<div style="width:1900px;height:1000px;box-sizing:border-box;padding:28px 36px;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:28px">
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <div><span class="h" style="font-size:20px;line-height:28px">What acts on what, in a split (option C)</span><br><span class="t2">One rule: the <b>active side</b> is model state, set when you click or type in a side, and every command reads it. Legacy guessed it from DOM focus and never got it right (ENH-084). [P]</span></div>
+    <table>
+      <tr><th style="width:150px">Command</th><th>In a split</th></tr>
+      <tr><td>⌘W</td><td>Closes the active side; the other becomes an ordinary tab. Never the console’s session (F-479: today ⌘W from a page or deck may end it).</td></tr>
+      <tr><td>⌘S</td><td>Saves the active side’s document; on a preview side, its source.</td></tr>
+      <tr><td>⌘F</td><td>Finds in the active side (the responder chain already routes it).</td></tr>
+      <tr><td>⌘D</td><td>Sends the active side’s selection to Claude; on a deck preview, the picked shape and its slot (Duo Decks R4).</td></tr>
+      <tr><td>⇧⌘D voice</td><td>Into the active editor; with a preview active, into its source (R8).</td></tr>
+      <tr><td>Formatting bar</td><td>Over the editor side only, while it has the keyboard (DL-266 unchanged); never over a preview.</td></tr>
+      <tr><td>Review bar</td><td>In each editor side’s own stack.</td></tr>
+      <tr><td>⌃Tab / ⌃⇧Tab</td><td>The right pane’s tabs; the split is one tab.</td></tr>
+      <tr><td>⌥⌘← / →</td><td>Sidebar → console → left side → right side, wrapping (Q-368). The rule moves with it.</td></tr>
+      <tr><td>⌥⌘P [P]</td><td>Preview Beside / Close Preview for the showing file (a new chord, DL-34; Q-364). Checked against 1Password, Raycast, Rectangle and macOS defaults before it’s logged (BUG-075).</td></tr>
+      <tr><td>⌥⌘↩</td><td>Search’s “Open in split view” (DL-79 e, already approved): the result goes beside the showing tab.</td></tr>
+    </table>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <div><span class="h" style="font-size:20px;line-height:28px">duo2 verbs (DL-71)</span><br><span class="t2">Every control names one. Agents split only when asked: <code>duo2 open</code> never splits (legacy SV-12).</span></div>
+    <table>
+      <tr><th style="width:290px">Verb</th><th>Does</th></tr>
+      <tr><td><code>duo2 split &lt;file&gt;</code></td><td>The file beside its preview (deck, Markdown, HTML)</td></tr>
+      <tr><td><code>duo2 split &lt;file&gt; --beside &lt;file|url&gt;</code></td><td>Two items side by side (slice 2)</td></tr>
+      <tr><td><code>duo2 split</code></td><td>State: sides, active side, ratio, folded, sidebar folded by the split</td></tr>
+      <tr><td><code>duo2 split close [--side left|right]</code></td><td>Close a side, or the split; nothing is lost</td></tr>
+      <tr><td><code>duo2 split focus left|right</code></td><td>Make a side active</td></tr>
+      <tr><td><code>duo2 split swap</code> · <code>separate</code></td><td>Swap Sides · Separate into two tabs</td></tr>
+      <tr><td><code>duo2 split ratio &lt;0.2–0.8&gt;</code></td><td>The divider; clamped so neither side goes under 340</td></tr>
+      <tr><td><code>doc read</code>, <code>doc screenshot</code>, <code>slide …</code>, <code>status</code></td><td>Gain <code>--side</code>; with none, the active side</td></tr>
+      <tr><td><code>duo2 deck …</code>, <code>deck go &lt;n&gt;</code>, <code>deck pick</code></td><td>Duo Decks’ own; <code>deck go</code> moves both sides</td></tr>
+    </table>
+    <div style="background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:12px 14px;display:flex;flex-direction:column;gap:4px">
+      <b>Persistence (Duo Decks R10)</b>
+      <span>Each split tab is saved in the restore file with its sides, ratio, active side and whether it’s folded (not in the project, so Obsidian and OKF never see it). A file opened in split reopens in split, its divider where it was left.</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1900,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

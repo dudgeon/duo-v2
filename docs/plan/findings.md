@@ -4739,3 +4739,42 @@ In captures of today's editor (a fresh build of origin/main 4e809942, isolated, 
 
 In `docs/design/markdown-toolbar-study/captures/fresh-review-dark.png` (the track-a document, Suggest Edits on, Dark), the paragraph "seconds, and gives up after an hour." wraps so that the inserted clause ends the line and its "." sits alone on the next one. The insertion's mark and its hidden signature (`{>>…<<}`) seem to give the browser a break opportunity before the punctuation. Not measured or traced; seen once, in Dark at the pane's 460.
 
+
+## F-474 · Legacy Duo's Split View: what it was, why it struggled (split-view, 2026-10-31)
+
+Legacy's Split View (ENH-041, "aux") was one companion slot right of the canvas, Slack-style at Geoff's request ("does not allow infinite split view inception, just one aux sidebar"). It first shipped in v0.6.5 and was last fixed in v0.13.7 (BUG-270). It never had an ADR, and ENH-041 was never closed. Its failures fall into a few causes:
+- a second native web view painted over the page (nine bugs);
+- the active side was never modelled: the focus glow failed three times, and ⌘W and the agent's current document ignored the aux;
+- one path could be open in two editors;
+- ⌘\ was taken by 1Password;
+- no narrow-window rules;
+- async moves (BUG-093);
+- unit tests only.
+
+Source beside its own preview ("Option D") was considered and deferred. Full history: `docs/design/split-view-study/legacy.md` and `legacy/`.
+
+## F-475 · Halving today's right pane leaves sides under every floor (split-view, 2026-10-31)
+
+With DL-129's widths the right pane is at most about 658 at 1440 (sidebar 300, console 480) and 498 at 1280. Halved, that's 329 and 249. Both fall under:
+- the right pane's 360 minimum;
+- the formatting bar's and review margin's 420 cuts (DL-266, DL-237);
+- the browser bar's 360 truncation;
+- Duo Decks' readable-slide floor of about 360.
+
+A split has to make room. Geoff's rule (the console narrows to 480; the sidebar folds below about 1,464 pt and peeks) gives 479 a side at 1440 and 399 at 1280 (Q-363).
+
+## F-476 · v2 has one viewer of each kind, and focus has no side (split-view, 2026-10-31)
+
+AppModel holds one `editor`, `htmlViewer`, `deckViewer` and `docxViewer` (`AppModel.swift:216-225`). `DocumentEditorView` re-parents the editor's one web view on every update (`DocumentEditor.swift:892-920`), so two editors on screen would take it from each other. `DuoPane` is left, middle and right, and `webFocus` is per kind (`none|editor|html`), so ⌘S, Format, ⌘D and voice all reach the single editor. A source beside a different kind of viewer (Markdown editor + deck viewer) fits as it is; two editors need C-135's refactor.
+
+## F-477 · Viewers read the file from disk, not the buffer (split-view, 2026-10-31)
+
+The HTML viewer and the deck viewer poll the file's modification time once a second (`HTMLViewer.startWatching`; `DeckViewer.swift:138-160`). A live preview of unsaved text (Duo Decks R1, R2) needs the buffer pushed to the viewer with a revision. A `.html` file also always opens in the viewer (`ProjectPanes.swift:880`), so showing HTML source beside its page needs the editor to open HTML as text.
+
+## F-478 · Search's "Open in split view ⌥⌘↩" is drawn and does nothing (split-view, 2026-10-31)
+
+Search's Tab menu lists "Open in split view ⌥⌘↩" for files and sessions (`SearchModel.swift:148, :169`), approved as a chord in DL-79 (e). Its `perform` is a no-op (`AppModel+Search.swift:479`). It's split view's ready-made entry point.
+
+## F-479 · As read, ⌘W from a page, deck, Word file or browser tab ends the console's session (split-view, 2026-10-31; not confirmed by a run)
+
+`Commands.swift:183` enables ⌘W when a terminal is visible or the editor has focus. `:252-254` closes the document only when `editorIfLoaded?.hasFocus`; otherwise it calls `closeVisibleSession()`. So with the keyboard in an HTML page, a deck, a Word document or a browser tab, ⌘W would end the console's session; DL-127 asks first only if Claude is working. It needs a run and a fix of its own. Split view routes ⌘W by the active side and must not build on this.

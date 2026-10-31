@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Split view: the job</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.t2{color:#5B636D}
+.h{font:600 15px/20px -apple-system,system-ui,sans-serif}
+.lbl{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#5B636D}
+.card{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.bar{display:flex;height:34px;border:1px solid #C9CDD3;border-radius:4px;overflow:hidden;font:12px/16px -apple-system,system-ui,sans-serif}
+.bar div{display:flex;align-items:center;justify-content:center;box-sizing:border-box;border-right:1px solid #C9CDD3}
+ul{margin:0;padding-left:18px}
+li{margin:3px 0}
+</style>
+</helmet>
+<div style="width:1900px;height:1000px;box-sizing:border-box;padding:36px 44px;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px">
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div><span class="h" style="font-size:20px;line-height:28px">One mechanism, four uses</span> <span class="t2">· [P]</span></div>
+    <div class="card">
+      <span class="t2">Geoff, 2026-10-31: split view is “the correct way to handle the side-by-side of source editing and rendered preview”.</span>
+      <ol style="margin:0;padding-left:20px">
+        <li><b>A deck’s Markdown beside its slides</b>: Duo Decks, the first customer (R1–R10)</li>
+        <li>A Markdown file beside its rendered preview</li>
+        <li>An HTML file beside its page</li>
+        <li>Two different documents side by side: legacy’s Split View, LR §4 item 11, DL-11 “side-by-side later”</li>
+      </ol>
+    </div>
+    <div class="lbl">Today: one item in the right pane at a time (v2 build e54ae738, fixture data)</div>
+    <img src="/_blob/d8f9901a2d79caddcc254c5d73abe26d" alt="Duo today: a project with a slide deck open in the right pane" style="width:100%;border:1px solid #C9CDD3;border-radius:6px;display:block">
+    <span class="t2">The right pane holds one tab at a time. There is one editor, one HTML viewer and one deck viewer in the whole app, each with one web view (F-476).</span>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="h" style="font-size:20px;line-height:28px">Why halving today’s right pane fails</div>
+    <div class="card" style="gap:12px">
+      <span class="lbl">1440 × 900, sidebar showing (DL-129 widths)</span>
+      <div class="bar"><div style="width:20.8%;background:#FFFFFF">sidebar 300</div><div style="width:33.4%;background:#15171B;color:#E6E8EB">console 480 min</div><div style="width:22.9%;background:#FFFFFF">329</div><div style="width:22.9%;background:#FFFFFF;border-right:0">329</div></div>
+      <span class="lbl">1280 × 800 (the minimum window)</span>
+      <div class="bar"><div style="width:23.4%;background:#FFFFFF">sidebar 300</div><div style="width:37.5%;background:#15171B;color:#E6E8EB">console 480 min</div><div style="width:19.5%;background:#FFFFFF">249</div><div style="width:19.5%;background:#FFFFFF;border-right:0">249</div></div>
+      <span>Each half lands under every floor a side needs:</span>
+      <ul>
+        <li>the right pane’s own minimum, 360 (DL-129)</li>
+        <li>a readable slide, about 360 (Duo Decks R7)</li>
+        <li>the formatting bar’s table fold and the review margin, 420 (DL-266, DL-237)</li>
+        <li>the browser bar’s address, truncating at 360</li>
+      </ul>
+      <span><b>So every option makes room first, then folds</b> (board 8).</span>
+    </div>
+    <div class="h">What legacy taught (legacy.md)</div>
+    <div class="card">
+      <ul>
+        <li><b>The active side was never modelled.</b> ⌘W, the focus glow and the agent’s “current document” ignored the split; three fixes failed (ENH-084).</li>
+        <li><b>A second native web view painted over the page.</b> Nine bugs, BUG-092 to BUG-270.</li>
+        <li><b>One file could end up in two editors</b>, each reading the other’s saves as outside changes.</li>
+        <li><b>⌘\ was taken by 1Password</b> (BUG-075). <b>No narrow rules.</b> <b>Unit tests only.</b></li>
+        <li><b>Source beside its preview (“Option D, linked twin views”) was deferred and never built.</b> That is the deck case.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1900,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

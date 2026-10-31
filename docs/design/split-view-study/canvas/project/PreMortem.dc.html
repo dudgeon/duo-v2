@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pre-mortem and cost</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.t2{color:#5B636D}
+.h{font:600 15px/20px -apple-system,system-ui,sans-serif}
+table{border-collapse:collapse;width:100%;background:#FFFFFF;border:1px solid #C9CDD3;font:12px/17px -apple-system,system-ui,sans-serif}
+td,th{border-bottom:1px solid #E9ECEF;padding:5px 8px;text-align:left;vertical-align:top}
+th{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#5B636D;background:#F3F4F6}
+.c{background:#F3F4F6;font-weight:600}
+</style>
+</helmet>
+<div style="width:1900px;height:1000px;box-sizing:border-box;padding:24px 36px;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;display:flex;flex-direction:column;gap:12px">
+  <div><span class="h" style="font-size:20px;line-height:28px">Pre-mortem: six months on, split view failed. Why?</span> <span class="t2">· each failure legacy actually had, or one we can see coming, and how each option fares. ✓ avoided · ~ partly · ✗ exposed. [P]</span></div>
+  <table>
+    <tr><th style="width:24px">#</th><th style="width:300px">How it failed</th><th style="width:300px">Legacy’s version</th><th>How C avoids it</th><th style="width:34px">A</th><th style="width:34px">B</th><th style="width:34px" class="c">C</th><th style="width:34px">D</th></tr>
+    <tr><td>1</td><td>The preview drew over the editor or a sheet</td><td>BUG-195, 209, 270: a second native view placed by hand</td><td>Each side is an ordinary subview in the right pane; a DuoCheck walks the view tree for a side outside its pane</td><td>✓</td><td>✓</td><td class="c">✓</td><td>✓</td></tr>
+    <tr><td>2</td><td>⌘W, ⌘S or Send acted on the wrong side</td><td>ENH-084; aux <code>isActive</code> always false; ⌘W always main</td><td><code>activeSide</code> in the model; one routing table (board 9); a DuoCheck per command × side</td><td>✓</td><td>~</td><td class="c">✓</td><td>✓</td></tr>
+    <tr><td>3</td><td>The focus mark lied</td><td>ENH-084 v1–v4, three failed fixes</td><td>The rule is drawn from <code>activeSide</code>, not inferred from DOM focus; a capture per side</td><td>✓</td><td>~</td><td class="c">✓</td><td>✓</td></tr>
+    <tr><td>4</td><td>Two copies of one file disagreed</td><td>Reopening from the tree made a second editor</td><td>One document per file; Open Beside on a file in a split selects it</td><td>✓</td><td>✗</td><td class="c">✓</td><td>~</td></tr>
+    <tr><td>5</td><td>The split was unusably narrow</td><td>The “squished” image viewer; BUG-209</td><td>Make room (Geoff’s rule, board 8), then fold at 2 × 340</td><td>✓</td><td>✗</td><td class="c">✓</td><td>~</td></tr>
+    <tr><td>6</td><td>The shortcut never fired</td><td>BUG-075: 1Password owns ⌘\</td><td>No backslash; ⌥⌘P checked against common grabbers before DL-277</td><td>✓</td><td>✓</td><td class="c">✓</td><td>✓</td></tr>
+    <tr><td>7</td><td>The widths came back wrong</td><td>ENH-126 overrode the saved ratio; three clamps</td><td>One <code>SplitGeometry</code>; restore reproduces what was saved; Duo gives back only what it took</td><td>✓</td><td>~</td><td class="c">✓</td><td>~</td></tr>
+    <tr><td>8</td><td>Moving or swapping crashed</td><td>BUG-093: state changes across an await</td><td>Make, swap, close and separate are one synchronous model change</td><td>✓</td><td>~</td><td class="c">✓</td><td>✓</td></tr>
+    <tr><td>9</td><td>Live preview made typing slow</td><td>(new)</td><td>Render 250 ms after typing pauses, off the main thread; drop stale revisions; timed under the GPU lock</td><td>~</td><td>~</td><td class="c">~</td><td>~</td></tr>
+    <tr><td>10</td><td>Sync looped, caret ↔ slide</td><td>(new)</td><td>Every event carries origin and revision; echoes suppressed (board 10)</td><td>✓</td><td>✓</td><td class="c">✓</td><td>✓</td></tr>
+    <tr><td>11</td><td>A layout change hung the app</td><td>(v2’s F-208 class)</td><td>Visibility watched inside AppKit, as <code>cover</code> is; F-212’s guard extended to the split’s file</td><td>✓</td><td>~</td><td class="c">✓</td><td>✗</td></tr>
+    <tr><td>12</td><td>The source and its slides drifted apart</td><td>The aux stayed while main’s tabs changed</td><td>The pair is one tab and travels together</td><td>✓</td><td>✗</td><td class="c">✓</td><td>✗</td></tr>
+    <tr><td>13</td><td>Agents split things nobody asked for</td><td>SV-12 rule</td><td><code>duo2 open</code> never splits; only <code>duo2 split</code></td><td>✓</td><td>✓</td><td class="c">✓</td><td>✓</td></tr>
+    <tr><td>14</td><td>It broke in a second window</td><td>ENH-191 addressing</td><td>Splits live in per-window state from day one</td><td>✓</td><td>~</td><td class="c">✓</td><td>~</td></tr>
+    <tr><td>15</td><td>Tests missed it</td><td>Unit tests only</td><td>DuoChecks for make, swap, close, separate, fold, restore and routing; fixture states for captures</td><td>✓</td><td>✓</td><td class="c">✓</td><td>✓</td></tr>
+    <tr><td>16</td><td>The sidebar was gone when you needed it</td><td>(new, from making room)</td><td>The peek slides it over the console without moving the split; closing the split restores it</td><td>~</td><td>~</td><td class="c">✓</td><td>~</td></tr>
+  </table>
+  <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px">
+    <div style="background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:10px 12px"><b>A · Paired view</b><br>~4 days. Decks, Markdown, HTML; no doc beside doc.</div>
+    <div style="background:#FFFFFF;border:1.5px solid #1F2328;border-radius:6px;padding:10px 12px"><b>C · Split tab (recommended)</b><br>~5 days slice 1 (pairs; unblocks Duo Decks) + ~5 days slice 2 (doc beside doc, with the editor-per-side refactor).</div>
+    <div style="background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:10px 12px"><b>D · Companion pane</b><br>~8–10 days; four-pane layout work.</div>
+    <div style="background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:10px 12px"><b>B · Two tab groups</b><br>~12–15 days; refactor first.</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1900,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

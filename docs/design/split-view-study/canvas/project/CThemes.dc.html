@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Option C: Dark and Classic</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.dark{--ground:#131518;--pane:#181A1E;--text:#E6E8EB;--text2:#9AA1AB;--rule:#2B2F36;--controlEdge:#6E7681;--selected:#262A30;--console:#0C0D10;--consoleText:#E6E8EB;--consoleText2:#9AA1AB;--consoleRule:#24272D;--paneFocus:#E6E8EB;--docFont:-apple-system,system-ui,sans-serif;--docSize:14px/22px}
+.classic{--ground:#F0E9D6;--pane:#FBF8EE;--text:#1A1410;--text2:#7B6F58;--rule:#D4C8A6;--controlEdge:#B8AB8E;--selected:#F2D9B8;--console:#1A1410;--consoleText:#F0E9D6;--consoleText2:#8A7E66;--consoleRule:#352D23;--paneFocus:#C66A2E;--docFont:'New York',ui-serif,Georgia,serif;--docSize:16px/27px}
+.win{position:relative;width:1440px;height:900px;display:flex;flex-direction:column;background:var(--ground);color:var(--text);font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.tb{height:40px;flex:none;background:var(--ground);border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:12px;padding:0 16px;color:var(--text2)}
+.dots{display:flex;gap:8px}.dots i{width:12px;height:12px;border-radius:6px;background:var(--rule);display:block}
+.cols{flex:1;display:flex;min-height:0}
+.side{background:var(--pane);border-right:1px solid var(--rule);padding:16px;box-sizing:border-box;display:flex;flex-direction:column;gap:6px;flex:none}
+.con{background:var(--console);color:var(--consoleText);display:flex;flex-direction:column;border-right:1px solid var(--rule);flex:none}
+.cstrip{height:36px;border-bottom:1px solid var(--consoleRule);display:flex;align-items:center;gap:18px;padding:0 14px;font:12px/19px 'SF Mono',Menlo,monospace;color:var(--consoleText2)}
+.term{padding:14px;font:12px/19px 'SF Mono',Menlo,monospace;color:var(--consoleText2)}
+.right{background:var(--pane);display:flex;flex-direction:column;min-width:0;flex:1}
+.strip{position:relative;height:36px;flex:none;border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:24px;padding:0 16px;color:var(--text2);white-space:nowrap}
+.rulef{position:absolute;top:0;height:2px;background:var(--paneFocus)}
+.split{display:flex;align-items:center;gap:6px;color:var(--text2)}
+.split b{color:var(--text);font-weight:600}
+.smark{display:inline-block;width:11px;height:9px;border:1.2px solid var(--text2);border-radius:2px;position:relative;box-sizing:border-box}
+.smark:after{content:"";position:absolute;left:3.5px;top:-1px;bottom:-1px;width:1.2px;background:var(--text2)}
+.sides{flex:1;display:flex;min-height:0}
+.dv{width:1px;background:var(--rule);flex:none}
+.ed{position:relative;background:var(--pane);overflow:hidden;display:flex;flex-direction:column}
+.fbar{height:24px;flex:none;display:flex;align-items:center;gap:8px;padding:0 10px;color:var(--text2);font:12px/16px -apple-system,system-ui,sans-serif;border-bottom:1px solid var(--rule)}
+.doc{padding:16px 22px;display:flex;flex-direction:column;gap:2px;font:var(--docSize) var(--docFont)}
+.mk{color:var(--text2);font:12px/22px 'SF Mono',Menlo,monospace}
+.h1{font-weight:600;font-size:20px;line-height:28px}
+.cur{position:absolute;left:8px;width:2px;background:var(--controlEdge);border-radius:1px}
+.deckbar{height:44px;flex:none;border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:6px;padding:0 14px;box-sizing:border-box}
+.btn{height:26px;box-sizing:border-box;padding:4px 10px;border:1px solid var(--controlEdge);border-radius:6px;background:var(--pane);font:12px/16px -apple-system,system-ui,sans-serif;color:var(--text);white-space:nowrap}
+.slides{flex:1;background:var(--ground);padding:14px 16px;display:flex;flex-direction:column;gap:6px;overflow:hidden}
+.num{font:11px/16px -apple-system,system-ui,sans-serif;color:var(--text2)}
+.slide{aspect-ratio:16/9;background:#FFFFFF;border:1px solid var(--rule);box-sizing:border-box;padding:14px 16px;display:flex;flex-direction:column;gap:4px;color:#1F2328;flex:none}
+.t2{color:#5B636D}
+.h{font:600 15px/20px -apple-system,system-ui,sans-serif}
+.lbl{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#5B636D}
+</style>
+</helmet>
+<div style="width:1900px;height:1000px;box-sizing:border-box;padding:28px 36px;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;display:flex;flex-direction:column;gap:14px">
+  <div><span class="h" style="font-size:20px;line-height:28px">C in Dark and Classic</span> <span class="t2">· the same split as board 4, every colour a token, so both schemes come for free (DL-224, DL-252). [P]</span></div>
+  <div style="display:flex;gap:24px">
+    <div style="display:flex;flex-direction:column;gap:6px"><span class="lbl">Dark (Ink)</span>
+      <div style="zoom:.6"><div class="win dark">
+        <div class="tb"><div class="dots"><i></i><i></i><i></i></div><span style="margin-left:60px">All projects › work ›</span><b style="color:var(--text)">orchard-robotics</b></div>
+        <div class="cols">
+          <div class="con" style="width:480px"><div class="cstrip"><span style="color:var(--consoleText);font-weight:500">○ Field trial deck</span></div><div class="term">● Update(decks/field-trial-review.md)</div></div>
+          <div class="right">
+            <div class="strip"><div class="rulef" style="left:480px;width:479px"></div><span>Project</span><span class="split"><span>field-trial-review.md</span><span class="smark"></span><b>Slides</b></span></div>
+            <div class="sides">
+              <div class="ed" style="width:479px;flex:none"><div class="doc"><span class="mk">&lt;!-- slide: kpi --&gt;</span><span class="h1">Unattended rows</span><span>88%</span><span>of rows finished with no one stepping in</span></div><div class="cur" style="top:16px;height:118px"></div></div>
+              <div class="dv"></div>
+              <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+                <div class="deckbar"><span class="btn">‹</span><span class="btn">›</span><span>3/10</span><span style="margin-left:auto" class="btn">Export ⌄</span></div>
+                <div class="slides"><span class="num" style="color:var(--text);font-weight:600">3</span><div class="slide"><b style="font-size:13px">Unattended rows</b><span style="font:600 34px/40px system-ui">88%</span></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px"><span class="lbl">Classic</span>
+      <div style="zoom:.6"><div class="win classic">
+        <div class="tb"><div class="dots"><i></i><i></i><i></i></div><span style="margin-left:60px">All projects › work ›</span><b style="color:var(--text)">orchard-robotics</b></div>
+        <div class="cols">
+          <div class="con" style="width:480px"><div class="cstrip"><span style="color:var(--consoleText);font-weight:500">○ Field trial deck</span></div><div class="term">● Update(decks/field-trial-review.md)</div></div>
+          <div class="right">
+            <div class="strip"><div class="rulef" style="left:0;width:479px"></div><span>Project</span><span class="split"><b>field-trial-review.md</b><span class="smark"></span><span>Slides</span></span></div>
+            <div class="sides">
+              <div class="ed" style="width:479px;flex:none"><div class="fbar"><span>Style ⌄</span><b>B</b><i>I</i><span>⋯</span></div><div class="doc"><span class="mk">&lt;!-- slide: kpi --&gt;</span><span class="h1">Unattended rows</span><span>88%</span><span>of rows finished with no one stepping in</span></div><div class="cur" style="top:40px;height:150px"></div></div>
+              <div class="dv"></div>
+              <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+                <div class="deckbar"><span class="btn">‹</span><span class="btn">›</span><span>3/10</span><span style="margin-left:auto" class="btn">Export ⌄</span></div>
+                <div class="slides"><span class="num" style="color:var(--text);font-weight:600">3</span><div class="slide"><b style="font-size:13px">Unattended rows</b><span style="font:600 34px/40px system-ui">88%</span></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px">
+    <span><b>Dark:</b> the slides side is active here, so the pane rule (<code>paneFocus</code>, light in Ink) sits over the slides. The slides keep their own colours; a deck is never re-themed.</span>
+    <span><b>Classic:</b> the source side is active. The rule is Classic’s orange <code>paneFocus</code>, a surface, never a word, and the document is in New York 16/27. The divider is <code>rule</code>, as every pane divider is.</span>
+    <span><b>Nothing new to tokenise but three sizes</b> [P]: <code>splitSideMin</code> 340, the divider’s 1 pt (shared with the panes) and the drop zone’s dash (<code>borderDash</code>). The source-lines mark is <code>controlEdge</code>, 2 pt.</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1900,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
