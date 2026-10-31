@@ -4730,7 +4730,14 @@ A python-pptx deck uploaded to Geoff's Drive with conversion on, then read back 
 - **Kept:** the slide's link to its layout, the master's and layouts' placeholders, placeholder `type` and `idx` (including dt/ftr/sldNum 10/11/12), exact EMU geometry, theme colours as `schemeClr` (`tx1` comes back as `dk1`), slide size.
 - **Changed:** layouts are renamed to their type (`Title Slide` → `TITLE`); every shape becomes `Google Shape;N;pN`; inherited formatting is written onto every shape and run (explicit `xfrm`, size, typeface); the theme font scheme is rewritten (to Arial) with the resolved font baked into runs; docProps are dropped; a notes master and notes slides are always added.
 - **So:** a placeholder-filled deck stays editable and can be mapped back to its template by placeholder type/idx plus geometry, never by names. Absolute text boxes look the same but carry nothing to map. Template fonts should be Google Fonts or carry a substitute.
-- **Not yet tested:** tables, charts, gradients, hyperlinks, custom (`cust`) layouts and idx 13+ placeholders through Google (Q-355).
+- **Full test, 2026-10-31 (Q-355, Geoff's OK; Claude in Chrome in his Chrome, folder "Duo Decks tests"):**
+  - Three synthetic decks went up byte-exact (sizes match), through Drive's own drop handler from a page-side file input. Each was converted with File › Save as Google Slides.
+  - **All 10 Northwind layouts are in Slides' Layout menu under their own names**, unused ones and the custom `cust` layouts ("Big Number" with idx 13–15, "Quote") included.
+  - The master's gradient bar, the logo, the footer and slide number, the native table (style, banding, editable cells in Inter), the picture placeholder, nested bullets and speaker notes all came through.
+  - **The python-pptx chart became a picture** (Slides offers "Replace image").
+  - The heading font Avenir Next shows as "Avenir" and Inter stays Inter.
+  - So layout names survive in Slides' own menu even though its pptx export renames them to their type (above).
+  - Evidence: `docs/design/duo-decks-study/img/google-layouts-kept.png`.
 
 ## F-461 · The Drive connector can't upload binaries intact (duo-decks, 2026-10-31)
 

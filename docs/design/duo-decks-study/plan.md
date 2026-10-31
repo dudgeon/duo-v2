@@ -25,7 +25,7 @@ A deck is a Markdown file. Every slide names a template and fills that template'
    - Anthropic's pptx skill dropped html2pptx in February 2026 for masters plus placeholder filling.
 2. **Markdown is cheap and diffs cleanly.**
    - A 10-slide deck is 260–430 tokens of Markdown, against about 3,100 for pandoc's minimal slide XML (formats, "Token cost"). The sample deck is 1,726 characters; its exported slide XML is 22,911.
-   - A one-word edit is a one-line diff in every Markdown dialect. The format barely matters; keeping the pptx out of review does (F-464).
+   - A one-word edit is a one-line diff in every Markdown dialect. The format barely matters. The pptx is committed too (DL-270), but reviewers read the Markdown (F-464).
 3. **Google Slides keeps the structure that matters** (tested, F-460):
    - It keeps the layout link, placeholder type and idx, exact geometry, and theme colour references.
    - It renames layouts and shapes, flattens inherited formatting into every run, and rewrites theme fonts to resolved ones.
@@ -51,7 +51,7 @@ The rule for placing a piece: **anything that must give the same answer every ti
 | `decks/assets/…` | Images the deck links to, with relative Markdown links (DL-17). | People and Claude |
 | `templates/decks/<pack>/<pack>.pptx` | The template package: theme, masters and layouts, with no slides. It's a copy of a real deck or a .potx, with slides removed and "promoted" layouts added. | `duo2 deck template build` |
 | `templates/decks/<pack>/<pack>.md` | The definition: `type: deck-template` frontmatter, then one `## <template>` section per template, each a purpose sentence and a `yaml` block of slots. Lines marked `# duo` are written and checked by Duo; names, purposes and limits are Claude's or yours. | Both (sample: `samples/templates/decks/northwind/northwind.md`) |
-| `<deck>.pptx` | The export. Deterministic bytes (fixed zip times and part order), so committing it doesn't churn. Whether it's committed at all is Q-354. | `duo2 deck export` |
+| `<deck>.pptx` | The export. Deterministic bytes (fixed zip times and part order), so committing it doesn't churn. Always committed beside its deck (DL-270). | `duo2 deck export` |
 
 **Scope** follows DL-146's file templates:
 - **Lookup:** a project's `templates/decks/<pack>/`, then Home's, then Duo's built-in pack.
@@ -313,7 +313,7 @@ The P1 writer and parser expose the anchor map (slide and slot → source lines)
 | **Corporate templates and decks in git repos** (a work pack in a public repo) | Medium | C-131. Packs live in the project, or in Home, which is the user's own repo. Duo never ships or uploads them. The built-in pack is original. |
 | **Template limits are guesses** (characters aren't space) | Low | Limits are guidance, and P2 adds a CoreText fit check against the real box. Overflow is an error to split, never a font shrink. |
 | **Token cost** | Low | Claude reads `deck templates` (about 400 tokens for 8 templates), never a pptx. The sample 9-slide deck is about 430 tokens. |
-| **Diff readability** | Low | One bullet per line, no wrapping, slides as contiguous blocks, the pptx kept out of review. |
+| **Diff readability** | Low | One bullet per line, no wrapping, slides as contiguous blocks, the pptx committed but read through its Markdown. |
 | **Work Mac** | Low | Everything Claude runs is a `duo2` verb in the signed app. No Python, Node or LibreOffice. The skill reaches 2.1.284. |
 | **Licences** | Low | Own writer; pptx-renderer is Apache-2.0 and already shipped. No pandoc (GPL). The user's pack is their own. |
 | **The writer grows into an Office clone** | Medium | C-132. Only what placeholders take: text runs, bullets, pictures, tables, notes. Anything else is ENH, case by case. |

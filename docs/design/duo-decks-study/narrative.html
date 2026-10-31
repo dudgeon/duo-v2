@@ -92,6 +92,16 @@ footer{font-size:14px;color:var(--ink2);border-top:1px solid var(--rule);padding
     <a href="https://claude.ai/artifact/UgxMcFsUf512DRDkHXJmVz">Google Docs in Duo (related)</a>
   </div>
   <div style="background:var(--accent-soft);border-radius:8px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;max-width:78ch">
+    <b>Decided 31 October, from your answers on this page</b>
+    <ul style="font-size:15px">
+      <li><b>DL-267:</b> one Markdown file per deck, with <code>## slot</code> headings (Q-348 A, Q-352 A).</li>
+      <li><b>DL-268:</b> a template is a layout in a real pptx plus a definition note. The built-in pack uses Google Fonts; imported packs record substitutes (Q-349 A, Q-356 A).</li>
+      <li><b>DL-270:</b> Duo's own Swift writer as <code>duo2 deck</code> verbs, and the exported pptx is always committed (Q-351 A, Q-354 C). Each export to Google is a new, dated presentation (Q-353 A).</li>
+      <li><b>Google test (Q-355):</b> done. All ten layouts kept their names in Slides' Layout menu, including the custom ones. Tables, gradients, pictures, notes and footers survived. The chart became a picture, and Avenir Next shows as "Avenir".</li>
+      <li><b>Still open:</b> the viewer (Q-350), with split view.</li>
+    </ul>
+  </div>
+  <div style="background:var(--accent-soft);border-radius:8px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;max-width:78ch">
     <b>Updated 31 October: the viewer now waits for split view</b>
     <p style="font-size:15px">You said split view is the right way to show a deck's source beside its slides, so this page splits in two.</p>
     <ul style="font-size:15px">
@@ -184,6 +194,16 @@ Up from 61% in the spring trial, over 431 rows on three farms.
       <button class="opt" data-v="C"><span class="t">C · Duo's own geometry (YAML or CSS)</span><span class="b">Easy to preview in HTML. But it loses the company master in PowerPoint and Google, and needs a template editor in Duo.</span></button>
       <button class="opt" data-v="D"><span class="t">D · A and B, both from the start</span><span class="b">Most flexible, and twice the writer and twice the testing in the first slice.</span></button>
     </div>
+    <div style="border:1px solid var(--rule);border-radius:6px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;font-size:15px;background:var(--bg)">
+      <b>What turns a pptx into a template (your question on this card)</b>
+      <ol>
+        <li><b>Inventory (Duo).</b> <code>duo2 deck template inventory q2.pptx</code> lists every slide's boxes: position, size, font size, and the theme's fonts and colours.</li>
+        <li><b>Mapping (Claude, with you).</b> Claude picks which boxes are slots, names them (<code>quote</code>, <code>who</code>), sets limits ("about 200 characters"), marks the rest as decoration, and writes a purpose line. This goes in the pack's definition note, which you can read and edit.</li>
+        <li><b>Build (Duo).</b> <code>duo2 deck template build</code> copies the theme and masters into the pack's pptx. It turns each chosen slide into a real layout (slot boxes become placeholders, decoration becomes layout art) and removes the original slides. Then it fills in and checks the exact placeholder for each slot.</li>
+        <li><b>Specimen (you).</b> A sample deck uses every template once, filled to its limits. You say what's wrong, Claude fixes the mapping, and build runs again.</li>
+      </ol>
+      <span class="muted">A slide already built on a proper layout skips the conversion in step 3. Canvas <a href="https://claude.ai/artifact/Sk28K1tkHgwk6gHs7RFGqQ">board 5</a> draws this.</span>
+    </div>
     <div class="save"><input type="text" aria-label="Note on Q-349" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div>
   </div>
 
@@ -263,7 +283,7 @@ Up from 61% in the spring trial, over 431 rows on three farms.
   <p class="col">The split-view session (<a href="https://claude.ai/code/session_01LhGdJWtnnUWeRUroZZDmyc">split-view</a>) agreed the shape. Until then you can still see slides: export, and the deck viewer Duo already has opens the file.</p>
   <div class="dec" data-q="Q-350">
     <div class="dec-head"><span class="qid">Q-350 → DL-269 · after split view</span><h3>How should source and slides sit together?</h3></div>
-    <p class="dep">Every variant draws the exported file with the renderer Duo ships, so the preview can't disagree with the file. Board <a href="https://claude.ai/artifact/Sk28K1tkHgwk6gHs7RFGqQ">8</a> sketches them. Pick a leaning if you have one; the final choice comes with split view's own options.</p>
+    <p class="dep">S1 and S2 look nearly the same on screen. S1 is one tab whose content is split in two; S2 is two panes, each with its own tab strip. Which one is split view's design call, so you needn't pick between them. Every variant draws the exported file with the renderer Duo ships, so the preview can't disagree with the file. Board <a href="https://claude.ai/artifact/Sk28K1tkHgwk6gHs7RFGqQ">8</a> sketches them. Pick a leaning if you have one; the final choice comes with split view's own options.</p>
     <div class="opts">
       <button class="opt" data-v="S1"><span class="rec">Recommended</span><span class="t">S1 · Two sides of a split in the right pane</span><span class="b">The deck's tab holds source and slides with a divider. The formatting bar sits over the source; the slides keep their own bar with Export.</span></button>
       <button class="opt" data-v="S2"><span class="t">S2 · Slides in a pane of their own</span><span class="b">More room for slides. It's doc beside doc (legacy Split View) with the second pane bound to the first.</span></button>
@@ -314,7 +334,7 @@ Up from 61% in the spring trial, over 431 rows on three farms.
 <section>
   <span class="eyebrow">Collaboration</span>
   <h2>What a reviewer sees in a PR</h2>
-  <p class="col">A teammate updates a number, adds a slide and adds an ask. This is the entire diff. Each hunk names its slide and slot in its context lines, and nothing reads "Binary files differ".</p>
+  <p class="col">A teammate updates a number, adds a slide and adds an ask. This is the entire diff. Each hunk names its slide and slot in its context lines, The exported pptx is committed beside it (your choice, Q-354), so the PR also lists it as a binary change; reviewers read the Markdown.</p>
   <div class="diff" role="figure" aria-label="Unified diff of the deck">
 <div class="h">@@ -29,13 +29,13 @@</div>
 <div> # Unattended rows</div>
@@ -354,11 +374,11 @@ Up from 61% in the spring trial, over 431 rows on three farms.
   <div class="tbl"><table>
     <tr><th>Risk</th><th>Size</th><th>What we do</th></tr>
     <tr><td>Duo's view and PowerPoint or Google disagree on fonts (no Calibri on a Mac without Office; Google swaps fonts it lacks)</td><td>Medium</td><td>Packs record a Google-safe font. Inventory flags fonts Google lacks. The viewer says when it substituted one. (C-130, Q-356)</td></tr>
-    <tr><td>Tables, gradients and custom layouts through Google are untested</td><td>Medium</td><td>Finish the test in P0 (Q-355). No charts in v1. Duo never writes SmartArt.</td></tr>
+    <tr><td>Charts become pictures in Google Slides (tested)</td><td>Low</td><td>No charts in v1 (ENH-299 later). Tables, gradients, custom layouts, pictures and notes all survived the test. Duo never writes SmartArt.</td></tr>
     <tr><td>Company templates end up in a public repo</td><td>Medium</td><td>Packs live in the project or Home. Duo never ships or uploads them, and could warn about a public remote. (C-131)</td></tr>
     <tr><td>The writer grows into an Office clone</td><td>Medium</td><td>Only what placeholders take: text, bullets, pictures, tables, notes, footer and number. Anything more is decided case by case. (C-132)</td></tr>
     <tr><td>Character limits are rough</td><td>Low</td><td>They guide Claude. P2 adds a fit check against the placeholder's real box. Too long means split, never shrink.</td></tr>
-    <tr><td>Token cost and diff readability</td><td>Low</td><td>About 400 tokens to read a pack, about 45 a slide. One bullet a line, no wrapping, the pptx kept out of PRs.</td></tr>
+    <tr><td>Token cost and diff readability</td><td>Low</td><td>About 400 tokens to read a pack, about 45 a slide. One bullet a line, no wrapping, the pptx committed, the Markdown reviewed.</td></tr>
     <tr><td>The work Mac and licences</td><td>Low</td><td>Everything Claude runs is a <code>duo2</code> verb in the signed app. Duo's own writer; the renderer is Apache-2.0 and already shipped; no GPL.</td></tr>
   </table></div>
 </section>
