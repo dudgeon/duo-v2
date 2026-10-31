@@ -20,8 +20,9 @@ import SwiftUI
     let old = ["Mod-d", "Mod-i", "Mod-b", "Mod-s", "Mod-w", "Mod-n", "Shift-Mod-n", "Mod-k", "Shift-Mod-a", "Shift-Mod-p", "Shift-Mod-h", "Mod-Enter"]
     check(old.allSatisfy(generated.contains), "the old hand-kept DUO_CHORDS are all generated (\(old.filter { !generated.contains($0) }))")
     check(EditorChords.keyName(DuoCommand.bold.shortcut!) == "Mod-b" && EditorChords.keyName(DuoCommand.newFolder.shortcut!) == "Shift-Mod-n"
-          && EditorChords.keyName(DuoCommand.jumpToPeekSelection.shortcut!) == "Mod-Enter" && EditorChords.keyName(DuoCommand.nextPane.shortcut!) == "Alt-Mod-ArrowRight",
-          "chord names are CodeMirror's: Mod-b, Shift-Mod-n, Mod-Enter, Alt-Mod-ArrowRight")
+          && EditorChords.keyName(DuoCommand.jumpToPeekSelection.shortcut!) == "Mod-Enter" && EditorChords.keyName(DuoCommand.allProjects.shortcut!) == "Mod-ArrowUp",
+          "chord names are CodeMirror's: Mod-b, Shift-Mod-n, Mod-Enter, Mod-ArrowUp")
+    check(DuoCommand.nextPane.shortcut == nil && DuoCommand.previousPane.shortcut == nil, "Next and Previous Pane have no chord: ⌥⌘← → are freed (DL-289)")
     check(EditorChords.keyName(DuoCommand.nextTab.shortcut!) == nil, "⌃Tab carries no ⌘ and stays with the pane key monitor")
     check(EditorChords.script().hasPrefix("window.__duoChords = [\"") && EditorChords.script().contains("\"Mod-s\""), "the page gets them as window.__duoChords at document start")
 }

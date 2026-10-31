@@ -209,7 +209,7 @@ All Duo shortcuts carry ⌘, so they never collide with keys typed into Claude C
 | ⌘D | Send selection to Claude |
 | ⌘W / ⇧⌘W | Close tab (never the window) / close window |
 | ⌥⌘0 | Hide or show the right pane (DL-129) |
-| ⌥⌘← → | Previous and next pane; the active pane shows a rule over its top (DL-165, provisional) |
+| — | Previous and next pane (View menu, no chord since DL-289); the active pane shows a rule over its top (DL-165, provisional) |
 | ⌃⇥ / ⌃⇧⇥ | Next and previous tab in the active pane, terminals included (DL-165) |
 
 Return and its chords mean the same in chat and in the terminal (DL-241). In the terminal they are Claude Code's own keys; Duo only makes sure each one arrives (F-395).

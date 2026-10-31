@@ -2,7 +2,7 @@ import AppKit
 import DuoKit
 import Foundation
 
-// DL-165: the active pane, ⌥⌘→ / ⌥⌘←, and ⌃Tab through the active pane's tabs.
+// DL-165: the active pane, Next / Previous Pane (no chord since DL-289), and ⌃Tab through the active pane's tabs.
 @MainActor func paneFocusChecks() throws {
     print("pane focus: the active pane and its tabs (DL-165)")
 

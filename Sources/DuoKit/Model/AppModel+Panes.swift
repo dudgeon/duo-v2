@@ -56,9 +56,9 @@ extension AppModel {
         return PaneCycle.order(leftShown: !leftHidden, rightShown: !rightCollapsed)
     }
 
-    /// ⌥⌘→
+    /// View ▸ Next Pane (no chord since DL-289)
     public func nextPane() { stepPane(forward: true) }
-    /// ⌥⌘←
+    /// View ▸ Previous Pane
     public func previousPane() { stepPane(forward: false) }
 
     private func stepPane(forward: Bool) {
