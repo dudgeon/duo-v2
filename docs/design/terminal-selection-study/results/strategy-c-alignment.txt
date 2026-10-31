@@ -1,0 +1,14 @@
+== 311
+plain three lines, select across a new line      caret=50 keys={'moves': -27, 'backspaces': 17} pass=True 
+plain, caret moved first (mid line 1)            caret=14 keys={'moves': -9, 'backspaces': 5} pass=True 
+long wrapped line, select across the wrap        caret=186 keys={'moves': -111, 'backspaces': 35} pass=True 
+wide and emoji                                   caret=35 keys={'moves': -9, 'backspaces': 11} pass=True 
+paste placeholder                                caret=14 keys={'moves': -1, 'backspaces': 4} pass=True 
+paste placeholder, selection over it             caret=14 keys={'moves': -4, 'backspaces': 5} pass=True 
+== 284
+plain three lines, select across a new line      caret=50 keys={'moves': -27, 'backspaces': 17} pass=True 
+plain, caret moved first (mid line 1)            caret=14 keys={'moves': -9, 'backspaces': 5} pass=True 
+long wrapped line, select across the wrap        caret=186 keys={'moves': -111, 'backspaces': 35} pass=True 
+wide and emoji                                   caret=35 keys={'moves': -9, 'backspaces': 11} pass=True 
+paste placeholder                                caret=14 keys={'moves': -1, 'backspaces': 4} pass=True 
+paste placeholder, selection over it             caret=14 keys={'moves': -4, 'backspaces': 5} pass=True 
