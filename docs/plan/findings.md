@@ -4779,3 +4779,30 @@ Two synthetic copies of the field-trial deck, each with a comment and a reply on
 - **Modern threaded comments** (`modernComment_*.xml`, anchored to the value placeholder, with a reply): **nothing came through** in Slides, and LibreOffice 26.8.1 drops them too.
   - Caveat: no PowerPoint was available to confirm the hand-written file is one PowerPoint itself would accept.
 - **So:** if Duo ever exports comments, legacy comments are the portable form. Each one goes on its slide with its author, and the slot and thread id go in the text (`[#c1 on value]`). Threads and resolved state don't survive.
+
+## F-498 · The Swift deck writer works, and is deterministic (duo-decks P0, 2026-10-31; DL-267, DL-270)
+
+The P0 spike is in `Sources/DuoSearch/Deck/`, about 820 lines in all:
+- `ZipWriter.swift`, 76 lines;
+- `DeckParse.swift`, 247: parser and anchor map, reusing `Review.parse` for DL-284's marks;
+- `DeckCheck.swift`, 113;
+- `PptxWriter.swift`, 320;
+- `DeckInspect.swift`, 60.
+
+The check is `Sources/DuoChecks/DeckChecks.swift` (`DUO_CHECKS=deck`, 39 passed). Write-up: `docs/design/duo-decks-study/p0-spike.md`.
+
+What it does to the sample deck and the Northwind pack:
+- **The slides:** 9, each on its named layout, placeholders filled by idx with no geometry of their own.
+- **On every slide:** footer and slide number cloned from the layout (F-466).
+- **Notes:** on slides 2 and 9; a notes master is added when the pack has none.
+- **Picture and table:** a crop-to-fill picture, and a 5 × 3 table.
+- **Source hash:** `duoSourceSha` in custom properties.
+- **Review marks:** comments are stripped; highlights export as their text; pending suggestions export as the text before the change.
+
+It is byte-identical across runs and processes: one sha-256, 44,047 bytes, about 10 ms on a debug build. python-pptx reads it, and LibreOffice draws it the same as the Python prototype. The checker refuses the broken copy with the prototype's three messages.
+
+Left over:
+- the pack's stale metadata is inherited (`lastModifiedBy`, a 4:3 `sldSz` type, the thumbnail), so `deck template build` should clean it;
+- JPEG pictures are untested;
+- no `duo2 deck` verbs yet;
+- not yet through Google or Duo's own viewer.

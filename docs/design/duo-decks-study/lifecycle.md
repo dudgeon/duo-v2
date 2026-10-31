@@ -88,6 +88,86 @@ The specimen shows the label wrapping into the context line. Claude sets `max: 3
 
 **Q-379.** Are limits only characters (DL-268's definition), or does the checker measure every slot's real text against its box on every check? Proposed: both. Limits are for Claude to plan with; the measured fit is what the checker enforces, and what it reports.
 
+### M3b · "I already have the deck. Can it become a Duo deck?" Converting a pptx, and merging look-alike layouts
+
+Geoff, 2026-10-31: "taking an existing pptx, converting it into a duo deck, either using/amending an existing template, or creating a new one; using claude to coalesce similar but non identical layouts into one, and then editing the deck as a duo deck".
+
+**The case.** `grower-update-sept.pptx` is a 16-slide deck a colleague made by hand. It came from the Northwind master, but over time people nudged things:
+- three "big number" slides whose boxes sit a few points apart;
+- one of them has an extra footnote box;
+- two "two column" slides, one with headings over its columns;
+- a timeline slide the northwind pack has no template for;
+- a chart;
+- speaker notes, and two review comments left in PowerPoint.
+
+**On screen.** The pptx open in the deck viewer.
+
+**New [P]: Convert to Duo Deck…** in the bar, as Word documents have Convert to Markdown… (DL-123, DL-162). It opens a Duo sheet:
+- **Template pack:** northwind (this project), another pack, or **a new pack from this deck**.
+- **Into:** `decks/grower-update-sept.md`.
+- Buttons: Cancel, **Convert with Claude** (default).
+
+The same from Claude: `duo2 deck import grower-update-sept.pptx --pack northwind`.
+
+**1. Duo groups the slides (deterministic).** The import inventory gives every slide a **layout fingerprint**:
+- for a slide on a real layout, its placeholders' type and idx;
+- for loose boxes, the boxes' kinds and positions rounded to a coarse grid.
+
+Duo groups identical fingerprints and lists near ones with how far apart they are ("slides 5, 9, 12: same three boxes; 9 has a fourth box; positions differ by up to 6 pt"). It then compares each group with the pack's templates.
+
+**2. Claude proposes the mapping (judgement, with you).** In the session, Claude lays out a plan. It reads as a table:
+
+| Slides | Becomes | Why |
+|---|---|---|
+| 1 | title | an exact match |
+| 2, 3, 7, 14 | bullets | the same layout |
+| 5, 9, 12 | **kpi, amended**: a new optional slot `footnote` | three look-alikes coalesced; 9's extra box becomes the optional slot, and the 6 pt drift is ignored |
+| 6, 10 | two-column (10's column headings move into the bullets' first line) | near-identical; headings aren't worth a new template |
+| 11 | **timeline, new** | nothing in the pack fits |
+| 13 | image, the chart as a picture | charts aren't slide content in v1 |
+| 15, 16 | section, quote | exact matches |
+
+**Error 9: a merge that would lose something.** Claude flags slide 10: merging it into two-column drops its column headings as headings. It asks with a question card:
+- (a) Fold the headings into the first bullet. Recommended.
+- (b) Amend two-column with optional `left-title` and `right-title` slots.
+- (c) Make a new template.
+
+The rule, as in M2: **Claude coalesces only what you approve, and any merge that changes how content appears is a question.**
+
+**3. Duo amends and builds the pack (deterministic).** `duo2 deck template build northwind`:
+- adds kpi's optional `footnote` placeholder (idx 16);
+- promotes slide 11 into a new "Timeline" layout;
+- adds both to `northwind.md`, the new template's purpose and limits written by Claude.
+
+Existing decks are untouched. An optional slot doesn't break them, and nothing was renamed (Q-385's rename map isn't needed).
+
+**4. Duo converts the content.**
+- Where a slide's layout maps by fingerprint, text moves from placeholder to slot by idx, deterministically.
+- For loose boxes, Claude's mapping from step 2 says which box feeds which slot.
+- Speaker notes become `> [!note]`.
+- **The PowerPoint comments become Review in Markdown comments** (DL-284), signed with their authors and dates (Geoff's Q-397 answer: comments come into the Markdown and git).
+- The chart on slide 13 is drawn by Duo's own renderer and saved as `assets/grower-update-sept-13.png` in an image slot.
+- Anything that maps nowhere goes to that slide's notes (DL-281), with the import report saying so.
+
+**Error 10: what doesn't convert.** The import ends with a report in the sheet's place, and as text for Claude:
+
+```
+grower-update-sept.md: 16 slides from 16. 1 chart became a picture (slide 13). 1 text box went to notes (slide 4: "Draft - not for circulation"). 2 PowerPoint comments imported. Fonts: Avenir Next → Nunito Sans for Google (northwind's substitute).
+```
+
+**5. Compare with the original [P].** The deck's bar offers **Compare with Original**. The slides side shows the original pptx and the new deck slide by slide, original on the left and Duo Deck on the right, and differences are listed as numbers (moved boxes, changed sizes). You see that slides 5, 9 and 12 now line up exactly, and that slide 10's headings are bullets now.
+
+**6. It's a Duo deck.** From here everything in M5–M10 applies: the checker, the picker, Change Template, comments, PRs, dated exports. The original pptx is never written (as with Word documents, DL-123).
+
+**Verbs.**
+- `duo2 deck import <pptx> [--pack <p> | --new-pack <name>] [--plan <file>]`: run without `--plan`, it prints the grouping and fingerprints for Claude; run with Claude's plan, it converts.
+- `duo2 deck compare <deck> <pptx>`.
+
+**Q-398.** How far may Claude coalesce look-alike layouts?
+- (a) **Into one template with optional slots, each merge approved in one plan.** Recommended.
+- (b) Only exact fingerprint matches; every variant becomes its own template.
+- (c) Freely, listing what it merged afterwards.
+
 ### M4 · "How do I start a deck?" A new deck from a pack
 
 **On screen.** **New [P]: New Deck…** in File › New and in Files' **+** menu (⇧⌘N stays "new folder"; no new shortcut, DL-34). It opens a Duo sheet:
@@ -289,6 +369,7 @@ The final line: "Decks as text. Templates as PowerPoint. Claude in between."
 | Templates from a deck | Make Templates… slide selection in the deck viewer; `deck template pick/picked` | Application (viewer) | P2 |
 | Extraction questions | Claude asks when a mapping is ambiguous (Q-378); a font substitute question | Agent (skill text) | P2 |
 | Fit | Measured fit at build and check; findings name the largest value that fits (Q-379) | Application | P2 |
+| Converting a deck | Convert to Duo Deck…; fingerprint grouping; Claude coalesces look-alikes into one template with optional slots (Q-398); comments and notes imported; charts as pictures; Compare with Original; `duo2 deck import`, `deck compare` | Application plus agent | P2 |
 | New deck | New Deck… sheet with a pack picker; `duo2 deck new` (Q-380) | Application | P1 (verb), P3 (sheet) |
 | Editing | Template autocomplete with skeletons; slot autocomplete; + between slides; `duo2 deck insert` (Q-381) | Application (editor) | P3 |
 | One-answer fixes | "Use kpi", "Move to left": Duo applies them (Q-382) | Application | P3 |
