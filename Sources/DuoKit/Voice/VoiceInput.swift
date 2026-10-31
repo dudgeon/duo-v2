@@ -29,6 +29,8 @@ public enum VoiceCopy {
     public static let restricted = "Your Mac’s administrator doesn’t allow voice input for Duo"
     public static let noMic = "No microphone found."
     public static let noMicAside = "Plug one in or pick one in System Settings › Sound."
+    /// Stand-in (Q-340): AVAudioEngine refused a device that looked usable.
+    public static let micFailed = "The microphone didn’t start."
     public static let keptAside = "Your words are kept."
     public static let isolated = "The microphone isn’t available in an isolated Duo."
     public static let tooltip = "Voice input ⇧⌘D · hold to talk"
@@ -98,6 +100,8 @@ public final class VoiceInput {
     /// launched with `DUO_VOICE_LIVE=1` for a person's own hands-on test (a gated, visible dev instance): then it
     /// asks for the microphone and uses the clipboard as the user's own Duo does.
     @ObservationIgnored public var isolated: () -> Bool = { VoiceInput.isolatedWithout(ProcessInfo.processInfo.environment) }
+    /// Whether there is a microphone to listen to (VoiceDevice; replaceable in checks).
+    @ObservationIgnored public var hasMicrophone: () -> Bool = { VoiceDevice.hasMicrophone }
 
     public static func isolatedWithout(_ env: [String: String], isolated: Bool = SupportFolder.isIsolated) -> Bool {
         isolated && env["DUO_VOICE_LIVE"] != "1"
@@ -173,6 +177,9 @@ public final class VoiceInput {
         set(.start)
         if case .microphone = source {
             if isolated() { return fail(.unavailable(VoiceCopy.isolated)) }
+            // No input device: say so before Duo's sheet or macOS's microphone question, which would be pointless
+            // (F-447: AVAudioEngine raised and took Duo down on a Mac mini with no microphone).
+            if !hasMicrophone() { return fail(.unavailable(VoiceCopy.noMic)) }
             switch AVCaptureDevice.authorizationStatus(for: .audio) {
             case .denied: return fail(.denied)
             case .restricted: return fail(.restricted)
@@ -233,6 +240,9 @@ public final class VoiceInput {
             }
         } catch VoiceAudioError.noMicrophone {
             return fail(.unavailable(VoiceCopy.noMic))
+        } catch VoiceAudioError.micFailed(let why) {
+            DuoLog.write("voice: the microphone failed to start: \(why)")
+            return fail(.unavailable(VoiceCopy.micFailed))
         } catch {
             return fail(.unavailable("Voice input can’t read that audio: \(error)."))
         }

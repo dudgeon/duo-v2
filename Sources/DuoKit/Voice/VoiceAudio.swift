@@ -1,4 +1,6 @@
 @preconcurrency import AVFoundation
+import CoreAudio
+import DuoObjC
 import Foundation
 
 // Audio sources for voice input (DL-260): the microphone through AVAudioEngine and a file, both as a
@@ -15,6 +17,40 @@ public enum VoiceAudioSource: Sendable, Equatable {
 enum VoiceAudioError: Error, Equatable {
     case noMicrophone
     case unreadable(String)
+    /// The engine refused (an exception or error from AVAudioEngine); the text says what it was.
+    case micFailed(String)
+}
+
+/// Whether the Mac has a microphone to listen to: a default input device with at least one input channel.
+/// Read from CoreAudio before AVAudioEngine is touched, since AVAudioEngine raises (and takes the app down)
+/// when there's none (F-447; a Mac mini with no microphone plugged in).
+public enum VoiceDevice {
+    /// The default input device and its input channel count, or nil when there's no device.
+    public static func defaultInput() -> (id: AudioObjectID, channels: Int)? {
+        var id = AudioObjectID(kAudioObjectUnknown)
+        var size = UInt32(MemoryLayout<AudioObjectID>.size)
+        var addr = AudioObjectPropertyAddress(mSelector: kAudioHardwarePropertyDefaultInputDevice,
+                                              mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain)
+        guard AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &addr, 0, nil, &size, &id) == noErr,
+              id != kAudioObjectUnknown else { return nil }
+        var streams = AudioObjectPropertyAddress(mSelector: kAudioDevicePropertyStreamConfiguration,
+                                                 mScope: kAudioDevicePropertyScopeInput, mElement: kAudioObjectPropertyElementMain)
+        var bytes: UInt32 = 0
+        guard AudioObjectGetPropertyDataSize(id, &streams, 0, nil, &bytes) == noErr, bytes > 0 else { return (id, 0) }
+        let raw = UnsafeMutableRawPointer.allocate(byteCount: Int(bytes), alignment: MemoryLayout<AudioBufferList>.alignment)
+        defer { raw.deallocate() }
+        guard AudioObjectGetPropertyData(id, &streams, 0, nil, &bytes, raw) == noErr else { return (id, 0) }
+        let list = UnsafeMutableAudioBufferListPointer(raw.assumingMemoryBound(to: AudioBufferList.self))
+        return (id, list.reduce(0) { $0 + Int($1.mNumberChannels) })
+    }
+
+    /// The rule: a device with input channels. Separate from the lookup so DuoChecks can test it.
+    public static func usable(_ input: (id: AudioObjectID, channels: Int)?) -> Bool {
+        guard let input else { return false }
+        return input.id != kAudioObjectUnknown && input.channels > 0
+    }
+
+    public static var hasMicrophone: Bool { usable(defaultInput()) }
 }
 
 /// The microphone: taps the input node, reports a smoothed level, ends its stream when the device goes away.
@@ -32,31 +68,55 @@ final class MicCapture: @unchecked Sendable {
         self.lost = lost
     }
 
+    /// Every AVAudioEngine call that can raise runs inside DuoCatchException: an exception becomes an error,
+    /// never a crash, whatever the device does (F-447).
     func start() throws {
-        let input = engine.inputNode
-        let format = input.outputFormat(forBus: 0)
-        guard format.sampleRate > 0, format.channelCount > 0 else { throw VoiceAudioError.noMicrophone }
+        guard VoiceDevice.hasMicrophone else { throw VoiceAudioError.noMicrophone }
         let level = self.level, continuation = self.continuation
-        input.installTap(onBus: 0, bufferSize: 4096, format: format) { buffer, _ in
-            if let ch = buffer.floatChannelData?[0] {
-                var sum: Float = 0
-                let n = Int(buffer.frameLength)
-                for i in 0..<n { sum += ch[i] * ch[i] }
-                level(n > 0 ? min(1, (sum / Float(n)).squareRoot() * 6) : 0)
+        var format: AVAudioFormat?
+        var caught: NSError?
+        let ok = DuoCatchException({
+            let input = self.engine.inputNode
+            let f = input.outputFormat(forBus: 0)
+            guard f.sampleRate > 0, f.channelCount > 0 else { return }
+            format = f
+            input.installTap(onBus: 0, bufferSize: 4096, format: f) { buffer, _ in
+                if let ch = buffer.floatChannelData?[0] {
+                    var sum: Float = 0
+                    let n = Int(buffer.frameLength)
+                    for i in 0..<n { sum += ch[i] * ch[i] }
+                    level(n > 0 ? min(1, (sum / Float(n)).squareRoot() * 6) : 0)
+                }
+                continuation.yield(VoiceBuffer(buffer: buffer))
             }
-            continuation.yield(VoiceBuffer(buffer: buffer))
-        }
+            self.tapped = true
+            self.engine.prepare()
+        }, &caught)
+        guard ok else { stop(); throw VoiceAudioError.micFailed(caught?.localizedDescription ?? "unknown") }
+        guard format != nil else { stop(); throw VoiceAudioError.noMicrophone }
+        // A device that comes or goes (AirPods, an iPhone's Continuity mic, a USB mic) changes the engine's
+        // configuration: the dictation stops with "the microphone went away" and keeps its words.
         observer = NotificationCenter.default.addObserver(forName: .AVAudioEngineConfigurationChange, object: engine, queue: nil) { [weak self] _ in
             self?.lost()
         }
-        engine.prepare()
-        try engine.start()
+        var startError: Error?
+        let started = DuoCatchException({
+            do { try self.engine.start() } catch { startError = error }
+        }, &caught)
+        guard started, startError == nil else {
+            stop()
+            throw VoiceAudioError.micFailed(startError.map { "\($0)" } ?? caught?.localizedDescription ?? "unknown")
+        }
     }
+
+    private var tapped = false
 
     func stop() {
         if let o = observer { NotificationCenter.default.removeObserver(o); observer = nil }
-        engine.inputNode.removeTap(onBus: 0)
-        engine.stop()
+        _ = DuoCatchException({
+            if self.tapped { self.engine.inputNode.removeTap(onBus: 0); self.tapped = false }
+            self.engine.stop()
+        }, nil)
         continuation.finish()
     }
 }
