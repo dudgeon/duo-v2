@@ -4739,3 +4739,7 @@ In captures of today's editor (a fresh build of origin/main 4e809942, isolated, 
 
 In `docs/design/markdown-toolbar-study/captures/fresh-review-dark.png` (the track-a document, Suggest Edits on, Dark), the paragraph "seconds, and gives up after an hour." wraps so that the inserted clause ends the line and its "." sits alone on the next one. The insertion's mark and its hidden signature (`{>>…<<}`) seem to give the browser a break opportunity before the punctuation. Not measured or traced; seen once, in Dark at the pane's 460.
 
+
+## F-495 · ⌘W with the keyboard in a page, deck, Word document or browser tab ended the console's session (2026-10-31; DL-34, DL-165)
+
+`DuoCommand.closeSession` closed a document only when the Markdown editor had the keyboard (`editorIfLoaded?.hasFocus`); with any other right-pane tab showing (HTML page, deck, Word document, browser tab) it fell to `closeVisibleSession()` and ended the console's Claude session. Read from the code, and the same at v0.2.21 (`Commands.swift:248-250`, enabled by `visibleTerminal != nil`). Fixed: `AppModel.keyboardInRightPane` (the right pane is active, or a web view has the keyboard) sends ⌘W to `closableRightTab`, a document or browser tab; the Project tab closes nothing. DuoChecks (`PaneFocusChecks`) cover Markdown, HTML, deck, Word and browser tabs, each with the right pane active and with a web view focused. Harness action `cmd-w` performs the command.
