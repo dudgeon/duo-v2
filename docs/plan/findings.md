@@ -4620,3 +4620,48 @@ Captured on main 32dada0a (`list-1440`, Light, Dark, Classic; isolated, backgrou
 - **The only button is Home's pill.** At All projects › List, the one way to start a Claude session is DL-253's `+ [robot | shell]` at the end of Home's tab strip in the left pane; it starts a Home session. To start one in a project you click one of its rows to jump in, then press the console's pill or ⌘T.
 - **⌘T does nothing at All projects.** New Claude Session stays enabled (`terminalsMode == .live`), but `AppModel.newSession()` returns at `guard let project = currentProject?.name`, and `currentProject` is nil outside a project. ⇧⌘T already falls back: `newShell()` uses Home at All projects. So with the left pane hidden (⌃⌘S) the list can't start a Claude session at all.
 - **An empty list draws nothing.** With no sessions, `SessionListPane` shows the header and a blank pane (no words, no button), unless Home has no projects yet (DL-212's folders).
+## F-444 · A first chat in a folder Claude Code hasn't trusted: answered from Duo's sheet, never a fallback (chat-trust, 2026-10-30; DL-229, DL-258)
+
+Geoff (a dev Duo on a new folder, `~/VoiceTest`): "pretty big fail if the very first time a user sees the home chat it has a chat mode failure because of the trust dialogue". Home's first session opened in chat. Claude Code asked "Accessing workspace … Is this a project you created or one you trust?", chat read it as an unknown screen, and the terminal came up (ChatReal even asserted that).
+
+- **Why not ask before starting.** The brief's likely shape was to ask before Duo starts a session in an untrusted folder. Claude Code's own rules decide whether it asks (F-445): a parent trusted, a repository's top folder, the home folder trusted one session at a time. Predicting them in Duo would either ask when Claude wouldn't, or miss a case and fall back anyway. Its screen names the exact folder each time it does ask. So Duo answers the screen.
+- **What happens now** (chat mode, a CLI chat trusts, i.e. any 2.1.x):
+  1. The reader reads the question as its own kind, `trust`: the folder, its wrapped rows joined, and the two choices with the cursor. Well-formed means both labels, one cursor, a folder.
+  2. Chat never falls back for it. It asks the app once per question (`onTrustQuestion`).
+  3. The app shows Duo's trust sheet (DL-229's surface: title, folder box, note, Don't Trust and Trust Folder, the default) only if the screen's folder is the session's own (`samePath`, whitespace-insensitive, since the wrap breaks a path anywhere). Another folder's question goes to the terminal (`trust-other-folder`). A CLI chat can't trust goes there too (`trust-unreadable`).
+  4. **Trust Folder** gives Claude Code its own answer: re-read the screen, ↓ to "Yes, I trust this folder" (it starts on "No, exit"), check the cursor and the folder before each key, then Return (DL-118). Claude Code then records the trust itself, exactly as when you answer in the terminal. **Don't Trust** presses Return on "No, exit": Claude Code exits and the session ends; nothing changes.
+- **Duo writes nothing to Claude Code's file here,** unlike DL-229's `/fork` case, where Claude has no question to answer. So nothing is trusted silently: only your click on the sheet sends the yes. `DUO_AUTOCONFIRM` doesn't answer Duo's sheets; scripted runs use `answer:<label>`.
+- **duo2** (DL-71): `duo2 session trust-folder <id>` also covers this question: the same sheet, waiting for your answer, with no `--yes`. It prints `trusted <path>`, or fails with `not trusted`.
+- **Terminal mode** is unchanged: Claude Code's own question is on screen.
+- The sheet's words for this case are a stand-in (Q-338).
+- Checks: `DUO_CHECKS=chat` "Claude Code's folder question at a session's start" (reader on 2.1.284 and 2.1.311 screens, a 60-column wrapped path, a git subfolder, 2.1.291's; no fallback, asked once; another folder, terminal mode, an unreadable CLI; the answer's keys for each choice and a refused one; the sheet's contents for a folder, the home folder and a repository's subfolder; the app's sheet giving the yes). `ChatChecks` now reads 2.1.291's trust prompt as `trust`. ChatReal answers it as the sheet does. Live: `scripts/check-chat-trust-live.sh`.
+
+## F-445 · Claude Code's trust question on 2.1.284 and 2.1.311 (chat-trust, 2026-10-30)
+
+Measured with the real TUIs against the mock API, a scratch `CLAUDE_CONFIG_DIR` and fresh folders (`Spikes/chat-mode/screens/trust-2.1.284/`, `trust-2.1.311/`):
+
+- **The screen is the same on both versions**, and the same as 2.1.291's:
+  - "Accessing workspace:", then the folder's real path (`/private/tmp/…`), hard-wrapped at the terminal's width with each continuation one space in;
+  - "Quick safety check: Is this a project you created or one you trust? …", "Claude Code'll be able to read, edit, and execute files here.", "Security guide";
+  - two unnumbered choices, **"No, exit" first and selected**, then "Yes, I trust this folder";
+  - "Enter to confirm · Esc to cancel".
+
+  So Return alone quits Claude Code, as F-338 found in a live run.
+- **Yes** (↓, Return): Claude Code writes `projects["‹key›"].hasTrustDialogAccepted = true` and reaches its prompt. The key is the folder itself, or the **repository's top folder** for a folder inside a git repository (`repo`, though the screen named `repo/sub`). **No:** Claude Code exits.
+- **The home folder:** Claude Code asks there too, and keeps the trust for that session only, so it asks again next time; the sheet says so and shows no key.
+- The question names the session's working folder even inside a repository, so the sheet compares the screen's folder with the session's own.
+
+## F-449 · A refused hand-over, then a terminal narrowed under the reader: two fallbacks in one second (chat-trust, 2026-10-30; DL-258)
+
+Geoff's Debug report (Duo Dev voice test, dd2b8e8c, Claude Code 2.1.311). The words on screen were his own dictation and aren't recorded. At 22:42:30 the history shows `answer-refused` ("Claude's prompt changed in the terminal (it holds "")") and then `unknown-screen`, in the same second. The screen judged was 42 columns, but many of its rows were longer: text from a wider drawing went on past column 42. Only one full-width rule was found, so there was no input box. Row 35 was a 42-dash rule with old text after it; row 37, the old 87-column bottom rule, was the one rule found.
+
+1. **The first fallback was the refusal.** Sending from the composer hands the text to Claude's prompt through Ctrl+G (`duo2 compose`, F-112). The hand-over carries what chat believes the prompt holds (`composerBasis`), and the helper refuses if Claude's real prompt differs, so text typed in the terminal is never overwritten. Here chat expected words, and the prompt was empty: it had been sent or cleared since chat last read it, after the chat ⇄ terminal switches Geoff was testing. An empty prompt has nothing to protect. **Now** a refusal whose prompt is empty is handed over once more onto the empty prompt, and the message goes. A prompt holding other words is still refused, as before.
+2. **What resized the terminal: the switch to it.** While chat shows, the terminal view isn't in the layout (`ConsoleChatBody` shows only `ChatPane`), so the PTY keeps the size of its last time on screen, about 87 columns here. The refusal's fallback put the terminal back in the 42-column pane, and it narrowed. The voice bar played no part.
+3. **Why the screen held two widths.** SwiftTerm trims rows on narrowing only as part of reflow, and reflows only a buffer with scrollback (`Buffer.isReflowEnabled`). The alternate screen, where a full-screen TUI draws, has none. So its rows keep their old cells past the new width. The view's row text (`visibleRowsText`, `end: -1`) hands chat the whole row, cells nobody can see included, and Claude's redraw never clears them. Waiting longer for the redraw (the brief's question 2) wouldn't have helped: the stale cells stay. **Now** chat clips each row to the terminal's width, counting a wide glyph as two cells (`ChatScreenReader.clip`), so it reads what the screen shows.
+- Checks: `DUO_CHECKS=chat` "a terminal that narrows, and a hand-over onto a prompt that emptied":
+  - a SwiftTerm terminal on the alternate screen, narrowed from 87 to 42, keeps rows of 87 and 82 cells;
+  - the clip, wide glyphs included;
+  - 2.1.284's idle prompt with the old tails reads unknown whole, and idle clipped;
+  - a hand-over refused with an empty prompt goes again (two Ctrl+G) and sends, with no fallback;
+  - one refused with other words is refused once, as before.
+- Not changed: the hidden terminal still keeps its last size while chat shows (Q-341).
