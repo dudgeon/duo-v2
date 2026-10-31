@@ -26,6 +26,7 @@ ap.add_argument("--mock-key", help="approve this dummy API key and trust every f
 ap.add_argument("--on-home", action="store_true", help="the restore file shows Home's own project with its newest session as the tab, and that session as Home's tab")
 ap.add_argument("--nested", type=int, default=0, help="Home's newest session ends with your message and Claude's reply holding Markdown lists nested this deep")
 ap.add_argument("--modes-chat", action="store_true", help="chat.json modes: chat for every restored session id")
+ap.add_argument("--tasks", type=int, default=0, help="task notes in every project's tasks/, each linking a few of its sessions (F-442)")
 ap.add_argument("--seed", type=int, default=7)
 a = ap.parse_args()
 
@@ -103,6 +104,15 @@ if a.nested:
         f.write(json.dumps({"type": "user", "message": {"role": "user", "content": text}, "timestamp": ts, "cwd": str(folder), "sessionId": sid}) + "\n")
         f.write(json.dumps({"type": "assistant", "message": {"model": "claude-opus-5-5", "role": "assistant", "content": [{"type": "text", "text": text}]},
                             "timestamp": ts, "cwd": str(folder), "sessionId": sid}) + "\n")
+for folder in folders if a.tasks else []:
+    (folder / "tasks").mkdir(exist_ok=True)
+    mine = [sid for sid, f in ids if f == folder]
+    for k in range(a.tasks):
+        links = "".join(f'  - "[s](duo2://session/{sid})"\n' for sid in (r.sample(mine, min(2, len(mine))) if k < 3 else []))
+        title = " ".join(r.choice(WORDS) for _ in range(4))
+        (folder / "tasks" / f"task-{k + 1}.md").write_text(
+            f"---\ntitle: \"{title}\"\nstatus: open\nsessions:\n{links}owner: \"pm\"\n---\n\n# {title}\n\n"
+            + " ".join(r.choice(WORDS) for _ in range(120)) + "\n")
 state = {"home": str(ws), "root": str(ws)}
 if a.home_view != "none":
     state["homeView"] = a.home_view
@@ -137,4 +147,4 @@ if a.tabs:
         modes = {sid: "chat" for ss in by.values() for sid in ss}
         modes.update({sid: "chat" for sid, folder in ids if folder == ws})
         (sup / "chat.json").write_text(json.dumps({"modes": modes, "last": "chat"}))
-print(f"{root}: {a.projects} projects, {a.sessions} sessions ({a.long} long), {a.tabs} tabs, home view {a.home_view}")
+print(f"{root}: {a.projects} projects, {a.sessions} sessions ({a.long} long), {a.tabs} tabs, {a.tasks} task notes each, home view {a.home_view}")

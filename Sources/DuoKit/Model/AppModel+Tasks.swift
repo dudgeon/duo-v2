@@ -7,9 +7,16 @@ import SwiftUI
 /// sessions working on them. Make a Task works on a session or a group; Add to Task adds a
 /// session's link to an existing note.
 extension AppModel {
-    /// The project's task notes, for Add to Task and `duo2 tasks`.
+    /// The project's task notes, read from disk: for `duo2 tasks` and actions. Never from a view's
+    /// body, where it runs per row per render (F-442): views read `taskSummaries(in:)`.
     public func taskNotes(in project: String) -> [TaskNote] {
         liveFolders[project].map { TaskNotes.load(project: $0) } ?? []
+    }
+
+    /// The project's task notes as the last live refresh read them (off the main thread), in path
+    /// order: what the menus show (F-442).
+    public func taskSummaries(in project: String) -> [Fixture.TaskSummary] {
+        (fixture.tasks ?? []).filter { $0.project == project }
     }
 
     /// Make a Task from sessions (one session, or a group's). Writes `tasks/<slug>.md` linking
