@@ -54,7 +54,7 @@ public enum VoiceDevice {
 }
 
 /// A buffer's loudness, 0…1, on a decibel scale: -50 dBFS (a quiet room) is 0, -10 dBFS (speech close to the mic) is 1.
-/// A linear RMS saturated on ordinary speech, so the bars sat at full height and didn't move (DL-266).
+/// A linear RMS saturated on ordinary speech, so the bars sat at full height and didn't move (DL-271).
 public enum VoiceLevel {
     static func of(_ buffer: AVAudioPCMBuffer) -> Float {
         guard let ch = buffer.floatChannelData?[0], buffer.frameLength > 0 else { return 0 }

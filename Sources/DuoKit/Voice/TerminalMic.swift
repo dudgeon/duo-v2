@@ -49,7 +49,7 @@ final class TerminalMicView: NSView {
     private var notice: NSHostingView<VoiceNoticeBox>?
     /// Where the mic last was in the slot, for the notice.
     private var lastFrame: NSRect?
-    /// The last three levels, one per bar, so the bars move apart (DL-266).
+    /// The last three levels, one per bar, so the bars move apart (DL-271).
     private var levels: [Double] = [0, 0, 0]
 
     /// `DUO_VOICE_MIC_ON_SHELL=1` draws the mic on a shell tab too, so a scripted run can feed recorded Claude screens
@@ -255,7 +255,7 @@ final class TerminalMicView: NSView {
         }
     }
 
-    /// Listening (DL-266, Geoff: "it is not obvious during dictation in terminal mode that the mic is picking up
+    /// Listening (DL-271, Geoff: "it is not obvious during dictation in terminal mode that the mic is picking up
     /// sound"): three bars in place of the mic, 2 wide, 2 apart, in `console` on the light chip, each as tall as one of
     /// the last three levels (2 pt quiet, a dot; 12 pt loud), redrawn at every poll (20 a second). Reduce Motion holds
     /// them still at a middle height.

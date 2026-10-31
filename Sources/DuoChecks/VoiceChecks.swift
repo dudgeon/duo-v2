@@ -70,7 +70,7 @@ import Foundation
         check(wrote == ["add the plan"], "voice: the user's own Duo puts the unsent words on the clipboard")
     }
 
-    // DL-266: the level is on a decibel scale, so speech moves the bars instead of pinning them.
+    // DL-271: the level is on a decibel scale, so speech moves the bars instead of pinning them.
     check(VoiceLevel.scaled(rms: 0) == 0 && abs(VoiceLevel.scaled(rms: 0.003162) - 0) < 0.01, "voice level: -50 dBFS is silent")
     check(abs(VoiceLevel.scaled(rms: 0.03162) - 0.5) < 0.01, "voice level: -30 dBFS (ordinary speech) is half")
     check(VoiceLevel.scaled(rms: 0.3162) > 0.99 && VoiceLevel.scaled(rms: 1) == 1, "voice level: -10 dBFS and louder is full")
