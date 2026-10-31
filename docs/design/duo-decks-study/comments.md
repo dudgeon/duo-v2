@@ -67,7 +67,7 @@ It opens the source margin's composer on that slot, and Duo writes the signed co
 | | What | Depends on |
 |---|---|---|
 | **E1. Comments stripped from the pptx [v1, recommended]** | The deck's discussion stays in git and Duo. The pptx is clean | Nothing |
-| **E2. Open threads exported as PowerPoint comments** | Modern threaded comments anchored to the placeholder, with authors | Whether Google Slides keeps them on import (`research-comments.md`, and a Google test like Q-355's) |
+| **E2. Open threads exported as PowerPoint comments** | Tested (F-497): Google imports **legacy** comments, attached to the slide with author, time and text, replies as separate comments. It drops **modern** threaded ones, as does LibreOffice. So export as legacy comments, one per comment, prefixed `[#c1 on value]` | F-497 |
 | **E3. A choice at export** | "Include comments" in Export ⌄ | E2's answer |
 
 ## Decision order (Geoff: "I trust you to reorder the decisions")
@@ -76,4 +76,6 @@ It opens the source margin's composer on that slot, and Duo writes the signed co
 2. **After split view (DL-275..278):**
    - **Q-395, the preview's look** (P1 pins recommended), with R11 and R12 sent to split view;
    - **Q-396, adding from the preview** (the picked bar and right-click).
-3. **After the Google comment test:** **Q-397, comments in the export** (E1 now; E2 or E3 later).
+3. **Comments in the export (Q-397):** the Google test is done (F-497). E1 stays the v1 recommendation. E3 ("Include comments" at export, written as legacy comments) is cheap and portable whenever it's wanted.
+
+**A whole-slide comment's anchor** (for split view's Add Comment, R12): the slide's title line, or the marker line when the slide has no title. Duo writes the comment on its own line under the marker. The range only sets the focus.

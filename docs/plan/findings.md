@@ -4771,3 +4771,11 @@ Drive's own uploader opens a native file picker, which Claude in Chrome can't dr
 3. A synthetic `dragenter`/`dragover`/`drop` on the file list, carrying those files in a `DataTransfer`, set Drive's own uploader going. The three pptx files arrived at their exact sizes.
 
 File › Save as Google Slides then made converted copies, each opening in a new tab outside the automation's tab group, so it can't close them. Use it only with the account owner's OK, as here (Q-355).
+
+## F-497 · Google Slides imports a pptx's classic comments, not its threaded ones (duo-decks, 2026-10-31; Q-397)
+
+Two synthetic copies of the field-trial deck, each with a comment and a reply on slide 3 (`research-comments.md`, built by hand-written XML). Uploaded byte-exact to Geoff's "Duo Decks tests" folder with his OK (the F-488 method) and converted with File › Save as Google Slides.
+- **Legacy comments** (`ppt/comments/comment1.xml`): both comments show on slide 3 with their authors ("geoff", "sam"), times and text, each marked "From imported document". The reply arrives as a **separate comment, not threaded**. They're attached to the slide, not an element. The Drive connector's `read_file_content` with comments listed none of them. Evidence: `docs/design/duo-decks-study/img/google-legacy-comments.png`.
+- **Modern threaded comments** (`modernComment_*.xml`, anchored to the value placeholder, with a reply): **nothing came through** in Slides, and LibreOffice 26.8.1 drops them too.
+  - Caveat: no PowerPoint was available to confirm the hand-written file is one PowerPoint itself would accept.
+- **So:** if Duo ever exports comments, legacy comments are the portable form. Each one goes on its slide with its author, and the slot and thread id go in the text (`[#c1 on value]`). Threads and resolved state don't survive.
