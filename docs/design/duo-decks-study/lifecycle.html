@@ -158,6 +158,101 @@ footer{font-size:14px;color:var(--ink2);border-top:1px solid var(--rule);padding
 - <strong>The fit check</strong> (plan.md P2) runs at build and at <code>deck check</code>. Its finding names the largest value that fits.
 - <strong>The specimen tab</strong> carries a bar: "Specimen for northwind · 3 templates · Rebuild".</p>
 <p><strong>Q-379.</strong> Are limits only characters (DL-268's definition), or does the checker measure every slot's real text against its box on every check? Proposed: both. Limits are for Claude to plan with; the measured fit is what the checker enforces, and what it reports.</p>
+<h3>M3b · "I already have the deck. Can it become a Duo deck?" Converting a pptx, and merging look-alike layouts</h3>
+<p>Geoff, 2026-10-31: "taking an existing pptx, converting it into a duo deck, either using/amending an existing template, or creating a new one; using claude to coalesce similar but non identical layouts into one, and then editing the deck as a duo deck".</p>
+<p><strong>The case.</strong> <code>grower-update-sept.pptx</code> is a 16-slide deck a colleague made by hand. It came from the Northwind master, but over time people nudged things:
+- three "big number" slides whose boxes sit a few points apart;
+- one of them has an extra footnote box;
+- two "two column" slides, one with headings over its columns;
+- a timeline slide the northwind pack has no template for;
+- a chart;
+- speaker notes, and two review comments left in PowerPoint.</p>
+<p><strong>On screen.</strong> The pptx open in the deck viewer.</p>
+<p><strong>New [P]: Convert to Duo Deck…</strong> in the bar, as Word documents have Convert to Markdown… (DL-123, DL-162). It opens a Duo sheet:
+- <strong>Template pack:</strong> northwind (this project), another pack, or <strong>a new pack from this deck</strong>.
+- <strong>Into:</strong> <code>decks/grower-update-sept.md</code>.
+- Buttons: Cancel, <strong>Convert with Claude</strong> (default).</p>
+<p>The same from Claude: <code>duo2 deck import grower-update-sept.pptx --pack northwind</code>.</p>
+<p><strong>1. Duo groups the slides (deterministic).</strong> The import inventory gives every slide a <strong>layout fingerprint</strong>:
+- for a slide on a real layout, its placeholders' type and idx;
+- for loose boxes, the boxes' kinds and positions rounded to a coarse grid.</p>
+<p>Duo groups identical fingerprints and lists near ones with how far apart they are ("slides 5, 9, 12: same three boxes; 9 has a fourth box; positions differ by up to 6 pt"). It then compares each group with the pack's templates.</p>
+<p><strong>2. Claude proposes the mapping (judgement, with you).</strong> In the session, Claude lays out a plan. It reads as a table:</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Slides</th>
+<th>Becomes</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>title</td>
+<td>an exact match</td>
+</tr>
+<tr>
+<td>2, 3, 7, 14</td>
+<td>bullets</td>
+<td>the same layout</td>
+</tr>
+<tr>
+<td>5, 9, 12</td>
+<td><strong>kpi, amended</strong>: a new optional slot <code>footnote</code></td>
+<td>three look-alikes coalesced; 9's extra box becomes the optional slot, and the 6 pt drift is ignored</td>
+</tr>
+<tr>
+<td>6, 10</td>
+<td>two-column (10's column headings move into the bullets' first line)</td>
+<td>near-identical; headings aren't worth a new template</td>
+</tr>
+<tr>
+<td>11</td>
+<td><strong>timeline, new</strong></td>
+<td>nothing in the pack fits</td>
+</tr>
+<tr>
+<td>13</td>
+<td>image, the chart as a picture</td>
+<td>charts aren't slide content in v1</td>
+</tr>
+<tr>
+<td>15, 16</td>
+<td>section, quote</td>
+<td>exact matches</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Error 9: a merge that would lose something.</strong> Claude flags slide 10: merging it into two-column drops its column headings as headings. It asks with a question card:
+- (a) Fold the headings into the first bullet. Recommended.
+- (b) Amend two-column with optional <code>left-title</code> and <code>right-title</code> slots.
+- (c) Make a new template.</p>
+<p>The rule, as in M2: <strong>Claude coalesces only what you approve, and any merge that changes how content appears is a question.</strong></p>
+<p><strong>3. Duo amends and builds the pack (deterministic).</strong> <code>duo2 deck template build northwind</code>:
+- adds kpi's optional <code>footnote</code> placeholder (idx 16);
+- promotes slide 11 into a new "Timeline" layout;
+- adds both to <code>northwind.md</code>, the new template's purpose and limits written by Claude.</p>
+<p>Existing decks are untouched. An optional slot doesn't break them, and nothing was renamed (Q-385's rename map isn't needed).</p>
+<p><strong>4. Duo converts the content.</strong>
+- Where a slide's layout maps by fingerprint, text moves from placeholder to slot by idx, deterministically.
+- For loose boxes, Claude's mapping from step 2 says which box feeds which slot.
+- Speaker notes become <code>&gt; [!note]</code>.
+- <strong>The PowerPoint comments become Review in Markdown comments</strong> (DL-284), signed with their authors and dates (Geoff's Q-397 answer: comments come into the Markdown and git).
+- The chart on slide 13 is drawn by Duo's own renderer and saved as <code>assets/grower-update-sept-13.png</code> in an image slot.
+- Anything that maps nowhere goes to that slide's notes (DL-281), with the import report saying so.</p>
+<p><strong>Error 10: what doesn't convert.</strong> The import ends with a report in the sheet's place, and as text for Claude:</p>
+<pre><code>grower-update-sept.md: 16 slides from 16. 1 chart became a picture (slide 13). 1 text box went to notes (slide 4: &quot;Draft - not for circulation&quot;). 2 PowerPoint comments imported. Fonts: Avenir Next → Nunito Sans for Google (northwind's substitute).
+</code></pre>
+<p><strong>5. Compare with the original [P].</strong> The deck's bar offers <strong>Compare with Original</strong>. The slides side shows the original pptx and the new deck slide by slide, original on the left and Duo Deck on the right, and differences are listed as numbers (moved boxes, changed sizes). You see that slides 5, 9 and 12 now line up exactly, and that slide 10's headings are bullets now.</p>
+<p><strong>6. It's a Duo deck.</strong> From here everything in M5–M10 applies: the checker, the picker, Change Template, comments, PRs, dated exports. The original pptx is never written (as with Word documents, DL-123).</p>
+<p><strong>Verbs.</strong>
+- <code>duo2 deck import &lt;pptx&gt; [--pack &lt;p&gt; | --new-pack &lt;name&gt;] [--plan &lt;file&gt;]</code>: run without <code>--plan</code>, it prints the grouping and fingerprints for Claude; run with Claude's plan, it converts.
+- <code>duo2 deck compare &lt;deck&gt; &lt;pptx&gt;</code>.</p>
+<p><strong>Q-398.</strong> How far may Claude coalesce look-alike layouts?
+- (a) <strong>Into one template with optional slots, each merge approved in one plan.</strong> Recommended.
+- (b) Only exact fingerprint matches; every variant becomes its own template.
+- (c) Freely, listing what it merged afterwards.</p>
 <h3>M4 · "How do I start a deck?" A new deck from a pack</h3>
 <p><strong>On screen.</strong> <strong>New [P]: New Deck…</strong> in File › New and in Files' <strong>+</strong> menu (⇧⌘N stays "new folder"; no new shortcut, DL-34). It opens a Duo sheet:
 - <strong>Name:</strong> <code>autumn-trial</code>.
@@ -325,6 +420,12 @@ Not placed after changing to two-column: body
 <td>P2</td>
 </tr>
 <tr>
+<td>Converting a deck</td>
+<td>Convert to Duo Deck…; fingerprint grouping; Claude coalesces look-alikes into one template with optional slots (Q-398); comments and notes imported; charts as pictures; Compare with Original; <code>duo2 deck import</code>, <code>deck compare</code></td>
+<td>Application plus agent</td>
+<td>P2</td>
+</tr>
+<tr>
 <td>New deck</td>
 <td>New Deck… sheet with a pack picker; <code>duo2 deck new</code> (Q-380)</td>
 <td>Application</td>
@@ -393,18 +494,16 @@ Not placed after changing to two-column: body
 <section id="questions">
   <span class="eyebrow">Your call</span>
   <h2>Open questions</h2>
-  <p class="col">Decided so far: Q-384 and Q-381 (DL-281), Q-386 (DL-282). Each card names its moment above; the comments question is explained in comments.md, summarised in M9 of the life cycle. The recommendation is first. Pick, add a note if you like, and save; I read the answers from this page.</p>
+  <p class="col">Decided so far: Q-381 and Q-384 (DL-281), Q-386 (DL-282), Q-383 (DL-285), Q-393 (DL-286), Q-394 (DL-284), Q-397 (comments stay in the Markdown; ENH-308). Each card names its moment above; the comments question is explained in comments.md, summarised in M9 of the life cycle. The recommendation is first. Pick, add a note if you like, and save; I read the answers from this page.</p>
   <div class="dec" data-q="Q-377"><div class="dec-head"><span class="qid">Q-377 · M1</span><h3>Where does "make templates" start?</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · A Make Templates… mode in the deck viewer</span><span class="b">Tick the slides you see, then Make Templates with Claude.</span></button><button class="opt" data-v="B"><span class="t">B · A Files context-menu item</span><span class="b">Right-click the pptx; Claude asks which slides.</span></button><button class="opt" data-v="C"><span class="t">C · Only by asking Claude</span><span class="b">No new UI.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-377" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
 <div class="dec" data-q="Q-378"><div class="dec-head"><span class="qid">Q-378 · M2</span><h3>When a mapping is ambiguous, does Claude ask?</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · Ask when it changes what goes where; list when it is only naming</span><span class="b">Fewest questions that matter.</span></button><button class="opt" data-v="B"><span class="t">B · Always ask</span><span class="b">Safest, chattiest.</span></button><button class="opt" data-v="C"><span class="t">C · Decide and list every guess</span><span class="b">Fastest; you review after.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-378" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
 <div class="dec" data-q="Q-379"><div class="dec-head"><span class="qid">Q-379 · M3</span><h3>Limits in characters, or measured fit?</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · Both: limits guide Claude, the measured fit is enforced</span><span class="b">The checker names the largest value that fits.</span></button><button class="opt" data-v="B"><span class="t">B · Character limits only</span><span class="b">Simpler; overflow possible in real fonts.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-379" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
 <div class="dec" data-q="Q-380"><div class="dec-head"><span class="qid">Q-380 · M4</span><h3>How do you start a deck?</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · A New Deck… sheet with a pack picker</span><span class="b">Plus duo2 deck new.</span></button><button class="opt" data-v="B"><span class="t">B · A file template (templates/new-deck.md)</span><span class="b">No new UI; no pack picker.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-380" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
 <div class="dec" data-q="Q-382"><div class="dec-head"><span class="qid">Q-382 · M6, M7</span><h3>Should Duo apply one-answer fixes as buttons?</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · Yes, only when there is exactly one right answer</span><span class="b">"Use kpi", "Move to left". Judgement goes to Claude.</span></button><button class="opt" data-v="B"><span class="t">B · No, every fix goes through Claude</span><span class="b">One path for everything.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-382" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
-<div class="dec" data-q="Q-383"><div class="dec-head"><span class="qid">Q-383 · M7</span><h3>Who decides where content goes when a slide changes template?</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · Duo's rules; a pack may override</span><span class="b">Fixed rules in Duo (title stays, same names carry, default to default, the only slot of the same kind) unless the pack names a mapping. Leftovers go to notes (DL-281).</span></button><button class="opt" data-v="B"><span class="t">B · Duo's rules only</span><span class="b">One set for every pack, nothing to configure.</span></button><button class="opt" data-v="C"><span class="t">C · Same-named slots only</span><span class="b">Everything else goes to notes.</span></button><button class="opt" data-v="D"><span class="t">D · Claude decides each time</span><span class="b">Judgement per slide; costs a turn.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-383" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
 <div class="dec" data-q="Q-385"><div class="dec-head"><span class="qid">Q-385 · M8</span><h3>A pack changes under live decks</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · A rename map, with Rename in All Decks</span><span class="b">Decks in a project move together.</span></button><button class="opt" data-v="B"><span class="t">B · Versioned packs decks pin (northwind@3)</span><span class="b">Old decks never break; old layouts kept forever.</span></button><button class="opt" data-v="C"><span class="t">C · Neither; decks break and get fixed</span><span class="b">Nothing to build.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-385" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
 <div class="dec" data-q="Q-391"><div class="dec-head"><span class="qid">Q-391 · M6</span><h3>Which key opens the template picker in a deck?</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · ⇧⌘N while in a deck</span><span class="b">PowerPoint's and Keynote's New Slide; New Note elsewhere.</span></button><button class="opt" data-v="B"><span class="t">B · ⌃M</span><span class="b">Google Slides' New Slide.</span></button><button class="opt" data-v="C"><span class="t">C · ⌃⌘N</span><span class="b">Free; matches no slide app.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-391" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
 <div class="dec" data-q="Q-392"><div class="dec-head"><span class="qid">Q-392 · M6</span><h3>How does the slide marker look in the editor?</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · A slide header chip</span><span class="b">"Slide 3 · kpi ⌄"; click to change template. The file is unchanged.</span></button><button class="opt" data-v="B"><span class="t">B · The raw comment, dimmed</span><span class="b">Editable text in text2.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-392" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
-<div class="dec" data-q="Q-393"><div class="dec-head"><span class="qid">Q-393 · M9</span><h3>Which dated exports does git keep?</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · Only the newest</span><span class="b">A new export removes the older one in the same commit; history keeps them.</span></button><button class="opt" data-v="B"><span class="t">B · Every export</span><span class="b">The folder grows.</span></button><button class="opt" data-v="C"><span class="t">C · Newest in git, older ignored</span><span class="b">Older ones move to an ignored folder on this Mac.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-393" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
-<div class="dec" data-q="Q-394"><div class="dec-head"><span class="qid">Q-394 · Comments</span><h3>Where do comments live in a deck?</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · Review in Markdown's inline comments, on their own line in the slot</span><span class="b">The existing convention, margin and @claude routing; pins on slides point at them.</span></button><button class="opt" data-v="B"><span class="t">B · A comments callout per slide</span><span class="b">Content stays clean; a second convention the margin and verbs don't read.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-394" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
+<div class="dec" data-q="Q-398"><div class="dec-head"><span class="qid">Q-398 · M3b</span><h3>How far may Claude merge look-alike layouts when converting a deck?</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · Into one template with optional slots, approved in one plan</span><span class="b">Every merge listed before anything is built; questions where content would look different.</span></button><button class="opt" data-v="B"><span class="t">B · Exact matches only</span><span class="b">Every variant becomes its own template; more templates.</span></button><button class="opt" data-v="C"><span class="t">C · Freely, listed afterwards</span><span class="b">Fastest; you review after.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-398" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
 </section>
 <footer>Duo Decks study · docs/design/duo-decks-study/lifecycle.md on research/duo-decks · synthetic world (Northwind Labs, an orchard-robotics team).</footer>
 </div>
