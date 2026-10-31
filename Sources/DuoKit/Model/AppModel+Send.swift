@@ -349,6 +349,13 @@ extension AppModel {
             guard let self, let text else { return }
             if let key { self.send(text, to: key) } else { self.send(text) }
         }
+        // A split routes by its active side, model state (routing-verbs): the preview's selection, or the source's.
+        if splitHasKeys, let t = showingSplit, t.active == .preview {
+            if t.kind == .html { htmlSelectionPayload(deliver) }
+            else if t.kind == .markdown { splits.markdown.webView.evaluateJavaScript("String(getSelection())") { v, _ in
+                MainActor.assumeIsolated { if let text = v as? String, !text.isEmpty { deliver(text) } } } }
+            return
+        }
         if webFocus == .editor || editorIfLoaded?.hasFocus == true { documentSelectionPayload(deliver) }
         else if webFocus == .html { htmlSelectionPayload(deliver) }
     }
@@ -357,6 +364,6 @@ extension AppModel {
     public var canSendSelection: Bool {
         // Observed (webFocus, the console tab) so the menu re-validates; the send itself checks
         // the session's readiness and says why if it can't.
-        webFocus != .none && visibleSessionId != nil
+        (webFocus != .none || splitHasKeys) && visibleSessionId != nil
     }
 }

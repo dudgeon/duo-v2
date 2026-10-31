@@ -14,11 +14,26 @@ struct PaneFocusRule: View {
         if model.activePane == pane {
             let light = pane == .left ? model.homeShowsChat : model.consoleShowsChat
             let dark = onConsole && !light
-            (dark ? DuoColor.paneFocusOnConsole : DuoColor.paneFocus)
-                .frame(height: DuoMetric.borderPaneFocusRule)
+            let color = dark ? DuoColor.paneFocusOnConsole : DuoColor.paneFocus
+            if pane == .right, let split = model.showingSplit {
+                // A split (DL-275): the rule spans only the active side's width, at the top of the strip.
+                GeometryReader { geo in
+                    let w = SplitGeometry.widths(width: geo.size.width, ratio: split.ratio)
+                    let side = split.activeSide
+                    let folded = SplitGeometry.folded(width: geo.size.width)
+                    color.frame(width: folded ? geo.size.width : side == .left ? w.left : w.right, height: DuoMetric.borderPaneFocusRule)
+                        .offset(x: folded || side == .left ? 0 : w.left + SplitGeometry.divider)
+                }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 .allowsHitTesting(false)
                 .accessibilityHidden(true)
+            } else {
+                color
+                    .frame(height: DuoMetric.borderPaneFocusRule)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+            }
         }
     }
 }

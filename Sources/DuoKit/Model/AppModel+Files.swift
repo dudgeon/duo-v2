@@ -120,6 +120,7 @@ extension AppModel {
     public func closeDocument(_ path: String) {
         guard let i = openDocuments.firstIndex(of: path) else { return }
         if path.hasPrefix("web:") { return closeWebTab(path) }
+        endSplit(path)   // the preview has no file of its own: closing the source closes the split (DL-275)
         // Save, then let go of the file: the editor kept it after its tab closed, so doc status
         // still said "open in Duo" and Claude's edits went into a buffer nobody could see (F-52).
         // A file gone from disk has no liveFile, but its tab still holds the editor (BUG-098): let go of it too.
@@ -260,6 +261,7 @@ extension AppModel {
         openDocuments = openDocuments.map { p in
             p == old ? new : p.hasPrefix(old + "/") ? new + p.dropFirst(old.count) : p
         }
+        splitMoved(old, to: new)
         if let tab = rightTab, tab == old || tab.hasPrefix(old + "/") { rightTab = new + tab.dropFirst(old.count) }
         if let sel = selectedFile, sel == old || sel.hasPrefix(old + "/") { selectedFile = new + sel.dropFirst(old.count) }
         if let folder = projectFolder {

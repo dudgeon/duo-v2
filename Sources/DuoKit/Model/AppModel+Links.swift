@@ -79,7 +79,7 @@ extension AppModel {
     public func revealInTree(_ path: String) {
         guard let p = currentProject?.name else { return }
         if boardProjects.contains(p) { showBoard(false, project: p) }
-        if leftCollapsed { leftCollapsed = false }
+        if leftCollapsed { if splits.sidebarFolded { splits.peek = true } else { leftCollapsed = false } }   // a split's folded sidebar peeks (DL-276)
         let parts = path.split(separator: "/").map(String.init)
         for i in parts.indices { expandedFolders[p, default: []].insert(parts[0...i].joined(separator: "/")) }
         if let root = liveFolders[p] {

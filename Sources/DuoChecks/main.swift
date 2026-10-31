@@ -54,6 +54,7 @@ func repoFixture() throws -> Fixture {
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "pane" { return try paneFocusChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "editors" { return try editorSetChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "editorperf" { return try editorPerfChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "split" { return try splitViewChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "docxlook" { return try docxLookChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "tabs" { return try tabOrderChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "newsession" { return try newSessionChecks() }
@@ -794,6 +795,7 @@ func repoFixture() throws -> Fixture {
     dockBadgeChecks()
     try paneFocusChecks()
     try editorSetChecks()
+    try splitViewChecks()
     try tabOrderChecks()
     try newSessionChecks()
     try newSessionRowChecks()

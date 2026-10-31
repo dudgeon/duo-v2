@@ -59,7 +59,7 @@ struct SidebarToggle: View {
 
     var body: some View {
         Button {
-            model.leftCollapsed.toggle()
+            model.toggleSidebarOrPeek()  // action: view sidebar
         } label: {
             Image(systemName: "sidebar.left")
                 .font(.system(size: DuoSymbolSize.toolbarIcon))

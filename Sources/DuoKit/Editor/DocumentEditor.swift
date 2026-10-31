@@ -93,6 +93,8 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     private var fileFD: Int32 = -1
     /// Called when conflict or removed-on-disk changes (the bars under the document redraw).
     var onStateChange: (() -> Void)?
+    /// The buffer may have changed (a report from the page): split view's preview renders it 250 ms after typing pauses.
+    var onBufferChange: (() -> Void)?
     /// Called once, after the first document is chosen (see `open`).
     var onFirstDocument: (() -> Void)?
     private var announcedFirstDocument = false
@@ -522,6 +524,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
             claudeChanges = count; atClaudeChange = atCaret; inTable = table; onStateChange?()
         }
         dirty = body["dirty"] as? Bool == true
+        if dirty { onBufferChange?() }
         guard dirty else { return }
         lastTyped = Date()
         // Autosave a second after the last change (no "Save?" prompts; files are the truth).

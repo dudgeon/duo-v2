@@ -876,6 +876,9 @@ struct RightPane: View {
                 }
             } else if model.rightTab == ReadOnlySession.tabKey, let ro = model.readOnlySession {
                 ReadOnlySessionView(session: ro)
+            } else if let path = model.rightTab, model.splitTab(path) != nil, let file = model.liveFile(path) {
+                // A split tab (DL-275): the source and its preview, two sides of one tab.
+                SplitBody(path: path, file: file)
             } else if let path = model.rightTab, ["html", "htm"].contains((path as NSString).pathExtension.lowercased()),
                let file = model.liveFile(path),
                // An outside page reads from its own folder (DL-106); a project's from the project.
@@ -947,9 +950,13 @@ struct RightPane: View {
                         }
                         // A popup's tab leads with ↳ (DL-132 i, standins2-handoff q67-popup).
                         if opener != nil { Text("↳").duoText(.body).foregroundStyle(DuoColor.text2).padding(.trailing, 3) }
-                        Text("\(Text(title).foregroundStyle(active ? DuoColor.text : DuoColor.text2))\(conflicted ? Text(" · conflict").foregroundStyle(DuoColor.text) : Text(""))")
-                            .duoText(active ? .bodyEmphasis : .body)
-                            .lineLimit(1)
+                        if let split = model.splitTab(tab.id) {
+                            SplitTabNames(split: split, title: title, tabActive: active)
+                        } else {
+                            Text("\(Text(title).foregroundStyle(active ? DuoColor.text : DuoColor.text2))\(conflicted ? Text(" · conflict").foregroundStyle(DuoColor.text) : Text(""))")
+                                .duoText(active ? .bodyEmphasis : .body)
+                                .lineLimit(1)
+                        }
                         // A file outside the project shows its folder under the pointer (DL-132 f, q39-hover).
                         if outside, model.showsTabClose(tab.id) {
                             Text(AppModel.short(URL(fileURLWithPath: String(tab.id.dropFirst(AppModel.outsideFilePrefix.count))).deletingLastPathComponent().path))
@@ -976,6 +983,12 @@ struct RightPane: View {
                         .modifier(LiveContextMenu(enabled: tab.isDocument) {
                             Button("Close Tab") { model.closeDocument(tab.id) }
                             Button("Close Other Tabs") { model.closeOtherDocuments(than: tab.id) }
+                            if model.splitTab(tab.id) != nil {
+                                Button("Close Split View") { model.closeSplitView(tab.id) }  // action: split close
+                                Button("Swap Sides") { model.rightTab = tab.id; model.swapSplitSides() }  // action: split swap
+                            } else if model.previewKind(forTab: tab.id) != nil {
+                                Button("Show Preview in Split View") { model.openSplitView(tab.id) }  // action: split
+                            }
                             Divider()
                             // DL-220 (tabs-menu): the tab one place along; dimmed at the end it's at.
                             Button("Move Tab Left") { model.moveTab(tab.id, in: .right, by: -1) }  // action: view tab-move
