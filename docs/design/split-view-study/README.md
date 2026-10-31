@@ -1,6 +1,6 @@
 # Split view: design study
 
-Status: **proposed, waiting on Geoff** (Q-362 to Q-368; Geoff's answers become DL-275 to DL-278). Every mark on the canvas is [P]. Research and design only; nothing is built.
+Status: **decided** (Geoff, 2026-10-31: DL-275 to DL-278; C, a split tab). Slice 1 is handed off in `../split-view-handoff/`. Every mark on the canvas is [P]. Research and design only; nothing is built.
 
 Geoff, 2026-10-31 (the full request is in `tasks/split-view.md`): study legacy Duo's Split View and every decision behind it, so v2 can build split view cleanly. It comes first because split view is the way to show a deck's Markdown source beside its rendered slides (Duo Decks).
 
