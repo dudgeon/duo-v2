@@ -28,6 +28,8 @@ let args = [action.verb] + rest   // what the local verbs below read (args[0] is
 switch action.id {
 case .search, .searchStatus:
     exit(runSearch(action.verb, rest))
+case .deckTemplates, .deckCheck, .deckExport, .deckInsert, .deckNew, .deckChange, .deckRender:
+    exit(runDeck(action.verb, rest))
 case .help:
     if rest.first == "--markdown" { print(DuoAction.markdown(), terminator: "") } else { print(DuoAction.help(family: rest.first), terminator: "") }
 case .legacy:

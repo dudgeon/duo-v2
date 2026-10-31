@@ -898,7 +898,8 @@ extension AppModel {
             walkSetup(t, done: done)
         case .searchRebuild:
             rebuildSearchIndex(); done(.ok("Rebuilding the search index; `duo2 search-status` shows progress."))
-        case .help, .doctor, .legacy, .install, .uninstall, .hook, .compose, .search, .searchStatus, .updateProbe, .hangs:
+        case .help, .doctor, .legacy, .install, .uninstall, .hook, .compose, .search, .searchStatus, .updateProbe, .hangs,
+             .deckTemplates, .deckCheck, .deckExport, .deckInsert, .deckNew, .deckChange, .deckRender:
             done(.fail("`duo2 \(id.rawValue)` runs in the CLI, not the app"))
         }
     }
