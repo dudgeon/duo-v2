@@ -7,6 +7,9 @@ extension Deck {
         /// Slides with unheaded text and lone images moved into their slots.
         public var slides: [Slide]
         public var problems: [Problem]
+        /// Things worth a look that don't stop an export: an empty slot (a template just changed, a
+        /// heading with nothing under it).
+        public var notices: [Problem] = []
     }
 
     /// Checks a deck against its template pack: the prototype's messages, one per problem, each
@@ -14,6 +17,7 @@ extension Deck {
     public static func check(deck: URL, packDirs: [URL]) throws -> Checked {
         let parsed = parse(try String(contentsOf: deck, encoding: .utf8))
         var problems = parsed.problems
+        var notices: [Problem] = []
         if parsed.front.isEmpty && parsed.slides.isEmpty { return Checked(parsed: parsed, pack: nil, slides: [], problems: problems) }
         if parsed.front["type"] != "deck" { problems.append(Problem(line: 2, message: "frontmatter needs type: deck")) }
         let pack = try loadPack(parsed.front["template"] ?? "", in: packDirs)
@@ -46,7 +50,14 @@ extension Deck {
                 }
             }
             s.slots.removeAll { $0.name == "_default" && t.slots.first(where: \.isDefault) == nil }
+            for spec in t.slots where !s.slots.contains(where: { $0.name == spec.name }) && s.slot("_default") == nil {
+                notices.append(Problem(line: s.line, message: "\(where_), \(spec.name): is empty"))
+            }
             for got in s.slots where got.name != "_default" {
+                if got.lines.allSatisfy({ $0.trimmingCharacters(in: .whitespaces).isEmpty }) {
+                    notices.append(Problem(line: got.line, message: "\(where_), \(got.name): is empty"))
+                    continue
+                }
                 guard let spec = t.slot(got.name) else {
                     problems.append(Problem(line: got.line, message: "\(where_): no slot \"\(got.name)\"; \(s.template) has \(t.slots.map(\.name).joined(separator: ", "))"))
                     continue
@@ -56,7 +67,8 @@ extension Deck {
             slides[n] = s
         }
         problems.sort { ($0.line, $0.message) < ($1.line, $1.message) }
-        return Checked(parsed: parsed, pack: pack, slides: slides, problems: problems)
+        notices.sort { ($0.line, $0.message) < ($1.line, $1.message) }
+        return Checked(parsed: parsed, pack: pack, slides: slides, problems: problems, notices: notices)
     }
 
     static func bulletIndent(_ l: String) -> Int { l.prefix { $0 == " " }.count }
@@ -106,8 +118,12 @@ extension Deck {
     }
 
     /// `file:line: message`, one per problem, then the count.
-    public static func report(_ deckPath: String, _ problems: [Problem]) -> String {
-        problems.map { "\(deckPath):\($0.line): \($0.message)" }.joined(separator: "\n")
-            + (problems.isEmpty ? "no problems" : "\n\(problems.count) problem\(problems.count == 1 ? "" : "s")")
+    /// Notices follow the problems as `file:line: notice: message`, and the count says how many of each.
+    public static func report(_ deckPath: String, _ problems: [Problem], notices: [Problem] = []) -> String {
+        var out = problems.map { "\(deckPath):\($0.line): \($0.message)" }
+        out += notices.map { "\(deckPath):\($0.line): notice: \($0.message)" }
+        let np = problems.isEmpty ? "no problems" : "\(problems.count) problem\(problems.count == 1 ? "" : "s")"
+        let nn = notices.isEmpty ? "" : ", \(notices.count) notice\(notices.count == 1 ? "" : "s")"
+        return (out + [np + nn]).joined(separator: "\n")
     }
 }

@@ -22,6 +22,16 @@ public enum Deck {
         public var lines: [String]
         /// Review marks (comments, highlights, suggestions) whose lines fall inside this slot.
         public var marks: [Mark] = []
+        /// The slot's body as written in the file, comments and highlight markers included (what a
+        /// template change carries over, DL-284): from the line after its `##` heading (the first
+        /// text line for unheaded text) to the last line before the next heading, note or slide,
+        /// with blank lines and `---` trimmed from both ends.
+        public var raw: [String] = []
+        /// The last source line of that body (the heading's line when it is empty).
+        public var blockEnd: Int = 0
+        public init(name: String, line: Int, lastLine: Int, lines: [String], marks: [Mark] = [], raw: [String] = [], blockEnd: Int = 0) {
+            self.name = name; self.line = line; self.lastLine = lastLine; self.lines = lines; self.marks = marks; self.raw = raw; self.blockEnd = blockEnd
+        }
     }
 
     /// A Review in Markdown mark (DL-236) found in the deck, with its source lines. The marks are
@@ -46,6 +56,9 @@ public enum Deck {
         /// Marks that belong to the slide itself: on the line after its marker, or outside any slot.
         public var marks: [Mark] = []
         public func slot(_ name: String) -> Slot? { slots.first { $0.name == name } }
+        public init(template: String, line: Int, lastLine: Int, slots: [Slot] = [], notes: [String] = [], notesLine: Int? = nil, marks: [Mark] = []) {
+            self.template = template; self.line = line; self.lastLine = lastLine; self.slots = slots; self.notes = notes; self.notesLine = notesLine; self.marks = marks
+        }
     }
 
     public struct Parsed: Sendable {
@@ -73,7 +86,11 @@ public enum Deck {
         public var layout: String
         public var fingerprint: String
         public var slots: [SlotSpec]
+        /// A pack's own carry-over for changing to this template (DL-285): `from: {bullets: {body: left}}`
+        /// in its yaml block means "from `bullets`, the `body` slot goes to `left`". Wins over Duo's rules.
+        public var overrides: [String: [String: String]] = [:]
         public func slot(_ n: String) -> SlotSpec? { slots.first { $0.name == n } }
+        public var defaultSlot: SlotSpec? { slots.first(where: \.isDefault) }
     }
 
     public struct Pack: Sendable {
@@ -195,8 +212,8 @@ public enum Deck {
                 continue
             }
             if line.trimmingCharacters(in: .whitespaces) == "---" { continue }
-            if line.hasPrefix("# "), slides[c].slot("title") == nil {
-                slides[c].slots.append(Slot(name: "title", line: n, lastLine: n, lines: [String(line.dropFirst(2)).trimmingCharacters(in: .whitespaces)]))
+            if line.hasPrefix("# ") || line == "#", slides[c].slot("title") == nil {
+                slides[c].slots.append(Slot(name: "title", line: n, lastLine: n, lines: [String(line.dropFirst(1)).trimmingCharacters(in: .whitespaces)]))
                 slot = nil; slides[c].lastLine = n
                 continue
             }
@@ -228,6 +245,23 @@ public enum Deck {
                 slides[c].slots.append(Slot(name: key, line: n, lastLine: n, lines: [line]))
             }
             slides[c].lastLine = n
+        }
+        // Each slot's body as written (comments kept): see Slot.raw.
+        let original = source.components(separatedBy: "\n")
+        for (si, slide) in slides.enumerated() {
+            let end = (si + 1 < slides.count ? slides[si + 1].line : lines.count + 1)   // exclusive, 1-based
+            let starts = Set(slide.slots.map(\.line) + [slide.notesLine].compactMap { $0 })
+            for (k, sl) in slide.slots.enumerated() {
+                if sl.name == "title" { slides[si].slots[k].raw = sl.lines; slides[si].slots[k].blockEnd = sl.line; continue }
+                let next = starts.filter { $0 > sl.line }.min() ?? end
+                let headed = sl.name != "_default" && sl.name != "_image"
+                var lo = headed ? sl.line + 1 : sl.line, hi = min(next, end) - 1
+                func skip(_ i: Int) -> Bool { let t = original[i - 1].trimmingCharacters(in: .whitespaces); return t.isEmpty || t == "---" }
+                while lo <= hi, skip(lo) { lo += 1 }
+                while hi >= lo, skip(hi) { hi -= 1 }
+                slides[si].slots[k].raw = lo <= hi ? Array(original[(lo - 1)...(hi - 1)]) : []
+                slides[si].slots[k].blockEnd = max(hi, sl.line)
+            }
         }
         // The anchor map for marks: a slot when the mark sits inside its lines, else the slide.
         // A comment alone on the line after the slide marker is the slide's.
@@ -283,6 +317,27 @@ public enum Deck {
         return (top, slots)
     }
 
+    /// `{bullets: {body: left}, kpi: {context: left}}`: nested flow maps of plain words.
+    static func overrides(_ text: String?) -> [String: [String: String]] {
+        guard let text, text.hasPrefix("{"), text.hasSuffix("}") else { return [:] }
+        var out: [String: [String: String]] = [:]
+        var depth = 0, token = "", key = "", outer = ""
+        func word(_ t: String) -> String { t.trimmingCharacters(in: .whitespaces) }
+        func store() { if !word(key).isEmpty, !word(token).isEmpty { out[outer, default: [:]][word(key)] = word(token) }; key = ""; token = "" }
+        for ch in text.dropFirst().dropLast() {
+            switch (ch, depth) {
+            case ("{", 0): depth = 1; token = ""; key = ""
+            case ("}", 1): store(); depth = 0
+            case (":", 0): outer = word(token); token = ""
+            case (":", 1): key = token; token = ""
+            case (",", 1): store()
+            case (",", 0): token = ""
+            default: token.append(ch)
+            }
+        }
+        return out
+    }
+
     public static func loadPack(_ name: String, in dirs: [URL]) throws -> Pack {
         guard let md = dirs.map({ $0.appending(path: name).appending(path: "\(name).md") }).first(where: { FileManager.default.fileExists(atPath: $0.path) }) else {
             throw Failure(description: "no template pack \"\(name)\" in \(dirs.map(\.path).joined(separator: ", "))")
@@ -307,8 +362,10 @@ public enum Deck {
                          items: m["items"] as? Int, levels: m["levels"] as? Int, rows: m["rows"] as? Int, cols: m["cols"] as? Int,
                          aspect: (m["aspect"] as? Double) ?? (m["aspect"] as? Int).map(Double.init), isDefault: m["default"] as? Bool ?? false)
             }
-            templates.append(Template(name: name, purpose: purpose.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines),
-                                      layout: y.top["layout"] ?? "", fingerprint: y.top["fingerprint"] ?? "", slots: specs))
+            var tpl = Template(name: name, purpose: purpose.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines),
+                               layout: y.top["layout"] ?? "", fingerprint: y.top["fingerprint"] ?? "", slots: specs)
+            tpl.overrides = overrides(y.top["from"])
+            templates.append(tpl)
         }
         return Pack(name: name, md: md, front: front, templates: templates)
     }
