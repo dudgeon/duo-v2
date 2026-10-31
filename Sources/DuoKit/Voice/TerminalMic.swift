@@ -10,13 +10,18 @@ import SwiftUI
 /// rect takes clicks.
 /// Design studies for the mic's look (`MicFix.dc.html`, after Geoff rejected the thin outline in a gap of the rule):
 /// `a` a 30 × 20 capsule on the rule, `b` the same with words, `c` a round button in a margin Duo keeps beside the
-/// terminal. Only an isolated Duo honours `DUO_VOICE_MIC_STYLE`; a release draws `today`.
+/// terminal. Geoff chose none of them (DL-264): `chosen` is today's subtle mark, beside the prompt row in C's margin.
+/// Only an isolated Duo honours `DUO_VOICE_MIC_STYLE` (today, a, b, c); a release draws `chosen`.
 enum VoiceMicStyle {
-    case today, a, b, c
+    case chosen, today, a, b, c
     static let current: VoiceMicStyle = {
-        guard SupportFolder.isIsolated else { return .today }
-        switch ProcessInfo.processInfo.environment["DUO_VOICE_MIC_STYLE"] { case "a": return .a; case "b": return .b; case "c": return .c; default: return .today }
+        guard SupportFolder.isIsolated else { return .chosen }
+        switch ProcessInfo.processInfo.environment["DUO_VOICE_MIC_STYLE"] {
+        case "today": return .today; case "a": return .a; case "b": return .b; case "c": return .c; default: return .chosen
+        }
     }()
+    /// Whether Claude's terminal gives up columns for a margin the mic sits in.
+    var keepsMargin: Bool { self == .chosen || self == .c }
 }
 
 @MainActor
@@ -24,6 +29,8 @@ final class TerminalMicView: NSView {
     static let size = NSSize(width: 24, height: 18)
     static let chip = NSSize(width: 30, height: 20)
     static let round: CGFloat = 28
+    /// DL-264: today's mark in a 24 × 22 patch, beside the prompt row.
+    static let beside = NSSize(width: 24, height: 22)
     /// A harness switch: draw the hover look.
     var forceHover = false
     private var cellH: CGFloat = 15
@@ -48,7 +55,10 @@ final class TerminalMicView: NSView {
     static let onShellForProofs = SupportFolder.isIsolated && ProcessInfo.processInfo.environment["DUO_VOICE_MIC_ON_SHELL"] == "1"
 
     override var isFlipped: Bool { true }
-    override init(frame: NSRect) { super.init(frame: frame); isHidden = true; setAccessibilityLabel("Voice input"); setAccessibilityRole(.button) }
+    override init(frame: NSRect) {
+        super.init(frame: frame); isHidden = true; setAccessibilityLabel("Voice input"); setAccessibilityRole(.button)
+        toolTip = VoiceCopy.tooltip
+    }
     required init?(coder: NSCoder) { fatalError() }
 
     override func viewDidMoveToWindow() {
@@ -93,7 +103,7 @@ final class TerminalMicView: NSView {
         case .today: Self.size.width
         case .a: Self.chip.width + 12
         case .b: chipWidth + 12
-        case .c: 1
+        case .c, .chosen: 1
         }
         let cells = Int(ceil(wanted / cell.width))
         // Scrolled back: the viewport's top row (SwiftTerm's yDisp) is below the highest it has been. The scroller's own
@@ -126,6 +136,14 @@ final class TerminalMicView: NSView {
             // Beside the box, in the margin Duo keeps: centred on the prompt row the finder reports.
             let y = tf.minY + (CGFloat(a.promptRow) + 0.5) * cell.height - Self.round / 2
             f = NSRect(x: (sv.bounds.width - 10 - Self.round).rounded(), y: y.rounded(), width: Self.round, height: Self.round)
+        case .chosen:
+            // DL-264: in the margin, centred across it, and centred on the input box's text rows (the prompt row to the
+            // row above the bottom rule), so a box of several lines keeps it in its middle.
+            let b = Self.beside
+            let mid = (CGFloat(a.promptRow) + CGFloat(max(a.promptRow, a.row - 1))) / 2 + 0.5
+            let y = tf.minY + mid * cell.height - b.height / 2
+            let x = tf.maxX + (sv.bounds.width - tf.maxX - b.width) / 2
+            f = NSRect(x: x.rounded(), y: y.rounded(), width: b.width, height: b.height)
         }
         if frame != f { frame = f }
         lastFrame = f
@@ -220,7 +238,7 @@ final class TerminalMicView: NSView {
 
     override func draw(_ dirty: NSRect) {
         switch VoiceMicStyle.current {
-        case .today: drawToday()
+        case .today, .chosen: drawToday()
         case .c: drawChip(bounds, round: true)
         case .a, .b:
             // `console` over the cells' row, so the rule isn't seen beside the chip; the chip centred on it.

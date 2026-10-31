@@ -53,6 +53,8 @@ struct ChatComposerArea: View {
                         ChatModeMark(mode: mode)
                         Text(mode.chip)
                     }
+                    // One line, its own width: in a narrow pane (Home's 340) the hints give way, not the chip (V-11).
+                    .lineLimit(1).fixedSize()
                     .duoText(.chatMeta).foregroundStyle(DuoColor.text2)
                     .padding(.horizontal, 8)
                     .background(Capsule().fill(DuoColor.pane))
