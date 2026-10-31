@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The Duo Decks interface</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.t2{color:#5B636D}
+.h{font:600 15px/20px -apple-system,system-ui,sans-serif}
+.box{background:#FFFFFF;border:1px solid #8B939C;border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:6px}
+.lbl{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#5B636D}
+.arr{display:flex;flex-direction:column;gap:4px;justify-content:center;font:12px/18px 'SF Mono',Menlo,monospace;color:#1F2328}
+code{font:12px/18px 'SF Mono',Menlo,monospace}
+ul{margin:0;padding-left:18px}
+li{margin:2px 0}
+</style>
+</helmet>
+<div style="width:1900px;height:1000px;box-sizing:border-box;padding:28px 36px;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;display:flex;flex-direction:column;gap:18px">
+  <div><span class="h" style="font-size:20px;line-height:28px">The interface between split view and a preview (agreed shape with duo-decks, proposed)</span><br><span class="t2">Duo Decks’ proposal (R1–R10, <code>SourcePreview</code>) with three changes: the name, a revision on every event, and render-from-buffer after DL-77 reconciles. Any viewer that can be the other side of a source implements it: the deck viewer first, then Markdown and HTML previews.</span></div>
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) 220px minmax(0,1fr) 220px minmax(0,1fr);gap:0;align-items:stretch">
+    <div class="box"><span class="lbl">The editor (source side)</span><b>Owns the caret and the lines</b><ul><li>caret, selection, visible lines</li><li>reveals lines, marks problem lines</li><li>the formatting bar, review bar and dictation</li><li>DL-77’s reconcile with disk</li></ul></div>
+    <div class="arr" style="padding:0 10px"><span>textChanged(rev) →</span><span>caretMoved(line) →</span><span>visibleLines(range) →</span><span>selection →</span><span style="margin-top:10px">← reveal(lines)</span><span>← mark(problems)</span></div>
+    <div class="box" style="border-width:1.5px;border-color:#1F2328"><span class="lbl">Split view</span><b>Owns the policy</b><ul><li>caret-follow (on), scroll-follow (off by default)</li><li>debounce: render 250 ms after typing pauses</li><li>loop suppression: every event carries its origin and revision</li><li>the split tab, divider, fold, making room, persistence</li><li><code>duo2 split …</code></li></ul></div>
+    <div class="arr" style="padding:0 10px"><span>render(text, rev) →</span><span>reveal(anchor, reason) →</span><span style="margin-top:10px">← anchorMap(rev, [AnchorRange])</span><span>← activate(anchor)</span><span>← current(anchor)</span><span>← problems(rev, [SourceProblem])</span></div>
+    <div class="box"><span class="lbl">The preview (PreviewProvider)</span><b>Owns the anchor map</b><ul><li><code>canPreview(file, frontmatter)</code>: deck = <code>type: deck</code></li><li>parses the source; the only one that can</li><li>draws from the buffer, never writes a file</li><li>its own bar: ‹ › n/N, problems, Select Shape, Export ⌄, export state</li><li><code>duo2 deck …</code></li></ul></div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px">
+    <div class="box"><span class="lbl">Anchors</span><span><code>AnchorRange</code> = a source line range → an anchor. Deck: <code>slide 3</code>, <code>slide 3/value</code>. Markdown: a heading or block. HTML: an element id.</span></div>
+    <div class="box"><span class="lbl">The revision rule</span><span>A provider drops a render older than its newest. Split view ignores an <code>anchorMap</code> or <code>problems</code> whose revision isn’t the editor’s current one. A <code>reveal</code> never echoes back as a <code>caretMoved</code>.</span></div>
+    <div class="box"><span class="lbl">On a change on disk</span><span>The editor reconciles first (DL-77: merge, or the conflict bar), then split view sends one normal <code>render</code>. Both sides update together (R1).</span></div>
+  </div>
+  <div class="box"><span class="lbl">What split view provides, and what it doesn’t</span>
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px">
+      <ul><li><b>Provides:</b> the split tab, making room (board 8), the fold at 2 × 340 with the names as a toggle, the active side and command routing (board 9), the sync policy, persistence (R10), <code>duo2 split</code>.</li><li><b>Slice 1 has same file, two views</b> (source + its preview, one buffer). That’s the deck case.</li></ul>
+      <ul><li><b>Doesn’t provide:</b> parsing, the anchor map, rendering, the problems list, the deck bar, export or its state, <code>duo2 deck</code>. Those are the provider’s.</li><li><b>Not in slice 1:</b> two editable views of one file (ENH-301), or two editors side by side (slice 2).</li></ul>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1900,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Option A: paired view</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.light{--ground:#F3F4F6;--pane:#FFFFFF;--text:#1F2328;--text2:#5B636D;--rule:#C9CDD3;--controlEdge:#8B939C;--selected:#E9ECEF;--console:#15171B;--consoleText:#E6E8EB;--consoleText2:#9AA1AB;--consoleRule:#2B2F36;--paneFocus:#1F2328;--needsYou:#C2410C}
+.win{position:relative;width:1440px;height:900px;display:flex;flex-direction:column;background:var(--ground);color:var(--text);font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.tb{height:40px;flex:none;background:var(--ground);border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:12px;padding:0 16px;color:var(--text2)}
+.dots{display:flex;gap:8px}.dots i{width:12px;height:12px;border-radius:6px;background:var(--rule);display:block}
+.cols{flex:1;display:flex;min-height:0}
+.side{background:var(--pane);border-right:1px solid var(--rule);padding:16px;box-sizing:border-box;display:flex;flex-direction:column;gap:6px;flex:none}
+.con{background:var(--console);color:var(--consoleText);display:flex;flex-direction:column;border-right:1px solid var(--rule);flex:none}
+.cstrip{height:36px;border-bottom:1px solid var(--consoleRule);display:flex;align-items:center;gap:18px;padding:0 14px;font:12px/19px 'SF Mono',Menlo,monospace;color:var(--consoleText2)}
+.term{padding:14px;font:12px/19px 'SF Mono',Menlo,monospace;color:var(--consoleText2);display:flex;flex-direction:column;gap:2px}
+.right{background:var(--pane);display:flex;flex-direction:column;min-width:0;flex:1}
+.strip{position:relative;height:36px;flex:none;border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:24px;padding:0 16px;color:var(--text2);white-space:nowrap}
+.rulef{position:absolute;top:0;height:2px;background:var(--paneFocus)}
+.sides{flex:1;display:flex;min-height:0}
+.dv{width:1px;background:var(--rule);flex:none}
+.ed{position:relative;background:var(--pane);box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column}
+.doc{padding:16px 22px;display:flex;flex-direction:column;gap:2px;font:14px/22px -apple-system,system-ui,sans-serif}
+.mk{color:var(--text2);font:12px/22px 'SF Mono',Menlo,monospace}
+.h1{font:600 20px/28px -apple-system,system-ui,sans-serif}
+.h2{font:600 15px/24px -apple-system,system-ui,sans-serif}
+.deckbar{height:44px;flex:none;border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:6px;padding:0 14px;box-sizing:border-box}
+.btn{height:26px;box-sizing:border-box;padding:4px 10px;border:1px solid var(--controlEdge);border-radius:6px;background:var(--pane);font:12px/16px -apple-system,system-ui,sans-serif;color:var(--text);white-space:nowrap}
+.seg{display:flex;border:1px solid var(--controlEdge);border-radius:6px;overflow:hidden;font:12px/16px -apple-system,system-ui,sans-serif}
+.seg span{padding:4px 10px}
+.seg .on{background:var(--selected);font-weight:600}
+.slides{flex:1;background:var(--ground);padding:14px 16px;display:flex;flex-direction:column;gap:6px;overflow:hidden}
+.num{font:11px/16px -apple-system,system-ui,sans-serif;color:var(--text2)}
+.slide{aspect-ratio:16/9;background:#FFFFFF;border:1px solid var(--rule);box-sizing:border-box;padding:14px 16px;display:flex;flex-direction:column;gap:4px;color:#1F2328;flex:none}
+.badge{position:absolute;width:26px;height:26px;border-radius:13px;background:#1F2328;color:#FFFFFF;font:600 13px/26px -apple-system,system-ui,sans-serif;text-align:center}
+.notes{display:flex;flex-direction:column;gap:10px}
+.n{display:grid;grid-template-columns:26px minmax(0,1fr);gap:10px;align-items:start}
+.n i{width:22px;height:22px;border-radius:11px;background:#1F2328;color:#FFFFFF;font:600 12px/22px -apple-system,system-ui,sans-serif;text-align:center;font-style:normal;display:block}
+.t2{color:#5B636D}
+.h{font:600 15px/20px -apple-system,system-ui,sans-serif}
+</style>
+</helmet>
+<div style="width:1900px;height:1000px;box-sizing:border-box;padding:28px 36px;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;display:flex;gap:28px">
+  <div style="zoom:.78;flex:none">
+    <div class="win light">
+      <div class="tb"><div class="dots"><i></i><i></i><i></i></div><span style="margin-left:60px">All projects › work ›</span><b style="color:var(--text)">orchard-robotics</b><span style="margin-left:auto;border:1px solid var(--rule);border-radius:6px;padding:2px 10px;width:300px;background:var(--pane)">Search all projects ⇧⌘A</span></div>
+      <div class="cols">
+        <div class="side" style="width:240px"><b>orchard-robotics</b><span class="t2" style="font:600 11px/16px system-ui;letter-spacing:.06em;margin-top:10px">SESSIONS</span><span>Field trial deck</span><span class="t2" style="font:600 11px/16px system-ui;letter-spacing:.06em;margin-top:14px">FILES</span><span style="font:12px/24px 'SF Mono',Menlo,monospace;background:var(--selected);border-radius:6px;padding:0 6px">field-trial-review.md</span></div>
+        <div class="con" style="width:480px">
+          <div class="cstrip"><span style="color:var(--consoleText);font-weight:500">○ Field trial deck</span><span>+</span></div>
+          <div class="term"><span>● Update(decks/field-trial-review.md)</span></div>
+        </div>
+        <div class="right">
+          <div class="strip">
+            <div class="rulef" style="left:0;right:0"></div>
+            <span>Project</span>
+            <span style="color:var(--text);font-weight:600">field-trial-review.md</span>
+            <span>notes.md</span>
+            <span style="margin-left:auto">+</span>
+          </div>
+          <div class="deckbar"><span class="btn">‹</span><span class="btn">›</span><span style="margin-left:4px">Slide 3 of 10</span><span style="margin-left:auto" class="seg"><span>Source</span><span class="on">Both</span><span>Slides</span></span><span class="btn">Export ⌄</span></div>
+          <div class="sides">
+            <div class="ed" style="width:358px;flex:none">
+              <div class="doc">
+                <span class="mk">&lt;!-- slide: kpi --&gt;</span>
+                <span class="h1">Unattended rows</span>
+                <span class="h2">value</span>
+                <span>88%</span>
+                <span class="h2">label</span>
+                <span>of rows finished with no one stepping in</span>
+              </div>
+            </div>
+            <div class="dv"></div>
+            <div class="slides">
+              <span class="num" style="color:var(--text);font-weight:600">3</span>
+              <div class="slide"><b style="font-size:13px">Unattended rows</b><span style="font:600 34px/40px system-ui">88%</span><span style="font-size:10px;line-height:14px">of rows finished with no one stepping in</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <span class="badge" style="left:1100px;top:46px">1</span>
+      <span class="badge" style="left:1190px;top:120px">2</span>
+      <span class="badge" style="left:1000px;top:300px">3</span>
+    </div>
+  </div>
+  <div class="notes" style="flex:1;min-width:0">
+    <div><span class="h" style="font-size:20px;line-height:28px">A · Paired view inside a tab</span><br><span class="t2">The split is a mode of one document tab. Duo Decks’ first sketch (Q-350 A), generalised. Every mark [P].</span></div>
+    <div class="n"><i>1</i><span><b>The strip doesn’t change.</b> It shows one tab per file. The pane rule spans the whole pane, as today.</span></div>
+    <div class="n"><i>2</i><span><b>Source · Both · Slides at the end of the viewer’s bar.</b> A deck has that bar today. Markdown and HTML would each need a bar of their own to carry the control.</span></div>
+    <div class="n"><i>3</i><span><b>One file, one buffer, two views.</b> The slides render from the unsaved text (R1, R2). This fits today’s single editor and single deck viewer, so there’s no refactor.</span></div>
+    <div style="border-top:1px solid #C9CDD3;padding-top:10px;display:flex;flex-direction:column;gap:6px">
+      <span><b>Serves:</b> deck ✓ · Markdown + preview ✓ · HTML + page ✓ · <b>two different documents ✗</b> (LR item 11 stays open).</span>
+      <span><b>Narrow:</b> folds to Source or Slides with the same control.</span>
+      <span><b>Focus:</b> the active side lives inside the tab. The same routing table as C (board 9), without the pane rule moving.</span>
+      <span><b>Legacy’s issues:</b> avoids the two-editor and overlay problems by never having a second document. Doesn’t answer Geoff’s doc-beside-doc ask.</span>
+      <span><b>Cost:</b> about 4 days. Choosing A now and C later moves the control from the viewer’s bar into the strip: about a day of work thrown away.</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1900,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

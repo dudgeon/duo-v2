@@ -1,0 +1,12 @@
+{
+ "handoff": "split-view",
+ "canvas": "https://claude.ai/artifact/8j6ukv88cvTqvdSEoHnEc1",
+ "screens": [
+  {"file": "split-deck.html", "size": "1900x1000", "decision": "DL-275", "shows": "Slice 1's target: a deck's source beside its slides in one split tab at 1440 (sidebar folded, console 480, sides of 479); the active-side rule, the formatting bar over the source, the source-lines mark, the deck's own bar", "canvasBoard": "OptC.dc.html"},
+  {"file": "making-room.html", "size": "1900x1000", "decision": "DL-276", "shows": "Making room, a looping low-fidelity animation (the PNG is its first frame): the console narrows to 480, the sidebar folds below about 1,464 pt and peeks over the console, everything comes back on close", "canvasBoard": "CNarrow.dc.html"},
+  {"file": "split-themes.html", "size": "1900x1000", "decision": "DL-275", "shows": "The split in Dark (slides side active) and Classic (source side active, orange pane rule, New York)", "canvasBoard": "CThemes.dc.html"},
+  {"file": "routing-verbs.html", "size": "1900x1000", "decision": "DL-275, DL-277", "shows": "What each command acts on in a split, the duo2 verbs, persistence", "canvasBoard": "Focus.dc.html"},
+  {"file": "preview-provider.html", "size": "1900x1000", "decision": "DL-275", "shows": "The PreviewProvider interface agreed with Duo Decks: ownership, events, anchors, revisions", "canvasBoard": "Decks.dc.html"},
+  {"file": "split-docs.html", "size": "1900x1000", "decision": "DL-278", "shows": "Slice 2 (not this build): two documents both editable, and the four ways to make a split", "canvasBoard": "CDocs.dc.html"}
+ ]
+}
