@@ -70,6 +70,21 @@ import Foundation
         check(wrote == ["add the plan"], "voice: the user's own Duo puts the unsent words on the clipboard")
     }
 
+    // F-447: no input device means no sheet, no macOS question and no AVAudioEngine.
+    do {
+        check(!VoiceDevice.usable(nil), "voice device: none is not usable")
+        check(!VoiceDevice.usable((id: 42, channels: 0)), "voice device: a device with no input channels is not usable")
+        check(VoiceDevice.usable((id: 42, channels: 1)), "voice device: a device with an input channel is usable")
+        let here = VoiceDevice.defaultInput()
+        print("  · this Mac's default input: \(here.map { "device \($0.id), \($0.channels) input channel(s)" } ?? "none")")
+        let v = VoiceInput()
+        v.isolated = { false }
+        v.hasMicrophone = { false }
+        v.start(.terminal("k"))
+        check(v.state == .unavailable(VoiceCopy.noMic), "voice: with no microphone a press says so at once, before any sheet or prompt")
+        check(SheetCenter.shared.current == nil, "voice: with no microphone the first-press sheet never shows")
+    }
+
     // The input-box finder
     let cells = 4
     func rows(_ text: String) -> [String] { text.split(separator: "\n", omittingEmptySubsequences: false).map(String.init) }
