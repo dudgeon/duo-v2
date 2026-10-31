@@ -236,6 +236,11 @@ public enum FixtureHarness {
             if parts.count > 1, let target = model.voiceFocusTarget {
                 model.voice.start(target, source: .file(URL(fileURLWithPath: parts[1])))
             }
+        case "window-shot":   // window-shot:<png>: the whole window drawn to <png> now, mid-run (a dictation in progress)
+            if parts.count > 1, let w = NSApp.windows.first(where: { $0.title == "Duo" }) ?? NSApp.windows.first {
+                do { try WindowCapture.window(w, to: URL(fileURLWithPath: parts[1])) }
+                catch { FileHandle.standardError.write(Data("window-shot failed: \(error.localizedDescription)\n".utf8)) }
+            }
         case "voice-log":     // voice-log: the dictation's state and target, and the composer's text, to stderr
             let field = model.visibleSessionId.flatMap { (model.chats.existing($0) ?? model.fixtureChats[$0])?.composerView }
             FileHandle.standardError.write(Data("voice-log: state=\(model.voice.state) target=\(model.voice.target.map { "\($0)" } ?? "-") field=\((field?.plainText ?? "-").debugDescription) dictation=\(field?.dictation.map { "\($0.start)+\($0.length)" } ?? "none")\n".utf8))
