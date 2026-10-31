@@ -7,6 +7,7 @@
   {"file": "split-themes.html", "size": "1900x1000", "decision": "DL-275", "shows": "The split in Dark (slides side active) and Classic (source side active, orange pane rule, New York)", "canvasBoard": "CThemes.dc.html"},
   {"file": "routing-verbs.html", "size": "1900x1000", "decision": "DL-275, DL-277", "shows": "What each command acts on in a split, the duo2 verbs, persistence", "canvasBoard": "Focus.dc.html"},
   {"file": "preview-provider.html", "size": "1900x1000", "decision": "DL-275", "shows": "The PreviewProvider interface agreed with Duo Decks: ownership, events, anchors, revisions", "canvasBoard": "Decks.dc.html"},
+  {"file": "fold.html", "size": "1900x1000", "decision": "DL-275", "shows": "When a split folds (animated; the PNG is the folded frame): the window to 1280, the console dragged wider, the active side fills the pane, the split rail at the far right brings the other side back by narrowing the console", "canvasBoard": "CFold.dc.html"},
   {"file": "split-docs.html", "size": "1900x1000", "decision": "DL-278", "shows": "Slice 2 (not this build): two documents both editable, and the four ways to make a split", "canvasBoard": "CDocs.dc.html"}
  ]
 }

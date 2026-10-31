@@ -10,9 +10,10 @@
 "CNarrow.dc.html":{"x":1980,"y":2600,"w":1900,"h":1000,"title":"8 · Making room (Geoff's rule, animated): the sidebar folds and peeks, the console narrows"},
 "Focus.dc.html":{"x":3960,"y":2600,"w":1900,"h":1000,"title":"9 · Focus, what each command acts on, duo2 verbs"},
 "Decks.dc.html":{"x":0,"y":3900,"w":1900,"h":1000,"title":"10 · The Duo Decks interface"},
-"PreMortem.dc.html":{"x":1980,"y":3900,"w":1900,"h":1000,"title":"11 · Pre-mortem: legacy's failures and how each option fares; cost"}
+"PreMortem.dc.html":{"x":1980,"y":3900,"w":1900,"h":1000,"title":"11 · Pre-mortem: legacy's failures and how each option fares; cost"},
+"CFold.dc.html":{"x":3960,"y":3900,"w":1900,"h":1000,"title":"12 · When a split folds (animated, for Q-366)"}
 },
-"order":["Main.dc.html","OptA.dc.html","OptB.dc.html","OptC.dc.html","CDocs.dc.html","OptD.dc.html","CThemes.dc.html","CNarrow.dc.html","Focus.dc.html","Decks.dc.html","PreMortem.dc.html"],
+"order":["Main.dc.html","OptA.dc.html","OptB.dc.html","OptC.dc.html","CDocs.dc.html","OptD.dc.html","CThemes.dc.html","CNarrow.dc.html","Focus.dc.html","Decks.dc.html","PreMortem.dc.html","CFold.dc.html"],
 "notes":{
 "t1":{"x":0,"y":-280,"text":"Split view · the job and the first two options","kind":"title1","maxW":5860},
 "t2":{"x":0,"y":1020,"text":"Option C (recommended) and option D","kind":"title1","maxW":5860},
