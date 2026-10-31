@@ -1,5 +1,5 @@
 #!/bin/zsh
-# F-452's proof in a real Duo: an isolated dev instance, in the background (F-227), Home's session in chat against the
+# F-456's proof in a real Duo: an isolated dev instance, in the background (F-227), Home's session in chat against the
 # chat-mode spike's mock API (no login, no tokens). Home's chat is narrow at All projects and wide on Home's own page, the
 # move that left Geoff's terminal at two widths (F-449). With chat showing: a long reply, Home's page (wide), back to All
 # projects (narrow), then four quick flips. The hidden terminal must follow each settled pane (one resize per settled

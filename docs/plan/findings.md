@@ -4666,7 +4666,7 @@ Geoff's Debug report (Duo Dev voice test, dd2b8e8c, Claude Code 2.1.311). The wo
   - one refused with other words is refused once, as before.
 - Not changed: the hidden terminal still keeps its last size while chat shows (Q-341).
 
-## F-452 · The hidden terminal keeps the pane's size while chat shows (chat-hidden-width, 2026-10-30; Q-341)
+## F-456 · The hidden terminal keeps the pane's size while chat shows (chat-hidden-width, 2026-10-30; Q-341)
 
 The director, on Q-341: "yes, go ahead … and keep your clipping as the backstop."
 

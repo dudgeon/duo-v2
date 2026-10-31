@@ -131,7 +131,7 @@ public enum ChildEnvironment {
 @MainActor
 public final class TerminalSession {
     /// While chat shows, the terminal view is out of the layout: it is sized here to the pane chat fills, as the slot
-    /// would size it (inset 12 × 8), so Claude draws at the width the terminal will show (Q-341, F-452). Only a view no
+    /// would size it (inset 12 × 8), so Claude draws at the width the terminal will show (Q-341, F-456). Only a view no
     /// slot on screen holds (two sizers resizing one terminal made Claude redraw by turns, F-208); not mid-slide (DL-129); and once
     /// the pane has settled, so a window being dragged resizes Claude once, not on every frame.
     public func holdHiddenSize(_ pane: CGSize) {
