@@ -75,9 +75,9 @@ body{margin:0}
     </div>
     <div class="lbl">Four ways to make a split</div>
     <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px">
-      <div class="panel"><b>A file’s menu in the tree</b><div class="menu"><span>Open</span><span class="hi">Open Beside</span><span>Preview Beside</span><hr><span>Rename…</span><span>Move to Trash</span></div></div>
-      <div class="panel"><b>A tab’s menu</b><div class="menu"><span>Close Tab</span><span>Close Other Tabs</span><span class="hi">Open Beside ▸</span><span>Preview Beside ⌥⌘P</span><hr><span>Move Tab Left</span></div></div>
-      <div class="panel"><b>Drag a tab onto the pane</b><div style="height:130px;display:flex;border:1px solid #C9CDD3;border-radius:4px;overflow:hidden"><div style="flex:1;background:#FFFFFF"></div><div style="flex:1;margin:6px;border:1.5px dashed #8B939C;border-radius:4px;background:#E9ECEF;display:flex;align-items:center;justify-content:center;color:#5B636D;font-size:12px">Open Beside</div></div></div>
+      <div class="panel"><b>A file’s menu in the tree</b><div class="menu"><span>Open</span><span class="hi">Open in Split View</span><span>Show Preview in Split View</span><hr><span>Rename…</span><span>Move to Trash</span></div></div>
+      <div class="panel"><b>A tab’s menu</b><div class="menu"><span>Close Tab</span><span>Close Other Tabs</span><span class="hi">Open in Split View ▸</span><span>Show Preview in Split View ⌥⌘P</span><hr><span>Move Tab Left</span></div></div>
+      <div class="panel"><b>Drag a tab onto the pane</b><div style="height:130px;display:flex;border:1px solid #C9CDD3;border-radius:4px;overflow:hidden"><div style="flex:1;background:#FFFFFF"></div><div style="flex:1;margin:6px;border:1.5px dashed #8B939C;border-radius:4px;background:#E9ECEF;display:flex;align-items:center;justify-content:center;color:#5B636D;font-size:12px">Open in Split View</div></div></div>
       <div class="panel"><b>Search, ⌥⌘↩</b><span class="t2">The result’s Tab menu already has “Open in split view ⌥⌘↩” (DL-79 e), today a no-op. It opens the result beside the showing tab.</span></div>
     </div>
   </div>
@@ -86,8 +86,8 @@ body{margin:0}
     <div class="n"><i>1</i><span><b>The same split tab, holding two files.</b> The synthesis on the right has the keyboard, so its name is semibold and the pane rule sits over the right side.</span></div>
     <div class="n"><i>2</i><span><b>Each editor side has its own formatting bar</b>, and only the side with the keyboard shows it (DL-266). The review bar sits in each editor side’s own stack.</span></div>
     <div style="border-top:1px solid #C9CDD3;padding-top:10px;display:flex;flex-direction:column;gap:6px">
-      <span><b>Open Beside</b> on a file that’s already open moves its tab into the split. On a file already in a split, it selects that split and side, so a file is never open in two editors.</span>
-      <span><b>Swap Sides, Separate, Close Tab</b> are on the split tab’s menu. Each name has its own hover ×.</span>
+      <span><b>Open in Split View</b> on a file that’s already open moves its tab into the split. On a file already in a split, it selects that split and side, so a file is never open in two editors.</span>
+      <span><b>Swap Sides, Close Split View (both stay as tabs), Close Tab</b> are on the split tab’s menu. Each name has its own hover ×.</span>
       <span><b>A browser tab or an HTML page can be either side</b>, as in legacy’s worksheet-beside-the-app use.</span>
       <span><b>Needs:</b> an editor per side, the same refactor multi-window’s slice 1 needs (C-135, Q-99). That’s why it’s slice 2: decks don’t wait for it.</span>
       <span><b>More than one split</b>: each split is its own tab, so a project can keep several pairs. One pair at a time is on screen.</span>

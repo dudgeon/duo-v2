@@ -32,7 +32,7 @@ code{font:12px/18px 'SF Mono',Menlo,monospace}
       <tr><td>Review bar</td><td>In each editor side’s own stack.</td></tr>
       <tr><td>⌃Tab / ⌃⇧Tab</td><td>The right pane’s tabs; the split is one tab.</td></tr>
       <tr><td>⌥⌘← / →</td><td>Sidebar → console → left side → right side, wrapping (Q-368). The rule moves with it.</td></tr>
-      <tr><td>⌥⌘P [P]</td><td>Preview Beside / Close Preview for the showing file (a new chord, DL-34; Q-364). Checked against 1Password, Raycast, Rectangle and macOS defaults before it’s logged (BUG-075).</td></tr>
+      <tr><td>⌥⌘P [P]</td><td>Show Preview in Split View / Close Split View for the showing file (a new chord, DL-34; Q-364). Checked against 1Password, Raycast, Rectangle and macOS defaults before it’s logged (BUG-075).</td></tr>
       <tr><td>⌥⌘↩</td><td>Search’s “Open in split view” (DL-79 e, already approved): the result goes beside the showing tab.</td></tr>
     </table>
   </div>
@@ -41,11 +41,11 @@ code{font:12px/18px 'SF Mono',Menlo,monospace}
     <table>
       <tr><th style="width:290px">Verb</th><th>Does</th></tr>
       <tr><td><code>duo2 split &lt;file&gt;</code></td><td>The file beside its preview (deck, Markdown, HTML)</td></tr>
-      <tr><td><code>duo2 split &lt;file&gt; --beside &lt;file|url&gt;</code></td><td>Two items side by side (slice 2)</td></tr>
+      <tr><td><code>duo2 split &lt;file&gt; --with &lt;file|url&gt;</code></td><td>Two items side by side (slice 2)</td></tr>
       <tr><td><code>duo2 split</code></td><td>State: sides, active side, ratio, folded, sidebar folded by the split</td></tr>
       <tr><td><code>duo2 split close [--side left|right]</code></td><td>Close a side, or the split; nothing is lost</td></tr>
       <tr><td><code>duo2 split focus left|right</code></td><td>Make a side active</td></tr>
-      <tr><td><code>duo2 split swap</code> · <code>separate</code></td><td>Swap Sides · Separate into two tabs</td></tr>
+      <tr><td><code>duo2 split swap</code> · <code>split close</code></td><td>Swap Sides · Close Split View (both stay open as tabs)</td></tr>
       <tr><td><code>duo2 split ratio &lt;0.2–0.8&gt;</code></td><td>The divider; clamped so neither side goes under 340</td></tr>
       <tr><td><code>doc read</code>, <code>doc screenshot</code>, <code>slide …</code>, <code>status</code></td><td>Gain <code>--side</code>; with none, the active side</td></tr>
       <tr><td><code>duo2 deck …</code>, <code>deck go &lt;n&gt;</code>, <code>deck pick</code></td><td>Duo Decks’ own; <code>deck go</code> moves both sides</td></tr>
