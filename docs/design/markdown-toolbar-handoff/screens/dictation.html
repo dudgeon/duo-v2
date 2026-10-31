@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="1560x980">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-266">
+<!--
+Dictating into a document: mic or shift-cmd-D, a phrase at a time, Suggest Edits on, one undo
+APPROVED BOARD for behaviour. Geoff, 2026-10-31 (DL-266). Its bar is drawn as option A's 32 strip: the bar's look and size are bar.html's (24). Exported from the Design canvas
+https://claude.ai/artifact/2DqVdN1cA1P6Hv1MW5T8Sb (board Voice.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup.
+-->
+<title>Duo · Dictating into a document</title>
+<style>
+
+body{margin:0}
+button{font:inherit;border:0;background:none;padding:0;margin:0;color:inherit;cursor:default}
+.bd{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;color:#1f2328;background:#eceef1}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.66px;text-transform:uppercase;color:#5b636d;display:flex;gap:8px;align-items:center}
+.P{font:10px/14px ui-monospace,'SF Mono',Menlo,monospace;color:#5b636d;border:1px dashed #8b939c;border-radius:3px;padding:0 3px;letter-spacing:0;text-transform:none;font-weight:400}
+.light{--ground:#f3f4f6;--pane:#ffffff;--sel:#e9ecef;--text:#1f2328;--text2:#5b636d;--rule:#c9cdd3;--edge:#8b939c;--a2:#1d5fa8;--doc:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;--ds:13px;--dl:20px;--h1:18px;--h1l:24px;--h2:14px;--h2l:20px}
+.pane{box-sizing:border-box;background:var(--pane);color:var(--text);border:1px solid var(--rule);display:flex;flex-direction:column;overflow:hidden;font-size:13px;line-height:20px;position:relative}
+.tabs{flex:none;height:36px;box-sizing:border-box;display:flex;align-items:center;gap:24px;padding:0 16px;border-bottom:1px solid var(--rule);color:var(--text2)}
+.tabs b{color:var(--text);font-weight:600}
+.doc{flex:1;padding:22px 28px;font-family:var(--doc);font-size:var(--ds);line-height:var(--dl);overflow:hidden}
+.doc h2{font-size:var(--h2);line-height:var(--h2l);font-weight:600;margin:4px 0 8px}
+.doc p{margin:0 0 10px}
+.caret{display:inline-block;width:1.5px;height:1.05em;background:var(--text);vertical-align:-0.15em;margin:0 -0.75px}
+.vol{color:var(--text2)}
+.ins{color:var(--a2);text-decoration:underline;text-underline-offset:3px}
+.strip{flex:none;height:32px;box-sizing:border-box;display:flex;align-items:center;gap:2px;padding:0 12px 0 20px;border-bottom:1px solid var(--rule);background:var(--pane)}
+.rbar{flex:none;height:44px;box-sizing:border-box;display:flex;align-items:center;gap:6px;padding:0 16px 0 20px;border-bottom:1px solid var(--rule)}
+.btn{flex:none;height:26px;box-sizing:border-box;display:flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--edge);border-radius:6px;background:var(--pane);font-size:12px;line-height:16px;color:var(--text)}
+.btn.on{background:var(--sel)}
+.dot{width:8px;height:8px;border-radius:4px;box-sizing:border-box;border:1.5px solid var(--edge)}
+.dot.on{background:var(--text);border-color:var(--text)}
+.g{flex:none;width:28px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:14px;font-weight:600}
+.pop{flex:none;height:24px;border-radius:6px;display:flex;align-items:center;gap:4px;padding:0 6px 0 8px;font-size:12px;line-height:16px;color:var(--text)}
+.sep{flex:none;width:1px;height:16px;background:var(--rule);margin:0 6px}
+.sp{flex:1}
+.mic{flex:none;width:24px;height:24px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--text2)}
+.mic.hov{background:var(--sel);color:var(--text)}
+.mic.lis{background:var(--text);color:var(--pane)}
+.hint{display:flex;align-items:center;gap:6px;font-size:12px;line-height:16px;color:var(--text2);white-space:nowrap}
+.hint b{color:var(--text);font-weight:400}
+.meter{display:flex;align-items:flex-end;gap:1.5px;height:12px}
+.meter i{display:block;width:2px;background:var(--text);border-radius:1px}
+.ch{color:var(--text2);display:flex}
+.tip{position:absolute;font-size:11px;line-height:14px;padding:3px 7px;background:var(--pane);color:var(--text);border:1px solid var(--rule);border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.18);white-space:nowrap}
+.spec{font-size:12px;line-height:18px;color:#1f2328}
+.spec p{margin:0 0 8px}
+.mono{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px}
+
+</style>
+</head>
+<body>
+
+
+<div class="bd" style="width:1560px;height:980px;box-sizing:border-box;padding:48px;display:flex;flex-direction:column;gap:26px">
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <div class="lbl">Every option · drawn in A's strip</div>
+    <h1 style="margin:0;font-size:24px;line-height:30px;font-weight:600">Dictating into a document <span class="P">[P]</span></h1>
+    <p style="margin:0;font-size:13px;line-height:20px;color:#5b636d">The same recognizer and look as chat (DL-260, DL-261). Words go in at the caret, a phrase at a time, and one ⌘Z takes a whole dictation out.</p>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:28px">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="lbl">1 · Mic or ⇧⌘D</div>
+      <div class="pane light" style="height:250px">
+        <div class="tabs"><span>Project</span><b>refunds-api.md</b></div>
+        <div class="strip">
+          <button class="pop">Body<span class="ch"><svg width="8" height="8" viewbox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 3l2.5 2.5L6.5 3"></path></svg></span></button>
+          <div class="sep"></div>
+          <button class="g" aria-label="Bold" style="font-weight:700">B</button>
+          <button class="g" aria-label="Italic" style="font-style:italic;font-weight:500">I</button>
+          <div class="sp"></div>
+          <button class="mic hov" aria-label="Start Voice Input"><svg width="14" height="14" viewbox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><rect x="5.6" y="1.8" width="4.8" height="8" rx="2.4"></rect><path d="M3.4 7.6a4.6 4.6 0 009.2 0M8 12.2v2"></path></svg></button>
+        </div>
+        <div class="tip" style="right:8px;top:72px">Start Voice Input  ⇧⌘D</div>
+        <div class="doc">
+          <h2>Open questions</h2>
+          <p>Who approves async refunds over $1,000? <span class="caret"></span></p>
+        </div>
+      </div>
+      <div class="spec" style="color:#5b636d">The caret stays where it was. A selection is replaced by what's said. The first press ever shows chat's sheet before macOS asks (DL-260).</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="lbl">2 · A phrase at a time</div>
+      <div class="pane light" style="height:250px">
+        <div class="tabs"><span>Project</span><b>refunds-api.md</b></div>
+        <div class="strip">
+          <div class="hint"><span class="meter"><i style="height:5px"></i><i style="height:9px"></i><i style="height:12px"></i><i style="height:7px"></i></span><b>Listening</b><span>· esc ends</span></div>
+          <div class="sp"></div>
+          <button class="mic lis" aria-label="Stop Voice Input"><svg width="14" height="14" viewbox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><rect x="5.6" y="1.8" width="4.8" height="8" rx="2.4"></rect><path d="M3.4 7.6a4.6 4.6 0 009.2 0M8 12.2v2"></path></svg></button>
+        </div>
+        <div class="doc">
+          <h2>Open questions</h2>
+          <p>Who approves async refunds over $1,000? Finance signs off above <span class="vol">two thousand</span><span class="caret"></span></p>
+        </div>
+      </div>
+      <div class="spec" style="color:#5b636d">Settled words in <span class="mono">text</span>; words still changing in <span class="mono">text2</span>, drawn by the page and replaced in place. The hint shortens with width; the full one reads “Listening · ⇧⌘D or the mic finishes · esc ends”.</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="lbl">3 · With Suggest Edits on</div>
+      <div class="pane light" style="height:250px">
+        <div class="tabs"><span>Project</span><b>refunds-api.md</b></div>
+        <div class="rbar" style="padding:0 12px 0 16px"><div class="btn on"><span class="dot on"></span>Suggest Edits</div><div class="sp"></div></div>
+        <div class="strip">
+          <div class="hint"><span class="meter"><i style="height:7px"></i><i style="height:11px"></i><i style="height:6px"></i><i style="height:4px"></i></span><b>Listening</b><span>· esc ends</span></div>
+          <div class="sp"></div>
+          <button class="mic lis" aria-label="Stop Voice Input"><svg width="14" height="14" viewbox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><rect x="5.6" y="1.8" width="4.8" height="8" rx="2.4"></rect><path d="M3.4 7.6a4.6 4.6 0 009.2 0M8 12.2v2"></path></svg></button>
+        </div>
+        <div class="doc">
+          <h2>Open questions</h2>
+          <p>Who approves async refunds over $1,000?<span class="ins"> Finance signs off above two thousand.</span><span class="caret"></span></p>
+        </div>
+      </div>
+      <div class="spec" style="color:#5b636d">Each phrase extends one suggested insertion, signed with your name, in your colour (DL-237). Over a selection it's a substitution. Off, the words are plain and clear Claude's green like typing does.</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="lbl">4 · Done, and ⌘Z</div>
+      <div class="pane light" style="height:250px">
+        <div class="tabs"><span>Project</span><b>refunds-api.md</b></div>
+        <div class="strip">
+          <button class="pop">Body<span class="ch"><svg width="8" height="8" viewbox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 3l2.5 2.5L6.5 3"></path></svg></span></button>
+          <div class="sep"></div>
+          <button class="g" aria-label="Bold" style="font-weight:700">B</button>
+          <button class="g" aria-label="Italic" style="font-style:italic;font-weight:500">I</button>
+          <div class="sp"></div>
+          <button class="mic" aria-label="Start Voice Input"><svg width="14" height="14" viewbox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><rect x="5.6" y="1.8" width="4.8" height="8" rx="2.4"></rect><path d="M3.4 7.6a4.6 4.6 0 009.2 0M8 12.2v2"></path></svg></button>
+        </div>
+        <div class="doc">
+          <h2>Open questions</h2>
+          <p>Who approves async refunds over $1,000? Finance signs off above two thousand.<span class="caret"></span></p>
+        </div>
+      </div>
+      <div class="spec" style="color:#5b636d">The words stay and the strip comes back. ⌘Z takes the whole dictation out in one step, not phrase by phrase.</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:40px">
+    <div class="spec">
+      <div class="lbl" style="margin-bottom:8px">Keys</div>
+      <p><b>⇧⌘D</b> goes to the document when it has the keyboard, ahead of the session. A tap toggles; held past 0.3 s it's hold-to-talk (DL-261).</p>
+      <p><b>Esc</b> ends and keeps the words, as everywhere outside chat's composer (DL-263).</p>
+      <p><b>Return</b> finishes, lets the last phrase land, then is the editor's own Return: a new line, continuing a list. It never sends (Q-346).</p>
+      <p><b>Typing or clicking</b> in the document finishes the dictation first, as in chat.</p>
+    </div>
+    <div class="spec">
+      <div class="lbl" style="margin-bottom:8px">States</div>
+      <p><b>No microphone</b>: DL-265's faint struck mic (<span class="mono">mic.slash</span>, <span class="mono">controlEdge</span>), tooltip “No mic detected · connect one to use transcription”. A press or ⇧⌘D says “No microphone found.” in the bar; Edit › Start Voice Input · no microphone is disabled.</p>
+      <p><b>Read only</b>: the mic is dimmed like every other control.</p>
+      <p><b>Claude edits the document mid-dictation</b>: its change merges as today, and the dictation keeps its place. If the page reloads, the dictation ends and keeps what landed.</p>
+    </div>
+    <div class="spec">
+      <div class="lbl" style="margin-bottom:8px">Build and duo2</div>
+      <p>A <span class="mono">VoiceTarget.document</span> beside chat and terminal. The page gains a dictation range that replaces the still-changing words in place and joins the dictation into one history event (<span class="mono">isolateHistory</span>), with a JS test. No new CodeMirror package. About 2 of the 3 shared days.</p>
+      <p><span class="mono">duo2 voice start --doc</span> (or plain <span class="mono">start</span> when a document has the keyboard); <span class="mono">voice status</span> names the document; <span class="mono">voice file &lt;audio&gt; --doc</span> for tests.</p>
+      <p>Before building: answer Q-181 (does the system's own Dictation already work in the editor?) so the two don't fight.</p>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

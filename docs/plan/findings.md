@@ -4723,3 +4723,12 @@ The director, on Q-341: "yes, go ahead … and keep your clipping as the backsto
 - **Left over:** at the switch the terminal gets one row fewer (52 → 51) than the chat's pane gave it, so Claude redraws once at the same width. The bars around the slot take slightly more height than the chat did. Widths match, which is what kept stale cells away.
 - Harness: `window-width:<pt>` (the window's width) and `term-info` (the visible session's terminal: cols × rows, on screen or not, the longest row as text, hidden resizes; `term-size` was taken: it resizes the emulator).
 - **Proof:** `scripts/check-chat-narrow-live.sh` (isolated, background, mock API, Haiku 5.5). At All projects, then Home's page, then back, then four quick flips, then the terminal: columns 42, 87, 42, 42, 42 and hidden resizes 1, 2, 3, 3, 3, ending at Claude's idle prompt with no fallback. It passes on 2.1.284 and 2.1.311. DuoChecks 2599 passed, 0 failed.
+
+## F-457 · The table bar's buttons sit about 1 pt apart, not 6 (markdown-toolbar, 2026-10-31; DL-113)
+
+In captures of today's editor (a fresh build of origin/main 4e809942, isolated, fixture data) the table bar's + Row, + Column, Align ▾ and Delete ▾ nearly touch: about 1 pt between borders, where `tables-handoff/` draws a 6 gap (`gapButtonToButton`). Seen in Light, Dark and Classic: `docs/design/markdown-toolbar-study/captures/today-table-pane.png`, `fresh-table-classic.png`, `fresh-table-dark.png`. The bar is `TableBarWidget` (`Vendor/codemirror/src/duo-editor.js:1611-1631`, CSS `.duo-table-bar button` :1856), which sets no gap between its buttons. DL-266 moves these controls into the formatting bar, so the fix may land with that build; until then it is a mismatch with the approved screen.
+
+## F-458 · A suggested insertion that ends a line leaves its full stop alone on the next line (markdown-toolbar, 2026-10-31; DL-237)
+
+In `docs/design/markdown-toolbar-study/captures/fresh-review-dark.png` (the track-a document, Suggest Edits on, Dark), the paragraph "seconds, and gives up after an hour." wraps so that the inserted clause ends the line and its "." sits alone on the next one. The insertion's mark and its hidden signature (`{>>…<<}`) seem to give the browser a break opportunity before the punctuation. Not measured or traced; seen once, in Dark at the pane's 460.
+

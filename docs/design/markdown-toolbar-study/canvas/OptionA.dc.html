@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Option A strip</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+button{font:inherit;border:0;background:none;padding:0;margin:0;color:inherit;cursor:default}
+.bd{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;color:#1f2328;background:#eceef1}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.66px;text-transform:uppercase;color:#5b636d;display:flex;gap:8px;align-items:center}
+.P{font:10px/14px ui-monospace,'SF Mono',Menlo,monospace;color:#5b636d;border:1px dashed #8b939c;border-radius:3px;padding:0 3px;letter-spacing:0;text-transform:none;font-weight:400}
+.light{--ground:#f3f4f6;--pane:#ffffff;--sel:#e9ecef;--text:#1f2328;--text2:#5b636d;--rule:#c9cdd3;--edge:#8b939c;--a2:#1d5fa8;--doc:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;--ds:13px;--dl:20px;--h1:18px;--h1l:24px;--h2:14px;--h2l:20px}
+.dark{--ground:#131518;--pane:#181a1e;--sel:#262a30;--text:#e6e8eb;--text2:#9aa1ab;--rule:#2b2f36;--edge:#6e7681;--a2:#7fb0ee;--doc:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;--ds:13px;--dl:20px;--h1:18px;--h1l:24px;--h2:14px;--h2l:20px}
+.classic{--ground:#f0e9d6;--pane:#fbf8ee;--sel:#f2d9b8;--text:#1a1410;--text2:#7b6f58;--rule:#d4c8a6;--edge:#b8ab8e;--a2:#1d5fa8;--doc:'New York',ui-serif,Georgia,serif;--ds:16px;--dl:27px;--h1:22px;--h1l:30px;--h2:17px;--h2l:27px}
+.pane{box-sizing:border-box;background:var(--pane);color:var(--text);border:1px solid var(--rule);display:flex;flex-direction:column;overflow:hidden;font-size:13px;line-height:20px;position:relative}
+.tabs{flex:none;height:36px;box-sizing:border-box;display:flex;align-items:center;gap:24px;padding:0 16px;border-bottom:1px solid var(--rule);color:var(--text2)}
+.tabs b{color:var(--text);font-weight:600}
+.doc{flex:1;padding:22px 28px;font-family:var(--doc);font-size:var(--ds);line-height:var(--dl);overflow:hidden}
+.doc h1{font-size:var(--h1);line-height:var(--h1l);font-weight:600;margin:4px 0 12px}
+.doc h2{font-size:var(--h2);line-height:var(--h2l);font-weight:600;margin:14px 0 8px}
+.doc p{margin:0 0 10px}
+.doc table{border-collapse:collapse;width:100%;margin:0 0 10px}
+.doc th,.doc td{padding:4px 8px;border:1px solid var(--rule);text-align:left;white-space:nowrap}
+.doc th{background:var(--ground);font-weight:600}
+.src{white-space:pre;margin:0}
+.caret{display:inline-block;width:1.5px;height:1.05em;background:var(--text);vertical-align:-0.15em;margin:0 -0.75px}
+.vol{color:var(--text2)}
+.ins{color:var(--a2);text-decoration:underline;text-underline-offset:3px}
+.strip{flex:none;height:32px;box-sizing:border-box;display:flex;align-items:center;gap:2px;padding:0 12px 0 20px;border-bottom:1px solid var(--rule);background:var(--pane)}
+.g{flex:none;width:28px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:14px;font-weight:600}
+.g.on{background:var(--sel);color:var(--text)}
+.pop{flex:none;height:24px;border-radius:6px;display:flex;align-items:center;gap:4px;padding:0 6px 0 8px;font-size:12px;line-height:16px;color:var(--text)}
+.tb{flex:none;height:24px;border-radius:6px;display:flex;align-items:center;gap:3px;padding:0 7px;font-size:12px;line-height:16px;color:var(--text)}
+.sep{flex:none;width:1px;height:16px;background:var(--rule);margin:0 6px}
+.sp{flex:1}
+.mic{flex:none;width:24px;height:24px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--text2)}
+.mic.lis{background:var(--text);color:var(--pane)}
+.mic.off{color:var(--edge)}
+.hint{display:flex;align-items:center;gap:6px;font-size:12px;line-height:16px;color:var(--text2);white-space:nowrap}
+.hint b{color:var(--text);font-weight:400}
+.meter{display:flex;align-items:flex-end;gap:1.5px;height:12px}
+.meter i{display:block;width:2px;background:var(--text);border-radius:1px}
+.rbar{flex:none;height:44px;box-sizing:border-box;display:flex;align-items:center;gap:6px;padding:0 16px 0 20px;border-bottom:1px solid var(--rule)}
+.btn{flex:none;height:26px;box-sizing:border-box;display:flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--edge);border-radius:6px;background:var(--pane);font-size:12px;line-height:16px;color:var(--text)}
+.btn.on{background:var(--sel)}
+.dot{width:8px;height:8px;border-radius:4px;box-sizing:border-box;border:1.5px solid var(--edge)}
+.dot.on{background:var(--text);border-color:var(--text)}
+.ch{color:var(--text2);display:flex}
+.tip{position:absolute;font-size:11px;line-height:14px;padding:3px 7px;background:var(--pane);color:var(--text);border:1px solid var(--rule);border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.18);white-space:nowrap;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif}
+.spec{font-size:12px;line-height:18px;color:#1f2328}
+.spec p{margin:0 0 9px}
+.mono{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px}
+</style>
+</helmet>
+<div class="bd" style="width:1560px;height:1300px;box-sizing:border-box;padding:48px;display:flex;flex-direction:column;gap:28px">
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <div class="lbl">Option A · recommended</div>
+    <h1 style="margin:0;font-size:24px;line-height:30px;font-weight:600">A slim strip, always shown <span class="P">[P]</span></h1>
+    <p style="margin:0;font-size:13px;line-height:20px;color:#5b636d">32 high under the tabs on every Markdown document, on the document's own ground. While the caret is in a table, the table controls take the style menu's place, and the bar inside the document goes.</p>
+  </div>
+
+  <div style="display:grid;grid-template-columns:460px 460px 460px;gap:40px">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="lbl">Light · 460 · caret in bold, pointer on Link</div>
+      <div class="pane light" style="width:460px;height:470px">
+        <div class="tabs"><span>Project</span><b>refunds-api.md</b><span>+</span></div>
+        <div class="strip">
+          <button class="pop">Body<span class="ch"><svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 3l2.5 2.5L6.5 3"/></svg></span></button>
+          <div class="sep"></div>
+          <button class="g on" aria-label="Bold" style="font-weight:700">B</button>
+          <button class="g" aria-label="Italic" style="font-style:italic;font-weight:500">I</button>
+          <button class="g on" aria-label="Link"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.6 9.4l2.8-2.8"/><path d="M7.2 4.6l1.1-1.1a2.6 2.6 0 013.7 3.7l-1.1 1.1"/><path d="M8.8 11.4l-1.1 1.1a2.6 2.6 0 01-3.7-3.7l1.1-1.1"/></svg></button>
+          <button class="g" aria-label="Insert Table"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M2 6.5h12M2 9.75h12M6 6.5v6.5M10 6.5v6.5"/></svg></button>
+          <button class="g" aria-label="More"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3.5" cy="8" r="1.2"/><circle cx="8" cy="8" r="1.2"/><circle cx="12.5" cy="8" r="1.2"/></svg></button>
+          <div class="sp"></div>
+          <button class="mic" aria-label="Start Voice Input"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><rect x="5.6" y="1.8" width="4.8" height="8" rx="2.4"/><path d="M3.4 7.6a4.6 4.6 0 009.2 0M8 12.2v2"/></svg></button>
+        </div>
+        <div class="tip" style="left:142px;top:72px">Link  ⌘K</div>
+        <div class="doc">
+          <h1>Refunds API spec</h1>
+          <h2>Thresholds</h2>
+          <p>Limits per path, as <b style="font-weight:600">finance conf<span class="caret"></span>irmed</b> on Oct 3.</p>
+          <table><tr><th>Path</th><th>Limit</th><th style="text-align:right">Approvers</th></tr><tr><td>Card</td><td>$500</td><td style="text-align:right">2</td></tr><tr><td>Async</td><td>$250</td><td style="text-align:right">1</td></tr></table>
+          <h2>Open questions</h2>
+          <p>Who approves async refunds over $1,000?</p>
+        </div>
+      </div>
+      <div class="spec" style="color:#5b636d">Bold is on because the caret is in bold; the style menu names the paragraph (Body, Heading 2…). The pointer's fill is the same <span class="mono">selected</span>.</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="lbl">Light · 460 · caret in a table</div>
+      <div class="pane light" style="width:460px;height:470px">
+        <div class="tabs"><span>Project</span><b>refunds-api.md</b><span>+</span></div>
+        <div class="strip">
+          <button class="g" aria-label="Bold" style="font-weight:700">B</button>
+          <button class="g" aria-label="Italic" style="font-style:italic;font-weight:500">I</button>
+          <button class="g" aria-label="Link"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.6 9.4l2.8-2.8"/><path d="M7.2 4.6l1.1-1.1a2.6 2.6 0 013.7 3.7l-1.1 1.1"/><path d="M8.8 11.4l-1.1 1.1a2.6 2.6 0 01-3.7-3.7l1.1-1.1"/></svg></button>
+          <div class="sep"></div>
+          <button class="tb">+ Row</button>
+          <button class="tb">+ Column</button>
+          <button class="tb">Align<span class="ch"><svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 3l2.5 2.5L6.5 3"/></svg></span></button>
+          <button class="tb">Delete<span class="ch"><svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 3l2.5 2.5L6.5 3"/></svg></span></button>
+          <div class="sp"></div>
+          <button class="mic" aria-label="Start Voice Input"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><rect x="5.6" y="1.8" width="4.8" height="8" rx="2.4"/><path d="M3.4 7.6a4.6 4.6 0 009.2 0M8 12.2v2"/></svg></button>
+        </div>
+        <div class="doc">
+          <h1>Refunds API spec</h1>
+          <h2>Thresholds</h2>
+          <p>Limits per path, as finance confirmed on Oct 3.</p>
+          <p class="src">| Path  | Limit | Approvers |</p>
+          <p class="src">| ----- | ----- | --------: |</p>
+          <p class="src">| Card  | $500  |         2 |</p>
+          <p class="src">| Async | $25<span class="caret"></span>0  |         1 |</p>
+          <p style="height:12px;margin:0"></p>
+          <h2>Open questions</h2>
+          <p>Who approves async refunds over $1,000?</p>
+        </div>
+      </div>
+      <div class="spec" style="color:#5b636d">No style menu in a cell (a cell holds one line). The table's Markdown shows as today, without the 28 bar above it. The table keeps its drawn height (DL-167); the bar's 28 now pads the source.</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="lbl">Light · 360 · caret in a table</div>
+      <div class="pane light" style="width:360px;height:470px">
+        <div class="tabs"><span>Project</span><b>refunds-api.md</b><span>+</span></div>
+        <div class="strip">
+          <button class="g" aria-label="Bold" style="font-weight:700">B</button>
+          <button class="g" aria-label="Italic" style="font-style:italic;font-weight:500">I</button>
+          <button class="g" aria-label="Link"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.6 9.4l2.8-2.8"/><path d="M7.2 4.6l1.1-1.1a2.6 2.6 0 013.7 3.7l-1.1 1.1"/><path d="M8.8 11.4l-1.1 1.1a2.6 2.6 0 01-3.7-3.7l1.1-1.1"/></svg></button>
+          <div class="sep"></div>
+          <button class="tb">+ Row</button>
+          <button class="tb">+ Column</button>
+          <button class="g" aria-label="More table commands"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3.5" cy="8" r="1.2"/><circle cx="8" cy="8" r="1.2"/><circle cx="12.5" cy="8" r="1.2"/></svg></button>
+          <div class="sp"></div>
+          <button class="mic" aria-label="Start Voice Input"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><rect x="5.6" y="1.8" width="4.8" height="8" rx="2.4"/><path d="M3.4 7.6a4.6 4.6 0 009.2 0M8 12.2v2"/></svg></button>
+        </div>
+        <div class="doc">
+          <h1>Refunds API spec</h1>
+          <h2>Thresholds</h2>
+          <p>Limits per path, as finance confirmed on Oct 3.</p>
+          <p class="src">| Path  | Limit | Approvers |</p>
+          <p class="src">| ----- | ----- | --------: |</p>
+          <p class="src">| Card  | $500  |         2 |</p>
+          <p class="src">| Async | $25<span class="caret"></span>0  |         1 |</p>
+          <p style="height:12px;margin:0"></p>
+          <h2>Open questions</h2>
+          <p>Who approves async refunds over $1,000?</p>
+        </div>
+      </div>
+      <div class="spec" style="color:#5b636d">Under 420, Align and Delete fold into ⋯ (Align Left, Center, Right; Delete Row, Delete Column). At rest at 360 every control fits (303 of 360). The mic never folds.</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:460px 460px 460px;gap:40px">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="lbl">Dark · 460 · listening</div>
+      <div class="pane dark" style="width:460px;height:400px">
+        <div class="tabs"><span>Project</span><b>refunds-api.md</b><span>+</span></div>
+        <div class="strip">
+          <div class="hint"><span class="meter"><i style="height:5px"></i><i style="height:9px"></i><i style="height:12px"></i><i style="height:7px"></i></span><b>Listening</b><span>· ⇧⌘D or the mic finishes · esc ends</span></div>
+          <div class="sp"></div>
+          <button class="mic lis" aria-label="Stop Voice Input"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><rect x="5.6" y="1.8" width="4.8" height="8" rx="2.4"/><path d="M3.4 7.6a4.6 4.6 0 009.2 0M8 12.2v2"/></svg></button>
+        </div>
+        <div class="doc">
+          <h1>Refunds API spec</h1>
+          <h2>Thresholds</h2>
+          <p>Limits per path, as finance confirmed on Oct 3.</p>
+          <table><tr><th>Path</th><th>Limit</th><th style="text-align:right">Approvers</th></tr><tr><td>Card</td><td>$500</td><td style="text-align:right">2</td></tr><tr><td>Async</td><td>$250</td><td style="text-align:right">1</td></tr></table>
+          <h2>Open questions</h2>
+          <p>Who approves async refunds over $1,000? Finance signs off above <span class="vol">two thousand</span><span class="caret"></span></p>
+        </div>
+      </div>
+      <div class="spec" style="color:#5b636d">While listening, the controls give way to chat's hint row: meter, Listening, the keys. Settled words are <span class="mono">text</span>, words still changing <span class="mono">text2</span> (DL-261).</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="lbl">Classic · 460 · review on, no microphone</div>
+      <div class="pane classic" style="width:460px;height:400px">
+        <div class="tabs"><span>Project</span><b>refunds-api.md</b><span>+</span></div>
+        <div class="rbar">
+          <div class="btn">Markup<span class="ch"><svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 3l2.5 2.5L6.5 3"/></svg></span></div>
+          <div class="btn on"><span class="dot on"></span>Suggest Edits</div>
+          <div class="sp"></div>
+          <div class="btn">‹</div><div class="btn">›</div>
+          <div class="btn">Review All<span class="ch"><svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 3l2.5 2.5L6.5 3"/></svg></span></div>
+        </div>
+        <div class="strip">
+          <button class="pop">Heading 2<span class="ch"><svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 3l2.5 2.5L6.5 3"/></svg></span></button>
+          <div class="sep"></div>
+          <button class="g" aria-label="Bold" style="font-weight:700">B</button>
+          <button class="g" aria-label="Italic" style="font-style:italic;font-weight:500">I</button>
+          <button class="g" aria-label="Link"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.6 9.4l2.8-2.8"/><path d="M7.2 4.6l1.1-1.1a2.6 2.6 0 013.7 3.7l-1.1 1.1"/><path d="M8.8 11.4l-1.1 1.1a2.6 2.6 0 01-3.7-3.7l1.1-1.1"/></svg></button>
+          <button class="g" aria-label="Insert Table"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M2 6.5h12M2 9.75h12M6 6.5v6.5M10 6.5v6.5"/></svg></button>
+          <button class="g" aria-label="More"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3.5" cy="8" r="1.2"/><circle cx="8" cy="8" r="1.2"/><circle cx="12.5" cy="8" r="1.2"/></svg></button>
+          <div class="sp"></div>
+          <button class="mic off" aria-label="No mic detected"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><rect x="5.6" y="1.8" width="4.8" height="8" rx="2.4"/><path d="M3.4 7.6a4.6 4.6 0 009.2 0M8 12.2v2"/><path d="M2.6 2.2l10.8 11.6"/></svg></button>
+        </div>
+        <div class="tip" style="right:10px;top:118px">No mic detected · connect one to use transcription</div>
+        <div class="doc">
+          <h1>Refunds API spec</h1>
+          <h2>Thresh<span class="caret"></span>olds</h2>
+          <p>Limits per path, as finance<span class="ins"> and legal</span> confirmed on Oct 3.</p>
+        </div>
+      </div>
+      <div class="spec" style="color:#5b636d">With the review bar showing, the strip sits under it, next to the text (76 in all). No microphone: DL-265's faint struck mic in <span class="mono">controlEdge</span>, its tooltip; a press says “No microphone found.” in the strip.</div>
+    </div>
+
+    <div class="spec">
+      <div class="lbl" style="margin-bottom:8px">Spec <span class="P">[P]</span></div>
+      <p><b>Where.</b> Under the tabs on every Markdown document (not templates' preview or read-only files, where it hides), below the review bar when that shows. 32 high (new <span class="mono">formatBarHeight</span>), on <span class="mono">pane</span>, a <span class="mono">rule</span> below. It comes with its view, so no slide. View › Hide Formatting Bar turns it off everywhere.</p>
+      <p><b>Controls.</b> Glyphs 28 × 24, radius 6, in <span class="mono">text2</span>. Under the pointer, and when on at the caret, a <span class="mono">selected</span> fill with the glyph in <span class="mono">text</span>; never the accent. Tooltips give the menu name and chord (Bold ⌘B, Italic ⌘I, Link ⌘K). Style ⌄: Body, Heading 1–3, Quote, Bulleted List, Numbered List, Task, Code Block. ⋯: Strikethrough ⇧⌘X, Code. Clicks never take focus from the text.</p>
+      <p><b>In a table.</b> + Row, + Column, Align ⌄, Delete ⌄ take Style's place, the same commands as Format › Table. The in-document bar goes: <b>amends DL-113 and DL-182</b>.</p>
+      <p><b>Mic.</b> At the trailing end, 24 round: rest, <span class="mono">selected</span> under the pointer, <span class="mono">text</span> fill listening, <span class="mono">mic.slash</span> with no microphone (DL-265).</p>
+      <p><b>duo2 (DL-71).</b> <span class="mono">doc format body|quote|bullet|numbered|codeblock</span> (new; bold, italic, link and headings exist), <span class="mono">doc table …</span> (exists), <span class="mono">voice start --doc</span>, <span class="mono">view format-bar show|hide</span>.</p>
+      <p><b>Build, about 5 days.</b> 3 are shared by every option: the new commands, a caret-state report from the page, voice into the document with one-step undo, and checks. 1 for the SwiftUI strip, beside <span class="mono">MarkdownReviewBar</span>. 1 to move the table controls out of the page and redo the table's height. Fits the bundle: no new CodeMirror package.</p>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1560,"height":1300}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
