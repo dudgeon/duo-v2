@@ -4723,3 +4723,35 @@ The director, on Q-341: "yes, go ahead … and keep your clipping as the backsto
 - **Left over:** at the switch the terminal gets one row fewer (52 → 51) than the chat's pane gave it, so Claude redraws once at the same width. The bars around the slot take slightly more height than the chat did. Widths match, which is what kept stale cells away.
 - Harness: `window-width:<pt>` (the window's width) and `term-info` (the visible session's terminal: cols × rows, on screen or not, the longest row as text, hidden resizes; `term-size` was taken: it resizes the emulator).
 - **Proof:** `scripts/check-chat-narrow-live.sh` (isolated, background, mock API, Haiku 5.5). At All projects, then Home's page, then back, then four quick flips, then the terminal: columns 42, 87, 42, 42, 42 and hidden resizes 1, 2, 3, 3, 3, ending at Claude's idle prompt with no fallback. It passes on 2.1.284 and 2.1.311. DuoChecks 2599 passed, 0 failed.
+
+## F-460 · Google Slides keeps a pptx's placeholders and layouts, and flattens the rest (duo-decks, 2026-10-31; Q-355)
+
+A python-pptx deck uploaded to Geoff's Drive with conversion on, then read back and exported as pptx and PDF (`docs/design/duo-decks-study/research-pptx-google-and-templates.md` §3; one-slide round trip, see F-461).
+- **Kept:** the slide's link to its layout, the master's and layouts' placeholders, placeholder `type` and `idx` (including dt/ftr/sldNum 10/11/12), exact EMU geometry, theme colours as `schemeClr` (`tx1` comes back as `dk1`), slide size.
+- **Changed:** layouts are renamed to their type (`Title Slide` → `TITLE`); every shape becomes `Google Shape;N;pN`; inherited formatting is written onto every shape and run (explicit `xfrm`, size, typeface); the theme font scheme is rewritten (to Arial) with the resolved font baked into runs; docProps are dropped; a notes master and notes slides are always added.
+- **So:** a placeholder-filled deck stays editable and can be mapped back to its template by placeholder type/idx plus geometry, never by names. Absolute text boxes look the same but carry nothing to map. Template fonts should be Google Fonts or carry a substitute.
+- **Not yet tested:** tables, charts, gradients, hyperlinks, custom (`cust`) layouts and idx 13+ placeholders through Google (Q-355).
+
+## F-461 · The Drive connector can't upload binaries intact (duo-decks, 2026-10-31)
+
+The claude.ai Google Drive connector's `create_file` takes the file as a base64 string the model writes out, and the copy corrupts at about one character in 13,000. Every pptx over about 10 KB failed ("Invalid conversion requested") or arrived with changed bytes; Sonnet subagents failed the same way. Downloads are exact (the base64 comes back verbatim in the transcript). A Google test or feature that sends files needs a byte-exact path: Drive's API from a local process, a tool that takes a file path (Claude in Chrome's `file_upload`), or Drive for desktop, which isn't on the Mac mini.
+
+## F-462 · pandoc's pptx writer fills a template's placeholders but chooses among 7 layouts itself (duo-decks, 2026-10-31)
+
+Tested with pandoc 3.13 (`research-formats.md`): `--reference-doc` slides keep the reference's master and layouts and put text in their real placeholders, but pandoc picks one of seven layouts by name (Title Slide, Title and Content, Section Header, Two Content, Comparison, Content with Caption, Blank) from the slide's content; a custom layout in the reference was dropped and can't be chosen per slide. The official `pandoc.wasm` (62 MB, GPL-2+) made a correct 10-slide pptx in about 170 ms under Node's WASI, so it could run in a web view, but its layout model doesn't fit Duo Decks.
+
+## F-463 · Duo has no OOXML or zip writer; a Swift one is small (duo-decks, 2026-10-31)
+
+`Pptx.Zip` (`Sources/DuoSearch/Pptx.swift`) only reads. No Swift package writes pptx usefully. Compression encodes raw DEFLATE and libz has `crc32`, so a zip writer is about 100 lines beside the reader; a placeholder-fill pptx writer on a template package is about 1–2k lines with tests. DuoSearch is linked by `duo2`, so the writer can back `local` verbs that run with Duo closed and inside Claude's sandbox. The vendored `@aiden0z/pptx-renderer` draws any pptx it writes (DL-121).
+
+## F-464 · A deck as Markdown costs about 30–45 tokens a slide and diffs line by line (duo-decks, 2026-10-31)
+
+Measured on the same 10-slide content (`research-formats.md`): pandoc Markdown 1,054 characters, Slidev 1,114, Marp 1,209, the Duo sketch 1,424 (about 356 tokens), a python-pptx script 2,139, pptxgenjs 3,093, pandoc's minimal slide XML 12,448 (about 3,100 tokens). The study's 9-slide sample deck is 1,726 characters against 22,911 of exported slide XML. A one-word edit is a one-line diff in every Markdown form; a committed pptx is "Binary files differ", and its unzipped slide XML is one line per file.
+
+## F-465 · How other agents build decks: the patterns Duo Decks takes (duo-decks, 2026-10-31)
+
+From `research-agentic-landscape.md`: Anthropic's pptx skill dropped html2pptx in February 2026 for theme-first masters with named placeholders, XSD checks and a LibreOffice look. Claude's Slides artifact type stores a deck index plus one closed-subset HTML file per slide with stable ids, blocks on build errors that name the fix, says "nothing shrinks; split the slide", and never re-reads its work unless asked. Presenton's Template V2 and PPTAgent induce slot schemas with text capacities from existing decks (PPTAgent: 95.0% success falls to 78.8% without schemas). ppt-master compiles a closed SVG dialect to DrawingML behind a checker. The patterns taken: a layout catalogue with slot schemas, a closed vocabulary with a checker, template induction by the model certified by the tool, placeholder fill over the user's own pptx, capacity limits with "split, don't shrink".
+
+## F-466 · New slides don't get footer or slide-number placeholders unless the writer copies them (duo-decks, 2026-10-31)
+
+python-pptx's `add_slide` leaves a layout's date, footer and slide-number placeholders off the new slide (PowerPoint adds them when "show footer" is on), so a deck loses its footer and numbers. The prototype (`docs/design/duo-decks-study/prototypes/compile/deck.py`) clones them from the layout. Slide → layout placeholders inherit by `idx`, layout → master by `type`; custom body slots should use idx 13 and up because 10–12 are date, footer and number.
