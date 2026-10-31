@@ -60,7 +60,8 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
 
     /// Shows a file; `root` is the folder the page may read (its project).
     public func open(_ file: URL, root: URL) {
-        guard file.standardizedFileURL != url?.standardizedFileURL else { return }
+        guard file.standardizedFileURL != url?.standardizedFileURL || bufferText != nil else { return }
+        bufferText = nil
         url = file
         self.root = root
         picked = nil
@@ -76,6 +77,32 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
     }
 
     public func reload() { webView.reload() }
+
+    /// The page drawn from the editor's buffer (split view: the preview renders the unsaved text,
+    /// DL-275). Nothing is written; the folder's files load through a base address, which WebKit
+    /// may refuse for local files, so relative images can be missing until the editor saves
+    /// (the editor autosaves a second after typing, and the page then loads from disk again).
+    public func renderBuffer(_ text: String, file: URL, root: URL) {
+        if url?.standardizedFileURL != file.standardizedFileURL { url = file; self.root = root; picked = nil; picking = false }
+        bufferText = text
+        let load = { [weak self] in
+            guard let self, self.rulesReady, self.bufferText == text else { return }
+            self.webView.loadHTMLString(text, baseURL: file.deletingLastPathComponent())
+        }
+        if rulesReady { load() } else { afterRules = load }
+        timer?.invalidate(); timer = nil
+        onChange?()
+    }
+
+    /// The buffer is no longer what the page shows: the next `open` loads the file.
+    public func endBuffer() {
+        guard bufferText != nil else { return }
+        bufferText = nil
+        url = nil
+    }
+
+    /// The text last drawn from a buffer, nil when the page shows the file.
+    public private(set) var bufferText: String?
 
     // MARK: Watching
 

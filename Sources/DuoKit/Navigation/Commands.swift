@@ -59,6 +59,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case actualSize         // ⌘0
     // All projects' middle (DL-142): no chords until Q-100 is decided
     case showBoard, showList
+    case previewInSplitView // ⌥⌘P: View › Show Preview in Split View / Close Split View for the showing file (DL-277, amends DL-34)
+    case previousSplitSide, nextSplitSide   // ⇧⌘[ and ⇧⌘]: View › Previous / Next Side of Split View (DL-277)
     case voiceInput         // ⇧⌘D: Edit › Start / Stop Voice Input (DL-261, amends DL-34): tap toggles, held past 0.3 s is hold-to-talk
 
     public var title: String {
@@ -124,6 +126,9 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .showBoard: "Show Board"
         case .showList: "Show List"
         case .voiceInput: "Voice Input"
+        case .previewInSplitView: "Show Preview in Split View"
+        case .previousSplitSide: "Previous Side of Split View"
+        case .nextSplitSide: "Next Side of Split View"
         }
     }
 
@@ -136,6 +141,9 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .jumpToPeekSelection: KeyboardShortcut(.return, modifiers: .command)
         case .toggleSidebar: KeyboardShortcut("s", modifiers: [.command, .control])
         case .toggleRightPane: KeyboardShortcut("0", modifiers: [.command, .option])
+        case .previewInSplitView: KeyboardShortcut("p", modifiers: [.command, .option])
+        case .previousSplitSide: KeyboardShortcut("[", modifiers: [.command, .shift])
+        case .nextSplitSide: KeyboardShortcut("]", modifiers: [.command, .shift])
         case .nextPane: KeyboardShortcut(.rightArrow, modifiers: [.command, .option])
         case .previousPane: KeyboardShortcut(.leftArrow, modifiers: [.command, .option])
         case .nextTab: KeyboardShortcut(.tab, modifiers: .control)
@@ -181,6 +189,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .jumpToPeekSelection: model.peekOpen
         case .goHome, .toggleSidebar, .closeWindow: true
         case .closeSession: model.keyboardInRightPane ? model.closableRightTab != nil : model.visibleTerminal != nil
+        case .previewInSplitView: model.canTogglePreviewInSplitView
+        case .previousSplitSide, .nextSplitSide: model.showingSplit != nil
         case .newMarkdown, .newFolder: model.terminalsMode == .live && model.projectFolder != nil
         case .save: model.terminalsMode == .live && model.editorOpened && model.editorIfLoaded?.url != nil
         case .bold, .italic, .strikethrough, .code, .link, .heading1, .heading2, .heading3, .task, .addProperties, .tableInsert: model.webFocus == .editor
@@ -248,9 +258,13 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .goHome: model.goHome()
         case .togglePeek: model.togglePeek()
         case .jumpToPeekSelection: model.jumpToPeekSelection()
-        case .toggleSidebar: model.leftCollapsed.toggle()
+        case .toggleSidebar: model.toggleSidebarOrPeek()
+        case .previewInSplitView: model.togglePreviewInSplitView()
+        case .previousSplitSide, .nextSplitSide: model.stepSplitSide()
         case .closeSession:
-            if model.keyboardInRightPane { if let doc = model.closableRightTab { model.closeDocument(doc) } }   // F-495: never the console's session
+            // In a split, ⌘W closes the active side (model state), never the console's session (F-479, F-495).
+            if model.splitHasKeys { model.closeActiveSplitSide() }
+            else if model.keyboardInRightPane { if let doc = model.closableRightTab { model.closeDocument(doc) } }
             else { model.closeVisibleSession() }
         case .newMarkdown: model.newMarkdownFile(near: model.selectedFile)
         case .newFolder: model.newFolder(near: model.selectedFile)
@@ -393,6 +407,12 @@ public struct DuoCommands: Commands {
         // panes) are left out until they work; Enter Full Screen is the system's.
         CommandGroup(after: .sidebar) {
             item(.toggleSidebar)
+            // Split view (DL-277): the showing file's preview beside its source.
+            Button(model.showingSplit != nil ? "Close Split View" : DuoCommand.previewInSplitView.title) { DuoCommand.previewInSplitView.perform(in: model) }  // action: split
+                .keyboardShortcut(DuoCommand.previewInSplitView.shortcut)
+                .disabled(!DuoCommand.previewInSplitView.isEnabled(in: model))
+            item(.previousSplitSide)
+            item(.nextSplitSide)
             Divider()
             // All projects' middle (DL-142), the same choice as the map header's Board | List.
             item(.showBoard)
