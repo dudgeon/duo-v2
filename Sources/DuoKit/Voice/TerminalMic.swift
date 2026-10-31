@@ -150,6 +150,9 @@ final class TerminalMicView: NSView {
         // No microphone, option 2 (NoMic.dc.html): no chip until there is one; the notice still has its place.
         if noMic, VoiceNoMicStyle.current == .hidden { updateNotice(); return hide() }
         if isHidden { isHidden = false }
+        // Option 1 with no microphone (DL-265): the tooltip says why it's faint.
+        let tip = noMic && VoiceNoMicStyle.current == .slashed ? VoiceNoMicStyle.tooltip : VoiceCopy.tooltip
+        if toolTip != tip { toolTip = tip }
         needsDisplay = true
         updateNotice()
     }
@@ -252,19 +255,21 @@ final class TerminalMicView: NSView {
     private func drawToday() {
         let st = state
         let listening = st == .listening
+        // No microphone, option 1 (DL-265): a faint mic with a strike through it, no fill, even under the pointer.
+        let slashed = noMic && VoiceNoMicStyle.current == .slashed
         let dashed: Bool = { if case .preparing = st { return true }; return st == .restricted }()
         let path = NSBezierPath(roundedRect: bounds, xRadius: 5, yRadius: 5)
         // The patch is `console`; hovered, `consoleRule`; listening, `consoleText`.
-        (listening ? DuoNSColor.consoleText : hovering ? DuoNSColor.consoleRule : DuoNSColor.console).setFill()
+        (listening ? DuoNSColor.consoleText : hovering && !slashed ? DuoNSColor.consoleRule : DuoNSColor.console).setFill()
         path.fill()
         if dashed {
             DuoNSColor.consoleRule.setStroke()
             let p = NSBezierPath(roundedRect: bounds.insetBy(dx: 0.5, dy: 0.5), xRadius: 5, yRadius: 5)
             p.setLineDash([2, 2], count: 2, phase: 0); p.lineWidth = 1; p.stroke()
         }
-        let tint = listening ? DuoNSColor.console : hovering ? DuoNSColor.consoleText : DuoNSColor.consoleText2
+        let tint = listening ? DuoNSColor.console : slashed ? DuoNSColor.tuiInputBorder : hovering ? DuoNSColor.consoleText : DuoNSColor.consoleText2
         let cfg = NSImage.SymbolConfiguration(pointSize: DuoSymbolSize.barIcon, weight: .regular)
-        if let img = NSImage(systemSymbolName: "mic", accessibilityDescription: nil)?.withSymbolConfiguration(cfg) {
+        if let img = NSImage(systemSymbolName: slashed ? "mic.slash" : "mic", accessibilityDescription: nil)?.withSymbolConfiguration(cfg) {
             let tinted = NSImage(size: img.size, flipped: false) { r in
                 img.draw(in: r); tint.set(); r.fill(using: .sourceAtop); return true
             }

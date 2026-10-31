@@ -92,9 +92,11 @@ public enum VoiceNoMicStyle: Sendable {
     case ordinary
 
     public static let current: VoiceNoMicStyle = {
-        guard SupportFolder.isIsolated else { return .hidden }   // Geoff chose option 2 (DL-264)
-        switch ProcessInfo.processInfo.environment["DUO_VOICE_NOMIC_STYLE"] { case "1": return .slashed; case "3": return .ordinary; default: return .hidden }
+        // Geoff chose 2 (DL-264), then changed his mind for 1 (DL-265): "faint mic with strikethrough is better".
+        guard SupportFolder.isIsolated else { return .slashed }
+        switch ProcessInfo.processInfo.environment["DUO_VOICE_NOMIC_STYLE"] { case "2": return .hidden; case "3": return .ordinary; default: return .slashed }
     }()
 
-    public static let tooltip = "No microphone connected · connect one to dictate"
+    /// Geoff's words (DL-265): "no mic detected, connect one to use transcription".
+    public static let tooltip = "No mic detected · connect one to use transcription"
 }

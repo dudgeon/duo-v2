@@ -6,7 +6,7 @@ The four boards in `screens/` are the target, rendered at 2× in `screens/png/`.
 
 There are no new tokens. Everything uses `pane`, `ground`, `selected`, `rule`, `controlEdge`, `text`, `text2`, `chatGround`, `console`, `consoleRule`, `consoleText`, `consoleText2` and `tuiInputBorder`. The mic is SF Symbol `mic` (the boards draw a stand-in stroke), 14 pt in chat and 12 pt on the console.
 
-> **Amended by DL-264 (Geoff, 2026-10-30).** The terminal mic is not on the bottom rule: it is today's subtle mark in a 4-column margin Duo keeps beside Claude's input box, centred on the box's text rows (`proof/dl264-*.png` are the target captures; `screens/terminal.html` is kept as drawn, for its states and failure modes). With no microphone, the mic is hidden in chat and the terminal (option 2 of the canvas's "No microphone" board). Return and Esc while dictating: DL-263.
+> **Amended by DL-264 (Geoff, 2026-10-30).** The terminal mic is not on the bottom rule: it is today's subtle mark in a 4-column margin Duo keeps beside Claude's input box, centred on the box's text rows (`proof/dl264-*.png` are the target captures; `screens/terminal.html` is kept as drawn, for its states and failure modes). With no microphone, the mic stays, faint and struck through, with the tooltip "No mic detected · connect one to use transcription" (DL-265, which replaced DL-264's hidden). Return and Esc while dictating: DL-263.
 
 ## Screens
 
