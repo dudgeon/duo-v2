@@ -296,6 +296,18 @@ public enum FixtureHarness {
                 let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init)
                 if kv.count == 2 { model.dropFiles(kv[1].split(separator: "|").map { URL(fileURLWithPath: String($0)) }, onto: kv[0] == "root" ? nil : kv[0]) }
             }
+        case "window-width":   // window-width:<pt>: Duo's window that wide, its height kept (F-452's narrowing run)
+            if parts.count > 1, let w = Double(parts[1]), let win = NSApp.windows.first(where: { $0.title == "Duo" }) {
+                var f = win.frame
+                f.size.width = w
+                win.setFrame(f, display: true)
+            }
+        case "term-info":   // the visible session's terminal: cols × rows, whether it is on screen, its longest row as text, hidden resizes (F-452)
+            if let t = model.visibleTerminal {
+                let d = t.view.terminalStateSnapshot().dimensions
+                let longest = t.view.visibleRowsText(0..<d.rows).map(\.count).max() ?? 0
+                FileHandle.standardError.write(Data("term-info: \(t.key.prefix(8)) cols=\(d.cols) rows=\(d.rows) onScreen=\(t.view.window != nil) longestRow=\(longest) hiddenResizes=\(t.hiddenResizes)\n".utf8))
+            } else { FileHandle.standardError.write(Data("term-info: no terminal\n".utf8)) }
         case "drop-terminal":   // drop-terminal:<path>|<path>: files dropped on the visible terminal
             if parts.count > 1 { model.visibleTerminal?.view.insertPaths(parts[1].split(separator: "|").map { URL(fileURLWithPath: String($0)) }) }
         case "drop-hover":   // drop-hover:<folder>|root|off: a drag of files held over the tree

@@ -4665,3 +4665,14 @@ Geoff's Debug report (Duo Dev voice test, dd2b8e8c, Claude Code 2.1.311). The wo
   - a hand-over refused with an empty prompt goes again (two Ctrl+G) and sends, with no fallback;
   - one refused with other words is refused once, as before.
 - Not changed: the hidden terminal still keeps its last size while chat shows (Q-341).
+
+## F-452 · The hidden terminal keeps the pane's size while chat shows (chat-hidden-width, 2026-10-30; Q-341)
+
+The director, on Q-341: "yes, go ahead … and keep your clipping as the backstop."
+
+- **What moved Geoff's terminal from 87 to 42 columns** (F-449): Home's session draws in two panes. At All projects it is a fixed column, 42 columns whatever the window's width. On Home's own page it is the console, 87 here. While chat shows, the terminal view is out of the layout, so it kept the size of the last pane that showed it as a terminal, not the one chat was in.
+- **Now** while chat shows, `ConsoleChatBody` measures the chat's pane, and the session sizes its hidden view to it as the slot would (`TerminalSession.holdHiddenSize`: the pane inset 12 × 8). It does this only for a view no slot on screen holds, since two sizers resizing one terminal made Claude redraw by turns (F-208); not mid-slide (DL-129); and only after the pane has kept a size for 0.25 s. SwiftTerm resizes the PTY only when its cell count changes. So Claude redraws, out of sight, once per settled move, and the terminal comes back at the width Claude drew at. The clip (F-449) stays as the backstop: the alternate screen still holds the wide drawing's cells past the width (`longestRow=87` at 42 columns in the run below).
+- **Redraws while hidden:** none per frame. Four page flips 0.02 s apart cost no resize at all, since the pane ended where it started. Each settled move costs one SIGWINCH and one redraw nobody sees.
+- **Left over:** at the switch the terminal gets one row fewer (52 → 51) than the chat's pane gave it, so Claude redraws once at the same width. The bars around the slot take slightly more height than the chat did. Widths match, which is what kept stale cells away.
+- Harness: `window-width:<pt>` (the window's width) and `term-info` (the visible session's terminal: cols × rows, on screen or not, the longest row as text, hidden resizes; `term-size` was taken: it resizes the emulator).
+- **Proof:** `scripts/check-chat-narrow-live.sh` (isolated, background, mock API, Haiku 5.5). At All projects, then Home's page, then back, then four quick flips, then the terminal: columns 42, 87, 42, 42, 42 and hidden resizes 1, 2, 3, 3, 3, ending at Claude's idle prompt with no fallback. It passes on 2.1.284 and 2.1.311. DuoChecks 2599 passed, 0 failed.

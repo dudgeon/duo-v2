@@ -201,6 +201,12 @@ struct ConsoleChatBody: View {
     var body: some View {
         if chat.showsChat {
             ChatPane(chat: chat)
+                // The terminal behind it keeps this pane's size, so it comes back at the width it was drawn at (Q-341).
+                .background(GeometryReader { g in
+                    Color.clear
+                        .onAppear { terminal?.holdHiddenSize(g.size) }
+                        .onChange(of: g.size) { _, size in terminal?.holdHiddenSize(size) }
+                })
         } else {
             VStack(spacing: 0) {
                 if chat.mode == .chat, let f = chat.fallback { ChatFallbackBar(chat: chat, message: f.message, command: f.command) }

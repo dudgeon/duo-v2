@@ -130,6 +130,35 @@ public enum ChildEnvironment {
 /// One terminal: a view and the process it hosts.
 @MainActor
 public final class TerminalSession {
+    /// While chat shows, the terminal view is out of the layout: it is sized here to the pane chat fills, as the slot
+    /// would size it (inset 12 × 8), so Claude draws at the width the terminal will show (Q-341, F-452). Only a view no
+    /// slot on screen holds (two sizers resizing one terminal made Claude redraw by turns, F-208); not mid-slide (DL-129); and once
+    /// the pane has settled, so a window being dragged resizes Claude once, not on every frame.
+    public func holdHiddenSize(_ pane: CGSize) {
+        heldPane = pane
+        holdTimer?.invalidate()
+        holdTimer = Timer.scheduledTimer(withTimeInterval: Self.holdSettle, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated { self?.applyHeldSize() }
+        }
+    }
+
+    /// How long the pane must keep a size before the hidden terminal takes it.
+    public static let holdSettle: TimeInterval = 0.25
+    private var heldPane: CGSize?
+    private var holdTimer: Timer?
+
+    func applyHeldSize() {
+        guard let pane = heldPane, view.window == nil else { return }
+        if PaneMotion.running > 0 { holdHiddenSize(pane); return }
+        let f = CGRect(origin: .zero, size: pane).insetBy(dx: 12, dy: 8)
+        guard f.width > 0, f.height > 0, view.frame.size != f.size else { return }
+        view.frame = f
+        hiddenResizes += 1
+    }
+
+    /// How many times the hidden view took a new size (the harness's `term-info`).
+    public private(set) var hiddenResizes = 0
+
     public internal(set) var key: String
     public let command: TerminalCommand
     public let cwd: String
