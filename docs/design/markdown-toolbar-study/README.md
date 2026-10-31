@@ -216,7 +216,7 @@ Paths are relative to the repo root. `JS` is `Vendor/codemirror/src/duo-editor.j
 
 ## The design round
 
-Canvas: https://claude.ai/artifact/2DqVdN1cA1P6Hv1MW5T8Sb. The boards' source is kept in `canvas/`, and today's captures in `captures/`. The captures are Light only: the isolated build ignored the appearance setting and drew the review marks as source, so Dark, Classic and the review bar are drawn from the tokens, not captured.
+Canvas: https://claude.ai/artifact/2DqVdN1cA1P6Hv1MW5T8Sb. The boards' source is kept in `canvas/`, and today's captures in `captures/`. The first captures (`today-*`) are Light only, because they came from the main checkout's stale build (v0.2.12-31, 12 Oct), which predates Dark, Classic and Review in Markdown. A fresh build of this branch (code identical to origin/main) draws all of them: `fresh-*` in Dark and Classic, with plain, table and review states. It's not a bug on main.
 
 - **A · a slim strip, always shown** (recommended):
   - 32 under the tabs;
