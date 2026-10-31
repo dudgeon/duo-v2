@@ -1,0 +1,27 @@
+{
+ "handoff": "markdown-toolbar",
+ "canvas": "https://claude.ai/artifact/2DqVdN1cA1P6Hv1MW5T8Sb",
+ "screens": [
+  {
+   "file": "bar.html",
+   "size": "1560x1740",
+   "decision": "DL-266",
+   "shows": "The formatting bar as picked: 24 high, only while the document has the keyboard, over the top padding; scrolled; caret in a table at 460 and 360; listening (Dark); review bar on and no microphone (Classic); spec",
+   "canvasBoard": "Picked.dc.html"
+  },
+  {
+   "file": "dictation.html",
+   "size": "1560x980",
+   "decision": "DL-266",
+   "shows": "Dictating into a document: mic or shift-cmd-D, a phrase at a time, Suggest Edits on, done and one undo; keys and states. Behaviour only: its strip is drawn at 32, the bar's look is bar.html's",
+   "canvasBoard": "Voice.dc.html"
+  },
+  {
+   "file": "underline.html",
+   "size": "1160x980",
+   "decision": "DL-266",
+   "shows": "Q-345: Duo's underlines (link, suggested insertion) and an underline beside them; U1 chosen (left out), U2 not chosen, highlight not offered",
+   "canvasBoard": "Underline.dc.html"
+  }
+ ]
+}
