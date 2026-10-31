@@ -88,6 +88,7 @@ func repoFixture() throws -> Fixture {
     try taskBoardChecks()
     try appearanceChecks()
     try styleLiteralChecks()
+    try viewDiskReadChecks()
 
     print("properties (DB-16)")
     do {

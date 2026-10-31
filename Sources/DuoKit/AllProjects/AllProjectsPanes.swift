@@ -1020,7 +1020,7 @@ struct SessionOrganizeMenu: ViewModifier {
 
     func body(content base: Content) -> some View {
         let content = base.modifier(MenuTargetFill(sessionKey: sessionKey, radius: radius, onConsole: onConsole))
-        if model.terminalsMode == .live, let s = (model.fixture.sessions + (model.fixture.archivedSessions ?? [])).first(where: { $0.tabKey == sessionKey }),
+        if model.terminalsMode == .live, let s = model.fixture.sessions.first(where: { $0.tabKey == sessionKey }) ?? model.fixture.archivedSessions?.first(where: { $0.tabKey == sessionKey }),
            let id = s.sessionId {
             let payload = AppModel.dragPayload(session: id)
             content
@@ -1035,7 +1035,7 @@ struct SessionOrganizeMenu: ViewModifier {
                     Divider()
                     // Tasks (DL-93): a note in tasks/ whose `sessions:` links this session.
                     Button("Make a Task") { model.makeTask(fromSession: sessionKey) }
-                    if !model.taskNotes(in: s.project).isEmpty { AddToTaskMenu(model: model, session: s, id: id) }
+                    if !model.taskSummaries(in: s.project).isEmpty { AddToTaskMenu(model: model, session: s, id: id) }
                     Divider()
                     MoveToProjectMenu(model: model, session: s, id: id)
                     Divider()
