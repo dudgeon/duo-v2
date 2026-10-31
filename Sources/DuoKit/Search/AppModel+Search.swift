@@ -477,7 +477,18 @@ extension AppModel {
             closeSearch()
             if let id = item.sessionId { deleteSession(id) }
         case .splitView:
-            break  // split view isn't built (search-handoff §9)
+            // DL-277, DL-278: the result beside the showing tab, both editable; with no document showing
+            // (or one already split), it opens as Open does. Sessions stay dimmed (Q-404).
+            closeSearch()
+            guard let project = item.project, let path = item.path ?? item.fixturePath else { return }
+            let rel = liveFolders[project].flatMap { relativePathIn(URL(fileURLWithPath: path), folder: $0) } ?? path
+            let lines = item.startLine > 0 ? item.startLine...max(item.startLine, item.endLine) : nil
+            if currentProject?.name == project, let beside = rightTab, beside.contains("."), beside != rel, openSplitView(beside, with: rel) {
+                if let lines { (editorShowing(liveFile(rel) ?? URL(fileURLWithPath: path)) ?? editor(.second)).revealFromSearch(path: rel, lines: lines, words: item.matchedWords) }
+            } else {
+                open(project: project, document: rel)
+                if let lines { editor.revealFromSearch(path: rel, lines: lines, words: item.matchedWords) }
+            }
         }
     }
 

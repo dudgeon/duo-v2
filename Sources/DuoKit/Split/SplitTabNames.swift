@@ -35,10 +35,10 @@ struct SplitTabNames: View {
     @ViewBuilder private func name(_ role: SplitRole) -> some View {
         let on = tabActive && split.active == role
         let hidden = split.folded && split.active != role   // folded, only the active side shows
-        let text = role == .source ? title : split.kind.sideName
+        let text = role == .source ? title : model.splitSideName(split, .preview)
         HStack(spacing: DuoMetric.tabCloseTitleGap) {
             if role == .preview, model.showsTabClose(split.source) {
-                TabCloseButton(key: split.source + "#preview", onConsole: false, active: on) { model.closePreviewSide(split.source) }  // action: split close
+                TabCloseButton(key: split.source + "#preview", onConsole: false, active: on) { split.isDocPair ? model.closeDocPairSide(.preview, in: split.source) : model.closePreviewSide(split.source) }  // action: split close
             }
             Text(text).duoText(on ? .bodyEmphasis : .body)
                 .foregroundStyle(on ? DuoColor.text : hidden ? DuoColor.controlEdge : DuoColor.text2).lineLimit(1)

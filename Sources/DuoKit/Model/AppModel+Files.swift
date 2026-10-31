@@ -118,6 +118,8 @@ extension AppModel {
 
     /// Closes a document tab; its file is saved first if it changed. The left neighbour, or Project, shows.
     public func closeDocument(_ path: String) {
+        // A document in a pair (DL-278): that side closes and the other stays as an ordinary tab.
+        if let held = splitHolding(path), splitTabs[held.key]?.isDocPair == true { return closeDocPairSide(held.role, in: held.key) }
         guard let i = openDocuments.firstIndex(of: path) else { return }
         if path.hasPrefix("web:") { return closeWebTab(path) }
         endSplit(path)   // the preview has no file of its own: closing the source closes the split (DL-275)

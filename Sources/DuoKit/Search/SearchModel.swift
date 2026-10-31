@@ -145,7 +145,7 @@ public final class SearchUI {
         case .file, .memory:
             return [
                 .init(id: .open, title: "Open", chord: "↩", group: 0),
-                .init(id: .splitView, title: "Open in split view", chord: "⌥⌘↩", group: 0, enabled: false),
+                .init(id: .splitView, title: "Open in split view", chord: "⌥⌘↩", group: 0),
                 .init(id: .goToProject, title: "Go to \(item.project ?? "the project")", chord: nil, group: 0, enabled: item.project != nil),
                 .init(id: .sendToClaude, title: send, chord: "⌘D", group: 1, enabled: sendTargetName != nil),
                 .init(id: .findSimilar, title: "Find similar", chord: nil, group: 1),

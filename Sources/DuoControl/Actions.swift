@@ -38,7 +38,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case ping, status, needsYou = "needs-you", undo, help, doctor, legacy, install, uninstall, hook, walkSetup = "walk setup", settings, updateProbe = "update probe", hangs
     // What's on screen
     case goAll = "go all", goHome = "go home", open, peek, peekJump = "peek jump"
-    case split, splitClose = "split close", splitFocus = "split focus", splitSwap = "split swap", splitUnfold = "split unfold", splitRatio = "split ratio"
+    case split, splitClose = "split close", splitFocus = "split focus", splitSwap = "split swap", splitUnfold = "split unfold", splitRatio = "split ratio", splitSeparate = "split separate"
     case viewSidebar = "view sidebar", viewRight = "view right", viewTab = "view tab", viewTabMove = "view tab-move", viewPane = "view pane", viewGroup = "view group", viewSelect = "view select"
     case viewSort = "view sort", viewFilter = "view filter", viewHidden = "view hidden", viewFolder = "view folder", viewHome = "view home"
     // Projects
@@ -166,11 +166,12 @@ extension DuoAction {
         .init(.peekJump, .view, "", "Jump into the project selected in the peek.", ui: ["Jump into Selected Project"]),
         .init(.viewSidebar, .view, "show|hide|toggle|peek", "Show or hide the left pane. `peek` slides it over the console while a split view has folded it to its rail; a second peek closes it (DL-276).", ui: ["Toggle Sidebar", "Show Sidebar", "sidebar rail"]),
         .init(.split, .split, "[<file>] [--side left|right] [--with <file>]",
-              "Split view (DL-275): with a file, show it beside its own preview (a deck, Markdown or HTML) as one tab in the right pane, source on the left, or on the side given. With nothing, report the sides, the active side, the ratio, whether it is folded, and whether the split folded the sidebar. `--with` (two documents) is slice 2. ⌥⌘P does the same for the showing file.",
-              ui: ["Show Preview in Split View", "Close Split View"]),
+              "Split view (DL-275): with a file, show it beside its own preview (a deck, Markdown or HTML) as one tab in the right pane, source on the left, or on the side given. With nothing, report the sides, the active side, the ratio, whether it is folded, and whether the split folded the sidebar. `--with <file>`: two documents side by side, both editable (DL-278), <file> (or the showing tab) on the left and the other on the right with the keyboard; a file already open moves its tab into the split, and one already in a split selects it. ⌥⌘P does the same for the showing file's preview.",
+              ui: ["Show Preview in Split View", "Close Split View", "Open in Split View", "Open in split view"]),
         .init(.splitClose, .split, "[--side left|right]", "Close Split View: the split ends and the source stays as a tab. With `--side`, close that side as its × does: the preview side closes the preview; the source side closes the whole split with its tab (⌘W closes the active side).", ui: ["Close Split View", "split side close"]),
         .init(.splitFocus, .split, "left|right", "Make a side of the split the active side and give it the keyboard (the active side is what ⌘W, ⌘D, find and `--side`-less verbs act on).", ui: ["split side name", "split side click", "Previous Side of Split View", "Next Side of Split View"]),
         .init(.splitUnfold, .split, "", "Unfold a folded split: the console narrows just enough for two 340 pt sides (never under 480) and the hidden side becomes active. A rail at the right pane's far right does the same with a click.", ui: ["split rail"]),
+        .init(.splitSeparate, .split, "", "A split of two documents (DL-278) ends with both kept as ordinary tabs, side by side in the strip. Close Split View on such a split does the same.", ui: []),
         .init(.splitSwap, .split, "", "Swap Sides: the source goes to the other side.", ui: ["Swap Sides"]),
         .init(.splitRatio, .split, "<0.2-0.8>", "Where the divider is: the left side's share of the pane, kept so that neither side goes under 340 pt. Double-click on the divider evens it (0.5).", ui: ["split divider"]),
         .init(.viewRight, .view, "show|hide|toggle", "Show or hide the right pane: the action column at All projects, the documents in a project (⌥⌘0, DL-129).", ui: ["Toggle Right Pane", "right pane button"]),

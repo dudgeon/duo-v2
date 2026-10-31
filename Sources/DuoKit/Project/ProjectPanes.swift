@@ -986,8 +986,19 @@ struct RightPane: View {
                             if model.splitTab(tab.id) != nil {
                                 Button("Close Split View") { model.closeSplitView(tab.id) }  // action: split close
                                 Button("Swap Sides") { model.rightTab = tab.id; model.swapSplitSides() }  // action: split swap
-                            } else if model.previewKind(forTab: tab.id) != nil {
-                                Button("Show Preview in Split View") { model.openSplitView(tab.id) }  // action: split
+                            } else {
+                                // DL-278 (split-docs): another open tab beside this one, both editable.
+                                let others = model.splitCandidates(beside: tab.id)
+                                if !others.isEmpty {
+                                    Menu("Open in Split View") {
+                                        ForEach(others, id: \.self) { o in
+                                            Button((o as NSString).lastPathComponent) { model.openSplitView(tab.id, with: o) }  // action: split
+                                        }
+                                    }
+                                }
+                                if model.previewKind(forTab: tab.id) != nil {
+                                    Button("Show Preview in Split View") { model.openSplitView(tab.id) }  // action: split
+                                }
                             }
                             Divider()
                             // DL-220 (tabs-menu): the tab one place along; dimmed at the end it's at.
@@ -1041,7 +1052,12 @@ struct FileMenu: View {
     let onTab: Bool
 
     var body: some View {
-        if !isFolder && !onTab { Button("Open") { model.openDocument(path) } }
+        if !isFolder && !onTab {
+            Button("Open") { model.openDocument(path) }
+            // DL-278 (split-docs): beside the showing tab, both editable; a file already in a split selects it.
+            Button("Open in Split View") { if let b = model.rightTab { model.openSplitView(b, with: path) } }  // action: split
+                .disabled(!model.canOpenInSplitView(path))
+        }
         if !isFolder {
             Menu("Open With") {
                 if let url = model.fileURL(path) {

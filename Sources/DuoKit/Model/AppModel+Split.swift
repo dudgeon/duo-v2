@@ -59,7 +59,8 @@ extension AppModel {
 
     /// Close Split View: ends the split and keeps the source as an ordinary tab (the preview has no file).
     public func closeSplitView(_ path: String) {
-        guard splitTabs[path] != nil else { return }
+        guard let t = splitTabs[path] else { return }
+        if t.isDocPair { return separateDocPair(path) }   // both stay as tabs (slice 2)
         endSplit(path)
         if rightTab == path { selectedFile = path }
     }
@@ -74,6 +75,7 @@ extension AppModel {
     /// closes the split with its tab. `duo2 split close --side`.
     public func closeSplitSide(_ side: SplitSide) {
         guard let tab = showingSplit else { return }
+        if tab.isDocPair { return closeDocPairSide(tab.role(at: side)) }
         if tab.role(at: side) == .preview { closePreviewSide(tab.source) } else { closeSourceSide(tab.source) }
     }
 
@@ -97,7 +99,7 @@ extension AppModel {
         let policy = splits.policy(project, path)
         if t.kind == .markdown { splits.markdown.emit = { [weak policy] e in policy?.accept(e) } }
         let render: @MainActor (Int) -> Void = { [weak self] rev in self?.renderPreview(path, rev: rev) }
-        editor.onBufferChange = { [weak policy] in policy?.bufferChanged(render: render) }
+        editor(.main).onBufferChange = { [weak policy] in policy?.bufferChanged(render: render) }
         // The editor opens the file after this view appears: render once it has, and again a moment later.
         for delay in [0.3, 1.0] {
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { MainActor.assumeIsolated { policy.bufferChanged(render: render) } }
@@ -105,8 +107,8 @@ extension AppModel {
     }
 
     func renderPreview(_ path: String, rev: Int) {
-        guard let t = splitTabs[path], let file = liveFile(path), editor.url?.standardizedFileURL == file.standardizedFileURL else { return }
-        editor.currentText { [weak self] text in
+        guard let t = splitTabs[path], let file = liveFile(path), editor(.main).url?.standardizedFileURL == file.standardizedFileURL else { return }
+        editor(.main).currentText { [weak self] text in
             guard let self, let text, self.splitTabs[path] != nil else { return }
             switch t.kind {
             case .markdown: self.splits.markdown.render(text: text, rev: rev)
@@ -137,7 +139,9 @@ extension AppModel {
 
     /// The active side is model state: set by a click or typing in a side, `duo2 split focus`.
     public func setActiveRole(_ role: SplitRole, in key: String? = nil) {
-        guard let k = key ?? rightTab, var t = splitTabs[k], t.active != role else { return }
+        guard let k = key ?? rightTab, var t = splitTabs[k] else { return }
+        defer { syncActiveEditor(t) }   // a pair's active side is the active editor (C-135)
+        guard t.active != role else { return }
         t.active = role
         splitTabs[k] = t
     }
@@ -168,7 +172,7 @@ extension AppModel {
         setActiveRole(role)
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
-            let view: NSView? = role == .source ? self.editorIfLoaded?.webView : self.previewWebView(for: t)
+            let view: NSView? = role == .source ? self.editorIfLoaded(.main)?.webView : self.previewWebView(for: t)
             if let v = view, v.window != nil { v.window?.makeFirstResponder(v) }
         }
     }
@@ -177,7 +181,8 @@ extension AppModel {
         switch t.kind {
         case .markdown: splits.markdown.webView
         case .html: htmlViewerIfLoaded?.webView
-        case .deck, .document: nil
+        case .document: editorIfLoaded(.second)?.webView
+        case .deck: nil
         }
     }
 
@@ -191,8 +196,8 @@ extension AppModel {
     /// `duo2 split` with nothing else: the sides, active side, ratio, folded, and the sidebar.
     public func splitReport() -> String {
         guard let t = showingSplit else { return "no split view showing" }
-        let left = t.role(at: .left) == .source ? t.source : t.kind.sideName
-        let right = t.role(at: .right) == .source ? t.source : t.kind.sideName
+        let name = { (r: SplitRole) in r == .source ? t.source : (t.with ?? t.kind.sideName) }
+        let left = name(t.role(at: .left)), right = name(t.role(at: .right))
         return "left: \(left)\nright: \(right)\nactive: \(t.activeSide.rawValue)\nratio: \(String(format: "%.3f", t.ratio))\nfolded: \(t.folded)\nsidebar folded by the split: \(splits.sidebarFolded)"
     }
 
@@ -228,7 +233,8 @@ extension AppModel {
     /// ⌘W while a split has the keys: the active side closes; never the console's session (F-479).
     func closeActiveSplitSide() {
         guard let t = showingSplit else { return }
-        switch SplitRouting.route(.closeTab, active: t.active) {
+        switch SplitRouting.route(.closeTab, active: t.active, docPair: t.isDocPair) {
+        case .closeSideDocument(let role): closeDocPairSide(role)
         case .closePreview: closePreviewSide(t.source)
         default: closeSourceSide(t.source)
         }
@@ -239,6 +245,7 @@ extension AppModel {
     /// A file in a split was renamed or moved: the split follows.
     public func splitMoved(_ old: String, to new: String) {
         for (project, var all) in splits.tabs {
+            if let k = all.first(where: { $0.value.with == old })?.key { all[k]?.with = new; splits.tabs[project] = all }   // a pair's other document
             guard var t = all.removeValue(forKey: old) else { continue }
             t.source = new
             all[new] = t
@@ -261,7 +268,7 @@ extension AppModel {
         guard let saved else { return }
         var out: [String: SplitTab] = [:]
         for var t in saved where documents.contains(t.source) {
-            guard PreviewProviders.kind(forFile: t.source) == t.kind || t.kind == .deck else { continue }
+            guard PreviewProviders.kind(forFile: t.source) == t.kind || t.kind == .deck || (t.kind == .document && t.with != nil) else { continue }
             t.ratio = SplitGeometry.clampedRatio(t.ratio)
             out[t.source] = t
         }

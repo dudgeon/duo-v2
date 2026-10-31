@@ -170,26 +170,19 @@ struct SplitBody: View {
                 .id(path)
                 .padding(.trailing, tab.folded ? DuoMetric.sidebarRail : 0)   // the active side fills the rest
                 .overlay(alignment: .trailing) { if tab.folded { SplitRail(tab: tab) } }
-                .onAppear { model.startPreview(path) }
+                .onAppear { if !tab.isDocPair { model.startPreview(path) } }
                 .accessibilityIdentifier("video.right.document")
         }
     }
 }
 
-/// The source side: today's editor with its bars, unchanged.
+/// The source side: today's editor with its bars, in the main editor (C-135).
 struct SplitSourceSide: View {
     @Environment(AppModel.self) private var model
     let path: String
     let file: URL
 
-    var body: some View {
-        VStack(spacing: 0) {
-            DocumentStateBar()
-            MarkdownReviewSlot(file: file)
-            DocumentEditorView(editor: model.editor, file: file)
-        }
-        .modifier(NoticeMotion(key: DocumentStateBar.key(model)))
-    }
+    var body: some View { DocumentStack(file: file, ref: .main) }
 }
 
 /// The preview side: the provider's view (no bar of its own for Markdown).
@@ -208,7 +201,11 @@ struct SplitPreviewSide: View {
                     WebPreviewView(web: model.htmlViewer.webView)
                     PickerBar()
                 }
-            case .document: DuoColor.pane   // slice 2 draws its own second editor
+            case .document:
+                // Slice 2 (DL-278): the other document, in the second editor with its own bars.
+                if let w = model.splitTab(path)?.with, let f = model.liveFile(w) ?? model.keptFile(w) {
+                    DocumentStack(file: f, ref: .second)
+                } else { DuoColor.pane }
             case .deck: DuoColor.pane   // Duo Decks' provider fills this (preview-provider)
             }
         }
@@ -224,7 +221,7 @@ struct SplitRail: View {
     var body: some View {
         let hovering = model.splits.railHover == "split"
         let hiddenRole: SplitRole = tab.active == .source ? .preview : .source
-        let name = hiddenRole == .source ? (tab.source as NSString).lastPathComponent : tab.kind.sideName
+        let name = model.splitSideName(tab, hiddenRole)
         ZStack(alignment: .top) {
             (hovering ? DuoColor.selected : DuoColor.pane)
             SplitMark().padding(.top, 10)
