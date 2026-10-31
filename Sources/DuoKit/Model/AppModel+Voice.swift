@@ -94,7 +94,7 @@ extension AppModel {
     /// run's window is never key, so its keys never reach a monitor). `responder` is where the key would go.
     /// - Esc ends the dictation wherever the keyboard is (V-10, Geoff: "escape does not end transcription and it should"):
     ///   the words already placed stay, and the key doesn't reach Claude. The chat composer keeps its own Esc (discard).
-    /// - Return in the terminal being dictated into (DL-262): finish, let the last phrase land in Claude's prompt, then
+    /// - Return in the terminal being dictated into (DL-263): finish, let the last phrase land in Claude's prompt, then
     ///   press the Return the user pressed. Before, Return reached Claude at once and the last phrase landed after it.
     /// True when it took the key.
     func voiceTakesKey(_ e: NSEvent, responder: NSResponder?) -> Bool {

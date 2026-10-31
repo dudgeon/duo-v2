@@ -398,7 +398,7 @@ public final class VoiceInput {
 
     // MARK: Finish and discard
 
-    /// The mic or ⇧⌘D: stops listening; the last phrases land. Never sends (Return sends after it, DL-262).
+    /// The mic or ⇧⌘D: stops listening; the last phrases land. Never sends (Return sends after it, DL-263).
     public func finish() {
         guard state == .listening else { return }
         set(.finish)

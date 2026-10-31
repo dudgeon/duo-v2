@@ -59,7 +59,7 @@ extension ComposerTextView {
         for e in keys { keyDown(with: e) }
     }
 
-    /// The composer's text was sent (DL-262): close the dictation without undoing it, so the field clears with the
+    /// The composer's text was sent (DL-263): close the dictation without undoing it, so the field clears with the
     /// send. While a dictation was open the field wouldn't take the model's empty text, and the sent words stayed.
     func dropDictation() {
         guard dictation != nil else { return }
@@ -70,7 +70,7 @@ extension ComposerTextView {
     }
 
     /// Voice input's keys while it listens: Esc discards; Return finishes and then sends, once the last words have
-    /// landed (DL-262: it's held and played after them, so it goes through the composer's own send); anything typed
+    /// landed (DL-263: it's held and played after them, so it goes through the composer's own send); anything typed
     /// finishes first, then types. True when it took the key.
     func voiceKey(_ e: NSEvent) -> Bool {
         guard let v = VoiceInput.current, let chat = coordinator?.chat, v.target == .chat(chat.key) else { return false }
