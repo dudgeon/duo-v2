@@ -16,15 +16,22 @@ struct ChatMicButton: View {
         let state = mine ? voice.state : .idle
         let listening = state == .listening
         let dashed: Bool = { if case .preparing = state { return true }; return state == .restricted }()
-        let hover = chat.ui.hoverChip == "mic" && !listening
+        // With no microphone (NoMic.dc.html): 1, slashed and dimmed, explained; 2, gone until there is one; 3, as ever.
+        let none = !voice.microphoneAvailable && !state.isActive
+        let slashed = none && VoiceNoMicStyle.current == .slashed
+        let hover = chat.ui.hoverChip == "mic" && !listening && !slashed
+        Group {
+        if none && VoiceNoMicStyle.current == .hidden {
+            Color.clear.frame(width: 0, height: 0)
+        } else {
         ZStack {
             Circle().fill(listening ? DuoColor.text : hover ? DuoColor.selected : Color.clear)
             if dashed {
                 Circle().strokeBorder(DuoColor.rule, style: StrokeStyle(lineWidth: DuoMetric.borderHairline, dash: DuoShadow.dashPattern))
             }
-            Image(systemName: "mic")
+            Image(systemName: slashed ? "mic.slash" : "mic")
                 .font(.system(size: DuoSymbolSize.toolbarIcon, weight: .regular))
-                .foregroundStyle(listening ? DuoColor.pane : hover ? DuoColor.text : DuoColor.text2)
+                .foregroundStyle(slashed ? DuoColor.controlEdge : listening ? DuoColor.pane : hover ? DuoColor.text : DuoColor.text2)
         }
         .frame(width: ChatMicButton.diameter, height: ChatMicButton.diameter)
         .contentShape(Circle())
@@ -32,14 +39,21 @@ struct ChatMicButton: View {
             if inside { chat.ui.hoverChip = "mic" } else if chat.ui.hoverChip == "mic" { chat.ui.hoverChip = nil }
         }
         .onActivate { model.toggleVoice(.chat(chat.key)) }  // action: voice start
-        .help(VoiceCopy.tooltip)
-        .accessibilityLabel(listening ? "Stop voice input" : "Voice input")
+        .help(slashed ? VoiceNoMicStyle.tooltip : VoiceCopy.tooltip)
+        .accessibilityLabel(slashed ? VoiceNoMicStyle.tooltip : listening ? "Stop voice input" : "Voice input")
         .accessibilityIdentifier("voice.mic")
+        }
+        }
+        .transition(.opacity)
+        .animation(MotionSettings.shared.reduce ? nil : .easeOut(duration: 0.15), value: voice.microphoneAvailable)
     }
 
     static let diameter: CGFloat = 30
-    /// What the field gives up at its right: the mic, 8 each side, less the text's own 14 inset.
+    /// What the field gives up at its right: the mic, 8 each side, less the text's own 14 inset; nothing while option 2 hides it.
     static let reserved: CGFloat = 32
+    @MainActor static func reserved(for voice: VoiceInput) -> CGFloat {
+        !voice.microphoneAvailable && VoiceNoMicStyle.current == .hidden ? 0 : reserved
+    }
 }
 
 /// The hint row while voice input is on: the level meter and its keys, the model download, or a line saying why not.

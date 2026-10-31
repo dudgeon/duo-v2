@@ -85,6 +85,35 @@ import Foundation
         check(SheetCenter.shared.current == nil, "voice: with no microphone the first-press sheet never shows")
     }
 
+    // No microphone: a simulated device change flips microphoneAvailable and the state, through an injectable source.
+    do {
+        final class Fake: VoiceDeviceSource {
+            var usable = true, name: String? = "AirPods Pro"
+            var fire: (@MainActor () -> Void)?
+            func current() -> (name: String?, usable: Bool) { (name, usable) }
+            func observe(_ changed: @escaping @MainActor () -> Void) { fire = changed }
+        }
+        let dev = Fake()
+        let v = VoiceInput()
+        v.deviceSource = dev
+        check(v.microphoneAvailable && v.microphoneName == "AirPods Pro", "voice device: a microphone is known and named at rest")
+        check(v.microphoneLine == "Voice input is off. Microphone: AirPods Pro.", "voice device: status names the microphone")
+        dev.usable = false; dev.fire?()
+        check(!v.microphoneAvailable && v.microphoneName == nil, "voice device: unplugging flips microphoneAvailable")
+        check(v.microphoneLine == "Voice input is off: no microphone connected.", "voice device: status says no microphone is connected")
+        v.showFixture(.unavailable(VoiceCopy.noMic), target: .chat("k"))
+        dev.usable = true; dev.name = "MacBook Pro Microphone"; dev.fire?()
+        check(v.microphoneAvailable && v.microphoneName == "MacBook Pro Microphone" && v.state == .idle, "voice device: connecting one flips it back and clears the no-microphone line")
+        v.showFixture(.listening, target: .chat("k"), onMicrophone: true)
+        dev.usable = false; dev.fire?()
+        check(v.state == .failed("Stopped: the microphone went away."), "voice device: losing the microphone ends a dictation that was using it")
+        v.showFixture(.listening, target: .chat("k"), onMicrophone: false)
+        dev.usable = true; dev.fire?(); dev.usable = false; dev.fire?()
+        check(v.state == .listening, "voice device: losing the microphone does not end a file dictation")
+        let real = VoiceInput()
+        check(real.microphoneAvailable == VoiceDevice.hasMicrophone, "voice device: the CoreAudio source agrees with the device lookup")
+    }
+
     // The input-box finder
     let cells = 4
     func rows(_ text: String) -> [String] { text.split(separator: "\n", omittingEmptySubsequences: false).map(String.init) }

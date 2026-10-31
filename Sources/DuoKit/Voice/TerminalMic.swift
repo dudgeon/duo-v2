@@ -71,6 +71,9 @@ final class TerminalMicView: NSView {
     override var acceptsFirstResponder: Bool { false }
     override func acceptsFirstMouse(for e: NSEvent?) -> Bool { true }
 
+    /// No input device and nothing running: options 1 and 2 of NoMic.dc.html change the look.
+    private var noMic: Bool { !(voice?.microphoneAvailable ?? true) && !state.isActive }
+
     private var state: VoiceState {
         guard let v = voice, let s = session, v.target == .terminal(s.key) else { return .idle }
         return v.state
@@ -126,6 +129,8 @@ final class TerminalMicView: NSView {
         }
         if frame != f { frame = f }
         lastFrame = f
+        // No microphone, option 2 (NoMic.dc.html): no chip until there is one; the notice still has its place.
+        if noMic, VoiceNoMicStyle.current == .hidden { updateNotice(); return hide() }
         if isHidden { isHidden = false }
         needsDisplay = true
         updateNotice()
@@ -160,7 +165,7 @@ final class TerminalMicView: NSView {
     }
 
     /// The mic mark of the board's SVG (16-unit box), stroked at 1.6 units.
-    static func micPath(size: CGFloat) -> NSBezierPath {
+    static func micPath(size: CGFloat, slash: Bool = false) -> NSBezierPath {
         let k = size / 16
         let p = NSBezierPath(roundedRect: NSRect(x: 5.5 * k, y: 1.5 * k, width: 5 * k, height: 8.5 * k), xRadius: 2.5 * k, yRadius: 2.5 * k)
         p.move(to: NSPoint(x: 3 * k, y: 7.8 * k))
@@ -170,6 +175,7 @@ final class TerminalMicView: NSView {
             p.line(to: NSPoint(x: (8 - 5 * cos(t)) * k, y: (7.8 + 5 * sin(t)) * k))
         }
         p.move(to: NSPoint(x: 8 * k, y: 12.8 * k)); p.line(to: NSPoint(x: 8 * k, y: 14.7 * k))
+        if slash { p.move(to: NSPoint(x: 2 * k, y: 1.5 * k)); p.line(to: NSPoint(x: 14 * k, y: 14.5 * k)) }
         p.lineWidth = 1.6 * k; p.lineCapStyle = .round; p.lineJoinStyle = .round
         return p
     }
@@ -180,15 +186,18 @@ final class TerminalMicView: NSView {
         let dashed: Bool = { if case .preparing = st { return true }; return st == .restricted }()
         let radius = r.height / 2
         let path = NSBezierPath(roundedRect: r.insetBy(dx: 0.5, dy: 0.5), xRadius: radius, yRadius: radius)
-        (listening ? DuoNSColor.consoleText : (hovering || forceHover) ? DuoNSColor.consoleMenuTarget : DuoNSColor.consoleRule).setFill()
+        // Option 1 with no microphone: the chip keeps its edge, loses its fill, and its mark is slashed in a dimmer step.
+        let slashed = noMic && VoiceNoMicStyle.current == .slashed
+        (listening ? DuoNSColor.consoleText : slashed ? DuoNSColor.console : (hovering || forceHover) ? DuoNSColor.consoleMenuTarget : DuoNSColor.consoleRule).setFill()
         path.fill()
         (listening ? DuoNSColor.consoleText : DuoNSColor.tuiInputBorder).setStroke()
         if dashed { path.setLineDash([2, 2], count: 2, phase: 0) }
         path.lineWidth = 1; path.stroke()
-        let ink = listening ? DuoNSColor.console : DuoNSColor.consoleText
+        let ink = listening ? DuoNSColor.console : slashed ? DuoNSColor.consoleText2 : DuoNSColor.consoleText
+        let slash = slashed
         let words = VoiceMicStyle.current == .b
         let markSize: CGFloat = round ? 13 : words ? 11 : 12
-        let mark = Self.micPath(size: markSize)
+        let mark = Self.micPath(size: markSize, slash: slash)
         let f = NSFont.systemFont(ofSize: DuoTextStyle.control.spec.size)
         if words {
             let label = listening ? "Listening" : "Voice"

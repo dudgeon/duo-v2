@@ -26,11 +26,11 @@ There are no new tokens. Everything uses `pane`, `ground`, `selected`, `rule`, `
 **Chat.**
 - Words go in at the caret: settled text in `text`, the volatile tail in `text2` (replaced in place as it changes). The whole dictation is one undo group.
 - Typing while listening finishes the dictation, then types.
-- Return while listening finishes and keeps the text. Esc discards the dictation (not Claude's turn). Stop still stops Claude.
+- Return while listening finishes, lets the last words land, then sends (DL-262, amending DL-261's "Return keeps the text"); in the terminal it presses Claude's Return after the last phrase is pasted. Esc discards the dictation (not Claude's turn). Stop still stops Claude.
 
 **Terminal.**
 - Each settled phrase is one bracketed paste (`TerminalSession.bracketed()`, as `duo2 send text`), with a space between phrases. The volatile tail is never sent.
-- Duo never presses Return. Esc stays Claude's.
+- Duo never presses Return on its own: Return pressed while dictating finishes, lets the last phrase land, then presses Claude's Return (DL-262). Esc ends the dictation and doesn't reach Claude (DL-262).
 - Before each paste Duo reads the screen. Claude's input box must be on screen; a question or picker must not be.
 - When a question appears, listening stops, the unsent words go to the clipboard, and a tooltip-style notice shows at the mic's last place for 6 s: "Voice input stopped: Claude asked a question. Your words are on the clipboard."
 - While Claude works with its prompt on screen, phrases go in as typing does.

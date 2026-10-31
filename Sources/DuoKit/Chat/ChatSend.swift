@@ -107,6 +107,9 @@ extension ChatSession {
         log.sent(shown, images: plan.keep.compactMap { ui.images[$0].flatMap(ChatImage.init) }, time: now, queued: wasBusy, planMode: s.mode == .plan)
         lastCommand = text.hasPrefix("/") ? (String(text.prefix { !$0.isWhitespace }), Date()) : nil
         _ = await press(.enter)
+        // A dictation still open in the field ends with the send, so the field clears (DL-262).
+        composerView?.dropDictation()
+        if let v = VoiceInput.current, v.target == .chat(key), v.state.isActive { v.discard() }
         ui.composer = ""
         ui.composerBasis = nil
         forgetImages()

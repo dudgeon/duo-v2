@@ -102,6 +102,8 @@ public final class VoiceInput {
     @ObservationIgnored public var isolated: () -> Bool = { VoiceInput.isolatedWithout(ProcessInfo.processInfo.environment) }
     /// Whether there is a microphone to listen to (VoiceDevice; replaceable in checks).
     @ObservationIgnored public var hasMicrophone: () -> Bool = { VoiceDevice.hasMicrophone }
+    /// Ends a file feed early, as the mic's stop does (finish, Esc, a switch away).
+    @ObservationIgnored private var fileStop: (@Sendable () -> Void)?
 
     public static func isolatedWithout(_ env: [String: String], isolated: Bool = SupportFolder.isIsolated) -> Bool {
         isolated && env["DUO_VOICE_LIVE"] != "1"
@@ -123,7 +125,41 @@ public final class VoiceInput {
     @ObservationIgnored private var waiting: [@MainActor (VoiceState) -> Void] = []
     @ObservationIgnored private var heldSince: Date?
 
-    public init() {}
+    /// Whether there is a microphone, and its name: read at rest and kept up to date by the device source, so the mics
+    /// change look by themselves when one connects or goes (NoMic.dc.html).
+    public private(set) var microphoneAvailable = true
+    public private(set) var microphoneName: String?
+    @ObservationIgnored public var deviceSource: VoiceDeviceSource = CoreAudioDeviceSource() { didSet { refreshMicrophone(); attachDeviceSource() } }
+    /// The running dictation listens to the microphone (not a file), so losing the device ends it.
+    @ObservationIgnored private var runsOnMicrophone = false
+
+    public init() {
+        refreshMicrophone()
+        attachDeviceSource()
+    }
+
+    private func attachDeviceSource() {
+        deviceSource.observe { [weak self] in self?.refreshMicrophone() }
+    }
+
+    /// Reads the device now, and acts on a change: a lost microphone ends a dictation that was using it (the words
+    /// stay), a found one clears the "No microphone found." line.
+    public func refreshMicrophone() {
+        let c = deviceSource.current()
+        microphoneAvailable = c.usable
+        microphoneName = c.usable ? c.name : nil
+        if !c.usable, runsOnMicrophone, state == .listening || state == .finishing {
+            stopAndKeep(.failed("Stopped: the microphone went away."))
+        } else if c.usable, case .unavailable(let why) = state, why == VoiceCopy.noMic {
+            state = .idle
+            notice = nil
+        }
+    }
+
+    /// `duo2 voice status` when nothing is running.
+    public var microphoneLine: String {
+        microphoneAvailable ? "Voice input is off." + (microphoneName.map { " Microphone: \($0)." } ?? "") : "Voice input is off: no microphone connected."
+    }
 
     public var isActive: Bool { state.isActive }
 
@@ -223,6 +259,7 @@ public final class VoiceInput {
     }
 
     private func begin(_ source: VoiceAudioSource, gen: Int) {
+        if case .microphone = source { runsOnMicrophone = true } else { runsOnMicrophone = false }
         if state == .asking { set(.sheetAnswered(continueAsking: true)) }
         let recognizer = AppleRecognizer()
         self.recognizer = recognizer
@@ -236,7 +273,10 @@ public final class VoiceInput {
                 mic = m
                 buffers = m.stream
             case .file(let url):
-                buffers = try FileFeed.stream(url)
+                // DUO_VOICE_FILE_REALTIME=1: at the pace it was spoken, so a live check can act mid-dictation.
+                let feed = try FileFeed.stream(url, realtime: ProcessInfo.processInfo.environment["DUO_VOICE_FILE_REALTIME"] == "1")
+                fileStop = feed.stop
+                buffers = feed.stream
             }
         } catch VoiceAudioError.noMicrophone {
             return fail(.unavailable(VoiceCopy.noMic))
@@ -284,6 +324,9 @@ public final class VoiceInput {
     }
 
     private func result(_ text: String, isFinal: Bool, gen: Int) {
+        if ProcessInfo.processInfo.environment["DUO_VOICE_TRACE"] == "1" {
+            FileHandle.standardError.write(Data("voice-result: gen=\(gen)/\(generation) state=\(state) final=\(isFinal) \(text.debugDescription)\n".utf8))
+        }
         guard generation == gen, state == .listening || state == .finishing, let target else { return }
         if !text.trimmingCharacters(in: .whitespaces).isEmpty { lastHeard = Date() }
         let phrase = transcript.apply(text, isFinal: isFinal)
@@ -355,7 +398,7 @@ public final class VoiceInput {
 
     // MARK: Finish and discard
 
-    /// The mic, ⇧⌘D or Return: stops listening; the last phrases land. Never sends.
+    /// The mic or ⇧⌘D: stops listening; the last phrases land. Never sends (Return sends after it, DL-262).
     public func finish() {
         guard state == .listening else { return }
         set(.finish)
@@ -366,7 +409,8 @@ public final class VoiceInput {
     public func finishWhenDone(_ done: @escaping @MainActor (VoiceState) -> Void) {
         guard state.isActive else { return done(state) }
         waiting.append(done)
-        if state == .listening { finish() } else { discard() }
+        // Already finishing: just wait for it (discarding here would drop the last words).
+        if state == .listening { finish() } else if state != .finishing { discard() }
     }
 
     /// Esc: drops the dictation.
@@ -395,6 +439,7 @@ public final class VoiceInput {
     private func stopCapture() {
         silenceTimer?.cancel()
         mic?.stop(); mic = nil
+        fileStop?(); fileStop = nil
         level = 0
         holding = false
     }
@@ -406,6 +451,12 @@ public final class VoiceInput {
     private func fail(_ s: VoiceEvent) {
         stopCapture()
         state = VoiceMachine.next(state, s)
+        runsOnMicrophone = false
+        // On a terminal there's no hint row: the no-microphone line shows as a notice at the mic, for 6 s.
+        if case .unavailable(let why) = state, why == VoiceCopy.noMic, case .terminal? = target {
+            notice = VoiceNotice(text: "\(VoiceCopy.noMic) \(VoiceCopy.noMicAside)", target: target!)
+            expireNotice()
+        }
         expireLine()
         finishedRun()
     }
@@ -441,7 +492,8 @@ public final class VoiceInput {
     // MARK: Fixtures
 
     /// Puts the UI in a state without a microphone (FixtureHarness).
-    public func showFixture(_ s: VoiceState, target: VoiceTarget, transcript: VoiceTranscript = VoiceTranscript(), holding: Bool = false, level: Double = 0.6) {
+    public func showFixture(_ s: VoiceState, target: VoiceTarget, transcript: VoiceTranscript = VoiceTranscript(), holding: Bool = false, level: Double = 0.6, onMicrophone: Bool = false) {
+        runsOnMicrophone = onMicrophone
         self.target = target; state = s; self.transcript = transcript; self.holding = holding; self.level = level
     }
 }
