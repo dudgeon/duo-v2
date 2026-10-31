@@ -195,7 +195,7 @@ All Duo shortcuts carry ⌘, so they never collide with keys typed into Claude C
 | Keys | Action |
 |---|---|
 | ⇧⌘A | Search everything (names first) |
-| ⌘↑ | All projects |
+| ⌘↑ | All projects; in a Claude terminal, the prompt's start instead (DL-274), and All projects is the View menu's item or the toolbar's crumb |
 | ⇧⌘H | Home, its terminal focused |
 | ⇧⌘P | Needs you elsewhere (the peek) |
 | ⌘↩ | Jump into the peek's selected project, while the peek is open; elsewhere it sends (DL-241) |
@@ -221,6 +221,14 @@ Return and its chords mean the same in chat and in the terminal (DL-241). In the
 | `\` then ↩ | New line; the `\` is dropped, as in Claude Code |
 | ⌘↩ | Send (the peek's jump wins while it's open); the review comment composer's Post |
 | ⌃↩ | Send now: while Claude works, the message and the queue go at once (Claude Code 2.1.275 and later); otherwise a plain send |
+
+In a Claude terminal, Claude Code's own editing keys work as they do in Claude (⌘←/→ and Home/End to the row's ends, ⌥←/→ by word, the Emacs keys, ⌥⌫ and ⌘⌫); Duo turns the four it gets wrong into keys it reads (DL-274). Copying the prompt drops the box's indent and joins its wrapped rows.
+
+| Keys | In Claude's prompt |
+|---|---|
+| ⌘↑ / ⌘↓ | The prompt's start / end (never the last prompt from history) |
+| ⌥⌦ (⌥fn⌫) | Delete a word forward |
+| ⌘Z | Claude's undo (⌃_); Claude has no redo |
 
 In chat's composer (DL-242):
 

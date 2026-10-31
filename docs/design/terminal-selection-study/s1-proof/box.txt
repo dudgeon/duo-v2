@@ -1,0 +1,151 @@
+The box's height (rows/2 - 5, then it scrolls): 20 rows
+==== 311
+## 5 lines
+    start {'row': 4, 'col': 8} 5 ['❯ line 1', '  line 2']
+    end {'row': 4, 'col': 8} 5 ['❯ line 1', '  line 2']
+## 8 lines
+    start {'row': 4, 'col': 8} 5 ['❯ line 4', '  line 5']
+    end {'row': 4, 'col': 8} 5 ['❯ line 4', '  line 5']
+## 9 lines
+    start {'row': 4, 'col': 8} 5 ['❯ line 5', '  line 6']
+    end {'row': 4, 'col': 8} 5 ['❯ line 5', '  line 6']
+## 10 lines
+    start {'row': 4, 'col': 9} 5 ['❯ line 6', '  line 7']
+    end {'row': 4, 'col': 9} 5 ['❯ line 6', '  line 7']
+## 11 lines
+    start {'row': 4, 'col': 9} 5 ['❯ line 7', '  line 8']
+    end {'row': 4, 'col': 9} 5 ['❯ line 7', '  line 8']
+## 12 lines
+    start {'row': 4, 'col': 9} 5 ['❯ line 8', '  line 9']
+    end {'row': 4, 'col': 9} 5 ['❯ line 8', '  line 9']
+## 16 lines
+    start {'row': 4, 'col': 9} 5 ['❯ line 12', '  line 13']
+    end {'row': 4, 'col': 9} 5 ['❯ line 12', '  line 13']
+## 40 lines
+    start {'row': 4, 'col': 9} 5 ['❯ line 36', '  line 37']
+    end {'row': 4, 'col': 9} 5 ['❯ line 36', '  line 37']
+## 40 lines, down at the bottom of a scrolled box
+    start {'row': 4, 'col': 9} 5 ['❯ line 36', '  line 37']
+    mid {'row': 2, 'col': 9} 5 ['❯ line 18', '  line 19']
+    after 25 down {'row': 4, 'col': 9} 5 ['❯ line 36', '  line 37']
+    peek text 'line 1\nline 2\nline 3\nline 4\nline 5\nline 6\nline 7\nline 8\nline 
+==== 284
+## 5 lines
+    start {'row': 4, 'col': 8} 5 ['❯ line 1', '  line 2']
+    end {'row': 4, 'col': 8} 5 ['❯ line 1', '  line 2']
+## 8 lines
+    start {'row': 4, 'col': 8} 5 ['❯ line 4', '  line 5']
+    end {'row': 4, 'col': 8} 5 ['❯ line 4', '  line 5']
+## 9 lines
+    start {'row': 4, 'col': 8} 5 ['❯ line 5', '  line 6']
+    end {'row': 4, 'col': 8} 5 ['❯ line 5', '  line 6']
+## 10 lines
+    start {'row': 4, 'col': 9} 5 ['❯ line 6', '  line 7']
+    end {'row': 4, 'col': 9} 5 ['❯ line 6', '  line 7']
+## 11 lines
+    start {'row': 4, 'col': 9} 5 ['❯ line 7', '  line 8']
+    end {'row': 4, 'col': 9} 5 ['❯ line 7', '  line 8']
+## 12 lines
+    start {'row': 4, 'col': 9} 5 ['❯ line 8', '  line 9']
+    end {'row': 4, 'col': 9} 5 ['❯ line 8', '  line 9']
+## 16 lines
+    start {'row': 4, 'col': 9} 5 ['❯ line 12', '  line 13']
+    end {'row': 4, 'col': 9} 5 ['❯ line 12', '  line 13']
+## 40 lines
+    start {'row': 4, 'col': 9} 5 ['❯ line 36', '  line 37']
+    end {'row': 4, 'col': 9} 5 ['❯ line 36', '  line 37']
+## 40 lines, down at the bottom of a scrolled box
+    start {'row': 4, 'col': 9} 5 ['❯ line 36', '  line 37']
+    mid {'row': 2, 'col': 9} 5 ['❯ line 18', '  line 19']
+    after 25 down {'row': 4, 'col': 9} 5 ['❯ line 36', '  line 37']
+    peek text 'line 1\nline 2\nline 3\nline 4\nline 5\nline 6\nline 7\nline 8\nline 
+
+50 rows
+==== 311
+## 5 lines
+    start {'row': 4, 'col': 8} 5 ['❯ line 1', '  line 2']
+    end {'row': 4, 'col': 8} 5 ['❯ line 1', '  line 2']
+## 8 lines
+    start {'row': 7, 'col': 8} 8 ['❯ line 1', '  line 2']
+    end {'row': 7, 'col': 8} 8 ['❯ line 1', '  line 2']
+## 9 lines
+    start {'row': 8, 'col': 8} 9 ['❯ line 1', '  line 2']
+    end {'row': 8, 'col': 8} 9 ['❯ line 1', '  line 2']
+## 10 lines
+    start {'row': 9, 'col': 9} 10 ['❯ line 1', '  line 2']
+    end {'row': 9, 'col': 9} 10 ['❯ line 1', '  line 2']
+## 11 lines
+    start {'row': 10, 'col': 9} 11 ['❯ line 1', '  line 2']
+    end {'row': 10, 'col': 9} 11 ['❯ line 1', '  line 2']
+## 12 lines
+    start {'row': 11, 'col': 9} 12 ['❯ line 1', '  line 2']
+    end {'row': 11, 'col': 9} 12 ['❯ line 1', '  line 2']
+## 16 lines
+    start {'row': 15, 'col': 9} 16 ['❯ line 1', '  line 2']
+    end {'row': 15, 'col': 9} 16 ['❯ line 1', '  line 2']
+## 40 lines
+    start {'row': 19, 'col': 9} 20 ['❯ line 21', '  line 22']
+    end {'row': 19, 'col': 9} 20 ['❯ line 21', '  line 22']
+## 40 lines, down at the bottom of a scrolled box
+    start {'row': 19, 'col': 9} 20 ['❯ line 21', '  line 22']
+    mid {'row': 10, 'col': 9} 20 ['❯ line 10', '  line 11']
+    after 25 down {'row': 19, 'col': 9} 20 ['❯ line 21', '  line 22']
+    peek text 'line 1\nline 2\nline 3\nline 4\nline 5\nline 6\nline 7\nline 8\nline 
+==== 284
+## 5 lines
+    start {'row': 4, 'col': 8} 5 ['❯ line 1', '  line 2']
+    end {'row': 4, 'col': 8} 5 ['❯ line 1', '  line 2']
+## 8 lines
+    start {'row': 7, 'col': 8} 8 ['❯ line 1', '  line 2']
+    end {'row': 7, 'col': 8} 8 ['❯ line 1', '  line 2']
+## 9 lines
+    start {'row': 8, 'col': 8} 9 ['❯ line 1', '  line 2']
+    end {'row': 8, 'col': 8} 9 ['❯ line 1', '  line 2']
+## 10 lines
+    start {'row': 9, 'col': 9} 10 ['❯ line 1', '  line 2']
+    end {'row': 9, 'col': 9} 10 ['❯ line 1', '  line 2']
+## 11 lines
+    start {'row': 10, 'col': 9} 11 ['❯ line 1', '  line 2']
+    end {'row': 10, 'col': 9} 11 ['❯ line 1', '  line 2']
+## 12 lines
+    start {'row': 11, 'col': 9} 12 ['❯ line 1', '  line 2']
+    end {'row': 11, 'col': 9} 12 ['❯ line 1', '  line 2']
+## 16 lines
+    start {'row': 15, 'col': 9} 16 ['❯ line 1', '  line 2']
+    end {'row': 15, 'col': 9} 16 ['❯ line 1', '  line 2']
+## 40 lines
+    start {'row': 19, 'col': 9} 20 ['❯ line 21', '  line 22']
+    end {'row': 19, 'col': 9} 20 ['❯ line 21', '  line 22']
+## 40 lines, down at the bottom of a scrolled box
+    start {'row': 19, 'col': 9} 20 ['❯ line 21', '  line 22']
+    mid {'row': 10, 'col': 9} 20 ['❯ line 10', '  line 11']
+    after 25 down {'row': 19, 'col': 9} 20 ['❯ line 21', '  line 22']
+    peek text 'line 1\nline 2\nline 3\nline 4\nline 5\nline 6\nline 7\nline 8\nline 
+
+Past the top: history, then ↓ (30 rows, a history file in the scratch config)
+==== 311
+## forty: up past the top, then down
+    start {'row': 9, 'col': 9} 10 ['❯ line 31', '  line 32']
+    top {'row': 0, 'col': 8} 10 ['❯ line 1 ', '  line 2']
+    history {'row': 0, 'col': 16} 1 ['❯ HISTORY NEWEST ']
+    down {'row': 0, 'col': 2} 10 ['❯ line 1', '  line 2']
+    peek text 'Xline 1\nline 2\nline 3\nline 4\nline 5\nline 6\nline 7\nline 8\nline
+## two lines: up past the top, then down
+    start {'row': 0, 'col': 6} 2 ['❯ alpha beta', '  gamma']
+    top {'row': 0, 'col': 6} 2 ['❯ alpha beta', '  gamma']
+    history {'row': 0, 'col': 16} 1 ['❯ HISTORY NEWEST ']
+    down {'row': 0, 'col': 2} 2 ['❯ alpha beta', '  gamma']
+    peek text 'Xalpha beta\ngamma'
+==== 284
+## forty: up past the top, then down
+    start {'row': 9, 'col': 9} 10 ['❯ line 31', '  line 32']
+    top {'row': 0, 'col': 8} 10 ['❯ line 1 ', '  line 2']
+    history {'row': 0, 'col': 16} 1 ['❯ HISTORY NEWEST ']
+    down {'row': 0, 'col': 2} 10 ['❯ line 1', '  line 2']
+    peek text 'Xline 1\nline 2\nline 3\nline 4\nline 5\nline 6\nline 7\nline 8\nline
+## two lines: up past the top, then down
+    start {'row': 0, 'col': 6} 2 ['❯ alpha beta', '  gamma']
+    top {'row': 0, 'col': 6} 2 ['❯ alpha beta', '  gamma']
+    history {'row': 0, 'col': 16} 1 ['❯ HISTORY NEWEST ']
+    down {'row': 0, 'col': 2} 2 ['❯ alpha beta', '  gamma']
+    peek text 'Xalpha beta\ngamma'

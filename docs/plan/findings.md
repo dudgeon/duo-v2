@@ -4739,3 +4739,22 @@ In captures of today's editor (a fresh build of origin/main 4e809942, isolated, 
 
 In `docs/design/markdown-toolbar-study/captures/fresh-review-dark.png` (the track-a document, Suggest Edits on, Dark), the paragraph "seconds, and gives up after an hour." wraps so that the inserted clause ends the line and its "." sits alone on the next one. The insertion's mark and its hidden signature (`{>>…<<}`) seem to give the browser a break opportunity before the punctuation. Not measured or traced; seen once, in Dark at the pane's 460.
 
+
+## F-504 · What S1's keys stand on, measured in Claude Code 2.1.284 and 2.1.311 (terminal-keys-s1, 2026-10-31; DL-274)
+
+The study's pty (real Claude Code, scratch config, mock key, dead API, kitty protocol answered), both versions identical in every case; `docs/design/terminal-selection-study/s1-proof/`.
+- **The box grows to `rows / 2 - 5` text rows, then scrolls** (5 at 20 rows, 10 at 30, 20 at 50), with no mark for the hidden rows; it keeps the caret near its middle as it scrolls (`box.txt`).
+- **↑ on the prompt's first row recalls the last prompt** (with a history file present; without one it does nothing), with the caret anywhere on that row; **one ↓ then brings the draft back with the caret at its start**. ↓ on the draft's last row does nothing.
+- **⌃A and ⌃E** (raw bytes, with the protocol on or off) **reach the line's start and end in vim's INSERT and NORMAL modes alike**, where Home and End do nothing in NORMAL; arrows move in both, so ↑ to the box's top then ⌃A is the prompt's start in every mode, and the history step works in NORMAL too (`vim.txt`). INSERT shows `-- INSERT --` in the footer; NORMAL shows nothing.
+- **Alt+D** as `CSI 100;3u` deletes a word forward in both modes (a bare `ESC d` would leave INSERT first); at a line's end it does nothing. **⌃_** undoes in both modes; its steps are Claude's own (a word deleted right after typing undoes with the typing).
+- **Claude wraps the prompt at `cols - 4` cells** (36 at 40 columns, 56 at 60, 93 at 97); a word longer than a row is broken inside it, filling the row (`wrap.txt`).
+- **Claude copies its selections twice on a Mac:** `pbcopy` (not over SSH) and an OSC 52 (`setClipboard` in the binary), so either can reach the pasteboard last.
+- **Its pickers draw no input box:** `/model` and `/effort` on both versions (`Fixtures/prompt-keys/`), so the box finder sees none and arrows stay theirs.
+
+## F-505 · DL-274 built: ⌘↑ ⌘↓ ⌥⌦ ⌘Z in Claude's prompt, and clean copies (terminal-keys-s1, 2026-10-31)
+
+- **`PromptKeys.swift`** is the model, pure: `PromptBox` (the box from the screen and the cursor, nil with a question up or the caret outside it; `full` at `rows/2 - 5`), `PromptKey` (the four chords), `PromptKeys.bytes` and `PromptKeys.next` (what one more ↑ or ↓ did to a full box: done, scrolled, history, stop), `PromptCopy.clean`.
+- **`GuardedTerminalView`'s key monitor** takes the four chords first in a live Claude terminal (`runsClaude`, set by the session; a shell is untouched), before the menus, so ⌘↑ is never All Projects there and ⌘Z never Duo's Undo. ⌘↑: ↑ to the box's first row and ⌃A; ⌘↓: ↓ to its last row and ⌃E; in a full box a task then probes one row at a time (back to the edge each time, since Claude re-centres the box), until nothing changes (⌃A/⌃E), or, at the top, the last prompt appears (↓). ⌥⌦: Alt+D (`CSI 100;3u` with the protocol, `ESC d` without). ⌘Z: ⌃_. With no box: ⌘↑ and ⌘Z do nothing, ⌘↓ and ⌥⌦ go on as before.
+- **Copies:** a `CopyCleaningDelegate` stands between SwiftTerm and the view (its `clipboardCopy` isn't open), so Claude's OSC 52 copies go through `PromptCopy.clean` (the box's indent and `❯` dropped, a row break the next word wouldn't have fitted across joined: a space, or nothing inside a long word; anything not lined up with the box's rows untouched). The clean text is put back for 1.5 s if the raw text arrives after it (`pbcopy`). Edit ▸ Copy of SwiftTerm's own selection is cleaned the same way.
+- **Proof:** DuoChecks `prompt-keys`, live pty replays of the exact keys on both versions in the default and vim configs (`s1-proof/keys.txt`: ⌘↑ from three lines, a wrapped prompt and a scrolled 40-line box all reach the start; ⌘↓ the end; ⌥⌦ and ⌘Z as above). The first replay found the full-box ⌘↓ stopping early: the caret's cell ends its row with a space, and the box re-centres; both are handled now.
+- Not proven: real keypresses in a visible window (for Geoff's walk); the work Mac's own Claude Code (2.1.284 measured here from its binary).

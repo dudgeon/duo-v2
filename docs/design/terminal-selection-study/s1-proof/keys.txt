@@ -1,0 +1,48 @@
+Duo's DL-274 keys as PromptKeys sends them (the full-box loop ported to the probe), into real Claude Code, read back through Ctrl+G.
+Default config:
+==== 311
+cmd-up from the end of three lines                   | edge 2 | X at the start: 'Xalpha beta gamma\ndelta epsilon zeta\neta theta iota'
+cmd-up from the first row                            | edge 0 | X at the start: 'Xalpha beta gamma\ndelta epsilon zeta\neta theta iota'
+cmd-down from the first row                          | edge 2 | X at the end: 'alpha beta gamma\ndelta epsilon zeta\neta theta iotaX'
+cmd-up on a wrapped prompt                           | edge 4 | X at the start: 'XThe quick brown fox jumps o'…'the hills.\nsecond line'
+cmd-down on a wrapped prompt from its start          | edge 4 | X at the end: 'The quick brown fox jumps ov'…'he hills.\nsecond lineX'
+cmd-up, 40 lines (box full, scrolled)                | edge 9 history after 7 | X at the start: 'Xline 1\nline 2\nline 3\nline 4'…'ine 38\nline 39\nline 40'
+cmd-down, 40 lines from the start                    | edge 9 done after 9 | X at the end: 'line 1\nline 2\nline 3\nline 4\n'…'ne 38\nline 39\nline 40X'
+cmd-up, 10 lines (box exactly full, nothing hidden)  | edge 9 history after 1 | X at the start: 'Xline 1\nline 2\nline 3\nline 4'…'\nline 8\nline 9\nline 10'
+opt-fwd-delete (Alt+D CSI u) mid word                | theta lost "ta": 'alpha beta gamma\ndelta epsilon zeta\neta thet iota'
+cmd-z (ctrl+_) after ctrl+w                          | unchanged: 'alpha beta gamma\ndelta epsilon zeta'
+==== 284
+cmd-up from the end of three lines                   | edge 2 | X at the start: 'Xalpha beta gamma\ndelta epsilon zeta\neta theta iota'
+cmd-up from the first row                            | edge 0 | X at the start: 'Xalpha beta gamma\ndelta epsilon zeta\neta theta iota'
+cmd-down from the first row                          | edge 2 | X at the end: 'alpha beta gamma\ndelta epsilon zeta\neta theta iotaX'
+cmd-up on a wrapped prompt                           | edge 4 | X at the start: 'XThe quick brown fox jumps o'…'the hills.\nsecond line'
+cmd-down on a wrapped prompt from its start          | edge 4 | X at the end: 'The quick brown fox jumps ov'…'he hills.\nsecond lineX'
+cmd-up, 40 lines (box full, scrolled)                | edge 9 history after 7 | X at the start: 'Xline 1\nline 2\nline 3\nline 4'…'ine 38\nline 39\nline 40'
+cmd-down, 40 lines from the start                    | edge 9 done after 9 | X at the end: 'line 1\nline 2\nline 3\nline 4\n'…'ne 38\nline 39\nline 40X'
+cmd-up, 10 lines (box exactly full, nothing hidden)  | edge 9 history after 1 | X at the start: 'Xline 1\nline 2\nline 3\nline 4'…'\nline 8\nline 9\nline 10'
+opt-fwd-delete (Alt+D CSI u) mid word                | theta lost "ta": 'alpha beta gamma\ndelta epsilon zeta\neta thet iota'
+cmd-z (ctrl+_) after ctrl+w                          | unchanged: 'alpha beta gamma\ndelta epsilon zeta'
+
+vim mode (editorMode vim; each case in INSERT, as typed):
+==== 311
+cmd-up from the end of three lines                   | edge 2 | X at the start: 'Xalpha beta gamma\ndelta epsilon zeta\neta theta iota'
+cmd-up from the first row                            | edge 0 | X at the start: 'Xalpha beta gamma\ndelta epsilon zeta\neta theta iota'
+cmd-down from the first row                          | edge 2 | X at the end: 'alpha beta gamma\ndelta epsilon zeta\neta theta iotaX'
+cmd-up on a wrapped prompt                           | edge 4 | X at the start: 'XThe quick brown fox jumps o'…'the hills.\nsecond line'
+cmd-down on a wrapped prompt from its start          | edge 4 | X at the end: 'The quick brown fox jumps ov'…'he hills.\nsecond lineX'
+cmd-up, 40 lines (box full, scrolled)                | edge 9 history after 6 | X at the start: 'Xline 1\nline 2\nline 3\nline 4'…'ine 38\nline 39\nline 40'
+cmd-down, 40 lines from the start                    | edge 9 stop after 1 | X at the end: 'line 1\nline 2\nline 3\nline 4\n'…'ine 38\nline 39\nline 40'
+cmd-up, 10 lines (box exactly full, nothing hidden)  | edge 9 history after 1 | X at the start: 'Xline 1\nline 2\nline 3\nline 4'…'\nline 8\nline 9\nline 10'
+opt-fwd-delete (Alt+D CSI u) mid word                | theta lost "ta": 'alpha beta gamma\ndelta epsilon zeta\neta thet iota'
+cmd-z (ctrl+_) after ctrl+w                          | unchanged: 'alpha beta gamma\ndelta epsilon zeta\neta theta iota'
+==== 284
+cmd-up from the end of three lines                   | edge 2 | X at the start: 'Xalpha beta gamma\ndelta epsilon zeta\neta theta iota'
+cmd-up from the first row                            | edge 0 | X at the start: 'Xalpha beta gamma\ndelta epsilon zeta\neta theta iota'
+cmd-down from the first row                          | edge 2 | X at the end: 'alpha beta gamma\ndelta epsilon zeta\neta theta iotaX'
+cmd-up on a wrapped prompt                           | edge 4 | X at the start: 'XThe quick brown fox jumps o'…'the hills.\nsecond line'
+cmd-down on a wrapped prompt from its start          | edge 4 | X at the end: 'The quick brown fox jumps ov'…'he hills.\nsecond lineX'
+cmd-up, 40 lines (box full, scrolled)                | edge 9 history after 6 | X at the start: 'Xline 1\nline 2\nline 3\nline 4'…'ine 38\nline 39\nline 40'
+cmd-down, 40 lines from the start                    | edge 9 stop after 1 | X at the end: 'line 1\nline 2\nline 3\nline 4\n'…'ine 38\nline 39\nline 40'
+cmd-up, 10 lines (box exactly full, nothing hidden)  | edge 9 history after 1 | X at the start: 'Xline 1\nline 2\nline 3\nline 4'…'\nline 8\nline 9\nline 10'
+opt-fwd-delete (Alt+D CSI u) mid word                | theta lost "ta": 'alpha beta gamma\ndelta epsilon zeta\neta thet iota'
+cmd-z (ctrl+_) after ctrl+w                          | unchanged: 'alpha beta gamma\ndelta epsilon zeta\neta theta iota'
