@@ -26,16 +26,25 @@ A file that has a preview (a deck, a Markdown file, an HTML file) can show its s
   - The tab's menu (DL-108's names): Close Tab, Close Split View, Swap Sides, then the usual Move Tab Left / Right and the file verbs.
   - ⌃Tab steps over the split as one tab. Dragging moves the pair together (DL-220).
 - **Sides:** the source on the left by default; Swap Sides puts it on the right. A 1 pt `rule` divider runs between them, the same as the pane dividers.
-  - Drag it to resize; the ratio is clamped so neither side goes under `splitSideMin` 340 (new token; Q-366's stand-in). Double-click evens it.
+  - Drag it to resize; the ratio is clamped so neither side goes under `splitSideMin` 340 (new token; Q-366, Geoff: "340 is fine as a starting point"). Double-click evens it.
   - Saved per split.
-- **The active side** is model state (`RightPane`'s `activeSide`, never inferred from DOM focus). It's set by a click or by typing in a side, by ⌥⌘← → (Q-368: sidebar → console → left side → right side, wrapping), and by `duo2 split focus`.
+- **The active side** is model state (`RightPane`'s `activeSide`, never inferred from DOM focus). It's set by a click or by typing in a side, by **⇧⌘[ / ⇧⌘] (Previous / Next Side of Split View, View menu; DL-277)**, and by `duo2 split focus`. ⌥⌘← → stay pane-to-pane and land on the active side; they never step between sides (Geoff, Q-368).
   - While the right pane is the active pane, DL-165's 2 pt `paneFocus` rule spans only the active side's width, at the top of the strip. Nothing moves.
 - **The source side** is today's Markdown editor, with its review bar in its own stack and the DL-266 formatting bar over it while it has the keyboard.
   - A 2 pt `controlEdge` mark in the left margin (8 in, radius 1) shows the lines of the anchor the caret is in (slide 3's lines). It's drawn by the editor from the provider's anchor map.
 - **The preview side** is the provider's view with the provider's own bar. For the deck, that's DeckViewer's 44 bar: under 460 it already reads `3/10`. Split view draws no bar on a side.
   - The Markdown preview is the rendered document, read only, on `pane`, in the editor's reading styles. It has no bar.
   - The HTML page is the HTML viewer, fed the buffer.
-- **Folded:** under 2 × 340 + 1, only the active side shows, and the split tab's two names become a toggle (the selected name on a `selected` fill, radius 5, 24 high). Widening the window unfolds it. This is also Duo Decks' fallback, so there's nothing separate to build.
+- **Folded** (`fold`, board 12, animated; Geoff on Q-366: "when a splitview auto collapses, it should have a far right bar to bring it back (use the same convention as the collapsed left pane); otherwise it will be very hard for the user to re-find that file. when the user clicks on it, the chat/terminal pane will shrink down to bring the editor/split view below the folding break point"):
+  - When the right pane is narrower than 2 × 340 + 1, the active side fills the pane.
+  - The other side becomes **the split's rail**: 16 wide (`sidebarRail`, the same token as the sidebar's), at the right pane's far right, on `pane`, with a 1 `rule` on its left. The split mark (11 × 9, `text2`) sits 10 from its top.
+  - The whole rail is one button: `selected` under the pointer, tooltip "Show ‹name› in Split View".
+  - The split tab keeps both names; the hidden one is in `controlEdge`.
+  - **Clicking the rail, or the dimmed name, unfolds:** the console narrows just enough for two 340 sides (never below its 480 minimum), over `motionPaneToggle`, and the hidden side becomes active.
+  - Making the room yourself also unfolds it.
+  - ⇧⌘[ / ⇧⌘] while folded swap which side shows, and the rail then stands for the other one.
+  - At Duo's 1280 minimum window each side is still 391, so only widening the console folds a split.
+  - Verb: `duo2 split unfold`. This is also Duo Decks' fallback, so there's nothing separate to build.
 
 ## Making room (`making-room`, DL-276)
 
@@ -132,4 +141,4 @@ Every control names one. Regenerate `docs/cli/duo2.md`.
 
 ## Open
 
-Q-366 (340 or 360), Q-368 (⌥⌘← → into sides; DL-165 still provisional). Slice 2 (DL-278): two documents both editable, with an editor per side (C-135, shared with multi-window).
+Nothing in slice 1's design is open: Q-366 and Q-368 are answered (DL-275, DL-277). **Slice 2 (DL-278) is built alongside slice 1**: two documents both editable, with an editor per side (C-135, shared with multi-window). Slice 1 must leave room for it: `activeSide` and the routing table take any viewer on either side, not only "source" and "preview".

@@ -56,6 +56,8 @@ Logic checks:
 swift run DuoChecks
 ```
 
+A fresh work tree needs `swift build --product duo2` (or `scripts/bundle.sh`) first: the EDITOR checks run the built `duo2` helper, and fail without it.
+
 Visual comparison against the design targets, writing `build/ui/<state>-compare.png` (target, build, difference):
 
 ```bash

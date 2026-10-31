@@ -180,7 +180,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .togglePeek: !model.altitude.isAllProjects && !model.needsYouElsewhere.isEmpty
         case .jumpToPeekSelection: model.peekOpen
         case .goHome, .toggleSidebar, .closeWindow: true
-        case .closeSession: model.visibleTerminal != nil || (model.webFocus == .editor && model.openDocuments.contains(model.rightTab ?? ""))
+        case .closeSession: model.keyboardInRightPane ? model.closableRightTab != nil : model.visibleTerminal != nil
         case .newMarkdown, .newFolder: model.terminalsMode == .live && model.projectFolder != nil
         case .save: model.terminalsMode == .live && model.editorOpened && model.editorIfLoaded?.url != nil
         case .bold, .italic, .strikethrough, .code, .link, .heading1, .heading2, .heading3, .task, .addProperties, .tableInsert: model.webFocus == .editor
@@ -250,7 +250,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .jumpToPeekSelection: model.jumpToPeekSelection()
         case .toggleSidebar: model.leftCollapsed.toggle()
         case .closeSession:
-            if model.editorIfLoaded?.hasFocus == true, let doc = model.rightTab, model.openDocuments.contains(doc) { model.closeDocument(doc) }
+            if model.keyboardInRightPane { if let doc = model.closableRightTab { model.closeDocument(doc) } }   // F-495: never the console's session
             else { model.closeVisibleSession() }
         case .newMarkdown: model.newMarkdownFile(near: model.selectedFile)
         case .newFolder: model.newFolder(near: model.selectedFile)
