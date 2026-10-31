@@ -147,6 +147,19 @@ import Foundation
     func recorded(_ rel: String) -> [String]? {
         (try? String(contentsOf: dir.appending(path: rel), encoding: .utf8))?.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
     }
+    // 2.1.311 draws rules only: no side borders, no corners (Geoff's Duo Dev). One screen recorded from the real claude (haiku, not logged in,
+    // no turn sent), one rebuilt from it and his description (effort line above, placeholder in the prompt).
+    for name in ["claude-2.1.311-real", "claude-2.1.311-geoff"] {
+        if let s = recorded("docs/design/voice-input-handoff/fixture-screens/\(name).txt") {
+            let a = InputBoxFinder.find(rows: s, micCells: 6)
+            check(a != nil, "finder: \(name) (rules only) has the mic")
+            if let a {
+                let line = Array(s[a.row])
+                check((a.firstCol...a.lastCol).allSatisfy { InputBoxFinder.isRuleChar(line[$0]) } && a.lastCol == line.count - 3, "finder: \(name): 6 rule cells, ending 2 columns in from the rule's end")
+                check(a.promptRow == a.row - 1 && s[a.promptRow].hasPrefix("❯"), "finder: \(name): the prompt row is the one above the bottom rule")
+            }
+        }
+    }
     if let idle219 = recorded("docs/research/chat-model-chip-screens/idle-2.1.219.txt") {
         check(InputBoxFinder.find(rows: idle219, micCells: cells) != nil, "finder: 2.1.219 idle screen has the mic")
     }

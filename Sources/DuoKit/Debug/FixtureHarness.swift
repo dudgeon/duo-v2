@@ -230,6 +230,12 @@ public enum FixtureHarness {
             if parts.count > 1, let t = model.visibleTerminal, let text = try? String(contentsOfFile: parts[1], encoding: .utf8) {
                 t.view.feed(text: "\u{1b}[2J\u{1b}[H" + text.replacingOccurrences(of: "\n", with: "\r\n"))
             }
+        case "voice-hover":   // voice-hover:on|off: the terminal mic drawn as under the pointer
+            if let t = model.visibleTerminal, let slot = t.view.superview as? TerminalSlot.SlotView { slot.mic.forceHover = parts.count > 1 ? parts[1] == "on" : true; slot.mic.needsDisplay = true }
+        case "term-dump":     // term-dump:<file>: the visible terminal's rows as text (a recording of what a program drew)
+            if parts.count > 1, let t = model.visibleTerminal {
+                try? model.voiceRows(t).joined(separator: "\n").write(toFile: parts[1], atomically: true, encoding: .utf8)
+            }
         case "term-scroll":   // term-scroll:up|down: scrolls the visible terminal back
             if let t = model.visibleTerminal {   // term-scroll:up|down[:<lines>]
                 let w = (parts.count > 1 ? parts[1] : "up").split(separator: ":").map(String.init)
