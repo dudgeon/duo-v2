@@ -189,6 +189,15 @@ struct PptxWriter {
                 guard let spec = template.slots.first(where: { $0.idx == ph.idx }), let got = slide.slot(spec.name) else { continue }
                 let nv = "<p:cNvPr id=\"\(id)\" name=\"\(Self.esc(ph.name))\"/>"
                 let phTag = "<p:nvPr><p:ph\(ph.attrs)/></p:nvPr>"
+                // An empty slot (a notice, not an error): text and bullets keep their placeholder, empty, so an
+                // editor shows where text goes; a picture or table has nothing to draw and is left out.
+                if got.lines.allSatisfy({ $0.trimmingCharacters(in: .whitespaces).isEmpty }) {
+                    if ["text", "number", "bullets"].contains(spec.kind) {
+                        shapes += "<p:sp><p:nvSpPr>\(nv)<p:cNvSpPr><a:spLocks noGrp=\"1\"/></p:cNvSpPr>\(phTag)</p:nvSpPr><p:spPr/><p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:endParaRPr lang=\"en-US\"/></a:p></p:txBody></p:sp>"
+                        id += 1
+                    }
+                    continue
+                }
                 switch spec.kind {
                 case "text", "number":
                     let text = got.lines.map { $0.trimmingCharacters(in: .whitespaces) }.joined(separator: " ")
