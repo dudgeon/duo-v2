@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 
 /// The interface between split view and whatever previews a file (`preview-provider`, agreed with
@@ -16,9 +17,12 @@ public struct AnchorRange: Equatable, Sendable {
 }
 
 public struct SourceProblem: Equatable, Sendable {
+    public enum Severity: String, Sendable { case error, notice }
     public var line: Int
     public var message: String
-    public init(line: Int, message: String) { self.line = line; self.message = message }
+    /// An error, or a notice (a deck's empty slot).
+    public var severity: Severity
+    public init(line: Int, message: String, severity: Severity = .error) { self.line = line; self.message = message; self.severity = severity }
 }
 
 public struct CommentAnchor: Equatable, Sendable {
@@ -40,11 +44,18 @@ public enum PreviewEvent: Equatable, Sendable {
     case current(anchor: String, origin: PreviewOrigin)
     case problems(rev: Int, [SourceProblem])
     case comments(rev: Int, [CommentAnchor])
+    /// R11: a pin on the preview asks to open its thread in the source's review margin (DL-237's popover when folded).
+    case openThread(thread: String)
+    /// R12: Add Comment on an anchor's lines, without taking focus from the preview.
+    case addComment(anchor: String)
 }
 
 @MainActor
 public protocol PreviewProvider: AnyObject {
     var kind: PreviewKind { get }
+    /// The provider's whole view, with its own bar (a deck's 44 bar, the HTML viewer's picker): split
+    /// view hosts it as the preview side and draws no bar of its own.
+    var view: NSView { get }
     /// Whether this provider can preview `file` (its project-relative path or `file:` key) with this frontmatter.
     static func canPreview(file: String, frontmatter: [String: String]) -> Bool
     /// Draws `text`, the editor's buffer at revision `rev` (unsaved edits included). Never writes a file.
@@ -129,6 +140,7 @@ public final class PreviewPolicy {
             if origin == .reveal || a == revealing { revealing = nil; return false }   // our own reveal coming back
             current = a
         case .activate(let a, _): current = a
+        case .openThread, .addComment: break   // routed to the editor by the caller (`routes`)
         }
         return true
     }
@@ -136,7 +148,7 @@ public final class PreviewPolicy {
     /// The caret moved to a source line: the anchor to reveal, once; nil if caret-follow is off, the
     /// line is in no anchor, or it is the one already revealed.
     public func anchorToReveal(forLine line: Int) -> String? {
-        guard caretFollow, let a = map.first(where: { $0.contains(line: line) })?.anchor, a != revealing, a != current else { return nil }
+        guard caretFollow, let a = narrowest(containing: line)?.anchor, a != revealing, a != current else { return nil }
         revealing = a
         return a
     }
@@ -144,5 +156,10 @@ public final class PreviewPolicy {
     /// The source lines of `anchor`, for the editor's margin mark.
     public func lines(of anchor: String) -> ClosedRange<Int>? {
         map.first { $0.anchor == anchor }.map { $0.firstLine...max($0.firstLine, $0.lastLine) }
+    }
+
+    /// The narrowest range holding `line`: `slide 3/value` over `slide 3`, whatever the map's order.
+    public func narrowest(containing line: Int) -> AnchorRange? {
+        map.filter { $0.contains(line: line) }.min { ($0.lastLine - $0.firstLine) < ($1.lastLine - $1.firstLine) }
     }
 }
