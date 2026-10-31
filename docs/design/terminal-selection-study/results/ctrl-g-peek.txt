@@ -1,0 +1,6 @@
+p-311
+{'altToggles': 1, 'clears': 2, 'ms': 1009, 'text': 'alpha beta gamma\ndelta'} screen while the editor runs: [[]]
+p-284
+{'altToggles': 1, 'clears': 2, 'ms': 1007, 'text': 'alpha beta gamma\ndelta'} screen while the editor runs: [[]]
+p0-311
+{'altToggles': 1, 'clears': 2, 'ms': 503, 'text': 'alpha beta gamma\ndelta'} screen while the editor runs: []

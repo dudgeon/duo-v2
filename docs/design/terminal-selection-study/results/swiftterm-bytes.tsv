@@ -1,0 +1,91 @@
+legacy flags 0 kitty flags 5
+←	ESC [ D	ESC [ D
+⇧←	ESC [ 1 ; 2 D	ESC [ 1 ; 2 D
+⌥←	ESC [ 1 ; 3 D	ESC [ 1 ; 3 D
+⇧⌥←	ESC [ 1 ; 4 D	ESC [ 1 ; 4 D
+⌘←	ESC b	ESC [ 1 ; 9 D
+⇧⌘←		ESC [ 1 ; 1 0 D
+⌃←	ESC [ 1 ; 5 D	ESC [ 1 ; 5 D
+⇧⌃←	ESC [ 1 ; 6 D	ESC [ 1 ; 6 D
+→	ESC [ C	ESC [ C
+⇧→	ESC [ 1 ; 2 C	ESC [ 1 ; 2 C
+⌥→	ESC [ 1 ; 3 C	ESC [ 1 ; 3 C
+⇧⌥→	ESC [ 1 ; 4 C	ESC [ 1 ; 4 C
+⌘→	ESC f	ESC [ 1 ; 9 C
+⇧⌘→		ESC [ 1 ; 1 0 C
+⌃→	ESC [ 1 ; 5 C	ESC [ 1 ; 5 C
+⇧⌃→	ESC [ 1 ; 6 C	ESC [ 1 ; 6 C
+↑	ESC [ A	ESC [ A
+⇧↑	ESC [ 1 ; 2 A	ESC [ 1 ; 2 A
+⌥↑	ESC [ 1 ; 3 A	ESC [ 1 ; 3 A
+⇧⌥↑	ESC [ 1 ; 4 A	ESC [ 1 ; 4 A
+⌘↑		ESC [ 1 ; 9 A
+⇧⌘↑		ESC [ 1 ; 1 0 A
+⌃↑	ESC [ 1 ; 5 A	ESC [ 1 ; 5 A
+⇧⌃↑	ESC [ 1 ; 6 A	ESC [ 1 ; 6 A
+↓	ESC [ B	ESC [ B
+⇧↓	ESC [ 1 ; 2 B	ESC [ 1 ; 2 B
+⌥↓	ESC [ 1 ; 3 B	ESC [ 1 ; 3 B
+⇧⌥↓	ESC [ 1 ; 4 B	ESC [ 1 ; 4 B
+⌘↓		ESC [ 1 ; 9 B
+⇧⌘↓		ESC [ 1 ; 1 0 B
+⌃↓	ESC [ 1 ; 5 B	ESC [ 1 ; 5 B
+⇧⌃↓	ESC [ 1 ; 6 B	ESC [ 1 ; 6 B
+Home	ESC [ H	ESC [ H
+⇧Home	ESC [ 1 ; 2 H	ESC [ 1 ; 2 H
+⌥Home	ESC [ 1 ; 3 H	ESC [ 1 ; 3 H
+⌘Home		ESC [ 1 ; 9 H
+⌃Home	ESC [ 1 ; 5 H	ESC [ 1 ; 5 H
+End	ESC [ F	ESC [ F
+⇧End	ESC [ 1 ; 2 F	ESC [ 1 ; 2 F
+⌥End	ESC [ 1 ; 3 F	ESC [ 1 ; 3 F
+⌘End		ESC [ 1 ; 9 F
+⌃End	ESC [ 1 ; 5 F	ESC [ 1 ; 5 F
+PgUp		ESC [ 5 ~
+⇧PgUp	ESC [ 5 ; 2 ~	ESC [ 5 ; 2 ~
+⌥PgUp	ESC [ 5 ; 3 ~	ESC [ 5 ; 3 ~
+⌘PgUp		ESC [ 5 ; 9 ~
+⌃PgUp	ESC [ 5 ; 5 ~	ESC [ 5 ; 5 ~
+PgDn		ESC [ 6 ~
+⇧PgDn	ESC [ 6 ; 2 ~	ESC [ 6 ; 2 ~
+⌥PgDn	ESC [ 6 ; 3 ~	ESC [ 6 ; 3 ~
+⌘PgDn		ESC [ 6 ; 9 ~
+⌃PgDn	ESC [ 6 ; 5 ~	ESC [ 6 ; 5 ~
+fn⌫ (⌦)	ESC [ 3 ~	ESC [ 3 ~
+⇧fn⌫ (⌦)	ESC [ 3 ; 2 ~	ESC [ 3 ; 2 ~
+⌥fn⌫ (⌦)	ESC [ 3 ; 3 ~	ESC [ 3 ; 3 ~
+⌘fn⌫ (⌦)		ESC [ 3 ; 9 ~
+⌃fn⌫ (⌦)	ESC [ 3 ; 5 ~	ESC [ 3 ; 5 ~
+⌫	7f	7f
+⌥⌫	ESC 7f	ESC [ 1 2 7 ; 3 u
+⌘⌫		ESC [ 1 2 7 ; 9 u
+⌃⌫	7f	ESC [ 8 ; 5 u
+⇧⌫	7f	ESC [ 1 2 7 ; 2 u
+⌃A	01	ESC [ 9 7 ; 5 u
+⌃E	05	ESC [ 1 0 1 ; 5 u
+⌃F	06	ESC [ 1 0 2 ; 5 u
+⌃B	02	ESC [ 9 8 ; 5 u
+⌃N	0e	ESC [ 1 1 0 ; 5 u
+⌃P	10	ESC [ 1 1 2 ; 5 u
+⌃T	14	ESC [ 1 1 6 ; 5 u
+⌃O	0f	ESC [ 1 1 1 ; 5 u
+⌃D	04	ESC [ 1 0 0 ; 5 u
+⌃H	08	ESC [ 1 0 4 ; 5 u
+⌃K	0b	ESC [ 1 0 7 ; 5 u
+⌃Y	19	ESC [ 1 2 1 ; 5 u
+⌃U	15	ESC [ 1 1 7 ; 5 u
+⌃W	17	ESC [ 1 1 9 ; 5 u
+⌥B	ESC b	ESC [ 9 8 ; 3 u
+⌥F	ESC f	ESC [ 1 0 2 ; 3 u
+⌥D	ESC d	ESC [ 1 0 0 ; 3 u
+⌘A		ESC [ 9 7 ; 9 u
+⌘Z		ESC [ 1 2 2 ; 9 u
+⌘X		ESC [ 1 2 0 ; 9 u
+⌘C		ESC [ 9 9 ; 9 u
+⌘V		ESC [ 1 1 8 ; 9 u
+⇧⌘Z		ESC [ 1 2 2 : 9 0 ; 1 0 u
+⇧⌘A		ESC [ 9 7 : 6 5 ; 1 0 u
+with menu ⌘Z	legacy 	kitty 
+with menu ⌘X	legacy 	kitty 
+with menu ⌘A	legacy 	kitty 
+with menu ⌘B	legacy 	kitty 
