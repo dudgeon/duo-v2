@@ -4665,3 +4665,19 @@ Geoff's Debug report (Duo Dev voice test, dd2b8e8c, Claude Code 2.1.311). The wo
   - a hand-over refused with an empty prompt goes again (two Ctrl+G) and sends, with no fallback;
   - one refused with other words is refused once, as before.
 - Not changed: the hidden terminal still keeps its last size while chat shows (Q-341).
+
+## F-450 · The New session row, as built (2026-10-30; DL-262, Q-339)
+
+Built to `home-list-new-session-handoff/` (`list-1440-new-session`, Light, Dark, Classic; isolated, background; states `list-1440-new-session`, `list-new-session-hover|pressed|nohome|none|empty`).
+- **Row:** `AllProjects/NewSessionRow.swift`, pinned with the header above the scroll view; a 1 pt `rule` shows under them once the list has scrolled (`onScrollGeometryChange`). The row sits 8 in from the pane's sides, as the screen draws it (the handoff README says 16; the screen wins, and 8 + the 8 inside the list's own rows lines the text up).
+- **Default:** `StartDefault.resolve`: Home, else `~/Documents` when it exists, else none. Whether `~/Documents` exists is read with each refresh off the main thread (`AppModel.documentsExists`); it never creates it and never falls back to `~`.
+- **⌘T at All projects** presses the row (`AppModel.newSession()`), and with no default opens the popup. The popup is an `NSMenu` (`NewSessionPopup`), so it isn't in a snapshot: the states board's popup frames are checked by DuoChecks (order, tick, last entries), not by pixels.
+- **Starts:** a project's opens inside it with the new tab selected; Home's opens in Home's pane; a plain folder (`startFolderSession`) first opens the folder off the main thread (`opendir`, which is what raises macOS's Documents prompt and waits for the answer, F-28), then spawns Claude. A refusal says why through `info` (stand-in: the console's folder-missing wording). Until Claude writes its history, a plain-folder session is filed under Home so its tab shows in Home's pane; the next refresh moves it to its folder row.
+- **Trust:** there is no trust-before-start seam. Claude Code's own folder-trust screen is answered in place by chat (F-444/F-445, merged here as bef90017); the row starts the session like any other and writes no trust.
+- **Chosen folders** (Choose Another Folder…, `duo2 session new --folder`) are remembered in Duo's state (`startFolders`, 12, newest first) and listed by last activity with the projects; gone ones are left out (checked with each refresh).
+- **duo2:** `session new --folder <path>`; with neither flag at All projects it uses the row's default and with no default refuses ("Choose where it starts: --project <name> or --folder <path>"). Live check, isolated (scratch `CLAUDE_CONFIG_DIR`, short `DUO_SUPPORT_DIR`): no flags started in Home, `--folder` started in a plain folder, a missing folder and both flags were refused.
+
+## F-451 · The empty List's words are a stand-in (2026-10-30)
+
+The handoff gives the words ("No sessions yet", "Start one above, or ⌘T. Sessions show here, newest first.") but draws no empty List. Built centred, 48 below the row, in `body` / `control`, shown when nothing but Archived is left (C-127).
+

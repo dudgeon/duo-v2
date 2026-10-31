@@ -10,14 +10,24 @@ struct SessionListPane: View {
 
     var body: some View {
         let list = model.sessionList
+        let scrolled = model.listScrolled
         let filtering = !model.listFilter.trimmingCharacters(in: .whitespaces).isEmpty
         let _ = model.noteSelectionOrder("list", Self.order(list, model: model, filtering: filtering))   // what ⇧ ranges over (DL-247)
         GeometryReader { box in
             let twoLine = box.size.width < DuoMetric.sessionListTwoLineBelow
+            VStack(alignment: .leading, spacing: 0) {
+            // The header and the New session row stay put while the list scrolls (DL-262); a rule shows under them once it has.
+            VStack(alignment: .leading, spacing: 0) {
+                MapHeader(layout: nil)
+                    .padding(EdgeInsets(top: DuoSpace.panePadding, leading: DuoSpace.panePadding, bottom: 8, trailing: DuoSpace.panePadding))
+                NewSessionRow()
+                    .padding(.horizontal, DuoMetric.sessionListRowInset)
+                    .padding(.top, 8)
+            }
+            .padding(.bottom, scrolled ? 7 : 8)
+            .overlay(alignment: .bottom) { if scrolled { Rectangle().fill(DuoColor.rule).frame(height: DuoMetric.borderHairline) } }
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    MapHeader(layout: nil)
-                        .padding(EdgeInsets(top: DuoSpace.panePadding, leading: DuoSpace.panePadding, bottom: 8, trailing: DuoSpace.panePadding))
                     if filtering {
                         // The filter (DL-142 (4), `filter`): best first, each with the passage that matched.
                         let matches = model.listMatches
@@ -36,6 +46,9 @@ struct SessionListPane: View {
                             HomeFoldersSection(folders: folders)
                                 .padding(.horizontal, DuoSpace.panePadding)
                                 .padding(.bottom, 8)
+                        }
+                        if list.needsYou.isEmpty, list.sections.isEmpty, list.earlier.isEmpty, model.firstRunFolders == nil {
+                            EmptySessionList()   // DL-262: the words (not drawn: a stand-in, C-127)
                         }
                         if model.rightCollapsedAllProjects {
                             // N1 with the column hidden: the line opens into the rows themselves.
@@ -62,6 +75,7 @@ struct SessionListPane: View {
                 .padding(.bottom, DuoSpace.panePadding)
                 .frame(width: box.size.width, alignment: .leading)
             }
+            .onScrollGeometryChange(for: Bool.self, of: { $0.contentOffset.y > 0.5 }) { model.listScrolled = $1 }
             .background { Color.clear.contentShape(Rectangle()).onTapGesture { model.clearSessionSelection() } }   // DL-247
             .scrollIndicators(.automatic)
             .focusable()
@@ -84,10 +98,26 @@ struct SessionListPane: View {
                 model.focusListFilter()
                 return .handled
             }
+            }
         }
         .foregroundStyle(DuoColor.text)
         .background(DuoColor.pane)
         .accessibilityIdentifier("video.s3.list")   // anchors: the video camera's target
+    }
+}
+
+/// An empty List (DL-262): where to start one. Not drawn; centred under the New session row as a stand-in (C-127).
+struct EmptySessionList: View {
+    var body: some View {
+        VStack(spacing: 4) {
+            Text("No sessions yet").duoText(.body).foregroundStyle(DuoColor.text)
+            Text("Start one above, or ⌘T. Sessions show here, newest first.").duoText(.control).foregroundStyle(DuoColor.text2)
+        }
+        .multilineTextAlignment(.center)
+        .frame(maxWidth: .infinity)
+        .padding(.top, 48)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("list-empty")
     }
 }
 

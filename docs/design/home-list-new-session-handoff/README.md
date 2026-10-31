@@ -1,6 +1,6 @@
 # Home list: New session (DL-262)
 
-Status: approved by Geoff, 2026-10-30 (DL-262, Q-339), through the director. Not built.
+Status: approved by Geoff, 2026-10-30 (DL-262, Q-339), through the director. Built on build/home-list-new-session (F-450).
 
 Geoff: "the home list view needs a new session button somewhere". The study (`../home-list-new-session-study/`, canvas https://claude.ai/artifact/Ug3zdTyXjRTR5TWzyyMAMN) drew three placements; he picked **B**, then set the default: "defaul to ~/Documents/ if no home folder present; else default to home folder".
 
