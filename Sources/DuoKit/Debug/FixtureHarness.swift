@@ -124,6 +124,7 @@ public enum FixtureHarness {
         case "focus-tile": model.moveTileFocus(dx: 0, dy: 0)
         case "new": model.newSession()
         case "close": model.closeVisibleSession()
+        case "cmd-w": DuoCommand.closeSession.perform(in: model)   // ⌘W's command, which closes the tab that has the keyboard (F-495)
         case "newfile": model.newMarkdownFile(near: parts.count > 1 ? parts[1] : nil)
         case "newfolder": model.newFolder(near: parts.count > 1 ? parts[1] : nil)
         case "rename":  // rename:<path>=<new name>
