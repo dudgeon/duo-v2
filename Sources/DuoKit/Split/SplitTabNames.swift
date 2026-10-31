@@ -64,7 +64,7 @@ struct SidebarRail: View {
             ZStack(alignment: .top) {
                 (hovering ? DuoColor.selected : DuoColor.pane)
                 VStack(spacing: 8) {
-                    Image(systemName: "sidebar.left").font(.system(size: 12)).foregroundStyle(DuoColor.text2)
+                    Image(systemName: "sidebar.left").font(.system(size: DuoSymbolSize.barIcon)).foregroundStyle(DuoColor.text2)
                     if !model.needsYouElsewhere.isEmpty {
                         Circle().fill(DuoColor.needsYou).frame(width: DuoMetric.tabNeedsYouDot, height: DuoMetric.tabNeedsYouDot)
                             .accessibilityLabel("needs you")

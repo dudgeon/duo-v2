@@ -70,7 +70,8 @@ final class SideSplitView: NSSplitView {
     }
 
     func didResize() {
-        guard !applying, !folded, arrangedSubviews.count == 2, bounds.width > 0 else { return }
+        // Only a drag of the divider changes the ratio; a window or pane resize doesn't.
+        guard !applying, !folded, arrangedSubviews.count == 2, bounds.width > 0, NSEvent.pressedMouseButtons & 1 != 0 else { return }
         let r = SplitGeometry.ratio(left: Double(arrangedSubviews[0].frame.width), width: Double(bounds.width))
         if abs(r - ratio) > 0.002 { ratio = r; onRatio?(r) }
     }
