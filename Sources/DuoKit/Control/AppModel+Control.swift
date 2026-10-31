@@ -252,6 +252,26 @@ extension AppModel {
             }
             done(.ok(text, j))
         case .sessionNew:
+            if let raw = inv.flags["folder"] {
+                // A plain folder (DL-262): same trust check as the row; a project's own folder is that project.
+                if inv.has("project") { return done(.fail("Pass --project or --folder, not both.")) }
+                if raw.trimmingCharacters(in: .whitespaces).isEmpty { return done(.fail("--folder needs a path.")) }
+                let url = URL(fileURLWithPath: (raw as NSString).expandingTildeInPath, relativeTo: req.cwd.map { URL(fileURLWithPath: $0) }).standardizedFileURL
+                var isDir: ObjCBool = false
+                guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir), isDir.boolValue else { return done(.fail("no folder '\(raw)'")) }
+                if let owner = fixture.projects.first(where: { !$0.isFolderOnly && liveFolders[$0.name]?.realPath == url.realPath }) {
+                    startSession(in: StartPlace(kind: owner.isHome == true ? .home : .project, label: owner.name, folder: url, project: owner.name))
+                    return done(.ok("Started a session in \(owner.name).", ["project": owner.name]))
+                }
+                guard let sid = startFolderSession(url) else { return done(.fail("couldn't start a session in \(Self.tilde(url.path))")) }
+                return done(.ok("Starting session \(sid) in \(Self.tilde(url.path)); macOS may ask once for access to the folder.", ["id": sid, "folder": url.path]))
+            }
+            if inv.flags["project"] == nil, projectFor(cwd: req.cwd) == nil, currentProject == nil, altitude.isAllProjects {
+                // At All projects with nothing to go on: the New session row's default (DL-262).
+                guard let d = startDefault else { return done(.fail("Choose where it starts: --project <name> or --folder <path>")) }
+                if d.kind == .folder { guard let sid = startFolderSession(d.folder) else { return done(.fail("couldn't start a session in \(d.label)")) }
+                    return done(.ok("Starting session \(sid) in \(d.label).", ["id": sid, "folder": d.folder.path])) }
+            }
             let name = inv.flags["project"] ?? projectFor(cwd: req.cwd)?.name ?? currentProject?.name ?? fixture.home?.name
             guard let name, let p = project(named: name) else { return done(name.map { noProject($0) } ?? .fail("no project ''")) }
             // Remote Control (DL-128): only for a claude that takes the flag; otherwise it starts without.

@@ -448,6 +448,17 @@ public final class AppModel {
     @ObservationIgnored public var rememberedHome: String?
     /// Projects outside the workspace root (DL-63), from Duo's state.
     @ObservationIgnored public var extraProjects: [URL] = []
+    /// Whether `~/Documents` exists, read off the main thread with each refresh (DL-262); nil until read.
+    /// The New session row's default when there's no Home. Captures and checks set it.
+    public var documentsExists: Bool?
+    /// The New session row's pointer state and whether the List has scrolled (DL-262); state lives here, not in views.
+    public var newSessionRowHover = false
+    public var newSessionRowPressed = false
+    public var listScrolled = false
+    /// Folders chosen for the New session row, newest first (DL-262), from Duo's state.
+    @ObservationIgnored public var startFolders: [String] = []
+    /// Which of those folders are still there, read off the main thread with each refresh.
+    public var startFoldersPresent: Set<String> = []
     /// Task titles as last seen, by "project/path": a title that changes moves its note to the
     /// new name's slug once it settles (DL-115, C-24).
     @ObservationIgnored var taskTitlesSeen: [String: String]?
@@ -488,6 +499,7 @@ public final class AppModel {
         rememberedHome = state.home
         keepRunningIDs = Set(state.keepRunning)
         extraProjects = state.projects.map { URL(fileURLWithPath: $0) }
+        startFolders = state.startFolders
         startMemoryPressureWatch()
         fixture = LiveSnapshot.empty()  // never show the design fixture while the first scan runs
         refreshLive()
@@ -514,6 +526,7 @@ public final class AppModel {
         ctx.showHidden = showHiddenFiles
         ctx.expanded = Dictionary(expandedFolders.compactMap { k, v in liveFolders[k].map { ($0.path, v) } }, uniquingKeysWith: { a, b in a.union(b) })
         let generation = localChange
+        let startList = startFolders
         Task.detached(priority: .utility) { [weak self] in
             let beacons = Beacon.readAll()
             let (snapshot, folders, moves) = LiveSnapshot.build(ctx, beacons: beacons)
@@ -532,7 +545,19 @@ public final class AppModel {
             let homeFolders = root.map { AppModel.homeFolders(root: $0) } ?? []
             await self?.apply(snapshot, folders: folders, beacons: beacons, generation: generation)
             await self?.setHomeFolderList(homeFolders)
+            let docs = StartDefault.documentsExistsOnDisk()
+            await self?.setDocumentsExists(docs)
+            let present = Set(startList.filter { FileManager.default.fileExists(atPath: $0) })
+            await self?.setStartFoldersPresent(present)
         }
+    }
+
+    private func setStartFoldersPresent(_ v: Set<String>) {
+        if startFoldersPresent != v { startFoldersPresent = v }
+    }
+
+    private func setDocumentsExists(_ v: Bool) {
+        if documentsExists != v { documentsExists = v }
     }
 
     private func setHomeFolderList(_ list: [URL]) {
@@ -709,6 +734,7 @@ public final class AppModel {
     /// `+ New session` (handoff §6.2): a new Claude Code session in the current project's folder,
     /// with a Duo-minted id recorded in the project's session index first (CONS FR-7.7.7).
     public func newSession() {
+        if altitude.isAllProjects { return pressNewSessionRow() }   // F-446, DL-262
         guard let project = currentProject?.name else { return }
         newSession(in: project)
         consoleTab = fixture.sessions.last?.tabKey

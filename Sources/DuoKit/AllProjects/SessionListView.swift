@@ -10,14 +10,24 @@ struct SessionListPane: View {
 
     var body: some View {
         let list = model.sessionList
+        let scrolled = model.listScrolled
         let filtering = !model.listFilter.trimmingCharacters(in: .whitespaces).isEmpty
         let _ = model.noteSelectionOrder("list", Self.order(list, model: model, filtering: filtering))   // what ⇧ ranges over (DL-247)
         GeometryReader { box in
             let twoLine = box.size.width < DuoMetric.sessionListTwoLineBelow
+            VStack(alignment: .leading, spacing: 0) {
+            // The header and the New session row stay put while the list scrolls (DL-262); a rule shows under them once it has.
+            VStack(alignment: .leading, spacing: 0) {
+                MapHeader(layout: nil)
+                    .padding(EdgeInsets(top: DuoSpace.panePadding, leading: DuoSpace.panePadding, bottom: 8, trailing: DuoSpace.panePadding))
+                NewSessionRow()
+                    .padding(.horizontal, DuoMetric.sessionListRowInset)
+                    .padding(.top, 8)
+            }
+            .padding(.bottom, scrolled ? 7 : 8)
+            .overlay(alignment: .bottom) { if scrolled { Rectangle().fill(DuoColor.rule).frame(height: DuoMetric.borderHairline) } }
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    MapHeader(layout: nil)
-                        .padding(EdgeInsets(top: DuoSpace.panePadding, leading: DuoSpace.panePadding, bottom: 8, trailing: DuoSpace.panePadding))
                     if filtering {
                         // The filter (DL-142 (4), `filter`): best first, each with the passage that matched.
                         let matches = model.listMatches
@@ -62,6 +72,7 @@ struct SessionListPane: View {
                 .padding(.bottom, DuoSpace.panePadding)
                 .frame(width: box.size.width, alignment: .leading)
             }
+            .onScrollGeometryChange(for: Bool.self, of: { $0.contentOffset.y > 0.5 }) { model.listScrolled = $1 }
             .background { Color.clear.contentShape(Rectangle()).onTapGesture { model.clearSessionSelection() } }   // DL-247
             .scrollIndicators(.automatic)
             .focusable()
@@ -83,6 +94,7 @@ struct SessionListPane: View {
                 guard press.modifiers == .command else { return .ignored }
                 model.focusListFilter()
                 return .handled
+            }
             }
         }
         .foregroundStyle(DuoColor.text)

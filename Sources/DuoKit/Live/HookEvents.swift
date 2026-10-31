@@ -271,6 +271,8 @@ public struct DuoState: Codable, Sendable, Equatable {
     public var gitignore: [String: String] = [:]
     /// Folders made projects outside the workspace root (DL-63): discovery includes them.
     public var projects: [String] = []
+    /// Folders chosen with the New session row's Choose Another Folder… (DL-262), newest first.
+    public var startFolders: [String] = []
     /// Projects and folders filed away (ENH-6): out of the map's columns, into its Archived rollup.
     /// Filing only: counts, search and sessions are unchanged. By folder path.
     public var archivedProjects: [String] = []
