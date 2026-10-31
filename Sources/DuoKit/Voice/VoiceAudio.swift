@@ -53,6 +53,23 @@ public enum VoiceDevice {
     public static var hasMicrophone: Bool { usable(defaultInput()) }
 }
 
+/// A buffer's loudness, 0…1, on a decibel scale: -50 dBFS (a quiet room) is 0, -10 dBFS (speech close to the mic) is 1.
+/// A linear RMS saturated on ordinary speech, so the bars sat at full height and didn't move (DL-271).
+public enum VoiceLevel {
+    static func of(_ buffer: AVAudioPCMBuffer) -> Float {
+        guard let ch = buffer.floatChannelData?[0], buffer.frameLength > 0 else { return 0 }
+        var sum: Float = 0
+        let n = Int(buffer.frameLength)
+        for i in 0..<n { sum += ch[i] * ch[i] }
+        return scaled(rms: (sum / Float(n)).squareRoot())
+    }
+
+    public static func scaled(rms: Float) -> Float {
+        guard rms > 0 else { return 0 }
+        return min(1, max(0, (20 * log10(rms) + 50) / 40))
+    }
+}
+
 /// The microphone: taps the input node, reports a smoothed level, ends its stream when the device goes away.
 final class MicCapture: @unchecked Sendable {
     private let engine = AVAudioEngine()
@@ -81,12 +98,7 @@ final class MicCapture: @unchecked Sendable {
             guard f.sampleRate > 0, f.channelCount > 0 else { return }
             format = f
             input.installTap(onBus: 0, bufferSize: 4096, format: f) { buffer, _ in
-                if let ch = buffer.floatChannelData?[0] {
-                    var sum: Float = 0
-                    let n = Int(buffer.frameLength)
-                    for i in 0..<n { sum += ch[i] * ch[i] }
-                    level(n > 0 ? min(1, (sum / Float(n)).squareRoot() * 6) : 0)
-                }
+                level(VoiceLevel.of(buffer))
                 continuation.yield(VoiceBuffer(buffer: buffer))
             }
             self.tapped = true

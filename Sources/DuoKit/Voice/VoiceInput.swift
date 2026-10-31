@@ -276,7 +276,21 @@ public final class VoiceInput {
                 // DUO_VOICE_FILE_REALTIME=1: at the pace it was spoken, so a live check can act mid-dictation.
                 let feed = try FileFeed.stream(url, realtime: ProcessInfo.processInfo.environment["DUO_VOICE_FILE_REALTIME"] == "1")
                 fileStop = feed.stop
-                buffers = feed.stream
+                if ProcessInfo.processInfo.environment["DUO_VOICE_FILE_REALTIME"] == "1" {
+                    // As the mic's tap does: each buffer's level, for the bars (DL-271).
+                    let (levelled, out) = AsyncStream<VoiceBuffer>.makeStream(bufferingPolicy: .unbounded)
+                    Task { [weak self] in
+                        for await b in feed.stream {
+                            let l = VoiceLevel.of(b.buffer)
+                            await MainActor.run { self?.take(level: l) }
+                            out.yield(b)
+                        }
+                        out.finish()
+                    }
+                    buffers = levelled
+                } else {
+                    buffers = feed.stream
+                }
             }
         } catch VoiceAudioError.noMicrophone {
             return fail(.unavailable(VoiceCopy.noMic))
