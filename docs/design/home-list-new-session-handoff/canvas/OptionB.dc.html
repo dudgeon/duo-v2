@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Option B: a New session row with where it starts</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+code{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px}
+</style>
+</helmet>
+<div style="width: 2760px; height: 1700px; box-sizing: border-box; padding: 48px; background: #F3F4F6; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; display: flex; flex-direction: column; gap: 28px">
+  <div style="display: flex; flex-direction: column; gap: 6px">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <h1 style="margin: 0; font-size: 28px; line-height: 36px; font-weight: 600">B · A New session row, with where it starts</h1>
+      <span style="font-size: 11px; line-height: 16px; padding: 1px 7px; border: 1px solid #8B939C; border-radius: 9px; color: #5B636D">[P]</span>
+      <span style="font-size: 11px; line-height: 16px; padding: 1px 7px; border: 1px solid #1F2328; border-radius: 9px; color: #1F2328; font-weight: 600">Recommended</span>
+    </div>
+    <p style="margin: 0; font-size: 16px; line-height: 24px; color: #5B636D">The list's first row is the way in, as the Claude app's sidebar starts with New chat (the list was modelled on it, DL-142). The robot, the words, and <i>in [★ home ⌄]</i>: a popup of Home and your projects. Dashed like <code>+ New project</code> beside it: in this header, dashed means “make something”.</p>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px 40px">
+    <div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.66px; color: #5B636D">REST · LIGHT</span><dc-import name="ListPane" theme="light" opt="B" st="rest" hint-size="860px,440px"></dc-import></div>
+    <div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.66px; color: #5B636D">REST · DARK</span><dc-import name="ListPane" theme="dark" opt="B" st="rest" hint-size="860px,440px"></dc-import></div>
+    <div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.66px; color: #5B636D">REST · CLASSIC</span><dc-import name="ListPane" theme="classic" opt="B" st="rest" hint-size="860px,440px"></dc-import></div>
+    <div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.66px; color: #5B636D">HOVER (THE ROW) · LIGHT · SYSTEM TOOLTIP</span><dc-import name="ListPane" theme="light" opt="B" st="hover" hint-size="860px,440px"></dc-import></div>
+    <div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.66px; color: #5B636D">PRESSED · LIGHT</span><dc-import name="ListPane" theme="light" opt="B" st="pressed" hint-size="860px,440px"></dc-import></div>
+    <div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.66px; color: #5B636D">THE POPUP OPEN · LIGHT · SYSTEM MENU</span><dc-import name="ListPane" theme="light" opt="B" st="menu" hint-size="860px,440px"></dc-import></div>
+    <div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.66px; color: #5B636D">EMPTY LIST · LIGHT</span><dc-import name="ListPane" theme="light" opt="B" st="empty" hint-size="860px,440px"></dc-import></div>
+    <div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.66px; color: #5B636D">A LONG LIST, SCROLLED: HEADER AND ROW STAY [P]</span><dc-import name="ListPane" theme="light" opt="B" st="scrolled" hint-size="860px,440px"></dc-import></div>
+    <div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.66px; color: #5B636D">WHAT IT DOES</span>
+      <div style="height: 440px; box-sizing: border-box; background: #FFFFFF; border: 1px solid #C9CDD3; border-radius: 8px; padding: 16px 20px; font-size: 13px; line-height: 19px; white-space: normal; display: flex; flex-direction: column; gap: 9px">
+        <div><b>Creates.</b> A Claude session in the chosen project's folder, in the mode that project's sessions open in (Home: chat). Home: it opens in Home's pane and takes the top of OPEN, selected. A project: Duo jumps in with the new tab selected, as a row click does (DL-142 (5)). The popup lists ★ home, your projects by last activity, then New Project…; it remembers the last pick (Home at first). No shell here: shells aren't rows in this list, and ⇧⌘T already opens one in Home.</div>
+        <div><b>Keys.</b> ⌘T at All projects = this row with its current pick (F-446's fix). The row takes focus with Tab like any control; Return presses it.</div>
+        <div><b>duo2.</b> <code>duo2 session new --project &lt;p&gt;</code>; with no <code>--project</code> at All projects it uses the row's pick. The popup is that argument, so no new verb.</div>
+        <div><b>Sizes.</b> 28 high, 16 in, 8 below, like the needs-you line under it; 1 pt dashed <code>controlEdge</code>, radius 6. Robot 12 × 8 in <code>text2</code>; popup 20 high, <code>rule</code> border. Hover <code>selected</code>, pressed <code>menuTarget</code>, robot to <code>text</code>.</div>
+        <div><b>For.</b> Says where before you click; starts in any project without leaving All projects first; visible at rest and with the left pane hidden.</div>
+        <div><b>Against.</b> 36 pt of the list's height; a new control (the popup); the robot without its shell half.</div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":2760,"height":1700}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
