@@ -459,10 +459,28 @@ public final class ChatSession {
             if !dialogsVerified {
                 fallBack(.automatic("Chat mode hasn’t been checked with this version of Claude Code’s screens (\(cliVersion ?? "unknown")), so here’s the terminal."), rule: "picker-unverified-version")
             } else if fallback?.command != nil { fallback = nil; noteTransition("back to chat", "the command's picker is up"); onChange?() }
+        case .trust:
+            // Claude Code's folder trust question (F-444): never a fallback. Duo asks with its trust sheet (DL-229) and
+            // gives Claude Code the answer you choose; nothing trusts the folder unless you say so (DL-258).
+            unknownSince = nil; disagreeSince = nil; unknownTimer?.invalidate()
+            if !dialogsVerified {
+                fallBack(.automatic("Chat mode can’t read Claude Code’s folder question in this version (\(cliVersion ?? "unknown")), so here’s the terminal."), rule: "trust-unreadable")
+            } else if mode == .chat, fallback == nil, trustAsked != s.sig {
+                trustAsked = s.sig
+                if !(onTrustQuestion?(s.title ?? "") ?? false) {
+                    fallBack(.automatic("Claude Code is asking about a folder that isn’t this session’s, so here’s the terminal."), rule: "trust-other-folder")
+                }
+            }
         case .starting:
             break
         }
+        if s.kind != .trust { trustAsked = nil }
     }
+
+    /// Set by the app: shows the trust sheet for the folder Claude Code named, and says whether it did (it is the session's).
+    @ObservationIgnored public var onTrustQuestion: (@MainActor (String) -> Bool)?
+    /// The trust question already put to you, so a repaint doesn't ask again.
+    @ObservationIgnored var trustAsked: String?
 
     /// The last command sent from chat, and when: a screen that comes up just after it is its own.
     @ObservationIgnored var lastCommand: (name: String, at: Date)?

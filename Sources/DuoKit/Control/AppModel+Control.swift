@@ -545,6 +545,15 @@ extension AppModel {
             done(.ok("Forked \(s.name) in \(s.project) as a new session with the same history."))
         case .sessionTrustFolder:
             guard let k = inv[0], let s = findSession(k, in: nil) else { return done(.fail("usage: \(id.action.usage)")) }
+            // Claude Code's own question at the session's start (F-444): the same kind of sheet, answered on its screen.
+            if let c = chats.existing(s.tabKey), let t = terminals.existing(s.tabKey), c.reread().kind == .trust, ChatScreenReader.wellFormed(c.screen) {
+                guard askTrustAtStart(c, folder: t.cwd, path: c.screen.title ?? "", source: "duo2", done: { answer in
+                    if answer.hasPrefix("trusted ") { done(.ok(answer)) }
+                    else if answer.hasPrefix("not trusted ") { done(.fail("not trusted: the user clicked Don’t Trust in Duo, so Claude Code exits. Nothing changed.")) }
+                    else { done(.fail(answer)) }
+                }) else { return done(.fail("Claude Code is asking about a folder that isn’t \(s.name)’s; answer it in the terminal.")) }
+                return
+            }
             guard let n = trustNotices[s.tabKey], n.canAsk else {
                 return done(.fail("\(s.name) has no blocked /fork waiting on a trust question Duo can offer."))
             }

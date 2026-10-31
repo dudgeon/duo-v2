@@ -4593,3 +4593,34 @@ Geoff (2026-10-30): Duo's files go in git like any other file, under one name, t
 - **Left as they are:** the design fixture, handoff screens and the intro film (C-123); the notice Geoff's chosen option described (Q-332).
 - Live, isolated (`scripts/github-fixture.sh`, `DUO_MOVE_FILES=1`): the `notes` project's untracked `PROJECT.md` became `_PROJECT.md` on launch and the project stayed as it was, its file marked `new` (`build/ui/stage4-move-notes.png`).
 - Checks: `DUO_CHECKS=duo-files` (12: renames, git mv, both names, F-186, each link kind, a second run), GitChecks (Duo's files as changes, no exclude, the exclude block taken back with the user's lines kept), TaskBoardChecks (read both, underscore wins, Claude told the file's name, no second file beside an old one, `_HOME.md`). Push sheet captured live, light and dark, from `scripts/github-fixture.sh`.
+
+## F-444 · A first chat in a folder Claude Code hasn't trusted: answered from Duo's sheet, never a fallback (chat-trust, 2026-10-30; DL-229, DL-258)
+
+Geoff (a dev Duo on a new folder, `~/VoiceTest`): "pretty big fail if the very first time a user sees the home chat it has a chat mode failure because of the trust dialogue". Home's first session opened in chat. Claude Code asked "Accessing workspace … Is this a project you created or one you trust?", chat read it as an unknown screen, and the terminal came up (ChatReal even asserted that).
+
+- **Why not ask before starting.** The brief's likely shape was to ask before Duo starts a session in an untrusted folder. Claude Code's own rules decide whether it asks (F-445): a parent trusted, a repository's top folder, the home folder trusted one session at a time. Predicting them in Duo would either ask when Claude wouldn't, or miss a case and fall back anyway. Its screen names the exact folder each time it does ask. So Duo answers the screen.
+- **What happens now** (chat mode, a CLI chat trusts, i.e. any 2.1.x):
+  1. The reader reads the question as its own kind, `trust`: the folder, its wrapped rows joined, and the two choices with the cursor. Well-formed means both labels, one cursor, a folder.
+  2. Chat never falls back for it. It asks the app once per question (`onTrustQuestion`).
+  3. The app shows Duo's trust sheet (DL-229's surface: title, folder box, note, Don't Trust and Trust Folder, the default) only if the screen's folder is the session's own (`samePath`, whitespace-insensitive, since the wrap breaks a path anywhere). Another folder's question goes to the terminal (`trust-other-folder`). A CLI chat can't trust goes there too (`trust-unreadable`).
+  4. **Trust Folder** gives Claude Code its own answer: re-read the screen, ↓ to "Yes, I trust this folder" (it starts on "No, exit"), check the cursor and the folder before each key, then Return (DL-118). Claude Code then records the trust itself, exactly as when you answer in the terminal. **Don't Trust** presses Return on "No, exit": Claude Code exits and the session ends; nothing changes.
+- **Duo writes nothing to Claude Code's file here,** unlike DL-229's `/fork` case, where Claude has no question to answer. So nothing is trusted silently: only your click on the sheet sends the yes. `DUO_AUTOCONFIRM` doesn't answer Duo's sheets; scripted runs use `answer:<label>`.
+- **duo2** (DL-71): `duo2 session trust-folder <id>` also covers this question: the same sheet, waiting for your answer, with no `--yes`. It prints `trusted <path>`, or fails with `not trusted`.
+- **Terminal mode** is unchanged: Claude Code's own question is on screen.
+- The sheet's words for this case are a stand-in (Q-338).
+- Checks: `DUO_CHECKS=chat` "Claude Code's folder question at a session's start" (reader on 2.1.284 and 2.1.311 screens, a 60-column wrapped path, a git subfolder, 2.1.291's; no fallback, asked once; another folder, terminal mode, an unreadable CLI; the answer's keys for each choice and a refused one; the sheet's contents for a folder, the home folder and a repository's subfolder; the app's sheet giving the yes). `ChatChecks` now reads 2.1.291's trust prompt as `trust`. ChatReal answers it as the sheet does. Live: `scripts/check-chat-trust-live.sh`.
+
+## F-445 · Claude Code's trust question on 2.1.284 and 2.1.311 (chat-trust, 2026-10-30)
+
+Measured with the real TUIs against the mock API, a scratch `CLAUDE_CONFIG_DIR` and fresh folders (`Spikes/chat-mode/screens/trust-2.1.284/`, `trust-2.1.311/`):
+
+- **The screen is the same on both versions**, and the same as 2.1.291's:
+  - "Accessing workspace:", then the folder's real path (`/private/tmp/…`), hard-wrapped at the terminal's width with each continuation one space in;
+  - "Quick safety check: Is this a project you created or one you trust? …", "Claude Code'll be able to read, edit, and execute files here.", "Security guide";
+  - two unnumbered choices, **"No, exit" first and selected**, then "Yes, I trust this folder";
+  - "Enter to confirm · Esc to cancel".
+
+  So Return alone quits Claude Code, as F-338 found in a live run.
+- **Yes** (↓, Return): Claude Code writes `projects["‹key›"].hasTrustDialogAccepted = true` and reaches its prompt. The key is the folder itself, or the **repository's top folder** for a folder inside a git repository (`repo`, though the screen named `repo/sub`). **No:** Claude Code exits.
+- **The home folder:** Claude Code asks there too, and keeps the trust for that session only, so it asks again next time; the sheet says so and shows no key.
+- The question names the session's working folder even inside a repository, so the sheet compares the screen's folder with the session's own.
