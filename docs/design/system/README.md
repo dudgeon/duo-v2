@@ -195,7 +195,7 @@ All Duo shortcuts carry ⌘, so they never collide with keys typed into Claude C
 | Keys | Action |
 |---|---|
 | ⇧⌘A | Search everything (names first) |
-| ⌘↑ | All projects |
+| ⌘↑ | All projects; in a Claude terminal, the prompt's start instead (DL-274), and All projects is the View menu's item or the toolbar's crumb |
 | ⇧⌘H | Home, its terminal focused |
 | ⇧⌘P | Needs you elsewhere (the peek) |
 | ⌘↩ | Jump into the peek's selected project, while the peek is open; elsewhere it sends (DL-241) |
@@ -209,7 +209,7 @@ All Duo shortcuts carry ⌘, so they never collide with keys typed into Claude C
 | ⌘D | Send selection to Claude |
 | ⌘W / ⇧⌘W | Close tab (never the window) / close window |
 | ⌥⌘0 | Hide or show the right pane (DL-129) |
-| ⌥⌘← → | Previous and next pane; the active pane shows a rule over its top (DL-165, provisional) |
+| — | Previous and next pane (View menu, no chord since DL-289); the active pane shows a rule over its top (DL-165, provisional) |
 | ⌃⇥ / ⌃⇧⇥ | Next and previous tab in the active pane, terminals included (DL-165) |
 
 Return and its chords mean the same in chat and in the terminal (DL-241). In the terminal they are Claude Code's own keys; Duo only makes sure each one arrives (F-395).
@@ -221,6 +221,14 @@ Return and its chords mean the same in chat and in the terminal (DL-241). In the
 | `\` then ↩ | New line; the `\` is dropped, as in Claude Code |
 | ⌘↩ | Send (the peek's jump wins while it's open); the review comment composer's Post |
 | ⌃↩ | Send now: while Claude works, the message and the queue go at once (Claude Code 2.1.275 and later); otherwise a plain send |
+
+In a Claude terminal, Claude Code's own editing keys work as they do in Claude (⌘←/→ and Home/End to the row's ends, ⌥←/→ by word, the Emacs keys, ⌥⌫ and ⌘⌫); Duo turns the four it gets wrong into keys it reads (DL-274). Copying the prompt drops the box's indent and joins its wrapped rows.
+
+| Keys | In Claude's prompt |
+|---|---|
+| ⌘↑ / ⌘↓ | The prompt's start / end (never the last prompt from history) |
+| ⌥⌦ (⌥fn⌫) | Delete a word forward |
+| ⌘Z | Claude's undo (⌃_); Claude has no redo |
 
 In chat's composer (DL-242):
 

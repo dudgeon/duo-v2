@@ -13,8 +13,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case jumpToPeekSelection // ⌘↩ (handoff proposal), while the peek is open
     case toggleSidebar      // ⌃⌘S, the macOS standard
     case toggleRightPane    // ⌥⌘0, as Xcode's inspector
-    case nextPane           // ⌥⌘→
-    case previousPane       // ⌥⌘←
+    case nextPane           // no chord: ⌥⌘→ freed (DL-289)
+    case previousPane       // no chord: ⌥⌘← freed (DL-289)
     case nextTab            // ⌃Tab: the next tab of the active pane (DL-165), the one non-⌘ chord
     case previousTab        // ⌃⇧Tab
     case newMarkdown        // ⌘N: a new Markdown file in the project, named inline (DL-61, DL-62)
@@ -136,8 +136,6 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .jumpToPeekSelection: KeyboardShortcut(.return, modifiers: .command)
         case .toggleSidebar: KeyboardShortcut("s", modifiers: [.command, .control])
         case .toggleRightPane: KeyboardShortcut("0", modifiers: [.command, .option])
-        case .nextPane: KeyboardShortcut(.rightArrow, modifiers: [.command, .option])
-        case .previousPane: KeyboardShortcut(.leftArrow, modifiers: [.command, .option])
         case .nextTab: KeyboardShortcut(.tab, modifiers: .control)
         case .previousTab: KeyboardShortcut(.tab, modifiers: [.control, .shift])
         case .newMarkdown: KeyboardShortcut("n", modifiers: .command)
@@ -157,6 +155,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
              .task, .addProperties, .duo2Reference, .whatsNew, .reportIssue, .explainTasks, .tableInsert, .tableRowAbove, .tableRowBelow,
              .tableColumnBefore, .tableColumnAfter, .tableDeleteRow, .tableDeleteColumn, .tableAlignLeft, .tableAlignCenter,
              .tableAlignRight, .showBoard, .showList: nil  // Show Board / Show List: Q-100
+        case .nextPane, .previousPane: nil  // ⌥⌘→ / ⌥⌘← freed (DL-289)
         case .newBrowserTab: KeyboardShortcut("t", modifiers: [.command, .option])
         case .focusAddress: KeyboardShortcut("l", modifiers: .command)
         case .openFile: KeyboardShortcut("o", modifiers: .command)
