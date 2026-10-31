@@ -91,7 +91,7 @@ footer{font-size:14px;color:var(--ink2);border-top:1px solid var(--rule);padding
   <h1>Duo Decks, end to end</h1>
   <p class="lede">Every step from an existing PowerPoint to a deck in Google Slides, with what goes wrong along the way. It's the source for the explainer film you asked for, and it adds what the walk-through surfaced: template autocomplete, what happens when a layout change breaks the slot mapping, pack changes, and the cost of always committing the pptx.</p>
   <div class="links">
-    <a href="#questions">The ten new questions</a>
+    <a href="#questions">The open questions</a>
     <a href="https://claude.ai/artifact/7H6wxTs26LW1DvAfSZCsyi">The study page (decided so far)</a>
     <a href="https://claude.ai/artifact/Sk28K1tkHgwk6gHs7RFGqQ">The canvas</a>
     <a href="https://claude.ai/code/session_01LhGdJWtnnUWeRUroZZDmyc">Split view's session</a>
@@ -204,6 +204,7 @@ footer{font-size:14px;color:var(--ink2);border-top:1px solid var(--rule);padding
 <pre><code>autumn-trial.md:58: slide 6: no template &quot;kip&quot; in northwind; did you mean &quot;kpi&quot;?
 </code></pre>
 <p>The slide draws as a dashed frame with the message and a <strong>Use kpi</strong> button (a fix with exactly one answer, applied by Duo).</p>
+<p><strong>Decided (DL-281):</strong> nobody types the marker. A shortcut opens the template list at the caret (the key is Q-391), and the + gallery opens it from the slides. The marker line shows in the editor as a slide header chip, "Slide 6 · kpi ⌄" (Q-392, recommended).</p>
 <p><strong>Verbs.</strong> <code>duo2 deck insert &lt;deck&gt; &lt;template&gt; [--after &lt;n&gt;]</code> writes the skeleton. Autocomplete itself is UI-only (<code>Parity.uiOnly</code>), because Claude has <code>deck templates</code>.</p>
 <p><strong>Q-381.</strong> The trigger. Is it <code>&lt;!-- slide:</code> only, <code>/slide</code> too, or the + in the slides only? Proposed: all three, one list.
 <strong>Q-382.</strong> Should a fix with exactly one answer ("did you mean kpi") be a button Duo applies? Proposed: yes, only for unambiguous fixes. Anything that needs judgement goes to Claude.</p>
@@ -218,34 +219,33 @@ footer{font-size:14px;color:var(--ink2);border-top:1px solid var(--rule);padding
 2. A slot whose <strong>name</strong> exists in the new template keeps its content.
 3. The <strong>default slot</strong> moves to the new template's default slot, if both have one and the kinds match.
 4. Otherwise a slot moves to the new template's <strong>only</strong> unused slot of the same kind, if there's exactly one.
-5. Anything left over is <strong>not placed</strong>. It is never deleted.</p>
+5. Anything left over moves to the slide's <strong>speaker notes</strong>, under a line naming where it came from. It is never deleted (<strong>DL-281</strong>).</p>
 <p><code>bullets</code> → <code>two-column</code>:
 - <code>title</code> stays;
 - <code>body</code> (bullets) has no same-named slot;
 - <code>two-column</code> has no default;
 - there are two bullet slots (<code>left</code>, <code>right</code>), so rule 4 doesn't apply;
 - so <code>body</code> is <strong>not placed</strong>.</p>
-<p><strong>The break, on screen.</strong>
-- <strong>In the source,</strong> <code>## body</code> and its five points stay where they were. A notice line sits under the heading: <code>not placed: two-column has no "body"; its slots are left, right</code>.
-- <strong>In the slides,</strong> slide 5 draws with its title and two empty columns. A strip under the slide reads "5 points not placed". The buttons:
-  - <strong>Move to left</strong>, <strong>Move to right</strong>: they rename the heading, deterministic;
-  - <strong>Split with Claude</strong>: it sends the slide and the problem to Claude;
+<p><strong>The break, on screen (DL-281).</strong>
+- <code>body</code> has nowhere to go, so Duo moves it into slide 5's speaker notes:
+  ```</p>
+<blockquote>
+<p>[!note]
+Not placed after changing to two-column: body
+- Stopped at every ladder
+- …
+  ```
+- The slide is clean at once, with its title and two empty columns. The notes panel under the slide shows the five points, and a strip reads "5 points moved to notes".
+- The strip's buttons:
+  - <strong>Move to left</strong>, <strong>Move to right</strong>: deterministic, they move the points into that slot;
+  - <strong>Split with Claude</strong>: Claude spreads them across both columns, only when you ask;
   - <strong>Undo Change</strong> (⌘Z also works).
-- <strong>The checker,</strong> for Claude and the CLI:</p>
-<pre><code>autumn-trial.md:44: slide 5 (two-column): body is not placed; two-column has left, right. Move it to one of them, or split it.
-</code></pre>
-<p>You press Split with Claude. Claude splits the five points into left ("Spring") and right ("Autumn") by meaning, and the checker is clean.</p>
-<p><strong>A worse break: the kinds don't match.</strong> <code>kpi</code> → <code>bullets</code>:
-- <code>value</code>, <code>label</code> and <code>context</code> have no home;
-- rule 3 doesn't apply, because <code>context</code> is text and <code>body</code> is bullets.</p>
-<p>So three slots are not placed, and the strip offers only <strong>Split with Claude</strong> and Undo Change, since no rename would make sense.</p>
-<p><strong>Export with content not placed.</strong> The export refuses:</p>
-<pre><code>autumn-trial.md: 1 slide has content not placed (slide 5). Place it, or remove it.
-</code></pre>
-<p>Nothing is ever silently dropped from a deck that goes out.</p>
-<p><strong>Q-383.</strong> The remap rules: is this order right, and should rule 4 (the only slot of the same kind) apply, or only name matches? Proposed: as listed, so the common moves (bullets ↔ image caption, kpi ↔ kpi variants) carry over without a prompt.
-<strong>Q-384.</strong> Content that isn't placed: stays in the source with a notice (proposed), moves to the speaker notes, or blocks the change? Proposed: it stays. The export refuses until it's placed.
-<strong>Q-384.</strong> Does Change Template ask Claude by default when the rules leave content behind, or wait for you to press Split with Claude? Proposed: wait. The change is yours, and Claude only rewrites when you ask.</p>
+- The checker reports an empty slot as a notice, not an error, so the deck exports.</p>
+</blockquote>
+<p>You press Split with Claude. Claude splits the five points into left ("Spring") and right ("Autumn") by meaning, and clears the note.</p>
+<p><strong>A worse break: the kinds don't match.</strong> <code>kpi</code> → <code>bullets</code>: <code>value</code>, <code>label</code> and <code>context</code> have no home, so all three move to the notes. The strip offers Split with Claude and Undo Change, since no single move would make sense.</p>
+<p><strong>Q-383.</strong> Who defines the carry-over rules, and should the same-kind rule apply? Geoff asked "who defines these fixed rules?" Duo does, one set for every pack. The proposal adds an override in a pack's definition. Still open.
+<strong>Q-384.</strong> Decided, DL-281: it moves to the speaker notes.</p>
 <h3>M8 · "What happens when the template changes?" A pack update under live decks</h3>
 <p><strong>On screen.</strong> A month later someone improves the pack: kpi's <code>context</code> slot is renamed <code>note</code>, and a new template <code>timeline</code> is added. They rebuild. Every deck in the project that uses kpi now fails the check. The project's Files show a problem badge on <code>autumn-trial.md</code> [P].</p>
 <p><strong>Error 6:</strong></p>
@@ -261,18 +261,18 @@ footer{font-size:14px;color:var(--ink2);border-top:1px solid var(--rule);padding
 <p><strong>On screen.</strong> A teammate's PR on GitHub: "Autumn numbers and a slide on what still breaks". The reviewer sees:
 - the Markdown diff, as on board 7;
 - the exported pptx as a binary change, because the pptx is always committed (DL-270).</p>
-<p><strong>Error 7: a stale export.</strong> The teammate edited the Markdown but didn't export, so the committed pptx is from before the edit. Nothing on GitHub can tell. In Duo, the deck's bar says <strong>Changed since export</strong>. <code>duo2 deck check</code> reports:</p>
-<pre><code>autumn-trial.pptx is older than autumn-trial.md (exported from a different source). Export again.
-</code></pre>
-<p><strong>New [P]:</strong>
-- <strong>Export on commit.</strong> When Duo commits a change to a deck (its Commit sheet), it exports the deck first, so the pptx in a commit always matches the Markdown.
-- For commits made elsewhere, the exported pptx carries the source's hash in a custom document property (<code>duoSourceSha</code>). <code>deck check</code> compares the two.</p>
-<p><strong>Error 8: a merge conflict on the pptx.</strong> Two branches both exported, and the merge conflicts on <code>autumn-trial.pptx</code>, a binary file nobody can merge.</p>
-<p><strong>New [P]:</strong>
-- Duo writes <code>*.pptx merge=ours</code> for decks' exports into <code>.gitattributes</code>, once, with your OK as DL-50's <code>.gitignore</code> offer does.
-- After a merge, Duo re-exports from the merged Markdown.
-- In other words, the pptx is never merged, only rebuilt.</p>
-<p><strong>Q-386.</strong> Always committing the pptx (DL-270) brings stale exports and binary merge conflicts. Does Geoff want:
+<p><strong>Exports carry their date (DL-282).</strong> Export writes <code>autumn-trial 2026-10-31 1642.pptx</code>, named with its date and time.
+- A stale export shows its age in its name.
+- Two branches that both export never fight over one binary file.
+- Only the newest is kept in the folder, and git history has the rest (Q-393, recommended).</p>
+<p>The bytes are still the same for the same source, and the pptx carries its source's hash, so <code>duo2 deck check</code> can say "the newest export is older than the deck".</p>
+<p><strong>Comments on slides [P] (Q-394 to Q-397, <code>comments.md</code>).</strong> The reviewer comments on slide 3's value in Duo:
+- Select Shape, then Add Comment;
+- the comment is written into the Markdown, signed, on its own line in the <code>value</code> slot;
+- a pin shows at the value's corner;
+- clicking it opens the thread in the source's margin;
+- the author answers, or asks @claude, as Review in Markdown already does.</p>
+<p><strong>Q-386.</strong> Decided, DL-282: exports are dated, which removes the merge conflicts. Which exports git keeps is Q-393.
 - export on commit plus <code>.gitattributes</code> (proposed);
 - a check that only warns;
 - or to revisit Q-354 ("never commit" makes both problems vanish)?</p>
@@ -344,7 +344,7 @@ footer{font-size:14px;color:var(--ink2);border-top:1px solid var(--rule);padding
 </tr>
 <tr>
 <td>Changing a layout</td>
-<td>Change Template…; deterministic remap rules; "not placed" content kept, never dropped; export refuses until it's placed (Q-383, Q-384, Q-384)</td>
+<td>Change Template…; deterministic remap rules; leftovers move to speaker notes (DL-281, Q-383)</td>
 <td>Application (rules, checker) plus the agent (Split with Claude)</td>
 <td>P1 (rules in the checker), P3 (UI)</td>
 </tr>
@@ -356,9 +356,15 @@ footer{font-size:14px;color:var(--ink2);border-top:1px solid var(--rule);padding
 </tr>
 <tr>
 <td>Git</td>
-<td>Export on commit; <code>duoSourceSha</code> in the pptx; <code>*.pptx merge=ours</code> and re-export after merge (Q-386)</td>
+<td>Dated exports, the newest kept; <code>duoSourceSha</code> in the pptx (DL-282, Q-393)</td>
 <td>Application</td>
 <td>P1</td>
+</tr>
+<tr>
+<td>Comments</td>
+<td>Pins on slides; Add Comment from the preview; stored as Review in Markdown comments (Q-394..Q-397, comments.md)</td>
+<td>Application plus context</td>
+<td>P3</td>
 </tr>
 <tr>
 <td>Problems in Files</td>
@@ -386,18 +392,19 @@ footer{font-size:14px;color:var(--ink2);border-top:1px solid var(--rule);padding
 </section>
 <section id="questions">
   <span class="eyebrow">Your call</span>
-  <h2>Ten new questions</h2>
-  <p class="col">Each card names its moment above. The recommendation is first. Pick, add a note if you like, and save; I read the answers from this page.</p>
+  <h2>Open questions</h2>
+  <p class="col">Decided so far: Q-384 and Q-381 (DL-281), Q-386 (DL-282). Each card names its moment above; the comments question is explained in comments.md, summarised in M9 of the life cycle. The recommendation is first. Pick, add a note if you like, and save; I read the answers from this page.</p>
   <div class="dec" data-q="Q-377"><div class="dec-head"><span class="qid">Q-377 · M1</span><h3>Where does "make templates" start?</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · A Make Templates… mode in the deck viewer</span><span class="b">Tick the slides you see, then Make Templates with Claude.</span></button><button class="opt" data-v="B"><span class="t">B · A Files context-menu item</span><span class="b">Right-click the pptx; Claude asks which slides.</span></button><button class="opt" data-v="C"><span class="t">C · Only by asking Claude</span><span class="b">No new UI.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-377" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
 <div class="dec" data-q="Q-378"><div class="dec-head"><span class="qid">Q-378 · M2</span><h3>When a mapping is ambiguous, does Claude ask?</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · Ask when it changes what goes where; list when it is only naming</span><span class="b">Fewest questions that matter.</span></button><button class="opt" data-v="B"><span class="t">B · Always ask</span><span class="b">Safest, chattiest.</span></button><button class="opt" data-v="C"><span class="t">C · Decide and list every guess</span><span class="b">Fastest; you review after.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-378" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
 <div class="dec" data-q="Q-379"><div class="dec-head"><span class="qid">Q-379 · M3</span><h3>Limits in characters, or measured fit?</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · Both: limits guide Claude, the measured fit is enforced</span><span class="b">The checker names the largest value that fits.</span></button><button class="opt" data-v="B"><span class="t">B · Character limits only</span><span class="b">Simpler; overflow possible in real fonts.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-379" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
 <div class="dec" data-q="Q-380"><div class="dec-head"><span class="qid">Q-380 · M4</span><h3>How do you start a deck?</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · A New Deck… sheet with a pack picker</span><span class="b">Plus duo2 deck new.</span></button><button class="opt" data-v="B"><span class="t">B · A file template (templates/new-deck.md)</span><span class="b">No new UI; no pack picker.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-380" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
-<div class="dec" data-q="Q-381"><div class="dec-head"><span class="qid">Q-381 · M6</span><h3>How do you pick a template while typing?</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · All three: <!-- slide:, /slide, and + between slides</span><span class="b">One list with thumbnails; inserts a skeleton.</span></button><button class="opt" data-v="B"><span class="t">B · Autocomplete only</span><span class="b">No + in the slides.</span></button><button class="opt" data-v="C"><span class="t">C · The + gallery only</span><span class="b">No typing triggers.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-381" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
 <div class="dec" data-q="Q-382"><div class="dec-head"><span class="qid">Q-382 · M6, M7</span><h3>Should Duo apply one-answer fixes as buttons?</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · Yes, only when there is exactly one right answer</span><span class="b">"Use kpi", "Move to left". Judgement goes to Claude.</span></button><button class="opt" data-v="B"><span class="t">B · No, every fix goes through Claude</span><span class="b">One path for everything.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-382" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
-<div class="dec" data-q="Q-383"><div class="dec-head"><span class="qid">Q-383 · M7</span><h3>The remap rules when a slide changes template</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · As listed, with the same-kind rule</span><span class="b">Common moves carry over without a prompt.</span></button><button class="opt" data-v="B"><span class="t">B · Same-named slots only</span><span class="b">Predictable; more content left over.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-383" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
-<div class="dec" data-q="Q-384"><div class="dec-head"><span class="qid">Q-384 · M7</span><h3>Content that isn't placed after a change</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · Stays in the source; export refuses; Claude waits to be asked</span><span class="b">Never dropped, never rewritten unasked.</span></button><button class="opt" data-v="B"><span class="t">B · Moves to speaker notes</span><span class="b">The slide is clean at once.</span></button><button class="opt" data-v="C"><span class="t">C · Block the change until it fits</span><span class="b">Strict; awkward to explore.</span></button><button class="opt" data-v="D"><span class="t">D · Stays, and Claude splits it at once</span><span class="b">Fastest; Claude rewrites without being asked.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-384" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
+<div class="dec" data-q="Q-383"><div class="dec-head"><span class="qid">Q-383 · M7</span><h3>Who decides where content goes when a slide changes template?</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · Duo's rules; a pack may override</span><span class="b">Fixed rules in Duo (title stays, same names carry, default to default, the only slot of the same kind) unless the pack names a mapping. Leftovers go to notes (DL-281).</span></button><button class="opt" data-v="B"><span class="t">B · Duo's rules only</span><span class="b">One set for every pack, nothing to configure.</span></button><button class="opt" data-v="C"><span class="t">C · Same-named slots only</span><span class="b">Everything else goes to notes.</span></button><button class="opt" data-v="D"><span class="t">D · Claude decides each time</span><span class="b">Judgement per slide; costs a turn.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-383" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
 <div class="dec" data-q="Q-385"><div class="dec-head"><span class="qid">Q-385 · M8</span><h3>A pack changes under live decks</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · A rename map, with Rename in All Decks</span><span class="b">Decks in a project move together.</span></button><button class="opt" data-v="B"><span class="t">B · Versioned packs decks pin (northwind@3)</span><span class="b">Old decks never break; old layouts kept forever.</span></button><button class="opt" data-v="C"><span class="t">C · Neither; decks break and get fixed</span><span class="b">Nothing to build.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-385" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
-<div class="dec" data-q="Q-386"><div class="dec-head"><span class="qid">Q-386 · M9</span><h3>Always committing the pptx: stale exports and merge conflicts</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · Export on commit, a source hash in the pptx, merge=ours and re-export after merge</span><span class="b">The pptx in git always matches its Markdown.</span></button><button class="opt" data-v="B"><span class="t">B · Warn only</span><span class="b">deck check flags a stale export; you fix it.</span></button><button class="opt" data-v="C"><span class="t">C · Revisit Q-354: never commit the pptx</span><span class="b">Both problems vanish.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-386" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
+<div class="dec" data-q="Q-391"><div class="dec-head"><span class="qid">Q-391 · M6</span><h3>Which key opens the template picker in a deck?</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · ⇧⌘N while in a deck</span><span class="b">PowerPoint's and Keynote's New Slide; New Note elsewhere.</span></button><button class="opt" data-v="B"><span class="t">B · ⌃M</span><span class="b">Google Slides' New Slide.</span></button><button class="opt" data-v="C"><span class="t">C · ⌃⌘N</span><span class="b">Free; matches no slide app.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-391" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
+<div class="dec" data-q="Q-392"><div class="dec-head"><span class="qid">Q-392 · M6</span><h3>How does the slide marker look in the editor?</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · A slide header chip</span><span class="b">"Slide 3 · kpi ⌄"; click to change template. The file is unchanged.</span></button><button class="opt" data-v="B"><span class="t">B · The raw comment, dimmed</span><span class="b">Editable text in text2.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-392" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
+<div class="dec" data-q="Q-393"><div class="dec-head"><span class="qid">Q-393 · M9</span><h3>Which dated exports does git keep?</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · Only the newest</span><span class="b">A new export removes the older one in the same commit; history keeps them.</span></button><button class="opt" data-v="B"><span class="t">B · Every export</span><span class="b">The folder grows.</span></button><button class="opt" data-v="C"><span class="t">C · Newest in git, older ignored</span><span class="b">Older ones move to an ignored folder on this Mac.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-393" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
+<div class="dec" data-q="Q-394"><div class="dec-head"><span class="qid">Q-394 · Comments</span><h3>Where do comments live in a deck?</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · Review in Markdown's inline comments, on their own line in the slot</span><span class="b">The existing convention, margin and @claude routing; pins on slides point at them.</span></button><button class="opt" data-v="B"><span class="t">B · A comments callout per slide</span><span class="b">Content stays clean; a second convention the margin and verbs don't read.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-394" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
 </section>
 <footer>Duo Decks study · docs/design/duo-decks-study/lifecycle.md on research/duo-decks · synthetic world (Northwind Labs, an orchard-robotics team).</footer>
 </div>

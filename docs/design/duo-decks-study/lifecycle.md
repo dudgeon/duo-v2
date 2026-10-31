@@ -159,6 +159,8 @@ autumn-trial.md:58: slide 6: no template "kip" in northwind; did you mean "kpi"?
 
 The slide draws as a dashed frame with the message and a **Use kpi** button (a fix with exactly one answer, applied by Duo).
 
+**Decided (DL-281):** nobody types the marker. A shortcut opens the template list at the caret (the key is Q-391), and the + gallery opens it from the slides. The marker line shows in the editor as a slide header chip, "Slide 6 · kpi ⌄" (Q-392, recommended).
+
 **Verbs.** `duo2 deck insert <deck> <template> [--after <n>]` writes the skeleton. Autocomplete itself is UI-only (`Parity.uiOnly`), because Claude has `deck templates`.
 
 **Q-381.** The trigger. Is it `<!-- slide:` only, `/slide` too, or the + in the slides only? Proposed: all three, one list.
@@ -178,7 +180,7 @@ The issue Geoff named.
 2. A slot whose **name** exists in the new template keeps its content.
 3. The **default slot** moves to the new template's default slot, if both have one and the kinds match.
 4. Otherwise a slot moves to the new template's **only** unused slot of the same kind, if there's exactly one.
-5. Anything left over is **not placed**. It is never deleted.
+5. Anything left over moves to the slide's **speaker notes**, under a line naming where it came from. It is never deleted (**DL-281**).
 
 `bullets` → `two-column`:
 - `title` stays;
@@ -187,37 +189,27 @@ The issue Geoff named.
 - there are two bullet slots (`left`, `right`), so rule 4 doesn't apply;
 - so `body` is **not placed**.
 
-**The break, on screen.**
-- **In the source,** `## body` and its five points stay where they were. A notice line sits under the heading: `not placed: two-column has no "body"; its slots are left, right`.
-- **In the slides,** slide 5 draws with its title and two empty columns. A strip under the slide reads "5 points not placed". The buttons:
-  - **Move to left**, **Move to right**: they rename the heading, deterministic;
-  - **Split with Claude**: it sends the slide and the problem to Claude;
+**The break, on screen (DL-281).**
+- `body` has nowhere to go, so Duo moves it into slide 5's speaker notes:
+  ```
+  > [!note]
+  > Not placed after changing to two-column: body
+  > - Stopped at every ladder
+  > - …
+  ```
+- The slide is clean at once, with its title and two empty columns. The notes panel under the slide shows the five points, and a strip reads "5 points moved to notes".
+- The strip's buttons:
+  - **Move to left**, **Move to right**: deterministic, they move the points into that slot;
+  - **Split with Claude**: Claude spreads them across both columns, only when you ask;
   - **Undo Change** (⌘Z also works).
-- **The checker,** for Claude and the CLI:
+- The checker reports an empty slot as a notice, not an error, so the deck exports.
 
-```
-autumn-trial.md:44: slide 5 (two-column): body is not placed; two-column has left, right. Move it to one of them, or split it.
-```
+You press Split with Claude. Claude splits the five points into left ("Spring") and right ("Autumn") by meaning, and clears the note.
 
-You press Split with Claude. Claude splits the five points into left ("Spring") and right ("Autumn") by meaning, and the checker is clean.
+**A worse break: the kinds don't match.** `kpi` → `bullets`: `value`, `label` and `context` have no home, so all three move to the notes. The strip offers Split with Claude and Undo Change, since no single move would make sense.
 
-**A worse break: the kinds don't match.** `kpi` → `bullets`:
-- `value`, `label` and `context` have no home;
-- rule 3 doesn't apply, because `context` is text and `body` is bullets.
-
-So three slots are not placed, and the strip offers only **Split with Claude** and Undo Change, since no rename would make sense.
-
-**Export with content not placed.** The export refuses:
-
-```
-autumn-trial.md: 1 slide has content not placed (slide 5). Place it, or remove it.
-```
-
-Nothing is ever silently dropped from a deck that goes out.
-
-**Q-383.** The remap rules: is this order right, and should rule 4 (the only slot of the same kind) apply, or only name matches? Proposed: as listed, so the common moves (bullets ↔ image caption, kpi ↔ kpi variants) carry over without a prompt.
-**Q-384.** Content that isn't placed: stays in the source with a notice (proposed), moves to the speaker notes, or blocks the change? Proposed: it stays. The export refuses until it's placed.
-**Q-384.** Does Change Template ask Claude by default when the rules leave content behind, or wait for you to press Split with Claude? Proposed: wait. The change is yours, and Claude only rewrites when you ask.
+**Q-383.** Who defines the carry-over rules, and should the same-kind rule apply? Geoff asked "who defines these fixed rules?" Duo does, one set for every pack. The proposal adds an override in a pack's definition. Still open.
+**Q-384.** Decided, DL-281: it moves to the speaker notes.
 
 ### M8 · "What happens when the template changes?" A pack update under live decks
 
@@ -244,24 +236,21 @@ Claude can do the same with `duo2 deck migrate --pack northwind`.
 - the Markdown diff, as on board 7;
 - the exported pptx as a binary change, because the pptx is always committed (DL-270).
 
-**Error 7: a stale export.** The teammate edited the Markdown but didn't export, so the committed pptx is from before the edit. Nothing on GitHub can tell. In Duo, the deck's bar says **Changed since export**. `duo2 deck check` reports:
+**Exports carry their date (DL-282).** Export writes `autumn-trial 2026-10-31 1642.pptx`, named with its date and time.
+- A stale export shows its age in its name.
+- Two branches that both export never fight over one binary file.
+- Only the newest is kept in the folder, and git history has the rest (Q-393, recommended).
 
-```
-autumn-trial.pptx is older than autumn-trial.md (exported from a different source). Export again.
-```
+The bytes are still the same for the same source, and the pptx carries its source's hash, so `duo2 deck check` can say "the newest export is older than the deck".
 
-**New [P]:**
-- **Export on commit.** When Duo commits a change to a deck (its Commit sheet), it exports the deck first, so the pptx in a commit always matches the Markdown.
-- For commits made elsewhere, the exported pptx carries the source's hash in a custom document property (`duoSourceSha`). `deck check` compares the two.
+**Comments on slides [P] (Q-394 to Q-397, `comments.md`).** The reviewer comments on slide 3's value in Duo:
+- Select Shape, then Add Comment;
+- the comment is written into the Markdown, signed, on its own line in the `value` slot;
+- a pin shows at the value's corner;
+- clicking it opens the thread in the source's margin;
+- the author answers, or asks @claude, as Review in Markdown already does.
 
-**Error 8: a merge conflict on the pptx.** Two branches both exported, and the merge conflicts on `autumn-trial.pptx`, a binary file nobody can merge.
-
-**New [P]:**
-- Duo writes `*.pptx merge=ours` for decks' exports into `.gitattributes`, once, with your OK as DL-50's `.gitignore` offer does.
-- After a merge, Duo re-exports from the merged Markdown.
-- In other words, the pptx is never merged, only rebuilt.
-
-**Q-386.** Always committing the pptx (DL-270) brings stale exports and binary merge conflicts. Does Geoff want:
+**Q-386.** Decided, DL-282: exports are dated, which removes the merge conflicts. Which exports git keeps is Q-393.
 - export on commit plus `.gitattributes` (proposed);
 - a check that only warns;
 - or to revisit Q-354 ("never commit" makes both problems vanish)?
@@ -303,9 +292,10 @@ The final line: "Decks as text. Templates as PowerPoint. Claude in between."
 | New deck | New Deck… sheet with a pack picker; `duo2 deck new` (Q-380) | Application | P1 (verb), P3 (sheet) |
 | Editing | Template autocomplete with skeletons; slot autocomplete; + between slides; `duo2 deck insert` (Q-381) | Application (editor) | P3 |
 | One-answer fixes | "Use kpi", "Move to left": Duo applies them (Q-382) | Application | P3 |
-| Changing a layout | Change Template…; deterministic remap rules; "not placed" content kept, never dropped; export refuses until it's placed (Q-383, Q-384, Q-384) | Application (rules, checker) plus the agent (Split with Claude) | P1 (rules in the checker), P3 (UI) |
+| Changing a layout | Change Template…; deterministic remap rules; leftovers move to speaker notes (DL-281, Q-383) | Application (rules, checker) plus the agent (Split with Claude) | P1 (rules in the checker), P3 (UI) |
 | Pack changes | Rename map in definitions; Rename in All Decks; `duo2 deck migrate` (Q-385) | Context plus application | P2 |
-| Git | Export on commit; `duoSourceSha` in the pptx; `*.pptx merge=ours` and re-export after merge (Q-386) | Application | P1 |
+| Git | Dated exports, the newest kept; `duoSourceSha` in the pptx (DL-282, Q-393) | Application | P1 |
+| Comments | Pins on slides; Add Comment from the preview; stored as Review in Markdown comments (Q-394..Q-397, comments.md) | Application plus context | P3 |
 | Problems in Files | A problem badge on a deck that fails its check | Application | P3 |
 
 **The rule these share.** Duo applies a fix itself only when it has exactly one right answer. Anything that needs judgement goes to Claude, and only when you ask. Content is never dropped.
