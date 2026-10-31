@@ -1,0 +1,453 @@
+<title>Duo Decks Life Cycle</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: one reading column (~70ch) with wide breakouts for tables, slides and decision cards. */
+:root{
+  --bg:#fbfbfa; --surface:#ffffff; --ink:#1c2128; --ink2:#59616b; --rule:#d9dcdf;
+  --accent:#1f5fae; --accent-soft:#e7eef8; --add:#e6f4ea; --addt:#2f7d32; --del:#fdecea; --delt:#b42318; --code:#f2f3f4;
+  --f-body:"IBM Plex Sans",-apple-system,"Segoe UI",system-ui,sans-serif;
+  --f-head:"IBM Plex Sans Condensed","IBM Plex Sans",-apple-system,system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono","SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#14171b; --surface:#1b1f24; --ink:#e7e9ec; --ink2:#a2a9b2; --rule:#30353c;
+  --accent:#7fb0ee; --accent-soft:#1d2a3a; --add:#15291c; --addt:#7cc98a; --del:#331a1d; --delt:#f2959e; --code:#20252b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14171b; --surface:#1b1f24; --ink:#e7e9ec; --ink2:#a2a9b2; --rule:#30353c;
+  --accent:#7fb0ee; --accent-soft:#1d2a3a; --add:#15291c; --addt:#7cc98a; --del:#331a1d; --delt:#f2959e; --code:#20252b; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:16px/1.6 var(--f-body)}
+.wrap{max-width:1080px;margin:0 auto;padding-block:40px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:56px}
+.col{max-width:70ch}
+h1,h2,h3{font-family:var(--f-head);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(34px,5vw,48px);font-weight:600}
+h2{font-size:28px;font-weight:600}
+h3{font-size:19px;font-weight:600}
+p{margin:0}
+section{display:flex;flex-direction:column;gap:16px}
+.eyebrow{font:500 12px/16px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink2)}
+.lede{font-size:19px;line-height:1.55;max-width:62ch}
+.muted{color:var(--ink2)}
+a{color:var(--accent)} a:hover{text-decoration-thickness:2px}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+code{background:var(--code);padding:1px 5px;border-radius:4px}
+ul,ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:6px}
+.links{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:15px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;align-items:start}
+.grid2>*{min-width:0}
+pre{margin:0;background:var(--code);border-radius:6px;padding:14px 16px;overflow-x:auto;font:13px/1.55 var(--f-mono)}
+figure{margin:0;display:flex;flex-direction:column;gap:8px}
+figure img{display:block;width:100%;max-width:100%;border:1px solid var(--rule);border-radius:2px}
+figcaption{font-size:14px;color:var(--ink2)}
+.tbl{overflow-x:auto;border:1px solid var(--rule);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{text-align:left;vertical-align:top;padding:10px 14px;border-bottom:1px solid var(--rule)}
+tr:last-child td{border-bottom:none}
+th{font:500 12px/16px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink2)}
+.layer{font-family:var(--f-head);font-weight:600;font-size:17px;white-space:nowrap}
+.finding{display:grid;grid-template-columns:2.2em 1fr;gap:4px 12px}
+.finding .n{font:500 14px/1.6 var(--f-mono);color:var(--ink2)}
+.diff div{white-space:pre;padding:0 14px}
+.diff .h{color:var(--ink2);background:var(--accent-soft)}
+.diff .a{background:var(--add);color:var(--addt)}
+.diff .d{background:var(--del);color:var(--delt)}
+.diff{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:6px 0;font:13px/1.6 var(--f-mono);overflow-x:auto}
+/* decisions */
+.dec{background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:22px;display:flex;flex-direction:column;gap:14px}
+.dec-head{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline}
+.qid{font:500 13px/1 var(--f-mono);color:var(--ink2)}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.opt{all:unset;box-sizing:border-box;cursor:pointer;border:1px solid var(--rule);border-radius:6px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;background:var(--bg);min-width:0}
+.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.opt[aria-pressed="true"]{border:2px solid var(--accent);padding:11px 13px;background:var(--accent-soft)}
+.opt .t{font-weight:600;font-size:15px;line-height:1.35}
+.opt .b{font-size:14px;line-height:1.5;color:var(--ink2)}
+.rec{font:500 11px/1 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.dep{font-size:14px;line-height:1.55;color:var(--ink2);border-left:3px solid var(--rule);padding-left:12px}
+.save{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.save input{flex:1 1 260px;min-width:0;font:15px var(--f-body);padding:8px 10px;border:1px solid var(--rule);border-radius:6px;background:var(--bg);color:var(--ink)}
+.btn{font:500 14px var(--f-body);padding:8px 14px;border-radius:6px;border:1px solid var(--accent);background:var(--accent);color:var(--surface);cursor:pointer}
+.btn:disabled{opacity:.45;cursor:default}
+.status{font-size:13px;color:var(--ink2)}
+.small{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.small .dec{padding:16px}
+.small .opts{grid-template-columns:1fr}
+.phase{display:grid;grid-template-columns:4.5em 1fr;gap:4px 16px;padding:12px 0;border-bottom:1px solid var(--rule)}
+.phase:last-child{border-bottom:none}
+.phase .p{font:600 15px/1.5 var(--f-mono)}
+footer{font-size:14px;color:var(--ink2);border-top:1px solid var(--rule);padding-top:16px}
+@media (prefers-reduced-motion:no-preference){.opt{transition:background .12s, border-color .12s}}
+</style>
+<style>
+.prose{max-width:72ch;display:flex;flex-direction:column;gap:14px}
+.prose h2{margin-top:28px} .prose h3{margin-top:18px}
+.prose pre{white-space:pre-wrap}
+.prose blockquote{margin:0;padding:12px 16px;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:4px;font-size:18px}
+.prose li p{margin:0}
+</style>
+<div class="wrap">
+<header style="display:flex;flex-direction:column;gap:14px">
+  <span class="eyebrow">Duo Decks · the life cycle, moment by moment · 31 October 2026 · proposed</span>
+  <h1>Duo Decks, end to end</h1>
+  <p class="lede">Every step from an existing PowerPoint to a deck in Google Slides, with what goes wrong along the way. It's the source for the explainer film you asked for, and it adds what the walk-through surfaced: template autocomplete, what happens when a layout change breaks the slot mapping, pack changes, and the cost of always committing the pptx.</p>
+  <div class="links">
+    <a href="#questions">The ten new questions</a>
+    <a href="https://claude.ai/artifact/7H6wxTs26LW1DvAfSZCsyi">The study page (decided so far)</a>
+    <a href="https://claude.ai/artifact/Sk28K1tkHgwk6gHs7RFGqQ">The canvas</a>
+    <a href="https://claude.ai/code/session_01LhGdJWtnnUWeRUroZZDmyc">Split view's session</a>
+  </div>
+</header>
+<section class="prose">
+<p>Status: <strong>proposed</strong> (every new mark [P]). Geoff asked for this on 2026-10-31:
+- an explainer film, "kind of like a PRFAQ", that walks the whole Duo Decks life cycle in one shot, with real or simulated UI;
+- real errors along the way;
+- a feature definition updated for the issues the walk-through surfaces, such as a layout change that breaks the content mapping;
+- things not yet discussed but likely needed, such as quick selection or autocomplete of template names.</p>
+<p>This document is the source for that film. It also extends <code>plan.md</code>: each moment below says what is on screen, who does what (you, Claude, Duo), what goes wrong, and how it resolves. New questions are Q-377 to Q-386. Decided so far: DL-267 (format), DL-268 (templates), DL-270 (writer, verbs, always commit the pptx). The viewer is open (Q-350) and waits for split view. Here it is drawn as S1, source and slides side by side, because that's the leaning.</p>
+<h2>The world (synthetic)</h2>
+<ul>
+<li><strong>Northwind Labs</strong>, an orchard-robotics company, and its field team's Duo project <code>orchard-robotics</code>.</li>
+<li><strong>The person</strong> is a product lead on that team (unnamed in the film; "you").</li>
+<li><strong>The source deck</strong> is <code>northwind-q2-review.pptx</code>, a 14-slide company deck made by hand in PowerPoint. Some slides sit on proper layouts; others are loose text boxes on Blank.</li>
+<li><strong>The notes</strong> are <code>notes/autumn-trial-log.md</code>, field notes from the autumn trial.</li>
+<li><strong>The new deck</strong> is <code>decks/autumn-trial.md</code>.</li>
+<li><strong>A teammate</strong> sends a pull request later. Shown by role, never named.</li>
+</ul>
+<p>All of it is generated from one data file (<code>video/fixture/world.json</code>, made by the film's worker). Nothing is real work content.</p>
+<h2>The press release (the film's opening, about 15 s)</h2>
+<blockquote>
+<p><strong>Duo Decks.</strong> Write slide decks with Claude in plain Markdown, held to your own company templates, reviewed in pull requests like code, and shipped as a PowerPoint file that opens properly in Google Slides. You never draw a template, and Claude never draws a slide.</p>
+</blockquote>
+<p>The FAQ is the rest of the film. Each moment answers one question a sceptical reader would ask.</p>
+<h2>The moments</h2>
+<h3>M1 · "Where do templates come from?" Pick a template deck</h3>
+<p><strong>On screen.</strong> The project, with <code>northwind-q2-review.pptx</code> in Files. You open it: the existing deck viewer (DL-125), slides down the pane.</p>
+<p><strong>New [P]: Make Templates…</strong> in the deck viewer's bar, next to Select Shape. It turns on <strong>slide selection</strong>:
+- each slide gets a check box at its top left;
+- the bar reads "Pick the slides to make into templates · 3 picked";
+- the buttons are <strong>Make Templates with Claude</strong> (default), Cancel.</p>
+<p>You tick slides 3 (bullets), 7 (a quote) and 12 (a big number).</p>
+<p><strong>What happens.</strong> Make Templates with Claude pastes into Claude's prompt, without Return, as Select Shape does:
+- the file and the picked slides;
+- the line <code>duo2 deck template inventory "northwind-q2-review.pptx" --slides 3,7,12</code>.</p>
+<p>You add "call the pack northwind" and press Return.</p>
+<p><strong>Verbs.</strong> <code>duo2 deck template pick</code> turns selection on. <code>duo2 deck template picked</code> lists the picked slides. (DL-71)</p>
+<p><strong>Q-377.</strong> Is Make Templates… a deck-viewer action (proposed), a Files context-menu item, or only something you ask Claude for? Proposed: the viewer action, because you choose slides by seeing them.</p>
+<h3>M2 · "How does a slide become a template?" Inventory and mapping</h3>
+<p><strong>On screen.</strong> Claude's session beside the deck. Claude runs the inventory. The output scrolls: layouts, slide 3 on "Title and Content" with placeholders, slides 7 and 12 on Blank with loose boxes, fonts.</p>
+<p><strong>Error 1: a font Google lacks.</strong> The inventory flags <code>Avenir Next (heading): not in Google Fonts</code>.
+- Claude asks you, by its own question card in chat, with buttons: Nunito Sans (closest, recommended), Montserrat, or keep Avenir Next and accept substitution.
+- You pick Nunito Sans. This is DL-268's recorded substitute.</p>
+<p><strong>Error 2: an ambiguous slide.</strong> On slide 12, two text boxes are the same size and the same 18 pt: "of rows finished…" and "Up from 61%…". The XML can't say which is the label and which is the context.
+- Claude says which it thinks is which, from position and wording, and asks to confirm.
+- The rule: <strong>Claude never guesses silently. Anything it can't decide from the XML or the words is a question to you.</strong></p>
+<p><strong>What happens.</strong> Claude writes <code>templates/decks/northwind/northwind.md</code>, three sections, each with a purpose line, slot names, kinds and limits.</p>
+<p><strong>Q-378.</strong> When the mapping is ambiguous, does Claude always ask, or decide and list its guesses for review? Proposed: ask when two readings would change what goes where; list when it's naming only.</p>
+<h3>M3 · "What does Duo do that Claude doesn't?" Build and specimen</h3>
+<p><strong>On screen.</strong> Claude runs <code>duo2 deck template build northwind</code>. Duo:
+- copies the theme and masters;
+- promotes slides 7 and 12 to real layouts ("Quote", "Big Number");
+- removes the 14 original slides;
+- fills the <code># duo</code> lines.</p>
+<p>Then <code>duo2 deck template specimen northwind</code> opens a three-slide specimen deck in the viewer, every slot filled to its limit.</p>
+<p><strong>Error 3: a limit that doesn't fit.</strong> Duo's fit check measures each slot's limit text against the placeholder's real box (CoreText, in the template's font):</p>
+<pre><code>northwind.md:41: kpi.label: 45 characters at 18 pt takes 2 lines; the box holds 1. Largest that fits: 34.
+</code></pre>
+<p>The specimen shows the label wrapping into the context line. Claude sets <code>max: 34</code>, and build and specimen run again clean.</p>
+<p><strong>New [P]:</strong>
+- <strong>The fit check</strong> (plan.md P2) runs at build and at <code>deck check</code>. Its finding names the largest value that fits.
+- <strong>The specimen tab</strong> carries a bar: "Specimen for northwind · 3 templates · Rebuild".</p>
+<p><strong>Q-379.</strong> Are limits only characters (DL-268's definition), or does the checker measure every slot's real text against its box on every check? Proposed: both. Limits are for Claude to plan with; the measured fit is what the checker enforces, and what it reports.</p>
+<h3>M4 · "How do I start a deck?" A new deck from a pack</h3>
+<p><strong>On screen.</strong> <strong>New [P]: New Deck…</strong> in File › New and in Files' <strong>+</strong> menu (⇧⌘N stays "new folder"; no new shortcut, DL-34). It opens a Duo sheet:
+- <strong>Name:</strong> <code>autumn-trial</code>.
+- <strong>Folder:</strong> <code>decks/</code>.
+- <strong>Template pack:</strong> a pop-up listing packs by scope. "northwind (this project)", then Home's packs, then "Duo Plain (built in)". Each has a strip of its templates' thumbnails.
+- <strong>Start with:</strong> the title slide only (default), or one slide of every template (a specimen to edit).
+- Buttons: Cancel, <strong>Create</strong>.</p>
+<p>Duo writes <code>decks/autumn-trial.md</code> with the frontmatter and a title slide, and opens it as source beside slides. The same thing from Claude: <code>duo2 deck new decks/autumn-trial.md --template northwind</code>.</p>
+<p><strong>Q-380.</strong> Should New Deck be a sheet (proposed), or a file template under DL-146's <code>templates/new-deck.md</code> (no new UI, but no pack picker)? Proposed: the sheet. Picking the pack is the one choice that matters, and it's visual.</p>
+<h3>M5 · "Can Claude write it for me?" Drafting from notes</h3>
+<p><strong>On screen.</strong> You ask, in the session: "draft the autumn trial review from notes/autumn-trial-log.md, about 8 slides". Claude:
+1. runs <code>duo2 deck templates decks/autumn-trial.md</code> (the catalogue, about 300 tokens);
+2. reads the notes;
+3. writes the deck.</p>
+<p>The slides fill in beside the source as the file changes: split view's live redraw, R2.</p>
+<p><strong>Error 4: too much for a slide.</strong> Claude runs <code>duo2 deck check</code>:</p>
+<pre><code>decks/autumn-trial.md:31: slide 4 (bullets), body: has 8 points; the template allows 6. Split the slide; never shrink the text
+</code></pre>
+<p>Claude splits slide 4 into "What worked" and "What didn't". The check comes back clean. You watch the extra slide appear.</p>
+<p><strong>What it shows.</strong> Claude never looks at the slides to stay inside the template. The checker tells it what's wrong, in words it can act on.</p>
+<h3>M6 · "Can I edit it myself?" Typing, with autocomplete</h3>
+<p><strong>On screen.</strong> You click into the source between two slides and start a new one.</p>
+<p><strong>New [P]: template autocomplete.</strong> Typing <code>&lt;!-- slide:</code> (or <code>/slide</code> at the start of a line, the slash-command habit from chat) opens a completion list at the caret, as the editor's other pop-ups do. Each row has:
+- the template's thumbnail;
+- its name in mono;
+- its purpose line in <code>text2</code>.</p>
+<p>Typing filters (<code>k</code> → kpi). Return inserts the marker <strong>and a skeleton</strong>:</p>
+<pre><code class="language-markdown">&lt;!-- slide: kpi --&gt;
+# |
+
+## value
+
+
+## label
+
+
+## context
+
+</code></pre>
+<p>The caret sits in the title. Tab moves slot to slot. Empty slots are allowed while you work, and the checker counts them as one notice, not errors.</p>
+<p><strong>New [P]: slot autocomplete.</strong> Typing <code>##</code> inside a slide lists that template's slots not yet used.</p>
+<p><strong>New [P]: + between slides</strong> in the slides side. Hover a gap and a small + appears. It opens the same template list as a pop-over gallery of thumbnails, and inserts the skeleton at that point in the source.</p>
+<p><strong>Error 5: a typo.</strong> You type <code>&lt;!-- slide: kip --&gt;</code> by hand, past the list. The checker:</p>
+<pre><code>autumn-trial.md:58: slide 6: no template &quot;kip&quot; in northwind; did you mean &quot;kpi&quot;?
+</code></pre>
+<p>The slide draws as a dashed frame with the message and a <strong>Use kpi</strong> button (a fix with exactly one answer, applied by Duo).</p>
+<p><strong>Verbs.</strong> <code>duo2 deck insert &lt;deck&gt; &lt;template&gt; [--after &lt;n&gt;]</code> writes the skeleton. Autocomplete itself is UI-only (<code>Parity.uiOnly</code>), because Claude has <code>deck templates</code>.</p>
+<p><strong>Q-381.</strong> The trigger. Is it <code>&lt;!-- slide:</code> only, <code>/slide</code> too, or the + in the slides only? Proposed: all three, one list.
+<strong>Q-382.</strong> Should a fix with exactly one answer ("did you mean kpi") be a button Duo applies? Proposed: yes, only for unambiguous fixes. Anything that needs judgement goes to Claude.</p>
+<h3>M7 · "What if I change a slide's layout?" Remapping, and when it breaks</h3>
+<p>The issue Geoff named.</p>
+<p><strong>On screen.</strong> Slide 5 is <code>bullets</code> (title, body with 5 points). You want it as two columns. You put the caret on its marker and use <strong>Change Template…</strong>:
+- <strong>New [P]:</strong> this is in the slide's context menu on the slides side, and in the editor's context menu on a marker line;
+- it opens the same autocomplete list;
+- or you just retype the name.</p>
+<p><strong>What Duo does, deterministically: the remap rules [P].</strong>
+1. <code>title</code> stays <code>title</code>.
+2. A slot whose <strong>name</strong> exists in the new template keeps its content.
+3. The <strong>default slot</strong> moves to the new template's default slot, if both have one and the kinds match.
+4. Otherwise a slot moves to the new template's <strong>only</strong> unused slot of the same kind, if there's exactly one.
+5. Anything left over is <strong>not placed</strong>. It is never deleted.</p>
+<p><code>bullets</code> → <code>two-column</code>:
+- <code>title</code> stays;
+- <code>body</code> (bullets) has no same-named slot;
+- <code>two-column</code> has no default;
+- there are two bullet slots (<code>left</code>, <code>right</code>), so rule 4 doesn't apply;
+- so <code>body</code> is <strong>not placed</strong>.</p>
+<p><strong>The break, on screen.</strong>
+- <strong>In the source,</strong> <code>## body</code> and its five points stay where they were. A notice line sits under the heading: <code>not placed: two-column has no "body"; its slots are left, right</code>.
+- <strong>In the slides,</strong> slide 5 draws with its title and two empty columns. A strip under the slide reads "5 points not placed". The buttons:
+  - <strong>Move to left</strong>, <strong>Move to right</strong>: they rename the heading, deterministic;
+  - <strong>Split with Claude</strong>: it sends the slide and the problem to Claude;
+  - <strong>Undo Change</strong> (⌘Z also works).
+- <strong>The checker,</strong> for Claude and the CLI:</p>
+<pre><code>autumn-trial.md:44: slide 5 (two-column): body is not placed; two-column has left, right. Move it to one of them, or split it.
+</code></pre>
+<p>You press Split with Claude. Claude splits the five points into left ("Spring") and right ("Autumn") by meaning, and the checker is clean.</p>
+<p><strong>A worse break: the kinds don't match.</strong> <code>kpi</code> → <code>bullets</code>:
+- <code>value</code>, <code>label</code> and <code>context</code> have no home;
+- rule 3 doesn't apply, because <code>context</code> is text and <code>body</code> is bullets.</p>
+<p>So three slots are not placed, and the strip offers only <strong>Split with Claude</strong> and Undo Change, since no rename would make sense.</p>
+<p><strong>Export with content not placed.</strong> The export refuses:</p>
+<pre><code>autumn-trial.md: 1 slide has content not placed (slide 5). Place it, or remove it.
+</code></pre>
+<p>Nothing is ever silently dropped from a deck that goes out.</p>
+<p><strong>Q-383.</strong> The remap rules: is this order right, and should rule 4 (the only slot of the same kind) apply, or only name matches? Proposed: as listed, so the common moves (bullets ↔ image caption, kpi ↔ kpi variants) carry over without a prompt.
+<strong>Q-384.</strong> Content that isn't placed: stays in the source with a notice (proposed), moves to the speaker notes, or blocks the change? Proposed: it stays. The export refuses until it's placed.
+<strong>Q-384.</strong> Does Change Template ask Claude by default when the rules leave content behind, or wait for you to press Split with Claude? Proposed: wait. The change is yours, and Claude only rewrites when you ask.</p>
+<h3>M8 · "What happens when the template changes?" A pack update under live decks</h3>
+<p><strong>On screen.</strong> A month later someone improves the pack: kpi's <code>context</code> slot is renamed <code>note</code>, and a new template <code>timeline</code> is added. They rebuild. Every deck in the project that uses kpi now fails the check. The project's Files show a problem badge on <code>autumn-trial.md</code> [P].</p>
+<p><strong>Error 6:</strong></p>
+<pre><code>autumn-trial.md:23: slide 3 (kpi): no slot &quot;context&quot;; northwind renamed it &quot;note&quot; (northwind.md). Rename the heading.
+</code></pre>
+<p><strong>New [P]: a rename map in the definition.</strong> <code>renamed: {context: note}</code> under kpi's yaml. Duo uses it:
+- to say "renamed", not "unknown";
+- to offer <strong>Rename in All Decks</strong>: one edit per deck, shown as a diff before it's applied.</p>
+<p>Claude can do the same with <code>duo2 deck migrate --pack northwind</code>.</p>
+<p><strong>Q-385.</strong> Does a pack carry a rename map (proposed), or a version number decks pin (<code>template: northwind@3</code>), or neither, so decks just break and get fixed? Proposed: the rename map. Pinning versions means keeping old layouts around, and decks in one project should move together.
+<strong>Q-385.</strong> Does a pack change in Home (user level) warn every project that uses it? Proposed: each project's check reports its own decks. Duo doesn't scan other projects.</p>
+<h3>M9 · "How do others change it?" A pull request</h3>
+<p><strong>On screen.</strong> A teammate's PR on GitHub: "Autumn numbers and a slide on what still breaks". The reviewer sees:
+- the Markdown diff, as on board 7;
+- the exported pptx as a binary change, because the pptx is always committed (DL-270).</p>
+<p><strong>Error 7: a stale export.</strong> The teammate edited the Markdown but didn't export, so the committed pptx is from before the edit. Nothing on GitHub can tell. In Duo, the deck's bar says <strong>Changed since export</strong>. <code>duo2 deck check</code> reports:</p>
+<pre><code>autumn-trial.pptx is older than autumn-trial.md (exported from a different source). Export again.
+</code></pre>
+<p><strong>New [P]:</strong>
+- <strong>Export on commit.</strong> When Duo commits a change to a deck (its Commit sheet), it exports the deck first, so the pptx in a commit always matches the Markdown.
+- For commits made elsewhere, the exported pptx carries the source's hash in a custom document property (<code>duoSourceSha</code>). <code>deck check</code> compares the two.</p>
+<p><strong>Error 8: a merge conflict on the pptx.</strong> Two branches both exported, and the merge conflicts on <code>autumn-trial.pptx</code>, a binary file nobody can merge.</p>
+<p><strong>New [P]:</strong>
+- Duo writes <code>*.pptx merge=ours</code> for decks' exports into <code>.gitattributes</code>, once, with your OK as DL-50's <code>.gitignore</code> offer does.
+- After a merge, Duo re-exports from the merged Markdown.
+- In other words, the pptx is never merged, only rebuilt.</p>
+<p><strong>Q-386.</strong> Always committing the pptx (DL-270) brings stale exports and binary merge conflicts. Does Geoff want:
+- export on commit plus <code>.gitattributes</code> (proposed);
+- a check that only warns;
+- or to revisit Q-354 ("never commit" makes both problems vanish)?</p>
+<h3>M10 · "And then it's PowerPoint?" Export and Google Slides</h3>
+<p><strong>On screen.</strong> Export ⌄ › Export as PowerPoint… The notice: "Exported autumn-trial.pptx · 9 slides".</p>
+<p>You open the pptx in the deck viewer, then (by hand, v1) upload it to Google Drive and open it in Slides:
+- Slides' Layout menu lists Title, Bullets, Quote, Big Number…, the pack's own layouts (tested, F-460);
+- the headings are in Nunito Sans, the substitute from M2;
+- every slide is editable text in its placeholder.</p>
+<p><strong>What it shows.</strong> The deck didn't become a picture of a deck. It is a real presentation on your company's master.</p>
+<p><strong>Later [P]:</strong> Upload to Google Slides… (P4), making a new dated presentation each time (DL-270).</p>
+<h3>M11 · The FAQ card (the film's close, about 20 s)</h3>
+<p>A motion graphic listing the questions the film answered, each with its moment's frame as a thumbnail:
+- where templates come from;
+- what Duo does and what Claude does;
+- how to start;
+- how to edit;
+- what happens when a layout changes;
+- what happens when a template changes;
+- how others contribute;
+- what Google keeps.</p>
+<p>The final line: "Decks as text. Templates as PowerPoint. Claude in between."</p>
+<h2>What this adds to the feature definition</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Addition [P]</th>
+<th>Layer</th>
+<th>Phase</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Templates from a deck</td>
+<td>Make Templates… slide selection in the deck viewer; <code>deck template pick/picked</code></td>
+<td>Application (viewer)</td>
+<td>P2</td>
+</tr>
+<tr>
+<td>Extraction questions</td>
+<td>Claude asks when a mapping is ambiguous (Q-378); a font substitute question</td>
+<td>Agent (skill text)</td>
+<td>P2</td>
+</tr>
+<tr>
+<td>Fit</td>
+<td>Measured fit at build and check; findings name the largest value that fits (Q-379)</td>
+<td>Application</td>
+<td>P2</td>
+</tr>
+<tr>
+<td>New deck</td>
+<td>New Deck… sheet with a pack picker; <code>duo2 deck new</code> (Q-380)</td>
+<td>Application</td>
+<td>P1 (verb), P3 (sheet)</td>
+</tr>
+<tr>
+<td>Editing</td>
+<td>Template autocomplete with skeletons; slot autocomplete; + between slides; <code>duo2 deck insert</code> (Q-381)</td>
+<td>Application (editor)</td>
+<td>P3</td>
+</tr>
+<tr>
+<td>One-answer fixes</td>
+<td>"Use kpi", "Move to left": Duo applies them (Q-382)</td>
+<td>Application</td>
+<td>P3</td>
+</tr>
+<tr>
+<td>Changing a layout</td>
+<td>Change Template…; deterministic remap rules; "not placed" content kept, never dropped; export refuses until it's placed (Q-383, Q-384, Q-384)</td>
+<td>Application (rules, checker) plus the agent (Split with Claude)</td>
+<td>P1 (rules in the checker), P3 (UI)</td>
+</tr>
+<tr>
+<td>Pack changes</td>
+<td>Rename map in definitions; Rename in All Decks; <code>duo2 deck migrate</code> (Q-385)</td>
+<td>Context plus application</td>
+<td>P2</td>
+</tr>
+<tr>
+<td>Git</td>
+<td>Export on commit; <code>duoSourceSha</code> in the pptx; <code>*.pptx merge=ours</code> and re-export after merge (Q-386)</td>
+<td>Application</td>
+<td>P1</td>
+</tr>
+<tr>
+<td>Problems in Files</td>
+<td>A problem badge on a deck that fails its check</td>
+<td>Application</td>
+<td>P3</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>The rule these share.</strong> Duo applies a fix itself only when it has exactly one right answer. Anything that needs judgement goes to Claude, and only when you ask. Content is never dropped.</p>
+<h2>For the film's worker</h2>
+<ul>
+<li><strong>Length:</strong> about 4 minutes; 11 moments; about 650 to 700 words of narration.</li>
+<li><strong>Look:</strong> the intro film's grammar (<code>video/style/</code>, shot-grammar.md, taste.md):</li>
+<li>no cuts;</li>
+<li>every change of scene is navigation in the app or a motion graphic;</li>
+<li>real-looking UI on sample data.</li>
+<li><strong>Simulated UI:</strong> Duo Decks isn't built. Each state is an HTML page drawn with the Duo design system's tokens (the canvas boards in <code>canvas/</code> are the starting point), captured headless at a fixed size with anchors from <code>data-video</code> elements. That's the skill's "web product" capture path.</li>
+<li>Real Duo chrome where it exists (sidebar, console, tabs, the deck viewer bar) is copied from the design system's previews.</li>
+<li>Slides are real renders of the fixture decks: the prototype <code>prototypes/compile/deck.py</code> exports them, LibreOffice draws them.</li>
+<li><strong>Errors</strong> are the real messages above, produced by running the prototype checker on the fixture decks wherever it can make them. Errors 1 to 3 and 6 to 8 need P2/P3 features the prototype doesn't have; their text is from this document.</li>
+<li><strong>Voice:</strong> Geoff's own (his project; access confirmed by <code>gh repo view dudgeon/geoff-voice</code>). Renders run under the exclusive GPU lock.</li>
+<li><strong>A Shot: note is a spec.</strong> The script Doc is the source of truth once Geoff edits it.</li>
+</ul>
+</section>
+<section id="questions">
+  <span class="eyebrow">Your call</span>
+  <h2>Ten new questions</h2>
+  <p class="col">Each card names its moment above. The recommendation is first. Pick, add a note if you like, and save; I read the answers from this page.</p>
+  <div class="dec" data-q="Q-377"><div class="dec-head"><span class="qid">Q-377 · M1</span><h3>Where does "make templates" start?</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · A Make Templates… mode in the deck viewer</span><span class="b">Tick the slides you see, then Make Templates with Claude.</span></button><button class="opt" data-v="B"><span class="t">B · A Files context-menu item</span><span class="b">Right-click the pptx; Claude asks which slides.</span></button><button class="opt" data-v="C"><span class="t">C · Only by asking Claude</span><span class="b">No new UI.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-377" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
+<div class="dec" data-q="Q-378"><div class="dec-head"><span class="qid">Q-378 · M2</span><h3>When a mapping is ambiguous, does Claude ask?</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · Ask when it changes what goes where; list when it is only naming</span><span class="b">Fewest questions that matter.</span></button><button class="opt" data-v="B"><span class="t">B · Always ask</span><span class="b">Safest, chattiest.</span></button><button class="opt" data-v="C"><span class="t">C · Decide and list every guess</span><span class="b">Fastest; you review after.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-378" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
+<div class="dec" data-q="Q-379"><div class="dec-head"><span class="qid">Q-379 · M3</span><h3>Limits in characters, or measured fit?</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · Both: limits guide Claude, the measured fit is enforced</span><span class="b">The checker names the largest value that fits.</span></button><button class="opt" data-v="B"><span class="t">B · Character limits only</span><span class="b">Simpler; overflow possible in real fonts.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-379" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
+<div class="dec" data-q="Q-380"><div class="dec-head"><span class="qid">Q-380 · M4</span><h3>How do you start a deck?</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · A New Deck… sheet with a pack picker</span><span class="b">Plus duo2 deck new.</span></button><button class="opt" data-v="B"><span class="t">B · A file template (templates/new-deck.md)</span><span class="b">No new UI; no pack picker.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-380" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
+<div class="dec" data-q="Q-381"><div class="dec-head"><span class="qid">Q-381 · M6</span><h3>How do you pick a template while typing?</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · All three: <!-- slide:, /slide, and + between slides</span><span class="b">One list with thumbnails; inserts a skeleton.</span></button><button class="opt" data-v="B"><span class="t">B · Autocomplete only</span><span class="b">No + in the slides.</span></button><button class="opt" data-v="C"><span class="t">C · The + gallery only</span><span class="b">No typing triggers.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-381" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
+<div class="dec" data-q="Q-382"><div class="dec-head"><span class="qid">Q-382 · M6, M7</span><h3>Should Duo apply one-answer fixes as buttons?</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · Yes, only when there is exactly one right answer</span><span class="b">"Use kpi", "Move to left". Judgement goes to Claude.</span></button><button class="opt" data-v="B"><span class="t">B · No, every fix goes through Claude</span><span class="b">One path for everything.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-382" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
+<div class="dec" data-q="Q-383"><div class="dec-head"><span class="qid">Q-383 · M7</span><h3>The remap rules when a slide changes template</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · As listed, with the same-kind rule</span><span class="b">Common moves carry over without a prompt.</span></button><button class="opt" data-v="B"><span class="t">B · Same-named slots only</span><span class="b">Predictable; more content left over.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-383" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
+<div class="dec" data-q="Q-384"><div class="dec-head"><span class="qid">Q-384 · M7</span><h3>Content that isn't placed after a change</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · Stays in the source; export refuses; Claude waits to be asked</span><span class="b">Never dropped, never rewritten unasked.</span></button><button class="opt" data-v="B"><span class="t">B · Moves to speaker notes</span><span class="b">The slide is clean at once.</span></button><button class="opt" data-v="C"><span class="t">C · Block the change until it fits</span><span class="b">Strict; awkward to explore.</span></button><button class="opt" data-v="D"><span class="t">D · Stays, and Claude splits it at once</span><span class="b">Fastest; Claude rewrites without being asked.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-384" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
+<div class="dec" data-q="Q-385"><div class="dec-head"><span class="qid">Q-385 · M8</span><h3>A pack changes under live decks</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · A rename map, with Rename in All Decks</span><span class="b">Decks in a project move together.</span></button><button class="opt" data-v="B"><span class="t">B · Versioned packs decks pin (northwind@3)</span><span class="b">Old decks never break; old layouts kept forever.</span></button><button class="opt" data-v="C"><span class="t">C · Neither; decks break and get fixed</span><span class="b">Nothing to build.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-385" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
+<div class="dec" data-q="Q-386"><div class="dec-head"><span class="qid">Q-386 · M9</span><h3>Always committing the pptx: stale exports and merge conflicts</h3></div><div class="opts"><button class="opt" data-v="A"><span class="rec">Recommended</span><span class="t">A · Export on commit, a source hash in the pptx, merge=ours and re-export after merge</span><span class="b">The pptx in git always matches its Markdown.</span></button><button class="opt" data-v="B"><span class="t">B · Warn only</span><span class="b">deck check flags a stale export; you fix it.</span></button><button class="opt" data-v="C"><span class="t">C · Revisit Q-354: never commit the pptx</span><span class="b">Both problems vanish.</span></button></div><div class="save"><input type="text" aria-label="Note on Q-386" placeholder="Note (optional)"><button class="btn" disabled>Save answer</button><span class="status" role="status"></span></div></div>
+</section>
+<footer>Duo Decks study · docs/design/duo-decks-study/lifecycle.md on research/duo-decks · synthetic world (Northwind Labs, an orchard-robotics team).</footer>
+</div>
+<script>
+(async () => {
+  const cards = [...document.querySelectorAll('.dec[data-q]')];
+  const picks = {};
+  let db = null;
+  cards.forEach(card => {
+    const q = card.dataset.q, btn = card.querySelector('.btn'), note = card.querySelector('input');
+    card.querySelectorAll('.opt').forEach(o => {
+      o.setAttribute('aria-pressed', 'false');
+      o.addEventListener('click', () => {
+        card.querySelectorAll('.opt').forEach(x => x.setAttribute('aria-pressed', String(x === o)));
+        picks[q] = o.dataset.v;
+        if (db) btn.disabled = false;
+      });
+    });
+    btn.addEventListener('click', async () => {
+      if (!db || !picks[q]) return;
+      const status = card.querySelector('.status');
+      btn.disabled = true;
+      status.textContent = 'Saving…';
+      try {
+        const label = card.querySelector(`.opt[data-v="${picks[q]}"] .t`).textContent;
+        await db.collection('answers').doc(q).set({ question: q, choice: picks[q], label, note: note.value.trim(), at: new Date().toISOString() });
+        status.textContent = 'Saved. The director will pick it up.';
+      } catch (e) {
+        status.textContent = 'Not saved: ' + (e && e.message ? e.message : 'try again');
+        btn.disabled = false;
+      }
+    });
+  });
+  try { db = window.claude ? await window.claude.use('db') : null; } catch (e) { db = null; }
+  if (!db) {
+    cards.forEach(c => { c.querySelector('.status').textContent = 'Answers can be saved when this page is opened on claude.ai.'; });
+    return;
+  }
+  cards.forEach(c => { const q = c.dataset.q; if (picks[q]) c.querySelector('.btn').disabled = false; });
+  try {
+    const snap = await db.collection('answers').get();
+    snap.docs.forEach(d => {
+      const a = d.data(); if (!a) return;
+      const card = document.querySelector(`.dec[data-q="${d.id}"]`); if (!card) return;
+      card.querySelectorAll('.opt').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.v === a.choice)));
+      picks[d.id] = a.choice;
+      if (a.note) card.querySelector('input').value = a.note;
+      card.querySelector('.status').textContent = 'Saved ' + new Date(a.at).toLocaleString() + '. Change it and save again any time.';
+      card.querySelector('.btn').disabled = false;
+    });
+  } catch (e) { /* the page still works; answers just aren't shown */ }
+})();
+</script>
