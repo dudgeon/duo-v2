@@ -4635,3 +4635,10 @@ Geoff, testing Duo Dev (dd2b8e8c) on a microphone: Return while recording did no
 ## F-454 · The faint, struck-through mic with no microphone, built and captured on this Mac (voice-input, 2026-10-30; DL-265)
 
 `VoiceNoMicStyle.slashed` is the default; `hidden` and `ordinary` stay as studies behind `DUO_VOICE_NOMIC_STYLE` (2, 3) in isolated runs. The terminal mic's `drawToday` draws `mic.slash` in `tuiInputBorder` with no fill (none under the pointer either) and sets its tooltip from the state each poll; the chat mic already drew `mic.slash` in `controlEdge`. Both tooltips read Geoff's words. Captured live on this Mac, which has no microphone, so nothing was faked: real Claude 2.1.311 on Haiku, an isolated background Duo, the terminal mic faint and struck through beside the prompt row (`proof/dl265-terminal-nomic.png`), the chat field's (`proof/dl265-chat-nomic.png`). Voice checks 91/0.
+
+## F-455 · The terminal mic's level bars, and a level that moves (voice-input, 2026-10-31; DL-266)
+
+- `TerminalMicView.drawBars` draws the listening chip's three bars from the last three levels the view saw at its 20-a-second poll; `MotionSettings.shared.reduce` holds them still.
+- **The level saturated.** The mic's tap computed RMS × 6, which reached 1 on ordinary speech: the first captures showed three full bars, unmoving. `VoiceLevel.of` now maps RMS to decibels (-50 dBFS is 0, -30 is 0.5, -10 is 1), shared by the mic's tap and, when `DUO_VOICE_FILE_REALTIME=1`, by a file fed at speaking pace, so the bars can be proved on a Mac with no microphone. DuoChecks pin the three points (voice 94/0).
+- **Captured live** (real Claude 2.1.311 on Haiku, an isolated background Duo, a spoken file at speaking pace; `proof/dl266-bars-strip.png`): mid-sentence the bars differ and change between frames; in the pause after the file ends, the ordinary mic returns.
+- Seen in passing: this Mac reported "Geoff AirPods Pro" as its input during the run (Geoff's AirPods were connected); the runs used the file, never the microphone.
