@@ -4,6 +4,8 @@ import Foundation
 /// to Duo Decks: until it registers, `deck` is never offered (`PreviewProviders`).
 public enum PreviewKind: String, Codable, Sendable, CaseIterable {
     case deck, markdown, html
+    /// Slice 2: the other side is a second document; its name is that file's.
+    case document
 
     /// The preview side's name in the strip: `Slides`, `Preview` or `Page`.
     public var sideName: String {
@@ -11,6 +13,7 @@ public enum PreviewKind: String, Codable, Sendable, CaseIterable {
         case .deck: "Slides"
         case .markdown: "Preview"
         case .html: "Page"
+        case .document: "Document"
         }
     }
 }
@@ -37,10 +40,15 @@ public struct SplitTab: Codable, Equatable, Sendable {
     public var active: SplitRole = .source
     /// Under 2 × `splitSideMin` + 1 only the active side shows.
     public var folded = false
+    /// Slice 2 (DL-278): the second document's tab key. nil in slice 1, where the other side is the preview.
+    public var with: String? = nil
 
-    public init(source: String, kind: PreviewKind, ratio: Double = 0.5, swapped: Bool = false, active: SplitRole = .source, folded: Bool = false) {
-        self.source = source; self.kind = kind; self.ratio = ratio; self.swapped = swapped; self.active = active; self.folded = folded
+    public init(source: String, kind: PreviewKind, ratio: Double = 0.5, swapped: Bool = false, active: SplitRole = .source, folded: Bool = false, with: String? = nil) {
+        self.source = source; self.kind = kind; self.ratio = ratio; self.swapped = swapped; self.active = active; self.folded = folded; self.with = with
     }
+
+    /// Two documents, not a source and its preview (slice 2).
+    public var isDocPair: Bool { with != nil }
 
     public func place(of role: SplitRole) -> SplitSide { (role == .source) == !swapped ? .left : .right }
     public func role(at side: SplitSide) -> SplitRole { place(of: .source) == side ? .source : .preview }
