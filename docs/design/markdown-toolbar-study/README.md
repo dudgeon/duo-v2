@@ -213,3 +213,22 @@ Paths are relative to the repo root. `JS` is `Vendor/codemirror/src/duo-editor.j
 - **Q-346:** Return while dictating into a document. Proposed: finish the dictation, then the editor's own Return (a new line); never "send".
 - **Q-347:** `docs/design/README.md` and `system/surfaces.md` still list Review in Markdown and voice input as not built. Review shipped in 0.2.21 and voice is merged on main (91e05fcf).
 - **C-129:** Formatting under Suggest Edits is uneven. A one-line format change becomes a suggestion, but a multi-line `lineMark` (several hunks) passes through untracked. A bar makes multi-line paragraph changes one click, so this will show. Read from the code (critic.js:384-396), not tested.
+
+## The design round
+
+Canvas: https://claude.ai/artifact/2DqVdN1cA1P6Hv1MW5T8Sb. The boards' source is kept in `canvas/`, and today's captures in `captures/`. The captures are Light only: the isolated build ignored the appearance setting and drew the review marks as source, so Dark, Classic and the review bar are drawn from the tokens, not captured.
+
+- **A · a slim strip, always shown** (recommended):
+  - 32 under the tabs;
+  - table controls take the style menu's place while the caret is in a table (amends DL-113, DL-182);
+  - about 5 days.
+- **B · one document bar**:
+  - the review bar becomes the document's one bar, 44, always shown;
+  - Markup and ‹ › fold into Review ⌄ (amends DL-237's bar, Q-265);
+  - about 5 days.
+- **C · a foot bar while you edit**:
+  - 36 at the pane's foot, only while the document has the keyboard;
+  - no mic in sight at rest;
+  - amends nothing;
+  - about 4½ days.
+- **Dictating into a document** (every option) and **Q-345, underline**, have their own boards. For underline, U1 (leave it out) is recommended; U2 is `<u>` with ⌘U.
