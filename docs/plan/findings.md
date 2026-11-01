@@ -5050,3 +5050,43 @@ Verified under the lock:
 The specimen showed nine overflows in the sample pack's own limits, which is the fit check doing its job.
 
 Weak spot: the survey's "best" template for a chart slide was `table`. That's a heuristic, and Claude's plan decides.
+
+## F-523 · Duo Decks P3a: the deck preview provider (duo-decks, 2026-11-01; DL-269)
+
+Built on build/duo-decks-viewer (8697b3f9, aaf07964, 64491b41, 9078b487) by a Sonnet subagent. Write-up: `docs/design/duo-decks-study/p3a.md`.
+
+`DeckPreview`, kind `.deck`, renders the editor's buffer to pptx bytes in memory (never a file), behind RevisionGate. It emits:
+- the anchor map (`slide N`, `slide N/slot`);
+- problems, as errors or notices;
+- comment anchors.
+
+Its behaviour:
+- **Reveal:** goes to a slide, with no scroll when it's already current and no echo.
+- **Slide changes** emit `current`.
+- **Picking a shape** emits `activate(slide N/slot)`. The pptx writer now records each slot's shape id.
+- **Redraws** happen in a hidden second host and are swapped in, keeping the scroll.
+- **A deck with errors** keeps its last good drawing.
+
+The verbs `duo2 deck`, `deck go` and `deck pick` are app verbs. Checks: `deckpreview` 30/0, `deck` 187/0.
+
+Captures in Light, Dark and Classic, from an isolated instance with the split wiring applied locally, match `split-deck`'s strip, layout, 44 bar and slide frames. They're in `docs/design/duo-decks-handoff/proof/`.
+
+What was left:
+- **Split wiring:** it's in `Split/*` and `AppModel+Split.swift`, which belong to split-view-build. It's handed over as `p3a-split-wiring.patch`.
+- **Registration:** it uses `PreviewProviders.extra` until split view's `register` merges.
+- **The editor's anchor mark and click-to-caret:** they wait for the editor hook.
+
+## F-524 · A test run reached Geoff's own Duo and changed his appearance (duo-decks, 2026-11-01)
+
+P3a's first live run looked for the isolated instance's `endpoint.json` in the wrong place. With `DUO_SOCKET`/`DUO_TOKEN` unset, `duo2` quietly reached Geoff's running Duo, exactly as CLAUDE.md warns.
+
+What reached his Duo:
+- reads (`status`, `doc tabs`);
+- unknown-command errors;
+- **one write, `duo2 settings appearance light`**.
+
+Geoff chose Match System, and the lead set it back with `duo2 settings appearance system` (confirmed: `appearance: system`).
+
+The script now refuses to run unless both variables are set from the instance's own `endpoint.json`. A later run confirmed `status` named the isolated project.
+
+The lesson: a script that drives a test instance should check `duo2 status` names the fixture before any write, and fail closed when the endpoint can't be read.
