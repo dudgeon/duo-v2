@@ -1031,6 +1031,7 @@ struct NewItemsMenu: View {
     var body: some View {
         Button("New Markdown File") { model.newMarkdownFile(near: near) }
         Button("New Folder") { model.newFolder(near: near) }
+        Button("New Deck…") { model.showNewDeck() }   // action: deck new
         Menu("New from Template") {
             let templates = model.templates
             if templates.isEmpty {
@@ -1084,6 +1085,9 @@ struct FileMenu: View {
         if !outside {
             Divider()
             NewItemsMenu(near: path)
+            if !isFolder, path.lowercased().hasSuffix(".pptx") {
+                Button("Convert to Duo Deck…") { model.showConvertDeck(path) }   // action: deck import
+            }
             Divider()
             Button("Rename") { model.renamingPath = path }.disabled(onTab && !model.isInTree(path))
             Button("Duplicate") { model.duplicate(path) }

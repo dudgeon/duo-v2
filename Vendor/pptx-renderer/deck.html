@@ -20,6 +20,25 @@
   .deck-number { font-size: 11px; line-height: 16px; color: var(--duo-text2); margin-bottom: 6px; }
   .deck-number.current { color: var(--duo-text); font-weight: 600; }
   body.picking #host [data-duo-shape-id] { cursor: default; }
+
+  /* Cards under a slide (P3-3): a problem, or content moved to the notes. On pane, a 1 pt rule, radius 6. */
+  .deck-card { margin: 6px 0 0; padding: 8px 10px; background: var(--duo-pane); border: 1px solid var(--duo-rule); border-radius: 6px; box-sizing: border-box; }
+  .deck-card-msg { font-size: 11px; line-height: 16px; color: var(--duo-text); }
+  .deck-card-msg b { font-weight: 600; }
+  .deck-card-buttons { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+  .deck-card button { font: inherit; font-size: 11px; line-height: 16px; height: 22px; padding: 0 8px; border-radius: 5px; border: 1px solid var(--duo-control-edge); background: var(--duo-pane); color: var(--duo-text); cursor: default; }
+  /* A comment pin (P3-1): an 18-high capsule on pane, a 1 pt controlEdge edge, a speech mark and the count. */
+  .deck-pin { position: absolute; z-index: 6; display: inline-flex; align-items: center; gap: 3px; height: 18px; padding: 0 6px; box-sizing: border-box;
+    border-radius: 9px; border: 1px solid var(--duo-control-edge); background: var(--duo-pane); color: var(--duo-text); font: 600 10px/16px var(--duo-font-ui); cursor: default; }
+  /* Picking slides (Make Templates, DL-291): a tick box in each slide's corner, the picked ones ringed. */
+  .deck-tick { position: absolute; left: 10px; z-index: 6; width: 28px; height: 28px; box-sizing: border-box; border: 1.5px solid var(--duo-text); border-radius: 4px;
+    background: var(--duo-pane); color: transparent; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+  .slide-picked .deck-tick { background: var(--duo-text); color: var(--duo-pane); }
+  .slide-picked > .deck-slide { outline: 2px solid var(--duo-text) !important; }
+  .slide-picked > .deck-number { color: var(--duo-text); font-weight: 600; }
+  body.slide-picking #host [data-slide-index] { cursor: default; }
+  #host.grid { display: grid; column-gap: 16px; align-items: start; align-content: start; }
+  #host.grid [data-slide-index] { margin: 0 0 16px 0 !important; min-width: 0; }
   #outline { position: absolute; pointer-events: none; box-sizing: border-box; display: none; z-index: 10; }
   #outline.hover { border: 1px dashed var(--duo-text); }
   #outline.frozen { border: 1.5px solid var(--duo-text); }

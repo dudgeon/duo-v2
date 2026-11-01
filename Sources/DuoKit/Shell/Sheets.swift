@@ -19,6 +19,8 @@ struct SheetOverlay: View {
                 ZStack(alignment: .top) {
                     if let m = model.moveIntoHomeForm { MoveIntoHomeSheet(form: m) }
                     else if let n = model.newProjectForm { NewProjectSheet(form: n) }
+                    else if let d = model.newDeckForm { NewDeckSheet(form: d) }
+                    else if let c = model.convertDeckForm { ConvertDeckSheet(form: c) }
                     else if let p = model.pushForm { PushSheet(form: p) }
                     else if let g = model.gitHubProjectForm { GitHubProjectSheet(form: g) }
                     else if let q = SheetCenter.shared.current { QuestionSheet(q: q).id(q.id).transition(.opacity).accessibilityIdentifier("video.sheet") }
@@ -149,6 +151,8 @@ struct SheetRow<Content: View>: View {
 struct SheetButtons: View {
     let confirm: String
     let topGap: CGFloat
+    /// The P3 boards' filled default button (New Deck, Convert to Duo Deck).
+    var filled = false
     let cancel: () -> Void
     let ok: () -> Void
 
@@ -156,9 +160,15 @@ struct SheetButtons: View {
         HStack(spacing: DuoSpace.gapButtonToButton) {
             Spacer(minLength: 0)
             Button("Cancel", action: cancel).buttonStyle(.duo).keyboardShortcut(.cancelAction)
-            Button(action: ok) { Text(confirm).fontWeight(.semibold) }
-                .buttonStyle(DefaultSheetButtonStyle())
-                .keyboardShortcut(.defaultAction)
+            if filled {
+                Button(action: ok) { Text(confirm) }
+                    .buttonStyle(FilledDefaultButtonStyle())
+                    .keyboardShortcut(.defaultAction)
+            } else {
+                Button(action: ok) { Text(confirm).fontWeight(.semibold) }
+                    .buttonStyle(DefaultSheetButtonStyle())
+                    .keyboardShortcut(.defaultAction)
+            }
         }
         .padding(.top, topGap)
     }

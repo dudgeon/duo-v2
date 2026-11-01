@@ -5137,3 +5137,28 @@ Geoff chose Match System, and the lead set it back with `duo2 settings appearanc
 The script now refuses to run unless both variables are set from the instance's own `endpoint.json`. A later run confirmed `status` named the isolated project.
 
 The lesson: a script that drives a test instance should check `duo2 status` names the fixture before any write, and fail closed when the endpoint can't be read.
+
+## F-525 · A protocol method with an optional parameter is silently not the protocol's (duo-decks P3, 2026-11-01)
+
+`DeckPreview.bind(path:file:model:)` took `model: AppModel?`, while `PreviewProvider.bind` requires `AppModel`. Swift doesn't count the optional version as satisfying the requirement. So split view would have called the protocol extension's do-nothing default, the deck would never have bound, and nothing would have warned.
+
+The director caught it while merging track A onto integrate/2026-11-01f. It added an exact-signature overload that forwards to ours, in the commit after 30ee8fc1.
+
+The lesson: a provider method meant to satisfy a protocol requirement that has a default should match its signature exactly. A check that calls the method through the protocol type, not the concrete type, would have caught this.
+
+## F-526 · Duo Decks P3 track C: the deck's editor pieces (duo-decks-editor worker, 2026-11-01; DL-295, DL-296, DL-303)
+
+The work is on build/duo-decks-editor: 362feef0, f32c0f1d, acef4a34 and c31d6fd3. Full DuoChecks passes 5317 of 5317. Write-up: `docs/design/duo-decks-study/p3c.md`.
+
+The page side lives in `Vendor/codemirror/src/deck.js`; duo-editor.js has only the two agreed lines.
+- **The slide chip:** 22 high, with a `rule` above, reading "Slide n · name ⌄". The comment is hidden and the file unchanged. Clicking it opens the picker in change mode.
+- **⌃⌘N:** Format › New Slide, enabled in a deck. It adds a pending chip with the picker open, and typing filters.
+- **A pick** runs `Deck.insertSlide` or `Deck.changeTemplate` on the buffer, the same code as `duo2 deck insert`/`change`, as one undo step.
+- **The anchor:** a 2 pt `controlEdge` bar fed by `setDeckAnchor`. `revealDeckSlot` is in place.
+
+Captures in Light, Dark and Classic (`docs/design/duo-decks-handoff/proof/`) match P3-2-picker: the chip rule is #C9CDD3, and the picker is 320 wide against the target's ~319. The lead looked at the comparison.
+
+What's left:
+- the thumbnails are a stand-in drawn from slot kinds (Q-415);
+- the editor's context-menu New Slide… is not built (Q-416);
+- ⌃⌘N wasn't exercised through the real menu; the captures call the same `duo.deckNewSlide()`.

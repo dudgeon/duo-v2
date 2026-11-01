@@ -15,6 +15,13 @@ public struct DeckRendering: Sendable {
     /// Slide number (from 1), then a drawn shape's OOXML id, to the slot it is.
     public var shapes: [Int: [Int: String]] = [:]
     public var slideCount = 0
+    /// Each slide's template, in order (the number's label, "3 · kpi").
+    public var templates: [String] = []
+    /// The newest dated export beside the deck, against this text (P3-3).
+    public var export = DeckExportState.none
+    /// Problem and notes-move cards under the slides (P3-3), and the comment pins (P3-1).
+    public var cards: [DeckCard] = []
+    public var pins: [DeckPin] = []
 
     /// The anchor of a picked shape: `slide 3/value`, or `slide 3` when the shape is no slot's.
     public func anchor(slide: Int, shapeID: Int) -> String {
@@ -44,11 +51,19 @@ public enum DeckPreviewBuild {
             out.anchors = anchors(slides)
             out.comments = comments(text, anchors: out.anchors)
             out.slideCount = slides.count
+            out.templates = slides.map(\.template)
+            out.pins = DeckCards.pins(text: text, anchors: out.anchors)
+            out.cards = DeckCards.problemCards(out.problems, text: text, anchors: out.anchors)
             return out
         }
         out.anchors = anchors(slides)
         out.slideCount = slides.count
+        out.templates = slides.map(\.template)
         out.comments = comments(text, anchors: out.anchors)
+        out.pins = DeckCards.pins(text: text, anchors: out.anchors)
+        out.cards = (DeckCards.problemCards(out.problems, text: text, anchors: out.anchors) + DeckCards.notesCards(text: text, pack: checked.pack))
+            .sorted { ($0.slide, $0.kind.rawValue) < ($1.slide, $1.kind.rawValue) }
+        out.export = DeckExportState.read(deck: file, text: text)
         if checked.problems.isEmpty, let drawn = try? Deck.export(checked: checked, source: text, deck: file) {
             out.bytes = drawn.data
             out.shapes = drawn.shapes
@@ -62,7 +77,7 @@ public enum DeckPreviewBuild {
         for (n, s) in slides.enumerated() {
             out.append(AnchorRange(anchor: "slide \(n + 1)", firstLine: s.line, lastLine: max(s.line, s.lastLine)))
             for slot in s.slots where slot.name != "_default" && slot.name != "_image" {
-                out.append(AnchorRange(anchor: "slide \(n + 1)/\(slot.name)", firstLine: slot.line, lastLine: max(slot.line, slot.lastLine)))
+                out.append(AnchorRange(anchor: "slide \(n + 1)/\(slot.name)", firstLine: slot.line, lastLine: max(slot.line, slot.lastLine, slot.blockEnd)))   // a comment on its own line at the slot's end is the slot's
             }
         }
         return out
@@ -119,19 +134,36 @@ public final class DeckPreview: NSObject, PreviewProvider {
     public private(set) var path: String?
     public private(set) var file: URL?
     /// The last rendering, and the revision it answered.
-    public private(set) var rendering = DeckRendering()
+    public internal(set) var rendering = DeckRendering()
     public private(set) var renderedRev = -1
     public private(set) var renders = 0
     private var gate = RevisionGate()
-    private weak var model: AppModel?
+    weak var model: AppModel?
     private var hosting: NSView?
-    private var revealing: Int?
+    var revealing: Int?
+    /// The text of the last render (the buffer), for the export state and the cards' actions.
+    public private(set) var lastText = ""
+    /// The shapes of the last drawing that had bytes: pins keep their places while the deck has errors.
+    var shapesDrawn: [Int: [Int: String]] = [:]
+    /// Which bar menu is open (`problems`, `export`) and the row under the pointer.
+    public var menu: String?
+    public var menuHover: String?
+    /// The notice after an export (P3-3, DL-132), until OK or ten seconds pass.
+    public var exportNotice: ExportNotice?
+
+    public struct ExportNotice: Equatable, Sendable {
+        public var text: String
+        public var sub: String?
+        public var file: URL?
+    }
 
     public init(resources: URL? = nil) {
         viewer = DeckViewer(resources: resources)
         super.init()
         viewer.onSlideChange = { [weak self] n in self?.pageMovedTo(n) }
         viewer.onPicked = { [weak self] e in self?.picked(e) }
+        viewer.onCard = { [weak self] i, b in self?.cardAction(i, b) }
+        viewer.onPin = { [weak self] t in self?.emit?(.openThread(thread: t)) }
     }
 
     public nonisolated static func canPreview(file: String, frontmatter: [String: String]) -> Bool {
@@ -151,7 +183,7 @@ public final class DeckPreview: NSObject, PreviewProvider {
         if let model, self.model !== model {
             self.model = model
             viewer.onChange = { [weak model] in model?.pickerRevision += 1 }
-            hosting = NSHostingView(rootView: DeckPreviewBody(viewer: viewer, path: path, file: file).environment(model))
+            hosting = NSHostingView(rootView: DeckPreviewBody(preview: self, viewer: viewer, path: path, file: file).environment(model))
         }
     }
 
@@ -162,6 +194,7 @@ public final class DeckPreview: NSObject, PreviewProvider {
     public func render(text: String, rev: Int) {
         guard gate.admit(rev), let file else { return }
         let name = file.lastPathComponent
+        lastText = text
         Task.detached(priority: .userInitiated) { [weak self] in
             let r = DeckPreviewBuild.build(text: text, file: file)
             await MainActor.run {
@@ -176,7 +209,10 @@ public final class DeckPreview: NSObject, PreviewProvider {
         rendering = r
         renderedRev = rev
         renders += 1
+        if r.bytes != nil { shapesDrawn = r.shapes }
+        pushOverlay()
         if let bytes = r.bytes, bytes != viewer.shownBytes { viewer.show(bytes: bytes, name: name) }
+        viewer.onChange?()
         emit?(.anchorMap(rev: rev, r.anchors))
         emit?(.problems(rev: rev, r.problems))
         emit?(.comments(rev: rev, r.comments))
@@ -188,6 +224,8 @@ public final class DeckPreview: NSObject, PreviewProvider {
         revealing = n
         viewer.go(n)
     }
+
+    func revealMoved(to n: Int) { revealing = n; viewer.go(n) }
 
     /// The page's slide changed: the user's scroll or ‹ ›, or our own reveal arriving (never echoed as the user's).
     private func pageMovedTo(_ n: Int) {
@@ -228,6 +266,7 @@ public enum DeckPreviewHub {
 /// The deck preview's body: the viewer's own bar, the slides, the picker bar (DL-125's A, B, C), as in the right pane.
 struct DeckPreviewBody: View {
     @Environment(AppModel.self) private var model
+    let preview: DeckPreview
     let viewer: DeckViewer
     let path: String
     let file: URL
@@ -235,9 +274,11 @@ struct DeckPreviewBody: View {
     var body: some View {
         let _ = model.pickerRevision
         VStack(spacing: 0) {
-            DeckBar(viewer: viewer, path: path, file: file)
+            DeckBar(viewer: viewer, path: path, file: file, preview: preview)
+            DeckExportNoticeBar(preview: preview)
             DeckWebHost(viewer: viewer)
-            DeckPickerBar(viewer: viewer)
+                .overlay(alignment: .top) { DeckMenuLayer(preview: preview) }
+            DeckPickerBar(viewer: viewer, preview: preview)
         }
     }
 }

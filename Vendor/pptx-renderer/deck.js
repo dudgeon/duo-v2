@@ -9,6 +9,10 @@ let spare = document.getElementById('spare');   // a redraw is made here, out of
 const outline = document.getElementById('outline');
 const tag = document.getElementById('tag');
 let viewer = null, title = '', current = 0, picking = false, hovered = null, frozen = null, hidden = false;
+// What Duo draws around the slides (P3b): cards under a slide, comment pins on a slot or slide, each slide's
+// template beside its number, and tick boxes while slides are being picked (Make Templates, DL-291).
+let overlay = { cards: [], pins: [], templates: [], shapes: {} };
+let slidePicking = false, slidePicks = new Set();
 
 const items = () => [...host.querySelectorAll('[data-slide-index]')];
 const count = () => viewer ? viewer.slideCount : 0;
@@ -18,11 +22,13 @@ function decorate(item) {
   if (!item || item.querySelector(':scope > .deck-number')) return;
   const n = document.createElement('div');
   n.className = 'deck-number';
-  n.textContent = String(+item.dataset.slideIndex + 1);
+  n.textContent = numberLabel(+item.dataset.slideIndex + 1);
   item.prepend(n);
   item.querySelector(':scope > div:not(.deck-number)')?.classList.add('deck-slide');
   if (+item.dataset.slideIndex === current - 1) n.classList.add('current');
 }
+
+const numberLabel = (k) => overlay.templates[k - 1] ? `${k} · ${overlay.templates[k - 1]}` : String(k);
 
 // The slide on screen is the one filling most of the pane.
 function track() {
@@ -100,6 +106,15 @@ document.addEventListener('mousemove', (e) => {
   if (el !== hovered) { hovered = el; place(el); }
 }, true);
 document.addEventListener('click', (e) => {
+  if (slidePicking) {
+    const item = e.target.closest?.('[data-slide-index]');
+    if (!item) return;
+    e.preventDefault(); e.stopPropagation();
+    const k = +item.dataset.slideIndex + 1;
+    if (slidePicks.has(k)) slidePicks.delete(k); else slidePicks.add(k);
+    markPicks(); post({ kind: 'slidePicks', slides: [...slidePicks].sort((a, b) => a - b) });
+    return;
+  }
   if (!picking) return;
   e.preventDefault(); e.stopPropagation();
   if (frozen) return;
@@ -109,6 +124,7 @@ document.addEventListener('click', (e) => {
   post({ kind: 'picked', element: describe(el) });
 }, true);
 document.addEventListener('keydown', (e) => {
+  if (slidePicking && e.key === 'Escape') { e.preventDefault(); setSlidePicking(false); post({ kind: 'slidePickEnded' }); return; }
   if (picking && e.key === 'Escape') { e.preventDefault(); stop(); post({ kind: 'pickEnded' }); return; }
   if (picking) return;
   if (e.key === 'PageDown' || e.key === 'ArrowRight') { e.preventDefault(); go(current + 1); }
@@ -141,6 +157,108 @@ function go(n, instant) {
 }
 let glideFrame = 0, glideSafety = 0;
 
+// ---- Duo's marks round the slides -----------------------------------------------------------------
+const SPEECH = '<svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round"><path d="M1.5 1.5h8v5.5H5.5L3 9.2V7H1.5z"/></svg>';
+const el_ = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+
+function applyOverlay() {
+  host.querySelectorAll('.deck-card, .deck-pin, .deck-tick').forEach((e) => e.remove());
+  for (const item of items()) {
+    const k = +item.dataset.slideIndex + 1;
+    const num = item.querySelector(':scope > .deck-number');
+    if (num) num.textContent = numberLabel(k);
+    const wrap = item.querySelector(':scope > .deck-slide') || item;
+    item.style.position = 'relative';
+    // Cards go under the slide, in the order given.
+    overlay.cards.forEach((c, idx) => {
+      if (c.slide !== k) return;
+      const card = el_('div', 'deck-card ' + c.kind);
+      card.dataset.card = String(idx);
+      const msg = el_('div', 'deck-card-msg');
+      if (c.slot) msg.append(el_('b', null, c.slot), document.createTextNode(' ' + c.message));
+      else msg.textContent = c.message;
+      const row = el_('div', 'deck-card-buttons');
+      for (const b of c.buttons) {
+        const btn = el_('button', null, b.label);
+        btn.addEventListener('click', (ev) => { ev.stopPropagation(); post({ kind: 'card', index: idx, button: b.id }); });
+        row.append(btn);
+      }
+      card.append(msg, row);
+      item.append(card);
+    });
+    // Pins: at a slot box's top right, or the slide's.
+    const ir = item.getBoundingClientRect();
+    for (const p of overlay.pins) {
+      if (p.slide !== k) continue;
+      let el = null;
+      const id = p.slot && overlay.shapes[k] ? overlay.shapes[k][p.slot] : null;
+      if (id != null) el = shapeAt(k, id);
+      const pin = el_('button', 'deck-pin');
+      pin.innerHTML = SPEECH;
+      pin.append(el_('span', null, String(p.count)));
+      pin.title = p.slot ? `Comment on ${p.slot}` : 'Comment on this slide';
+      const wr = wrap.getBoundingClientRect();
+      if (el) {
+        const r = el.getBoundingClientRect();
+        pin.style.left = `${Math.round(r.right - ir.left + 4)}px`;
+        pin.style.top = `${Math.round(r.top - ir.top - 2)}px`;
+      } else {
+        pin.style.right = `${Math.round(ir.right - wr.right + 8)}px`;
+        pin.style.top = `${Math.round(wr.top - ir.top + 8)}px`;
+      }
+      pin.addEventListener('mouseenter', () => { if (el && !picking) { hovered = el; place(el); } });
+      pin.addEventListener('mouseleave', () => { if (!picking) place(null); });
+      pin.addEventListener('click', (ev) => { ev.preventDefault(); ev.stopPropagation(); post({ kind: 'pin', thread: p.thread }); });
+      item.append(pin);
+      if (el) {   // a box that reaches the slide's edge keeps its pin inside the slide
+        const lim = wr.right - ir.left - pin.offsetWidth - 4;
+        if (parseFloat(pin.style.left) > lim) pin.style.left = `${Math.round(lim)}px`;
+      }
+    }
+    if (slidePicking) {
+      const t = el_('div', 'deck-tick'); t.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.4l2.4 2.4 4.6-5"/></svg>';
+      t.style.top = `${Math.round(wrap.getBoundingClientRect().top - ir.top + 10)}px`;
+      item.append(t);
+    }
+  }
+  markPicks();
+}
+function markPicks() {
+  for (const item of items()) {
+    const k = +item.dataset.slideIndex + 1, on = slidePicking && slidePicks.has(k);
+    item.classList.toggle('slide-picked', on);
+    item.classList.toggle('slide-picking', slidePicking);
+  }
+}
+// While picking slides they lie in a grid (board 9A): 2 columns under 640 pt of pane, 3 from there. The renderer
+// sizes a slide to the host's width times its zoom, so the zoom is the column's share of the width; leaving puts
+// it back to 1 and returns to the slide that was on screen.
+const GRID_GAP = 16;
+const gridCols = () => window.innerWidth < 640 ? 2 : 3;
+async function fitGrid(on) {
+  if (!viewer) return;
+  const w = host.clientWidth || 1;
+  const cols = on ? gridCols() : 1;
+  host.style.gridTemplateColumns = on ? `repeat(${cols}, minmax(0, 1fr))` : '';
+  const z = on ? ((w - (cols - 1) * GRID_GAP) / cols) / w : 1;
+  await viewer.setZoom(Math.max(10, z * 100));
+  items().forEach(decorate);
+  applyOverlay();
+}
+async function setSlidePicking(on) {
+  const keep = current;
+  slidePicking = on;
+  if (!on) slidePicks = new Set();
+  document.body.classList.toggle('slide-picking', on);
+  host.classList.toggle('grid', on);
+  await fitGrid(on);
+  // The slides settle (the renderer mounts them as it lays out) before the page scrolls to the slide kept.
+  for (let i = 0; i < 3; i++) { await new Promise((r) => setTimeout(r, 60)); if (keep > 0) go(keep, true); }
+  if (keep > 0) { current = keep; post({ kind: 'slide', slide: current, count: count() }); for (const it of items()) it.querySelector(':scope > .deck-number')?.classList.toggle('current', +it.dataset.slideIndex === keep - 1); }
+}
+window.addEventListener('resize', () => { if (slidePicking) fitGrid(true); });
+
+
 window.__duo = {
   // Opens the deck DeckViewer serves at deck.pptx (`v` defeats caching); shows `slide` (from 1).
   async open(name, slide, v) {
@@ -156,6 +274,7 @@ window.__duo = {
         onSlideRendered: (_, el) => decorate(el.closest?.('[data-slide-index]') || el),
       });
       items().forEach(decorate);
+      applyOverlay();
       if (slide > 1) go(slide, true); else track();   // opening lands on the slide, no scroll
       post({ kind: 'ready', count: count(), slide: current, width: viewer.slideWidth, height: viewer.slideHeight });
       return { count: count() };
@@ -186,6 +305,8 @@ window.__duo = {
       old.destroy(); spare.innerHTML = '';
       current = Math.min(keep, count()) || 1;
       items().forEach(decorate);
+      if (slidePicking) { host.classList.add('grid'); await fitGrid(true); }
+      applyOverlay();
       scrollTo(0, y); track();
       post({ kind: 'ready', count: count(), slide: current, width: viewer.slideWidth, height: viewer.slideHeight });
       return { count: count() };
@@ -194,6 +315,11 @@ window.__duo = {
       return { error: String(err && err.message || err) };
     }
   },
+  // Duo's marks: { cards, pins, templates, shapes } (see DeckViewer.setOverlay); drawn now, and after each redraw.
+  overlay(o) { overlay = Object.assign({ cards: [], pins: [], templates: [], shapes: {} }, o); applyOverlay(); return true; },
+  slidePicking: async (on) => { await setSlidePicking(!!on); return true; },
+  setSlidePicks: (list) => { slidePicks = new Set(list); markPicks(); return true; },
+  overlayState: () => ({ cards: host.querySelectorAll('.deck-card').length, pins: host.querySelectorAll('.deck-pin').length, ticks: host.querySelectorAll('.deck-tick').length }),
   go, current: () => current, count,
   start, stop, unfreeze: () => { frozen = null; place(null); },
   freeze: (sel) => { const [s, id] = String(sel).split('/'); const el = shapeAt(+s, id); if (el) { picking = true; frozen = el; go(+s, true); place(el); post({ kind: 'picked', element: describe(el) }); } return !!el; },

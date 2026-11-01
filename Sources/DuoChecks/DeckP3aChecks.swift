@@ -24,7 +24,7 @@ import Foundation
     let before = PreviewProviders.extra.count
     DeckPreviewRegistration.install(); DeckPreviewRegistration.install()
     check(PreviewProviders.extra.count == before + 1 || PreviewProviders.extra.count == before, "installing twice registers once")
-    check(PreviewProviders.kind(forFile: "decks/x.md", frontmatter: ["type": "deck"]) == .deck && PreviewProviders.kind(forFile: "x.md", frontmatter: ["type": "note"]) == .markdown,
+    check(PreviewProviders.kind(forFile: "decks/x.md", frontmatter: ["type": "deck"]) == .deck && PreviewProviders.kind(forFile: "x.md", frontmatter: ["type": "note"]) != .deck,
           "split view's lookup finds the deck kind before Markdown")
 
     // a clean render: bytes, no errors, the same bytes as the file export

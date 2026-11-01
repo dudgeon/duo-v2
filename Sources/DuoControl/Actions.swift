@@ -100,6 +100,9 @@ public enum ActionID: String, CaseIterable, Sendable {
     case deckTemplatePick = "deck template pick", deckTemplatePicked = "deck template picked", deckImport = "deck import", deckMigrate = "deck migrate"
     // Duo Decks P3a: the deck in split view
     case deckShowing = "deck", deckGo = "deck go", deckPick = "deck pick"
+    // Duo Decks P3b: problems, comments and export state in the deck viewer
+    case deckProblems = "deck problems", deckComments = "deck comments", deckComment = "deck comment"
+    case deckExportAgain = "deck export again", deckExportShow = "deck export show"
     // Send to Claude
     case sendFile = "send file", sendSession = "send session", sendProject = "send project", sendSelection = "send selection"
     case sendElement = "send element", sendText = "send text", selection
@@ -531,7 +534,7 @@ extension DuoAction {
               ui: ["New Slide"], local: true),
         .init(.deckNew, .deck, "<path> --template <pack>",
               "Make a deck file: the frontmatter naming the pack, and a title slide. Refuses a path that exists.",
-              local: true),
+              ui: ["New Deck…", "Create"], local: true),
         .init(.deckChange, .deck, "<deck> <n> <template>",
               "Change slide n to another template. The title stays, same-named slots keep their text, and a slot's text goes to the new default or only same-kind slot when it can (a pack may say otherwise); anything else moves to the slide's speaker notes under `Not placed after changing to <template>: <slot>`, never dropped. Comments travel with their text. Prints what moved.",
               ui: ["Slide chip"], local: true),
@@ -548,12 +551,12 @@ extension DuoAction {
               "Write a deck that uses every template of the pack once, each slot filled to its limit with sample text, and export it. Look at the result to see what breaks.",
               local: true),
         .init(.deckTemplatePick, .deck, "[<pack>]",
-              "Start the template picker in the deck viewer for the user. Needs the deck viewer (the Slides view), which isn't built yet."),
+              "Turn on slide picking in the deck viewer for the user (Make Templates…): tick boxes on each slide of the PowerPoint file showing. With slide numbers (`3,7`), those are ticked. Read the result with `deck template picked`.", ui: ["Make Templates…", "Cancel"]),
         .init(.deckTemplatePicked, .deck, "",
-              "The template and slides the user picked in the deck viewer. Needs the deck viewer (the Slides view), which isn't built yet."),
+              "The slides the user ticked in the deck viewer, with the `deck template inventory <pptx> --slides …` line that reads them.", ui: ["Make Templates with Claude", "Add to Pack"]),
         .init(.deckImport, .deck, "<pptx> [--pack <p> | --new-pack <name>] [--plan <file>] [--out <deck.md>]",
               "Turn an existing PowerPoint file into a Duo deck. Without --plan: print the slide groups (identical layout fingerprints), near groups and, for each group, the pack template that fits best, for you to plan with. With --plan: apply your plan (which group becomes which template, optional slots to add, new templates to make, loose boxes mapped to slots), amend or create the pack, convert the text, notes and comments (as Review marks), and print the import report. Never writes the pptx.",
-              local: true),
+              ui: ["Convert to Duo Deck…", "Convert with Claude"], local: true),
         .init(.deckMigrate, .deck, "[--pack <p>] [--dry-run]",
               "After a pack renamed a slot (`renamed: {old: new}` in the template's definition), rewrite the slot headings of every deck in the project that uses the pack, printing a diff. --dry-run prints it without writing.",
               local: true),
@@ -565,6 +568,23 @@ extension DuoAction {
               "Move both sides of the deck in split view to a slide: the preview scrolls to it and the source shows its first line. Plain .pptx decks use `slide go`."),
         .init(.deckPick, .deck, "[<slide>/<shape id>]",
               "Start the shape picker on the deck's preview for the user, or select the shape a slide and id name. Once a shape is picked, this names its slide, slot and source lines."),
+
+        // Duo Decks P3b: problems, comments and export state in the deck viewer. Each works on the deck in split view, or on --deck <file>.
+        .init(.deckProblems, .deck, "[--deck <file>]",
+              "The deck's problems as the viewer's Problems menu lists them: each error (the deck can't export until it is fixed) and each notice (an empty slot), as `file:line: message`. Reads the editor's buffer, so unsaved edits count.",
+              ui: ["Problems", "Go to Line"]),
+        .init(.deckComments, .deck, "[--deck <file>]",
+              "The comment threads in the deck by slide and slot (`slide 3/value`), open and closed, as the viewer's pins show them. Comments are Review in Markdown's, in the deck's own text (DL-284).",
+              ui: ["Open Thread"]),
+        .init(.deckComment, .deck, "<slide>[/<slot>] \"<text>\" [--deck <file>] [--as <name>]",
+              "Comment on a slide or one of its slots: a signed comment on its own line at the slot's end (a slide's, under its title). Signed as Claude when a Claude session runs it, else as the user, or --as. The viewer shows it as a pin and the source's margin as a thread.",
+              ui: ["Add Comment"]),
+        .init(.deckExportAgain, .deck, "[--deck <file>]",
+              "Export the deck in split view again, as the viewer's Export ⌄ does: the dated PowerPoint beside it, the previous one removed (the same writer as `deck export`), and the viewer's state follows.",
+              ui: ["Export as PowerPoint…", "Export Again"], timeout: 120),
+        .init(.deckExportShow, .deck, "[--deck <file>]",
+              "Show the deck's newest dated export in Finder.",
+              ui: ["Show Export in Finder"]),
 
         // Search
         .init(.search, .search, "<query> | --similar <path> [-k N] [--project P] [--kind file|session|memory] [--exact]",

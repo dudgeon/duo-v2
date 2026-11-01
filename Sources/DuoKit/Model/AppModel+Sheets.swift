@@ -185,6 +185,8 @@ extension AppModel {
     public func cancelSheet() {
         if let m = moveIntoHomeForm { moveIntoHomeForm = nil; m.finish(nil) }
         newProjectForm = nil
+        newDeckForm = nil
+        convertDeckForm = nil
         pushForm = nil
         gitHubProjectForm = nil
     }
@@ -195,5 +197,5 @@ extension AppModel {
         m.finish(m.into)
     }
 
-    public var sheetIsUp: Bool { moveIntoHomeForm != nil || newProjectForm != nil || pushForm != nil || gitHubProjectForm != nil || SheetCenter.shared.current != nil }
+    public var sheetIsUp: Bool { moveIntoHomeForm != nil || newProjectForm != nil || newDeckForm != nil || convertDeckForm != nil || pushForm != nil || gitHubProjectForm != nil || SheetCenter.shared.current != nil }
 }

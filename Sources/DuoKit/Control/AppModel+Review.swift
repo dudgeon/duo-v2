@@ -20,7 +20,7 @@ extension AppModel {
     }
 
     /// Who signs: `--as`, else Claude when a Claude session runs the verb, else the user's Mac account (DL-236 11).
-    private func reviewAuthor(_ inv: Invocation, _ req: ControlRequest) -> String {
+    func reviewAuthor(_ inv: Invocation, _ req: ControlRequest) -> String {
         if let name = inv.flags["as"], !name.isEmpty { return name }
         return req.session != nil ? "claude" : NSUserName()
     }
