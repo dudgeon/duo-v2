@@ -1,5 +1,6 @@
 import CryptoKit
 import DuoDeck
+import DuoControl
 import DuoSearch
 import Foundation
 
@@ -126,4 +127,6 @@ func deckChecks() throws {
     check(rvGot.slides[0].shapes.first?.text == "Field review" && rvGot.slides[1].shapes.first { $0.idx == 15 }?.text == "Up from 61% in the spring, roughly.", "the exported text has no marks")
     let rvAll = rvGot.slides.flatMap(\.shapes).map(\.text).joined()
     check(!rvAll.contains("{") && !rvAll.contains("@sam"), "no CriticMarkup in the pptx")
+
+    try deckP1Checks(tmp: tmp, study: study, deck: deck, packs: packs)
 }
