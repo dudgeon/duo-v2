@@ -413,6 +413,16 @@ public enum FixtureHarness {
         case "close-doc": if parts.count > 1 { model.closeDocument(parts[1]) }   // close-doc:<path>: a document tab closes as its × does (ENH-144)
         case "tree-click": if parts.count > 1 { model.selectFile(parts[1]) }   // tree-click:<path>: a single click on a file row (selects, F-348)
         case "tree-return": model.openSelectedFile()   // Return on the tree's selection
+        // Split view (DL-275): split:<path>[/left|right] opens a file with its preview; split-swap, split-ratio:<r>,
+        // split-focus:left|right, split-unfold, split-close, sidebar-peek:on|off.
+        case "split": if parts.count > 1 { _ = model.openSplitView(parts[1]) }
+        case "split-swap": model.swapSplitSides()
+        case "split-ratio": if parts.count > 1, let r = Double(parts[1]) { model.setSplitRatio(r) }
+        case "split-focus": if parts.count > 1, let side = SplitSide(rawValue: parts[1]) { model.focusSplitSide(side) }
+        case "split-unfold": model.unfoldSplit()
+        case "split-close": if let t = model.showingSplit { model.closeSplitView(t.source) }
+        case "sidebar-peek": model.setSidebarPeek(parts.count > 1 ? parts[1] == "on" : !model.splits.peek)
+        case "split-report": FileHandle.standardError.write(Data((model.splitReport() + "\n").utf8))
         case "doc": if parts.count > 1 { model.openDocument(parts[1]) }   // doc:<path>: a document tab, as the file tree opens it
         case "convert": if parts.count > 1 { model.convertToMarkdown(parts[1]) }   // convert:<docx>: the bar's Convert to Markdown (DL-123)
         case "converting":   // converting:<docx>: hold the progress bar (C) as drawn, for a capture

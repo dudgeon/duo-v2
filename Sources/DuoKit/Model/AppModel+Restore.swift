@@ -20,6 +20,8 @@ public struct RestoreState: Codable, Equatable, Sendable {
     /// Home's session on screen.
     public var homeTab: String?
     public var projects: [Project] = []
+    /// What a split took to make room (DL-276), so it can be given back; absent with no split.
+    public var splitRoom: SplitRoom.Taken? = nil
 
     public init() {}
 
@@ -34,6 +36,8 @@ public struct RestoreState: Codable, Equatable, Sendable {
         public var webTabs: [String: String]? = nil
         /// The console's order where the user moved a tab (DL-220), by session id; absent otherwise.
         public var tabOrder: [String]? = nil
+        /// Split tabs (DL-275; Duo Decks R10): source, preview kind, ratio, active side, fold. Validated on restore.
+        public var splits: [SplitTab]? = nil
 
         public init(folder: String, sessions: [String], consoleTab: String?, documents: [String], rightTab: String?, webTabs: [String: String]? = nil, tabOrder: [String]? = nil) {
             self.folder = folder; self.sessions = sessions; self.consoleTab = consoleTab; self.documents = documents; self.rightTab = rightTab; self.webTabs = webTabs
@@ -88,7 +92,9 @@ extension AppModel {
                                     documents: docs.filter { !$0.hasPrefix("web:") || web[$0] != nil },
                                     rightTab: name == current ? rightTab : lastRightTab[name], webTabs: web.isEmpty ? nil : web,
                                     tabOrder: consoleTabOrder[name].map { $0.filter(ids.contains) }.flatMap { $0.isEmpty ? nil : $0 }))
+            s.projects[s.projects.count - 1].splits = splitsForRestore(name)
         }
+        s.splitRoom = splits.any ? splits.taken : nil
         return s
     }
 
@@ -132,6 +138,7 @@ extension AppModel {
             // The tabs it showed, for coming back to it (DL-107).
             if let t = p.consoleTab { lastConsoleTab[project] = t }
             if let r = p.rightTab, r == "Project" || docs.contains(r) { lastRightTab[project] = r }
+            restoreSplits(p.splits, project: project, documents: docs)
             // Parked, not resumed (DL-156): each resumes when its tab is shown, so a launch starts
             // what's on screen, not one sign-in per tab at once (F-208).
             for id in p.sessions where !liveElsewhere.contains(id) {
@@ -156,6 +163,7 @@ extension AppModel {
                 if right != "Project" { selectedFile = right }
             }
         }
+        restoreRoom(s.splitRoom)
         FileHandle.standardError.write(Data("restore: parked \(reopened) session(s) in \(s.projects.count) project(s)\n".utf8))
         if started > 0 { FileHandle.standardError.write(Data("restore: resumed \(started) Keep Running session(s) at once\n".utf8)) }
     }

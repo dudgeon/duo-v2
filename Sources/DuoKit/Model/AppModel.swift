@@ -117,6 +117,8 @@ public final class AppModel {
     public var rightTab: String?                // "Project", a group name, or a document path
     /// The search modal (DL-76, DL-80).
     public let search = SearchUI()
+    /// Split view (DL-275 to DL-278): the split tabs, what they took to make room, their previews.
+    public let splits = SplitState()
     /// The Explainer popover (DL-172): which is open, where, and the hover clocks.
     public let explainer = ExplainerState()
     /// A session opened read-only from search, shown as a right-pane tab (search-open-session).

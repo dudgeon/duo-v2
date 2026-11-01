@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Duo acceptance: split view, slice 1</title>
+<style>
+:root {
+  --bg: #f6f6f4; --card: #ffffff; --ink: #1d1d1f; --muted: #6e6e73; --line: #e2e2e0;
+  --chip: #efefec; --accent: #2f6fde; --ok: #1f8a4c; --ok-bg: #e5f4ea; --bad: #c4362c; --bad-bg: #fbe9e7;
+  --later: #8a6a12; --later-bg: #f8f0d8; --code: #f1f1ee;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1b1d; --card: #252528; --ink: #ececee; --muted: #9a9aa0; --line: #38383c;
+    --chip: #303034; --accent: #6b9cf0; --ok: #5ccb8a; --ok-bg: #1d3427; --bad: #f0786d; --bad-bg: #3d2220;
+    --later: #e2c264; --later-bg: #3a321b; --code: #2e2e32;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1b1b1d; --card: #252528; --ink: #ececee; --muted: #9a9aa0; --line: #38383c;
+  --chip: #303034; --accent: #6b9cf0; --ok: #5ccb8a; --ok-bg: #1d3427; --bad: #f0786d; --bad-bg: #3d2220;
+  --later: #e2c264; --later-bg: #3a321b; --code: #2e2e32;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 14px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; }
+code { font: 12.5px "SF Mono", ui-monospace, Menlo, monospace; background: var(--code); padding: 1px 4px; border-radius: 4px; overflow-wrap: anywhere; }
+header { position: sticky; top: 0; z-index: 2; background: var(--bg); border-bottom: 1px solid var(--line); }
+.bar { max-width: 860px; margin: 0 auto; padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+h1 { font-size: 17px; margin: 0; flex: 1 1 260px; }
+.progress { flex: 1 1 100%; height: 6px; border-radius: 3px; background: var(--chip); overflow: hidden; display: flex; }
+.progress span { display: block; height: 100%; }
+.counts { color: var(--muted); font-size: 12.5px; }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; }
+button { font: inherit; color: inherit; cursor: pointer; border: 1px solid var(--line); background: var(--card); border-radius: 7px; padding: 5px 11px; }
+button:hover { border-color: var(--muted); }
+.linkbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.linkbtn { display: inline-block; padding: 4px 10px; border: 1px solid var(--accent); border-radius: 6px; color: var(--accent); text-decoration: none; font-size: 13px; }
+.linkbtn:hover { text-decoration: underline; }
+a.lnk { color: var(--accent); }
+button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.filters button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.primary:hover { border-color: var(--accent); filter: brightness(1.08); }
+main { max-width: 860px; margin: 0 auto; padding: 8px 16px 80px; }
+.intro { color: var(--muted); margin: 14px 0 4px; }
+.setup { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin: 10px 0 6px; }
+.setup ol { margin: 4px 0; padding-left: 20px; }
+.store { font-size: 12px; color: var(--muted); margin: 6px 0 0; }
+h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 26px 0 8px; }
+.card { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 10px; padding: 12px 14px; margin: 0 0 10px; }
+.card.accepted { border-left-color: var(--ok); }
+.card.rejected { border-left-color: var(--bad); }
+.card.deferred { border-left-color: var(--later); }
+.top { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.top h3 { font-size: 15px; margin: 0; flex: 1 1 240px; }
+.ref { font-size: 11.5px; color: var(--muted); }
+.pill { font-size: 11.5px; padding: 1px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); }
+.pill.accepted { background: var(--ok-bg); color: var(--ok); }
+.pill.rejected { background: var(--bad-bg); color: var(--bad); }
+.pill.deferred { background: var(--later-bg); color: var(--later); }
+.what { margin: 4px 0 8px; color: var(--muted); }
+.label { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); margin-top: 6px; }
+ol.steps { margin: 2px 0 6px; padding-left: 20px; }
+.expect { margin: 2px 0 10px; }
+.actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.actions .accept[aria-pressed="true"] { background: var(--ok); border-color: var(--ok); color: #fff; }
+.actions .reject[aria-pressed="true"] { background: var(--bad); border-color: var(--bad); color: #fff; }
+.actions .defer[aria-pressed="true"] { background: var(--later); border-color: var(--later); color: #fff; }
+.saved { font-size: 11.5px; color: var(--muted); margin-left: auto; }
+.commit { font-size: 12px; color: var(--muted); margin: 6px 0 2px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.commit a { color: var(--muted); }
+.commit code { cursor: copy; }
+button.primary:disabled { opacity: .45; cursor: default; }
+.tosend { border-color: var(--accent); color: var(--accent); }
+.tosend:disabled { opacity: .45; cursor: default; border-color: var(--line); color: var(--muted); }
+.sent { font-size: 11.5px; color: var(--muted); }
+.sent.ok { color: var(--ok); }
+.sent.err { color: var(--bad); }
+.chan { font-size: 12px; color: var(--muted); }
+.chan.ok { color: var(--ok); }
+.dsend { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+textarea { width: 100%; min-height: 54px; margin-top: 8px; resize: vertical; font: inherit; color: inherit;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 7px 9px; }
+.hidden { display: none; }
+/* Set up test, Claude's attempt, cleared items */
+.setupbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 2px 0 8px; }
+a.setupbtn { display: inline-block; text-decoration: none; color: #fff; background: var(--accent); border-radius: 7px; padding: 4px 11px; font-weight: 600; font-size: 13px; }
+a.setupbtn:hover { filter: brightness(1.08); }
+.setupbar .alt { font-size: 12px; color: var(--muted); }
+.claude { border: 1px dashed var(--line); border-radius: 8px; padding: 7px 10px; margin: 6px 0 10px; background: var(--bg); }
+.claude .head { display: flex; gap: 8px; align-items: center; font-size: 12.5px; font-weight: 600; }
+.claude ul { margin: 2px 0 4px; padding-left: 18px; }
+.claude .lbl { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); margin-top: 4px; }
+.pill.passed { background: var(--ok-bg); color: var(--ok); }
+.pill.failed { background: var(--bad-bg); color: var(--bad); }
+.pill.partial { background: var(--later-bg); color: var(--later); }
+.cleared-note { font-size: 12.5px; color: var(--muted); margin: 6px 0; }
+.group-note { font-size: 13px; color: var(--muted); margin: -4px 0 10px; }
+/* Decisions */
+#decisions h2 .count { font-weight: 400; text-transform: none; letter-spacing: 0; }
+.decision { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 10px; padding: 12px 14px; margin: 0 0 12px; }
+.decision.answered { border-left-color: var(--ok); }
+.decision .context p { margin: 4px 0 6px; }
+.decision .context ul { margin: 2px 0 6px; padding-left: 20px; }
+.options { display: grid; gap: 8px; margin: 8px 0 4px; }
+.option { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; align-items: start; border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px; cursor: pointer; background: var(--bg); }
+.option:hover { border-color: var(--muted); }
+.option.chosen { border-color: var(--ok); box-shadow: 0 0 0 1px var(--ok) inset; background: var(--ok-bg); }
+.option input { margin-top: 3px; }
+.option .olabel { font-weight: 600; }
+.option .rec { font-size: 11px; font-weight: 600; color: var(--accent); margin-left: 6px; }
+.option .odesc { grid-column: 2; color: var(--muted); }
+.option .mock { grid-column: 2; margin-top: 6px; overflow-x: auto; }
+.decision .chosen-note { font-size: 12.5px; color: var(--ok); margin-left: auto; }
+/* Mini mockups: Duo's light look, whatever the page theme */
+.mk { --t: #1f2328; --t2: #6e7781; --rule: #e1e4e8; --sel: #eef1f4; --pane: #fff; --ground: #f6f7f8; --edge: #d0d7de;
+  font: 12px/1.35 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; color: var(--t); display: inline-block; min-width: 0; max-width: 100%; }
+.mk code, .mk .mono { font: 11.5px "SF Mono", ui-monospace, Menlo, monospace; background: none; padding: 0; }
+.mk-menu { background: rgba(246,246,246,.98); border: 1px solid #c8c8c8; border-radius: 7px; padding: 4px; box-shadow: 0 6px 18px rgba(0,0,0,.18); width: 270px; }
+.mk-menu .ttl { font-weight: 600; padding: 2px 8px 4px; color: #555; }
+.mk-item { display: flex; justify-content: space-between; gap: 16px; padding: 3px 8px; border-radius: 4px; white-space: nowrap; }
+.mk-item.hl { background: #2f6fde; color: #fff; }
+.mk-item.hl .k { color: #fff; }
+.mk-item.dim { color: #aaa; }
+.mk-item .k { color: #777; }
+.mk-sep { height: 1px; background: #ddd; margin: 4px 6px; }
+.mk-modal { background: var(--pane); border: 1px solid var(--rule); border-radius: 10px; box-shadow: 0 8px 24px rgba(31,35,40,.16); width: 440px; max-width: 100%; overflow: hidden; }
+.mk-field { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--rule); font-size: 14px; }
+.mk-field .q { flex: 1; }
+.mk-field .ph { flex: 1; color: var(--t2); }
+.mk-scope { display: inline-flex; border: 1px solid var(--edge); border-radius: 5px; font-size: 11px; overflow: hidden; }
+.mk-scope span { padding: 1px 6px; color: var(--t2); }
+.mk-scope span.on { background: var(--sel); color: var(--t); font-weight: 600; }
+.mk-filters { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; padding: 6px 10px 7px; border-bottom: 1px solid var(--rule); }
+.mk-pop { border: 1px solid var(--edge); border-radius: 5px; padding: 1px 7px; background: #fff; }
+.mk-pop.set { background: var(--sel); font-weight: 600; }
+.mk-pop.focus { outline: 2px solid #2f6fde; outline-offset: 1px; }
+.mk-chip { border-radius: 10px; padding: 1px 7px; background: var(--t); color: #fff; font-size: 11px; }
+.mk-hint { margin-left: auto; color: var(--t2); font-size: 11px; }
+.mk-row { padding: 5px 8px; margin: 2px 6px; border-radius: 6px; }
+.mk-row.sel { background: var(--sel); }
+.mk-row .t { font-weight: 600; }
+.mk-row .m { color: var(--t2); font-size: 11px; }
+.mk-pill { border: 1px solid var(--edge); border-radius: 8px; padding: 0 5px; font-size: 10px; color: var(--t2); margin-left: 4px; }
+.mk-foot { display: flex; justify-content: space-between; gap: 10px; padding: 5px 10px; background: var(--ground); border-top: 1px solid var(--rule); font-size: 11px; }
+.mk-foot .r { color: var(--t2); }
+.mk-body { padding: 6px 0; }
+.mk-sec { padding: 4px 12px 2px; font-size: 10px; font-weight: 600; letter-spacing: .04em; color: var(--t2); }
+.mk-help { padding: 2px 12px; color: var(--t2); }
+.mk-caption { font-size: 11.5px; color: var(--muted); margin-top: 4px; }
+.mk-side { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-start; }
+dialog { max-width: min(720px, calc(100vw - 32px)); width: 100%; border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--ink); padding: 16px; }
+dialog::backdrop { background: rgba(0,0,0,.35); }
+dialog textarea { min-height: 320px; font: 12.5px "SF Mono", ui-monospace, Menlo, monospace; }
+.row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+.row .note { margin-right: auto; color: var(--muted); font-size: 12.5px; }
+/* Work Mac rating chip */
+.wm { font-size: 11.5px; padding: 1px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); white-space: nowrap; cursor: help; }
+.wm.as-is { background: var(--ok-bg); color: var(--ok); }
+.wm.small { background: var(--later-bg); color: var(--later); }
+.wm.home { background: var(--chip); color: var(--muted); }
+.wmwhy { font-size: 12px; color: var(--muted); margin: 0 0 6px; }
+.filters button[data-toggle][aria-pressed="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+.mobile-only { display: none; }
+.desk-only { display: inline-block; }
+pre, code, .card, .decision, .what, .expect, ol.steps, .commit { overflow-wrap: anywhere; }
+.mock, .tablewrap, .card table, .decision table { max-width: 100%; }
+.card table, .decision table { display: block; overflow-x: auto; }
+@media (max-width: 760px) {
+  body { font-size: 15px; }
+  .bar { padding: 8px 16px; gap: 6px 8px; }
+  h1 { font-size: 15px; flex: 1 1 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .counts { font-size: 11px; line-height: 1.25; flex: 1 1 80px; min-width: 0; }
+  .bar button { padding: 8px 10px; }
+  .long { display: none; }
+  details.aboutwalk { margin: 12px 0; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 0 12px; }
+  details.aboutwalk summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 600; }
+  details.aboutwalk .intro { margin-top: 0; }
+  .progress { height: 4px; order: 5; }
+  .chan { flex: 1 1 100%; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; order: 4; }
+  .filters { flex-wrap: nowrap; overflow-x: auto; max-width: 100%; padding-bottom: 2px; order: 6; -webkit-overflow-scrolling: touch; }
+  .filters button { flex: 0 0 auto; white-space: nowrap; }
+  button { min-height: 44px; min-width: 44px; padding: 8px 14px; }
+  a.setupbtn { min-height: 44px; display: inline-flex; align-items: center; padding: 8px 14px; }
+  main { padding: 4px 16px 80px; }
+  .card, .decision { padding: 12px; }
+  .actions { gap: 8px; }
+  .actions button.accept, .actions button.reject, .actions button.defer { flex: 1 1 28%; }
+  .saved { margin-left: 0; flex: 1 1 100%; }
+  .option { padding: 12px; min-height: 44px; grid-template-columns: 28px 1fr; align-items: center; }
+  .option input { width: 22px; height: 22px; margin: 0; }
+  .option .odesc, .option .mock { grid-column: 1 / -1; }
+  textarea { font-size: 16px; min-height: 80px; }
+  .commit code { display: inline-block; padding: 8px 4px; }
+  .mock { overflow-x: auto; }
+  .mk-menu, .mk-modal { max-width: none; }
+  .mobile-only { display: inline-block; }
+  .desk-only { display: none; }
+  dialog { padding: 12px; }
+  dialog textarea { min-height: 50vh; font-size: 13px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <h1 id="title"></h1>
+    <span class="counts" id="counts"></span>
+    <button class="primary" id="sendall" disabled title="Sends the whole summary to the Claude session watching this page">Send all<span class="long"> to Claude</span></button>
+    <button id="copy">Copy<span class="long"> feedback</span></button>
+    <span class="chan" id="chan" aria-live="polite">Checking for Claude…</span>
+    <div class="progress" id="progress" aria-hidden="true"></div>
+    <div class="filters" role="group" aria-label="Show">
+      <button data-f="all" aria-pressed="true">All</button>
+      <button data-f="todo" aria-pressed="false">To do</button>
+      <button data-f="accepted" aria-pressed="false">Accepted</button>
+      <button data-f="rejected" aria-pressed="false">Rejected</button>
+      <button data-f="deferred" aria-pressed="false">Not now</button>
+      <button id="onlyasis" data-toggle="1" aria-pressed="false" class="desk-only" title="Show only features walkable on the work Mac with a stock install">Work Mac: as-is</button>
+      <button id="mobileorder" data-toggle="1" aria-pressed="false" class="desk-only" title="Order the page the way it appears on a phone: decisions, then as-is, small setup, home only">Mobile order</button>
+      <button id="clear" title="Hide accepted tests and answered decisions (they stay recorded)">Clear done</button>
+      <button id="showcleared" aria-pressed="false">Show cleared</button>
+    </div>
+  </div>
+</header>
+<main>
+  <div id="about">
+  <p class="intro" id="intro"></p>
+  <div class="setup"><div class="label">Before you start</div><ol id="setup"></ol>
+    <p class="store" id="store">Connecting to saved verdicts…</p></div>
+  </div>
+  <section id="decisions" class="hidden"></section>
+  <div id="list"></div>
+</main>
+<dialog id="dlg">
+  <strong>Feedback for Claude</strong>
+  <textarea id="out" readonly></textarea>
+  <div class="row"><span class="note" id="dlgnote"></span><button id="close">Close</button></div>
+</dialog>
+
+<script type="application/json" id="data">{"sprint": "2026-11-01-split-view-slice1", "title": "Duo acceptance: split view, slice 1", "intro": "A file beside its own preview, in one tab of the right pane (DL-275 to DL-278), with Geoff's making-room rule (DL-276). Slice 2, two documents side by side, is a separate walk. Still to come: the formatting bar over the source, the source-lines mark in the margin (Q-399), a deck's preview (Duo Decks), comments from a preview (slice 2's wiring) and Search's ⌥⌘↩.", "setup": ["Use a window about 1440 wide to see the sidebar fold to its rail."], "groupNotes": {"In checkout: a file beside its preview": "Needs the `checkout` project from the fixtures; no reset.", "In checkout: making room, the rails and folding": "A window under about 1,464 pt wide, with the sidebar showing.", "In checkout: keys, saving and coming back": "The last cards need a Claude session running in the console and a quit."}, "features": [{"id": "split-open-markdown", "group": "In checkout: a file beside its preview", "title": "Show a Markdown file's preview in Split View", "what": "⌥⌘P (View › Show Preview in Split View, or the tab's menu) puts the showing file and its rendered preview side by side in one tab. Preview Beside is called Split View in every menu (Geoff, on the canvas).", "steps": ["Open `checkout`, then `docs/prd.md`.", "Press ⌥⌘P.", "Type a word into the source and wait a moment.", "Press ⌥⌘P again."], "expect": "One tab reads `prd.md ⧉ Preview`, the source on the left and the rendered document on the right, a 1 pt rule between them. Your typed word shows in the preview about a quarter second after you stop, before you save. The second ⌥⌘P closes the split and leaves `prd.md` as an ordinary tab. A deck's preview isn't here: Duo Decks provides it.", "ref": "DL-275, DL-277, F-500, F-502", "commit": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9", "alsoCommits": ["5e276cf3c6f71390190141eef33480503c82caf6", "b28dcd79c3ef2ef234eb3027021472cafa08f48c", "6710570b32684db5169010bbff46d330d2370618"], "workMac": "as-is", "workMacWhy": "Any Markdown file in any project", "links": [{"label": "split-deck screen", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/split-view-handoff/screens/split-deck.html"}, {"label": "design canvas", "url": "https://claude.ai/artifact/8j6ukv88cvTqvdSEoHnEc1"}], "setup": ["open checkout", "doc open docs/prd.md"], "claude": {"result": "passed", "did": ["Opened a split on a fixture workspace in isolated background runs (`scripts/check-split.sh`) and read its state from the harness's `split-report` (the same report `duo2 split` prints).", "Captured it in Light, Dark and Classic and compared the layout with the screen (F-512)."], "didnt": [], "human": ["How the preview reads beside your editor, and whether the 250 ms feels right."], "at": "2026-11-01"}, "commitInfo": [{"sha": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9", "subject": "Split view slice 1: the split tab, its sides, making room with the rail, routing by active side, persistence, duo2 split verbs, DuoChecks (DL-275 to DL-278)"}, {"sha": "5e276cf3c6f71390190141eef33480503c82caf6", "subject": "Split view: the harness actions, check-split.sh, records fix, rail and room timing"}, {"sha": "b28dcd79c3ef2ef234eb3027021472cafa08f48c", "subject": "Split view: ratio changes only on a drag, the fold counts the rail, preview converted off the main thread, records F-500 to F-503, Q-399 to Q-402, C-140, duo2 reference"}, {"sha": "6710570b32684db5169010bbff46d330d2370618", "subject": "Split view: comparison with the screens (F-504), proof images, check-split.sh in Light, Dark and Classic"}]}, {"id": "split-open-html", "group": "In checkout: a file beside its preview", "title": "An HTML page beside its source", "what": "A `.html` file splits with its page drawn from the unsaved text.", "steps": ["Open `prototypes/checkout.html` in `checkout`.", "Press ⌥⌘P.", "Edit a heading in the source."], "expect": "The page shows on the right, the source on the left. Your edit shows in the page without saving. Images beside the file may appear a second late, until the editor saves (Q-400).", "ref": "DL-275, Q-400", "commit": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9", "alsoCommits": ["5e276cf3c6f71390190141eef33480503c82caf6", "b28dcd79c3ef2ef234eb3027021472cafa08f48c", "6710570b32684db5169010bbff46d330d2370618"], "workMac": "as-is", "workMacWhy": "Any local HTML file", "links": [{"label": "split-deck screen", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/split-view-handoff/screens/split-deck.html"}], "setup": ["open checkout", "doc open prototypes/checkout.html"], "claude": {"result": "passed", "did": ["Opened `page.html` in a split on a scratch workspace and read `right: Page`."], "didnt": ["Edited the source and watched the page redraw."], "human": ["Whether the page redraw from your typing looks right."], "at": "2026-11-01"}, "commitInfo": [{"sha": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9", "subject": "Split view slice 1: the split tab, its sides, making room with the rail, routing by active side, persistence, duo2 split verbs, DuoChecks (DL-275 to DL-278)"}, {"sha": "5e276cf3c6f71390190141eef33480503c82caf6", "subject": "Split view: the harness actions, check-split.sh, records fix, rail and room timing"}, {"sha": "b28dcd79c3ef2ef234eb3027021472cafa08f48c", "subject": "Split view: ratio changes only on a drag, the fold counts the rail, preview converted off the main thread, records F-500 to F-503, Q-399 to Q-402, C-140, duo2 reference"}, {"sha": "6710570b32684db5169010bbff46d330d2370618", "subject": "Split view: comparison with the screens (F-504), proof images, check-split.sh in Light, Dark and Classic"}]}, {"id": "split-tab-names", "group": "In checkout: a file beside its preview", "title": "The split tab: two names, the active side, the × on each", "what": "One tab holds both sides: their names joined by the split mark, the active side's in semibold, the other dimmed; each name has its own × under the pointer.", "steps": ["With the split open, click the source, then the preview.", "Point at the tab and click the × on `Preview`.", "Open the split again; on the source's × click."], "expect": "The 2 pt active-pane rule spans only the active side and moves when you click the other. The × on `Preview` closes the preview and leaves the source tab. The × on the source closes the whole split with its tab. Right-click the tab: Close Split View, Swap Sides.", "ref": "DL-275, DL-165", "commit": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9", "alsoCommits": ["5e276cf3c6f71390190141eef33480503c82caf6", "b28dcd79c3ef2ef234eb3027021472cafa08f48c", "6710570b32684db5169010bbff46d330d2370618"], "workMac": "as-is", "workMacWhy": "Any split", "links": [{"label": "split-deck screen", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/split-view-handoff/screens/split-deck.html"}], "setup": ["open checkout", "doc open docs/prd.md", "split docs/prd.md"], "claude": {"result": "passed", "did": ["Made, swapped and closed each side in the model and checked the state each time (DuoChecks `split`, 2247 checks); swapped and closed in live runs through the harness."], "didnt": ["Clicked the × with a pointer."], "human": ["The look and hover of the ×; the mark's size."], "at": "2026-11-01"}, "commitInfo": [{"sha": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9", "subject": "Split view slice 1: the split tab, its sides, making room with the rail, routing by active side, persistence, duo2 split verbs, DuoChecks (DL-275 to DL-278)"}, {"sha": "5e276cf3c6f71390190141eef33480503c82caf6", "subject": "Split view: the harness actions, check-split.sh, records fix, rail and room timing"}, {"sha": "b28dcd79c3ef2ef234eb3027021472cafa08f48c", "subject": "Split view: ratio changes only on a drag, the fold counts the rail, preview converted off the main thread, records F-500 to F-503, Q-399 to Q-402, C-140, duo2 reference"}, {"sha": "6710570b32684db5169010bbff46d330d2370618", "subject": "Split view: comparison with the screens (F-504), proof images, check-split.sh in Light, Dark and Classic"}]}, {"id": "split-divider", "group": "In checkout: a file beside its preview", "title": "The divider: drag, double-click, swap, and where it's kept", "what": "A 1 pt rule between the sides; drag it, double-click to even it, Swap Sides puts the source on the right. Neither side goes under 340.", "steps": ["Drag the divider left and right.", "Double-click it.", "Right-click the tab › Swap Sides.", "Close the split and open it again."], "expect": "You can't make a side narrower than 340. Double-click makes them equal. Swap moves the source to the right without reloading it. The divider comes back where you left it.", "ref": "DL-275, Q-366", "commit": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9", "alsoCommits": ["5e276cf3c6f71390190141eef33480503c82caf6", "b28dcd79c3ef2ef234eb3027021472cafa08f48c", "6710570b32684db5169010bbff46d330d2370618"], "workMac": "as-is", "workMacWhy": "Any split", "links": [{"label": "split-deck screen", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/split-view-handoff/screens/split-deck.html"}], "setup": ["open checkout", "doc open docs/prd.md", "split docs/prd.md", "split ratio 0.4"], "claude": {"result": "partial", "did": ["The ratio, swap and the 340 clamp are checked in the model for every width from 100 to 2000 pt; a swap and a ratio change ran in live runs through the harness."], "didnt": ["Dragged the divider with a pointer (the ratio changes only while the mouse button is down)."], "human": ["Drag and double-click feel."], "at": "2026-11-01"}, "commitInfo": [{"sha": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9", "subject": "Split view slice 1: the split tab, its sides, making room with the rail, routing by active side, persistence, duo2 split verbs, DuoChecks (DL-275 to DL-278)"}, {"sha": "5e276cf3c6f71390190141eef33480503c82caf6", "subject": "Split view: the harness actions, check-split.sh, records fix, rail and room timing"}, {"sha": "b28dcd79c3ef2ef234eb3027021472cafa08f48c", "subject": "Split view: ratio changes only on a drag, the fold counts the rail, preview converted off the main thread, records F-500 to F-503, Q-399 to Q-402, C-140, duo2 reference"}, {"sha": "6710570b32684db5169010bbff46d330d2370618", "subject": "Split view: comparison with the screens (F-504), proof images, check-split.sh in Light, Dark and Classic"}]}, {"id": "split-making-room", "group": "In checkout: making room, the rails and folding", "title": "Making room: the console narrows to 480 and the sidebar folds to a rail", "what": "Opening a split narrows the console to its 480 minimum; at about 1,464 pt and under, the sidebar folds to a 16 pt rail. Closing the split gives everything back.", "steps": ["With a 1440 wide window and the sidebar showing, open a split.", "Close the split."], "expect": "The console is 480 wide and the sides are about 470 each (about 391 at 1280). The sidebar's rail shows at the window's left edge with its glyph, and a dot under it while a session needs you. Closing the split brings back the sidebar and the console's old width.", "ref": "DL-276, F-501", "commit": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9", "alsoCommits": ["5e276cf3c6f71390190141eef33480503c82caf6", "b28dcd79c3ef2ef234eb3027021472cafa08f48c", "6710570b32684db5169010bbff46d330d2370618"], "workMac": "as-is", "workMacWhy": "A window under about 1,464 pt wide", "links": [{"label": "making-room (animated: open the HTML)", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/split-view-handoff/screens/making-room.html"}, {"label": "design canvas", "url": "https://claude.ai/artifact/8j6ukv88cvTqvdSEoHnEc1"}], "setup": ["open checkout", "doc open docs/prd.md"], "claude": {"result": "passed", "did": ["Measured the panes in isolated live runs: [rail, 480, 944] at 1440 and [rail, 480, 784] at 1280.", "Checked that closing the split gives the old widths back (DuoChecks)."], "didnt": [], "human": ["The slide's motion, which the captures can't show."], "at": "2026-11-01"}, "commitInfo": [{"sha": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9", "subject": "Split view slice 1: the split tab, its sides, making room with the rail, routing by active side, persistence, duo2 split verbs, DuoChecks (DL-275 to DL-278)"}, {"sha": "5e276cf3c6f71390190141eef33480503c82caf6", "subject": "Split view: the harness actions, check-split.sh, records fix, rail and room timing"}, {"sha": "b28dcd79c3ef2ef234eb3027021472cafa08f48c", "subject": "Split view: ratio changes only on a drag, the fold counts the rail, preview converted off the main thread, records F-500 to F-503, Q-399 to Q-402, C-140, duo2 reference"}, {"sha": "6710570b32684db5169010bbff46d330d2370618", "subject": "Split view: comparison with the screens (F-504), proof images, check-split.sh in Light, Dark and Classic"}]}, {"id": "split-sidebar-peek", "group": "In checkout: making room, the rails and folding", "title": "Peek at the folded sidebar", "what": "While the split folded the sidebar, ⌃⌘S, the toolbar's sidebar button or a click on the rail slides it over the console; the split doesn't move.", "steps": ["With the sidebar folded by a split, click the rail.", "Click it again, or press Esc, or click away.", "Press ⌃⌘S."], "expect": "The sidebar slides over the console at its own width with a shadow; the split stays where it is. A second click, Esc or a click outside closes it. Picking a file in it closes it too.", "ref": "DL-276", "commit": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9", "alsoCommits": ["5e276cf3c6f71390190141eef33480503c82caf6", "b28dcd79c3ef2ef234eb3027021472cafa08f48c", "6710570b32684db5169010bbff46d330d2370618"], "workMac": "as-is", "workMacWhy": "Any split in a narrow window", "links": [{"label": "making-room (animated: open the HTML)", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/split-view-handoff/screens/making-room.html"}], "setup": ["open checkout", "doc open docs/prd.md", "split docs/prd.md"], "claude": {"result": "partial", "did": ["Opened the peek in a live run and captured it (`proof/peek-1440.png`)."], "didnt": ["Esc and click-away, which need a person at the keys."], "human": ["Esc and click outside; the slide's motion."], "at": "2026-11-01"}, "commitInfo": [{"sha": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9", "subject": "Split view slice 1: the split tab, its sides, making room with the rail, routing by active side, persistence, duo2 split verbs, DuoChecks (DL-275 to DL-278)"}, {"sha": "5e276cf3c6f71390190141eef33480503c82caf6", "subject": "Split view: the harness actions, check-split.sh, records fix, rail and room timing"}, {"sha": "b28dcd79c3ef2ef234eb3027021472cafa08f48c", "subject": "Split view: ratio changes only on a drag, the fold counts the rail, preview converted off the main thread, records F-500 to F-503, Q-399 to Q-402, C-140, duo2 reference"}, {"sha": "6710570b32684db5169010bbff46d330d2370618", "subject": "Split view: comparison with the screens (F-504), proof images, check-split.sh in Light, Dark and Classic"}]}, {"id": "split-fold-rail", "group": "In checkout: making room, the rails and folding", "title": "When a split folds: the rail on the right brings it back", "what": "If the right pane is narrower than two 340 sides, the active side fills it and the other becomes a 16 pt rail at its far right. Clicking the rail, or the dimmed name, narrows the console just enough for both.", "steps": ["With a split open, drag the right pane's divider so it is under 680 pt wide.", "Click the rail at the right pane's far right.", "Or run `duo2 split unfold`."], "expect": "The source fills the pane; the tab still shows both names with the hidden one dimmed. The rail has the split mark 10 from its top and the tooltip `Show Preview in Split View`. Clicking it widens the right pane, the console never under 480, and the preview becomes the active side.", "ref": "DL-275, Q-366", "commit": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9", "alsoCommits": ["5e276cf3c6f71390190141eef33480503c82caf6", "b28dcd79c3ef2ef234eb3027021472cafa08f48c", "6710570b32684db5169010bbff46d330d2370618"], "workMac": "small", "workMacWhy": "Needs the right pane dragged narrow by hand", "links": [{"label": "fold screen (animated)", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/split-view-handoff/screens/fold.html"}], "setup": ["open checkout", "doc open docs/prd.md", "split docs/prd.md"], "claude": {"result": "passed", "did": ["Dragged the pane to 600 in a live run (folded: true), unfolded with `split-unfold` (folded: false) and captured both (`proof/fold-1280.png`)."], "didnt": [], "human": ["The rail's hover and the motion."], "at": "2026-11-01"}, "commitInfo": [{"sha": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9", "subject": "Split view slice 1: the split tab, its sides, making room with the rail, routing by active side, persistence, duo2 split verbs, DuoChecks (DL-275 to DL-278)"}, {"sha": "5e276cf3c6f71390190141eef33480503c82caf6", "subject": "Split view: the harness actions, check-split.sh, records fix, rail and room timing"}, {"sha": "b28dcd79c3ef2ef234eb3027021472cafa08f48c", "subject": "Split view: ratio changes only on a drag, the fold counts the rail, preview converted off the main thread, records F-500 to F-503, Q-399 to Q-402, C-140, duo2 reference"}, {"sha": "6710570b32684db5169010bbff46d330d2370618", "subject": "Split view: comparison with the screens (F-504), proof images, check-split.sh in Light, Dark and Classic"}]}, {"id": "split-keys-by-side", "group": "In checkout: keys, saving and coming back", "title": "Keys follow the active side: ⇧⌘[ and ⇧⌘], ⌘W, ⌘D, ⌘S", "what": "⇧⌘[ and ⇧⌘] switch the active side. ⌘W closes the active side and never the console's session. ⌘D sends the active side's selection. ⌘S saves the one document from either side.", "steps": ["With a split open and a Claude session in the console, press ⇧⌘].", "Select some text in the preview and press ⌘D.", "Press ⌘W with the preview active, then reopen the split and press ⌘W with the source active."], "expect": "The rule moves with ⇧⌘[ and ⇧⌘]. ⌘D sends the preview's selected text to the console's session. ⌘W on the preview closes the preview and leaves the source tab; on the source it closes the split with its tab. The console's session is untouched both times. ⌥⌘← and ⌥⌘→ no longer step between panes (DL-289) and don't step between sides.", "ref": "DL-277, DL-289, F-479, F-495", "commit": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9", "alsoCommits": ["5e276cf3c6f71390190141eef33480503c82caf6", "b28dcd79c3ef2ef234eb3027021472cafa08f48c", "6710570b32684db5169010bbff46d330d2370618"], "workMac": "small", "workMacWhy": "Needs a running Claude session in the console", "links": [{"label": "routing-verbs screen", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/split-view-handoff/screens/routing-verbs.html"}], "setup": ["open checkout", "doc open docs/prd.md", "split docs/prd.md", "session-running checkout"], "claude": {"result": "partial", "did": ["Checked every command by side in DuoChecks (`split`), and ⌘W with the console's session left alone.", "Stepped sides in the model."], "didnt": ["Pressed the chords themselves."], "human": ["The chords ⇧⌘[ ⇧⌘], ⌘D from the preview."], "at": "2026-11-01"}, "commitInfo": [{"sha": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9", "subject": "Split view slice 1: the split tab, its sides, making room with the rail, routing by active side, persistence, duo2 split verbs, DuoChecks (DL-275 to DL-278)"}, {"sha": "5e276cf3c6f71390190141eef33480503c82caf6", "subject": "Split view: the harness actions, check-split.sh, records fix, rail and room timing"}, {"sha": "b28dcd79c3ef2ef234eb3027021472cafa08f48c", "subject": "Split view: ratio changes only on a drag, the fold counts the rail, preview converted off the main thread, records F-500 to F-503, Q-399 to Q-402, C-140, duo2 reference"}, {"sha": "6710570b32684db5169010bbff46d330d2370618", "subject": "Split view: comparison with the screens (F-504), proof images, check-split.sh in Light, Dark and Classic"}]}, {"id": "split-restore", "group": "In checkout: keys, saving and coming back", "title": "A split comes back after a quit", "what": "The split, its divider, which side was active and whether it had folded the sidebar are kept in the restore file, never in the project.", "steps": ["Open a split and move the divider.", "Quit Duo and reopen it."], "expect": "The file reopens in its split with the divider where you left it, the sidebar folded as before and the console at 480. Closing the split then gives the sidebar back.", "ref": "DL-275, C-140", "commit": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9", "alsoCommits": ["5e276cf3c6f71390190141eef33480503c82caf6", "b28dcd79c3ef2ef234eb3027021472cafa08f48c", "6710570b32684db5169010bbff46d330d2370618"], "workMac": "small", "workMacWhy": "Needs a quit and relaunch", "links": [{"label": "split-deck screen", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/split-view-handoff/screens/split-deck.html"}], "setup": ["open checkout", "doc open docs/prd.md", "split docs/prd.md", "split ratio 0.4"], "claude": {"result": "partial", "did": ["The restore file's round trip and its validation (a missing source is dropped; a wild ratio is clamped) are checked in DuoChecks."], "didnt": ["A real quit and relaunch."], "human": ["Quit and relaunch."], "at": "2026-11-01"}, "commitInfo": [{"sha": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9", "subject": "Split view slice 1: the split tab, its sides, making room with the rail, routing by active side, persistence, duo2 split verbs, DuoChecks (DL-275 to DL-278)"}, {"sha": "5e276cf3c6f71390190141eef33480503c82caf6", "subject": "Split view: the harness actions, check-split.sh, records fix, rail and room timing"}, {"sha": "b28dcd79c3ef2ef234eb3027021472cafa08f48c", "subject": "Split view: ratio changes only on a drag, the fold counts the rail, preview converted off the main thread, records F-500 to F-503, Q-399 to Q-402, C-140, duo2 reference"}, {"sha": "6710570b32684db5169010bbff46d330d2370618", "subject": "Split view: comparison with the screens (F-504), proof images, check-split.sh in Light, Dark and Classic"}]}, {"id": "split-themes", "group": "In checkout: keys, saving and coming back", "title": "Dark and Classic", "what": "The split in Light, Dark and Classic.", "steps": ["Open a split.", "Settings › Appearance: Light, Dark, Classic."], "expect": "The rule, the tab names, the rails and the divider follow the appearance, as the screen draws them.", "ref": "DL-275, DL-252", "commit": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9", "alsoCommits": ["5e276cf3c6f71390190141eef33480503c82caf6", "b28dcd79c3ef2ef234eb3027021472cafa08f48c", "6710570b32684db5169010bbff46d330d2370618"], "workMac": "as-is", "workMacWhy": "Any split", "links": [{"label": "split-themes screen", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/split-view-handoff/screens/split-themes.html"}], "setup": ["open checkout", "doc open docs/prd.md", "split docs/prd.md"], "claude": {"result": "passed", "did": ["Captured the split in all three appearances (`proof/theme-dark.png`, `proof/theme-classic.png`)."], "didnt": [], "human": ["How each theme looks beside the screen."], "at": "2026-11-01"}, "commitInfo": [{"sha": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9", "subject": "Split view slice 1: the split tab, its sides, making room with the rail, routing by active side, persistence, duo2 split verbs, DuoChecks (DL-275 to DL-278)"}, {"sha": "5e276cf3c6f71390190141eef33480503c82caf6", "subject": "Split view: the harness actions, check-split.sh, records fix, rail and room timing"}, {"sha": "b28dcd79c3ef2ef234eb3027021472cafa08f48c", "subject": "Split view: ratio changes only on a drag, the fold counts the rail, preview converted off the main thread, records F-500 to F-503, Q-399 to Q-402, C-140, duo2 reference"}, {"sha": "6710570b32684db5169010bbff46d330d2370618", "subject": "Split view: comparison with the screens (F-504), proof images, check-split.sh in Light, Dark and Classic"}]}, {"id": "split-duo2", "group": "In checkout: keys, saving and coming back", "title": "`duo2 split`", "what": "Everything the split does has a verb: `duo2 split <file>`, `split` (a report), `split close [--side]`, `split focus`, `split swap`, `split ratio`, `split unfold`, and `view sidebar peek`.", "steps": ["Run `duo2 split docs/prd.md`, then `duo2 split`.", "Run `duo2 split swap`, `duo2 split ratio 0.3`, `duo2 split focus right`, `duo2 split close`."], "expect": "The report names both sides, the active side, the ratio, whether it is folded and whether the split folded the sidebar. `split --with` (two documents) is slice 2's.", "ref": "DL-71, DL-275", "commit": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9", "alsoCommits": ["5e276cf3c6f71390190141eef33480503c82caf6", "b28dcd79c3ef2ef234eb3027021472cafa08f48c", "6710570b32684db5169010bbff46d330d2370618"], "workMac": "small", "workMacWhy": "Needs the `duo2` command in a terminal", "setup": ["open checkout", "doc open docs/prd.md"], "claude": {"result": "passed", "did": ["Each verb's action runs in DuoChecks and the harness's equivalents ran live; the `duo2` command itself was not run against a live Duo, which is for the walk. `docs/cli/duo2.md` is regenerated and current."], "didnt": [], "human": ["Run the verbs from a terminal."], "at": "2026-11-01"}, "commitInfo": [{"sha": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9", "subject": "Split view slice 1: the split tab, its sides, making room with the rail, routing by active side, persistence, duo2 split verbs, DuoChecks (DL-275 to DL-278)"}, {"sha": "5e276cf3c6f71390190141eef33480503c82caf6", "subject": "Split view: the harness actions, check-split.sh, records fix, rail and room timing"}, {"sha": "b28dcd79c3ef2ef234eb3027021472cafa08f48c", "subject": "Split view: ratio changes only on a drag, the fold counts the rail, preview converted off the main thread, records F-500 to F-503, Q-399 to Q-402, C-140, duo2 reference"}, {"sha": "6710570b32684db5169010bbff46d330d2370618", "subject": "Split view: comparison with the screens (F-504), proof images, check-split.sh in Light, Dark and Classic"}]}, {"id": "split-contract", "group": "In checkout: keys, saving and coming back", "title": "The PreviewProvider contract (for Duo Decks and slice 2)", "what": "The interface a preview provider implements, with revisions on every event, so a stale map or an echo is ignored and a render older than the newest is dropped.", "steps": ["Run `DUO_CHECKS=split swift run DuoChecks`."], "expect": "2247 checks pass, covering the revision gate, stale maps, echo suppression, the narrowest anchor, the routing table by side, narrow widths and swaps. Nothing to see in the app; Duo Decks' viewer and slice 2 build on it.", "ref": "DL-275", "commit": "7c128884ee57ea83521c9605d5e4ec251b10c400", "alsoCommits": ["36fb46132807be02da4697e5d052869549d6c178"], "workMac": "home", "workMacWhy": "A command run in the repo", "setup": ["go all"], "claude": {"result": "passed", "did": ["Ran the split checks: 2247 passed, 0 failed."], "didnt": [], "human": [], "at": "2026-11-01"}, "commitInfo": [{"sha": "7c128884ee57ea83521c9605d5e4ec251b10c400", "subject": "Split view: the PreviewProvider contract (protocol, events, revisions, policy), SplitGeometry, and tokens splitSideMin and sidebarRail (DL-275)"}, {"sha": "36fb46132807be02da4697e5d052869549d6c178", "subject": "Split view: contract additions from Duo Decks and slice 2 (openThread, addComment, problem severity, provider view, narrowest anchor, SplitTab.with, doc-pair routing)"}]}], "repo": "https://github.com/dudgeon/duo-v2", "builtAt": "6cbe72f9d682ed527bdcf288ad2ebf824e29ff1b"}</script>
+<script>
+const DATA = JSON.parse(document.getElementById("data").textContent);
+const KEY = "acceptance:" + DATA.sprint;
+const LABEL = { accepted: "Accepted", rejected: "Rejected", deferred: "Not now", "": "To do" };
+let verdicts = {};   // id -> {status, comment, at}
+let answers = {};    // decision id -> {choice, other, comment, at}
+let db = null, filter = "all", showCleared = false, onlyAsIs = false, forceMobile = false;
+const WM_LABEL = { "as-is": "Work Mac: as-is", small: "Work Mac: small setup", home: "Home Mac only" };
+const WM_ORDER = ["as-is", "small", "home"];
+const WM_SHORT = { "as-is": "Work Mac, as-is", small: "Work Mac, small setup", home: "Home Mac only" };
+const mq = window.matchMedia ? window.matchMedia("(max-width: 760px)") : { matches: false };
+const mobileOrder = () => mq.matches || forceMobile;
+// Send to Claude (comments capability): reaches the Claude session watching this page; its reply
+// arrives as a comment in the thread. Each card keeps one thread, so later sends reply into it.
+let comments = null, canSend = "off";
+let threads = {};
+try { threads = JSON.parse(localStorage.getItem("acceptance-threads:" + (JSON.parse(document.getElementById("data").textContent).sprint)) || "{}"); } catch (e) { threads = {}; }
+const keepThreads = () => { try { localStorage.setItem("acceptance-threads:" + DATA.sprint, JSON.stringify(threads)); } catch (e) {} };
+async function sendToClaude(key, anchorEl, text, statusEl) {
+  if (!comments || canSend !== "available") { statusEl.className = "sent err"; statusEl.textContent = "No Claude session is listening; it's saved here."; return false; }
+  statusEl.className = "sent"; statusEl.textContent = "Sending…";
+  const body = text.length > 3900 ? text.slice(0, 3900) + "\n… (more on the page; read the saved verdicts)" : text;
+  try {
+    let r;
+    if (threads[key]) {
+      try { r = await comments.sendToClaude({ threadId: threads[key], text: body }); }
+      catch (e) { if (e && e.code === "not_found") { delete threads[key]; } else throw e; }
+    }
+    if (!r) r = await comments.sendToClaude({ anchor: await comments.anchorFor(anchorEl), text: body });
+    threads[key] = r.threadId; keepThreads();
+    statusEl.className = "sent ok"; statusEl.textContent = "Sent to Claude; its reply arrives as a comment here.";
+    return true;
+  } catch (e) {
+    const code = e && e.code;
+    statusEl.className = "sent err";
+    statusEl.textContent = code === "consent_required" ? "Allow comments from this page, then send again."
+      : code === "claude_unavailable" ? "No Claude session could take it; it's saved here."
+      : code === "rate_limited" ? "Sending too fast; wait a moment."
+      : "Couldn't send (" + (code || "error") + "); it's saved here.";
+    return false;
+  }
+}
+function featureText(f) {
+  const v = verdicts[f.id] || {};
+  return `Walk ${DATA.sprint} · test \`${f.id}\`: ${f.title}${f.ref ? " (" + f.ref + ")" : ""}; ${commitText(f)}; ${WM_LABEL[f.workMac] || f.workMac}\nVerdict: ${LABEL[v.status || ""]}` + ((v.comment || "").trim() ? `\nComment: ${v.comment.trim()}` : "");
+}
+function decisionText(d) {
+  const a = answers[d.id] || {}, o = (d.options || []).find(x => x.id === a.choice);
+  return `Walk ${DATA.sprint} · decision \`${d.id}\`: ${d.title}${d.ref ? " (" + d.ref + ")" : ""}\nChoice: ${a.choice ? (o ? o.label : "Something else") : "not answered"}` + ((a.comment || "").trim() ? `\nComment: ${a.comment.trim()}` : "");
+}
+function sendable() {
+  document.querySelectorAll(".tosend[data-k]").forEach(b => {
+    const [kind, id] = b.dataset.k.split(":");
+    const has = kind === "f" ? !!((verdicts[id]?.status) || (verdicts[id]?.comment || "").trim()) : !!((answers[id]?.choice) || (answers[id]?.comment || "").trim());
+    b.disabled = canSend !== "available" || !has;
+    b.title = canSend === "available" ? (has ? "Send this to Claude now" : "Give a verdict or a comment first") : "No Claude session is listening right now";
+  });
+  const all = $("#sendall"); if (all) all.disabled = canSend !== "available";
+}
+
+function local(read, value) {
+  try { if (read) return JSON.parse(localStorage.getItem(KEY) || "{}"); localStorage.setItem(KEY, JSON.stringify(value)); }
+  catch (e) { return read ? {} : undefined; }
+}
+verdicts = local(true);
+try { answers = JSON.parse(localStorage.getItem(KEY + ":decisions") || "{}"); } catch (e) { answers = {}; }
+
+const $ = (s, el = document) => el.querySelector(s);
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+
+// Inline `code`, **bold** and *italic* in the walk's text.
+function rich(parent, text) {
+  text.split(/(\[[^\]]+\]\(https?:\/\/[^)\s]+\)|`[^`]+`|\*\*[^*]+\*\*|\*[^*\s][^*]*\*)/).forEach(part => {
+    const lk = part.match(/^\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)$/);
+    if (lk) { const a = el("a", "lnk", lk[1]); a.href = lk[2]; a.target = "_blank"; a.rel = "noopener"; parent.append(a); }
+    else if (part.length > 2 && part.startsWith("`") && part.endsWith("`")) parent.append(el("code", null, part.slice(1, -1)));
+    else if (part.length > 4 && part.startsWith("**") && part.endsWith("**")) parent.append(el("strong", null, part.slice(2, -2)));
+    else if (part.length > 2 && part.startsWith("*") && part.endsWith("*")) parent.append(el("em", null, part.slice(1, -1)));
+    else parent.append(document.createTextNode(part));
+  });
+  return parent;
+}
+
+$("#title").textContent = DATA.title;
+document.title = DATA.title;
+rich($("#intro"), DATA.intro || "");
+(DATA.setup || []).forEach(s => $("#setup").append(rich(el("li"), s)));
+
+const cards = {};
+// A card's or decision's `links` as buttons that open in a new tab.
+function linkBar(links) {
+  if (!links || !links.length) return null;
+  const bar = el("div", "linkbar");
+  links.forEach(l => { const a = el("a", "linkbtn", l.label + " ↗"); a.href = l.url; a.target = "_blank"; a.rel = "noopener"; bar.append(a); });
+  return bar;
+}
+
+function build() {
+  const list = $("#list");
+  DATA.features.forEach(f => {
+    const c = el("section", "card"); c.id = "f-" + f.id;
+    const top = el("div", "top");
+    top.append(el("h3", null, f.title));
+    if (f.ref) top.append(el("span", "ref", f.ref));
+    const pill = el("span", "pill"); top.append(pill);
+    const wm = el("span", "wm " + f.workMac, WM_LABEL[f.workMac] || f.workMac); wm.title = f.workMacWhy || WM_LABEL[f.workMac] || ""; top.append(wm);
+    c.append(top);
+    const lb = linkBar(f.links); if (lb) c.append(lb);
+    if (f.workMacWhy) c.append(el("p", "wmwhy", f.workMacWhy));
+    if (f.what) c.append(rich(el("p", "what"), f.what));
+    c.append(commitLine(f));
+    if (f.setup && f.setup.length) {
+      const bar = el("div", "setupbar");
+      const a = el("a", "setupbtn", "Set up test"); a.href = "duo2://walk-setup?id=" + encodeURIComponent(f.id);
+      a.title = "Duo arranges the fixtures for this test: " + f.setup.join(" · ");
+      bar.append(a);
+      const alt = el("span", "alt"); alt.append("or in a terminal: "); alt.append(el("code", null, "duo2 walk setup " + f.id)); bar.append(alt);
+      c.append(bar);
+    }
+    if (f.claude) {
+      const b = el("div", "claude");
+      const head = el("div", "head"); head.append("Claude tried this"); head.append(el("span", "pill " + (f.claude.result || ""), f.claude.result || "not run"));
+      if (f.claude.at) head.append(el("span", "ref", f.claude.at));
+      b.append(head);
+      const list = (lbl, items) => { if (!items || !items.length) return; b.append(el("div", "lbl", lbl)); const ul = el("ul"); items.forEach(x => ul.append(rich(el("li"), x))); b.append(ul); };
+      list("Did and saw", f.claude.did);
+      list("Didn't or couldn't", f.claude.didnt);
+      list("Needs your judgment", f.claude.human);
+      c.append(b);
+    }
+    c.append(el("div", "label", "Try"));
+    const ol = el("ol", "steps"); f.steps.forEach(s => ol.append(rich(el("li"), s))); c.append(ol);
+    c.append(el("div", "label", "Expect"));
+    c.append(rich(el("p", "expect"), f.expect));
+    const acts = el("div", "actions");
+    const mk = (cls, text, status) => { const b = el("button", cls, text); b.setAttribute("aria-pressed", "false"); b.onclick = () => setStatus(f.id, status); acts.append(b); return b; };
+    const btns = { accepted: mk("accept", "Accept", "accepted"), rejected: mk("reject", "Reject", "rejected"), deferred: mk("defer", "Not now", "deferred") };
+    const send = el("button", "tosend", "Send to Claude"); send.dataset.k = "f:" + f.id;
+    const sent = el("span", "sent");
+    send.onclick = async () => {
+      // A comment still being typed goes with it.
+      if ((verdicts[f.id]?.comment || "") !== ta.value) await write(f.id, { comment: ta.value });
+      sendToClaude("f:" + f.id, c, featureText(f), sent);
+    };
+    acts.append(send); acts.append(sent);
+    const saved = el("span", "saved"); acts.append(saved);
+    c.append(acts);
+    const ta = el("textarea"); ta.placeholder = "Comments (what you saw, what's wrong, what you'd change)";
+    let timer;
+    ta.oninput = () => { clearTimeout(timer); saved.textContent = "…"; timer = setTimeout(() => setComment(f.id, ta.value), 700); };
+    ta.onblur = () => { clearTimeout(timer); if ((verdicts[f.id]?.comment || "") !== ta.value) setComment(f.id, ta.value); };
+    c.append(ta);
+    cards[f.id] = { c, pill, btns, ta, saved };
+  });
+  layout();
+}
+
+// Order: walk order on desktop; on a phone (or with "Mobile order") decisions, then as-is, small, home.
+let sections = [];
+let lastMode = null;
+function layout() {
+  const mobile = mobileOrder();
+  lastMode = mobile;
+  placeAbout(mobile);
+  const list = $("#list"); list.textContent = "";
+  sections = [];
+  const groups = [];
+  DATA.features.forEach(f => {
+    let g = groups.find(x => x.name === f.group);
+    if (!g) groups.push(g = { name: f.group, fs: [] });
+    g.fs.push(f);
+  });
+  const add = (title, fs, group) => {
+    if (!fs.length) return;
+    const h = el("h2", null, title);
+    const note = (DATA.groupNotes || {})[group];
+    const n = note ? rich(el("p", "group-note"), note) : null;
+    list.append(h); if (n) list.append(n);
+    fs.forEach(f => list.append(cards[f.id].c));
+    sections.push({ h, n, fs });
+  };
+  if (!mobile) {
+    // consecutive runs, as the walk is written
+    const runs = [];
+    DATA.features.forEach(f => { let r = runs[runs.length - 1]; if (!r || r.name !== f.group) runs.push(r = { name: f.group, fs: [] }); r.fs.push(f); });
+    runs.forEach(r => add(r.name, r.fs, r.name));
+  } else {
+    WM_ORDER.forEach(r => groups.forEach(g => add(WM_SHORT[r] + " · " + g.name, g.fs.filter(f => f.workMac === r), g.name)));
+  }
+}
+let aboutDetails = null;
+function placeAbout(mobile) {
+  const about = $("#about"), ds = $("#decisions");
+  if (mobile) {
+    if (!aboutDetails) { aboutDetails = el("details", "aboutwalk"); aboutDetails.append(el("summary", null, "About this walk and setup")); }
+    aboutDetails.append(about);
+    ds.after(aboutDetails);
+  } else {
+    ds.before(about);
+    if (aboutDetails) aboutDetails.remove();
+  }
+}
+function relayout() { layout(); render(); }
+if (mq.addEventListener) mq.addEventListener("change", relayout); else if (mq.addListener) mq.addListener(relayout);
+
+// The commit that built the feature, so a rejected one can be reverted (Geoff, 2026-10-05).
+const short = (sha) => sha.slice(0, 7);
+function commitLine(f) {
+  const line = el("div", "commit");
+  if (!f.commitInfo || !f.commitInfo.length) { line.append(el("span", null, f.noCommit || "No commit recorded")); return line; }
+  const [first, ...later] = f.commitInfo;
+  const link = (c) => { const a = el("a", null, short(c.sha)); a.href = `${DATA.repo}/commit/${c.sha}`; a.target = "_blank"; a.rel = "noopener"; a.title = c.subject; return a; };
+  const built = el("span"); built.append("Built in "); built.append(link(first)); built.append(" · " + first.subject.slice(0, 80) + (first.subject.length > 80 ? "…" : "")); line.append(built);
+  if (later.length) { const a = el("span"); a.append("changed in "); later.forEach((c, i) => { if (i) a.append(", "); a.append(link(c)); }); line.append(a); }
+  const cmd = "git revert " + f.commitInfo.map(c => short(c.sha)).reverse().join(" ");
+  const code = el("code", null, cmd); code.title = "Copy the revert command";
+  code.onclick = () => { try { navigator.clipboard.writeText(cmd); code.textContent = "Copied"; setTimeout(() => code.textContent = cmd, 1200); } catch (e) {} };
+  const r = el("span"); r.append("revert: "); r.append(code); line.append(r);
+  return line;
+}
+const commitText = (f) => f.commitInfo && f.commitInfo.length ? `commit ${f.commitInfo.map(c => short(c.sha)).join(", ")}` : "no commit";
+
+function render() {
+  const n = { accepted: 0, rejected: 0, deferred: 0, "": 0 };
+  DATA.features.forEach(f => {
+    const v = verdicts[f.id] || {}, s = v.status || "", k = cards[f.id];
+    n[s] = (n[s] || 0) + 1;
+    k.c.className = "card " + s;
+    k.pill.className = "pill " + s; k.pill.textContent = LABEL[s];
+    for (const [st, b] of Object.entries(k.btns)) b.setAttribute("aria-pressed", String(s === st));
+    if (document.activeElement !== k.ta && k.ta.value !== (v.comment || "")) k.ta.value = v.comment || "";
+    const show = (filter === "all" || (filter === "todo" ? !s : s === filter)) && (showCleared || !v.cleared) && (!onlyAsIs || f.workMac === "as-is");
+    k.c.classList.toggle("hidden", !show);
+  });
+  sections.forEach(s => {
+    const any = s.fs.some(f => !cards[f.id].c.classList.contains("hidden"));
+    s.h.classList.toggle("hidden", !any);
+    if (s.n) s.n.classList.toggle("hidden", !any);
+  });
+  $("#mobileorder").setAttribute("aria-pressed", String(forceMobile));
+  $("#onlyasis").setAttribute("aria-pressed", String(onlyAsIs));
+  const total = DATA.features.length;
+  sendable();
+  $("#counts").textContent = `${n.accepted} accepted · ${n.rejected} rejected · ${n.deferred} not now · ${n[""]} to do (${total})`;
+  const p = $("#progress"); p.textContent = "";
+  [["accepted", "var(--ok)"], ["rejected", "var(--bad)"], ["deferred", "var(--later)"]].forEach(([s, col]) => {
+    const span = el("span"); span.style.width = (100 * n[s] / total) + "%"; span.style.background = col; p.append(span);
+  });
+}
+
+async function write(id, patch) {
+  const k = cards[id];
+  const next = Object.assign({ status: "", comment: "" }, verdicts[id], patch, { at: new Date().toISOString() });
+  verdicts[id] = next;
+  local(false, verdicts);
+  render();
+  if (!db) { k.saved.textContent = "Saved in this browser"; return; }
+  k.saved.textContent = "Saving…";
+  try { await db.doc("verdicts/" + id).set(next); k.saved.textContent = "Saved"; }
+  catch (e) { k.saved.textContent = "Not saved (" + (e.code || e.message || "error") + "), kept in this browser"; }
+}
+function setStatus(id, status) {
+  const cur = verdicts[id]?.status || "";
+  write(id, { status: cur === status ? "" : status, comment: cards[id].ta.value });
+}
+function setComment(id, comment) { write(id, { comment }); }
+
+$("#onlyasis").onclick = () => { onlyAsIs = !onlyAsIs; render(); };
+$("#mobileorder").onclick = () => { forceMobile = !forceMobile; relayout(); };
+document.querySelectorAll(".filters button[data-f]").forEach(b => b.onclick = () => {
+  filter = b.dataset.f;
+  document.querySelectorAll(".filters button[data-f]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  render();
+});
+
+function feedback() {
+  const by = s => DATA.features.filter(f => (verdicts[f.id]?.status || "") === s);
+  const line = f => {
+    const c = (verdicts[f.id]?.comment || "").trim();
+    return `- **${f.title}** (\`${f.id}\`${f.ref ? ", " + f.ref : ""}; ${commitText(f)}; ${WM_LABEL[f.workMac] || f.workMac})` + (c ? `\n  ${c.replace(/\n/g, "\n  ")}` : "");
+  };
+  const out = [`# Acceptance feedback: ${DATA.title}`, `Sprint \`${DATA.sprint}\` · built at ${(DATA.builtAt || "").slice(0, 7)} · ${new Date().toLocaleString()}`, ""];
+  const sec = (name, list, all) => {
+    const items = all ? list : list.filter(f => (verdicts[f.id]?.comment || "").trim());
+    if (!items.length) return;
+    out.push(`## ${name} (${list.length})`, ...items.map(line), "");
+    if (!all && items.length < list.length) out.splice(out.length - 1, 0, `- ${list.length - items.length} more with no comment`);
+  };
+  const ds = DATA.decisions || [];
+  if (ds.length) {
+    out.push(`## Decisions (${ds.filter(d => answers[d.id]?.choice).length} of ${ds.length} answered)`);
+    ds.forEach(d => {
+      const a = answers[d.id] || {};
+      const o = (d.options || []).find(x => x.id === a.choice);
+      const pick = a.choice ? (o ? o.label : "Something else") : "not answered";
+      out.push(`- **${d.title}** (\`${d.id}\`${d.ref ? ", " + d.ref : ""}): ${pick}` + ((a.comment || "").trim() ? `\n  ${a.comment.trim().replace(/\n/g, "\n  ")}` : ""));
+    });
+    out.push("");
+  }
+  sec("Rejected", by("rejected"), true);
+  sec("Accepted, with comments", by("accepted"), false);
+  sec("Not now", by("deferred"), true);
+  const todo = DATA.features.filter(f => !verdicts[f.id]?.status);
+  if (todo.length) out.push(`## Not yet tested (${todo.length})`, todo.map(f => f.id).join(", "), "");
+  const loose = todo.filter(f => (verdicts[f.id]?.comment || "").trim());
+  if (loose.length) out.push(`## Comments on untested items`, ...loose.map(line), "");
+  return out.join("\n");
+}
+
+// Clear done: accepted tests and answered decisions are hidden (marked cleared, still recorded).
+$("#clear").onclick = async () => {
+  const fs = DATA.features.filter(f => verdicts[f.id]?.status === "accepted" && !verdicts[f.id]?.cleared);
+  const ds = (DATA.decisions || []).filter(d => answers[d.id]?.choice && !answers[d.id]?.cleared);
+  if (!fs.length && !ds.length) return;
+  for (const f of fs) await write(f.id, { cleared: true });
+  for (const d of ds) await writeAnswer(d.id, { cleared: true });
+  render(); renderDecisions();
+};
+$("#showcleared").onclick = () => {
+  showCleared = !showCleared;
+  $("#showcleared").setAttribute("aria-pressed", String(showCleared));
+  render(); renderDecisions();
+};
+
+$("#copy").onclick = async () => {
+  const text = feedback();
+  $("#out").value = text;
+  const extra = db ? " Claude can also read your verdicts directly." : "";
+  $("#dlgnote").textContent = "Select all and copy, then paste it into Claude." + extra;
+  $("#dlg").showModal();
+  $("#out").select();
+  // The clipboard can be refused (or never answer) inside a frame; the dialog is the fallback.
+  Promise.race([navigator.clipboard.writeText(text), new Promise((_, no) => setTimeout(no, 1500))])
+    .then(() => { $("#dlgnote").textContent = "Copied. Paste it into Claude." + extra; }, () => {});
+};
+$("#close").onclick = () => $("#dlg").close();
+$("#sendall").onclick = async () => {
+  const st = $("#chan");
+  await sendToClaude("all", $("header"), feedback(), st);
+};
+
+// Send to Claude lights up when a session is watching; re-checked every 30 s.
+(async () => {
+  try { comments = await window.claude?.use?.("comments"); } catch (e) { comments = null; }
+  const check = async () => {
+    try { canSend = comments ? await comments.canSendToClaude() : "off"; } catch (e) { canSend = "off"; }
+    const chan = $("#chan");
+    if (!chan.textContent.startsWith("Sen")) {
+      chan.className = "chan" + (canSend === "available" ? " ok" : "");
+      chan.textContent = canSend === "available" ? "Claude is listening: sends reach it directly"
+        : canSend === "no_session" ? "No Claude session is listening; verdicts are saved for it"
+        : canSend === "writers_only" ? "Only the page's editors can send to Claude"
+        : "Verdicts are saved for Claude to read";
+    }
+    sendable();
+  };
+  await check();
+  setInterval(check, 30000);
+})();
+
+// Decisions Geoff makes from the page: context, options (with small mockups), a pick, comments.
+const dcards = {};
+function buildDecisions() {
+  const list = DATA.decisions || [];
+  if (!list.length) return;
+  const sec = $("#decisions");
+  sec.classList.remove("hidden");
+  const h = el("h2", null, "Decisions for you ");
+  h.append(el("span", "count", ""));
+  sec.append(h);
+  if (DATA.decisionsIntro) sec.append(rich(el("p", "intro"), DATA.decisionsIntro));
+  list.forEach(d => {
+    const c = el("section", "decision"); c.id = "d-" + d.id;
+    const top = el("div", "top");
+    top.append(el("h3", null, d.title));
+    if (d.ref) top.append(el("span", "ref", d.ref));
+    const state = el("span", "pill"); top.append(state);
+    c.append(top);
+    const dlb = linkBar(d.links); if (dlb) c.append(dlb);
+    const ctx = el("div", "context");
+    (d.context || []).forEach(p => {
+      if (Array.isArray(p)) { const ul = el("ul"); p.forEach(x => ul.append(rich(el("li"), x))); ctx.append(ul); }
+      else ctx.append(rich(el("p"), p));
+    });
+    c.append(ctx);
+    const opts = el("div", "options");
+    const radios = {};
+    (d.options || []).concat([{ id: "other", label: "Something else", desc: "Say what in the comment below." }]).forEach(o => {
+      const lab = el("label", "option");
+      const r = el("input"); r.type = "radio"; r.name = "d-" + d.id; r.value = o.id;
+      r.onchange = () => writeAnswer(d.id, { choice: o.id });
+      lab.append(r);
+      const head = el("div"); head.append(el("span", "olabel", o.label)); if (o.recommended) head.append(el("span", "rec", "Recommended"));
+      lab.append(head);
+      if (o.desc) lab.append(rich(el("div", "odesc"), o.desc));
+      if (o.mockup) { const m = el("div", "mock"); m.innerHTML = o.mockup; lab.append(m); }
+      opts.append(lab);
+      radios[o.id] = { r, lab };
+    });
+    c.append(opts);
+    const ta = el("textarea"); ta.placeholder = "Comments (why, conditions, what to change)";
+    let timer;
+    ta.oninput = () => { clearTimeout(timer); timer = setTimeout(() => writeAnswer(d.id, { comment: ta.value }), 700); };
+    ta.onblur = () => { clearTimeout(timer); if ((answers[d.id]?.comment || "") !== ta.value) writeAnswer(d.id, { comment: ta.value }); };
+    c.append(ta);
+    const row = el("div", "dsend");
+    const send = el("button", "tosend", "Send to Claude"); send.dataset.k = "d:" + d.id;
+    const sent = el("span", "sent");
+    send.onclick = async () => {
+      if ((answers[d.id]?.comment || "") !== ta.value) await writeAnswer(d.id, { comment: ta.value });
+      sendToClaude("d:" + d.id, c, decisionText(d), sent);
+    };
+    row.append(send); row.append(sent);
+    const saved = el("div", "saved"); row.append(saved);
+    c.append(row);
+    sec.append(c);
+    dcards[d.id] = { c, state, radios, ta, saved, d };
+  });
+}
+
+function renderDecisions() {
+  const list = DATA.decisions || [];
+  if (!list.length) return;
+  let n = 0;
+  list.forEach(d => {
+    const a = answers[d.id] || {}, k = dcards[d.id];
+    if (a.choice) n++;
+    k.c.classList.toggle("answered", !!a.choice);
+    k.c.classList.toggle("hidden", !!a.cleared && !showCleared);
+    const opt = (d.options || []).find(o => o.id === a.choice);
+    k.state.className = "pill" + (a.choice ? " accepted" : "");
+    k.state.textContent = a.choice ? (opt ? opt.label : "Something else") : "Open";
+    for (const [id, { r, lab }] of Object.entries(k.radios)) { r.checked = a.choice === id; lab.classList.toggle("chosen", a.choice === id); }
+    if (document.activeElement !== k.ta && k.ta.value !== (a.comment || "")) k.ta.value = a.comment || "";
+  });
+  $("#decisions .count").textContent = `(${n} of ${list.length} answered)`;
+  sendable();
+}
+
+async function writeAnswer(id, patch) {
+  const k = dcards[id];
+  const next = Object.assign({ choice: "", comment: "" }, answers[id], patch, { at: new Date().toISOString() });
+  answers[id] = next;
+  try { localStorage.setItem(KEY + ":decisions", JSON.stringify(answers)); } catch (e) {}
+  renderDecisions();
+  if (!db) { k.saved.textContent = "Saved in this browser"; return; }
+  k.saved.textContent = "Saving…";
+  try { await db.doc("decisions/" + id).set(next); k.saved.textContent = "Saved"; }
+  catch (e) { k.saved.textContent = "Not saved (" + (e.code || e.message || "error") + "), kept in this browser"; }
+}
+
+buildDecisions();
+renderDecisions();
+build();
+render();
+
+(async () => {
+  try { db = await window.claude?.use?.("db"); } catch (e) { db = null; }
+  if (!db) { $("#store").textContent = "Verdicts are saved in this browser only. Use Copy feedback to send them to Claude."; return; }
+  $("#store").textContent = "Verdicts are saved with this page; you can stop and come back any time, and Claude can read them.";
+  // Anything recorded in this browser before the store connected goes up once.
+  const remote = await db.collection("verdicts").get().catch(() => null);
+  const have = new Set(remote ? remote.docs.map(d => d.id) : []);
+  for (const [id, v] of Object.entries(verdicts)) if (!have.has(id) && cards[id] && (v.status || v.comment)) db.doc("verdicts/" + id).set(v).catch(() => {});
+  const remoteD = await db.collection("decisions").get().catch(() => null);
+  const haveD = new Set(remoteD ? remoteD.docs.map(d => d.id) : []);
+  for (const [id, a] of Object.entries(answers)) if (!haveD.has(id) && dcards[id] && (a.choice || a.comment)) db.doc("decisions/" + id).set(a).catch(() => {});
+  db.collection("decisions").onSnapshot(snap => {
+    snap.docs.forEach(d => { if (dcards[d.id]) answers[d.id] = d.data(); });
+    try { localStorage.setItem(KEY + ":decisions", JSON.stringify(answers)); } catch (e) {}
+    renderDecisions();
+  }, () => {});
+  db.collection("verdicts").onSnapshot(snap => {
+    snap.docs.forEach(d => { if (cards[d.id]) verdicts[d.id] = d.data(); });
+    local(false, verdicts);
+    render();
+  }, e => { $("#store").textContent = "Lost the connection to saved verdicts (" + (e.code || "error") + "); changes are kept in this browser."; });
+})();
+</script>
+</body>
+</html>

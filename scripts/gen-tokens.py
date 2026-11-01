@@ -106,6 +106,8 @@ s = t["size"]
 w(f"    public static let toolbarHeight: CGFloat = {num(s['toolbarHeight'])}")
 w(f"    public static let tabStripHeight: CGFloat = {num(s['tabStripHeight'])}")
 w(f"    public static let chatStripHeight: CGFloat = {num(s['chatStripHeight'])}")   # the console tab strip over chat (DL-136)
+for k in ("splitSideMin", "sidebarRail", "splitMarkWidth", "splitMarkHeight", "sourceLinesMarkWidth", "sourceLinesMarkInset"):   # split view (DL-275)
+    w(f"    public static let {k}: CGFloat = {num(s[k])}")
 w(f"    public static let tabFade: CGFloat = {num(s['tabFade'])}")   # a scrolling tab strip's edge fade (DL-225)
 w(f"    public static let tabPeek: CGFloat = {num(s['tabPeek'])}")   # how much of the next tab shows past the selected one
 w(f"    public static let tabEdgeScroll: CGFloat = {num(s['tabEdgeScroll'])}")   # a dragged tab this near an end scrolls the strip

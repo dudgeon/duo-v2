@@ -73,8 +73,44 @@ extension AppModel {
             guard peekOpen else { return done(.fail("the peek isn't open")) }
             jumpToPeekSelection(); done(.ok("Jumped."))
         case .viewSidebar:
-            switch inv[0] { case "show": leftCollapsed = false; case "hide": leftCollapsed = true; default: leftCollapsed.toggle() }
+            if inv[0] == "peek" {
+                guard splits.sidebarFolded else { return done(.fail("the sidebar isn't folded by a split view; use show, hide or toggle")) }
+                splits.peek.toggle()
+                return done(.ok(splits.peek ? "Sidebar peeking over the console." : "Peek closed."))
+            }
+            switch inv[0] { case "show": leftCollapsed = false; case "hide": leftCollapsed = true; default: toggleSidebarOrPeek() }
             done(.ok(leftCollapsed ? "Left pane hidden." : "Left pane showing."))
+        case .split:
+            guard let f = inv[0] else { return done(.ok(splitReport())) }
+            guard let (p, rel) = locate(f, inv, req) else { return done(.fail("'\(f)' isn't a file in a project Duo knows")) }
+            if inv.flags["with"] != nil { return done(.fail("two documents in one split view is slice 2 (DL-278); a file's own preview is `duo2 split <file>`")) }
+            if currentProject?.name != p { open(project: p) }
+            let side = inv.flags["side"].flatMap(SplitSide.init(rawValue:))
+            guard previewKind(forTab: rel) != nil else { return done(.fail("\(rel) has no preview to show beside it")) }
+            guard openSplitView(rel, side: side) else { return done(.fail("can't open \(rel) in split view (live mode, and a file that exists)")) }
+            done(.ok("Split view: \(rel) with its preview.\n" + splitReport()))
+        case .splitClose:
+            guard showingSplit != nil else { return done(.fail("no split view is showing")) }
+            if let s = inv.flags["side"] {
+                guard let side = SplitSide(rawValue: s) else { return done(.fail("usage: \(id.action.usage)")) }
+                closeSplitSide(side)
+            } else if let t = showingSplit { closeSplitView(t.source) }
+            done(.ok("Closed."))
+        case .splitFocus:
+            guard showingSplit != nil else { return done(.fail("no split view is showing")) }
+            guard let side = inv[0].flatMap(SplitSide.init(rawValue:)) else { return done(.fail("usage: \(id.action.usage)")) }
+            focusSplitSide(side)
+            done(.ok("Active side: \(side.rawValue)."))
+        case .splitUnfold:
+            guard showingSplit != nil else { return done(.fail("no split view is showing")) }
+            unfoldSplit(); done(.ok(splitReport()))
+        case .splitSwap:
+            guard showingSplit != nil else { return done(.fail("no split view is showing")) }
+            swapSplitSides(); done(.ok(splitReport()))
+        case .splitRatio:
+            guard showingSplit != nil else { return done(.fail("no split view is showing")) }
+            guard let r = inv[0].flatMap(Double.init), SplitGeometry.ratioRange.contains(r) else { return done(.fail("usage: \(id.action.usage)")) }
+            setSplitRatio(r); done(.ok(splitReport()))
         case .viewRight:
             switch inv[0] { case "show": rightCollapsed = false; case "hide": rightCollapsed = true; default: rightCollapsed.toggle() }
             done(.ok(rightCollapsed ? "Right pane hidden." : "Right pane showing."))

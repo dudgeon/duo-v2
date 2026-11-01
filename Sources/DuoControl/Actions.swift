@@ -7,12 +7,13 @@ import Foundation
 // menu item or click in the app isn't tied to an action here or listed in `Parity.uiOnly`.
 
 public enum ActionFamily: String, CaseIterable, Sendable {
-    case app, view, projects, sessions, director, files, repo, docs, review, html, slides, send, search, setup
+    case app, view, split, projects, sessions, director, files, repo, docs, review, html, slides, send, search, setup
 
     public var title: String {
         switch self {
         case .app: "Duo"
         case .view: "What's on screen"
+        case .split: "Split view"
         case .projects: "Projects"
         case .sessions: "Sessions"
         case .director: "Director"
@@ -37,6 +38,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case ping, status, needsYou = "needs-you", undo, help, doctor, legacy, install, uninstall, hook, walkSetup = "walk setup", settings, updateProbe = "update probe", hangs
     // What's on screen
     case goAll = "go all", goHome = "go home", open, peek, peekJump = "peek jump"
+    case split, splitClose = "split close", splitFocus = "split focus", splitSwap = "split swap", splitUnfold = "split unfold", splitRatio = "split ratio"
     case viewSidebar = "view sidebar", viewRight = "view right", viewTab = "view tab", viewTabMove = "view tab-move", viewPane = "view pane", viewGroup = "view group", viewSelect = "view select"
     case viewSort = "view sort", viewFilter = "view filter", viewHidden = "view hidden", viewFolder = "view folder", viewHome = "view home"
     // Projects
@@ -162,7 +164,15 @@ extension DuoAction {
               ui: ["Open project", "Review", "project tile", "map session row"], everyday: true),
         .init(.peek, .view, "[open|close]", "Show or hide the sessions that need the user in other projects.", ui: ["Needs You Elsewhere"]),
         .init(.peekJump, .view, "", "Jump into the project selected in the peek.", ui: ["Jump into Selected Project"]),
-        .init(.viewSidebar, .view, "show|hide|toggle", "Show or hide the left pane.", ui: ["Toggle Sidebar"]),
+        .init(.viewSidebar, .view, "show|hide|toggle|peek", "Show or hide the left pane. `peek` slides it over the console while a split view has folded it to its rail; a second peek closes it (DL-276).", ui: ["Toggle Sidebar", "Show Sidebar", "sidebar rail"]),
+        .init(.split, .split, "[<file>] [--side left|right] [--with <file>]",
+              "Split view (DL-275): with a file, show it beside its own preview (a deck, Markdown or HTML) as one tab in the right pane, source on the left, or on the side given. With nothing, report the sides, the active side, the ratio, whether it is folded, and whether the split folded the sidebar. `--with` (two documents) is slice 2. ⌥⌘P does the same for the showing file.",
+              ui: ["Show Preview in Split View", "Close Split View"]),
+        .init(.splitClose, .split, "[--side left|right]", "Close Split View: the split ends and the source stays as a tab. With `--side`, close that side as its × does: the preview side closes the preview; the source side closes the whole split with its tab (⌘W closes the active side).", ui: ["Close Split View", "split side close"]),
+        .init(.splitFocus, .split, "left|right", "Make a side of the split the active side and give it the keyboard (the active side is what ⌘W, ⌘D, find and `--side`-less verbs act on).", ui: ["split side name", "split side click", "Previous Side of Split View", "Next Side of Split View"]),
+        .init(.splitUnfold, .split, "", "Unfold a folded split: the console narrows just enough for two 340 pt sides (never under 480) and the hidden side becomes active. A rail at the right pane's far right does the same with a click.", ui: ["split rail"]),
+        .init(.splitSwap, .split, "", "Swap Sides: the source goes to the other side.", ui: ["Swap Sides"]),
+        .init(.splitRatio, .split, "<0.2-0.8>", "Where the divider is: the left side's share of the pane, kept so that neither side goes under 340 pt. Double-click on the divider evens it (0.5).", ui: ["split divider"]),
         .init(.viewRight, .view, "show|hide|toggle", "Show or hide the right pane: the action column at All projects, the documents in a project (⌥⌘0, DL-129).", ui: ["Toggle Right Pane", "right pane button"]),
         .init(.viewTab, .view, "<Project | document path | group | next | previous>", "Switch the right pane's tab; next and previous step through the active pane's tabs instead (⌃Tab, ⌃⇧Tab, DL-165).",
               ui: ["right pane tab", "Open Project File", "Show Next Tab", "Show Previous Tab"]),

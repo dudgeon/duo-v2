@@ -4797,6 +4797,36 @@ Search's Tab menu lists "Open in split view ⌥⌘↩" for files and sessions (`
 
 `DuoCommand.closeSession` closed a document only when the Markdown editor had the keyboard (`editorIfLoaded?.hasFocus`); with any other right-pane tab showing (HTML page, deck, Word document, browser tab) it fell to `closeVisibleSession()` and ended the console's Claude session. Read from the code, and the same at v0.2.21 (`Commands.swift:248-250`, enabled by `visibleTerminal != nil`). Fixed: `AppModel.keyboardInRightPane` (the right pane is active, or a web view has the keyboard) sends ⌘W to `closableRightTab`, a document or browser tab; the Project tab closes nothing. DuoChecks (`PaneFocusChecks`) cover Markdown, HTML, deck, Word and browser tabs, each with the right pane active and with a web view focused. Harness action `cmd-w` performs the command.
 
+## F-500 · ⌥⌘P clashes with nothing on this Mac (split-view-build, 2026-10-31; DL-277)
+
+Checked for DL-277 before wiring Show Preview in Split View. macOS: no symbolic hot key is ⌥⌘P (`com.apple.symbolichotkeys` has none with ⌥⌘ and the P key), and no user key equivalent is set in the global domain. Installed here: 1Password 7 only (its chords are ⌘\, ⌥⌘\, ⌥⌘L, ⇧⌘L); Raycast and Rectangle aren't installed on this Mac, so their defaults were checked from what they publish, not from a run: Raycast's is ⌥Space, Rectangle's are ⌃⌥ plus arrows and letters (no ⌥⌘P). App-level uses of ⌥⌘P exist (Finder's Hide Path Bar, Preview's Page Setup in some apps), but only while that app is in front, never while Duo is. A clash on Geoff's work Mac (other managed tools) isn't ruled out; the chord can be rebound in one place (`Commands.swift`).
+
+## F-501 · A pane's width set during another pane's slide is undone by the slide (split-view-build, 2026-10-31; DL-276)
+
+Making room does two things at once: the sidebar folds (a `motionPaneToggle` slide) and the right pane widens so the console is at 480. `DuoSplitView.setCollapsed` captures every pane's width when the slide starts and `place`s all of them each frame, so a `setPosition` made during the slide is overwritten and the right pane went back to 660. Fixed by widening the right pane after the slide (`SplitState.applyRightWidthSoon(_, after: 0.35)`), both when taking and when giving back the room. Live proof (`scripts/check-split.sh`, isolated background runs): at 1440 × 900 the panes are [rail, 480, 944] and the sides about 470; at 1280 × 800 [rail, 480, 784], sides about 391 — the handoff's numbers.
+
+## F-502 · Preview render time (split-view-build, 2026-10-31; C-136)
+
+Timed under `--exclusive` (`DUO_CHECKS=split-perf`, best of five): on a release build the Markdown preview's HTML and anchor map take 3.7 ms for 200 lines, 34 ms for 2,000 lines (46 KB) and 343 ms for 20,000 lines (471 KB); a debug build was 3.8, 38 and 377 ms, so the cost is the parse and string work, not debug overhead. A 2,000-line note is about a tenth of a second of background work, a 20,000-line one about a third of a second, and typing never waits for it. That is the conversion only; WebKit loads the page after. The conversion runs off the main thread (`Task.detached`), and a newer revision wins at the gate, so typing never waits for it. The render waits 250 ms after typing pauses. (`scripts/timing-lock.sh` fails when run from the main checkout: `git rev-parse --git-common-dir` prints a relative `.git` there, so its `cd .git/..` fails. I called `gpu-lock.sh --exclusive` with `GPU_LOCK_ENFORCE=1` directly, which is what it runs.)
+
+## F-503 · What slice 1 does not do yet (split-view-build, 2026-10-31)
+
+- **Caret-follow and the source-lines mark.** The editor's page doesn't report the caret's line to Swift (only `selection` facts), and adding it means rebuilding `Vendor/codemirror/dist/cm6.js`. `PreviewPolicy` has the policy (`anchorToReveal(forLine:)`, loop suppression) and DuoChecks cover it; nothing feeds it a line yet. Q-399.
+- **A page rendered from the buffer** loads through `loadHTMLString` with the folder as its base address, which WebKit may not let read local images until the editor's autosave (a second after typing) lets it load from disk again. Q-400.
+- **The deck provider** is Duo Decks' (`PreviewProviders.extra`); `deck` is never offered until it registers.
+- **R11 and R12** (`openThread`, `addComment` from a preview) arrive at `PreviewPolicy.onRequest`; wiring them to the editor waits for slice 2's `editor.addComment(lines:quiet:done:)` and `openThread(id:line:done:)`.
+- **Search's ⌥⌘↩** and the tree's "Show Preview in Split View" aren't wired (slice 2 adds Open in Split View). Q-402.
+
+## F-512 · How slice 1 compares with its screens (split-view-build, 2026-11-01)
+
+(Outside the reserved F-500 to F-503: the director's gate asked for this comparison, and F-504 is terminal-selection's.) The split boards are annotated canvases, not 1440 × 900 windows, so `compare.sh` can't take them whole. `proof/compare-split-deck.png` crops the board's window, scales it to a Light capture at 1440 × 900 (TARGET | BUILD | DIFFERENCE), and I read it region by region, with `fold.png` against `proof/fold-1280.png`:
+- **Proportions:** the console is 33–34% of the window in both, the two sides each about a third. Rail, console, source, preview are in the same order and widths.
+- **Strip:** `Project  review.md ⧉ Preview` with the active name semibold in `text`, the other `text2`, the mark between; the active-pane rule spans the source side only, across the top of the strip.
+- **Rails:** the sidebar's rail at the window's left with its glyph (no needs-you dot in the capture: nothing needed it); the split's rail at the right pane's far right with the mark 10 from the top, a `rule` on its left, the hidden name dimmed. Folded, the source fills the pane.
+- **Peek:** the sidebar over the console at 300, with the shadow, the split unmoved (`proof/peek-1440.png`).
+- **Themes:** `proof/theme-dark.png` and `proof/theme-classic.png`.
+- **Not matched, because they are not built:** the formatting bar over the source, the source-lines mark (Q-399) and the deck's own bar (Duo Decks'). The Markdown preview's type is the editor's reading look by eye, not measured. No pixel diff was run with `pixels.py`.
+
 ## F-470 · Claude Code's prompt keys, measured on 2.1.284 and 2.1.311 (terminal-selection, 2026-10-31)
 
 Real Claude Code in a pty (node-pty + @xterm/headless), scratch `CLAUDE_CONFIG_DIR`, mock key, dead API address, no turn; each key's bytes sent into the prompt `alpha beta gamma / delta epsil|on zeta / eta theta iota`, then a marker typed and the box read back, with the kitty protocol answered (as SwiftTerm does) and not. 81 cases, `docs/design/terminal-selection-study/results/claude-keys.txt`. **Both versions, both modes, gave the same answer in every case.**

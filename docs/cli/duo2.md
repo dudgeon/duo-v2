@@ -26,7 +26,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 open <project> [session] [--file <path>]` | Open a project, optionally on one of its sessions or documents. | Open project, Review, project tile, map session row |
 | `duo2 peek [open\|close]` | Show or hide the sessions that need the user in other projects. | Needs You Elsewhere |
 | `duo2 peek jump` | Jump into the project selected in the peek. | Jump into Selected Project |
-| `duo2 view sidebar show\|hide\|toggle` | Show or hide the left pane. | Toggle Sidebar |
+| `duo2 view sidebar show\|hide\|toggle\|peek` | Show or hide the left pane. `peek` slides it over the console while a split view has folded it to its rail; a second peek closes it (DL-276). | Toggle Sidebar, Show Sidebar, sidebar rail |
 | `duo2 view right show\|hide\|toggle` | Show or hide the right pane: the action column at All projects, the documents in a project (⌥⌘0, DL-129). | Toggle Right Pane, right pane button |
 | `duo2 view tab <Project \| document path \| group \| next \| previous>` | Switch the right pane's tab; next and previous step through the active pane's tabs instead (⌃Tab, ⌃⇧Tab, DL-165). | right pane tab, Open Project File, Show Next Tab, Show Previous Tab |
 | `duo2 view tab-move left\|right\|<n> [tab] [--pane middle\|right]` | Move a tab along its strip: one place left or right (Move Tab Left / Right on its menu), or to place n among the tabs that move (1 is the leftmost), as a drag does (DL-220). The tab is a document path, a session id or name, or by default the selected tab of the active pane (or --pane). The right pane's Project tab stays first. | Move Tab Left, Move Tab Right, tab dragged along its strip |
@@ -38,6 +38,17 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 view home board\|list\|toggle [--archived on\|off]` | All projects' middle (DL-142): the Board (the map) or the List, every session across projects by recency (View › Show Board / Show List). Duo remembers the choice. --archived shows or hides the List's Archived fold (its Group popup's Show Archived). | Board, List, Show Board, Show List, Group By Recent, Show Archived, list group popup |
 | `duo2 view hidden on\|off\|toggle` | Show or hide dotfiles in the project's file tree (View › Show Hidden Files). | Show Hidden Files |
 | `duo2 view folder <folder> open\|close` | Open or close a folder in the project's file tree. | folder row |
+
+## Split view
+
+| Command | What it does | In the app |
+|---|---|---|
+| `duo2 split [<file>] [--side left\|right] [--with <file>]` | Split view (DL-275): with a file, show it beside its own preview (a deck, Markdown or HTML) as one tab in the right pane, source on the left, or on the side given. With nothing, report the sides, the active side, the ratio, whether it is folded, and whether the split folded the sidebar. `--with` (two documents) is slice 2. ⌥⌘P does the same for the showing file. | Show Preview in Split View, Close Split View |
+| `duo2 split close [--side left\|right]` | Close Split View: the split ends and the source stays as a tab. With `--side`, close that side as its × does: the preview side closes the preview; the source side closes the whole split with its tab (⌘W closes the active side). | Close Split View, split side close |
+| `duo2 split focus left\|right` | Make a side of the split the active side and give it the keyboard (the active side is what ⌘W, ⌘D, find and `--side`-less verbs act on). | split side name, split side click, Previous Side of Split View, Next Side of Split View |
+| `duo2 split unfold` | Unfold a folded split: the console narrows just enough for two 340 pt sides (never under 480) and the hidden side becomes active. A rail at the right pane's far right does the same with a click. | split rail |
+| `duo2 split swap` | Swap Sides: the source goes to the other side. | Swap Sides |
+| `duo2 split ratio <0.2-0.8>` | Where the divider is: the left side's share of the pane, kept so that neither side goes under 340 pt. Double-click on the divider evens it (0.5). | split divider |
 
 ## Projects
 

@@ -88,7 +88,7 @@ struct ProjectLayout: View {
             panes: [
                 .init(view: AnyView(ProjectSidebarPane().paneFocusRule(.left)), width: DuoMetric.paneProjectLeft,
                       minWidth: DuoMetric.paneMinSessionsAndFiles, collapsible: true, collapsed: model.leftCollapsedProject),
-                .init(view: AnyView(ConsolePane().paneFocusRule(.middle, onConsole: true)), width: nil, minWidth: DuoMetric.paneMinConsole),
+                .init(view: AnyView(ConsoleWithRail().paneFocusRule(.middle, onConsole: true)), width: nil, minWidth: DuoMetric.paneMinConsole),
                 .init(view: AnyView(RightPane().paneFocusRule(.right)), width: model.videoRightWidth ?? DuoMetric.paneProjectRight,
                       minWidth: DuoMetric.paneMinRight, collapsible: true, collapsed: model.rightCollapsedProject),
             ],
@@ -100,7 +100,20 @@ struct ProjectLayout: View {
             onActivePane: { [weak model] i in
                 guard let model else { return }
                 model.panePicked(i == 0 && model.boardShown ? .middle : DuoPane.allCases[i], allProjects: false)   // the board covers the left
-            }
+            },
+            onHost: { [weak model] split in model?.splits.paneHost = split }   // split view sets the right pane's width
         )
+    }
+}
+
+/// The console with the folded sidebar's rail on its leading edge, and the sidebar peeking over it
+/// (split view, DL-276). A view of its own so the layout reads none of it (F-208).
+struct ConsoleWithRail: View {
+    var body: some View {
+        HStack(spacing: 0) {
+            SidebarRail()
+            ConsolePane()
+        }
+        .overlay(alignment: .leading) { SidebarPeek().padding(.leading, DuoMetric.sidebarRail) }
     }
 }

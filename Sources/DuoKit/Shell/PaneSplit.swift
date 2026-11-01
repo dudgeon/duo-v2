@@ -33,10 +33,13 @@ struct PaneSplit: NSViewRepresentable {
     /// A click in a pane, or the keyboard landing in one, says which (0, 1, 2; the cover is the middle's, 1): the
     /// active pane follows (DL-165). Both altitudes' splits report; the layout passes it on if it is on screen.
     var onActivePane: ((Int) -> Void)?
+    /// Told the AppKit split once it exists (split view sets the right pane's width through it).
+    var onHost: ((DuoSplitView) -> Void)?
 
     func makeNSView(context: Context) -> DuoSplitView {
         let split = DuoSplitView()
         split.onActivePane = onActivePane
+        onHost?(split)
         split.isVertical = true
         split.dividerStyle = .thin
         split.delegate = context.coordinator

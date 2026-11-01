@@ -1,0 +1,531 @@
+{
+ "sprint": "2026-11-01-split-view-slice1",
+ "title": "Duo acceptance: split view, slice 1",
+ "intro": "A file beside its own preview, in one tab of the right pane (DL-275 to DL-278), with Geoff's making-room rule (DL-276). Slice 2, two documents side by side, is a separate walk. Still to come: the formatting bar over the source, the source-lines mark in the margin (Q-399), a deck's preview (Duo Decks), comments from a preview (slice 2's wiring) and Search's ⌥⌘↩.",
+ "setup": [
+  "Use a window about 1440 wide to see the sidebar fold to its rail."
+ ],
+ "groupNotes": {
+  "In checkout: a file beside its preview": "Needs the `checkout` project from the fixtures; no reset.",
+  "In checkout: making room, the rails and folding": "A window under about 1,464 pt wide, with the sidebar showing.",
+  "In checkout: keys, saving and coming back": "The last cards need a Claude session running in the console and a quit."
+ },
+ "features": [
+  {
+   "id": "split-open-markdown",
+   "group": "In checkout: a file beside its preview",
+   "title": "Show a Markdown file's preview in Split View",
+   "what": "⌥⌘P (View › Show Preview in Split View, or the tab's menu) puts the showing file and its rendered preview side by side in one tab. Preview Beside is called Split View in every menu (Geoff, on the canvas).",
+   "steps": [
+    "Open `checkout`, then `docs/prd.md`.",
+    "Press ⌥⌘P.",
+    "Type a word into the source and wait a moment.",
+    "Press ⌥⌘P again."
+   ],
+   "expect": "One tab reads `prd.md ⧉ Preview`, the source on the left and the rendered document on the right, a 1 pt rule between them. Your typed word shows in the preview about a quarter second after you stop, before you save. The second ⌥⌘P closes the split and leaves `prd.md` as an ordinary tab. A deck's preview isn't here: Duo Decks provides it.",
+   "ref": "DL-275, DL-277, F-500, F-502",
+   "commit": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9",
+   "alsoCommits": [
+    "5e276cf3c6f71390190141eef33480503c82caf6",
+    "b28dcd79c3ef2ef234eb3027021472cafa08f48c",
+    "6710570b32684db5169010bbff46d330d2370618"
+   ],
+   "workMac": "as-is",
+   "workMacWhy": "Any Markdown file in any project",
+   "links": [
+    {
+     "label": "split-deck screen",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/split-view-handoff/screens/split-deck.html"
+    },
+    {
+     "label": "design canvas",
+     "url": "https://claude.ai/artifact/8j6ukv88cvTqvdSEoHnEc1"
+    }
+   ],
+   "setup": [
+    "open checkout",
+    "doc open docs/prd.md"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Opened a split on a fixture workspace in isolated background runs (`scripts/check-split.sh`) and read its state from the harness's `split-report` (the same report `duo2 split` prints).",
+     "Captured it in Light, Dark and Classic and compared the layout with the screen (F-512)."
+    ],
+    "didnt": [],
+    "human": [
+     "How the preview reads beside your editor, and whether the 250 ms feels right."
+    ],
+    "at": "2026-11-01"
+   }
+  },
+  {
+   "id": "split-open-html",
+   "group": "In checkout: a file beside its preview",
+   "title": "An HTML page beside its source",
+   "what": "A `.html` file splits with its page drawn from the unsaved text.",
+   "steps": [
+    "Open `prototypes/checkout.html` in `checkout`.",
+    "Press ⌥⌘P.",
+    "Edit a heading in the source."
+   ],
+   "expect": "The page shows on the right, the source on the left. Your edit shows in the page without saving. Images beside the file may appear a second late, until the editor saves (Q-400).",
+   "ref": "DL-275, Q-400",
+   "commit": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9",
+   "alsoCommits": [
+    "5e276cf3c6f71390190141eef33480503c82caf6",
+    "b28dcd79c3ef2ef234eb3027021472cafa08f48c",
+    "6710570b32684db5169010bbff46d330d2370618"
+   ],
+   "workMac": "as-is",
+   "workMacWhy": "Any local HTML file",
+   "links": [
+    {
+     "label": "split-deck screen",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/split-view-handoff/screens/split-deck.html"
+    }
+   ],
+   "setup": [
+    "open checkout",
+    "doc open prototypes/checkout.html"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Opened `page.html` in a split on a scratch workspace and read `right: Page`."
+    ],
+    "didnt": [
+     "Edited the source and watched the page redraw."
+    ],
+    "human": [
+     "Whether the page redraw from your typing looks right."
+    ],
+    "at": "2026-11-01"
+   }
+  },
+  {
+   "id": "split-tab-names",
+   "group": "In checkout: a file beside its preview",
+   "title": "The split tab: two names, the active side, the × on each",
+   "what": "One tab holds both sides: their names joined by the split mark, the active side's in semibold, the other dimmed; each name has its own × under the pointer.",
+   "steps": [
+    "With the split open, click the source, then the preview.",
+    "Point at the tab and click the × on `Preview`.",
+    "Open the split again; on the source's × click."
+   ],
+   "expect": "The 2 pt active-pane rule spans only the active side and moves when you click the other. The × on `Preview` closes the preview and leaves the source tab. The × on the source closes the whole split with its tab. Right-click the tab: Close Split View, Swap Sides.",
+   "ref": "DL-275, DL-165",
+   "commit": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9",
+   "alsoCommits": [
+    "5e276cf3c6f71390190141eef33480503c82caf6",
+    "b28dcd79c3ef2ef234eb3027021472cafa08f48c",
+    "6710570b32684db5169010bbff46d330d2370618"
+   ],
+   "workMac": "as-is",
+   "workMacWhy": "Any split",
+   "links": [
+    {
+     "label": "split-deck screen",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/split-view-handoff/screens/split-deck.html"
+    }
+   ],
+   "setup": [
+    "open checkout",
+    "doc open docs/prd.md",
+    "split docs/prd.md"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Made, swapped and closed each side in the model and checked the state each time (DuoChecks `split`, 2247 checks); swapped and closed in live runs through the harness."
+    ],
+    "didnt": [
+     "Clicked the × with a pointer."
+    ],
+    "human": [
+     "The look and hover of the ×; the mark's size."
+    ],
+    "at": "2026-11-01"
+   }
+  },
+  {
+   "id": "split-divider",
+   "group": "In checkout: a file beside its preview",
+   "title": "The divider: drag, double-click, swap, and where it's kept",
+   "what": "A 1 pt rule between the sides; drag it, double-click to even it, Swap Sides puts the source on the right. Neither side goes under 340.",
+   "steps": [
+    "Drag the divider left and right.",
+    "Double-click it.",
+    "Right-click the tab › Swap Sides.",
+    "Close the split and open it again."
+   ],
+   "expect": "You can't make a side narrower than 340. Double-click makes them equal. Swap moves the source to the right without reloading it. The divider comes back where you left it.",
+   "ref": "DL-275, Q-366",
+   "commit": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9",
+   "alsoCommits": [
+    "5e276cf3c6f71390190141eef33480503c82caf6",
+    "b28dcd79c3ef2ef234eb3027021472cafa08f48c",
+    "6710570b32684db5169010bbff46d330d2370618"
+   ],
+   "workMac": "as-is",
+   "workMacWhy": "Any split",
+   "links": [
+    {
+     "label": "split-deck screen",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/split-view-handoff/screens/split-deck.html"
+    }
+   ],
+   "setup": [
+    "open checkout",
+    "doc open docs/prd.md",
+    "split docs/prd.md",
+    "split ratio 0.4"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "The ratio, swap and the 340 clamp are checked in the model for every width from 100 to 2000 pt; a swap and a ratio change ran in live runs through the harness."
+    ],
+    "didnt": [
+     "Dragged the divider with a pointer (the ratio changes only while the mouse button is down)."
+    ],
+    "human": [
+     "Drag and double-click feel."
+    ],
+    "at": "2026-11-01"
+   }
+  },
+  {
+   "id": "split-making-room",
+   "group": "In checkout: making room, the rails and folding",
+   "title": "Making room: the console narrows to 480 and the sidebar folds to a rail",
+   "what": "Opening a split narrows the console to its 480 minimum; at about 1,464 pt and under, the sidebar folds to a 16 pt rail. Closing the split gives everything back.",
+   "steps": [
+    "With a 1440 wide window and the sidebar showing, open a split.",
+    "Close the split."
+   ],
+   "expect": "The console is 480 wide and the sides are about 470 each (about 391 at 1280). The sidebar's rail shows at the window's left edge with its glyph, and a dot under it while a session needs you. Closing the split brings back the sidebar and the console's old width.",
+   "ref": "DL-276, F-501",
+   "commit": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9",
+   "alsoCommits": [
+    "5e276cf3c6f71390190141eef33480503c82caf6",
+    "b28dcd79c3ef2ef234eb3027021472cafa08f48c",
+    "6710570b32684db5169010bbff46d330d2370618"
+   ],
+   "workMac": "as-is",
+   "workMacWhy": "A window under about 1,464 pt wide",
+   "links": [
+    {
+     "label": "making-room (animated: open the HTML)",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/split-view-handoff/screens/making-room.html"
+    },
+    {
+     "label": "design canvas",
+     "url": "https://claude.ai/artifact/8j6ukv88cvTqvdSEoHnEc1"
+    }
+   ],
+   "setup": [
+    "open checkout",
+    "doc open docs/prd.md"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Measured the panes in isolated live runs: [rail, 480, 944] at 1440 and [rail, 480, 784] at 1280.",
+     "Checked that closing the split gives the old widths back (DuoChecks)."
+    ],
+    "didnt": [],
+    "human": [
+     "The slide's motion, which the captures can't show."
+    ],
+    "at": "2026-11-01"
+   }
+  },
+  {
+   "id": "split-sidebar-peek",
+   "group": "In checkout: making room, the rails and folding",
+   "title": "Peek at the folded sidebar",
+   "what": "While the split folded the sidebar, ⌃⌘S, the toolbar's sidebar button or a click on the rail slides it over the console; the split doesn't move.",
+   "steps": [
+    "With the sidebar folded by a split, click the rail.",
+    "Click it again, or press Esc, or click away.",
+    "Press ⌃⌘S."
+   ],
+   "expect": "The sidebar slides over the console at its own width with a shadow; the split stays where it is. A second click, Esc or a click outside closes it. Picking a file in it closes it too.",
+   "ref": "DL-276",
+   "commit": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9",
+   "alsoCommits": [
+    "5e276cf3c6f71390190141eef33480503c82caf6",
+    "b28dcd79c3ef2ef234eb3027021472cafa08f48c",
+    "6710570b32684db5169010bbff46d330d2370618"
+   ],
+   "workMac": "as-is",
+   "workMacWhy": "Any split in a narrow window",
+   "links": [
+    {
+     "label": "making-room (animated: open the HTML)",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/split-view-handoff/screens/making-room.html"
+    }
+   ],
+   "setup": [
+    "open checkout",
+    "doc open docs/prd.md",
+    "split docs/prd.md"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "Opened the peek in a live run and captured it (`proof/peek-1440.png`)."
+    ],
+    "didnt": [
+     "Esc and click-away, which need a person at the keys."
+    ],
+    "human": [
+     "Esc and click outside; the slide's motion."
+    ],
+    "at": "2026-11-01"
+   }
+  },
+  {
+   "id": "split-fold-rail",
+   "group": "In checkout: making room, the rails and folding",
+   "title": "When a split folds: the rail on the right brings it back",
+   "what": "If the right pane is narrower than two 340 sides, the active side fills it and the other becomes a 16 pt rail at its far right. Clicking the rail, or the dimmed name, narrows the console just enough for both.",
+   "steps": [
+    "With a split open, drag the right pane's divider so it is under 680 pt wide.",
+    "Click the rail at the right pane's far right.",
+    "Or run `duo2 split unfold`."
+   ],
+   "expect": "The source fills the pane; the tab still shows both names with the hidden one dimmed. The rail has the split mark 10 from its top and the tooltip `Show Preview in Split View`. Clicking it widens the right pane, the console never under 480, and the preview becomes the active side.",
+   "ref": "DL-275, Q-366",
+   "commit": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9",
+   "alsoCommits": [
+    "5e276cf3c6f71390190141eef33480503c82caf6",
+    "b28dcd79c3ef2ef234eb3027021472cafa08f48c",
+    "6710570b32684db5169010bbff46d330d2370618"
+   ],
+   "workMac": "small",
+   "workMacWhy": "Needs the right pane dragged narrow by hand",
+   "links": [
+    {
+     "label": "fold screen (animated)",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/split-view-handoff/screens/fold.html"
+    }
+   ],
+   "setup": [
+    "open checkout",
+    "doc open docs/prd.md",
+    "split docs/prd.md"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Dragged the pane to 600 in a live run (folded: true), unfolded with `split-unfold` (folded: false) and captured both (`proof/fold-1280.png`)."
+    ],
+    "didnt": [],
+    "human": [
+     "The rail's hover and the motion."
+    ],
+    "at": "2026-11-01"
+   }
+  },
+  {
+   "id": "split-keys-by-side",
+   "group": "In checkout: keys, saving and coming back",
+   "title": "Keys follow the active side: ⇧⌘[ and ⇧⌘], ⌘W, ⌘D, ⌘S",
+   "what": "⇧⌘[ and ⇧⌘] switch the active side. ⌘W closes the active side and never the console's session. ⌘D sends the active side's selection. ⌘S saves the one document from either side.",
+   "steps": [
+    "With a split open and a Claude session in the console, press ⇧⌘].",
+    "Select some text in the preview and press ⌘D.",
+    "Press ⌘W with the preview active, then reopen the split and press ⌘W with the source active."
+   ],
+   "expect": "The rule moves with ⇧⌘[ and ⇧⌘]. ⌘D sends the preview's selected text to the console's session. ⌘W on the preview closes the preview and leaves the source tab; on the source it closes the split with its tab. The console's session is untouched both times. ⌥⌘← and ⌥⌘→ no longer step between panes (DL-289) and don't step between sides.",
+   "ref": "DL-277, DL-289, F-479, F-495",
+   "commit": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9",
+   "alsoCommits": [
+    "5e276cf3c6f71390190141eef33480503c82caf6",
+    "b28dcd79c3ef2ef234eb3027021472cafa08f48c",
+    "6710570b32684db5169010bbff46d330d2370618"
+   ],
+   "workMac": "small",
+   "workMacWhy": "Needs a running Claude session in the console",
+   "links": [
+    {
+     "label": "routing-verbs screen",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/split-view-handoff/screens/routing-verbs.html"
+    }
+   ],
+   "setup": [
+    "open checkout",
+    "doc open docs/prd.md",
+    "split docs/prd.md",
+    "session-running checkout"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "Checked every command by side in DuoChecks (`split`), and ⌘W with the console's session left alone.",
+     "Stepped sides in the model."
+    ],
+    "didnt": [
+     "Pressed the chords themselves."
+    ],
+    "human": [
+     "The chords ⇧⌘[ ⇧⌘], ⌘D from the preview."
+    ],
+    "at": "2026-11-01"
+   }
+  },
+  {
+   "id": "split-restore",
+   "group": "In checkout: keys, saving and coming back",
+   "title": "A split comes back after a quit",
+   "what": "The split, its divider, which side was active and whether it had folded the sidebar are kept in the restore file, never in the project.",
+   "steps": [
+    "Open a split and move the divider.",
+    "Quit Duo and reopen it."
+   ],
+   "expect": "The file reopens in its split with the divider where you left it, the sidebar folded as before and the console at 480. Closing the split then gives the sidebar back.",
+   "ref": "DL-275, C-140",
+   "commit": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9",
+   "alsoCommits": [
+    "5e276cf3c6f71390190141eef33480503c82caf6",
+    "b28dcd79c3ef2ef234eb3027021472cafa08f48c",
+    "6710570b32684db5169010bbff46d330d2370618"
+   ],
+   "workMac": "small",
+   "workMacWhy": "Needs a quit and relaunch",
+   "links": [
+    {
+     "label": "split-deck screen",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/split-view-handoff/screens/split-deck.html"
+    }
+   ],
+   "setup": [
+    "open checkout",
+    "doc open docs/prd.md",
+    "split docs/prd.md",
+    "split ratio 0.4"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "The restore file's round trip and its validation (a missing source is dropped; a wild ratio is clamped) are checked in DuoChecks."
+    ],
+    "didnt": [
+     "A real quit and relaunch."
+    ],
+    "human": [
+     "Quit and relaunch."
+    ],
+    "at": "2026-11-01"
+   }
+  },
+  {
+   "id": "split-themes",
+   "group": "In checkout: keys, saving and coming back",
+   "title": "Dark and Classic",
+   "what": "The split in Light, Dark and Classic.",
+   "steps": [
+    "Open a split.",
+    "Settings › Appearance: Light, Dark, Classic."
+   ],
+   "expect": "The rule, the tab names, the rails and the divider follow the appearance, as the screen draws them.",
+   "ref": "DL-275, DL-252",
+   "commit": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9",
+   "alsoCommits": [
+    "5e276cf3c6f71390190141eef33480503c82caf6",
+    "b28dcd79c3ef2ef234eb3027021472cafa08f48c",
+    "6710570b32684db5169010bbff46d330d2370618"
+   ],
+   "workMac": "as-is",
+   "workMacWhy": "Any split",
+   "links": [
+    {
+     "label": "split-themes screen",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/split-view-handoff/screens/split-themes.html"
+    }
+   ],
+   "setup": [
+    "open checkout",
+    "doc open docs/prd.md",
+    "split docs/prd.md"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Captured the split in all three appearances (`proof/theme-dark.png`, `proof/theme-classic.png`)."
+    ],
+    "didnt": [],
+    "human": [
+     "How each theme looks beside the screen."
+    ],
+    "at": "2026-11-01"
+   }
+  },
+  {
+   "id": "split-duo2",
+   "group": "In checkout: keys, saving and coming back",
+   "title": "`duo2 split`",
+   "what": "Everything the split does has a verb: `duo2 split <file>`, `split` (a report), `split close [--side]`, `split focus`, `split swap`, `split ratio`, `split unfold`, and `view sidebar peek`.",
+   "steps": [
+    "Run `duo2 split docs/prd.md`, then `duo2 split`.",
+    "Run `duo2 split swap`, `duo2 split ratio 0.3`, `duo2 split focus right`, `duo2 split close`."
+   ],
+   "expect": "The report names both sides, the active side, the ratio, whether it is folded and whether the split folded the sidebar. `split --with` (two documents) is slice 2's.",
+   "ref": "DL-71, DL-275",
+   "commit": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9",
+   "alsoCommits": [
+    "5e276cf3c6f71390190141eef33480503c82caf6",
+    "b28dcd79c3ef2ef234eb3027021472cafa08f48c",
+    "6710570b32684db5169010bbff46d330d2370618"
+   ],
+   "workMac": "small",
+   "workMacWhy": "Needs the `duo2` command in a terminal",
+   "setup": [
+    "open checkout",
+    "doc open docs/prd.md"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Each verb's action runs in DuoChecks and the harness's equivalents ran live; the `duo2` command itself was not run against a live Duo, which is for the walk. `docs/cli/duo2.md` is regenerated and current."
+    ],
+    "didnt": [],
+    "human": [
+     "Run the verbs from a terminal."
+    ],
+    "at": "2026-11-01"
+   }
+  },
+  {
+   "id": "split-contract",
+   "group": "In checkout: keys, saving and coming back",
+   "title": "The PreviewProvider contract (for Duo Decks and slice 2)",
+   "what": "The interface a preview provider implements, with revisions on every event, so a stale map or an echo is ignored and a render older than the newest is dropped.",
+   "steps": [
+    "Run `DUO_CHECKS=split swift run DuoChecks`."
+   ],
+   "expect": "2247 checks pass, covering the revision gate, stale maps, echo suppression, the narrowest anchor, the routing table by side, narrow widths and swaps. Nothing to see in the app; Duo Decks' viewer and slice 2 build on it.",
+   "ref": "DL-275",
+   "commit": "7c128884ee57ea83521c9605d5e4ec251b10c400",
+   "alsoCommits": [
+    "36fb46132807be02da4697e5d052869549d6c178"
+   ],
+   "workMac": "home",
+   "workMacWhy": "A command run in the repo",
+   "setup": [
+    "go all"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Ran the split checks: 2247 passed, 0 failed."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-11-01"
+   }
+  }
+ ]
+}
