@@ -30,6 +30,8 @@ let walkGuardExempt: [String: String] = [
     "DuoKit/Shell/SettingsView.swift": "the size of Claude's config folder",
     "DuoSearch/SessionSource.swift": "Claude's config folder",
     "duo2/main.swift": "Duo's archive in its support folder",
+    "DuoDeck/DeckExport.swift": "one listing of the folder a deck is exported into (its own folder, or --out), to remove the deck's earlier dated export",
+    "DuoDeck/DeckPacks.swift": "one listing of each templates/decks folder (the project's, Home's, the built-in pack), one level",
 ]
 
 func walkGuardChecks() {

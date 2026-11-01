@@ -255,6 +255,18 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 slide pick [<slide>/<shape id>]` | Start the shape picker for the user, or select the shape a slide and id name. | Select Shape, Pick Another |
 | `duo2 slide element [<slide>/<shape id>]` | Describe a shape (the picked one by default): slide, id, name, groups, text, box, and a screenshot. | — |
 
+## Decks (Markdown to slides)
+
+| Command | What it does | In the app |
+|---|---|---|
+| `duo2 deck templates [<deck>]` | The templates a deck can use, compact: for each, its slots with kind and limits, and what it is for. Read this before writing slides; never open the template's pptx. With a deck, its pack (the project's templates/decks/, then Home's, then Duo Plain, built in); without one, every pack found from here. | — |
+| `duo2 deck check <deck>` | Check a Markdown deck against its template pack. Each problem is `file:line: slide n (template), slot: what's wrong and the fix`; empty slots are notices, not errors. Exit 1 when there are problems. Run it after every edit and fix what it names. | — |
+| `duo2 deck export <deck> [--out <dir>]` | Write the deck as a PowerPoint file named `<deck> YYYY-MM-DD HHmm.pptx` beside it (or in --out), and remove the deck's previous dated export. Refuses a deck with problems. The same deck gives the same bytes; comments stay in the Markdown (DL-290). | — |
+| `duo2 deck insert <deck> <template> [--after <n>]` | Add a slide of this template after slide n (default: the end; 0 puts it first): the slide marker, an empty title, and a `## slot` heading for each of the template's other slots. Fill in the text, then run `deck check`. | — |
+| `duo2 deck new <path> --template <pack>` | Make a deck file: the frontmatter naming the pack, and a title slide. Refuses a path that exists. | — |
+| `duo2 deck change <deck> <n> <template>` | Change slide n to another template. The title stays, same-named slots keep their text, and a slot's text goes to the new default or only same-kind slot when it can (a pack may say otherwise); anything else moves to the slide's speaker notes under `Not placed after changing to <template>: <slot>`, never dropped. Comments travel with their text. Prints what moved. | — |
+| `duo2 deck render <deck> [<n>]` | Draw a slide as a PNG. Not built yet: it needs Duo's viewer (WebKit), which the deck work reaches in a later phase. Export the deck and open the pptx in Duo meanwhile. | — |
+
 ## Send to Claude
 
 | Command | What it does | In the app |
