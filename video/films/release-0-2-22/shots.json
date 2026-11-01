@@ -67,7 +67,7 @@
       "video-vv-chat-rest"
     ],
     "pauses": {
-      "1": 8.2
+      "1": 11.6
     },
     "tail": 0.5,
     "beats": [
@@ -106,62 +106,8 @@
         },
         "click": "voice.mic",
         "in": "video-vv-chat-rest",
-        "state": "video-vv-chat-at-05",
-        "stateAfter": 0.05,
+        "rec": "video-vv-chat-rec",
         "audio": "chat"
-      },
-      {
-        "id": "level",
-        "at": {
-          "line": 1,
-          "word": "now",
-          "offset": 2
-        },
-        "in": "video-vv-chat-at-15",
-        "state": "video-vv-chat-at-15",
-        "stateAfter": 0
-      },
-      {
-        "at": {
-          "line": 1,
-          "word": "now",
-          "offset": 3.5
-        },
-        "in": "video-vv-chat-at-30",
-        "state": "video-vv-chat-at-30",
-        "stateAfter": 0
-      },
-      {
-        "id": "phrase-1",
-        "at": {
-          "line": 1,
-          "word": "now",
-          "offset": 4.6
-        },
-        "in": "video-vv-chat-at-45",
-        "state": "video-vv-chat-at-45",
-        "stateAfter": 0
-      },
-      {
-        "at": {
-          "line": 1,
-          "word": "now",
-          "offset": 6.5
-        },
-        "in": "video-vv-chat-at-60",
-        "state": "video-vv-chat-at-60",
-        "stateAfter": 0
-      },
-      {
-        "id": "phrase-2",
-        "at": {
-          "line": 1,
-          "word": "now",
-          "offset": 8.1
-        },
-        "in": "video-vv-chat-at-80",
-        "state": "video-vv-chat-at-80",
-        "stateAfter": 0
       },
       {
         "id": "words-mark",
@@ -170,7 +116,7 @@
           "word": "phrase",
           "nth": 2
         },
-        "in": "video-vv-chat-at-80",
+        "in": "video-vv-chat-rec",
         "mark": "video.composer",
         "hold": 1.6
       },
@@ -197,18 +143,15 @@
       {
         "what": "The cursor clicks the mic: it fills, and the hint row's level meter moves with the voice",
         "by": [
-          "#mic-click",
-          "#level"
+          "#mic-click"
         ]
       },
       {
         "what": "We hear Sam's dictation, and the words land in the composer as the recognizer settles them, a phrase at a time, at the real delay of a run on this Mac (the meter moving with nothing written, then each phrase); nothing is sent",
         "by": [
           "#mic-click",
-          "#level",
-          "#phrase-1",
-          "#phrase-2",
-          "#words-mark"
+          "#words-mark",
+          "state:video-vv-chat-rec"
         ]
       },
       {
@@ -218,7 +161,7 @@
         ]
       }
     ],
-    "shotSha": "ab38651c9de6"
+    "shotSha": "e804ea0a818f"
   },
   "S2": {
     "kind": "drawn",
@@ -229,7 +172,7 @@
       "video-vv-chat-sent"
     ],
     "pauses": {
-      "1": 7.4
+      "1": 11.2
     },
     "tail": 0.5,
     "beats": [
@@ -241,7 +184,7 @@
         },
         "click": "video.tab.middle.0",
         "in": "video-vv-chat-sent",
-        "state": "video-vv-term-rest",
+        "state": "video-vv-term-live",
         "cam": {
           "rel": "video.pane.middle",
           "dx": 44.9,
@@ -257,7 +200,7 @@
           "line": 1,
           "word": "beside"
         },
-        "in": "video-vv-term-rest",
+        "in": "video-vv-term-live",
         "mark": "video.vv.termmic",
         "hold": 1.4
       },
@@ -269,55 +212,10 @@
           "offset": 0.5
         },
         "key": "⇧⌘D",
-        "keyHold": 6,
-        "in": "video-vv-term-l0",
-        "state": "video-vv-term-l0",
-        "stateAfter": 0.1,
+        "keyHold": 6.8,
+        "in": "video-vv-term-live",
+        "rec": "video-vv-term-rec",
         "audio": "terminal"
-      },
-      {
-        "id": "bars",
-        "at": {
-          "line": 1,
-          "word": "talk",
-          "offset": 2.5
-        },
-        "in": "video-vv-term-l1",
-        "state": "video-vv-term-l1",
-        "stateAfter": 0
-      },
-      {
-        "id": "pasted-1",
-        "at": {
-          "line": 1,
-          "word": "talk",
-          "offset": 4.6
-        },
-        "in": "video-vv-term-l2",
-        "state": "video-vv-term-l2",
-        "stateAfter": 0
-      },
-      {
-        "id": "released",
-        "at": {
-          "line": 1,
-          "word": "talk",
-          "offset": 7.3
-        },
-        "in": "video-vv-term-done",
-        "state": "video-vv-term-done",
-        "stateAfter": 0
-      },
-      {
-        "id": "prompt-mark",
-        "at": {
-          "line": 1,
-          "word": "talk",
-          "offset": 7.7
-        },
-        "in": "video-vv-term-done",
-        "mark": "video.vv.terminal",
-        "hold": 0.1
       }
     ],
     "requires": [
@@ -332,18 +230,18 @@
         "what": "On \"Shift-Command-D\" the keys show held; the mic turns into three level bars that move as Sam speaks",
         "by": [
           "#hold",
-          "#bars"
+          "state:video-vv-term-rec"
         ]
       },
       {
         "what": "Each phrase lands in Claude's prompt as it settles; the keys let go and the mic comes back; nothing is sent",
         "by": [
-          "#pasted-1",
-          "#released"
+          "#hold",
+          "state:video-vv-term-rec"
         ]
       }
     ],
-    "shotSha": "aa4bf84df61e"
+    "shotSha": "5878739fcfa8"
   },
   "S3": {
     "kind": "drawn",

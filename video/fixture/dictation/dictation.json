@@ -5,7 +5,8 @@
    "and tell me which ones still fail?"
   ],
   "text": "Can you check the glare cases against Denise's photos and tell me which ones still fail?",
-  "duration_s": 7.12
+  "duration_s": 7.9,
+  "voice": "Geoff's (geoff-voxcpm2-v2)"
  },
  "terminal": {
   "phrases": [
@@ -13,6 +14,7 @@
    "and keep it under ten words."
   ],
   "text": "Add a glare warning to the scan screen and keep it under ten words.",
-  "duration_s": 6.48
+  "duration_s": 7.9,
+  "voice": "Geoff's (geoff-voxcpm2-v2)"
  }
 }

@@ -20,6 +20,7 @@ extension VideoTargets {
         "video-vv-chat-at-05", "video-vv-chat-at-10", "video-vv-chat-at-15", "video-vv-chat-at-20", "video-vv-chat-at-25", "video-vv-chat-at-30",
         "video-vv-chat-at-35", "video-vv-chat-at-40", "video-vv-chat-at-45", "video-vv-chat-at-50", "video-vv-chat-at-55", "video-vv-chat-at-60",
         "video-vv-chat-at-65", "video-vv-chat-at-70", "video-vv-chat-at-75", "video-vv-chat-at-80",
+        "video-vv-chat-rec", "video-vv-term-live", "video-vv-term-rec",
         "video-vv-term-rest", "video-vv-term-l0", "video-vv-term-l1", "video-vv-term-l2", "video-vv-term-l3", "video-vv-term-done"]
 
     static let tighten = "Tighten PRD goals"
@@ -68,6 +69,18 @@ extension VideoTargets {
             let k = model.fixture.sessions[i].tabKey
             model.fixtureChats[k] = s6Chat(dir.appending(path: "chat-vv-sent"), cwd: v.cwd, picked: false, key: k)
         }
+        if name == "term-live" || name == "term-rec" {
+            // A real shell tab, in front, running prompt-echo.py: the recorded Claude screen whose prompt row takes what voice
+            // input pastes, so the delivery (a bracketed paste per settled phrase) is the app's own.
+            let k = key(tighten)
+            let live = model.terminals.session(k, command: .shell, cwd: model.liveFolders[project]?.path ?? NSTemporaryDirectory())
+            model.fixtureTerminals[k] = live
+            model.consoleTab = k
+            let helper = dir.appending(path: "terms/prompt-echo.py").path, screen = dir.appending(path: "terms/tighten-prd.ans").path
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                MainActor.assumeIsolated { live.view.send(txt: "clear; exec /usr/bin/python3 '\(helper)' '\(screen)'\r") }
+            }
+        }
         if let t = vvTerm(name) {
             // The Tighten PRD goals tab in front, its recorded screen with what has been pasted into Claude's prompt so far.
             let k = key(tighten)
@@ -88,6 +101,11 @@ extension VideoTargets {
     nonisolated static func vvActions(_ screen: String) -> [String] {
         let name = String(screen.dropFirst("video-v?-".count))
         let measure = ["wait:0.4", "video:vv-measure"]
+        // Recorded: the dictation runs for real while the window is drawn 15 times a second (`vv-rec`), then the capture
+        // is the moment after.
+        if name == "chat-rec" { return ["wait:2", "video:vv-rec=chat|12", "wait:12.6"] + measure }
+        if name == "term-live" { return ["wait:3.5"] + measure }
+        if name == "term-rec" { return ["wait:3.5", "video:vv-rec=terminal|11", "wait:11.6"] + measure }
         if name.hasPrefix("chat-at-"), let tenths = Int(name.dropFirst("chat-at-".count)) {
             // The dictation runs as it would from the mic; the capture is taken this far in.
             return ["wait:2", "video:vv-feed=chat", "wait:\(Double(tenths) / 10)", "video:vv-measure"]
@@ -114,6 +132,13 @@ extension VideoTargets {
                 slot.mic.tick()
             }
             slot.mic.needsDisplay = true
+        case "vv-rec":   // vv-rec=<clip>|<seconds>: dictate the clip into the session showing, recording the middle pane
+            let a = arg.split(separator: "|").map(String.init)
+            guard let dir = vvDir, let k = model.consoleTab, a.count == 2, let secs = Double(a[1]) else { return }
+            let target: VoiceTarget = model.fixtureChats[k] != nil ? .chat(k) : .terminal(k)
+            vvRecord(model, seconds: secs, region: CGRect(x: 300, y: 40, width: 840, height: 1061))
+            model.voice.start(target, source: .file(dir.appending(path: "dictation/\(a[0]).wav")))
+            vvTrace(model)
         case "vv-hover":   // the pointer resting on the chat mic: its tooltip is drawn by the film (macOS draws tooltips outside the window)
             break
         case "vv-measure": vvMeasure(model)
@@ -133,6 +158,54 @@ extension VideoTargets {
             }
         }
         step()
+    }
+
+    /// Draws the window's `region` (window points, from the top left) `fps` times a second for `seconds`, as the capture
+    /// draws it (no permission, the window never shown), into $DUO_VIDEO_REC_DIR: frame-NNNN.png at the capture scale and
+    /// times.json (each frame's seconds from the first). `pipeline/capture.mjs` makes them a video.
+    static func vvRecord(_ model: AppModel, seconds: Double, region: CGRect, fps: Double = 15) {
+        guard let dirPath = ProcessInfo.processInfo.environment["DUO_VIDEO_REC_DIR"],
+              let window = NSApp.windows.filter({ $0.isVisible }).max(by: { $0.frame.width < $1.frame.width }),
+              let frame = window.contentView?.superview else { return }
+        let dir = URL(fileURLWithPath: dirPath)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let scale = WindowCapture.scale
+        let rect = NSRect(x: region.minX, y: frame.bounds.height - region.maxY, width: region.width, height: region.height)
+        let t0 = Date()
+        let encode = DispatchQueue(label: "duo.video.record", qos: .userInitiated, attributes: .concurrent)
+        let group = DispatchGroup()
+        var times: [Double] = []
+        func shot() {
+            let n = times.count
+            times.append(Date().timeIntervalSince(t0))
+            guard let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(rect.width * scale), pixelsHigh: Int(rect.height * scale), bitsPerSample: 8,
+                                             samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0) else { return }
+            rep.size = rect.size
+            if let under = WindowCapture.underlay, let ctx = NSGraphicsContext(bitmapImageRep: rep) {
+                NSGraphicsContext.saveGraphicsState(); NSGraphicsContext.current = ctx
+                under.setFill(); NSRect(origin: .zero, size: rect.size).fill()
+                NSGraphicsContext.restoreGraphicsState()
+            }
+            frame.layoutSubtreeIfNeeded()
+            frame.cacheDisplay(in: rect, to: rep)
+            let url = dir.appending(path: String(format: "frame-%04d.png", n))
+            nonisolated(unsafe) let r = rep
+            encode.async(group: group) { try? r.representation(using: .png, properties: [:])?.write(to: url) }
+        }
+        func tick() {
+            shot()
+            if Date().timeIntervalSince(t0) < seconds {
+                let next = Double(times.count) / fps - Date().timeIntervalSince(t0)
+                DispatchQueue.main.asyncAfter(deadline: .now() + max(0.001, next)) { MainActor.assumeIsolated { tick() } }
+            } else {
+                group.notify(queue: .main) {
+                    let json = try? JSONSerialization.data(withJSONObject: ["fps": fps, "scale": scale, "region": [region.minX, region.minY, region.width, region.height], "times": times])
+                    try? json?.write(to: dir.appending(path: "times.json"))
+                    FileHandle.standardError.write(Data("vv-rec: \(times.count) frames in \(String(format: "%.1f", times.last ?? 0)) s\n".utf8))
+                }
+            }
+        }
+        tick()
     }
 
     /// `video.vv.*`: the chat composer and the terminal mic, in window points (`--then anchors:` adds them).

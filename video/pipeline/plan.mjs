@@ -214,6 +214,16 @@ function planApp({scene, shot, lines, tr, prev, prevShot, captures, events, styl
     if (b.dockIcon !== undefined) data.dockIcon = {at, icon: b.dockIcon};
     // band: 'down': the caption band drops away from here (the Dock sits where it would be).
     if (b.band === 'down') data.bandDown = at;
+    // rec: the real app recorded while it worked (a `-rec` state's video), played in its region of the window from here;
+    // the state's capture (the moment after) takes over when it ends.
+    if (b.rec) {
+      const c = cap(use(b.rec));
+      if (!c.rec) throw new BuildError(`shots: ${scene.id} plays ${b.rec}, which has no recording`);
+      const [x, y, w, h] = c.rec.region;
+      (data.recs ??= []).push({at, until: at + c.rec.duration, src: c.rec.src, region: {x, y, w, h}});
+      data.steps.push({at: +(at + c.rec.duration).toFixed(3), state: b.rec});
+      data.ends.push(at + c.rec.duration + 0.3);
+    }
     if (b.wipe) (data.wipes ??= []).push({at, dur: b.wipe.dur ?? 1.2, state: use(b.wipe.state), rect: camRect(b.wipe.on, 'wipe'), ...(b.wipe.chars ? {chars: b.wipe.chars} : {})});
     if (b.mark) data.marks.push({at, until: at + (b.hold ?? 2.2), rect: camRect(b.mark, 'mark'), quote: b.quote});
     if (b.state) { state = use(b.state); data.steps.push({at: +(at + (b.stateAfter ?? 0.1)).toFixed(3), state, ...(b.fade ? {fade: b.fade} : {})}); }

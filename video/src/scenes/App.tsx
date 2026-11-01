@@ -1,5 +1,5 @@
 import React from 'react';
-import {AbsoluteFill, Img, interpolate, staticFile} from 'remotion';
+import {AbsoluteFill, Img, interpolate, OffthreadVideo, Sequence, staticFile, useVideoConfig} from 'remotion';
 import {smootherstep, type Rect} from '../lib/camera';
 import {Wallpaper} from '../lib/Desk';
 import {Dock, MenuBar} from '../lib/Clutter';
@@ -33,6 +33,8 @@ export type AppData = {
   panes: Record<string, Rect>;
   steps: AppStep[]; clicks: AppClick[]; drags: AppDrag[]; cams: AppCam[]; marks: AppMark[]; menus: AppMenu[];
   keys?: AppKey[]; wipes?: AppWipe[]; overlays?: AppOverlay[];
+  // The real app recorded while it worked: a video of a region of the window, in window points, from at to until.
+  recs?: {at: number; until: number; src: string; region: Rect}[];
   running?: boolean; startCam?: Rect | null;
 };
 
@@ -89,6 +91,7 @@ const KeyCap = ({label, u, down}: {label: string; u: number; down: number}) => {
 
 /** dockIcon: an icon image for Duo's Dock tile (Classic's, DL-252), else the drawn mark. */
 export const AppScene = ({t, data, dockIcon}: {t: number; data: AppData; dockIcon?: string}) => {
+  const {fps} = useVideoConfig();
   const win = {x: (W - data.window.w * K) / 2, y: 38, w: data.window.w * K, h: data.window.h * K};
   const toFrame = (r: Rect): Rect => ({x: win.x + r.x * K, y: win.y + r.y * K, w: r.w * K, h: r.h * K});
 
@@ -171,6 +174,11 @@ export const AppScene = ({t, data, dockIcon}: {t: number; data: AppData; dockIco
               <Crop src={data.src[state]} scale={data.scale} region={{x: 0, y: 0, w: data.window.w, h: data.window.h}} rect={{x: 0, y: 0, w: win.w, h: win.h}} />
             </div>
           </>}
+          {(data.recs ?? []).map((r, i) => (
+            <Sequence key={`rec${i}`} from={Math.round(r.at * fps)} durationInFrames={Math.max(1, Math.round((r.until - r.at) * fps))} layout="none">
+              <OffthreadVideo src={staticFile(r.src)} muted style={{position: 'absolute', left: r.region.x * K, top: r.region.y * K, width: r.region.w * K, height: r.region.h * K}} />
+            </Sequence>
+          ))}
           {(data.wipes ?? []).map((w, i) => {
             if (t < w.at || t > w.at + w.dur + 0.1) return null;
             // `chars`: typing, not a wipe. The text arrives a character at a time, with the small uneven gaps of real

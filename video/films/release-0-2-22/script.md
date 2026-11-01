@@ -1,5 +1,5 @@
 # Duo 0.2.22 release film: Classic and voice input
-<!-- Synced from the script Doc at rev 21 on 2026-10-31 by pipeline/sync.mjs; edit the Doc, not this file. -->
+<!-- Synced from the script Doc at rev 24 on 2026-11-01 by pipeline/sync.mjs; edit the Doc, not this file. -->
 
 Oct 31, 2026 · @Geoff Dudgeon
 
@@ -38,13 +38,13 @@ Shot: the intro's title card: the Duo icon builds itself on the High Sierra wall
 - macOS waits to hear a whole phrase before writing it, so the words land a phrase at a time,
 - and nothing sends till I press Return.
 
-Shot: the camera pushes in on the Auto-add decision chat's composer and the mic at its right end. The cursor clicks the mic: it fills, and the hint row shows the level meter moving with the voice. We hear Sam say "Can you check the glare cases against Denise's photos, and tell me which ones still fail?" and the words land in the composer as the recognizer settles them, a phrase at a time, with the real delay of a run on this Mac: the meter moves for a few seconds with nothing written, then the first phrase lands, then the second. Nothing is sent. On "press Return" the Return key shows as a keycap and the message goes into the chat.
+Shot: the camera pushes in on the Auto-add decision chat's composer and the mic at its right end. The cursor clicks the mic: it shows the level bars while it listens (DL-272), and the hint row keeps only the keys. This part is a recording of the real app running the real dictation: we hear you say "Can you check the glare cases against Denise's photos, and tell me which ones still fail?" and the words land in the composer as the recognizer settles them, a phrase at a time, with the real delay of a run on this Mac: the meter moves for a few seconds with nothing written, then the first phrase lands, then the second. Nothing is sent. On "press Return" the Return key shows as a keycap and the message goes into the chat.
 
 ### S2 · Voice in the terminal (about 15 s)
 
 - In the terminal the mic sits beside Claude's prompt, or I hold *down Shift, Command and D* to talk.
 
-Shot: the cursor clicks the Tighten PRD goals tab: Claude Code's terminal, with the small mic beside its input box. On "Shift-Command-D" the keys show held as keycaps; the mic turns into three level bars that move as Sam says "Add a glare warning to the scan screen, and keep it under ten words", and each phrase lands in Claude's prompt as it settles. The keys let go and the mic comes back. Nothing is sent.
+Shot: the cursor clicks the Tighten PRD goals tab: Claude Code's terminal, with the small mic beside its input box. On "Shift-Command-D" the keys show held as keycaps; recorded from the real app, the mic turns into three level bars that move as you say "Add a glare warning to the scan screen, and keep it under ten words", and each phrase lands in Claude's prompt as it settles. The keys let go and the mic comes back. Nothing is sent.
 
 ### S3 · No microphone (about 5 s)
 
@@ -67,7 +67,7 @@ Shot: the camera pulls back to the whole window, which folds back into its Class
 
 ## The voice
 
-The narrator is your own voice, the fine-tuned VoxCPM2 clone (DL-173). Sam's dictation is the house voice (a designed voice, nobody's real one).
+The narrator is your own voice, the fine-tuned VoxCPM2 clone (DL-173). The dictation the app hears is your voice too, from the same model.
 
 | Written | Said |
 | --- | --- |

@@ -18,36 +18,29 @@ const S = {
       {what: 'Beside "Duo 0.2.22", "Voice input, and Classic" over "A mic in chat and the terminal, and the v1 paper look"', by: ['event:title', 'event:sub']},
       {what: 'The settled frame is the thumbnail (frame 0)', by: ['event:sub', 'src:build.mjs']},
       {what: 'The words wipe back, the icon drops into the Dock, and the window opens out of it on Sam\'s shelf-scan project in Light', by: ['src:src/scenes/release/Title.tsx', 'state:video-vv-chat-rest']}]},
-  S1: {kind: 'drawn', scene: 'rel-app', transitionIn: 'rel-open', leadIn: 0.9, states: ['video-vv-chat-rest'], pauses: {1: 8.2}, tail: 0.5,
+  S1: {kind: 'drawn', scene: 'rel-app', transitionIn: 'rel-open', leadIn: 0.9, states: ['video-vv-chat-rest'], pauses: {1: 11.6}, tail: 0.5,
     beats: [
       {id: 'push', at: {line: 1, offset: -0.6}, in: 'video-vv-chat-rest', cam: M(663), dur: 1.2},
       {id: 'mic-mark', at: {line: 1, word: 'mic'}, in: 'video-vv-chat-rest', mark: 'voice.mic', hold: 1.3},
-      {id: 'mic-click', at: after(0.5), click: 'voice.mic', in: 'video-vv-chat-rest', state: 'video-vv-chat-at-05', stateAfter: 0.05, audio: 'chat'},
-      {id: 'level', at: after(2.0), in: 'video-vv-chat-at-15', state: 'video-vv-chat-at-15', stateAfter: 0},
-      {at: after(3.5), in: 'video-vv-chat-at-30', state: 'video-vv-chat-at-30', stateAfter: 0},
-      {id: 'phrase-1', at: after(4.6), in: 'video-vv-chat-at-45', state: 'video-vv-chat-at-45', stateAfter: 0},
-      {at: after(6.5), in: 'video-vv-chat-at-60', state: 'video-vv-chat-at-60', stateAfter: 0},
-      {id: 'phrase-2', at: after(8.1), in: 'video-vv-chat-at-80', state: 'video-vv-chat-at-80', stateAfter: 0},
-      {id: 'words-mark', at: {line: 2, word: 'phrase', nth: 2}, in: 'video-vv-chat-at-80', mark: 'video.composer', hold: 1.6},
+      // The real app, recorded while it hears the dictation (video-vv-chat-rec): the words land when the recognizer writes them.
+      {id: 'mic-click', at: after(0.5), click: 'voice.mic', in: 'video-vv-chat-rest', rec: 'video-vv-chat-rec', audio: 'chat'},
+      {id: 'words-mark', at: {line: 2, word: 'phrase', nth: 2}, in: 'video-vv-chat-rec', mark: 'video.composer', hold: 1.6},
       {id: 'return', at: {line: 3, word: 'return'}, key: '↩', in: 'video-vv-chat-sent', state: 'video-vv-chat-sent', stateAfter: 0.08}],
     requires: [
       {what: 'The camera pushes in on the Auto-add decision chat\'s composer and the mic at its right end', by: ['#push', '#mic-mark']},
-      {what: 'The cursor clicks the mic: it fills, and the hint row\'s level meter moves with the voice', by: ['#mic-click', '#level']},
-      {what: 'We hear Sam\'s dictation, and the words land in the composer as the recognizer settles them, a phrase at a time, at the real delay of a run on this Mac (the meter moving with nothing written, then each phrase); nothing is sent', by: ['#mic-click', '#level', '#phrase-1', '#phrase-2', '#words-mark']},
+      {what: 'The cursor clicks the mic: it fills, and the hint row\'s level meter moves with the voice', by: ['#mic-click']},
+      {what: 'We hear Sam\'s dictation, and the words land in the composer as the recognizer settles them, a phrase at a time, at the real delay of a run on this Mac (the meter moving with nothing written, then each phrase); nothing is sent', by: ['#mic-click', '#words-mark', 'state:video-vv-chat-rec']},
       {what: 'On "press Return" the Return key shows as a keycap and the message goes into the chat', by: ['#return']}]},
-  S2: {kind: 'drawn', scene: 'rel-app', transitionIn: 'rel-carry', leadIn: 0.6, states: ['video-vv-chat-sent'], pauses: {1: 7.4}, tail: 0.5,
+  S2: {kind: 'drawn', scene: 'rel-app', transitionIn: 'rel-carry', leadIn: 0.6, states: ['video-vv-chat-sent'], pauses: {1: 11.2}, tail: 0.5,
     beats: [
-      {id: 'tab', at: {line: 1, offset: -0.2}, click: 'video.tab.middle.0', in: 'video-vv-chat-sent', state: 'video-vv-term-rest', cam: M(250), dur: 1.0},
-      {id: 'termmic-mark', at: {line: 1, word: 'beside'}, in: 'video-vv-term-rest', mark: 'video.vv.termmic', hold: 1.4},
-      {id: 'hold', at: {line: 1, word: 'talk', offset: 0.5}, key: '⇧⌘D', keyHold: 6.0, in: 'video-vv-term-l0', state: 'video-vv-term-l0', stateAfter: 0.1, audio: 'terminal'},
-      {id: 'bars', at: {line: 1, word: 'talk', offset: +(2.0 + 0.5).toFixed(2)}, in: 'video-vv-term-l1', state: 'video-vv-term-l1', stateAfter: 0},
-      {id: 'pasted-1', at: {line: 1, word: 'talk', offset: +(4.1 + 0.5).toFixed(2)}, in: 'video-vv-term-l2', state: 'video-vv-term-l2', stateAfter: 0},
-      {id: 'released', at: {line: 1, word: 'talk', offset: +(6.8 + 0.5).toFixed(2)}, in: 'video-vv-term-done', state: 'video-vv-term-done', stateAfter: 0},
-      {id: 'prompt-mark', at: {line: 1, word: 'talk', offset: +(7.2 + 0.5).toFixed(2)}, in: 'video-vv-term-done', mark: 'video.vv.terminal', hold: 0.1}],
+      {id: 'tab', at: {line: 1, offset: -0.2}, click: 'video.tab.middle.0', in: 'video-vv-chat-sent', state: 'video-vv-term-live', cam: M(250), dur: 1.0},
+      {id: 'termmic-mark', at: {line: 1, word: 'beside'}, in: 'video-vv-term-live', mark: 'video.vv.termmic', hold: 1.4},
+      // ⇧⌘D held while the dictation is heard; the real app recorded (video-vv-term-rec): bars, and each phrase pasted as it settles.
+      {id: 'hold', at: {line: 1, word: 'talk', offset: 0.5}, key: '⇧⌘D', keyHold: 6.8, in: 'video-vv-term-live', rec: 'video-vv-term-rec', audio: 'terminal'}],
     requires: [
       {what: 'The cursor clicks the Tighten PRD goals tab: Claude Code\'s terminal with the small mic beside its input box', by: ['#tab', '#termmic-mark']},
-      {what: 'On "Shift-Command-D" the keys show held; the mic turns into three level bars that move as Sam speaks', by: ['#hold', '#bars']},
-      {what: 'Each phrase lands in Claude\'s prompt as it settles; the keys let go and the mic comes back; nothing is sent', by: ['#pasted-1', '#released']}]},
+      {what: 'On "Shift-Command-D" the keys show held; the mic turns into three level bars that move as Sam speaks', by: ['#hold', 'state:video-vv-term-rec']},
+      {what: 'Each phrase lands in Claude\'s prompt as it settles; the keys let go and the mic comes back; nothing is sent', by: ['#hold', 'state:video-vv-term-rec']}]},
   S3: {kind: 'drawn', scene: 'rel-app', transitionIn: 'rel-carry', leadIn: 0.6, states: ['video-vv-term-done'], tail: 1.0,
     beats: [
       {id: 'back', at: {line: 1, offset: -0.3}, click: 'video.tab.middle.3', in: 'video-vv-term-done', state: 'video-vv-nomic', cam: M(663), dur: 1.0},
@@ -86,7 +79,7 @@ const S = {
       {what: 'Held about 2 s after the line', by: ['event:foot']}]},
 };
 // The hash of each scene's Shot: note this file was written against (check.mjs stops when a note changes).
-const SHA = {S0: '6ca154664ec4', S1: 'ab38651c9de6', S2: 'aa4bf84df61e', S3: 'be09ff632b35', S4: '501b8daeb300', S5: '856bf238d738'};
+const SHA = {S0: '6ca154664ec4', S1: 'e804ea0a818f', S2: '5878739fcfa8', S3: 'be09ff632b35', S4: '501b8daeb300', S5: '856bf238d738'};
 for (const k of Object.keys(SHA)) S[k].shotSha = SHA[k];
 writeFileSync(here + 'shots.json', JSON.stringify(S, null, 2) + '\n');
 console.log('shots.json written');
