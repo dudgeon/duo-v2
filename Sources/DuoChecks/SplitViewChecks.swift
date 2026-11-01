@@ -67,7 +67,7 @@ import Foundation
     let m = AppModel(fixture: f)
     TargetState.project.apply(to: m)
     let project = m.currentProject!.name
-    func makeSplit(_ path: String = "docs/prd-v2.md", kind: PreviewKind = .markdown) {
+    func makeSplit(_ path: String = "pages/report.html", kind: PreviewKind = .html) {
         if !m.openDocuments.contains(path) { m.openDocuments.append(path) }
         m.rightTab = path; m.selectedFile = path
         m.splitTabs[path] = SplitTab(source: path, kind: kind)
@@ -75,9 +75,9 @@ import Foundation
     let console = m.consoleTab
 
     makeSplit()
-    check(m.showingSplit?.source == "docs/prd-v2.md" && m.showingSplit?.activeSide == .left, "a split is made: the source on the left, active")
-    check(m.openDocuments.filter { $0 == "docs/prd-v2.md" }.count == 1, "one tab for the file: the split adds no second document")
-    check(m.rightTabKeys().filter { $0 == "docs/prd-v2.md" }.count == 1, "the strip lists the split once")
+    check(m.showingSplit?.source == "pages/report.html" && m.showingSplit?.activeSide == .left, "a split is made: the source on the left, active")
+    check(m.openDocuments.filter { $0 == "pages/report.html" }.count == 1, "one tab for the file: the split adds no second document")
+    check(m.rightTabKeys().filter { $0 == "pages/report.html" }.count == 1, "the strip lists the split once")
 
     // The active side is model state, not DOM focus.
     m.webFocus = .editor
@@ -94,23 +94,23 @@ import Foundation
     m.activate(.right, focus: false)
     check(m.splitHasKeys && DuoCommand.closeSession.isEnabled(in: m), "⌘W is enabled with the right pane active on a split")
     DuoCommand.closeSession.perform(in: m)
-    check(m.showingSplit == nil && m.openDocuments.contains("docs/prd-v2.md") && m.rightTab == "docs/prd-v2.md", "⌘W on the preview side closes the preview and leaves the source tab")
+    check(m.showingSplit == nil && m.openDocuments.contains("pages/report.html") && m.rightTab == "pages/report.html", "⌘W on the preview side closes the preview and leaves the source tab")
     check(m.consoleTab == console, "and leaves the console's session alone")
 
     // ⌘W on the source closes the whole split with its tab
     makeSplit(); m.setActiveRole(.source); m.activate(.right, focus: false)
     DuoCommand.closeSession.perform(in: m)
-    check(m.showingSplit == nil && !m.openDocuments.contains("docs/prd-v2.md"), "⌘W on the source side closes the split with its tab")
+    check(m.showingSplit == nil && !m.openDocuments.contains("pages/report.html"), "⌘W on the source side closes the split with its tab")
     check(m.consoleTab == console, "and the console's session is still alone")
 
     // The × of each side; Close Split View
     makeSplit(); m.closeSplitSide(.right)
-    check(m.splitTab("docs/prd-v2.md") == nil && m.openDocuments.contains("docs/prd-v2.md"), "close the preview side: the source stays an ordinary tab")
+    check(m.splitTab("pages/report.html") == nil && m.openDocuments.contains("pages/report.html"), "close the preview side: the source stays an ordinary tab")
     makeSplit(); m.closeSplitSide(.left)
-    check(m.splitTab("docs/prd-v2.md") == nil && !m.openDocuments.contains("docs/prd-v2.md"), "close the source side: the split goes with its tab")
-    makeSplit(); m.closeSplitView("docs/prd-v2.md")
-    check(m.splitTab("docs/prd-v2.md") == nil && m.openDocuments.contains("docs/prd-v2.md"), "Close Split View keeps the source as a tab")
-    m.closeDocument("docs/prd-v2.md")
+    check(m.splitTab("pages/report.html") == nil && !m.openDocuments.contains("pages/report.html"), "close the source side: the split goes with its tab")
+    makeSplit(); m.closeSplitView("pages/report.html")
+    check(m.splitTab("pages/report.html") == nil && m.openDocuments.contains("pages/report.html"), "Close Split View keeps the source as a tab")
+    m.closeDocument("pages/report.html")
 
     // A swap can't crash, however it's used (legacy: a swap crashed)
     m.swapSplitSides(); m.evenSplit(); m.stepSplitSide(); m.setSplitRatio(0.3); m.closeSplitSide(.left)
@@ -126,27 +126,27 @@ import Foundation
     m.swapSplitSides()
     check(m.showingSplit!.place(of: .source) == .right && m.showingSplit!.role(at: .left) == .preview, "swapped, the source is on the right")
     check(m.showingSplit!.activeSide == m.showingSplit!.place(of: m.showingSplit!.active), "the active side follows its role through a swap")
-    m.closeSplitView("docs/prd-v2.md"); m.closeDocument("docs/prd-v2.md")
+    m.closeSplitView("pages/report.html"); m.closeDocument("pages/report.html")
 
     // Folding is a model change too
     makeSplit()
-    m.splitFolded(true, for: "docs/prd-v2.md")
+    m.splitFolded(true, for: "pages/report.html")
     check(m.showingSplit?.folded == true, "fold is recorded")
-    m.splitFolded(false, for: "docs/prd-v2.md")
+    m.splitFolded(false, for: "pages/report.html")
     check(m.showingSplit?.folded == false, "unfold is recorded")
     m.splitFolded(true, for: "docs/nothing.md")   // a split that isn't there: nothing happens
-    m.closeSplitView("docs/prd-v2.md"); m.closeDocument("docs/prd-v2.md")
+    m.closeSplitView("pages/report.html"); m.closeDocument("pages/report.html")
 
     // One document per file across kinds and two tabs
-    makeSplit("docs/prd-v2.md"); makeSplit("pages/report.html", kind: .html)
-    check(m.splitTabs.count == 2 && m.openDocuments.filter { $0 == "pages/report.html" }.count == 1, "two files, two splits, one tab each")
-    m.splits.tabs[project]?["docs/prd-v2.md"]?.ratio = 0.35
+    makeSplit("pages/report.html"); makeSplit("pages/other.html", kind: .html)
+    check(m.splitTabs.count == 2 && m.openDocuments.filter { $0 == "pages/other.html" }.count == 1, "two files, two splits, one tab each")
+    m.splits.tabs[project]?["pages/report.html"]?.ratio = 0.35
     let saved = m.splitsForRestore(project) ?? []
     check(saved.count == 2, "both splits are saved with the restore state")
 
     // Persistence round trip, and the fields are optional (older files decode)
     var state = RestoreState()
-    state.projects = [.init(folder: "/x", sessions: [], consoleTab: nil, documents: ["docs/prd-v2.md"], rightTab: nil)]
+    state.projects = [.init(folder: "/x", sessions: [], consoleTab: nil, documents: ["pages/report.html"], rightTab: nil)]
     state.projects[0].splits = saved
     state.splitRoom = SplitRoom.Taken(rightWidth: 460, sidebarWasShown: true, foldedSidebar: true)
     let data = try JSONEncoder().encode(state)
@@ -159,13 +159,13 @@ import Foundation
     let m2 = AppModel(fixture: f)
     TargetState.project.apply(to: m2)
     let p2 = m2.currentProject!.name
-    m2.restoreSplits([SplitTab(source: "docs/prd-v2.md", kind: .markdown, ratio: 9), SplitTab(source: "gone.md", kind: .markdown)], project: p2, documents: ["docs/prd-v2.md"])
-    check(m2.splits.tabs[p2]?.count == 1 && m2.splits.tabs[p2]?["docs/prd-v2.md"]?.ratio == 0.8, "restore drops a missing source and clamps the ratio")
+    m2.restoreSplits([SplitTab(source: "pages/report.html", kind: .html, ratio: 9), SplitTab(source: "gone.md", kind: .html)], project: p2, documents: ["pages/report.html"])
+    check(m2.splits.tabs[p2]?.count == 1 && m2.splits.tabs[p2]?["pages/report.html"]?.ratio == 0.8, "restore drops a missing source and clamps the ratio")
 
     // A rename follows
-    makeSplit("docs/prd-v2.md")
-    m.splitMoved("docs/prd-v2.md", to: "docs/prd-v3.md")
-    check(m.splitTab("docs/prd-v3.md")?.source == "docs/prd-v3.md" && m.splitTab("docs/prd-v2.md") == nil, "a renamed file keeps its split")
+    makeSplit("pages/report.html")
+    m.splitMoved("pages/report.html", to: "pages/report3.html")
+    check(m.splitTab("pages/report3.html")?.source == "pages/report3.html" && m.splitTab("pages/report.html") == nil, "a renamed file keeps its split")
 
     // --- The provider interface: revisions, stale events, echo suppression, nested anchors
     var gate = RevisionGate()
@@ -183,33 +183,7 @@ import Foundation
     check(policy.anchorToReveal(forLine: 40) == nil, "with caret-follow off nothing is revealed")
     policy.cancel()
 
-    // The Markdown preview: anchors by heading, outside code
-    let md = "---\ntitle: x\n---\n# One\ntext\n```\n# not a heading\n```\n## Two\nmore\n"
-    let map = MarkdownPreviewHTML.anchorMap(md)
-    check(map.map(\.anchor) == ["h:1", "h:2"] && map[0].firstLine == 4 && map[0].lastLine == 8 && map[1].firstLine == 9, "headings are anchors, and a hash in a code block isn't one")
-    let page = MarkdownPreviewHTML.page(md, colors: ("#fff", "#000", "#555", "#ccc"))
-    check(page.contains("<h1>One</h1>") && page.contains("<h2>Two</h2>") && !page.contains("title: x"), "the preview renders the body, not the frontmatter")
-    check(MarkdownPreviewHTML.page("<script>x</script>", colors: ("#fff", "#000", "#555", "#ccc")).contains("&lt;script&gt;"), "text in a preview is escaped")
-
     // Which files preview
-    check(PreviewProviders.kind(forFile: "a.md") == .markdown && PreviewProviders.kind(forFile: "a.html") == .html && PreviewProviders.kind(forFile: "a.png") == nil, "Markdown and HTML preview; a picture doesn't")
+    check(PreviewProviders.kind(forFile: "a.md") == nil && PreviewProviders.kind(forFile: "a.html") == .html && PreviewProviders.kind(forFile: "a.png") == nil, "HTML previews; Markdown (live in the editor) and a picture don't")
     check(PreviewProviders.kind(forFile: "a.pptx") == nil, "a deck has no preview until Duo Decks registers its provider")
-}
-
-/// C-136: what a Markdown preview render costs, timed under the exclusive lock (`DUO_CHECKS=split-perf`).
-@MainActor func splitViewPerf() {
-    print("split view: preview render time (C-136)")
-    for lines in [200, 2000, 20000] {
-        var md = "# Title\n\n"
-        for i in 0..<lines / 4 { md += "## Section \(i)\n\nA paragraph with **bold**, `code` and a [link](https://x.y/\(i)).\n\n- one\n- two\n\n" }
-        var best = Double.infinity
-        for _ in 0..<5 {
-            let t0 = DispatchTime.now().uptimeNanoseconds
-            let page = MarkdownPreviewHTML.page(md, colors: ("#fff", "#000", "#555", "#ccc"))
-            let map = MarkdownPreviewHTML.anchorMap(md)
-            best = min(best, Double(DispatchTime.now().uptimeNanoseconds - t0) / 1e6)
-            check(!page.isEmpty && !map.isEmpty, "rendered \(lines) lines")
-        }
-        print("  \(lines) lines (\(md.utf8.count / 1024) KB): \(String(format: "%.1f", best)) ms to HTML and anchor map")
-    }
 }

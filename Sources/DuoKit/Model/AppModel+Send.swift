@@ -352,8 +352,6 @@ extension AppModel {
         // A split routes by its active side, model state (routing-verbs): the preview's selection, or the source's.
         if splitHasKeys, let t = showingSplit, t.active == .preview {
             if t.kind == .html { htmlSelectionPayload(deliver) }
-            else if t.kind == .markdown { splits.markdown.webView.evaluateJavaScript("String(getSelection())") { v, _ in
-                MainActor.assumeIsolated { if let text = v as? String, !text.isEmpty { deliver(text) } } } }
             return
         }
         if webFocus == .editor || editorIfLoaded?.hasFocus == true { documentSelectionPayload(deliver) }

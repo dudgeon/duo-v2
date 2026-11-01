@@ -197,7 +197,6 @@ struct SplitPreviewSide: View {
     var body: some View {
         Group {
             switch kind {
-            case .markdown: WebPreviewView(web: model.splits.markdown.webView).background(DuoColor.pane)
             case .html:
                 ZStack(alignment: .bottom) {
                     WebPreviewView(web: model.htmlViewer.webView)
@@ -208,6 +207,7 @@ struct SplitPreviewSide: View {
                 if let w = model.splitTab(path)?.with, let f = model.liveFile(w) ?? model.keptFile(w) {
                     DocumentStack(file: f, ref: .second)
                 } else { DuoColor.pane }
+            case .markdown: DuoColor.pane   // no Markdown preview (Geoff, 2026-11-01: view/edit source is being explored)
             case .deck: DuoColor.pane   // Duo Decks' provider fills this (preview-provider)
             }
         }
@@ -238,4 +238,11 @@ struct SplitRail: View {
         .accessibilityLabel("Show \(name) in Split View")
         .accessibilityAddTraits(.isButton)
     }
+}
+
+/// A web view shown as a pane's whole body (the preview side), re-parented like the editor's.
+struct WebPreviewView: NSViewRepresentable {
+    let web: NSView
+    func makeNSView(context: Context) -> DocumentEditorView.EditorHost { DocumentEditorView.EditorHost() }
+    func updateNSView(_ host: DocumentEditorView.EditorHost, context: Context) { host.show(web) }
 }
