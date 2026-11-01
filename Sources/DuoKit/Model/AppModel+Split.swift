@@ -98,7 +98,10 @@ extension AppModel {
         guard let project = currentProject?.name, let t = splitTabs[path] else { return }
         let policy = splits.policy(project, path)
         policy.onRequest = { [weak self, weak policy] e in if let policy { self?.previewRequest(e, policy) } }   // R11, R12
-        if let p = splits.provider(t.kind) { p.emit = { [weak policy] e in policy?.accept(e) } }   // maps, problems, comments, current
+        if let p = splits.provider(t.kind) {
+            if let file = liveFile(path) { p.bind(path: path, file: file, model: self) }   // which split it previews now
+            p.emit = { [weak policy] e in policy?.accept(e) }   // maps, problems, comments, current
+        }
         let render: @MainActor (Int) -> Void = { [weak self] rev in self?.renderPreview(path, rev: rev) }
         editor(.main).onBufferChange = { [weak policy] in policy?.bufferChanged(render: render) }
         // The editor opens the file after this view appears: render once it has, and again a moment later.
