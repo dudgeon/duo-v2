@@ -155,5 +155,62 @@ import Foundation
         try? FileManager.default.removeItem(at: dir)
     }
 
+    // Q-374 (Geoff): a dictation running at the switch keeps listening into the terminal. Its words so far are carried,
+    // its volatile tail left to settle; phrases that settle during the carry wait, then go in after the carried words.
+    do {
+        let (c, tui, prompt, dir) = rig()
+        let v = VoiceInput()
+        let was = VoiceInput.current
+        VoiceInput.current = v
+        defer { VoiceInput.current = was }
+        var pasted: [(String, Bool)] = []
+        v.host = VoiceInput.Host(update: { _, _, _ in }, paste: { _, phrase, first in
+            pasted.append((phrase, first)); tui.sendKeys(VoiceTerminalText.paste(phrase, first: first)); return .sent
+        }, ended: { _, _ in })
+        var t = VoiceTranscript()
+        t.apply("so this is the first phrase", isFinal: true)
+        t.apply("and the second is still", isFinal: false)
+        v.showFixture(.listening, target: .chat(c.key), transcript: t)
+        c.ui.composer = "so this is the first phrase and the second is still"
+        c.mode = .terminal
+        check(v.target == .terminal(c.key) && v.state == .listening && v.isHeldForCarry, "Terminal chosen mid-dictation: it keeps listening, now for the terminal (\(v.target.map { "\($0)" } ?? "-"))")
+        v.deliver("and the second is still going", to: .terminal(c.key))   // settles while the hand-over runs
+        check(pasted.isEmpty, "a phrase that settles during the carry waits for it")
+        settle(c) { prompt().contains("going") }
+        check(prompt() == "so this is the first phrase and the second is still going" && pasted.count == 1 && pasted[0].1 == false && returns(tui) == 0,
+              "the words so far carried, then the next phrase after them with a space, the volatile tail not doubled (\(prompt().debugDescription))")
+        v.deliver("and a third", to: .terminal(c.key))
+        spin(0.1)
+        check(prompt() == "so this is the first phrase and the second is still going and a third" && !v.isHeldForCarry, "later phrases go straight in")
+        // Back to chat while it still listens: it finishes, then the composer opens on Claude's prompt.
+        c.mode = .chat
+        check(v.state != .listening, "back in chat a moved dictation finishes (\(v.state))")
+        try? FileManager.default.removeItem(at: dir)
+    }
+
+    // A question up at the switch: the moved dictation's phrases wait with the words; back in chat first, they join the composer.
+    do {
+        let (c, tui, _, dir) = rig()
+        let v = VoiceInput()
+        let was = VoiceInput.current
+        VoiceInput.current = v
+        defer { VoiceInput.current = was }
+        v.host = VoiceInput.Host(update: { _, _, _ in }, paste: { _, _, _ in .sent }, ended: { _, _ in })
+        var t = VoiceTranscript()
+        t.apply("words before the question", isFinal: true)
+        v.showFixture(.listening, target: .chat(c.key), transcript: t)
+        c.ui.composer = "words before the question"
+        tui.text = question
+        _ = c.reread()
+        tui.keys = []
+        c.mode = .terminal
+        v.deliver("and after it", to: .terminal(c.key))
+        settle(c)
+        check(tui.keys.isEmpty && v.isHeldForCarry, "a question at the switch: nothing typed, the dictation's phrase held")
+        c.mode = .chat
+        check(c.ui.composer == "words before the question and after it" && !v.state.isActive, "back in chat first: the held phrase joins the composer and the dictation ends (\(c.ui.composer.debugDescription))")
+        try? FileManager.default.removeItem(at: dir)
+    }
+
     check(ChatSession.holds("x  the words\nhere y", "the words here") && !ChatSession.holds("", "") , "a prompt that already holds the words is left alone")
 }

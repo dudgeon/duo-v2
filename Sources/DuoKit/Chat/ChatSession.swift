@@ -140,6 +140,8 @@ public final class ChatSession {
     @ObservationIgnored var carryPending = false
     @ObservationIgnored var carrying = false
     @ObservationIgnored var carried = false
+    /// The composer's dictation followed the session into the terminal (Q-374).
+    @ObservationIgnored var movedVoice = false
     public private(set) var screen: ChatScreen = .starting
     /// The effort the TUI last drew (DL-168). Claude Code shows it for a few seconds after a start or a change (F-275), so it is kept until a screen draws another; nil until one has.
     public internal(set) var effort: ChatEffort?

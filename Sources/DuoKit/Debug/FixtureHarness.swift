@@ -238,7 +238,7 @@ public enum FixtureHarness {
             }
         case "voice-log":     // voice-log: the dictation's state and target, and the composer's text, to stderr
             let field = model.visibleSessionId.flatMap { (model.chats.existing($0) ?? model.fixtureChats[$0])?.composerView }
-            FileHandle.standardError.write(Data("voice-log: state=\(model.voice.state) target=\(model.voice.target.map { "\($0)" } ?? "-") field=\((field?.plainText ?? "-").debugDescription) dictation=\(field?.dictation.map { "\($0.start)+\($0.length)" } ?? "none")\n".utf8))
+            FileHandle.standardError.write(Data("voice-log: state=\(model.voice.state) target=\(model.voice.target.map { "\($0)" } ?? "-") level=\(String(format: "%.2f", model.voice.level)) field=\((field?.plainText ?? "-").debugDescription) dictation=\(field?.dictation.map { "\($0.start)+\($0.length)" } ?? "none")\n".utf8))
         case "voice-key":   // voice-key:return|escape: that key, as a person presses it in the session showing (its composer in chat,
                       // its terminal otherwise): voice input's key monitor decides first, then the focused view takes it
             let name = parts.count > 1 ? parts[1] : "return"

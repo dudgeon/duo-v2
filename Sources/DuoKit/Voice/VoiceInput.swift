@@ -205,6 +205,7 @@ public final class VoiceInput {
         self.target = target
         transcript = VoiceTranscript()
         sentPhrases = 0
+        heldPhrases = nil
         notice = nil
         unsentWords = nil
         holding = false
@@ -350,8 +351,54 @@ public final class VoiceInput {
         }
     }
 
+    // MARK: Chat to the terminal (Q-374)
+
+    /// Phrases waiting while the composer's words are carried into Claude's prompt: pasting during the hand-over would
+    /// type into the editor's blank screen, or ahead of the carried words.
+    @ObservationIgnored private var heldPhrases: [String]?
+
+    /// A dictation into `key`'s composer follows the session into its terminal (Geoff, Q-374): the words so far are
+    /// the composer's, carried by the chat; each phrase that settles after this is held until `releaseMoved`, then
+    /// goes in as the terminal mic's do, a space ahead (`joins`: the prompt will hold words before it). The mic,
+    /// its level bars and the state follow `target`. Returns the volatile tail to leave out of the carry: it settles
+    /// into a phrase of its own and would land twice.
+    @discardableResult
+    public func moveToTerminal(_ key: String, joins: Bool) -> String? {
+        guard state.isActive, target == .chat(key) else { return nil }
+        target = .terminal(key)
+        sentPhrases = joins ? 1 : 0
+        heldPhrases = []
+        return transcript.volatile
+    }
+
+    /// The carry landed (or there was nothing to carry): the held phrases go in, and later ones as they settle.
+    public func releaseMoved() {
+        guard let held = heldPhrases, let t = target else { return }
+        heldPhrases = nil
+        for p in held { deliver(p, to: t) }
+    }
+
+    /// The carry couldn't be made, or chat came back before it was: the dictation ends, and the words held for the
+    /// terminal, with the volatile tail, are returned for the composer.
+    public func endMoved() -> String {
+        let held = (heldPhrases ?? []) + [transcript.volatile].filter { !$0.isEmpty }
+        heldPhrases = nil
+        if state.isActive {
+            generation += 1
+            stopCapture()
+            runTask?.cancel()
+            Task { await recognizer?.cancel() }
+            state = .idle
+            finishedRun()
+        }
+        return held.joined(separator: " ")
+    }
+
+    public var isHeldForCarry: Bool { heldPhrases != nil }
+
     /// One settled phrase into the terminal. A question on screen stops everything. Public for DuoChecks.
     public func deliver(_ phrase: String, to target: VoiceTarget) {
+        if heldPhrases != nil { heldPhrases?.append(phrase); return }
         switch host?.paste(target, phrase, sentPhrases == 0) ?? .blocked("no terminal") {
         case .sent: sentPhrases += 1
         case .blocked:
