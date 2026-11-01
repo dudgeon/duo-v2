@@ -1,5 +1,5 @@
 import React from 'react';
-import {AbsoluteFill, interpolate} from 'remotion';
+import {AbsoluteFill, Img, interpolate} from 'remotion';
 import {smootherstep} from './camera';
 import {Wallpaper} from './Desk';
 import tokens from '../../style/tokens.json';
@@ -69,9 +69,14 @@ export const DuoTile = ({x, y, w}: {x: number; y: number; w: number}) => {
   const size = w * 1024 / 824;
   return <div style={{position: 'absolute', left: x - (size - w) / 2, top: y - (size - w) / 2}}><DuoIcon t={99} size={size} /></div>;
 };
+/** An app icon image (its 1024 grid, squircle inset as DuoTile's) filling a tile: Duo's Classic icon (DL-252). */
+export const IconTile = ({src, w}: {src: string; w: number}) => {
+  const size = w * 1024 / 824;
+  return <Img src={src} style={{position: 'absolute', left: -(size - w) / 2, top: -(size - w) / 2, width: size, height: size}} />;
+};
 /** duo: the Duo tile is drawn ('tile'), or its slot is left open for the logo to land in ('slot').
  *  lift: px the tile bounces up (launching). running: the dot under it. y: px the whole Dock sits lower (sliding in). */
-export const Dock = ({duo = 'tile', lift = 0, running = false, y = 0}: {duo?: 'tile' | 'slot'; lift?: number; running?: boolean; y?: number}) => (
+export const Dock = ({duo = 'tile', lift = 0, running = false, y = 0, icon}: {duo?: 'tile' | 'slot'; lift?: number; running?: boolean; y?: number; icon?: string}) => (
   <div style={{position: 'absolute', left: '50%', bottom: BOTTOM, transform: `translate(-50%, ${y}px)`, display: 'flex', gap: GAP, padding: PAD, borderRadius: 22,
     background: 'rgba(255,255,255,0.25)', backdropFilter: 'blur(20px)', boxShadow: '0 0 0 0.5px rgba(255,255,255,0.4)'}}>
     {DOCK.map(([g, c]) => (
@@ -79,7 +84,7 @@ export const Dock = ({duo = 'tile', lift = 0, running = false, y = 0}: {duo?: 't
         fontFamily: mono, fontSize: 24, color: c === '#F0F0F2' ? '#333' : '#FFF', boxShadow: '0 2px 6px rgba(0,0,0,0.25)'}}>{g}</div>
     ))}
     <div style={{width: TILE, height: TILE, position: 'relative'}}>
-      {duo === 'tile' && <div style={{position: 'absolute', left: 0, top: -lift}}><DuoTile x={0} y={0} w={TILE} /></div>}
+      {duo === 'tile' && <div style={{position: 'absolute', left: 0, top: -lift}}>{icon ? <IconTile src={icon} w={TILE} /> : <DuoTile x={0} y={0} w={TILE} />}</div>}
       {running && <div style={{position: 'absolute', left: TILE / 2 - 2.5, bottom: -8, width: 5, height: 5, borderRadius: 3, background: 'rgba(0,0,0,0.65)'}} />}
     </div>
   </div>

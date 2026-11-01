@@ -19,7 +19,7 @@ export function appStates(repo) {
 }
 
 // Every state a shot shows: its list, plus (app scenes) the states its beats switch to or read anchors from, and its entry's.
-export const shotStates = (s) => (s.kind === 'desk' ? [s.state] : [...(s.states ?? []), ...(s.beats ?? []).flatMap((b) => [b.state, b.in, b.wipe?.state, b.drag?.reveal]),
+export const shotStates = (s) => (s.kind === 'desk' ? [s.state] : [...(s.states ?? []), ...(s.beats ?? []).flatMap((b) => [b.state, b.in, b.wipe?.state, b.drag?.reveal, b.overlay?.state, b.rec]),
   s.entry?.base, ...Object.values(s.entry?.panes ?? {})].filter(Boolean));
 
 export const noteText = (sc) => [sc.shot, ...sc.notes].join('\n');

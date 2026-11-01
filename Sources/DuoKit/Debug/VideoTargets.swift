@@ -25,10 +25,11 @@ public enum VideoTargets {
                                              "video-s7-md-sel", "video-s7-md-composer-empty", "video-s7-md-composer-ref", "video-s7-md-composer", "video-s7-md-sent", "video-s7-md-after",
                                              "video-s7-html-pick", "video-s7-html-sent", "video-s7-html-after",
                                              "video-s7-pptx-slide3", "video-s7-pptx-pick", "video-s7-pptx-sent", "video-s7-pptx-after"]
-                                            + s9s10Screens + rvScreens
+                                            + s9s10Screens + rvScreens + vvScreens
 
     public static func apply(_ screen: String, to model: AppModel) {
         if screen.hasPrefix("video-rv-") { return applyReview(screen, model) }
+        if screen.hasPrefix("video-vc-") || screen.hasPrefix("video-vv-") { return applyVoice(screen, model) }
         if screen == "video-s3-list" { return applyS3(model) }
         if screen == "video-s9-board" || screen == "video-s9-list" { return applyS9Home(screen, model) }
         if screen == "video-s9-beta" { return applyS9Beta(model) }
@@ -303,6 +304,7 @@ public enum VideoTargets {
     nonisolated public static func impliedActions(for screen: String?, fixturePath: String?) -> [String] {
         if let screen, screen.hasPrefix("video-s9-") || screen.hasPrefix("video-s10-"), let fixturePath { return s9s10Actions(screen, dir: URL(fileURLWithPath: fixturePath).deletingLastPathComponent()) }
         if let screen, screen.hasPrefix("video-rv-") { return rvActions(screen) }
+        if let screen, screen.hasPrefix("video-vc-") || screen.hasPrefix("video-vv-") { return vvActions(screen) }
         if let screen, screen.hasPrefix("video-s7-"), let fixturePath { return s7Actions(screen, dir: URL(fileURLWithPath: fixturePath).deletingLastPathComponent()) }
         guard let screen, screen.hasPrefix("video-s5-") || screen.hasPrefix("video-s6-"), let fixturePath else { return [] }
         let order = screen.hasPrefix("video-s5-") ? ["video-s5-draft", "video-s5-paste-text", "video-s5-paste-image"]

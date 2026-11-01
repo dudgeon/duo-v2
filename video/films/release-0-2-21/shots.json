@@ -1,5 +1,5 @@
 {
-  "$note": "The 0.2.21 release film (DL-245): one shot per scene of films/release-0-2-21/script.md, in the intro's shots.json format. S0 is the title card (src/scenes/release-0-2-21/Title.tsx, the intro's Logo build with the release's words); S1 to S4 are app scenes (`rel-app`: the intro's AppScene with captions) on the video-rv-* states (Sources/DuoKit/Debug/VideoTargets+Review.swift, fixture video/fixture/make-review.py); S5 folds the window back into the Dock and ends on the card.",
+  "$note": "The 0.2.21 release film (DL-245): one shot per scene of films/release-0-2-21/script.md, in the intro's shots.json format. S0 is the title card (src/scenes/release/Title.tsx, the intro's Logo build with the release's words); S1 to S4 are app scenes (`rel-app`: the intro's AppScene with captions) on the video-rv-* states (Sources/DuoKit/Debug/VideoTargets+Review.swift, fixture video/fixture/make-review.py); S5 folds the window back into the Dock and ends on the card.",
   "S0": {
     "kind": "drawn",
     "scene": "rel-title",
@@ -23,7 +23,7 @@
       {
         "what": "The Duo icon builds itself on the High Sierra wallpaper, as the intro's title card",
         "by": [
-          "src:src/scenes/release-0-2-21/Title.tsx",
+          "src:src/scenes/release/Title.tsx",
           "src:src/lib/DuoIcon.tsx"
         ]
       },
@@ -44,7 +44,7 @@
       {
         "what": "The words wipe back, the menu bar and Dock slide in, the icon drops into its Dock slot, and Duo's window opens out of the Dock on Sam's PRD with the review in the margin",
         "by": [
-          "src:src/scenes/release-0-2-21/Title.tsx",
+          "src:src/scenes/release/Title.tsx",
           "state:video-rv-open"
         ]
       }
@@ -737,7 +737,7 @@
         "by": [
           "event:fold",
           "event:card",
-          "src:src/scenes/release-0-2-21/Title.tsx"
+          "src:src/scenes/release/Title.tsx"
         ]
       },
       {

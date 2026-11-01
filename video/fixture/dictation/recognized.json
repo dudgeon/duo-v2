@@ -1,0 +1,5 @@
+{
+ "$note": "What macOS's on-device recognizer wrote, phrase by phrase, when Duo's voice input heard dictation/<id>.wav (Geoff's voice) at its spoken pace (the run of 2026-11-01, video:vv-rec with its trace). The chat's sent message (chat-vv-sent) is these words.",
+ "chat": {"phrases": ["Please update the PRD with the latest changes to the UI design."], "volatile_s": 4.1, "settled_s": 5.8},
+ "terminal": {"phrases": ["Can you add the new design to the release notes too?"], "settled_s": 5.4}
+}

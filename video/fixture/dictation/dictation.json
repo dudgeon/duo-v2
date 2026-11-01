@@ -1,0 +1,18 @@
+{
+ "chat": {
+  "phrases": [
+   "Please update the PRD with the latest changes to the UI design."
+  ],
+  "text": "Please update the PRD with the latest changes to the UI design.",
+  "duration_s": 5.6,
+  "voice": "Geoff's (geoff-voxcpm2-v2)"
+ },
+ "terminal": {
+  "phrases": [
+   "Can you add the new design to the release notes too?"
+  ],
+  "text": "Can you add the new design to the release notes too?",
+  "duration_s": 5.12,
+  "voice": "Geoff's (geoff-voxcpm2-v2)"
+ }
+}

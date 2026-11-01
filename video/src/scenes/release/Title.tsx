@@ -5,6 +5,7 @@ import {DuoIcon} from '../../lib/DuoIcon';
 import {DOCK_DUO, Dock, MenuBar} from '../../lib/Clutter';
 import tokens from '../../../style/tokens.json';
 import type {SceneProps} from '../registry';
+import classicIcon from './classic-icon.png';
 
 // The 0.2.21 film's bookends (shots.json S0 `rel-title`, S5's ending `rel-end`): the intro's title card (Logo.tsx's
 // build, glide and type, on the same wallpaper) with the release's own words, and the window opening out of the Dock
@@ -18,7 +19,10 @@ const ramp = (t: number, a: number, b: number) => (b <= a ? (t >= a ? 1 : 0) : s
 const lerp = (a: number, b: number, u: number) => a + (b - a) * u;
 
 export type Stills = {window: {w: number; h: number}; src: Record<string, string>; first: string; last: string};
-type Scene = SceneProps['scene'] & {stills?: Stills; duration?: number};
+/** The card's words (shots.json `words`): the version after "Duo", two lines under it, and the icon (Duo's, or its Classic one). */
+export type Words = {version: string; lines: [string, string]; icon?: 'classic'; foot?: string[]};
+const WORDS_0_2_21: Words = {version: '0.2.21', lines: ['Review in Markdown', 'Comments, suggested edits and @claude']};
+type Scene = SceneProps['scene'] & {stills?: Stills; duration?: number; words?: Words};
 
 const TILE = DOCK_DUO.w * 1024 / 824;
 const tileAt = {x: DOCK_DUO.x - (TILE - DOCK_DUO.w) / 2, y: DOCK_DUO.y - (TILE - DOCK_DUO.w) / 2};
@@ -40,19 +44,19 @@ const Window = ({stills, state, u}: {stills: Stills; state: string; u: number}) 
 };
 
 /** The card's type: "Duo 0.2.21", then the release's line; `title`, `sub` reveal, `wipe` takes them back to the icon. */
-const Words = ({x, title, sub, ink, wipe, foot}: {x: number; title: number; sub: number; ink: number; wipe: number; foot?: number}) => (
+const Words = ({x, title, sub, ink, wipe, foot, words = WORDS_0_2_21}: {x: number; title: number; sub: number; ink: number; wipe: number; foot?: number; words?: Words}) => (
   <div style={{position: 'absolute', left: x, top: H / 2 - 172, fontFamily: tokens.font.ui, color: '#fff', filter: 'drop-shadow(0 2px 14px rgba(0,0,0,0.28))'}}>
     <div style={{fontSize: 200, fontWeight: 650, letterSpacing: -6, lineHeight: 1, whiteSpace: 'nowrap',
       clipPath: `inset(0 ${100 - 100 * title * (1 - ramp(wipe, 0.08, 1))}% 0 0)`, transform: `translateX(${(1 - title) * -24}px)`}}>
-      Duo <span style={{fontWeight: 300, letterSpacing: -4, opacity: 0.82}}>0.2.21</span>
+      Duo <span style={{fontWeight: 300, letterSpacing: -4, opacity: 0.82}}>{words.version}</span>
     </div>
     <div style={{fontSize: 50, fontWeight: 550, letterSpacing: -0.8, lineHeight: 1.22, marginTop: 24, opacity: sub > 0 ? 1 : 0,
       clipPath: `inset(0 ${100 * ramp(wipe, 0, 0.75)}% 0 0)`, transform: `translateY(${(1 - sub) * 14}px)`, color: `rgba(255,255,255,${0.5 + 0.45 * ink})`}}>
-      Review in Markdown<br />Comments, suggested edits and @claude
+      {words.lines[0]}<br />{words.lines[1]}
     </div>
     {foot !== undefined && (
       <div style={{fontFamily: tokens.font.mono, fontSize: 30, marginTop: 36, opacity: 0.86 * foot, transform: `translateY(${(1 - foot) * 10}px)`}}>
-        Duo › Check for Updates…
+        {(words.foot ?? ['Duo › Check for Updates…']).map((f) => <div key={f}>{f}</div>)}
       </div>
     )}
   </div>
@@ -85,7 +89,7 @@ export const ReleaseTitle = ({t, ev, scene}: SceneProps) => {
       {bars > 0 && <Dock duo={landed ? 'tile' : 'slot'} y={(1 - bars) * 120} running={open > 0} />}
       {!landed && <div style={{position: 'absolute', left: bez(x, cx, tileAt.x), top: bez(y, cy, tileAt.y)}}><DuoIcon t={t} size={size + (TILE - size) * fly} /></div>}
       {landed && pop > 0 && <div style={{position: 'absolute', left: tileAt.x - TILE * pop / 2, top: tileAt.y - TILE * pop}}><DuoIcon t={99} size={TILE * (1 + pop)} /></div>}
-      <Words x={S + 32 + 300 + 64} title={title} sub={sub} ink={ink} wipe={wipe} />
+      <Words x={S + 32 + 300 + 64} title={title} sub={sub} ink={ink} wipe={wipe} words={(scene as Scene).words} />
       {st && <Window stills={st} state={st.first} u={open} />}
     </AbsoluteFill>
   );
@@ -95,6 +99,8 @@ export const ReleaseTitle = ({t, ev, scene}: SceneProps) => {
  *  with the way to get it under it. Events: `fold` (the window starts back), `card` (the words), `foot` (Check for Updates). */
 export const ReleaseEnd = ({t, ev, scene}: SceneProps) => {
   const st = (scene as Scene).stills;
+  // A film that ends in Classic (0.2.22) folds into Classic's Dock icon, and that icon comes back on the card.
+  const classic = (scene as Scene).words?.icon === 'classic';
   const f0 = ev.fold ?? 1;
   const fold = ramp(t, f0, f0 + 0.85);
   const rise = ramp(t, f0 + 0.9, f0 + 1.8);
@@ -111,10 +117,11 @@ export const ReleaseEnd = ({t, ev, scene}: SceneProps) => {
       <Wallpaper w={W} h={H} />
       <AbsoluteFill style={{background: 'linear-gradient(90deg, rgba(8,12,18,0.42), rgba(8,12,18,0.2) 40%, rgba(8,12,18,0) 62%)', opacity: ramp(t, c0 - 0.3, c0 + 0.5)}} />
       <div style={{position: 'absolute', left: 0, top: 0, width: W, transform: `translateY(${(bars - 1) * 34}px)`}}>{bars > 0 && <MenuBar app={fold < 1 ? 'Duo' : 'Finder'} />}</div>
-      {bars > 0 && <Dock duo={rise > 0 ? 'slot' : 'tile'} y={(1 - bars) * 120} running={fold < 1} />}
-      {rise > 0 && <div style={{position: 'absolute', left: bez(tileAt.x, cx, x1), top: bez(tileAt.y, cy, y1)}}><DuoIcon t={99} size={size} /></div>}
+      {bars > 0 && <Dock duo={rise > 0 ? 'slot' : 'tile'} y={(1 - bars) * 120} running={fold < 1} icon={classic ? classicIcon : undefined} />}
+      {rise > 0 && <div style={{position: 'absolute', left: bez(tileAt.x, cx, x1), top: bez(tileAt.y, cy, y1)}}>{classic
+        ? <Img src={classicIcon} style={{width: size, height: size}} /> : <DuoIcon t={99} size={size} />}</div>}
       {st && <Window stills={st} state={st.last} u={1 - fold} />}
-      <Words x={S + 32 + 300 + 64} title={title} sub={sub} ink={ink} wipe={0} foot={foot} />
+      <Words x={S + 32 + 300 + 64} title={title} sub={sub} ink={ink} wipe={0} foot={foot} words={(scene as Scene).words} />
     </AbsoluteFill>
   );
 };
