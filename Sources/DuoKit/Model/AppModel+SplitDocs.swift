@@ -113,6 +113,16 @@ extension AppModel {
         focusSplitSide(t.place(of: role))
     }
 
+    /// A preview's pin asks for the source's review margin (Duo Decks R11, R12): neither takes focus from it.
+    func previewRequest(_ e: PreviewEvent, _ policy: PreviewPolicy) {
+        let source = editor(.main)
+        switch e {
+        case .openThread(let thread): source.openThread(id: thread)
+        case .addComment(let anchor): if let lines = policy.lines(of: anchor) { source.addComment(lines: lines) }
+        default: break
+        }
+    }
+
     /// An editor took the keyboard: in a pair, its side becomes the active one (DL-275: typing in a side).
     func editorTookFocus(_ ref: EditorRef) {
         guard let k = rightTab, let t = splitTabs[k], t.isDocPair else { return }

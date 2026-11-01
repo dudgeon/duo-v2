@@ -97,6 +97,7 @@ extension AppModel {
     func startPreview(_ path: String) {
         guard let project = currentProject?.name, let t = splitTabs[path] else { return }
         let policy = splits.policy(project, path)
+        policy.onRequest = { [weak self, weak policy] e in if let policy { self?.previewRequest(e, policy) } }   // R11, R12
         if t.kind == .markdown { splits.markdown.emit = { [weak policy] e in policy?.accept(e) } }
         let render: @MainActor (Int) -> Void = { [weak self] rev in self?.renderPreview(path, rev: rev) }
         editor(.main).onBufferChange = { [weak policy] in policy?.bufferChanged(render: render) }
@@ -199,13 +200,7 @@ extension AppModel {
         let name = { (r: SplitRole) in r == .source ? t.source : (t.with ?? t.kind.sideName) }
         let left = name(t.role(at: .left)), right = name(t.role(at: .right))
         let panes = splits.paneHost.map { $0.arrangedSubviews.map { Int($0.frame.width) } } ?? []
-        return "panes: \(panes)
-left: \(left)
-right: \(right)
-active: \(t.activeSide.rawValue)
-ratio: \(String(format: "%.3f", t.ratio))
-folded: \(t.folded)
-sidebar folded by the split: \(splits.sidebarFolded)"
+        return "panes: \(panes)\nleft: \(left)\nright: \(right)\nactive: \(t.activeSide.rawValue)\nratio: \(String(format: "%.3f", t.ratio))\nfolded: \(t.folded)\nsidebar folded by the split: \(splits.sidebarFolded)"
     }
 
     // MARK: - Making room (DL-276)
