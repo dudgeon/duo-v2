@@ -199,6 +199,15 @@ Do we keep saved cards out of scope for v2? *Decision due Oct 10.*
     deck = pathlib.Path(__file__).resolve().parents[2] / "Spikes" / "PptxViewer" / "decks" / "garden.pptx"
     if deck.exists():
         shutil.copy(deck, co / "docs" / "garden-review.pptx")
+    # Duo Decks (DL-267 and on): a deck in Markdown, its template pack and a plain pptx to convert, all synthetic,
+    # from the Duo Decks study's samples.
+    samples = pathlib.Path(__file__).resolve().parents[2] / "docs" / "design" / "duo-decks-study" / "samples"
+    if samples.exists():
+        (co / "decks" / "assets").mkdir(parents=True, exist_ok=True)
+        shutil.copy(samples / "decks" / "field-trial-review.md", co / "decks" / "field-trial-review.md")
+        shutil.copy(samples / "decks" / "assets" / "row-map.png", co / "decks" / "assets" / "row-map.png")
+        shutil.copytree(samples / "templates" / "decks" / "northwind", co / "templates" / "decks" / "northwind", dirs_exist_ok=True)
+        shutil.copy(samples / "import" / "grower-update.pptx", co / "docs" / "grower-update.pptx")
     write(co / "docs" / "mixed-endings.md", None, raw=b"# Mixed endings\r\nThis line ends in CRLF.\nThis one in LF.\r\nDuo must open this read-only.\n")
     write(co / "docs" / "legacy-export.txt", None, raw="Café résumé: exported in Latin-1, not UTF-8.\n".encode("latin-1"))
     write(co / "templates" / "meeting-notes.md", "# Meeting notes\n\n**Date:** \n**Attendees:** \n\n## Decisions\n\n## Actions\n- [ ] \n")
