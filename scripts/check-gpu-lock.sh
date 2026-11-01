@@ -218,6 +218,16 @@ st=$("$R/scripts/gpu-lock.sh" --status)
 echo "$st" | grep -q "exclusive holder: test held .*held 0m0" && echo "$st" | grep -q "waiting: .*test waiter .*for 0m0" && ok "--status lists the holder and the waiter with ages" || bad "--status said: $st"
 wait
 [ "$("$R/scripts/gpu-lock.sh" --status)" = "no holder, no waiter" ] && ok "--status on an idle lock" || bad "--status idle"
+# timing-lock.sh finds the main checkout's gpu-lock.sh from a linked work tree, whatever the caller's cwd (the relative
+# --git-common-dir bug): a scratch repo with a stub gpu-lock.sh, a work tree, and a call from an unrelated directory.
+M="$T/main"; git init -q "$M" && cp -R "$R/scripts" "$M/scripts" 2>/dev/null
+printf '#!/bin/bash\necho "stub lock: $*"\n' > "$M/scripts/gpu-lock.sh"; chmod +x "$M/scripts/gpu-lock.sh"
+git -C "$M" add -A >/dev/null 2>&1; git -C "$M" -c user.name=t -c user.email=t@t commit -qm init >/dev/null 2>&1
+git -C "$M" worktree add -q "$T/wt" -b wt >/dev/null 2>&1
+out=$(cd "$T" && GPU_LOCK="$L" "$T/wt/scripts/timing-lock.sh" "test tl" echo hi 2>&1)
+[ "$out" = "stub lock: --exclusive test tl echo hi" ] && ok "timing-lock.sh from a work tree finds the main checkout's gpu-lock.sh" || bad "timing-lock.sh from a work tree said: $out"
+out=$(cd "$T" && GPU_LOCK="$L" "$M/scripts/timing-lock.sh" "test tl" echo hi 2>&1)   # the main checkout itself: git says ".git"
+[ "$out" = "stub lock: --exclusive test tl echo hi" ] && ok "timing-lock.sh from the main checkout, from another directory" || bad "timing-lock.sh from the main checkout said: $out"
 echo "max hold: $fails failure(s)"
 rm -rf "$T"
 [ "$fails" = 0 ]

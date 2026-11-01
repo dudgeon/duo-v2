@@ -10,7 +10,7 @@ set -u
 : "${GPU_LOCK:?set GPU_LOCK to the lock folder of this machine (machine-local; the director gives it in each brief)}"
 [ $# -ge 2 ] || { echo "usage: GPU_LOCK=<lock dir> scripts/timing-lock.sh <owner name> <command...>" >&2; exit 2; }
 here="$(cd "$(dirname "$0")/.." && pwd)"
-main="$(cd "$(git -C "$here" rev-parse --git-common-dir)/.." && pwd)"
+main="$(cd "$(git -C "$here" rev-parse --path-format=absolute --git-common-dir)/.." && pwd)"
 lock="$main/scripts/gpu-lock.sh"
 [ -x "$lock" ] || { echo "timing-lock: $lock is missing" >&2; exit 2; }
 name="$1"; shift
