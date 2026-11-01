@@ -101,7 +101,10 @@ struct ProjectLayout: View {
                 guard let model else { return }
                 model.panePicked(i == 0 && model.boardShown ? .middle : DuoPane.allCases[i], allProjects: false)   // the board covers the left
             },
-            onHost: { [weak model] split in model?.splits.paneHost = split }   // split view sets the right pane's width
+            onHost: { [weak model] split in
+                model?.splits.paneHost = split   // split view sets the right pane's width
+                split.onResize = { [weak model] w in model?.splitWindowResized(w) }   // and folds the sidebar only while too narrow (DL-276)
+            }
         )
     }
 }

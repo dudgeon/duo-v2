@@ -1,6 +1,6 @@
 # Duo: the Markdown formatting bar, with the mic — design handoff
 
-Status: approved by Geoff, 2026-10-31 (DL-266). Build after 0.2.22.
+Status: approved by Geoff, 2026-10-31 (DL-266). Built after 0.2.22 on `build/md-format-bar` (DL-301): where the build departs from the screen or leaves a question, Q-411 to Q-413 and C-143 say so.
 
 The boards were drawn on the Design canvas https://claude.ai/artifact/2DqVdN1cA1P6Hv1MW5T8Sb with the Duo design system; every new mark is a [P]. Geoff chose option A, "but much slimmer; only while editing/carat is in the editor", then said yes to the redrawn board. They're exported here as static HTML (`screens/`, listed in `screens/manifest.json`), with PNGs at 2x in `screens/png/`.
 

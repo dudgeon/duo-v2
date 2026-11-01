@@ -7,15 +7,15 @@ struct DuoToolbar: ToolbarContent {
 
     var body: some ToolbarContent {
         ToolbarItem(placement: .navigation) {
-            SidebarToggle()
+            SidebarToggle().dimmedUnderSearch()
         }
         .sharedBackgroundVisibility(.hidden)
 
         ToolbarItem(placement: .navigation) {
             if model.altitude.isAllProjects {
-                AllProjectsTitle()
+                AllProjectsTitle().dimmedUnderSearch()
             } else {
-                ProjectBreadcrumb()
+                ProjectBreadcrumb().dimmedUnderSearch()
             }
         }
         .sharedBackgroundVisibility(.hidden)
@@ -24,13 +24,13 @@ struct DuoToolbar: ToolbarContent {
         ToolbarSpacer(.flexible)
 
         ToolbarItem(placement: .primaryAction) {
-            SearchField()
+            SearchField().dimmedUnderSearch()
         }
         .sharedBackgroundVisibility(.hidden)
 
         // The mirror of the sidebar button, at the trailing end (DL-129).
         ToolbarItem(placement: .primaryAction) {
-            RightPaneToggle()
+            RightPaneToggle().dimmedUnderSearch()
         }
         .sharedBackgroundVisibility(.hidden)
     }
@@ -215,4 +215,31 @@ struct SearchField: View {
         .accessibilityLabel("Search all projects")
         .accessibilityAddTraits(.isSearchField)
     }
+}
+
+/// A toolbar item under the search scrim (DL-76: "the whole window, toolbar included"; F-522).
+/// The toolbar's items are hosted above the content, so the content's scrim never reaches them:
+/// each draws the same `scrim` over its own shape (masked by its alpha, so the toolbar's empty
+/// space isn't dimmed twice), fading with `scrimIn`/`scrimOut`. A click on it closes the search,
+/// as a click on the dimmed content does.
+struct DimmedUnderSearch: ViewModifier {
+    @Environment(AppModel.self) private var model
+
+    func body(content: Content) -> some View {
+        let open = model.search.isOpen
+        content
+            .allowsHitTesting(!open)
+            .overlay {
+                if open {
+                    Rectangle().fill(DuoColor.scrim).mask { content }
+                        .overlay { Color.clear.contentShape(Rectangle()).onActivate { model.closeSearch() } }  // action: search
+                        .transition(.opacity)
+                }
+            }
+            .animation((open ? DuoMotionToken.scrimIn : .scrimOut).animation, value: open)
+    }
+}
+
+extension View {
+    func dimmedUnderSearch() -> some View { modifier(DimmedUnderSearch()) }
 }

@@ -12,3 +12,6 @@ node "$out2"
 out3="${TMPDIR:-/tmp}/duo-atmenu-test.cjs"
 ./node_modules/.bin/esbuild test/atmenu.test.mjs --bundle --platform=node --format=cjs --outfile="$out3" --log-level=error
 node "$out3"
+out4="${TMPDIR:-/tmp}/duo-dictation-test.cjs"
+./node_modules/.bin/esbuild test/dictation.test.mjs --bundle --platform=node --format=cjs --outfile="$out4" --log-level=error
+node "$out4"

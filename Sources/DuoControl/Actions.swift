@@ -41,7 +41,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case goAll = "go all", goHome = "go home", open, peek, peekJump = "peek jump"
     case split, splitClose = "split close", splitFocus = "split focus", splitSwap = "split swap", splitUnfold = "split unfold", splitRatio = "split ratio", splitSeparate = "split separate"
     case viewSidebar = "view sidebar", viewRight = "view right", viewTab = "view tab", viewTabMove = "view tab-move", viewPane = "view pane", viewGroup = "view group", viewSelect = "view select"
-    case viewSort = "view sort", viewFilter = "view filter", viewHidden = "view hidden", viewFolder = "view folder", viewHome = "view home"
+    case viewSort = "view sort", viewFilter = "view filter", viewHidden = "view hidden", viewFormatBar = "view format-bar", viewFolder = "view folder", viewHome = "view home"
     // Projects
     case projects, projectShow = "project show", projectMake = "project make", projectMerge = "project merge"
     case projectArchive = "project archive", projectUnarchive = "project unarchive"
@@ -201,6 +201,7 @@ extension DuoAction {
         .init(.viewFilter, .view, "[text]", "Narrow All projects' middle, whichever shows: the Board to projects and folders whose name or path has the text, the List to sessions about it; no text clears it.", ui: ["Filter folders", "Filter sessions"]),
         .init(.viewHome, .view, "board|list|toggle [--archived on|off]", "All projects' middle (DL-142): the Board (the map) or the List, every session across projects by recency (View › Show Board / Show List). Duo remembers the choice. --archived shows or hides the List's Archived fold (its Group popup's Show Archived).",
               ui: ["Board", "List", "Show Board", "Show List", "Group By Recent", "Show Archived", "list group popup"]),
+        .init(.viewFormatBar, .view, "show|hide|toggle", "Show or hide the Markdown formatting bar over the editor (View › Hide Formatting Bar). It shows only while a Markdown document has the keyboard.", ui: ["Hide Formatting Bar", "Show Formatting Bar", "Formatting Bar"]),
         .init(.viewHidden, .view, "on|off|toggle", "Show or hide dotfiles in the project's file tree (View › Show Hidden Files).", ui: ["Show Hidden Files"]),
         .init(.viewFolder, .view, "<folder> open|close", "Open or close a folder in the project's file tree.", ui: ["folder row"]),
 
@@ -375,9 +376,9 @@ extension DuoAction {
         .init(.docSelection, .docs, "", "The text selected in the editor, with its file and lines."),
         .init(.docSelect, .docs, "<line> [to-line]", "Select lines in the showing document."),
         .init(.docSave, .docs, "", "Save the showing document now (it also autosaves).", ui: ["Save"]),
-        .init(.docFormat, .docs, "bold|italic|strikethrough|code|link|heading1|heading2|heading3|task|properties",
-              "Format the selection (bold, italic, strikethrough, code, a link waiting for its address), make its lines headings or tasks (again takes it off), or start the properties block.",
-              ui: ["Bold", "Italic", "Strikethrough", "Code", "Link…", "Heading 1", "Heading 2", "Heading 3", "Task", "Add Properties"]),
+        .init(.docFormat, .docs, "bold|italic|strikethrough|code|link|heading1|heading2|heading3|task|body|quote|bullet|numbered|codeblock|properties",
+              "Format the selection (bold, italic, strikethrough, code, a link waiting for its address), make its lines headings, quotes, bulleted or numbered items or tasks (again takes it off; body clears the mark), fence them as a code block, or start the properties block.",
+              ui: ["Bold", "Italic", "Strikethrough", "Code", "Link…", "Heading 1", "Heading 2", "Heading 3", "Task", "Body", "Quote", "Bulleted List", "Numbered List", "Code Block", "Add Properties", "Style"]),
         .init(.docTable, .docs, "insert|row-above|row-below|column-before|column-after|delete-row|delete-column|align-left|align-center|align-right|next|previous",
               "Edit the table at the caret as Markdown, its columns kept lined up: insert a 3 × 2 table, add or delete a row or column, align a column, or move to the next or previous cell (the last cell's next adds a row).",
               ui: ["Insert Table", "Add Row Above", "Add Row Below", "Add Column Before", "Add Column After", "Delete Row", "Delete Column",
@@ -498,11 +499,11 @@ extension DuoAction {
         .init(.sendElement, .send, "[--to <id> | --new]", "Put the picked HTML element, or the shape picked on a slide, into a session's prompt.", ui: ["Send to Claude", "Send To", "New Session"]),
         .init(.sendText, .send, "<text> [--to <id> | --new]", "Type text into a session's prompt for the user to finish and send."),
         // Voice input (DL-260): Apple's on-device recognizer; words land in the prompt, never sent
-        .init(.voiceStart, .send, "[<id> | shell]", "Start voice input in a session (the one showing by default): words go into its chat composer, or its terminal prompt a phrase at a time; Return is never pressed. Needs the user to have allowed the microphone in Duo; never asks in a scripted or isolated Duo.",
+        .init(.voiceStart, .send, "[<id> | shell | --doc]", "With --doc (or while a Markdown document has the keyboard), words go into the document at the caret, a phrase at a time, one undo for the whole dictation, signed as a suggestion when Suggest Edits is on; Return finishes then adds a line. Otherwise: start voice input in a session (the one showing by default): words go into its chat composer, or its terminal prompt a phrase at a time; Return is never pressed. Needs the user to have allowed the microphone in Duo; never asks in a scripted or isolated Duo.",
               ui: ["Start Voice Input", "Voice Input"]),
-        .init(.voiceStop, .send, "[<id> | shell]", "Finish voice input: the last phrases land, nothing is sent.", ui: ["Stop Voice Input"]),
-        .init(.voiceStatus, .send, "[<id> | shell]", "Whether voice input is listening, downloading Apple's speech model, or off, and why."),
-        .init(.voiceFile, .send, "<audio file> [<id> | shell]", "Feed an audio file (absolute path or ~) through voice input into a session's composer or prompt, as if spoken. The scripted twin of the mic; never touches the microphone.", timeout: 180),
+        .init(.voiceStop, .send, "[<id> | shell | --doc]", "Finish voice input: the last phrases land, nothing is sent.", ui: ["Stop Voice Input"]),
+        .init(.voiceStatus, .send, "[<id> | shell | --doc]", "Whether voice input is listening (and into which document), downloading Apple's speech model, or off, and why."),
+        .init(.voiceFile, .send, "<audio file> [<id> | shell | --doc]", "Feed an audio file (absolute path or ~) through voice input into a session's composer or prompt, as if spoken. The scripted twin of the mic; never touches the microphone.", timeout: 180),
         .init(.selection, .send, "", "What the user has selected or picked right now, in the editor or an HTML page.", everyday: true),
 
         // Director (DL-193 to DL-206): the exact parts of the duo-director skill. Each writes a line to
@@ -667,7 +668,7 @@ public struct Invocation: Sendable {
     public var flags: [String: String] = [:]
 
     /// Flags that take no value.
-    public static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "use-folder", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "full-page", "session", "open", "sessions", "keep-sessions", "synthetic", "resolved", "force", "session-only", "left", "right", "hidden", "anyway", "not-now", "no-interview", "cancel", "fetch", "background", "in-duo", "suggest", "closed", "unsent", "take-over", "handed-back", "no-worker", "adopt", "clear", "refresh", "no-open", "log", "add"]
+    public static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "use-folder", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "full-page", "session", "open", "sessions", "keep-sessions", "synthetic", "resolved", "force", "session-only", "left", "right", "hidden", "anyway", "not-now", "no-interview", "cancel", "fetch", "background", "in-duo", "suggest", "closed", "unsent", "take-over", "handed-back", "no-worker", "adopt", "clear", "refresh", "no-open", "log", "add", "doc"]
 
     /// Flags whose value is optional: the next word is theirs unless it's another flag.
     public static let optionalValues: Set<String> = ["remote-control"]

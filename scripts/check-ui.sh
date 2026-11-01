@@ -13,6 +13,7 @@ cd "$root"
 [ -n "${NO_BUILD:-}" ] || scripts/bundle.sh >/dev/null
 out="${UI_OUT:-$root/build/ui}"
 mkdir -p "$out"
+out="$(cd "$out" && pwd)"   # absolute: `open` starts the app in /, so a relative UI_OUT never got its capture
 states=("$@")
 [ ${#states[@]} -gt 0 ] || states=(overview flow-zoom-1 project flow-zoom-2 flow-zoom-3 flow-zoom-4)
 extra=()

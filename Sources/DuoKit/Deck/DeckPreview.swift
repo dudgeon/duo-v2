@@ -170,6 +170,11 @@ public final class DeckPreview: NSObject, PreviewProvider {
         ["md", "markdown"].contains((file as NSString).pathExtension.lowercased()) && frontmatter["type"] == "deck"
     }
 
+    /// PreviewProvider's requirement (non-optional model), which split view calls before the first render.
+    public func bind(path: String, file: URL, model: AppModel) {
+        bind(path: path, file: file, model: Optional(model))
+    }
+
     /// Ties the provider to the tab it previews and to the app (the bar's picker and Open With need the model).
     public func bind(path: String, file: URL, model: AppModel?) {
         self.path = path

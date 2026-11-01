@@ -3,7 +3,9 @@ import Foundation
 /// Which kind of preview a split tab shows beside its source (DL-275). The deck's provider belongs
 /// to Duo Decks: until it registers, `deck` is never offered (`PreviewProviders`).
 public enum PreviewKind: String, Codable, Sendable, CaseIterable {
-    case deck, markdown, html
+    case deck, html
+    /// Retired: no Markdown preview is offered (Geoff, 2026-11-01). Kept so the contract's enum doesn't change under slice 2 and Duo Decks.
+    case markdown
     /// Slice 2: the other side is a second document; its name is that file's.
     case document
 
@@ -117,7 +119,7 @@ public enum SplitRoom {
     public static func plan(window: Double, sidebarShown: Bool) -> Plan {
         let folds = sidebarShown && window < foldSidebarBelow
         let sidebar = folds ? railWidth : (sidebarShown ? sidebarWidth : 0)
-        return Plan(rightWidth: max(0, window - sidebar - consoleMin), foldsSidebar: folds)
+        return Plan(rightWidth: max(0, window - sidebar - consoleMin - 2), foldsSidebar: folds)   // 2: the pane dividers
     }
 
     /// What the split took, to give back on close.

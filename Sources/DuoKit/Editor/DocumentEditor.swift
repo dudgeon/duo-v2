@@ -25,9 +25,10 @@ public struct ReviewSummary: Equatable, Sendable {
 }
 
 public enum EditorMessage: String, CaseIterable {
-    case openLink, image, pasteImage, tableMenu, noteEdit, ready, selection, copyCode
+    case openLink, image, pasteImage, noteEdit, ready, selection, copyCode
     case propertiesFolded, propertyType, propertyDate, propertyMenu, propertyAdd, propertyReference
     case review, reviewAction
+    case dictation
 }
 
 /// The document editor (Phase I; stack rec #8–9): CodeMirror 6 live preview in one WKWebView
@@ -187,6 +188,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
 
     public func webView(_ w: WKWebView, didFinish n: WKNavigation!) {
         pageReady = true
+        if formatBarOn { webView.evaluateJavaScript("window.duo && duo.setFormatBar(true)") }
         webView.evaluateJavaScript("window.__reviewer = \(String(reflecting: Self.reviewerName))")
         pending?(); pending = nil
         sendSourceModes()
@@ -199,6 +201,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     public func webViewWebContentProcessDidTerminate(_ w: WKWebView) {
         DuoLog.write("editor: web content process terminated (dirty=\(dirty), phase=\(phase))")
         pageReady = false
+        onDictationBreak?()      // a dictation into the dead page is over; what landed is on disk or gone with it
         saveTask?.cancel()
         generation += 1          // replies still in flight from the dead page are dropped
         dirty = false
@@ -484,8 +487,6 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
             return
         case .pasteImage:
             savePastedImage(body); return
-        case .tableMenu:
-            tableMenu(body["menu"] as? String ?? "", at: NSPoint(x: body["x"] as? Double ?? 0, y: (body["y"] as? Double ?? 0) + 2)); return
         case .noteEdit:
             // The properties block's own controls (the references field) ask Swift to write (DL-167 step 4).
             let link = body["link"] as? String ?? "", target = body["target"] as? String ?? ""
@@ -514,14 +515,19 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
             return
         case .ready:
             return
+        case .dictation:
+            // The user typed or clicked in the document while words were going in: the dictation is over (DL-266).
+            if body["op"] as? String == "break" { onDictationBreak?() }
+            return
         case .selection:
             break
         }
         // A report from a page state that is no longer on screen (the page tags reports with the document it shows).
         if let doc = body["doc"] as? String, let shown = url.map(Self.docID), doc != shown { return }
         let count = body["claudeChanges"] as? Int ?? 0, atCaret = body["atClaudeChange"] as? Bool == true, table = body["inTable"] as? Bool == true
-        if count != claudeChanges || atCaret != atClaudeChange || table != inTable {
-            claudeChanges = count; atClaudeChange = atCaret; inTable = table; onStateChange?()
+        let marks = Set((body["marks"] as? [String]) ?? []), block = body["block"] as? String ?? "body"
+        if count != claudeChanges || atCaret != atClaudeChange || table != inTable || marks != caretMarks || block != caretBlock {
+            claudeChanges = count; atClaudeChange = atCaret; inTable = table; caretMarks = marks; caretBlock = block; onStateChange?()
         }
         dirty = body["dirty"] as? Bool == true
         if dirty { onBufferChange?() }
@@ -858,6 +864,34 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     public private(set) var atClaudeChange = false
     /// The caret is in a table: Format › Table's row and column items apply (DL-113).
     public private(set) var inTable = false
+    /// What is at the caret, for the formatting bar (DL-266): the inline marks that cover it (`bold`, `italic`,
+    /// `strike`, `code`, `link`) and the paragraph's style (`body`, `heading1`…, `quote`, `bullet`, `numbered`,
+    /// `task`, `codeblock`). Reported by the page with every selection change.
+    public private(set) var caretMarks: Set<String> = []
+    public private(set) var caretBlock = "body"
+    /// The page keeps the bar's 24 out of the way of scrolling while the bar shows.
+    private var formatBarOn = false
+    public func setFormatBar(_ on: Bool) {
+        guard on != formatBarOn else { return }
+        formatBarOn = on
+        if pageReady { webView.evaluateJavaScript("window.duo && duo.setFormatBar(\(on))") }
+    }
+    /// A user edit or click ended a dictation the page was running (DL-266): the voice input finishes too.
+    public var onDictationBreak: (() -> Void)?
+
+    // MARK: Dictation into the document (DL-266)
+
+    /// Whether words can go in: a document is open in the page and isn't read-only.
+    public var canDictate: Bool { url != nil && readOnlyReason == nil && phase == .open }
+    public func dictationBegin() { run("return duo.dictBegin()") { _ in } }
+    /// One settled phrase at the caret (over the selection, the first time).
+    public func dictationPhrase(_ text: String) { run("return duo.dictPhrase(t)", ["t": text]) { _ in } }
+    /// The words still changing, drawn beside the caret in `text2` (empty clears them).
+    public func dictationTail(_ text: String) { run("return duo.dictTail(t)", ["t": text]) { _ in } }
+    /// Ends the dictation: the next change is its own undo step.
+    public func dictationEnd(done: (@MainActor () -> Void)? = nil) { run("return duo.dictEnd()") { _ in done?() } }
+    /// Return after a dictation: the editor's own Return.
+    public func dictationNewline() { run("return duo.newline()") { _ in } }
 
     /// Puts back what Claude's change at the caret replaced (ENH-4).
     public func revertAtCaret(_ done: (@MainActor (Int) -> Void)? = nil) {
@@ -941,20 +975,5 @@ struct DocumentEditorView: NSViewRepresentable {
             super.layout()
             current?.frame = bounds
         }
-    }
-}
-
-extension EditorController {
-    /// The table bar's Align ▾ and Delete ▾ (DL-113): the system's menu under the button, with
-    /// the same items as Format › Table.
-    func tableMenu(_ which: String, at point: NSPoint) {
-        let menu = NSMenu()
-        let items: [(String, String)] = which == "align"
-            ? [("Left", "tableAlignLeft"), ("Center", "tableAlignCenter"), ("Right", "tableAlignRight")]
-            : [("Delete Row", "tableDeleteRow"), ("Delete Column", "tableDeleteColumn")]
-        for (title, name) in items {
-            menu.addItem(ActionMenuItem(title) { [weak self] in self?.run("duo.exec(f); return 1", ["f": name]) { _ in } })  // action: doc table
-        }
-        menu.popUp(positioning: nil, at: point, in: webView)
     }
 }

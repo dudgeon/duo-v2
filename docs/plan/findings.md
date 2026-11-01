@@ -4821,10 +4821,13 @@ Making room does two things at once: the sidebar folds (a `motionPaneToggle` sli
 
 ## F-502 · Preview render time (split-view-build, 2026-10-31; C-136)
 
+**Removed 2026-11-01:** Geoff dropped the Markdown preview ("markdown editing is inherently wysiwyg/live rendering"; he'd rather see view/edit source), so the converter timed here is gone. The numbers stay as the cost of rendering Markdown to HTML in Swift, should a Markdown view return.
+
 Timed under `--exclusive` (`DUO_CHECKS=split-perf`, best of five): on a release build the Markdown preview's HTML and anchor map take 3.7 ms for 200 lines, 34 ms for 2,000 lines (46 KB) and 343 ms for 20,000 lines (471 KB); a debug build was 3.8, 38 and 377 ms, so the cost is the parse and string work, not debug overhead. A 2,000-line note is about a tenth of a second of background work, a 20,000-line one about a third of a second, and typing never waits for it. That is the conversion only; WebKit loads the page after. The conversion runs off the main thread (`Task.detached`), and a newer revision wins at the gate, so typing never waits for it. The render waits 250 ms after typing pauses. (`scripts/timing-lock.sh` fails when run from the main checkout: `git rev-parse --git-common-dir` prints a relative `.git` there, so its `cd .git/..` fails. I called `gpu-lock.sh --exclusive` with `GPU_LOCK_ENFORCE=1` directly, which is what it runs.)
 
 ## F-503 · What slice 1 does not do yet (split-view-build, 2026-10-31)
 
+- **No Markdown preview (Geoff, 2026-11-01).** The provider and its HTML converter were removed; `PreviewKind.markdown` stays in the enum only so the contract doesn't change under slice 2 and Duo Decks, and nothing offers it. View/edit source for Markdown and HTML is a design exploration the director started.
 - **Caret-follow and the source-lines mark.** The editor's page doesn't report the caret's line to Swift (only `selection` facts), and adding it means rebuilding `Vendor/codemirror/dist/cm6.js`. `PreviewPolicy` has the policy (`anchorToReveal(forLine:)`, loop suppression) and DuoChecks cover it; nothing feeds it a line yet. Q-399.
 - **A page rendered from the buffer** loads through `loadHTMLString` with the folder as its base address, which WebKit may not let read local images until the editor's autosave (a second after typing) lets it load from disk again. Q-400.
 - **The deck provider** is Duo Decks' (`PreviewProviders.extra`); `deck` is never offered until it registers.
@@ -5051,6 +5054,50 @@ The specimen showed nine overflows in the sample pack's own limits, which is the
 
 Weak spot: the survey's "best" template for a chart slide was `table`. That's a heuristic, and Claude's plan decides.
 
+## F-522: the search scrim didn't reach the toolbar's items
+
+With search open, the Sessions/Tasks toggle and the toolbar's search field stayed bright. The scrim is a content overlay; an `NSToolbar` item is hosted in its own view above the content, so the content's scrim passes under it. The target says the scrim covers "the whole window, toolbar included" (search-handoff README, scrim row; DL-76), so Geoff's report matches the design. The screens' backdrop doesn't show the toolbar separately.
+
+Fix: `dimmedUnderSearch()` on each toolbar item (`Shell/DuoToolbar.swift`) draws the same `scrim` over the item's own shape (masked by its alpha, so the toolbar's empty space isn't dimmed twice), fades with `scrimIn`/`scrimOut` (off with Reduce Motion, as the other scrim fades), and a click on a dimmed item closes search as a click on the content does. A DuoCheck (`searchScrimToolbarChecks`) counts items against the modifier. Window captures in Light, Dark and Classic (`build/ui-scrim/`) show the field and breadcrumb dimmed; before, the field was bright white.
+## F-527 · Split view's layout bugs from Geoff's first try (split-view-build, 2026-11-01)
+
+Geoff's screen recordings (2026-11-01) showed four bugs. Each now has a live check in `scripts/check-split.sh`:
+- **The window shrank below its 1280 × 800 minimum,** so the panes overflowed and were clipped on every side: when narrow, the console's left and the page's right were cut off; when short, the console drew over the toolbar.
+  - Cause: `MainWindow` sets `host.sizingOptions = []`, so the hosting controller never gave the window its content's minimum, and it reset `contentMinSize` too.
+  - Fix: a window delegate (`MinimumWindowSize.windowWillResize`) holds 1280 × 800.
+  - Not split view's own bug, but a split made it easy to hit.
+- **The sidebar stayed folded in a wide window.**
+  - Cause: the fold was decided once, when the split opened, and widening the window gave the room to the console.
+  - Fix: the window's resizes are watched (`DuoSplitView.onResize`). A moment after a resize stops, the sidebar comes back once the window is at least about 1,464 pt, and folds again under it. Only a sidebar the user had showing moves.
+- **Closing the split left the sidebar hidden:** the model said shown, but the pane stayed 0 wide.
+  - Cause: the sidebar was asked to open while the console was still squeezed to 480, so the console's minimum clamped the divider back to 0.
+  - Fix: the right pane's width is given back first, then the sidebar.
+  - Also, a pane at no width now counts as hidden (`DuoSplitView.isHidden`). `adjustSubviews`, after a divider set from code, leaves a collapsed pane 0 wide but no longer "collapsed", so a second hide saved 0 as its open width.
+  - A collapse asked for during another pane's slide is now queued, not dropped.
+- **The room didn't count the pane dividers,** which left the console 2 pt under 480. The right pane now gives them back: sides of 470 at 1440 and 390 at 1280.
+- The room is also given back when the project on screen has no split left (a split in another project used to hold it), and taken again when a split comes on screen.
+
+## F-518 · Q-181 answered as far as a background run can: the editor is a text input client, the system's Dictation was not run (md-format-bar, 2026-11-01)
+
+The editor's web view is first responder and takes marked and inserted text like any editable web content; a probe (`dictation-probe` in the harness: `setMarkedText` then `insertText` through the view's input context) found `inputContext` nil in a background instance, because its window is never key. So macOS's own fn-fn Dictation couldn't be exercised without a visible, key window, which needs Geoff's OK (asked in the report). Duo's mic doesn't depend on it or fight it: the mic is a button and ⇧⌘D, and its words arrive as ordinary `input.type` changes. Q-181 stays open for the editor, to be closed by a 30-second foreground check.
+
+## F-519 · Suggest Edits rewrote a dictated phrase without its annotations, so the page took it for the user typing (md-format-bar, 2026-11-01; DL-237, DL-266)
+
+`suggestTyping` (critic.js) returns a fresh spec for a single-hunk `input.*` change, and the spec carried only `userEvent`: the dictation's own mark, its history timestamp and `isolateHistory` were dropped. With Suggest Edits on, the first phrase landed as `{++…++}` and was then read as a break-in, ending the dictation; the second phrase was lost. Found by the live check, not by the node test (which didn't look at the mark). The spec now passes `tr.annotations` except the user event; `test/dictation.test.mjs` checks that a signed phrase is still the dictation's own. Typing under Suggest Edits is unchanged.
+
+## F-520 · Live proof of dictation into a document, on the real recognizer (md-format-bar, 2026-11-01; DL-266)
+
+Isolated background instance, fixture Home with the refunds project: a spoken file (`say`, then `DUO_VOICE_FILE_REALTIME=1`) through `VoiceInput` with target `.document` into `notes.md`, caret inside a list item. Apple's recognizer settled the phrases a few seconds apart, they landed at the caret with single spaces ("- o Who approves assing refunds over a $1000? Does a partial refund reset the limit?ne"), the undo depth went 0 → 1, and one `duo.undo` took the whole dictation out. The recognizer's own misses ("assing", "$1000") are its. The harness's `bar-dictate`, `bar-text`, `bar-undo` and `bar-return` drive this (`scripts/bar-live.sh`).
+
+## F-521 · F-458's cause and fix: CodeMirror's zero-width buffer images are break opportunities (md-format-bar, 2026-11-01; DL-237)
+
+A suggestion that ends a line left its full stop on the next, in Dark and Light alike, at 457–460 pt (and 321) with the review margin narrowing the column. The hidden marks (`{++`, `++}`, the signature) are `Decoration.replace`, and CodeMirror puts `<img class="cm-widgetBuffer">` around each; a browser may break at an inline image. A probe that steps the page's width 300–560 and checks where the full stop sits found 5 bad widths; with the buffers out of the flow (`.duo-rv ~ .cm-widgetBuffer { position: absolute }` in the review theme) it finds none, in 522 cases; `display: none` also fixes it, `word-break` and `nowrap` don't. The probe is `bar-js:` with `/private/tmp/mdb/wrap-probe.js`'s approach (a page script run from the harness).
+
+F-457 (the table bar's buttons 1 apart) is moot: the in-document table bar is gone (DL-266). Its controls are in the formatting bar at the board's spacing.
+
+## F-528 · The shipped director skill makes every question about something to look at carry its link (fix/director-skill-question-links, 2026-11-01)
+
+Geoff: when the director or a worker asks him a question about an artifact, it must say what to look at. duo-v2's own rules had this (ea577a2a); the skill Duo ships did not. `skills/duo-director/SKILL.md` §7 now requires it of the director and its workers: the link (URL, `duo2://` link or a file path the user can open) on the line right before the question and inside the question text, naming the board or section. `Director.workerPrompt` (the brief every worker starts with) carries the same sentence, and a DirectorChecks check pins it. The skill revision goes 3 → 4 so installed copies update at launch. No duo-v2 URLs in the text. No open question, so Q-424 is unused.
 ## F-523 · Duo Decks P3a: the deck preview provider (duo-decks, 2026-11-01; DL-269)
 
 Built on build/duo-decks-viewer (8697b3f9, aaf07964, 64491b41, 9078b487) by a Sonnet subagent. Write-up: `docs/design/duo-decks-study/p3a.md`.

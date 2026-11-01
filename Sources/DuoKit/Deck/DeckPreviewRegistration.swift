@@ -4,10 +4,8 @@ import Foundation
 /// `DuoApp.init` (Sources/Duo/DuoApp.swift), outside `Split/`.
 ///
 /// Split view's `PreviewProviders.kind(forFile:frontmatter:)` asks each registered test, first match
-/// wins. Today's base has only `PreviewProviders.extra`; split-view-build's branch (fix/split-view-1101)
-/// adds `PreviewProviders.register(.deck, test:make:)`. Until that merges this file appends to `extra`;
-/// when it does, replace the body with
-/// `PreviewProviders.register(.deck, test: Self.test, make: { DeckPreview() })`.
+/// wins. The deck registers with `PreviewProviders.register(.deck, test:make:)`, so split view hosts a
+/// `DeckPreview` and calls its `bind(path:file:model:)` before the first render.
 public enum DeckPreviewRegistration {
     /// A deck's frontmatter, read from a project-relative path by someone who knows the project's folder
     /// (the app model sets this); used when the caller passed no frontmatter (`previewKind(forTab:)` today).
@@ -28,7 +26,7 @@ public enum DeckPreviewRegistration {
     public static func install() {
         guard !installed else { return }
         installed = true
-        PreviewProviders.extra.append((kind: .deck, test: { file, front in test(file, front) }))
+        PreviewProviders.register(.deck, test: { file, front in test(file, front) }, make: { DeckPreview() })
     }
 
     /// Registers, and lets the test read a tab's frontmatter from the model's files (the model passes none).

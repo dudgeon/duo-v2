@@ -172,7 +172,7 @@ struct SplitBody: View {
                 .id(path)
                 .padding(.trailing, tab.folded ? DuoMetric.sidebarRail : 0)   // the active side fills the rest
                 .overlay(alignment: .trailing) { if tab.folded { SplitRail(tab: tab) } }
-                .onAppear { if !tab.isDocPair { model.startPreview(path) } }
+                .onAppear { model.takeRoomIfNeeded(); if !tab.isDocPair { model.startPreview(path) } }   // a split shown again (another project's, restored) takes the room
                 .accessibilityIdentifier("video.right.document")
         }
     }
@@ -197,7 +197,6 @@ struct SplitPreviewSide: View {
     var body: some View {
         Group {
             switch kind {
-            case .markdown: WebPreviewView(web: model.splits.markdown.webView).background(DuoColor.pane)
             case .html:
                 ZStack(alignment: .bottom) {
                     WebPreviewView(web: model.htmlViewer.webView)
@@ -208,7 +207,10 @@ struct SplitPreviewSide: View {
                 if let w = model.splitTab(path)?.with, let f = model.liveFile(w) ?? model.keptFile(w) {
                     DocumentStack(file: f, ref: .second)
                 } else { DuoColor.pane }
-            case .deck: DuoColor.pane   // Duo Decks' provider fills this (preview-provider)
+            case .markdown: DuoColor.pane   // no Markdown preview (Geoff, 2026-11-01: view/edit source is being explored)
+            case .deck:
+                // A registered provider's own view, its bar included; split view draws no bar (preview-provider).
+                if let p = model.splits.provider(.deck) { WebPreviewView(web: p.view) } else { DuoColor.pane }
             }
         }
     }
@@ -238,4 +240,11 @@ struct SplitRail: View {
         .accessibilityLabel("Show \(name) in Split View")
         .accessibilityAddTraits(.isButton)
     }
+}
+
+/// A web view shown as a pane's whole body (the preview side), re-parented like the editor's.
+struct WebPreviewView: NSViewRepresentable {
+    let web: NSView
+    func makeNSView(context: Context) -> DocumentEditorView.EditorHost { DocumentEditorView.EditorHost() }
+    func updateNSView(_ host: DocumentEditorView.EditorHost, context: Context) { host.show(web) }
 }

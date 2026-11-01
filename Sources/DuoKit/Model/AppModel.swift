@@ -181,6 +181,13 @@ public final class AppModel {
     var tabDragPointer: (pane: DuoPane, x: CGFloat)?
     /// The file tree (DL-105): hidden files on or off, and the folders open in each project's tree.
     public var showHiddenFiles = DuoState.load().showHiddenFiles
+    /// View › Hide Formatting Bar (DL-266): the Markdown bar over the editor, remembered.
+    public var formatBarHidden = DuoState.load().formatBarHidden
+    /// The formatting bar's control under the pointer, and the one whose menu is open (the bar stays while a menu is).
+    var formatBarHover: String?
+    var formatBarMenuOpen = false
+    /// Where each of the bar's menu buttons is, in the window's content view (to pop its menu under it).
+    @ObservationIgnored var formatBarFrames: [String: CGRect] = [:]
     /// Documents shown in Source mode (DL-167), by standardized path; remembered.
     public var sourceDocuments = Set(DuoState.load().sourceDocuments)
     /// The main window is full screen (View › Enter / Exit Full Screen, DL-108).
@@ -798,6 +805,7 @@ public final class AppModel {
     /// you (or the most recent live one) and the right pane on the document it is editing [P].
     public func open(project name: String, session sessionName: String? = nil, document: String? = nil) {
         rememberTabs()
+        defer { if splitTabs.isEmpty { giveBackRoom() } }   // another project's split doesn't hold the room here (DL-276)
         let live = fixture.liveSessions(inProject: name)
         // Coming back (DL-107): the tab the user left on, while it's still open.
         let returning = sessionName == nil ? lastConsoleTab[name] : nil
