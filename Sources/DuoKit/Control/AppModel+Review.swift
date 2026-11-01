@@ -26,8 +26,7 @@ extension AppModel {
     }
 
     private func isOpenInEditor(_ url: URL) -> EditorController? {
-        guard let e = editorIfLoaded, let open = e.url, open.resolvingSymlinksInPath().standardizedFileURL == url.resolvingSymlinksInPath().standardizedFileURL else { return nil }
-        return e
+        editorShowing(url)
     }
 
     /// The text as the editor has it (unsaved edits included), or the file's.
@@ -190,7 +189,7 @@ extension AppModel {
                 return done(.ok("Suggest Edits is \(now ? "on" : "off") for \(displayPath(url)).", ["file": displayPath(url), "on": now]))
             }
             if word == "next" || word == "previous" {
-                guard let e = editorIfLoaded, isOpenInEditor(url) != nil else { return done(.fail("the document isn't showing in the editor")) }
+                guard let e = isOpenInEditor(url) else { return done(.fail("the document isn't showing in the editor")) }
                 e.run("return duo.reviewStep(d)", ["d": word == "next" ? 1 : -1]) { v in
                     guard let r = v as? [String: Any], let n = r["index"] as? Int, let t = r["total"] as? Int else { return done(.ok("Nothing to review in \(self.displayPath(url)).")) }
                     done(.ok("Mark \(n) of \(t): \((r["kind"] as? String) ?? "") #\((r["id"] as? String) ?? "?")", r))

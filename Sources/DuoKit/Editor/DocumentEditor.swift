@@ -140,7 +140,9 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     static var reviewerOverride: String?
 
     private func loadPage() {
-        if let dir = Bundle.main.resourceURL?.appending(path: "editor"),
+        // DuoChecks has no app bundle: it names the built page's folder (Vendor/codemirror/dist).
+        let override = ProcessInfo.processInfo.environment["DUO_EDITOR_DIR"].map { URL(fileURLWithPath: $0) }
+        if let dir = override ?? Bundle.main.resourceURL?.appending(path: "editor"),
            FileManager.default.fileExists(atPath: dir.appending(path: "editor.html").path) {
             webView.loadFileURL(dir.appending(path: "editor.html"), allowingReadAccessTo: dir)
         }
@@ -213,6 +215,15 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     /// Shows a file. The current document is saved first if it changed; one in conflict, or
     /// removed on disk, keeps its unsaved text in memory until it's shown again.
     public func open(_ file: URL) {
+        // One home per file (DL-278): another editor of the set holding it saves and lets go first.
+        if let set = homeSet, let me = set.ref(of: self) { set.open(file, in: me); return }
+        openHere(file)
+    }
+
+    /// The set this editor belongs to (C-135); nil for an editor made on its own.
+    weak var homeSet: EditorSet?
+
+    func openHere(_ file: URL) {
         if switchingTo != nil { switchingTo = file; return }
         guard file != url else { return }
         // Never a file that isn't text (C-26): the right pane shows it another way, and nothing
@@ -257,7 +268,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     private func finishSwitch() {
         guard let next = switchingTo else { return }
         switchingTo = nil
-        open(next)
+        openHere(next)
     }
 
     /// Ends a conflict (DL-77). Mine: the user's text is saved over the file (the file's version
@@ -376,6 +387,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         // A path that no longer exists keeps its /private prefix under /tmp and /var, where one that
         // does has it standardized away: compare both without it.
         let plain = Self.plainPath, old = plain(oldPath), new = plain(newPath)
+        homeSet?.homes.move(from: oldPath, to: newPath)
         for k in kept.keys where plain(k.standardizedFileURL.path) == old || plain(k.standardizedFileURL.path).hasPrefix(old + "/") {
             kept[URL(fileURLWithPath: new + plain(k.standardizedFileURL.path).dropFirst(old.count))] = kept.removeValue(forKey: k)
         }
@@ -396,6 +408,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         // tab closing (DL-77): its state stays until the file is shown again.
         guard kept[file] == nil || file == url else { return }
         kept[file] = nil
+        if let set = homeSet, let me = set.ref(of: self) { set.forgetHome(file, in: me) }
         webView.callAsyncJavaScript("return window.duo ? duo.close(id) : false", arguments: ["id": Self.docID(file)], in: nil, in: .page, completionHandler: nil)
     }
 
@@ -754,6 +767,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
 
     /// The open file was renamed or moved on purpose: follow it, no reload.
     public func fileMoved(to newURL: URL) {
+        if let old = url { homeSet?.homes.move(from: old.path, to: newURL.path) }
         if let old = url, kept[old] != nil { kept[newURL] = kept.removeValue(forKey: old) }
         if let old = url {
             webView.callAsyncJavaScript("return window.duo ? duo.rename(a, b) : false", arguments: ["a": Self.docID(old), "b": Self.docID(newURL)], in: nil, in: .page, completionHandler: nil)
@@ -895,6 +909,14 @@ final class EditorWebView: DuoWebView {
 struct DocumentEditorView: NSViewRepresentable {
     let editor: EditorController
     let file: URL
+    /// Set for a side of the editor set (C-135): the file opens through it, so one editor holds it.
+    var editors: EditorSet?
+    var ref: EditorRef = .main
+
+    init(editor: EditorController, file: URL) { self.editor = editor; self.file = file }
+    init(editors: EditorSet, ref: EditorRef, file: URL) {
+        self.editor = editors.editor(ref); self.file = file; self.editors = editors; self.ref = ref
+    }
 
     func makeNSView(context: Context) -> EditorHost { EditorHost() }
 

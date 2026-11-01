@@ -111,7 +111,7 @@ extension AppModel {
     }
 
     func applyReset(_ info: TemplateInfo) {
-        if let e = editorIfLoaded, e.url?.standardizedFileURL == info.file.standardizedFileURL { e.saveNow(force: true) }
+        if let e = editorShowing(info.file) { e.saveNow(force: true) }
         var trashed: NSURL?
         try? FileManager.default.trashItem(at: info.file, resultingItemURL: &trashed)
         if info.project == nil {

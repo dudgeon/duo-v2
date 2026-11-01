@@ -67,7 +67,7 @@ extension AppModel {
         var changed = false
         for t in TaskContext.entries(for: [old], folders: liveFolders) {
             let file = URL(fileURLWithPath: t.folder).appending(path: t.path)
-            if let e = editorIfLoaded, e.url?.standardizedFileURL == file.standardizedFileURL {
+            if let e = editorShowing(file) {
                 e.applyNoteEdit(.addSession(link: link))
             } else if let text = try? String(contentsOf: file, encoding: .utf8), let updated = TaskNotes.adding(link, to: text) {
                 try? Data(updated.utf8).write(to: file, options: .atomic)

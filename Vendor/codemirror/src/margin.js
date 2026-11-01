@@ -284,7 +284,8 @@ class Margin {
     dom.append(field, to, verbs);
     dom.dataset.composer = "1";
     this.composerField = field; this.composerDom = dom;
-    setTimeout(() => field.focus(), 0);
+    // A comment asked for from a preview (R12) leaves the keyboard where it is: a click in the field takes it.
+    if (!(this.composer && this.composer.quiet)) setTimeout(() => field.focus(), 0);
     return dom;
   }
 
@@ -406,11 +407,10 @@ class Margin {
     const id = (marker || card)?.dataset.thread;
     if (id) { e.preventDefault(); this.setActive(this.active === id && marker ? null : id); if (this.field) setTimeout(() => this.field && this.field.focus(), 0); }
   }
-  compose() {
-    const r = this.view.state.selection.main;
-    let { from, to } = r;
+  compose(range, quiet) {
+    let { from, to } = range || this.view.state.selection.main;
     if (from === to) { const w = this.view.state.wordAt(from); if (!w) return false; from = w.from; to = w.to; }
-    this.composer = { from, to }; this.active = null; this.sig = ""; this.schedule();
+    this.composer = { from, to, quiet: !!quiet }; this.active = null; this.sig = ""; this.schedule();
     return true;
   }
   post(text) {
@@ -429,7 +429,7 @@ const margin = ViewPlugin.fromClass(Margin);
 export const marginExtensions = [margin];
 export const setDelivery = (view, map, def) => { view.dispatch({ effects: setDeliveryEffect.of({ map: map || {}, def: def || null }) }); return true; };
 export const activate = (view, id) => view.dispatch({ effects: setActive.of(id) });
-export const composeComment = (view) => { const p = view.plugin(margin); return p ? p.compose() : false; };
+export const composeComment = (view, range, quiet) => { const p = view.plugin(margin); return p ? p.compose(range, quiet) : false; };
 export const activeThread = (view) => { const p = view.plugin(margin); return p ? p.active : null; };
 
 export const marginTheme = EditorView.baseTheme({

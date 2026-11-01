@@ -9,10 +9,11 @@ import SwiftUI
 /// which gains Next and Previous at its top.
 struct MarkdownReviewBar: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.editorSide) private var side
 
     var body: some View {
         let _ = model.editorRevision
-        let r = model.editor.review
+        let r = model.editor(side).review
         GeometryReader { g in
             let compact = g.size.width < 420
             row(r, compact: compact)
@@ -21,10 +22,10 @@ struct MarkdownReviewBar: View {
                 .overlay(alignment: .bottom) { DuoColor.rule.frame(height: DuoMetric.borderHairline) }
                 // The menus hang under their buttons; the bar is above the editor so they draw over it.
                 .overlay(alignment: .topLeading) {
-                    if model.reviewMenu == "markup" { MarkdownMarkupMenu().padding(.leading, DuoMetric.noticePaddingX).padding(.top, DuoMetric.docxMenuTop) }
+                    if model.reviewMenu == "markup", model.editors.active == side { MarkdownMarkupMenu().padding(.leading, DuoMetric.noticePaddingX).padding(.top, DuoMetric.docxMenuTop) }
                 }
                 .overlay(alignment: .topTrailing) {
-                    if model.reviewMenu == "all" { MarkdownReviewAllMenu(compact: compact).padding(.trailing, DuoMetric.docxBarTrailing).padding(.top, DuoMetric.docxMenuTop) }
+                    if model.reviewMenu == "all", model.editors.active == side { MarkdownReviewAllMenu(compact: compact).padding(.trailing, DuoMetric.docxBarTrailing).padding(.top, DuoMetric.docxMenuTop) }
                 }
         }
         .frame(height: DuoMetric.deckBarHeight)
@@ -37,9 +38,9 @@ struct MarkdownReviewBar: View {
 
     private func row(_ r: ReviewSummary, compact: Bool) -> some View {
         HStack(spacing: DuoSpace.gapButtonToButton) {
-            Button { model.reviewMenu = model.reviewMenu == "markup" ? nil : "markup" } label: { chevron("Markup") }   // action: doc markup
+            Button { model.onSide(side) { model.reviewMenu = model.reviewMenu == "markup" ? nil : "markup" } } label: { chevron("Markup") }   // action: doc markup
                 .buttonStyle(DuoButtonStyle(on: model.reviewMenu == "markup")).fixedSize()
-            Button { model.toggleSuggestEdits() } label: {   // action: doc review
+            Button { model.onSide(side) { model.toggleSuggestEdits() } } label: {   // action: doc review
                 HStack(spacing: 6) {
                     // A hollow 8 dot (1.5 controlEdge) when off; filled `text` when on (track-a).
                     if r.suggestEdits { Circle().fill(DuoColor.text).frame(width: 8, height: 8) }
@@ -51,12 +52,12 @@ struct MarkdownReviewBar: View {
             .accessibilityAddTraits(r.suggestEdits ? .isSelected : [])
             Spacer(minLength: 0)
             if !compact {
-                Button { model.editor.reviewStep(-1) } label: { Text("‹") }   // action: doc review
+                Button { model.editor(side).reviewStep(-1) } label: { Text("‹") }   // action: doc review
                     .buttonStyle(DuoButtonStyle(on: false)).fixedSize().accessibilityLabel("Previous Change")
-                Button { model.editor.reviewStep(1) } label: { Text("›") }   // action: doc review
+                Button { model.editor(side).reviewStep(1) } label: { Text("›") }   // action: doc review
                     .buttonStyle(DuoButtonStyle(on: false)).fixedSize().accessibilityLabel("Next Change")
             }
-            Button { model.reviewMenu = model.reviewMenu == "all" ? nil : "all" } label: { chevron(compact ? "Review" : "Review All") }   // action: suggestion accept
+            Button { model.onSide(side) { model.reviewMenu = model.reviewMenu == "all" ? nil : "all" } } label: { chevron(compact ? "Review" : "Review All") }   // action: suggestion accept
                 .buttonStyle(DuoButtonStyle(on: model.reviewMenu == "all")).fixedSize()
         }
     }
@@ -65,12 +66,13 @@ struct MarkdownReviewBar: View {
 /// Where the bar goes in the pane: on a Markdown document that has marks or comments, or Suggest Edits on.
 struct MarkdownReviewSlot: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.editorSide) private var side
     let file: URL
 
     var body: some View {
         let _ = model.editorRevision
-        if AppModel.markdownExtensions.contains(file.pathExtension.lowercased()), model.editor.url?.standardizedFileURL == file.standardizedFileURL,
-           model.editor.review.showsBar {
+        if AppModel.markdownExtensions.contains(file.pathExtension.lowercased()), model.editor(side).url?.standardizedFileURL == file.standardizedFileURL,
+           model.editor(side).review.showsBar {
             MarkdownReviewBar()
         }
     }
@@ -79,19 +81,20 @@ struct MarkdownReviewSlot: View {
 /// Markup ⌄: the Word viewer's menu (DL-162 W4) with Show Closed Comments where Word says Show Resolved.
 struct MarkdownMarkupMenu: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.editorSide) private var side
     private static let modes: [(id: String, title: String)] = [("all", "All Markup"), ("simple", "Simple Markup"), ("none", "No Markup"), ("original", "Original")]
 
     var body: some View {
         let _ = model.editorRevision
-        let r = model.editor.review
+        let r = model.editor(side).review
         VStack(alignment: .leading, spacing: 0) {
             ForEach(Self.modes, id: \.id) { mode in
                 ReviewMenuRow(title: mode.title, checked: r.mode == mode.id, selected: r.mode == mode.id)
-                    .onActivate { model.setMarkdownMarkup(mode: mode.id) }   // action: doc markup
+                    .onActivate { model.onSide(side) { model.setMarkdownMarkup(mode: mode.id) } }   // action: doc markup
             }
             ReviewMenuDivider()
             ReviewMenuRow(title: "Show Closed Comments", checked: r.showClosed, trailing: r.closed > 0 ? "\(r.closed)" : nil)
-                .onActivate { model.setMarkdownMarkup(showClosed: !r.showClosed) }   // action: doc markup
+                .onActivate { model.onSide(side) { model.setMarkdownMarkup(showClosed: !r.showClosed) } }   // action: doc markup
         }
         .modifier(ReviewMenuFrame())
     }
@@ -100,27 +103,28 @@ struct MarkdownMarkupMenu: View {
 /// Review All ⌄ (or Review ⌄ when narrow): Accept All, Reject All, then the same per person, then the counts.
 struct MarkdownReviewAllMenu: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.editorSide) private var side
     let compact: Bool
 
     var body: some View {
         let _ = model.editorRevision
-        let r = model.editor.review
+        let r = model.editor(side).review
         VStack(alignment: .leading, spacing: 0) {
             if compact {
-                ReviewMenuRow(title: "Next Change", checked: false).onActivate { model.reviewMenu = nil; model.editor.reviewStep(1) }   // action: doc review
-                ReviewMenuRow(title: "Previous Change", checked: false).onActivate { model.reviewMenu = nil; model.editor.reviewStep(-1) }   // action: doc review
+                ReviewMenuRow(title: "Next Change", checked: false).onActivate { model.reviewMenu = nil; model.editor(side).reviewStep(1) }   // action: doc review
+                ReviewMenuRow(title: "Previous Change", checked: false).onActivate { model.reviewMenu = nil; model.editor(side).reviewStep(-1) }   // action: doc review
                 ReviewMenuDivider()
             }
-            ReviewMenuRow(title: "Accept All", checked: false).onActivate { model.reviewMenu = nil; model.editor.reviewResolveAll(accept: true) }   // action: suggestion accept
-            ReviewMenuRow(title: "Reject All", checked: false).onActivate { model.reviewMenu = nil; model.editor.reviewResolveAll(accept: false) }   // action: suggestion reject
+            ReviewMenuRow(title: "Accept All", checked: false).onActivate { model.reviewMenu = nil; model.editor(side).reviewResolveAll(accept: true) }   // action: suggestion accept
+            ReviewMenuRow(title: "Reject All", checked: false).onActivate { model.reviewMenu = nil; model.editor(side).reviewResolveAll(accept: false) }   // action: suggestion reject
             let who = r.people.filter { $0.count > 0 }
             if who.count > 1 {
                 ReviewMenuDivider()
                 ForEach(who, id: \.name) { p in
                     ReviewMenuRow(title: "Accept All from \(p.name.prefix(1).uppercased() + p.name.dropFirst())", checked: false, dot: p.colour)
-                        .onActivate { model.reviewMenu = nil; model.editor.reviewResolveAll(accept: true, person: p.name) }   // action: suggestion accept
+                        .onActivate { model.reviewMenu = nil; model.editor(side).reviewResolveAll(accept: true, person: p.name) }   // action: suggestion accept
                     ReviewMenuRow(title: "Reject All from \(p.name.prefix(1).uppercased() + p.name.dropFirst())", checked: false, dot: p.colour)
-                        .onActivate { model.reviewMenu = nil; model.editor.reviewResolveAll(accept: false, person: p.name) }   // action: suggestion reject
+                        .onActivate { model.reviewMenu = nil; model.editor(side).reviewResolveAll(accept: false, person: p.name) }   // action: suggestion reject
                 }
             }
             ReviewMenuDivider()

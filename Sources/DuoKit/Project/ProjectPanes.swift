@@ -903,24 +903,12 @@ struct RightPane: View {
                 // Never the editor for a file that isn't text (C-26): Quick Look, or a note (Q-52).
                 BinaryFileView(path: path, file: file)
             } else if let path = model.rightTab, path.contains("."), let file = model.liveFile(path) ?? model.keptFile(path) {
-                VStack(spacing: 0) {
-                    DocumentStateBar()
-                    // A template (DL-146): what it's for, Preview and Reset over it.
-                    if let info = model.templateInfo(forFile: file) { TemplateBar(info: info) }
-                    MarkdownReviewSlot(file: file)   // DL-237: marks, comments or Suggest Edits on
-                    DocumentEditorView(editor: model.editor, file: file)
-                }
-                .modifier(NoticeMotion(key: DocumentStateBar.key(model)))
-                .accessibilityIdentifier("video.right.document")
+                DocumentStack(file: file)
+                    .accessibilityIdentifier("video.right.document")
             } else if model.rightTab == "Project" || model.rightTab == nil, let own = model.projectFile, let file = model.liveFile(own) {
                 // The Project tab is the project's own file (DL-60).
-                VStack(spacing: 0) {
-                    DocumentStateBar()
-                    MarkdownReviewSlot(file: file)
-                    DocumentEditorView(editor: model.editor, file: file)
-                }
-                .modifier(NoticeMotion(key: DocumentStateBar.key(model)))
-                .accessibilityIdentifier("video.right.document")
+                DocumentStack(file: file, templates: false)
+                    .accessibilityIdentifier("video.right.document")
             } else if let path = model.rightTab, path.contains(".") {
                 DocumentPlaceholder(path: path)
             } else if model.rightTab == "Project" || model.rightTab == nil, let p = model.currentProject, p.kind == "folder" {
@@ -998,8 +986,19 @@ struct RightPane: View {
                             if model.splitTab(tab.id) != nil {
                                 Button("Close Split View") { model.closeSplitView(tab.id) }  // action: split close
                                 Button("Swap Sides") { model.rightTab = tab.id; model.swapSplitSides() }  // action: split swap
-                            } else if model.previewKind(forTab: tab.id) != nil {
-                                Button("Show Preview in Split View") { model.openSplitView(tab.id) }  // action: split
+                            } else {
+                                // DL-278 (split-docs): another open tab beside this one, both editable.
+                                let others = model.splitCandidates(beside: tab.id)
+                                if !others.isEmpty {
+                                    Menu("Open in Split View") {
+                                        ForEach(others, id: \.self) { o in
+                                            Button((o as NSString).lastPathComponent) { model.openSplitView(tab.id, with: o) }  // action: split
+                                        }
+                                    }
+                                }
+                                if model.previewKind(forTab: tab.id) != nil {
+                                    Button("Show Preview in Split View") { model.openSplitView(tab.id) }  // action: split
+                                }
                             }
                             Divider()
                             // DL-220 (tabs-menu): the tab one place along; dimmed at the end it's at.
@@ -1053,7 +1052,12 @@ struct FileMenu: View {
     let onTab: Bool
 
     var body: some View {
-        if !isFolder && !onTab { Button("Open") { model.openDocument(path) } }
+        if !isFolder && !onTab {
+            Button("Open") { model.openDocument(path) }
+            // DL-278 (split-docs): beside the showing tab, both editable; a file already in a split selects it.
+            Button("Open in Split View") { if let b = model.rightTab { model.openSplitView(b, with: path) } }  // action: split
+                .disabled(!model.canOpenInSplitView(path))
+        }
         if !isFolder {
             Menu("Open With") {
                 if let url = model.fileURL(path) {
@@ -1280,11 +1284,12 @@ struct PickerBar: View {
 /// removed or renamed on disk, or why it's read only. A bar under the tabs on `ground`.
 struct DocumentStateBar: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.editorSide) private var side
 
     /// Which bar shows, if any: the document's container animates on it (DL-130).
-    static func key(_ model: AppModel) -> String? {
+    static func key(_ model: AppModel, _ side: EditorRef = .main) -> String? {
         let _ = model.editorRevision
-        guard let e = model.editorIfLoaded, e.url != nil else { return nil }
+        guard let e = model.editorIfLoaded(side), e.url != nil else { return nil }
         if e.conflict { return "conflict" }
         if e.removedOnDisk { return "removed" }
         if e.renamedTo != nil { return "renamed" }
@@ -1299,7 +1304,7 @@ struct DocumentStateBar: View {
 
     @ViewBuilder var bar: some View {
         let _ = model.editorRevision
-        if let e = model.editorIfLoaded, let file = e.url {
+        if let e = model.editorIfLoaded(side), let file = e.url {
             if e.conflict {
                 let lines = e.conflictLines.map { $0[0] == $0[1] ? "line \($0[0])" : "lines \($0[0])–\($0[1])" }.joined(separator: ", ")
                 NoticeBar(text: "Changed on disk where you’re editing\(lines.isEmpty ? "" : " (\(lines))"). Both versions are kept.",

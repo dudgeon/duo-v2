@@ -223,7 +223,7 @@ extension AppModel {
         return items
     }
 
-    func wireEditor(_ e: EditorController) {
+    func wireEditor(_ e: EditorController, ref: EditorRef = .main) {
         e.onStateChange = { [weak self] in self?.editorRevision += 1 }
         e.onFirstDocument = { [weak self] in self?.editorOpened = true }
         e.onReviewChange = { [weak self] r in self?.syncReviewMarkup(r) }
@@ -248,7 +248,9 @@ extension AppModel {
         }
         e.webView.onFocusChange = { [weak self] on in
             guard let self else { return }
-            if on { self.webFocus = .editor } else if self.webFocus == .editor { self.webFocus = .none }
+            // Typing or clicking in a side makes its editor the one the menus act on (C-135).
+            if on { self.editors.active = ref; self.webFocus = .editor; self.editorTookFocus(ref) }
+            else if self.webFocus == .editor, self.editors.active == ref { self.webFocus = .none }
         }
         e.webView.extraMenuItems = { [weak self, weak e] hasSelection, _ in
             guard let self, self.terminalsMode == .live else { return [] }

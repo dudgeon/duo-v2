@@ -93,7 +93,7 @@ extension AppModel {
             return .failure(Refused(description: "couldn't start a session in \(project)"))
         }
         // The note open with unsaved text takes the link in its buffer, as + Add does; otherwise on disk.
-        if let e = editorIfLoaded, e.url?.standardizedFileURL == folder.appending(path: path).standardizedFileURL {
+        if let e = editorShowing(folder.appending(path: path)) {
             let title = fixture.sessions.first { $0.sessionId == id }?.name ?? id
             e.applyNoteEdit(.addSession(link: TaskNotes.link(title: title, id: id)))
         } else if let why = addToTask(sessionKey: id, task: path) {
@@ -114,7 +114,7 @@ extension AppModel {
     public func setTaskStatus(project: String, path: String, _ status: String) -> String? {
         guard let folder = liveFolders[project] else { return "no project '\(project)'" }
         let file = folder.appending(path: path)
-        if let e = editorIfLoaded, e.url?.standardizedFileURL == file.standardizedFileURL {
+        if let e = editorShowing(file) {
             // Open in the editor: the change goes through its buffer (DL-13), so unsaved typing is kept and
             // ⌘Z undoes it. The menu and a board drag are the same writer (C-81).
             let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; f.locale = Locale(identifier: "en_US_POSIX")
@@ -168,7 +168,7 @@ extension AppModel {
         guard let s = fixture.sessions.first(where: { $0.tabKey == key || $0.sessionId == key }), let id = s.sessionId,
               let folder = liveFolders[s.project] else { return "no session '\(key)'" }
         let file = folder.appending(path: path)
-        if let e = editorIfLoaded, e.url?.standardizedFileURL == file.standardizedFileURL {
+        if let e = editorShowing(file) {
             e.applyNoteEdit(.addSession(link: TaskNotes.link(title: s.name, id: id)))   // through the buffer, as + Add does
             return nil
         }

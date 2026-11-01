@@ -81,9 +81,25 @@ extension AppModel {
             switch inv[0] { case "show": leftCollapsed = false; case "hide": leftCollapsed = true; default: toggleSidebarOrPeek() }
             done(.ok(leftCollapsed ? "Left pane hidden." : "Left pane showing."))
         case .split:
+            if let w = inv.flags["with"] {
+                // Slice 2 (DL-278): two documents, both editable; with no <file>, beside the showing tab.
+                guard let (p, other) = locate(w, inv, req) else { return done(.fail("'\(w)' isn't a file in a project Duo knows")) }
+                if currentProject?.name != p { open(project: p) }
+                let source: String
+                if let f = inv[0] {
+                    guard let (p2, rel) = locate(f, inv, req), p2 == p else { return done(.fail("'\(f)' isn't a file in \(p)")) }
+                    source = rel
+                } else {
+                    guard let t = rightTab, t.contains("."), !t.hasPrefix("web:") else { return done(.fail("no document is showing to open \(other) beside; name one: `duo2 split <file> --with \(other)`")) }
+                    source = t
+                }
+                guard openSplitView(source, with: other) else {
+                    return done(.fail("can't open \(other) beside \(source): both must be text files that exist, different, and \(source) not already in a split"))
+                }
+                return done(.ok("Split view: \(splitTab(rightTab).map { "\($0.source) and \($0.with ?? $0.kind.sideName)" } ?? other).\n" + splitReport()))
+            }
             guard let f = inv[0] else { return done(.ok(splitReport())) }
             guard let (p, rel) = locate(f, inv, req) else { return done(.fail("'\(f)' isn't a file in a project Duo knows")) }
-            if inv.flags["with"] != nil { return done(.fail("two documents in one split view is slice 2 (DL-278); a file's own preview is `duo2 split <file>`")) }
             if currentProject?.name != p { open(project: p) }
             let side = inv.flags["side"].flatMap(SplitSide.init(rawValue:))
             guard previewKind(forTab: rel) != nil else { return done(.fail("\(rel) has no preview to show beside it")) }
@@ -96,6 +112,10 @@ extension AppModel {
                 closeSplitSide(side)
             } else if let t = showingSplit { closeSplitView(t.source) }
             done(.ok("Closed."))
+        case .splitSeparate:
+            guard let t = showingSplit, t.isDocPair else { return done(.fail("no split view of two documents is showing")) }
+            separateDocPair(t.source)
+            done(.ok("Both documents are ordinary tabs again."))
         case .splitFocus:
             guard showingSplit != nil else { return done(.fail("no split view is showing")) }
             guard let side = inv[0].flatMap(SplitSide.init(rawValue:)) else { return done(.fail("usage: \(id.action.usage)")) }

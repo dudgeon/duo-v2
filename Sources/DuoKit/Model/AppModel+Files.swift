@@ -17,8 +17,7 @@ extension AppModel {
     /// The editor's own file when it's gone from disk: the document stays open with its text
     /// and the removed-on-disk bar (DL-77).
     public func keptFile(_ path: String) -> URL? {
-        guard let e = editorIfLoaded, e.removedOnDisk, let u = e.url, let f = fileURL(path),
-              u.standardizedFileURL.path == f.standardizedFileURL.path else { return nil }
+        guard let f = fileURL(path), let e = editorShowing(f), e.removedOnDisk, let u = e.url else { return nil }
         return u
     }
 
@@ -119,17 +118,21 @@ extension AppModel {
 
     /// Closes a document tab; its file is saved first if it changed. The left neighbour, or Project, shows.
     public func closeDocument(_ path: String) {
+        // A document in a pair (DL-278): that side closes and the other stays as an ordinary tab.
+        if let held = splitHolding(path), splitTabs[held.key]?.isDocPair == true { return closeDocPairSide(held.role, in: held.key) }
         guard let i = openDocuments.firstIndex(of: path) else { return }
         if path.hasPrefix("web:") { return closeWebTab(path) }
         endSplit(path)   // the preview has no file of its own: closing the source closes the split (DL-275)
         // Save, then let go of the file: the editor kept it after its tab closed, so doc status
         // still said "open in Duo" and Claude's edits went into a buffer nobody could see (F-52).
         // A file gone from disk has no liveFile, but its tab still holds the editor (BUG-098): let go of it too.
-        if let e = editorIfLoaded, let u = liveFile(path) ?? keptFile(path), u.standardizedFileURL == e.url?.standardizedFileURL {
-            e.saveNow(force: true)
-            e.closeFile()
-        } else if let e = editorIfLoaded, let u = liveFile(path) ?? keptFile(path) {
-            e.forget(u)   // a tab that wasn't showing: the page lets go of its editor state
+        if let u = liveFile(path) ?? keptFile(path) {
+            if let e = editorShowing(u) {
+                e.saveNow(force: true)
+                e.closeFile()
+            } else {
+                for e in loadedEditors { e.forget(u) }   // a tab that wasn't showing: the pages let go of its editor state
+            }
         }
         let next = PopupPlacement.after(closing: path, in: openDocuments, openers: [:])   // the left neighbour (ENH-144)
         openDocuments.remove(at: i)
@@ -263,13 +266,16 @@ extension AppModel {
         splitMoved(old, to: new)
         if let tab = rightTab, tab == old || tab.hasPrefix(old + "/") { rightTab = new + tab.dropFirst(old.count) }
         if let sel = selectedFile, sel == old || sel.hasPrefix(old + "/") { selectedFile = new + sel.dropFirst(old.count) }
-        if let e = editorIfLoaded, let folder = projectFolder {
-            e.moveHeld(from: folder.appending(path: old).standardizedFileURL.path, to: folder.appending(path: new).standardizedFileURL.path)
-        }
-        if let e = editorIfLoaded, let open = e.url, let folder = projectFolder {
+        if let folder = projectFolder {
+            for e in loadedEditors {
+                e.moveHeld(from: folder.appending(path: old).standardizedFileURL.path, to: folder.appending(path: new).standardizedFileURL.path)
+            }
             let oldURL = folder.appending(path: old).standardizedFileURL.path
-            if open.standardizedFileURL.path == oldURL || open.standardizedFileURL.path.hasPrefix(oldURL + "/") {
-                e.fileMoved(to: folder.appending(path: new + open.standardizedFileURL.path.dropFirst(oldURL.count)))
+            for e in loadedEditors {
+                guard let open = e.url else { continue }
+                if open.standardizedFileURL.path == oldURL || open.standardizedFileURL.path.hasPrefix(oldURL + "/") {
+                    e.fileMoved(to: folder.appending(path: new + open.standardizedFileURL.path.dropFirst(oldURL.count)))
+                }
             }
         }
         afterChange {}
@@ -280,7 +286,7 @@ extension AppModel {
             // Let go of a file still on disk without saving: callers trash or move it next, and
             // closeDocument's save would land after that and write it back (F-262). A file already
             // gone has no liveFile; closeDocument lets go of it (its save is paused, removed on disk).
-            if liveFile(p) == editorIfLoaded?.url { editorIfLoaded?.closeFile() }
+            if let u = liveFile(p), let e = editorShowing(u) { e.closeFile() }
             closeDocument(p)
         }
     }

@@ -15,8 +15,7 @@ extension AppModel {
         if on { sourceDocuments.insert(path) } else { sourceDocuments.remove(path) }
         let all = sourceDocuments.sorted()
         DuoState.update { $0.sourceDocuments = all }
-        e.sourceModes = all
-        e.sendSourceModes()
+        for x in loadedEditors { x.sourceModes = all; x.sendSourceModes() }
         e.showSource(on)
     }
 
