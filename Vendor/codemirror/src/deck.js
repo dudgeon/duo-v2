@@ -155,12 +155,13 @@ const anchorLayer = layer({
 // ----- the picker -----
 
 let current = null;   // { el, view }
+if (typeof window !== "undefined") window.addEventListener("scroll", () => { if (current) renderPicker(current.view); }, true);
 
 function filtered(state) {
   const p = state.field(pickerField);
   const q = (p?.query || "").toLowerCase();
   const ts = state.field(templatesField).templates;
-  return ts.filter((t) => !q || t.name.toLowerCase().includes(q) || (t.purpose || "").toLowerCase().includes(q));
+  return ts.filter((t) => !q || t.name.toLowerCase().includes(q));
 }
 
 function thumbFor(t) {
@@ -221,7 +222,7 @@ function renderPicker(view) {
   if (p.mode === "insert") anchorEl = view.dom.querySelector(".duo-deck-chip-pending");
   else for (const c of chips) if (c.firstChild?.textContent === `Slide ${p.slide}`) anchorEl = c;
   const r = anchorEl?.getBoundingClientRect() || view.dom.getBoundingClientRect();
-  const w = Math.min(340, window.innerWidth - 24);
+  const w = Math.min(320, window.innerWidth - 24);
   el.style.width = w + "px";
   el.style.left = Math.max(12, Math.min(r.left, window.innerWidth - w - 12)) + "px";
   const h = el.offsetHeight;
@@ -265,7 +266,10 @@ function newSlide(view) {
   // Under a deck with no slides, or the caret before the first: after slide 0 would be first; use the last slide for the former.
   const slide = marks.length ? Math.max(n, 0) : 0;
   const at = slide === 0 ? (marks.length ? Math.max(0, view.state.doc.line(marks[0].line).from) : view.state.doc.length) : insertionPoint(view.state, slide);
-  view.dispatch({ effects: openPicker.of({ mode: "insert", slide, at }), scrollIntoView: false });
+  view.dispatch({ effects: [openPicker.of({ mode: "insert", slide, at }), EditorView.scrollIntoView(at, { y: "center" })] });
+  // The pending chip is drawn after this update; the list needs its place, so draw once more when it exists.
+  // (A timer, not a frame: a window that isn't on screen never gets frames.) Scroll the chip into place by hand too.
+  for (const ms of [0, 60, 250]) setTimeout(() => { view.dom.querySelector(".duo-deck-chip-pending")?.scrollIntoView({ block: "center" }); renderPicker(view); }, ms);
   return true;
 }
 
@@ -363,7 +367,7 @@ function installApi(view) {
     deckNewSlide() { return newSlide(apiView); },
     // Harness hooks (captures and checks): type into the picker as a person would, and put the caret in slide n.
     deckType(q) { const p = apiView.state.field(pickerField); if (!p) return false; apiView.dispatch({ effects: setQuery.of({ query: p.query + q, sel: 0 }) }); return true; },
-    deckGo(n) { const m = slideMarks(apiView.state)[n - 1]; if (!m) return false; const d = apiView.state.doc; let at = m.line + 1; while (at < d.lines && !d.line(at).text.trim()) at++; apiView.dispatch({ selection: { anchor: d.line(Math.min(at, d.lines)).to } }); return true; },
+    deckGo(n) { const m = slideMarks(apiView.state)[n - 1]; if (!m) return false; const d = apiView.state.doc; let at = m.line + 1; while (at < d.lines && !d.line(at).text.trim()) at++; apiView.dispatch({ selection: { anchor: d.line(Math.min(at, d.lines)).to } }); setTimeout(() => { for (const c of apiView.dom.querySelectorAll(".duo-deck-chip")) if (c.firstChild?.textContent === `Slide ${n}`) c.scrollIntoView({ block: "start" }); }, 0); return true; },
     deckPickerOpen() { return !!apiView?.state.field(pickerField); },
     deckProbe() { return { deck: isDeckDoc(apiView.state), marks: slideMarks(apiView.state).length, picker: apiView.state.field(pickerField) }; },
   });
@@ -373,8 +377,8 @@ const deckTheme = EditorView.baseTheme({
   ".duo-deck-chip": { display: "block", boxSizing: "border-box", height: "22px", marginTop: "6px", paddingTop: "0", borderTop: "1px solid var(--duo-rule)", font: "11px/20px var(--duo-font-ui)", color: "var(--duo-text2)", cursor: "pointer", userSelect: "none" },
   ".duo-deck-chip-n": { color: "var(--duo-text)", fontWeight: "600" },
   ".duo-deck-chip-pending": { cursor: "default" },
-  ".duo-deck-chip-query": { fontFamily: "var(--duo-font-mono)", color: "var(--duo-text)" },
-  ".duo-deck-chip-caret": { display: "inline-block", width: "1px", height: "12px", marginLeft: "1px", verticalAlign: "-2px", backgroundColor: "var(--duo-text)" },
+  ".duo-deck-chip-query": { fontFamily: "var(--duo-font-mono)", color: "var(--duo-text)", backgroundColor: "var(--duo-selected)", borderRadius: "3px", padding: "1px 4px" },
+  ".duo-deck-chip-caret": { display: "inline-block", width: "1px", height: "12px", marginLeft: "4px", verticalAlign: "-2px", backgroundColor: "var(--duo-text)" },
   ".duo-deck-anchor": { position: "absolute", backgroundColor: "var(--duo-control-edge)", borderRadius: "1px" },
 });
 

@@ -29,6 +29,6 @@ run() {   # run <state> <appearance> <width> <actions>
   [[ -f $out/$n.png ]] && echo "captured $n" || echo "FAILED $n"
 }
 for a in ${=DUO_APPEARANCES:-light dark classic}; do
-  run chip $a 470 "editor-js:duo.deckGo(3),wait:1"
-  run picker $a 470 "editor-js:duo.deckGo(4),wait:1,editor-js:duo.deckNewSlide(),editor-js:duo.deckType('k'),wait:1"
+  run chip $a 470 "editor-js:return duo.deckGo(3),wait:1"
+  run picker $a 470 "editor-js:return duo.deckGo(4),wait:1,editor-js:return duo.deckNewSlide(),wait:1,editor-js:return duo.deckType('k'),wait:1"
 done
