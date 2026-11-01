@@ -4819,3 +4819,23 @@ Timed under `--exclusive` (`DUO_CHECKS=split-perf swift run DuoChecks`, a debug 
 - **The deck provider** is Duo Decks' (`PreviewProviders.extra`); `deck` is never offered until it registers.
 - **R11 and R12** (`openThread`, `addComment` from a preview) arrive at `PreviewPolicy.onRequest`; wiring them to the editor waits for slice 2's `editor.addComment(lines:quiet:done:)` and `openThread(id:line:done:)`.
 - **Search's ⌥⌘↩** and the tree's "Show Preview in Split View" aren't wired (slice 2 adds Open in Split View). Q-402.
+
+## F-508 · What a second editor costs: no typing slowdown, about 226 MB (2026-11-01; C-135, C-141)
+
+`DUO_CHECKS=editorperf`, under the GPU lock `--exclusive` (enforced limit). Two editors were laid out side by side, 470 pt each, on documents of about 600 lines. `duo.bench(400)` was run at line 150 (dispatch plus layout per keystroke).
+- **Typing.** One editor: p50 0, p95 1, max 1 ms. With the second open beside it, the main side: p50 0, p95 1, max 1 ms; the second side: p50 0, p95 1, max 2 ms. WebKit coarsens `performance.now()` to 1 ms, so this reads as "under a millisecond either way". A second editor doesn't slow typing in the first.
+- **Memory.** The second editor's WebContent process took the WebContent RSS from 178 MB to 404 MB, about +226 MB. RSS counts pages shared with the first process, so this is an upper bound. The process lives until quit once a pair has made it (C-141).
+- The first run hung all night holding the exclusive lock. It ran `ps` into a Pipe and waited for it to exit before reading, and ps's output outgrew the pipe buffer. Fixed (2e4bb12c): the pipe is read first, a 180 s watchdog exits, and output is line-buffered.
+
+## F-509 · split-docs, built and compared in Light, Dark and Classic (2026-11-01; DL-278)
+
+`scripts/check-split-docs.sh`: background runs at 1440 × 900 on the board's two files, `duo2 split interview-notes.md --with synthesis.md`. Slice 1 makes room: panes [rail, 494, 944], ratio 0.500. Measured with `scripts/pixels.py` in all three looks:
+- sides of 472 and 471 with a 1 pt `rule` divider (DL-276 says about 470);
+- the 2 pt `paneFocus` rule spans only the active right side, 969–1440, in each look's own colour (board note 1);
+- the strip reads `Project  interview-notes.md ⫼ synthesis.md`, with the active name semibold.
+
+Two differences from the board:
+- **DL-266's formatting bar** over the active side (board note 2) isn't built in Duo yet.
+- **Each heading shows its `#`**, because a freshly opened editor's caret sits on line 1 and the editor shows marks on the caret's line. That's the same as any document today; the board draws the caret on synthesis.md's last line.
+
+The comparison images are `build/split-docs/compare-{light,dark,classic}.png` (the board's frame over the capture).
