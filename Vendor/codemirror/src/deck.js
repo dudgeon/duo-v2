@@ -361,6 +361,9 @@ function installApi(view) {
       return true;
     },
     deckNewSlide() { return newSlide(apiView); },
+    // Harness hooks (captures and checks): type into the picker as a person would, and put the caret in slide n.
+    deckType(q) { const p = apiView.state.field(pickerField); if (!p) return false; apiView.dispatch({ effects: setQuery.of({ query: p.query + q, sel: 0 }) }); return true; },
+    deckGo(n) { const m = slideMarks(apiView.state)[n - 1]; if (!m) return false; const d = apiView.state.doc; let at = m.line + 1; while (at < d.lines && !d.line(at).text.trim()) at++; apiView.dispatch({ selection: { anchor: d.line(Math.min(at, d.lines)).to } }); return true; },
     deckPickerOpen() { return !!apiView?.state.field(pickerField); },
     deckProbe() { return { deck: isDeckDoc(apiView.state), marks: slideMarks(apiView.state).length, picker: apiView.state.field(pickerField) }; },
   });

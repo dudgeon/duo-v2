@@ -164,6 +164,6 @@ func deckP1Checks(tmp: URL, study: URL, deck: URL, packs: [URL]) throws {
     check(skill.contains("## Decks") && !verbs.isEmpty && verbs.allSatisfy { DuoAction.resolve($0.split(separator: " ").map(String.init)) != nil },
           "the skill's Decks section names only real verbs (\(Set(verbs).sorted()))")
     check(skill.contains("Don't run python-pptx") && skill.contains("Never open a pack's pptx") && skill.contains("`duo2 deck check <deck>`"), "the Decks section carries the rules")
-    check(DuoAction.all.filter { $0.family == .deck }.allSatisfy { ($0.local || [.deckTemplatePick, .deckTemplatePicked].contains($0.id)) && $0.ui.isEmpty }, "the deck verbs are local and CLI-only, except pick and picked, which wait for the deck viewer (no UI yet, nothing for Parity to match)")
+    check(DuoAction.all.filter { $0.family == .deck }.allSatisfy { ($0.local || [.deckTemplatePick, .deckTemplatePicked].contains($0.id)) && ($0.ui.isEmpty || [.deckInsert, .deckChange].contains($0.id)) }, "the deck verbs are local and CLI-only, except pick and picked (they wait for the deck viewer) and insert and change, which the editor's New Slide and slide chip call (DL-295, DL-296)")
     try deckP2Checks(tmp: tmp, study: study)
 }
