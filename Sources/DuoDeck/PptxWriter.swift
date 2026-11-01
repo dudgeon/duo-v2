@@ -18,6 +18,23 @@ extension Deck {
         return try PptxWriter(pack: pack, front: checked.parsed.front, slides: checked.slides, deckDir: deck.deletingLastPathComponent(),
                               sourceSha: SHA256.hash(data: source).map { String(format: "%02x", $0) }.joined()).write()
     }
+
+    /// Exports an already checked deck from `source` (the deck's text, saved or not) in memory: nothing is
+    /// written. `shapes` says which slot each drawn shape is: slide number (from 1), then the shape's
+    /// OOXML id, to the slot's name. The bytes are the same as `export(deck:)` gives for the same text.
+    public static func export(checked: Checked, source: String, deck: URL) throws -> (data: Data, shapes: [Int: [Int: String]]) {
+        guard checked.problems.isEmpty, let pack = checked.pack else {
+            throw Failure(description: report(deck.path, checked.problems))
+        }
+        var writer = PptxWriter(pack: pack, front: checked.parsed.front, slides: checked.slides, deckDir: deck.deletingLastPathComponent(),
+                                sourceSha: SHA256.hash(data: Data(source.utf8)).map { String(format: "%02x", $0) }.joined())
+        let sink = ShapeSink()
+        writer.shapeSink = sink
+        let data = try writer.write()
+        return (data, sink.map)
+    }
+
+    final class ShapeSink: @unchecked Sendable { var map: [Int: [Int: String]] = [:] }
 }
 
 // MARK: - the writer
@@ -28,6 +45,8 @@ struct PptxWriter {
     let slides: [Deck.Slide]
     let deckDir: URL
     let sourceSha: String
+    /// Hears each slot's shape as it is written (slide, id, slot name).
+    var shapeSink: Deck.ShapeSink?
 
     struct LayoutPh {
         var name: String
@@ -189,8 +208,13 @@ struct PptxWriter {
             var slideRels: [(String, String, String)] = [("rId1", "slideLayout", "../slideLayouts/\((layout.part as NSString).lastPathComponent)")]
             func rid() -> String { "rId\(slideRels.count + 1)" }
 
+            // A slot's shape counts once an id was used for it (the writer skips some without taking one).
+            var lastSlot: (id: Int, name: String)?
+            func flush() { if let l = lastSlot, id > l.id { shapeSink?.map[num, default: [:]][l.id] = l.name }; lastSlot = nil }
             for ph in layout.phs where !["dt", "ftr", "sldNum"].contains(ph.type) {
+                flush()
                 guard let spec = template.slots.first(where: { $0.idx == ph.idx }), let got = slide.slot(spec.name) else { continue }
+                lastSlot = (id, spec.name)
                 let nv = "<p:cNvPr id=\"\(id)\" name=\"\(Self.esc(ph.name))\"/>"
                 let phTag = "<p:nvPr><p:ph\(ph.attrs)/></p:nvPr>"
                 // An empty slot (a notice, not an error): text and bullets keep their placeholder, empty, so an
@@ -256,6 +280,7 @@ struct PptxWriter {
                 }
                 id += 1
             }
+            flush()
             // Footer and slide number: the layout's placeholders, without their boxes, so they
             // inherit position and look from the layout (F-466: python-pptx drops them).
             for ph in layout.phs where ph.type == "ftr" || ph.type == "sldNum" {

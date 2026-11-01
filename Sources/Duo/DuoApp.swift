@@ -34,6 +34,7 @@ struct DuoApp: App {
             exit(66)
         }
         let model = AppModel(fixture: fixture)
+        DeckPreviewRegistration.install(model: model)   // Duo Decks: a `type: deck` note previews as slides in split view
         // Stalls of the main thread, logged on this Mac for `duo2 hangs` (DL-139). DUO_HANG_LOG=0 turns it off.
         if ProcessInfo.processInfo.environment["DUO_HANG_LOG"] != "0" { HangMonitor.shared.start { model.hangScreen() } }
         model.interactivePrompts = !options.capturing

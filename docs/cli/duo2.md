@@ -286,6 +286,9 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 deck template picked` | The template and slides the user picked in the deck viewer. Needs the deck viewer (the Slides view), which isn't built yet. | — |
 | `duo2 deck import <pptx> [--pack <p> \| --new-pack <name>] [--plan <file>] [--out <deck.md>]` | Turn an existing PowerPoint file into a Duo deck. Without --plan: print the slide groups (identical layout fingerprints), near groups and, for each group, the pack template that fits best, for you to plan with. With --plan: apply your plan (which group becomes which template, optional slots to add, new templates to make, loose boxes mapped to slots), amend or create the pack, convert the text, notes and comments (as Review marks), and print the import report. Never writes the pptx. | — |
 | `duo2 deck migrate [--pack <p>] [--dry-run]` | After a pack renamed a slot (`renamed: {old: new}` in the template's definition), rewrite the slot headings of every deck in the project that uses the pack, printing a diff. --dry-run prints it without writing. | — |
+| `duo2 deck` | The Markdown deck showing in split view: its slide count, the slide on screen in the preview, and the slot (with its source lines) the caret is in. | — |
+| `duo2 deck go <n> \| next \| previous` | Move both sides of the deck in split view to a slide: the preview scrolls to it and the source shows its first line. Plain .pptx decks use `slide go`. | — |
+| `duo2 deck pick [<slide>/<shape id>]` | Start the shape picker on the deck's preview for the user, or select the shape a slide and id name. Once a shape is picked, this names its slide, slot and source lines. | — |
 
 ## Send to Claude
 

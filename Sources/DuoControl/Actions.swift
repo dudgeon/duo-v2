@@ -98,6 +98,8 @@ public enum ActionID: String, CaseIterable, Sendable {
     // Duo Decks P2: templates from your decks
     case deckTemplateInventory = "deck template inventory", deckTemplateBuild = "deck template build", deckTemplateSpecimen = "deck template specimen"
     case deckTemplatePick = "deck template pick", deckTemplatePicked = "deck template picked", deckImport = "deck import", deckMigrate = "deck migrate"
+    // Duo Decks P3a: the deck in split view
+    case deckShowing = "deck", deckGo = "deck go", deckPick = "deck pick"
     // Send to Claude
     case sendFile = "send file", sendSession = "send session", sendProject = "send project", sendSelection = "send selection"
     case sendElement = "send element", sendText = "send text", selection
@@ -555,6 +557,14 @@ extension DuoAction {
         .init(.deckMigrate, .deck, "[--pack <p>] [--dry-run]",
               "After a pack renamed a slot (`renamed: {old: new}` in the template's definition), rewrite the slot headings of every deck in the project that uses the pack, printing a diff. --dry-run prints it without writing.",
               local: true),
+
+        // Duo Decks P3a: the deck in split view (the source beside its slides). These ask the app.
+        .init(.deckShowing, .deck, "",
+              "The Markdown deck showing in split view: its slide count, the slide on screen in the preview, and the slot (with its source lines) the caret is in."),
+        .init(.deckGo, .deck, "<n> | next | previous",
+              "Move both sides of the deck in split view to a slide: the preview scrolls to it and the source shows its first line. Plain .pptx decks use `slide go`."),
+        .init(.deckPick, .deck, "[<slide>/<shape id>]",
+              "Start the shape picker on the deck's preview for the user, or select the shape a slide and id name. Once a shape is picked, this names its slide, slot and source lines."),
 
         // Search
         .init(.search, .search, "<query> | --similar <path> [-k N] [--project P] [--kind file|session|memory] [--exact]",
