@@ -17,7 +17,7 @@ for look in $looks; do
   printf -- '---\ngoal: "Synthesis"\n---\n\n# buyer-interviews\n' > $ws/research/buyer-interviews/PROJECT.md
   printf '# Interview 4: Dana, ops lead\n\n“We stopped trusting the dashboard after the March outage.” Rebuilds the weekly report by hand, about 3 hours.\n' > $ws/research/buyer-interviews/interview-notes.md
   printf '# What we heard\n\nTrust broke at the March outage; three of six rebuild reports by hand.\n' > $ws/research/buyer-interviews/synthesis.md
-  then=${DUO_SPLIT_THEN:-"open:buyer-interviews,open-file:$ws/research/buyer-interviews/interview-notes.md,wait:2,verb:split interview-notes.md --with synthesis.md,wait:2,right-width:944,wait:2,verb:split"}   # 944: the right pane DL-276 plans at 1440 (slice 1 makes it; see the report)
+  then=${DUO_SPLIT_THEN:-"open:buyer-interviews,open-file:$ws/research/buyer-interviews/interview-notes.md,wait:2,verb:split interview-notes.md --with synthesis.md,wait:4,verb:split"}
   env -u DUO_SUPPORT_DIR DUO_EXTRA_ENV="DUO_SUPPORT_DIR=$root/sup-$look CLAUDE_CONFIG_DIR=$root/cc-$look DUO_APPEARANCE=$look" DUO_TIMEOUT=${DUO_TIMEOUT:-90} \
     scripts/run-live.sh $ws "$out/split-docs-$look.png" "$then" "$out/split-docs-$look.log"
   grep -a "^verb split" "$out/split-docs-$look.log" | sed 's/^/  /'
