@@ -16,7 +16,7 @@ extension AppModel {
     /// Sessions | Tasks for the project on screen (or `project`).
     public func showBoard(_ shown: Bool, project: String? = nil) {
         guard let p = project ?? currentProject?.name else { return }
-        if shown { boardProjects.insert(p); watchBoardKeys() } else { boardProjects.remove(p) }
+        if shown { boardProjects.insert(p) } else { boardProjects.remove(p) }
         if shown, currentProject?.name != p { open(project: p) }
     }
 
@@ -91,7 +91,7 @@ extension AppModel {
         return payload.hasPrefix(prefix) ? String(payload.dropFirst(prefix.count)) : nil
     }
 
-    /// A card moved to another lane (a drag, ⌥⌘← / ⌥⌘→, `duo2 task status`): Set Status, which
+    /// A card moved to another lane (a drag, the card's Set Status, `duo2 task status`): Set Status, which
     /// writes only `status:` (and `completed:` when it closes or reopens). With the note open, the
     /// change goes through the editor's buffer (DL-13), so unsaved typing is kept; ⌘Z undoes it
     /// either way. Onto Done, the card holds ticked where it was for Mark Complete's 5 s (DL-130).
@@ -116,36 +116,6 @@ extension AppModel {
             boardHeld[id] = nil
         }
         return nil
-    }
-
-    /// ⌥⌘← / ⌥⌘→ (board 7 [P]): the selected card (its note in the right pane) one lane over.
-    public func moveSelectedCard(by step: Int) -> Bool {
-        guard boardShown, let project = currentProject?.name, let path = rightTab,
-              let t = fixture.tasks?.first(where: { $0.project == project && $0.path == path }) else { return false }
-        let lanes = board(project).map(\.status)
-        guard let i = lanes.firstIndex(of: TaskBoard.key(t.status)) else { return false }
-        let j = i + step
-        guard lanes.indices.contains(j) else { return true }
-        if let why = moveCard(project: project, path: path, to: lanes[j]) { info(why) }
-        return true
-    }
-
-    /// The board shows and a card is selected (its note is the right pane's tab).
-    var boardCardSelected: Bool {
-        guard boardShown, let project = currentProject?.name, let path = rightTab else { return false }
-        return fixture.tasks?.contains { $0.project == project && $0.path == path } == true
-    }
-
-    /// The board's keys, while it shows with a card selected: ⌥⌘← / ⌥⌘→ move the card a lane, unless a text
-    /// field or the editor has the keyboard. Otherwise they pass on to Next / Previous Pane (DL-165).
-    func watchBoardKeys() {
-        guard boardKeyMonitor == nil else { return }
-        boardKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            guard let self, self.boardShown, self.boardCardSelected, event.modifierFlags.intersection([.option, .command, .shift, .control]) == [.option, .command],
-                  [123, 124].contains(event.keyCode) else { return event }
-            if let r = event.window?.firstResponder, r is NSTextView || isInsideWebView(r) { return event }
-            return self.moveSelectedCard(by: event.keyCode == 123 ? -1 : 1) ? nil : event
-        }
     }
 
     // MARK: References (DL-150, board 13)

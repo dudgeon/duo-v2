@@ -2,7 +2,7 @@ import AppKit
 import DuoKit
 import Foundation
 
-// DL-165: the active pane, ⌥⌘→ / ⌥⌘←, and ⌃Tab through the active pane's tabs.
+// DL-165: the active pane, Next / Previous Pane (no chord since DL-289), and ⌃Tab through the active pane's tabs.
 @MainActor func paneFocusChecks() throws {
     print("pane focus: the active pane and its tabs (DL-165)")
 
@@ -123,5 +123,32 @@ import Foundation
     m.openDocument("docs/prd-v2.md")   // a double click
     check(m.openDocuments.contains("docs/prd-v2.md") && m.rightTab == "docs/prd-v2.md", "a double click opens the file")
     m.openDocuments = []; m.rightTab = "Project"; m.selectedFile = nil
+    }
+
+    // ⌘W closes the tab that has the keyboard, never the console's session (F-495)
+    do {
+    let m = AppModel(fixture: f)
+    TargetState.project.apply(to: m)
+    let console = m.consoleTab
+    let kinds = ["docs/prd-v2.md", "pages/report.html", "decks/launch.pptx", "docs/spec.docx", "web:abc12345"]
+    for kind in kinds {
+        for how in ["the right pane active", "a web view focused"] {
+            m.openDocuments = [kind]; m.rightTab = kind; m.selectedFile = kind
+            if how == "the right pane active" { m.activate(.right, focus: false); m.webFocus = .none }
+            else { m.activate(.middle, focus: false); m.webFocus = .html }
+            let label = "\(kind) with \(how)"
+            check(m.keyboardInRightPane && DuoCommand.closeSession.isEnabled(in: m), "⌘W is enabled on the right pane's tab: \(label)")
+            DuoCommand.closeSession.perform(in: m)
+            check(!m.openDocuments.contains(kind) && m.rightTab == "Project", "⌘W closes the tab: \(label)")
+            check(m.consoleTab == console, "and leaves the console's session alone: \(label)")
+        }
+    }
+    m.webFocus = .none
+    m.rightTab = "Project"; m.activate(.right, focus: false)
+    check(!DuoCommand.closeSession.isEnabled(in: m), "⌘W on the right pane's Project tab closes nothing and is disabled")
+    DuoCommand.closeSession.perform(in: m)
+    check(m.consoleTab == console, "and performing it leaves the console's session alone")
+    m.activate(.middle, focus: false)
+    check(!m.keyboardInRightPane, "with the console active ⌘W is the console's")
     }
 }

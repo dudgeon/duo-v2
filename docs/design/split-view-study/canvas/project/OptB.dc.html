@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Option B: two tab groups</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.light{--ground:#F3F4F6;--pane:#FFFFFF;--text:#1F2328;--text2:#5B636D;--rule:#C9CDD3;--controlEdge:#8B939C;--selected:#E9ECEF;--console:#15171B;--consoleText:#E6E8EB;--consoleText2:#9AA1AB;--consoleRule:#2B2F36;--paneFocus:#1F2328;--needsYou:#C2410C}
+.win{position:relative;width:1440px;height:900px;display:flex;flex-direction:column;background:var(--ground);color:var(--text);font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.tb{height:40px;flex:none;background:var(--ground);border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:12px;padding:0 16px;color:var(--text2)}
+.dots{display:flex;gap:8px}.dots i{width:12px;height:12px;border-radius:6px;background:var(--rule);display:block}
+.cols{flex:1;display:flex;min-height:0}
+.side{background:var(--pane);border-right:1px solid var(--rule);padding:16px;box-sizing:border-box;display:flex;flex-direction:column;gap:6px;flex:none}
+.con{background:var(--console);color:var(--consoleText);display:flex;flex-direction:column;border-right:1px solid var(--rule);flex:none}
+.cstrip{height:36px;border-bottom:1px solid var(--consoleRule);display:flex;align-items:center;gap:18px;padding:0 14px;font:12px/19px 'SF Mono',Menlo,monospace;color:var(--consoleText2)}
+.grp{background:var(--pane);display:flex;flex-direction:column;min-width:0}
+.strip{position:relative;height:36px;flex:none;border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:18px;padding:0 14px;color:var(--text2);white-space:nowrap;overflow:hidden}
+.rulef{position:absolute;top:0;height:2px;background:var(--paneFocus)}
+.dv{width:1px;background:var(--rule);flex:none}
+.doc{padding:16px 22px;display:flex;flex-direction:column;gap:2px;font:14px/22px -apple-system,system-ui,sans-serif}
+.mk{color:var(--text2);font:12px/22px 'SF Mono',Menlo,monospace}
+.h1{font:600 20px/28px -apple-system,system-ui,sans-serif}
+.deckbar{height:44px;flex:none;border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:6px;padding:0 14px;box-sizing:border-box}
+.btn{height:26px;box-sizing:border-box;padding:4px 10px;border:1px solid var(--controlEdge);border-radius:6px;background:var(--pane);font:12px/16px -apple-system,system-ui,sans-serif;color:var(--text);white-space:nowrap}
+.slides{flex:1;background:var(--ground);padding:14px 16px;display:flex;flex-direction:column;gap:6px;overflow:hidden}
+.slide{aspect-ratio:16/9;background:#FFFFFF;border:1px solid var(--rule);box-sizing:border-box;padding:14px 16px;display:flex;flex-direction:column;gap:4px;color:#1F2328;flex:none}
+.badge{position:absolute;width:26px;height:26px;border-radius:13px;background:#1F2328;color:#FFFFFF;font:600 13px/26px -apple-system,system-ui,sans-serif;text-align:center}
+.notes{display:flex;flex-direction:column;gap:10px}
+.n{display:grid;grid-template-columns:26px minmax(0,1fr);gap:10px;align-items:start}
+.n i{width:22px;height:22px;border-radius:11px;background:#1F2328;color:#FFFFFF;font:600 12px/22px -apple-system,system-ui,sans-serif;text-align:center;font-style:normal;display:block}
+.t2{color:#5B636D}
+.h{font:600 15px/20px -apple-system,system-ui,sans-serif}
+</style>
+</helmet>
+<div style="width:1900px;height:1000px;box-sizing:border-box;padding:28px 36px;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;display:flex;gap:28px">
+  <div style="zoom:.78;flex:none">
+    <div class="win light">
+      <div class="tb"><div class="dots"><i></i><i></i><i></i></div><span style="margin-left:60px">All projects › work ›</span><b style="color:var(--text)">orchard-robotics</b><span style="margin-left:auto;border:1px solid var(--rule);border-radius:6px;padding:2px 10px;width:300px;background:var(--pane)">Search all projects ⇧⌘A</span></div>
+      <div class="cols">
+        <div class="side" style="width:240px"><b>orchard-robotics</b></div>
+        <div class="con" style="width:480px"><div class="cstrip"><span style="color:var(--consoleText);font-weight:500">○ Field trial deck</span><span>+</span></div></div>
+        <div class="grp" style="width:358px;flex:none">
+          <div class="strip"><div class="rulef" style="left:0;right:0"></div><span>Project</span><span style="color:var(--text);font-weight:600">field-trial-review.md</span><span>notes.md</span><span>+</span></div>
+          <div class="doc"><span class="mk">&lt;!-- slide: kpi --&gt;</span><span class="h1">Unattended rows</span><span>88%</span></div>
+        </div>
+        <div class="dv"></div>
+        <div class="grp" style="flex:1">
+          <div class="strip"><span style="color:var(--text);font-weight:600">Slides · field-trial-review</span><span>example.com</span><span>…</span></div>
+          <div class="deckbar"><span class="btn">‹</span><span class="btn">›</span><span>3/10</span><span style="margin-left:auto" class="btn">Export ⌄</span></div>
+          <div class="slides"><div class="slide"><b style="font-size:13px">Unattended rows</b><span style="font:600 34px/40px system-ui">88%</span></div></div>
+        </div>
+      </div>
+      <span class="badge" style="left:780px;top:46px">1</span>
+      <span class="badge" style="left:1300px;top:46px">2</span>
+      <span class="badge" style="left:1080px;top:200px">3</span>
+    </div>
+  </div>
+  <div class="notes" style="flex:1;min-width:0">
+    <div><span class="h" style="font-size:20px;line-height:28px">B · Two tab groups</span><br><span class="t2">The right pane holds up to two groups, each with its own strip, like an editor’s “split right”. Legacy deferred this as its Option B. Every mark [P].</span></div>
+    <div class="n"><i>1</i><span><b>Each side has its own strip.</b> The pane rule sits over the active group’s strip. ⌃Tab cycles within that group.</span></div>
+    <div class="n"><i>2</i><span><b>Two strips at about 358 each already truncate</b> at 1440 with three tabs. A deck’s Slides is a tab of its own in the other group, so the source and its slides can drift apart when you switch tabs.</span></div>
+    <div class="n"><i>3</i><span><b>Make one:</b> drag a tab to the other side, Move to Other Side, Open in Split View. Any item can go in either group.</span></div>
+    <div style="border-top:1px solid #C9CDD3;padding-top:10px;display:flex;flex-direction:column;gap:6px">
+      <span><b>Serves:</b> deck ✓ · Markdown + preview ✓ · HTML + page ✓ · two documents ✓ · more than one pair at once ✓.</span>
+      <span><b>Narrow:</b> a group folds away and its tabs go where?: a new rule to design (merge into the other group, or hide).</span>
+      <span><b>Legacy’s issues:</b> reopens the focus problem twice over (group and tab), plus drop zones and two sets of tab rules (DL-225’s scrolling, Q-210’s pinned tabs) per group.</span>
+      <span><b>Cost:</b> about 12–15 days. It needs the editor-per-view refactor first (C-135), two strips, per-group ⌃Tab, persistence of two groups, and drag between groups.</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1900,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

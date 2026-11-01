@@ -4744,3 +4744,98 @@ In `docs/design/markdown-toolbar-study/captures/fresh-review-dark.png` (the trac
 - **F-482: dictation latency, measured.** With voice input fed a spoken file at its spoken pace (`DUO_VOICE_FILE_REALTIME=1`, the path the live checks use), macOS's on-device recognizer settled nothing for the first phrase until about 3.6 s after the speech began (4.1 s after the start). It gave the whole phrase at once, with only a 0.1 s volatile flash, then the second phrase 3.3 s later, when the speech ended. The film's states are that run, captured at those moments (`video-vv-chat-at-<tenths>`), so words land at the real delay. A capture only waits on the clock, and the recognizer timing was the same across runs.
 - **F-483: a fixture terminal gets the real terminal mic.** A recorded screen fed to a `TerminalSession(key:screen:)` sits in a `TerminalSlot`, and with `DUO_VOICE_MIC_ON_SHELL=1` (isolated only) the mic is found beside Claude's input box as on a live session. The level bars come from three `showFixture` levels and a `tick()` each, since the bars keep the last three polls. A fixed `VoiceDeviceSource` makes the capture independent of the Mac's own microphone (this Mac has none built in, so it would draw the struck-through mic).
 - **F-484: the speech check counted spoken words badly for numbers and chords.** "0.2.22" said as words fails WER against the written digits, and "Shift-Command-D" came back as "shiftCmand D" on every seed. The film's lines avoid both: "this release", and "Shift, Command and D". The keycaps show the chord.
+## F-467 · One set of level bars for chat and the terminal (voice-input, 2026-10-31; DL-272)
+
+`VoiceInput` keeps the last three levels (`levels`) and the one height rule (`barHeights`: the newest in the middle, the older two either side at 0.8 and 0.9; Reduce Motion holds 0.5, 0.8, 0.6). The terminal mic draws them (it kept its own history before) and chat's mic draws them with `VoiceBars` (2 wide, 2 apart, 2 to 12 pt) in `pane` on its `text` circle. The hint row's four-bar `LevelMeter` and its "Listening" are gone; it shows the keys. A `window-shot:<png>` harness action captures the window mid-run. Captured live (real Claude 2.1.311 on Haiku, an isolated background Duo, a spoken file at speaking pace): the chat mic with its bars 2.3 s into the dictation, the hint row with the keys only (`proof/dl272-chat-listening.png`), and the ordinary mic again with the words in the field when it finished (`dl272-chat-after.png`). Voice and chat checks 1630/0.
+
+## F-474 · Legacy Duo's Split View: what it was, why it struggled (split-view, 2026-10-31)
+
+Legacy's Split View (ENH-041, "aux") was one companion slot right of the canvas, Slack-style at Geoff's request ("does not allow infinite split view inception, just one aux sidebar"). It first shipped in v0.6.5 and was last fixed in v0.13.7 (BUG-270). It never had an ADR, and ENH-041 was never closed. Its failures fall into a few causes:
+- a second native web view painted over the page (nine bugs);
+- the active side was never modelled: the focus glow failed three times, and ⌘W and the agent's current document ignored the aux;
+- one path could be open in two editors;
+- ⌘\ was taken by 1Password;
+- no narrow-window rules;
+- async moves (BUG-093);
+- unit tests only.
+
+Source beside its own preview ("Option D") was considered and deferred. Full history: `docs/design/split-view-study/legacy.md` and `legacy/`.
+
+## F-475 · Halving today's right pane leaves sides under every floor (split-view, 2026-10-31)
+
+With DL-129's widths the right pane is at most about 658 at 1440 (sidebar 300, console 480) and 498 at 1280. Halved, that's 329 and 249. Both fall under:
+- the right pane's 360 minimum;
+- the formatting bar's and review margin's 420 cuts (DL-266, DL-237);
+- the browser bar's 360 truncation;
+- Duo Decks' readable-slide floor of about 360.
+
+A split has to make room. Geoff's rule (the console narrows to 480; the sidebar folds below about 1,464 pt and peeks) gives 479 a side at 1440 and 399 at 1280 (Q-363).
+
+## F-476 · v2 has one viewer of each kind, and focus has no side (split-view, 2026-10-31)
+
+AppModel holds one `editor`, `htmlViewer`, `deckViewer` and `docxViewer` (`AppModel.swift:216-225`). `DocumentEditorView` re-parents the editor's one web view on every update (`DocumentEditor.swift:892-920`), so two editors on screen would take it from each other. `DuoPane` is left, middle and right, and `webFocus` is per kind (`none|editor|html`), so ⌘S, Format, ⌘D and voice all reach the single editor. A source beside a different kind of viewer (Markdown editor + deck viewer) fits as it is; two editors need C-135's refactor.
+
+## F-477 · Viewers read the file from disk, not the buffer (split-view, 2026-10-31)
+
+The HTML viewer and the deck viewer poll the file's modification time once a second (`HTMLViewer.startWatching`; `DeckViewer.swift:138-160`). A live preview of unsaved text (Duo Decks R1, R2) needs the buffer pushed to the viewer with a revision. A `.html` file also always opens in the viewer (`ProjectPanes.swift:880`), so showing HTML source beside its page needs the editor to open HTML as text.
+
+## F-478 · Search's "Open in split view ⌥⌘↩" is drawn and does nothing (split-view, 2026-10-31)
+
+Search's Tab menu lists "Open in split view ⌥⌘↩" for files and sessions (`SearchModel.swift:148, :169`), approved as a chord in DL-79 (e). Its `perform` is a no-op (`AppModel+Search.swift:479`). It's split view's ready-made entry point.
+
+## F-479 · As read, ⌘W from a page, deck, Word file or browser tab ends the console's session (split-view, 2026-10-31; not confirmed by a run)
+
+`Commands.swift:183` enables ⌘W when a terminal is visible or the editor has focus. `:252-254` closes the document only when `editorIfLoaded?.hasFocus`; otherwise it calls `closeVisibleSession()`. So with the keyboard in an HTML page, a deck, a Word document or a browser tab, ⌘W would end the console's session; DL-127 asks first only if Claude is working. It needs a run and a fix of its own. Split view routes ⌘W by the active side and must not build on this.
+
+## F-495 · ⌘W with the keyboard in a page, deck, Word document or browser tab ended the console's session (2026-10-31; DL-34, DL-165)
+
+`DuoCommand.closeSession` closed a document only when the Markdown editor had the keyboard (`editorIfLoaded?.hasFocus`); with any other right-pane tab showing (HTML page, deck, Word document, browser tab) it fell to `closeVisibleSession()` and ended the console's Claude session. Read from the code, and the same at v0.2.21 (`Commands.swift:248-250`, enabled by `visibleTerminal != nil`). Fixed: `AppModel.keyboardInRightPane` (the right pane is active, or a web view has the keyboard) sends ⌘W to `closableRightTab`, a document or browser tab; the Project tab closes nothing. DuoChecks (`PaneFocusChecks`) cover Markdown, HTML, deck, Word and browser tabs, each with the right pane active and with a web view focused. Harness action `cmd-w` performs the command.
+
+## F-470 · Claude Code's prompt keys, measured on 2.1.284 and 2.1.311 (terminal-selection, 2026-10-31)
+
+Real Claude Code in a pty (node-pty + @xterm/headless), scratch `CLAUDE_CONFIG_DIR`, mock key, dead API address, no turn; each key's bytes sent into the prompt `alpha beta gamma / delta epsil|on zeta / eta theta iota`, then a marker typed and the box read back, with the kitty protocol answered (as SwiftTerm does) and not. 81 cases, `docs/design/terminal-selection-study/results/claude-keys.txt`. **Both versions, both modes, gave the same answer in every case.**
+- Move: ←→↑↓ (↑/↓ by visual row; history on the first/last), Home/End (`CSI H/F`, `CSI 1~/4~`, `SS3 H/F`) and Super+←/→ (`CSI 1;9D/C`) to the visual row's start/end, ⌃A/⌃E to the paragraph's, ⌥←/→ (`CSI 1;3D/C`, ⌃←/→, `ESC b/f`, `CSI 98/102;3u`) by word, ⌃F/B/N/P.
+- Delete: ⌫, ⌃H, ⌃D and ⌦ (`CSI 3~`); ⌥⌫ and ⌃W a word back; ⌃U and Super+⌫ (`CSI 127;9u`) to the row's start; ⌃K to the end; ⌥⌦ (`CSI 3;3~`) **kills to the line's end** (a Mac deletes a word forward); `ESC d` a word forward; ⌃Y yanks; ⌃_ undoes.
+- Nothing: ⇧↑/⇧↓, ⌃Home/⌃End, Page Up/Down in the prompt (fullscreen scrolls the transcript). ⇧←/→, ⇧Home/⇧End, ⇧⌥←, ⇧⌘←/→ only move. ⌃T toggles the task list, ⌃O the transcript. Super+A/Z/X and ⇧Super+Z (`CSI 97/122/120;9u`) **type the letter**.
+- `keybindings.json` (both versions): no action moves the cursor or selects in the prompt; 2.1.311's table adds ⇧↑/⇧↓ effort and ⌃Y "default to newer model", both gated (neither did anything here; ⌃Y still yanked).
+- Vim mode (`editorMode: vim`): INSERT as above for every key tried; NORMAL gives keys their vim sense (Super+← and Super+⌫ act as `h`), `results/claude-keys-vim.txt`.
+
+## F-471 · The fullscreen renderer has a selection of its own; Duo already forwards the mouse to it (terminal-selection, 2026-10-31)
+
+2.1.284 and 2.1.311, with a clean environment and no `tui` setting, both go to the alternate screen and turn on mouse reporting 1000/1002/1003/1006, with bracketed paste and focus reports (the fullscreen renderer is the default, as F-284 found for 2.1.296; it can be turned off by a GrowthBook gate, settings, a crash canary, tmux -CC). Geoff's `~/.claude/settings.json` has `"tui": "fullscreen"`. SwiftTerm's `allowMouseReporting` is on in Duo, so clicks and drags in a Claude terminal go to Claude; ⇧-drag stays SwiftTerm's. Measured in the pty with SGR mouse bytes (`results/claude-mouse-selection.txt`), the same on both versions:
+- a drag selects, in Claude's theme colour (`rgb(38,79,120)` dark, `rgb(180,213,255)` light, ANSI cyan/blue in the ANSI themes), and **is copied at once** by OSC 52, which SwiftTerm's `clipboardCopy` writes to the Mac clipboard: screen text, continuation rows keeping their 2-space indent, soft wraps as new lines;
+- double-click selects a word, triple-click a row; a click places the caret; ⇧-click (SGR modifier 4) acts as a click;
+- with a selection: ⇧←/→/↑/↓ and ⇧Home/⇧End extend it, ⌫ or ⌦ deletes it if it lies in the prompt (`tryDelete`; one that runs into the transcript isn't, and ⌫ deletes a character), ⌃C copies it, typing inserts at the old caret and drops it, ⇧⌥← moves the caret and keeps it.
+- No key starts a selection.
+
+## F-472 · Two ways to a keyboard selection in the prompt, prototyped headless (terminal-selection, 2026-10-31)
+
+Both on 2.1.284 and 2.1.311, kitty mode, the pty above; `docs/design/terminal-selection-study/` strategies 2 and 3.
+- **Claude's own selection, made by synthetic drags** (strategy 2, `results/strategy-b-synthetic-drag.txt`, 11 cases): a drag from the box's first text cell to past its last character, then ⌫, emptied three-line, wrapped, placeholder, trailing-blank-line and wide-text prompts; ⌫ then X replaced it; ⇧←, ⇧Home and ⇧↑ extended a drag from the caret, and ⌫ then deleted exactly that; ⌦ deleted it. A drag ending *on* a wide last character (👍) left it; ending one or more cells past the text works (Claude clamps).
+- **Duo's own selection by keys** (strategy 3, `results/strategy-c-alignment.txt`): Duo aligns the box's cells with the prompt's exact text (Ctrl+G, `EDITOR` a copying script), maps the terminal cursor (Claude's caret: the real cursor sits on it) to an offset, moves it to the selection's end with ←/→ and sends ⌫ per unit. 6 of 6 exact on both versions: across a new line, a soft wrap, CJK and a ZWJ emoji, beside a paste placeholder and over one. The first run failed 2: xterm splits a ZWJ emoji over two cells, and Ctrl+G hands over a placeholder's full pasted text (the screen shows `[Pasted text #1 +29 lines]`, which ← and ⌫ treat as one unit); the aligner now takes cells until a cluster is whole and collapses the pasted run into one unit.
+
+## F-473 · Smaller facts about keys in Duo's terminal (terminal-selection, 2026-10-31)
+
+- **SwiftTerm's bytes for every Mac chord** at Duo's pinned commit, with and without the kitty flags: `results/swiftterm-bytes.tsv` (a borderless never-shown window and a raw `cat`, as DuoChecks `return-chords`). With the flags every modified key is CSI u or `CSI 1;m X`. Without them (2.1.219 only) ⌘← sends `ESC b` and ⌘→ `ESC f` (a word, from `moveToLeftEndOfLine:`), and ⌘↑/↓, ⇧⌘←/→ send nothing.
+- **A menu's key never reaches the terminal, even with its item disabled** (an AppKit menu in the probe with Undo, Cut, Select All and an unanswered Bold: none of ⌘Z ⌘X ⌘A ⌘B sent a byte). So the Super+letter typing in F-470 can't happen in Duo for menu keys; SwiftUI's menus were not measured.
+- **`TerminalKeys`' comment is stale:** both versions read Super+Backspace (`CSI 127;9u`) as delete-to-row-start, so Duo's ^U for ⌘⌫ is no longer needed with the protocol (harmless).
+- **Ctrl+G blanks the terminal while the editor runs:** the screen is empty mid-peek and Claude leaves and re-enters the alternate screen (`results/ctrl-g-peek.txt`). Chat's `peekPrompt` runs with the terminal hidden; in the terminal a peek would show as a flash.
+
+## F-504 · What S1's keys stand on, measured in Claude Code 2.1.284 and 2.1.311 (terminal-keys-s1, 2026-10-31; DL-274)
+
+The study's pty (real Claude Code, scratch config, mock key, dead API, kitty protocol answered), both versions identical in every case; `docs/design/terminal-selection-study/s1-proof/`.
+- **The box grows to `rows / 2 - 5` text rows, then scrolls** (5 at 20 rows, 10 at 30, 20 at 50), with no mark for the hidden rows; it keeps the caret near its middle as it scrolls (`box.txt`).
+- **↑ on the prompt's first row recalls the last prompt** (with a history file present; without one it does nothing), with the caret anywhere on that row; **one ↓ then brings the draft back with the caret at its start**. ↓ on the draft's last row does nothing.
+- **⌃A and ⌃E** (raw bytes, with the protocol on or off) **reach the line's start and end in vim's INSERT and NORMAL modes alike**, where Home and End do nothing in NORMAL; arrows move in both, so ↑ to the box's top then ⌃A is the prompt's start in every mode, and the history step works in NORMAL too (`vim.txt`). INSERT shows `-- INSERT --` in the footer; NORMAL shows nothing.
+- **Alt+D** as `CSI 100;3u` deletes a word forward in both modes (a bare `ESC d` would leave INSERT first); at a line's end it does nothing. **⌃_** undoes in both modes; its steps are Claude's own (a word deleted right after typing undoes with the typing).
+- **Claude wraps the prompt at `cols - 4` cells** (36 at 40 columns, 56 at 60, 93 at 97); a word longer than a row is broken inside it, filling the row (`wrap.txt`).
+- **Claude copies its selections twice on a Mac:** `pbcopy` (not over SSH) and an OSC 52 (`setClipboard` in the binary), so either can reach the pasteboard last.
+- **Its pickers draw no input box:** `/model` and `/effort` on both versions (`Fixtures/prompt-keys/`), so the box finder sees none and arrows stay theirs.
+
+## F-505 · DL-274 built: ⌘↑ ⌘↓ ⌥⌦ ⌘Z in Claude's prompt, and clean copies (terminal-keys-s1, 2026-10-31)
+
+- **`PromptKeys.swift`** is the model, pure: `PromptBox` (the box from the screen and the cursor, nil with a question up or the caret outside it; `full` at `rows/2 - 5`), `PromptKey` (the four chords), `PromptKeys.bytes` and `PromptKeys.next` (what one more ↑ or ↓ did to a full box: done, scrolled, history, stop), `PromptCopy.clean`.
+- **`GuardedTerminalView`'s key monitor** takes the four chords first in a live Claude terminal (`runsClaude`, set by the session; a shell is untouched), before the menus, so ⌘↑ is never All Projects there and ⌘Z never Duo's Undo. ⌘↑: ↑ to the box's first row and ⌃A; ⌘↓: ↓ to its last row and ⌃E; in a full box a task then probes one row at a time (back to the edge each time, since Claude re-centres the box), until nothing changes (⌃A/⌃E), or, at the top, the last prompt appears (↓). ⌥⌦: Alt+D (`CSI 100;3u` with the protocol, `ESC d` without). ⌘Z: ⌃_. With no box: ⌘↑ and ⌘Z do nothing, ⌘↓ and ⌥⌦ go on as before.
+- **Copies:** a `CopyCleaningDelegate` stands between SwiftTerm and the view (its `clipboardCopy` isn't open), so Claude's OSC 52 copies go through `PromptCopy.clean` (the box's indent and `❯` dropped, a row break the next word wouldn't have fitted across joined: a space, or nothing inside a long word; anything not lined up with the box's rows untouched). The clean text is put back for 1.5 s if the raw text arrives after it (`pbcopy`). Edit ▸ Copy of SwiftTerm's own selection is cleaned the same way.
+- **Proof:** DuoChecks `prompt-keys`, live pty replays of the exact keys on both versions in the default and vim configs (`s1-proof/keys.txt`: ⌘↑ from three lines, a wrapped prompt and a scrolled 40-line box all reach the start; ⌘↓ the end; ⌥⌦ and ⌘Z as above). The first replay found the full-box ⌘↓ stopping early: the caret's cell ends its row with a space, and the box re-centres; both are handled now.
+- Not proven: real keypresses in a visible window (for Geoff's walk); the work Mac's own Claude Code (2.1.284 measured here from its binary).

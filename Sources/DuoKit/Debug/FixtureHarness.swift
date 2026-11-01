@@ -124,6 +124,7 @@ public enum FixtureHarness {
         case "focus-tile": model.moveTileFocus(dx: 0, dy: 0)
         case "new": model.newSession()
         case "close": model.closeVisibleSession()
+        case "cmd-w": DuoCommand.closeSession.perform(in: model)   // ⌘W's command, which closes the tab that has the keyboard (F-495)
         case "newfile": model.newMarkdownFile(near: parts.count > 1 ? parts[1] : nil)
         case "newfolder": model.newFolder(near: parts.count > 1 ? parts[1] : nil)
         case "rename":  // rename:<path>=<new name>
@@ -235,6 +236,11 @@ public enum FixtureHarness {
         case "voice-file":    // voice-file:<audio>: dictate a file into the session showing (its composer or prompt), no microphone
             if parts.count > 1, let target = model.voiceFocusTarget {
                 model.voice.start(target, source: .file(URL(fileURLWithPath: parts[1])))
+            }
+        case "window-shot":   // window-shot:<png>: the whole window drawn to <png> now, mid-run (a dictation in progress)
+            if parts.count > 1, let w = NSApp.windows.first(where: { $0.title == "Duo" }) ?? NSApp.windows.first {
+                do { try WindowCapture.window(w, to: URL(fileURLWithPath: parts[1])) }
+                catch { FileHandle.standardError.write(Data("window-shot failed: \(error.localizedDescription)\n".utf8)) }
             }
         case "voice-log":     // voice-log: the dictation's state and target, and the composer's text, to stderr
             let field = model.visibleSessionId.flatMap { (model.chats.existing($0) ?? model.fixtureChats[$0])?.composerView }

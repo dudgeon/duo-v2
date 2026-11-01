@@ -49,8 +49,6 @@ final class TerminalMicView: NSView {
     private var notice: NSHostingView<VoiceNoticeBox>?
     /// Where the mic last was in the slot, for the notice.
     private var lastFrame: NSRect?
-    /// The last three levels, one per bar, so the bars move apart (DL-271).
-    private var levels: [Double] = [0, 0, 0]
 
     /// `DUO_VOICE_MIC_ON_SHELL=1` draws the mic on a shell tab too, so a scripted run can feed recorded Claude screens
     /// to a shell and watch the finder. Only an isolated Duo honours it: a release never does.
@@ -152,7 +150,6 @@ final class TerminalMicView: NSView {
         // No microphone, option 2 (NoMic.dc.html): no chip until there is one; the notice still has its place.
         if noMic, VoiceNoMicStyle.current == .hidden { updateNotice(); return hide() }
         if isHidden { isHidden = false }
-        if state == .listening { levels = Array((levels + [voice?.level ?? 0]).suffix(3)) } else { levels = [0, 0, 0] }
         // Option 1 with no microphone (DL-265): the tooltip says why it's faint.
         let tip = noMic && VoiceNoMicStyle.current == .slashed ? VoiceNoMicStyle.tooltip : VoiceCopy.tooltip
         if toolTip != tip { toolTip = tip }
@@ -260,10 +257,7 @@ final class TerminalMicView: NSView {
     /// the last three levels (2 pt quiet, a dot; 12 pt loud), redrawn at every poll (20 a second). Reduce Motion holds
     /// them still at a middle height.
     private func drawBars() {
-        let still = MotionSettings.shared.reduce
-        // The middle bar takes the newest level; the outer two the older ones, a little shorter, so a voice reads as a
-        // moving shape rather than three equal bars.
-        let heights = (still ? [0.5, 0.8, 0.6] : [levels[0] * 0.8, levels[2], levels[1] * 0.9]).map { CGFloat(2 + 10 * min(1, max(0, $0))) }
+        let heights = VoiceInput.barHeights(voice?.levels ?? [], still: MotionSettings.shared.reduce).map { CGFloat(2 + 10 * $0) }
         DuoNSColor.console.setFill()
         let w: CGFloat = 2, gap: CGFloat = 2
         var x = (bounds.width - (3 * w + 2 * gap)) / 2

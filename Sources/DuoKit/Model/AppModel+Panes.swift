@@ -50,15 +50,27 @@ extension AppModel {
         }
     }
 
+    /// Whether ⌘W belongs to the right pane's tab: the right pane is active (DL-165), or one of its
+    /// web views (editor, HTML, deck, Word, browser) has the keyboard (F-495).
+    public var keyboardInRightPane: Bool {
+        guard !altitude.isAllProjects else { return false }
+        return activePane == .right || webFocus != .none || editorIfLoaded?.hasFocus == true
+    }
+
+    /// The right pane's tab ⌘W closes: a document or browser tab, never Project or a group.
+    public var closableRightTab: String? {
+        rightTab.flatMap { openDocuments.contains($0) ? $0 : nil }
+    }
+
     /// The panes on screen, left to right.
     public func visiblePanes() -> [DuoPane] {
         let leftHidden = leftCollapsed || (!altitude.isAllProjects && boardShown)
         return PaneCycle.order(leftShown: !leftHidden, rightShown: !rightCollapsed)
     }
 
-    /// ⌥⌘→
+    /// View ▸ Next Pane (no chord since DL-289)
     public func nextPane() { stepPane(forward: true) }
-    /// ⌥⌘←
+    /// View ▸ Previous Pane
     public func previousPane() { stepPane(forward: false) }
 
     private func stepPane(forward: Bool) {

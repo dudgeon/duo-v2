@@ -1,0 +1,104 @@
+======== 311
+## B select all (3 lines), backspace
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    sel cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma                                          ', '  delta epsilon zeta                                        ', '  eta theta iota '] highlighted ['alpha beta gamma                                          ', 'delta epsilon zeta                                        ', 'eta theta iota ']
+    osc52 copy on select ['alpha beta gamma\n  delta epsilon zeta\n  eta theta iota']
+    after cursor {'row': 0, 'col': 2} rows ['❯  '] highlighted [' ']
+    peek text ''
+## B select all (3 lines), Duo replaces: backspace then X
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    peek text 'X'
+## B select all (wrapped + line), backspace
+    start cursor {'row': 4, 'col': 13} rows ['❯ The quick brown fox jumps over the lazy dog while the', '  band plays on, and then it keeps running past the barn,', '  the mill and the river until the sun goes down behind', '  the hills.', '  second line '] highlighted ['', '', '', '', '··········· ']
+    sel cursor {'row': 4, 'col': 13} rows ['❯ The quick brown fox jumps over the lazy dog while the     ', '  band plays on, and then it keeps running past the barn,   ', '  the mill and the river until the sun goes down behind     ', '  the hills.                                                ', '  second line '] highlighted ['The quick brown fox jumps over the lazy dog while the     ', 'band plays on, and then it keeps running past the barn,   ', 'the mill and the river until the sun goes down behind     ', 'the hills.                                                ', 'second line ']
+    osc52 copy ['alpha beta gamma\n  delta epsilon zeta\n  eta theta iota', 'The quick brown fox jumps over the lazy dog while the\n  band plays on, and then it keeps running past the barn,\n  the mill and the river until the sun goes down behind\n  the hills.\n  second line']
+    peek text ''
+## B select all with a placeholder, backspace
+    start cursor {'row': 0, 'col': 41} rows ['❯ before [Pasted text #1 +29 lines] after '] highlighted ['······································· ']
+    osc52 copy ['before [Pasted text #1 +29 lines] after']
+    peek text ''
+## B select all, trailing blank line
+    start cursor {'row': 3, 'col': 2} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota', '   '] highlighted ['', '', '', ' ']
+    peek text ''
+## B select all, wide + emoji
+    start cursor {'row': 1, 'col': 9} rows ['❯ 日本語のテキスト and émoji 👩\u200d💻 here', '  next 👍 '] highlighted ['', '······ ']
+    osc52 copy ['alpha beta gamma\n  delta epsilon zeta\n  eta theta iota', '日本語のテキスト and émoji 👩\u200d💻 here\n  next 👍']
+    peek text '👍'
+## B from caret 5 left, then shift+left, shift+home, backspace
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    shift-left cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '········a iota ']
+    shift-home cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', 'eta theta iota ']
+    peek text 'alpha beta gamma\ndelta epsilon zeta'
+## B selection, then shift+up (extend up)
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    shift-up cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta                                        ', '  eta theta iota '] highlighted ['', '···········on zeta                                        ', 'eta theta iota ']
+    peek text 'alpha beta gamma\ndelta epsil'
+## B selection, then alt+shift+left (not bound)
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    alt-shift-left cursor {'row': 2, 'col': 12} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '··········iota ']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta theta i'
+## B selection, then plain left (collapses?)
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    left cursor {'row': 2, 'col': 15} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota'] highlighted ['', '', '·············a']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta theta iotXa'
+## B selection, then fwd delete
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta theta '
+======== 284
+## B select all (3 lines), backspace
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    sel cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma                                          ', '  delta epsilon zeta                                        ', '  eta theta iota '] highlighted ['alpha beta gamma                                          ', 'delta epsilon zeta                                        ', 'eta theta iota ']
+    osc52 copy on select ['alpha beta gamma\n  delta epsilon zeta\n  eta theta iota']
+    after cursor {'row': 0, 'col': 2} rows ['❯  '] highlighted [' ']
+    peek text ''
+## B select all (3 lines), Duo replaces: backspace then X
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    peek text 'X'
+## B select all (wrapped + line), backspace
+    start cursor {'row': 4, 'col': 13} rows ['❯ The quick brown fox jumps over the lazy dog while the', '  band plays on, and then it keeps running past the barn,', '  the mill and the river until the sun goes down behind', '  the hills.', '  second line '] highlighted ['', '', '', '', '··········· ']
+    sel cursor {'row': 4, 'col': 13} rows ['❯ The quick brown fox jumps over the lazy dog while the     ', '  band plays on, and then it keeps running past the barn,   ', '  the mill and the river until the sun goes down behind     ', '  the hills.                                                ', '  second line '] highlighted ['The quick brown fox jumps over the lazy dog while the     ', 'band plays on, and then it keeps running past the barn,   ', 'the mill and the river until the sun goes down behind     ', 'the hills.                                                ', 'second line ']
+    osc52 copy ['alpha beta gamma\n  delta epsilon zeta\n  eta theta iota', 'The quick brown fox jumps over the lazy dog while the\n  band plays on, and then it keeps running past the barn,\n  the mill and the river until the sun goes down behind\n  the hills.\n  second line']
+    peek text ''
+## B select all with a placeholder, backspace
+    start cursor {'row': 0, 'col': 41} rows ['❯ before [Pasted text #1 +29 lines] after '] highlighted ['······································· ']
+    osc52 copy ['before [Pasted text #1 +29 lines] after']
+    peek text ''
+## B select all, trailing blank line
+    start cursor {'row': 3, 'col': 2} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota', '   '] highlighted ['', '', '', ' ']
+    peek text ''
+## B select all, wide + emoji
+    start cursor {'row': 1, 'col': 9} rows ['❯ 日本語のテキスト and émoji 👩\u200d💻 here', '  next 👍 '] highlighted ['', '······ ']
+    osc52 copy ['alpha beta gamma\n  delta epsilon zeta\n  eta theta iota', '日本語のテキスト and émoji 👩\u200d💻 here\n  next 👍']
+    peek text '👍'
+## B from caret 5 left, then shift+left, shift+home, backspace
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    shift-left cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '········a iota ']
+    shift-home cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', 'eta theta iota ']
+    peek text 'alpha beta gamma\ndelta epsilon zeta'
+## B selection, then shift+up (extend up)
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    shift-up cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta                                        ', '  eta theta iota '] highlighted ['', '···········on zeta                                        ', 'eta theta iota ']
+    peek text 'alpha beta gamma\ndelta epsil'
+## B selection, then alt+shift+left (not bound)
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    alt-shift-left cursor {'row': 2, 'col': 12} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '··········iota ']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta theta i'
+## B selection, then plain left (collapses?)
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    left cursor {'row': 2, 'col': 15} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota'] highlighted ['', '', '·············a']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta theta iotXa'
+## B selection, then fwd delete
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta theta '
+
+Re-run of two select-all cases with the drag ending one and three cells past the last character (PAST=1, PAST=3):
+== 311
+## B select all (wrapped + line), backspace
+    peek text ''
+## B select all, wide + emoji
+    peek text ''
+== 284
+## B select all (wrapped + line), backspace
+    peek text ''
+## B select all, wide + emoji
+    peek text ''

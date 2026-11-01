@@ -13,8 +13,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case jumpToPeekSelection // ⌘↩ (handoff proposal), while the peek is open
     case toggleSidebar      // ⌃⌘S, the macOS standard
     case toggleRightPane    // ⌥⌘0, as Xcode's inspector
-    case nextPane           // ⌥⌘→
-    case previousPane       // ⌥⌘←
+    case nextPane           // no chord: ⌥⌘→ freed (DL-289)
+    case previousPane       // no chord: ⌥⌘← freed (DL-289)
     case nextTab            // ⌃Tab: the next tab of the active pane (DL-165), the one non-⌘ chord
     case previousTab        // ⌃⇧Tab
     case newMarkdown        // ⌘N: a new Markdown file in the project, named inline (DL-61, DL-62)
@@ -136,8 +136,6 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .jumpToPeekSelection: KeyboardShortcut(.return, modifiers: .command)
         case .toggleSidebar: KeyboardShortcut("s", modifiers: [.command, .control])
         case .toggleRightPane: KeyboardShortcut("0", modifiers: [.command, .option])
-        case .nextPane: KeyboardShortcut(.rightArrow, modifiers: [.command, .option])
-        case .previousPane: KeyboardShortcut(.leftArrow, modifiers: [.command, .option])
         case .nextTab: KeyboardShortcut(.tab, modifiers: .control)
         case .previousTab: KeyboardShortcut(.tab, modifiers: [.control, .shift])
         case .newMarkdown: KeyboardShortcut("n", modifiers: .command)
@@ -157,6 +155,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
              .task, .addProperties, .duo2Reference, .whatsNew, .reportIssue, .explainTasks, .tableInsert, .tableRowAbove, .tableRowBelow,
              .tableColumnBefore, .tableColumnAfter, .tableDeleteRow, .tableDeleteColumn, .tableAlignLeft, .tableAlignCenter,
              .tableAlignRight, .showBoard, .showList: nil  // Show Board / Show List: Q-100
+        case .nextPane, .previousPane: nil  // ⌥⌘→ / ⌥⌘← freed (DL-289)
         case .newBrowserTab: KeyboardShortcut("t", modifiers: [.command, .option])
         case .focusAddress: KeyboardShortcut("l", modifiers: .command)
         case .openFile: KeyboardShortcut("o", modifiers: .command)
@@ -180,7 +179,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .togglePeek: !model.altitude.isAllProjects && !model.needsYouElsewhere.isEmpty
         case .jumpToPeekSelection: model.peekOpen
         case .goHome, .toggleSidebar, .closeWindow: true
-        case .closeSession: model.visibleTerminal != nil || (model.webFocus == .editor && model.openDocuments.contains(model.rightTab ?? ""))
+        case .closeSession: model.keyboardInRightPane ? model.closableRightTab != nil : model.visibleTerminal != nil
         case .newMarkdown, .newFolder: model.terminalsMode == .live && model.projectFolder != nil
         case .save: model.terminalsMode == .live && model.editorOpened && model.editorIfLoaded?.url != nil
         case .bold, .italic, .strikethrough, .code, .link, .heading1, .heading2, .heading3, .task, .addProperties, .tableInsert: model.webFocus == .editor
@@ -250,7 +249,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .jumpToPeekSelection: model.jumpToPeekSelection()
         case .toggleSidebar: model.leftCollapsed.toggle()
         case .closeSession:
-            if model.editorIfLoaded?.hasFocus == true, let doc = model.rightTab, model.openDocuments.contains(doc) { model.closeDocument(doc) }
+            if model.keyboardInRightPane { if let doc = model.closableRightTab { model.closeDocument(doc) } }   // F-495: never the console's session
             else { model.closeVisibleSession() }
         case .newMarkdown: model.newMarkdownFile(near: model.selectedFile)
         case .newFolder: model.newFolder(near: model.selectedFile)
