@@ -7,6 +7,12 @@ import Foundation
 // on its own document, and the WebContent processes' memory before and after.
 @MainActor func editorPerfChecks() throws {
     print("editor per side: typing latency and memory (C-135)")
+    // It holds the GPU lock --exclusive: never past 3 minutes, whatever hangs (a page that never loads).
+    DispatchQueue.global().asyncAfter(deadline: .now() + 180) {
+        FileHandle.standardError.write(Data("editorperf: timed out after 180 s; exiting so the lock is released\n".utf8))
+        exit(2)
+    }
+    setvbuf(stdout, nil, _IOLBF, 0)   // line by line, so a log shows how far it got
     let dir = FileManager.default.temporaryDirectory.appending(path: "duo-editorperf-\(UUID().uuidString.prefix(6))")
     try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
     defer { try? FileManager.default.removeItem(at: dir) }
@@ -34,8 +40,10 @@ import Foundation
         p.executableURL = URL(fileURLWithPath: "/bin/ps")
         p.arguments = ["-axo", "rss=,ppid=,comm="]
         let pipe = Pipe(); p.standardOutput = pipe
-        try? p.run(); p.waitUntilExit()
+        try? p.run()
+        // Read before waiting: ps's output outgrows the pipe's buffer, and waiting first deadlocked (F-508).
         let text = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        p.waitUntilExit()
         // WebContent processes are launched by launchd (ppid 1), so match by name and by having started since we did.
         let mine = text.split(separator: "\n").filter { $0.contains("com.apple.WebKit.WebContent") }
         return mine.compactMap { Double($0.split(separator: " ").first ?? "") }.reduce(0, +) / 1024
