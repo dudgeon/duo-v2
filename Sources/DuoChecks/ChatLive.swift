@@ -332,6 +332,39 @@ struct AskCase {
     chat.composeDir = saved
     _ = idle(); spin(1)
     check(pasted?.ok == true && lastPrompt(after: from) == "Pasted on send SCENARIO:hello", "paste-on-send, for older CLIs (\(pasted?.why ?? "ok"))")
+    // ENH-292, F-485: leaving chat carries the composer's words into Claude's prompt, Return never pressed; back in chat
+    // (from 2.1.269, where the composer can read the prompt) the composer has them again.
+    do {
+        _ = idle()
+        from = transcriptSize()
+        chat.ui.composer = "carried on leaving chat\nand its second line"
+        chat.mode = .terminal
+        _ = until(10) { (chat.reread().input ?? "").contains("second line") }
+        spin(1.5)
+        let input = chat.reread().input ?? ""
+        check(input.contains("carried on leaving chat") && input.contains("second line") && chat.reread().kind == .idle && lastPrompt(after: from) == nil && chat.ui.composer.isEmpty,
+              "Terminal chosen: the composer's two lines are in Claude's prompt, unsent (\(input.debugDescription))")
+        chat.mode = .chat
+        if chat.usesExternalEditor {
+            _ = until(10) { !chat.ui.composer.isEmpty }
+            check(chat.ui.composer == "carried on leaving chat\nand its second line", "back in chat the composer holds them again (\(chat.ui.composer.debugDescription))")
+        }
+        chat.ui.composer = ""; chat.ui.composerBasis = nil
+        for _ in 0..<60 { tui.sendKeys("\u{7f}") }
+        _ = until(5) { (chat.reread().input ?? "").isEmpty }
+        // A fallback with words in the composer: the same, and chat sends nothing.
+        from = transcriptSize()
+        chat.ui.composer = "dictated, then chat fell back"
+        chat.fallBack(.automatic("Chat mode can’t show this screen, so here’s the terminal."), rule: "unknown-screen")
+        _ = until(10) { (chat.reread().input ?? "").contains("fell back") }
+        spin(1.5)
+        check((chat.reread().input ?? "").trimmingCharacters(in: .whitespaces) == "dictated, then chat fell back" && lastPrompt(after: from) == nil,
+              "a fallback carries them too, unsent (\((chat.reread().input ?? "").debugDescription))")
+        chat.fallback = nil
+        chat.ui.composer = ""; chat.ui.composerBasis = nil
+        for _ in 0..<60 { tui.sendKeys("\u{7f}") }
+        _ = until(5) { (chat.reread().input ?? "").isEmpty }
+    }
     prompt("long")
     _ = until(10) { chat.reread().kind == .busy }
     from = transcriptSize()

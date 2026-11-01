@@ -131,9 +131,15 @@ public enum ChatKey: String, Sendable {
 public final class ChatSession {
     /// The console tab key (the session id when live).
     public let key: String
-    public var mode: ChatViewMode
+    public var mode: ChatViewMode { didSet { shownChanged() } }
     /// Set while a session in chat mode shows the terminal by itself or by a handover.
-    public var fallback: ChatFallback?
+    public var fallback: ChatFallback? { didSet { shownChanged() } }
+    /// `showsChat` as last seen, so leaving chat carries the composer's words once (ENH-292).
+    @ObservationIgnored var wasShowingChat: Bool
+    /// The composer's words wait to go into Claude's prompt (a question was up), are going, or went.
+    @ObservationIgnored var carryPending = false
+    @ObservationIgnored var carrying = false
+    @ObservationIgnored var carried = false
     public private(set) var screen: ChatScreen = .starting
     /// The effort the TUI last drew (DL-168). Claude Code shows it for a few seconds after a start or a change (F-275), so it is kept until a screen draws another; nil until one has.
     public internal(set) var effort: ChatEffort?
@@ -296,6 +302,7 @@ public final class ChatSession {
     public init(key: String, mode: ChatViewMode) {
         self.key = key
         self.mode = mode
+        wasShowingChat = mode == .chat
     }
 
     /// What the console pane shows for this session.
@@ -401,6 +408,7 @@ public final class ChatSession {
     /// whose dialogs aren't verified; and, once the TUI is back at its prompt, coming back.
     func evaluateFallback() {
         let s = screen
+        defer { carryWhenReady() }
         switch s.kind {
         case .unknown:
             if composing || sending { return }
