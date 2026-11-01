@@ -198,6 +198,7 @@ import Foundation
               "resume arguments carry no flag besides --resume and end with -- <message> (F-422)")
         check(VersionOrder.atLeast("2.1.284", "2.1.284") && !VersionOrder.atLeast("2.1.283", "2.1.284"), "2.1.284 is where background resume starts")
         check(Director.workerPrompt(note: "/n.md", director: "director-p").contains("SendMessage(to: \"director-p\")"), "a worker's brief asks it to send its report to the director by name")
+        check(Director.workerPrompt(note: "/n.md", director: "director-p").contains("on the line right before the question and inside the question text"), "a worker's brief makes its questions carry the link to what they're about (F-528)")
     }
 
     print("director: a recorded 2.1.284 beacon and its transcript (the work Mac)")

@@ -22,6 +22,7 @@ public enum Director {
         tag(director) + """
         You're the worker on the task whose note is \(note), directed by \(director). Read its ## Request and done_when: first; \
         don't decide anything the Request says you mustn't, and ask in this session if something only the user can answer comes up. \
+        When your question needs the user to look at something (a canvas or board, a page, a document, a file, a capture, a session), put its link (a URL, a duo2:// link or a file path they can open) on the line right before the question and inside the question text, naming the board or section. \
         As you go, append dated one-line updates under the note's ## Progress; if you can't write to the note, put those lines in your report. \
         When you're done or stuck, end your turn with your report as your last message: what you did, what you checked and how, \
         and any other work you noticed (as suggestions, not done). \
@@ -114,7 +115,7 @@ public enum DirectorSkill {
     public static let format = 1
     /// Bump when the skill starts needing a `duo2 director` verb or behaviour an older Duo lacks
     /// (F-341): `status` compares the installed skill's revision with the running Duo's.
-    public static let revision = 3
+    public static let revision = 4
     public static func text(name: String = "director") -> String {
         let t = source.replacingOccurrences(of: "{{FORMAT}}", with: "\(format)").replacingOccurrences(of: "{{REVISION}}", with: "\(revision)")
         return name == "director" ? t : t.replacingOccurrences(of: "name: director\n", with: "name: \(name)\n")

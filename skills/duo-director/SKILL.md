@@ -123,6 +123,7 @@ Sessions on one Mac message each other by name (`SendMessage`, `ListAgents`), on
 
 ## 7. Asking the user, and growing the rules
 
+- **A question about something the user has to look at carries its link.** Whenever you or a worker ask the user a question that needs them to look at something (a canvas or board, a page, a document, a file, a capture, a session), put that thing's link (a URL, a `duo2://` link, or a file path they can open) on the line right before the question and inside the question text too, naming the board or section. Never ask "which do you prefer?" and leave them to hunt for what it's about.
 - Ask in your own session with **AskUserQuestion** (Duo marks it Needs you): buttons, your recommendation first, several decisions to one question when they belong together. Don't re-ask what a Director section or `## Decisions` already answers.
 - **No AskUserQuestion here** (a headless run, `claude -p`, some clients): end your turn with the question, its options and your recommendation, and stop. Never act on anything that needs the user's yes because you couldn't ask.
 - Offer to make an artifact when it would help, and make an HTML page and open it in Duo (`duo2 open <project> --file <path>`) when it's needed. Artifacts are optional and never load-bearing: weigh the user's rules and the tools this client has.
