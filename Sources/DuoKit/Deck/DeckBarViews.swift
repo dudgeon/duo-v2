@@ -5,6 +5,29 @@ import SwiftUI
 // Duo Decks P3b: the deck bar's parts (P3-3, P3-4, make-templates). The target draws Problems ⌄ and Export ⌄
 // as menus under their buttons; they are drawn in the window here (not NSMenu) so a capture sees them.
 
+/// The default button of the P3 boards (P3-1 Add Comment, P3-4 Create, make-templates' Make Templates with Claude):
+/// `text` fill, `pane` label, 12 pt semibold; dimmed to half strength when disabled.
+struct FilledDefaultButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View { FilledDefaultButtonBody(configuration: configuration) }
+}
+
+private struct FilledDefaultButtonBody: View {
+    let configuration: ButtonStyleConfiguration
+    @Environment(\.isEnabled) private var enabled
+
+    var body: some View {
+        configuration.label
+            .duoText(.control, weight: .semibold)
+            .foregroundStyle(DuoColor.pane)
+            .lineLimit(1)
+            .padding(.horizontal, DuoSpace.buttonPadding.leading + DuoMetric.borderHairline)
+            .padding(.vertical, DuoSpace.buttonPadding.top + DuoMetric.borderHairline)
+            .background(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).fill(DuoColor.text.opacity(configuration.isPressed ? 0.8 : 1)))
+            .opacity(enabled ? 1 : DuoOpacity.disabled)
+            .contentShape(Rectangle())
+    }
+}
+
 struct DeckMenuItem: Identifiable {
     let id: String
     var title: String
@@ -147,8 +170,8 @@ struct DeckSlidePickBar: View {
             if n == 0 {
                 Text("Click slides to pick them; Esc to stop").duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1)
             } else {
-                (Text("\(n) slide\(n == 1 ? "" : "s") picked").fontWeight(.semibold) + Text(" · click slides to pick them; Esc to stop").foregroundColor(DuoColor.text2))
-                    .duoText(.body).lineLimit(1)
+                Text("\(n) slide\(n == 1 ? "" : "s") picked").duoText(.bodyEmphasis).lineLimit(1).fixedSize()
+                Text("· click slides to pick them; Esc to stop").duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1).layoutPriority(-1)
             }
             Spacer(minLength: 8)
             Button("Cancel") { viewer.setSlidePicking(false) }.buttonStyle(.duo).fixedSize()   // action: deck template pick
@@ -166,7 +189,7 @@ struct DeckSlidePickBar: View {
                 model.sendTemplatesRequest(file: file, path: path, slides: viewer.pickedSlides, pack: nil)
                 viewer.setSlidePicking(false)
             }
-            .buttonStyle(DefaultSheetButtonStyle()).disabled(n == 0).fixedSize()
+            .buttonStyle(FilledDefaultButtonStyle()).disabled(n == 0).fixedSize()
             .accessibilityIdentifier("deck.make-with-claude")
         }
         .padding(.vertical, DuoMetric.noticePaddingY)

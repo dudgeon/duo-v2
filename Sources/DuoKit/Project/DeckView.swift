@@ -49,13 +49,17 @@ struct DeckBar: View {
         // A pane narrower than the board's 460 shortens the count to "2/5" (DL-132 j, q68-narrow);
         // while drawing, ‹ › and Select Shape are dimmed (q68-drawing).
         Group {
-            if preview != nil {
-                // The export state gives way last: it is dropped only when even the short count can't fit it.
-                ViewThatFits(in: .horizontal) {
-                    bar(long: true, folded: 0, state: true)
-                    bar(long: false, folded: 0, state: true)
-                    bar(long: false, folded: 0, state: false)
+            if let preview {
+                // The export state gives way last: it is dropped only when even the short count can't fit it
+                // (measured widths: the bar with the short count and Problems needs about 425 pt inside its padding).
+                GeometryReader { g in
+                    let w = g.size.width - 2 * DuoMetric.noticePaddingX
+                    let problems = !preview.errors.isEmpty
+                    bar(long: w >= (problems ? 500 : 420), folded: 0, state: w >= (problems ? 430 : 340))
+                        .padding(.horizontal, DuoMetric.noticePaddingX)
+                        .frame(width: g.size.width, height: g.size.height, alignment: .leading)
                 }
+                .id(model.pickerRevision)   // the viewer isn't observable: a change of it redraws the bar
             } else {
                 ViewThatFits(in: .horizontal) {
                     bar(long: true, folded: 0, state: false)
@@ -65,7 +69,7 @@ struct DeckBar: View {
                 }
             }
         }
-        .padding(.horizontal, DuoMetric.noticePaddingX)
+        .padding(.horizontal, preview == nil ? DuoMetric.noticePaddingX : 0)
         .frame(height: DuoMetric.deckBarHeight)
         .overlay(alignment: .bottom) { DuoColor.rule.frame(height: DuoMetric.borderHairline) }
     }
@@ -84,7 +88,7 @@ struct DeckBar: View {
                 let label = preview.rendering.export.label()
                 if !label.isEmpty {
                     Text(label).duoText(.pill).foregroundStyle(DuoColor.text2).multilineTextAlignment(.trailing).lineLimit(2).fixedSize(horizontal: false, vertical: true)
-                        .minimumScaleFactor(0.9).frame(width: 60, alignment: .trailing)
+                        .minimumScaleFactor(0.9).frame(width: 66, alignment: .trailing)
                         .accessibilityIdentifier("deck.export-state")
                 }
             }
@@ -103,7 +107,7 @@ struct DeckBar: View {
 
 extension DeckBar {
     func count(_ s: String) -> some View {
-        Text(s).duoText(.body).foregroundStyle(viewer.count > 0 ? DuoColor.text : DuoColor.text2).lineLimit(1).fixedSize().padding(.leading, 4)
+        Text(s).duoText(.body).foregroundStyle(viewer.count > 0 ? DuoColor.text : DuoColor.text2).lineLimit(1).fixedSize().padding(.leading, 2)
     }
 }
 
@@ -168,7 +172,7 @@ struct PickerButtonRow: View {
     @ViewBuilder private var comment: some View {
         if let addComment {
             Button("Add Comment") { addComment() }   // action: deck comment
-                .buttonStyle(DefaultSheetButtonStyle()).keyboardShortcut(.defaultAction)
+                .buttonStyle(FilledDefaultButtonStyle()).keyboardShortcut(.defaultAction)
                 .accessibilityIdentifier("deck.add-comment")
         }
     }

@@ -244,7 +244,7 @@ struct NewDeckSheet: View {
                 }
             }
             if let e = form.error { SheetRow("") { Text(e).duoText(.control).foregroundStyle(DuoColor.diffDelText) } }
-            SheetButtons(confirm: "Create", topGap: 4, cancel: model.cancelSheet) { model.commitNewDeck() }   // action: deck new
+            SheetButtons(confirm: "Create", topGap: 4, filled: true, cancel: model.cancelSheet) { model.commitNewDeck() }   // action: deck new
         }
         .foregroundStyle(DuoColor.text)
         .padding(DuoMetric.sheetPadding)
@@ -290,7 +290,7 @@ struct ConvertDeckSheet: View {
             SheetRow("Into", center: true) {
                 SheetField(text: form.into, focus: false, submit: { model.commitConvertDeck() }, cancel: model.cancelSheet) { form.into = $0 }
             }
-            SheetButtons(confirm: "Convert with Claude", topGap: 4, cancel: model.cancelSheet) { model.commitConvertDeck() }   // action: deck import
+            SheetButtons(confirm: "Convert with Claude", topGap: 4, filled: true, cancel: model.cancelSheet) { model.commitConvertDeck() }   // action: deck import
         }
         .foregroundStyle(DuoColor.text)
         .padding(DuoMetric.sheetPadding)

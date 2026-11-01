@@ -151,6 +151,8 @@ struct SheetRow<Content: View>: View {
 struct SheetButtons: View {
     let confirm: String
     let topGap: CGFloat
+    /// The P3 boards' filled default button (New Deck, Convert to Duo Deck).
+    var filled = false
     let cancel: () -> Void
     let ok: () -> Void
 
@@ -158,9 +160,15 @@ struct SheetButtons: View {
         HStack(spacing: DuoSpace.gapButtonToButton) {
             Spacer(minLength: 0)
             Button("Cancel", action: cancel).buttonStyle(.duo).keyboardShortcut(.cancelAction)
-            Button(action: ok) { Text(confirm).fontWeight(.semibold) }
-                .buttonStyle(DefaultSheetButtonStyle())
-                .keyboardShortcut(.defaultAction)
+            if filled {
+                Button(action: ok) { Text(confirm) }
+                    .buttonStyle(FilledDefaultButtonStyle())
+                    .keyboardShortcut(.defaultAction)
+            } else {
+                Button(action: ok) { Text(confirm).fontWeight(.semibold) }
+                    .buttonStyle(DefaultSheetButtonStyle())
+                    .keyboardShortcut(.defaultAction)
+            }
         }
         .padding(.top, topGap)
     }
