@@ -172,7 +172,7 @@ struct SplitBody: View {
                 .id(path)
                 .padding(.trailing, tab.folded ? DuoMetric.sidebarRail : 0)   // the active side fills the rest
                 .overlay(alignment: .trailing) { if tab.folded { SplitRail(tab: tab) } }
-                .onAppear { if !tab.isDocPair { model.startPreview(path) } }
+                .onAppear { model.takeRoomIfNeeded(); if !tab.isDocPair { model.startPreview(path) } }   // a split shown again (another project's, restored) takes the room
                 .accessibilityIdentifier("video.right.document")
         }
     }
@@ -208,7 +208,9 @@ struct SplitPreviewSide: View {
                     DocumentStack(file: f, ref: .second)
                 } else { DuoColor.pane }
             case .markdown: DuoColor.pane   // no Markdown preview (Geoff, 2026-11-01: view/edit source is being explored)
-            case .deck: DuoColor.pane   // Duo Decks' provider fills this (preview-provider)
+            case .deck:
+                // A registered provider's own view, its bar included; split view draws no bar (preview-provider).
+                if let p = model.splits.provider(.deck) { WebPreviewView(web: p.view) } else { DuoColor.pane }
             }
         }
     }

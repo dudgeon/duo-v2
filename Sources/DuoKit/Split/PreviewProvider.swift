@@ -81,6 +81,18 @@ public struct RevisionGate: Sendable {
 public enum PreviewProviders {
     /// Extra tests (a deck): first match wins, before the built-in ones.
     nonisolated(unsafe) public static var extra: [(kind: PreviewKind, test: @Sendable (_ file: String, _ frontmatter: [String: String]) -> Bool)] = []
+    /// How a registered kind's provider is made: once per window, when a split first shows it.
+    nonisolated(unsafe) static var makers: [PreviewKind: @MainActor () -> PreviewProvider] = [:]
+
+    /// A provider outside split view (Duo Decks' deck) registers its kind, its test and how to make it,
+    /// once at app start. Split view then hosts `view`, pushes `render(text:rev:)` 250 ms after typing pauses
+    /// and takes the provider's events through its policy.
+    public static func register(_ kind: PreviewKind, test: @escaping @Sendable (_ file: String, _ frontmatter: [String: String]) -> Bool,
+                                make: @escaping @MainActor () -> PreviewProvider) {
+        extra.removeAll { $0.kind == kind }
+        extra.insert((kind, test), at: 0)
+        makers[kind] = make
+    }
 
     public static func kind(forFile file: String, frontmatter: [String: String] = [:]) -> PreviewKind? {
         for e in extra where e.test(file, frontmatter) { return e.kind }

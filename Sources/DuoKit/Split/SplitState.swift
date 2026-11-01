@@ -25,6 +25,17 @@ public final class SplitState {
     /// A restored split's room, applied once the layout exists.
     @ObservationIgnored var pendingRightWidth: Double?
     @ObservationIgnored var policies: [String: PreviewPolicy] = [:]
+    @ObservationIgnored var resizeSettle: DispatchWorkItem?
+    @ObservationIgnored private var providers: [PreviewKind: PreviewProvider] = [:]
+
+    /// The registered provider for `kind` (one per window), made on first use; nil when none registered.
+    func provider(_ kind: PreviewKind) -> PreviewProvider? {
+        if let p = providers[kind] { return p }
+        guard let make = PreviewProviders.makers[kind] else { return nil }
+        let p = make()
+        providers[kind] = p
+        return p
+    }
 
     public init() {}
 

@@ -795,6 +795,7 @@ public final class AppModel {
     /// you (or the most recent live one) and the right pane on the document it is editing [P].
     public func open(project name: String, session sessionName: String? = nil, document: String? = nil) {
         rememberTabs()
+        defer { if splitTabs.isEmpty { giveBackRoom() } }   // another project's split doesn't hold the room here (DL-276)
         let live = fixture.liveSessions(inProject: name)
         // Coming back (DL-107): the tab the user left on, while it's still open.
         let returning = sessionName == nil ? lastConsoleTab[name] : nil

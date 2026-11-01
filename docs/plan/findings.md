@@ -5053,3 +5053,22 @@ Verified under the lock:
 The specimen showed nine overflows in the sample pack's own limits, which is the fit check doing its job.
 
 Weak spot: the survey's "best" template for a chart slide was `table`. That's a heuristic, and Claude's plan decides.
+
+## F-527 · Split view's layout bugs from Geoff's first try (split-view-build, 2026-11-01)
+
+Geoff's screen recordings (2026-11-01) showed four bugs. Each now has a live check in `scripts/check-split.sh`:
+- **The window shrank below its 1280 × 800 minimum,** so the panes overflowed and were clipped on every side: when narrow, the console's left and the page's right were cut off; when short, the console drew over the toolbar.
+  - Cause: `MainWindow` sets `host.sizingOptions = []`, so the hosting controller never gave the window its content's minimum, and it reset `contentMinSize` too.
+  - Fix: a window delegate (`MinimumWindowSize.windowWillResize`) holds 1280 × 800.
+  - Not split view's own bug, but a split made it easy to hit.
+- **The sidebar stayed folded in a wide window.**
+  - Cause: the fold was decided once, when the split opened, and widening the window gave the room to the console.
+  - Fix: the window's resizes are watched (`DuoSplitView.onResize`). A moment after a resize stops, the sidebar comes back once the window is at least about 1,464 pt, and folds again under it. Only a sidebar the user had showing moves.
+- **Closing the split left the sidebar hidden:** the model said shown, but the pane stayed 0 wide.
+  - Cause: the sidebar was asked to open while the console was still squeezed to 480, so the console's minimum clamped the divider back to 0.
+  - Fix: the right pane's width is given back first, then the sidebar.
+  - Also, a pane at no width now counts as hidden (`DuoSplitView.isHidden`). `adjustSubviews`, after a divider set from code, leaves a collapsed pane 0 wide but no longer "collapsed", so a second hide saved 0 as its open width.
+  - A collapse asked for during another pane's slide is now queued, not dropped.
+- **The room didn't count the pane dividers,** which left the console 2 pt under 480. The right pane now gives them back: sides of 470 at 1440 and 390 at 1280.
+- The room is also given back when the project on screen has no split left (a split in another project used to hold it), and taken again when a split comes on screen.
+

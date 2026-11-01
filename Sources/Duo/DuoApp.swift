@@ -201,6 +201,8 @@ final class MainWindow {
     private let model: AppModel
     private let options: LaunchOptions
     private var window: NSWindow?
+    /// Keeps the window at or above 1280 × 800 while the user resizes it (F-527).
+    private let minimum = MinimumWindowSize()
 
     init(model: AppModel, options: LaunchOptions) {
         self.model = model
@@ -228,6 +230,11 @@ final class MainWindow {
         w.title = "Duo"
         w.isReleasedWhenClosed = false
         w.setContentSize(DuoMetric.designWindow)  // full-size content: the whole window, as SwiftUI's defaultSize
+        // The minimum window (1280 × 800): `sizingOptions = []` above means the hosting controller never
+        // passes the content's minimum to the window, which then shrank below it and clipped the panes
+        // on every side, the console over the toolbar (Geoff, 2026-11-01, F-527).
+        w.contentMinSize = DuoMetric.minimumWindow
+        w.delegate = minimum   // the hosting controller resets contentMinSize; the delegate holds the line
         w.center()
         w.setFrameAutosaveName("main")
         window = w
@@ -241,5 +248,15 @@ final class MainWindow {
         DuoFocus.hide(w)   // a background test launch draws its window without showing it (F-227)
         w.makeKeyAndOrderFront(nil)
         if !SupportFolder.isIsolated { NSApp.activate() }   // an isolated instance never takes focus (C-28)
+    }
+}
+
+/// The window never resizes below Duo's minimum (1280 × 800, `minimumWindow`): under it the panes'
+/// own minimums don't fit and the content overflowed, clipped at every edge (Geoff, 2026-11-01, F-527).
+/// With full-size content the window's frame is its content.
+@MainActor
+final class MinimumWindowSize: NSObject, NSWindowDelegate {
+    func windowWillResize(_ sender: NSWindow, to frameSize: NSSize) -> NSSize {
+        NSSize(width: max(frameSize.width, DuoMetric.minimumWindow.width), height: max(frameSize.height, DuoMetric.minimumWindow.height))
     }
 }

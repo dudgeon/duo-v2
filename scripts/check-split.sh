@@ -60,6 +60,25 @@ fresh close
 run close 1440x900 "$open,split:page.html,wait:2,split-close,wait:2,split-report"
 expect "close: the split is gone" $out/close.log "no split view showing"
 
+# Geoff's four (2026-11-01): a wide window keeps its sidebar; widening brings a folded sidebar back and
+# narrowing folds it again; closing gives the sidebar back; the window keeps its 1280 x 800 minimum.
+fresh wide
+run wide 2400x1200 "$open,split:page.html,wait:3,split-report"
+expect "wide: a wide window keeps the sidebar" $out/wide.log "sidebar folded by the split: false"
+fresh widen
+run widen 1440x900 "$open,split:page.html,wait:2,window-width:2200,wait:2,split-report"
+expect "widen: the sidebar comes back when the window is wide enough" $out/widen.log "sidebar folded by the split: false"
+fresh renarrow
+run renarrow 1440x900 "$open,split:page.html,wait:2,window-width:2200,wait:2,window-width:1440,wait:2,split-report"
+expect "renarrow: and folds again when it's narrow" $out/renarrow.log "sidebar folded by the split: true"
+fresh giveback
+run giveback 1440x900 "$open,split:page.html,wait:2,split-close,wait:2,split-report"
+expect "giveback: closing brings the sidebar back" $out/giveback.log "sidebar hidden: false"
+fresh widenclose
+run widenclose 1440x900 "$open,split:page.html,wait:2,window-width:2200,wait:2,window-width:1440,wait:2,split-close,wait:2,split-report"
+expect "widenclose: after resizes, closing still brings the sidebar back" $out/widenclose.log "sidebar hidden: false"
+expect "minimum: the window can't be made smaller than 1280 x 800" $out/giveback.log "min 1280x800"
+
 # split-themes: the same split in Dark and Classic (Light is the runs above)
 for theme in dark classic; do
   fresh theme-$theme

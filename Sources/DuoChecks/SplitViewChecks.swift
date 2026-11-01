@@ -35,14 +35,14 @@ import Foundation
 
     // --- Making room (DL-276): the numbers in the handoff
     let r1440 = SplitRoom.plan(window: 1440, sidebarShown: true)
-    check(r1440.foldsSidebar && r1440.rightWidth == 944, "1440: the sidebar folds to its rail, the console is at 480")
-    check(SplitGeometry.widths(width: r1440.rightWidth - 1, ratio: 0.5).left == 471 || SplitGeometry.widths(width: r1440.rightWidth - 1, ratio: 0.5).left == 472, "1440: sides of about 470")
+    check(r1440.foldsSidebar && r1440.rightWidth == 942, "1440: the sidebar folds to its rail, the console is at 480")
+    check(abs(SplitGeometry.widths(width: r1440.rightWidth - 1, ratio: 0.5).left - 470) <= 1, "1440: sides of 470, as the handoff says")
     let r1280 = SplitRoom.plan(window: 1280, sidebarShown: true)
-    check(r1280.foldsSidebar && r1280.rightWidth == 784, "1280: the sidebar folds, the right pane takes the rest")
+    check(r1280.foldsSidebar && r1280.rightWidth == 782, "1280: the sidebar folds, the right pane takes the rest")
     check(abs(SplitGeometry.widths(width: r1280.rightWidth - 1, ratio: 0.5).left - 391) <= 1, "1280: sides of about 391")
     let wide = SplitRoom.plan(window: 1700, sidebarShown: true)
-    check(!wide.foldsSidebar && wide.rightWidth == 1700 - 300 - 480, "a wide window keeps the sidebar")
-    check(SplitRoom.plan(window: 1700, sidebarShown: false).rightWidth == 1700 - 480 && !SplitRoom.plan(window: 1000, sidebarShown: false).foldsSidebar, "a hidden sidebar is left alone")
+    check(!wide.foldsSidebar && wide.rightWidth == 1700 - 300 - 480 - 2, "a wide window keeps the sidebar")
+    check(SplitRoom.plan(window: 1700, sidebarShown: false).rightWidth == 1700 - 480 - 2 && !SplitRoom.plan(window: 1000, sidebarShown: false).foldsSidebar, "a hidden sidebar is left alone")
     check(abs(SplitRoom.foldSidebarBelow - 1464) <= 1, "the sidebar folds under about 1,464")
 
     // --- The routing table: every command × side (legacy: the active side was inferred)

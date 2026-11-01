@@ -422,7 +422,14 @@ public enum FixtureHarness {
         case "split-unfold": model.unfoldSplit()
         case "split-close": if let t = model.showingSplit { model.closeSplitView(t.source) }
         case "sidebar-peek": model.setSidebarPeek(parts.count > 1 ? parts[1] == "on" : !model.splits.peek)
-        case "split-report": FileHandle.standardError.write(Data((model.splitReport() + "\n").utf8))
+        case "split-report":
+            let win = NSApp.windows.first { $0.title == "Duo" }
+            // The smallest the user can resize it to: what the window's delegate allows for a zero size.
+            let size = win.map { w -> String in
+                let m = w.delegate?.windowWillResize?(w, to: .zero) ?? w.contentMinSize
+                return "window: \(Int(w.frame.width))x\(Int(w.frame.height)), min \(Int(m.width))x\(Int(m.height))"
+            } ?? "window: none"
+            FileHandle.standardError.write(Data((model.splitReport() + "\n" + size + "\n").utf8))
         case "doc": if parts.count > 1 { model.openDocument(parts[1]) }   // doc:<path>: a document tab, as the file tree opens it
         case "convert": if parts.count > 1 { model.convertToMarkdown(parts[1]) }   // convert:<docx>: the bar's Convert to Markdown (DL-123)
         case "converting":   // converting:<docx>: hold the progress bar (C) as drawn, for a capture
