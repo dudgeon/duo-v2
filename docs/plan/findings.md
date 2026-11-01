@@ -4785,3 +4785,23 @@ Search's Tab menu lists "Open in split view ⌥⌘↩" for files and sessions (`
 ## F-495 · ⌘W with the keyboard in a page, deck, Word document or browser tab ended the console's session (2026-10-31; DL-34, DL-165)
 
 `DuoCommand.closeSession` closed a document only when the Markdown editor had the keyboard (`editorIfLoaded?.hasFocus`); with any other right-pane tab showing (HTML page, deck, Word document, browser tab) it fell to `closeVisibleSession()` and ended the console's Claude session. Read from the code, and the same at v0.2.21 (`Commands.swift:248-250`, enabled by `visibleTerminal != nil`). Fixed: `AppModel.keyboardInRightPane` (the right pane is active, or a web view has the keyboard) sends ⌘W to `closableRightTab`, a document or browser tab; the Project tab closes nothing. DuoChecks (`PaneFocusChecks`) cover Markdown, HTML, deck, Word and browser tabs, each with the right pane active and with a web view focused. Harness action `cmd-w` performs the command.
+
+## F-500 · ⌥⌘P clashes with nothing on this Mac (split-view-build, 2026-10-31; DL-277)
+
+Checked for DL-277 before wiring Show Preview in Split View. macOS: no symbolic hot key is ⌥⌘P (`com.apple.symbolichotkeys` has none with ⌥⌘ and the P key), and no user key equivalent is set in the global domain. Installed here: 1Password 7 only (its chords are ⌘\, ⌥⌘\, ⌥⌘L, ⇧⌘L); Raycast and Rectangle aren't installed on this Mac, so their defaults were checked from what they publish, not from a run: Raycast's is ⌥Space, Rectangle's are ⌃⌥ plus arrows and letters (no ⌥⌘P). App-level uses of ⌥⌘P exist (Finder's Hide Path Bar, Preview's Page Setup in some apps), but only while that app is in front, never while Duo is. A clash on Geoff's work Mac (other managed tools) isn't ruled out; the chord can be rebound in one place (`Commands.swift`).
+
+## F-501 · A pane's width set during another pane's slide is undone by the slide (split-view-build, 2026-10-31; DL-276)
+
+Making room does two things at once: the sidebar folds (a `motionPaneToggle` slide) and the right pane widens so the console is at 480. `DuoSplitView.setCollapsed` captures every pane's width when the slide starts and `place`s all of them each frame, so a `setPosition` made during the slide is overwritten and the right pane went back to 660. Fixed by widening the right pane after the slide (`SplitState.applyRightWidthSoon(_, after: 0.35)`), both when taking and when giving back the room. Live proof (`scripts/check-split.sh`, isolated background runs): at 1440 × 900 the panes are [rail, 480, 944] and the sides about 470; at 1280 × 800 [rail, 480, 784], sides about 391 — the handoff's numbers.
+
+## F-502 · Preview render time (split-view-build, 2026-10-31; C-136)
+
+Timed under `--exclusive` (`DUO_CHECKS=split-perf swift run DuoChecks`, a debug build, so release is faster): the Markdown preview's HTML and anchor map take 3.8 ms for 200 lines, 38 ms for 2,000 lines (46 KB) and 377 ms for 20,000 lines (471 KB). That is the conversion only; WebKit loads the page after. The conversion runs off the main thread (`Task.detached`), and a newer revision wins at the gate, so typing never waits for it. The render waits 250 ms after typing pauses.
+
+## F-503 · What slice 1 does not do yet (split-view-build, 2026-10-31)
+
+- **Caret-follow and the source-lines mark.** The editor's page doesn't report the caret's line to Swift (only `selection` facts), and adding it means rebuilding `Vendor/codemirror/dist/cm6.js`. `PreviewPolicy` has the policy (`anchorToReveal(forLine:)`, loop suppression) and DuoChecks cover it; nothing feeds it a line yet. Q-399.
+- **A page rendered from the buffer** loads through `loadHTMLString` with the folder as its base address, which WebKit may not let read local images until the editor's autosave (a second after typing) lets it load from disk again. Q-400.
+- **The deck provider** is Duo Decks' (`PreviewProviders.extra`); `deck` is never offered until it registers.
+- **R11 and R12** (`openThread`, `addComment` from a preview) arrive at `PreviewPolicy.onRequest`; wiring them to the editor waits for slice 2's `editor.addComment(lines:quiet:done:)` and `openThread(id:line:done:)`.
+- **Search's ⌥⌘↩** and the tree's "Show Preview in Split View" aren't wired (slice 2 adds Open in Split View). Q-402.

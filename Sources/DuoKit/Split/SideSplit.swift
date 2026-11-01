@@ -43,7 +43,8 @@ final class SideSplitView: NSSplitView {
     }
 
     override func layout() {
-        let isFolded = SplitGeometry.folded(width: Double(bounds.width))
+        // The pane's whole width: a folded split gives 16 pt of it to its rail.
+        let isFolded = SplitGeometry.folded(width: Double(bounds.width) + (folded ? SplitRoom.railWidth : 0))
         applying = true
         if isFolded {
             // Only the active side shows; the other is kept, hidden (never torn down).
