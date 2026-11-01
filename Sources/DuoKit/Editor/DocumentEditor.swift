@@ -29,6 +29,7 @@ public enum EditorMessage: String, CaseIterable {
     case propertiesFolded, propertyType, propertyDate, propertyMenu, propertyAdd, propertyReference
     case review, reviewAction
     case dictation
+    case deckDoc, deckCaret, deckPick   // Duo Decks: the slide chip, picker and anchor mark (DL-295, DL-296)
 }
 
 /// The document editor (Phase I; stack rec #8–9): CodeMirror 6 live preview in one WKWebView
@@ -42,7 +43,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     /// Notifies like the other bar states: a read-only reason left from a file that vanished mid-switch
     /// kept its bar over the next document, which open() had already cleared (F-262).
     public private(set) var readOnlyReason: String? { didSet { if oldValue != readOnlyReason { onStateChange?() } } }
-    public private(set) var lastEvent: String = "idle"   // for the harness and logs
+    public internal(set) var lastEvent: String = "idle"   // for the harness and logs
     // MARK: Lifecycle (DL-167 step 5)
     //
     // One document lifecycle, and one generation token. `phase` says what the document on screen is;
@@ -521,6 +522,8 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
             return
         case .selection:
             break
+        case .deckDoc, .deckCaret, .deckPick:
+            handleDeck(kind, body); return
         }
         // A report from a page state that is no longer on screen (the page tags reports with the document it shows).
         if let doc = body["doc"] as? String, let shown = url.map(Self.docID), doc != shown { return }
@@ -864,6 +867,8 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     public private(set) var atClaudeChange = false
     /// The caret is in a table: Format › Table's row and column items apply (DL-113).
     public private(set) var inTable = false
+    /// The page shows a `type: deck` document: ⌃⌘N, New Slide applies (DL-295).
+    public internal(set) var isDeck = false
     /// What is at the caret, for the formatting bar (DL-266): the inline marks that cover it (`bold`, `italic`,
     /// `strike`, `code`, `link`) and the paragraph's style (`body`, `heading1`…, `quote`, `bullet`, `numbered`,
     /// `task`, `codeblock`). Reported by the page with every selection change.

@@ -11,6 +11,7 @@ import { marginExtensions, marginTheme, composeComment, activate, setDelivery, a
 import { reviewCore, reviewDrawing, reviewSummary, setMarkup as setReviewMarkup, setReviewer, onReviewAction, resolveSuggestion, resolveAll as resolveAllSuggestions, step as stepReview, suggestHunks, reviewField, suggestEditsOn } from "./critic.js";
 import { tailField, dictationTheme, phraseSpec, endSpec, breaksDictation, setTail } from "./dictation.js";
 import { renumberLists, renumberAfter, listIndentKeys } from "./lists.js";
+import { deckExtensions } from "./deck.js";
 import { search, searchKeymap, SearchQuery, setSearchQuery, getSearchQuery, findNext, findPrevious, openSearchPanel, closeSearchPanel, replaceNext } from "@codemirror/search";
 
 // ---------- live preview ----------
@@ -2211,6 +2212,7 @@ function extensions(readOnly) {
       keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap].filter((b) => !DUO_CHORDS.has(b.key))),
       EditorView.contentAttributes.of({ spellcheck: "true", autocorrect: "on", autocapitalize: "on" }),
       tailField, dictationTheme,
+      ...deckExtensions(),
       // The formatting bar lies over the top 24 of the viewport (DL-266): the caret, a find match or a review step never stops under it.
       EditorView.scrollMargins.of(() => (formatBarOn ? { top: FORMAT_BAR } : null)),
       EditorView.updateListener.of((u) => {

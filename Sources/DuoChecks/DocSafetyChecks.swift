@@ -17,7 +17,9 @@ private func matches(_ pattern: String, in text: String) -> [String] {
 
     // Every kind the page posts is decoded by Swift, and every kind Swift decodes is posted: a prefix test
     // once dropped "propertiesFolded" without a sound.
-    let posted = Set(matches(#"\bpost\("(\w+)""#, in: js))
+    // deck.js (Duo Decks) posts and exports its own: its page-side verbs join window.duo when the first view is made.
+    let deckJS = (try? String(contentsOf: repoRoot().appending(path: "Vendor/codemirror/src/deck.js"), encoding: .utf8)) ?? ""
+    let posted = Set(matches(#"\bpost\("(\w+)""#, in: js + deckJS))
     let decoded = Set(EditorMessage.allCases.map(\.rawValue))
     check(posted.subtracting(decoded).isEmpty, "every message the page posts is in EditorMessage (missing: \(posted.subtracting(decoded).sorted()))")
     check(decoded.subtracting(posted).isEmpty, "every EditorMessage is posted by the page (unused: \(decoded.subtracting(posted).sorted()))")
@@ -31,6 +33,11 @@ private func matches(_ pattern: String, in text: String) -> [String] {
         let body = js[r.upperBound...]
         let end = body.range(of: "\n};")?.lowerBound ?? body.endIndex
         exported = Set(matches(#"(?m)^  (\w+)\s*[:,(]"#, in: String(body[..<end])))
+    }
+    if let r = deckJS.range(of: "Object.assign(window.duo, {") {
+        let body = deckJS[r.upperBound...]
+        let end = body.range(of: "\n  });")?.lowerBound ?? body.endIndex
+        exported.formUnion(matches(#"(?m)^    (\w+)\s*[:,(]"#, in: String(body[..<end])))
     }
     check(exported.count > 20, "window.duo's names are read (\(exported.count))")
     var called = Set<String>()
