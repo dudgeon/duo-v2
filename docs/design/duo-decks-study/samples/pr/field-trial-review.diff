@@ -1,0 +1,41 @@
+--- a/decks/field-trial-review.md
++++ b/decks/field-trial-review.md
+@@ -29,13 +29,13 @@
+ # Unattended rows
+ 
+ ## value
+-86%
++88%
+ 
+ ## label
+ of rows finished with no one stepping in
+ 
+ ## context
+-Up from 61% in the spring trial, over 412 rows on three farms.
++Up from 61% in the spring trial, over 431 rows on three farms.
+ 
+ ---
+ 
+@@ -83,6 +83,14 @@
+ 
+ ---
+ 
++<!-- slide: bullets -->
++# What still breaks
++
++- Mud on the camera after heavy rain
++- Rows narrower than 2.4 m
++
++---
++
+ <!-- slide: section -->
+ # Next season
+ 
+@@ -97,6 +105,7 @@
+ - Two more farms for the winter trial
+ - A second gripper design to compare
+ - Battery swaps without stopping the row
++- A night-picking test in December
+ 
+ > [!note]
+ > Close on the asks; leave the risks for questions.

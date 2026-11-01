@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A deck in Duo</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.mono{font:12px/19px "SF Mono",Menlo,monospace}
+.t2{color:#5b636d}
+.lbl{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#5b636d}
+.btn{font:12px/16px -apple-system,system-ui,sans-serif;padding:4px 10px;border:1px solid #8b939c;border-radius:6px;background:#ffffff;color:#1f2328;cursor:default}
+.ln{display:inline-block;width:26px;color:#8b939c;text-align:right;margin-right:10px}
+.slide{width:100%;display:block;border:1px solid #c9cdd3}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;display:flex;flex-direction:column;background:#ffffff;color:#1f2328;font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;overflow:hidden">
+  <div style="height:40px;flex:none;background:#f3f4f6;border-bottom:1px solid #c9cdd3;display:flex;align-items:center;padding:0 16px 0 84px;gap:12px">
+    <span style="font-weight:600">orchard-robotics</span><span class="t2">~/work/orchard-robotics</span>
+  </div>
+  <div style="flex:1;display:flex;min-height:0">
+    <div style="width:260px;flex:none;border-right:1px solid #c9cdd3;padding:16px;box-sizing:border-box;display:flex;flex-direction:column;gap:6px">
+      <span class="lbl">Sessions</span>
+      <div style="display:flex;align-items:center;gap:6px;height:26px;background:#e8f0fa;border-radius:6px;padding:0 6px"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1f2328" stroke-width="1.5"/></svg><span>Field trial deck</span><span class="t2" style="margin-left:auto">at prompt</span></div>
+      <div style="display:flex;align-items:center;gap:6px;height:26px;padding:0 6px"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5h6" stroke="#5b636d" stroke-width="1.6" stroke-linecap="round"/></svg><span>Gripper pad test plan</span><span class="t2" style="margin-left:auto">2d</span></div>
+      <div style="border-top:2px solid #8b939c;margin-top:14px;padding-top:10px;display:flex;flex-direction:column">
+        <span class="lbl">Files</span>
+        <span class="t2" style="font:11px/20px 'SF Mono',Menlo,monospace">~/work/orchard-robotics</span>
+        <div class="mono" style="line-height:24px">
+          <div>_PROJECT.md</div>
+          <div>decks/</div>
+          <div style="padding-left:16px">assets/</div>
+          <div style="padding-left:16px;background:#e9ecef;border-radius:6px">field-trial-review.md</div>
+          <div style="padding-left:16px" class="t2">field-trial-review.pptx</div>
+          <div>templates/</div>
+          <div style="padding-left:16px">decks/</div>
+          <div style="padding-left:32px">northwind/</div>
+        </div>
+      </div>
+    </div>
+    <div style="width:400px;flex:none;background:#15171b;color:#e6e8eb;display:flex;flex-direction:column">
+      <div style="height:36px;display:flex;align-items:center;gap:6px;padding:0 16px;border-bottom:1px solid #2b2f36;font:500 12px/19px 'SF Mono',Menlo,monospace">Field trial deck</div>
+      <div class="mono" style="padding:16px;display:flex;flex-direction:column;gap:10px;color:#e6e8eb">
+        <div><span style="color:#9aa1ab">&gt;</span> the 86% is now 88%, over 431 rows. and add a slide on what still breaks: mud on the camera, narrow rows</div>
+        <div style="color:#9aa1ab">● Bash(duo2 deck templates decks/field-trial-review.md)</div>
+        <div style="color:#9aa1ab">● Update(decks/field-trial-review.md)<br>&#160;&#160;⎿ Updated with 2 changes, 1 slide added</div>
+        <div style="color:#9aa1ab">● Bash(duo2 deck check decks/field-trial-review.md)<br>&#160;&#160;⎿ no problems</div>
+        <div>Updated slide 3 (kpi): 88%, 431 rows. Added "What still breaks" as a bullets slide before Next season.</div>
+      </div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+      <div style="height:36px;flex:none;display:flex;align-items:center;gap:18px;padding:0 20px;border-bottom:1px solid #c9cdd3"><span class="t2">Project</span><span style="font-weight:600">field-trial-review.md</span><span class="t2">+</span></div>
+      <div style="height:44px;flex:none;display:flex;align-items:center;gap:8px;padding:0 20px;border-bottom:1px solid #c9cdd3">
+        <button class="btn" aria-label="Previous slide">‹</button><button class="btn" aria-label="Next slide">›</button>
+        <span>Slide 3 of 10</span><span class="t2">· kpi</span>
+        <span style="flex:1"></span>
+        <span style="display:inline-flex;border:1px solid #8b939c;border-radius:6px;overflow:hidden;font:12px/16px -apple-system,system-ui,sans-serif">
+          <span style="padding:4px 10px;background:#ffffff">Source</span><span style="padding:4px 10px;background:#e9ecef;border-left:1px solid #8b939c;border-right:1px solid #8b939c">Both</span><span style="padding:4px 10px">Slides</span>
+        </span>
+        <button class="btn">Select Shape</button>
+        <button class="btn">Export ⌄</button>
+      </div>
+      <div style="flex:1;display:flex;min-height:0">
+        <div class="mono" style="width:330px;flex:none;border-right:1px solid #c9cdd3;padding:12px 0;box-sizing:border-box;overflow:hidden;font-size:11.5px;line-height:19px">
+          <div><span class="ln">22</span><span class="t2">---</span></div>
+          <div><span class="ln">23</span></div>
+          <div style="background:#e9ecef"><span class="ln">24</span><span class="t2">&lt;!-- slide: kpi --&gt;</span></div>
+          <div style="background:#e9ecef"><span class="ln">25</span># Unattended rows</div>
+          <div style="background:#e9ecef"><span class="ln">26</span></div>
+          <div style="background:#e9ecef"><span class="ln">27</span>## value</div>
+          <div style="background:#d6eddc"><span class="ln">28</span>88%</div>
+          <div style="background:#e9ecef"><span class="ln">29</span></div>
+          <div style="background:#e9ecef"><span class="ln">30</span>## label</div>
+          <div style="background:#e9ecef"><span class="ln">31</span>of rows finished with no</div>
+          <div style="background:#e9ecef"><span class="ln"></span>one stepping in</div>
+          <div style="background:#e9ecef"><span class="ln">32</span></div>
+          <div style="background:#e9ecef"><span class="ln">33</span>## context</div>
+          <div style="background:#d6eddc"><span class="ln">34</span>Up from 61% in the spring</div>
+          <div style="background:#d6eddc"><span class="ln"></span>trial, over 431 rows on</div>
+          <div style="background:#d6eddc"><span class="ln"></span>three farms.</div>
+          <div><span class="ln">35</span></div>
+          <div><span class="ln">36</span><span class="t2">---</span></div>
+          <div><span class="ln">37</span></div>
+          <div><span class="ln">38</span><span class="t2">&lt;!-- slide: two-column --&gt;</span></div>
+          <div><span class="ln">39</span># Spring and autumn</div>
+          <div><span class="ln">40</span></div>
+          <div><span class="ln">41</span>## left</div>
+          <div><span class="ln">42</span>- Stopped at every ladder</div>
+          <div><span class="ln">43</span>- Lost GPS under netting</div>
+          <div><span class="ln">44</span>- Gripper slipped when wet</div>
+          <div><span class="ln">45</span></div>
+          <div><span class="ln">46</span>## right</div>
+          <div><span class="ln">47</span>- Routes round ladders</div>
+          <div><span class="ln">48</span>- Rows mapped from the drone</div>
+        </div>
+        <div style="flex:1;background:#f3f4f6;padding:16px 20px;box-sizing:border-box;display:flex;flex-direction:column;gap:6px;overflow:hidden;min-width:0">
+          <span class="t2" style="font-size:11px;line-height:16px">2 · bullets</span>
+          <div style="height:58px;overflow:hidden;flex:none"><img class="slide" style="margin-top:-178px" src="/_blob/6efe542afd1ac269ac055eb0cdc50034" alt="Slide 2, What we set out to learn"></div>
+          <span style="font-size:11px;line-height:16px;font-weight:600;margin-top:10px">3 · kpi</span>
+          <img class="slide" src="/_blob/de5093a4e51b746f5758d0e83e034110" alt="Slide 3, Unattended rows, 88%">
+          <span class="t2" style="font-size:11px;line-height:16px;margin-top:10px">4 · two-column</span>
+          <img class="slide" src="/_blob/b483f9c8d2a80b1440c6fc4a99b49a66" alt="Slide 4, Spring and autumn">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

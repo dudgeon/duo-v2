@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Make templates: A, in the deck viewer</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.t2{color:#5b636d}
+.mono{font:12px/19px "SF Mono",Menlo,monospace}
+.btn{font:12px/16px -apple-system,system-ui,sans-serif;padding:4px 10px;border:1px solid #8b939c;border-radius:6px;background:#ffffff;color:#1f2328}
+.def{background:#1f2328;color:#ffffff;border-color:#1f2328}
+.sl{position:relative;display:flex;flex-direction:column;gap:4px}
+.sl img{width:100%;display:block;border:1px solid #c9cdd3}
+.box{position:absolute;left:8px;top:26px;width:18px;height:18px;border-radius:4px;border:1.5px solid #1f2328;background:#ffffff;display:flex;align-items:center;justify-content:center}
+.on{background:#1f2328}
+.cap{font-size:12px;line-height:18px;color:#5b636d}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;box-sizing:border-box;padding:28px 40px;background:#f3f4f6;color:#1f2328;font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;display:flex;gap:28px">
+  <div style="width:820px;flex:none;display:flex;flex-direction:column;gap:10px">
+    <span class="cap">[P] A · The deck viewer gets a picking mode for slides, as Select Shape picks shapes. You choose by looking.</span>
+    <div style="flex:1;background:#ffffff;border:1px solid #c9cdd3;border-radius:6px;display:flex;flex-direction:column;overflow:hidden">
+      <div style="height:36px;display:flex;align-items:center;gap:18px;padding:0 20px;border-bottom:1px solid #c9cdd3"><span class="t2">Project</span><span style="font-weight:600">grower-update.pptx</span></div>
+      <div style="height:44px;display:flex;align-items:center;gap:8px;padding:0 20px;border-bottom:1px solid #c9cdd3">
+        <button class="btn" aria-label="Previous slide">‹</button><button class="btn" aria-label="Next slide">›</button><span>Slide 7 of 16</span><span style="flex:1"></span>
+        <button class="btn">Select Shape</button><button class="btn" style="background:#e9ecef">Make Templates…</button><button class="btn">Open With ⌄</button>
+      </div>
+      <div style="flex:1;background:#f3f4f6;padding:16px 20px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-content:start;overflow:hidden">
+        <div class="sl"><span class="t2" style="font-size:11px">2</span><div class="box" aria-hidden="true"></div><img src="/_blob/6efe542afd1ac269ac055eb0cdc50034" alt="slide 2"></div>
+        <div class="sl"><span style="font-size:11px;font-weight:600">3</span><div class="box on" aria-hidden="true"><svg width="10" height="8" viewBox="0 0 10 8"><path d="M1 4l3 3 5-6" stroke="#fff" stroke-width="1.8" fill="none"/></svg></div><img src="/_blob/693221054a4d386f6deaf182d6216c40" alt="slide 3, picked" style="outline:1.5px solid #1f2328;outline-offset:2px"></div>
+        <div class="sl"><span class="t2" style="font-size:11px">4</span><div class="box" aria-hidden="true"></div><img src="/_blob/b483f9c8d2a80b1440c6fc4a99b49a66" alt="slide 4"></div>
+        <div class="sl"><span class="t2" style="font-size:11px">5</span><div class="box" aria-hidden="true"></div><img src="/_blob/78424957935e5da232361333568d6c74" alt="slide 5"></div>
+        <div class="sl"><span class="t2" style="font-size:11px">6</span><div class="box" aria-hidden="true"></div><img src="/_blob/06e6d8d69b57ed9960bd30054e705295" alt="slide 6"></div>
+        <div class="sl"><span style="font-size:11px;font-weight:600">7</span><div class="box on" aria-hidden="true"><svg width="10" height="8" viewBox="0 0 10 8"><path d="M1 4l3 3 5-6" stroke="#fff" stroke-width="1.8" fill="none"/></svg></div><img src="/_blob/5fdd134cd41712ecf577a8d525304a74" alt="slide 7, picked" style="outline:1.5px solid #1f2328;outline-offset:2px"></div>
+      </div>
+      <div style="background:#f3f4f6;border-top:1px solid #c9cdd3;padding:10px 20px;display:flex;align-items:center;gap:8px">
+        <span><b>2 slides picked</b> <span class="t2">· click slides to pick them; Esc to stop</span></span><span style="flex:1"></span>
+        <button class="btn">Cancel</button><button class="btn">Add to Pack ⌄</button><button class="btn def">Make Templates with Claude</button>
+      </div>
+    </div>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;gap:14px;min-width:0">
+    <span style="font:600 18px/24px -apple-system,system-ui,sans-serif">A · Pick slides in the deck viewer (recommended)</span>
+    <span>The pptx is already open in the viewer when you think "this one should be a template". Make Templates… turns slides into a grid with tick boxes. The bar at the foot works like Select Shape's picked bar.</span>
+    <div class="mono" style="background:#15171b;color:#e6e8eb;border-radius:6px;padding:12px;font-size:11.5px;line-height:18px">From grower-update.pptx, slides 3 and 7:<br>make them templates in a pack.<br>duo2 deck template inventory "grower-update.pptx" --slides 3,7</div>
+    <span class="t2" style="font-size:12px">Make Templates with Claude pastes this into Claude's prompt without Return, as Send to Claude does. You add "call the pack northwind" or "add them to northwind", then press Return. Add to Pack ⌄ names the pack first.</span>
+    <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px">
+      <li>You see what you're picking, and nothing new to learn.</li>
+      <li>Reuses the viewer's picker bar (DL-125 C) and Send to Claude.</li>
+      <li>The same mode serves Convert to Duo Deck (M3b): pick none and convert the whole deck.</li>
+      <li>Verbs: <span class="mono">duo2 deck template pick</span>, <span class="mono">picked</span>.</li>
+    </ul>
+    <span class="t2" style="font-size:12px">Against: one more mode on the viewer's bar, beside Select Shape.</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

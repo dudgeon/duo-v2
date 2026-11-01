@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Duo Decks in three layers</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.lane{display:flex;gap:16px;align-items:stretch}
+.tag{font:600 11px/16px -apple-system,"SF Pro Text",system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#5b636d}
+.box{background:#ffffff;border:1px solid #c9cdd3;border-radius:6px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.mono{font:12px/19px "SF Mono",Menlo,monospace}
+.t2{color:#5b636d}
+.arrow{font:16px/20px -apple-system,system-ui,sans-serif;color:#5b636d;align-self:center}
+</style>
+</helmet>
+<div style="width:1600px;height:900px;box-sizing:border-box;padding:40px 48px;background:#f3f4f6;color:#1f2328;font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;align-items:baseline;gap:16px">
+    <h1 style="margin:0;font-size:22px;line-height:28px;font-weight:600">Duo Decks: one Markdown file, real PowerPoint templates, one engine</h1>
+    <span class="t2">[P] proposed · nothing built</span>
+  </div>
+  <p style="margin:0;max-width:1180px" class="t2">Anything that must give the same answer every time is the application's. Anything that needs judgement is Claude's. Anything both read, and people and other tools must read too, is a file on disk.</p>
+
+  <div style="display:grid;grid-template-columns:150px minmax(0,1fr);gap:14px 18px;align-items:stretch">
+    <div style="display:flex;flex-direction:column;justify-content:center"><span class="tag">Agent</span><span style="font-weight:600">Claude</span><span class="t2">judgement and language</span></div>
+    <div class="lane">
+      <div class="box" style="flex:1"><b>Picks a template per slide</b><span class="t2">from <span class="mono">duo2 deck templates</span>: ~400 tokens, never the pptx</span></div>
+      <div class="box" style="flex:1"><b>Writes and edits slots</b><span class="t2">one bullet a line, no wrapping, only what a slot takes</span></div>
+      <div class="box" style="flex:1"><b>Splits, never shrinks</b><span class="t2">runs <span class="mono">duo2 deck check</span> after every edit and fixes what it names</span></div>
+      <div class="box" style="flex:1"><b>Turns your slides into templates</b><span class="t2">names slots, writes purposes and limits, says what's decoration</span></div>
+      <div class="box" style="flex:1;background:#e9ecef;border-color:#e9ecef"><b>Taught by</b><span class="t2">a Decks section in the duo2 skill Duo installs. Works on Claude Code 2.1.284</span></div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;justify-content:center"><span class="tag">Context</span><span style="font-weight:600">Files on disk</span><span class="t2">in git, Obsidian-safe</span></div>
+    <div class="lane">
+      <div class="box" style="flex:1.3"><span class="mono">decks/field-trial-review.md</span><span class="t2"><span class="mono">type: deck</span>, <span class="mono">template: northwind</span>; each slide starts <span class="mono">&lt;!-- slide: kpi --&gt;</span>, slots are <span class="mono">## value</span> headings</span></div>
+      <div class="box" style="flex:.8"><span class="mono">decks/assets/</span><span class="t2">pictures, linked relatively</span></div>
+      <div class="box" style="flex:1.2"><span class="mono">templates/decks/northwind/<br>northwind.pptx</span><span class="t2">theme, masters, layouts; no slides</span></div>
+      <div class="box" style="flex:1.2"><span class="mono">templates/decks/northwind/<br>northwind.md</span><span class="t2">a template per layout: purpose, slots, limits</span></div>
+      <div class="box" style="flex:1"><span class="mono">field-trial-review.pptx</span><span class="t2">the export: same input, same bytes</span></div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;justify-content:center"><span class="tag">Application</span><span style="font-weight:600">Duo, in Swift</span><span class="t2">deterministic, small</span></div>
+    <div class="lane">
+      <div class="box" style="flex:1"><b>Parser</b><span class="t2">slides and slots, with their source lines</span></div>
+      <span class="arrow" aria-hidden="true">→</span>
+      <div class="box" style="flex:1"><b>Checker</b><span class="t2">errors name file:line, the slot and the fix</span></div>
+      <span class="arrow" aria-hidden="true">→</span>
+      <div class="box" style="flex:1.2"><b>Writer</b><span class="t2">fills the named layout's placeholders by idx. No geometry of its own</span></div>
+      <span class="arrow" aria-hidden="true">→</span>
+      <div class="box" style="flex:1.2"><b>Viewer</b><span class="t2">draws that pptx with the renderer Duo already ships. What you see is the export</span></div>
+      <div class="box" style="flex:1.1;background:#e9ecef;border-color:#e9ecef"><b>duo2 deck …</b><span class="t2 mono" style="font-size:11px;line-height:17px">templates · check · export · render · template inventory · build · specimen</span></div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:16px;margin-top:4px">
+    <div class="box" style="flex:1;background:transparent;border-style:dashed;border-color:#8b939c">
+      <b>Not built, on purpose</b>
+      <span class="t2">No slide editor and no template editor: text is edited as text, layouts in PowerPoint, Keynote or Google Slides. No layout logic in Duo. No model calls from Duo. No Python, Node or LibreOffice on your Mac.</span>
+    </div>
+    <div class="box" style="flex:1;background:transparent;border-style:dashed;border-color:#8b939c">
+      <b>Scope, as file templates already work (DL-146)</b>
+      <span class="t2">The project's <span class="mono">templates/decks/</span>, then Home's, then one plain built-in pack. User level means Home's folder, which is in git.</span>
+    </div>
+    <div class="box" style="flex:1;background:transparent;border-style:dashed;border-color:#8b939c">
+      <b>To Google Slides</b>
+      <span class="t2">Upload the pptx yourself in v1. Google keeps layouts, placeholders, geometry and theme colours, and swaps fonts it lacks (F-460). Upload from Duo comes with Duo's Google sign-in.</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1600,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

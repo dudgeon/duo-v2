@@ -267,6 +267,25 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 slide pick [<slide>/<shape id>]` | Start the shape picker for the user, or select the shape a slide and id name. | Select Shape, Pick Another |
 | `duo2 slide element [<slide>/<shape id>]` | Describe a shape (the picked one by default): slide, id, name, groups, text, box, and a screenshot. | — |
 
+## Decks (Markdown to slides)
+
+| Command | What it does | In the app |
+|---|---|---|
+| `duo2 deck templates [<deck>]` | The templates a deck can use, compact: for each, its slots with kind and limits, and what it is for. Read this before writing slides; never open the template's pptx. With a deck, its pack (the project's templates/decks/, then Home's, then Duo Plain, built in); without one, every pack found from here. | — |
+| `duo2 deck check <deck>` | Check a Markdown deck against its template pack. Each problem is `file:line: slide n (template), slot: what's wrong and the fix`; empty slots are notices, not errors. Exit 1 when there are problems. Run it after every edit and fix what it names. | — |
+| `duo2 deck export <deck> [--out <dir>]` | Write the deck as a PowerPoint file named `<deck> YYYY-MM-DD HHmm.pptx` beside it (or in --out), and remove the deck's previous dated export. Refuses a deck with problems. The same deck gives the same bytes; comments stay in the Markdown (DL-290). | — |
+| `duo2 deck insert <deck> <template> [--after <n>]` | Add a slide of this template after slide n (default: the end; 0 puts it first): the slide marker, an empty title, and a `## slot` heading for each of the template's other slots. Fill in the text, then run `deck check`. | — |
+| `duo2 deck new <path> --template <pack>` | Make a deck file: the frontmatter naming the pack, and a title slide. Refuses a path that exists. | — |
+| `duo2 deck change <deck> <n> <template>` | Change slide n to another template. The title stays, same-named slots keep their text, and a slot's text goes to the new default or only same-kind slot when it can (a pack may say otherwise); anything else moves to the slide's speaker notes under `Not placed after changing to <template>: <slot>`, never dropped. Comments travel with their text. Prints what moved. | — |
+| `duo2 deck render <deck> [<n>]` | Draw a slide as a PNG. Not built yet: it needs Duo's viewer (WebKit), which the deck work reaches in a later phase. Export the deck and open the pptx in Duo meanwhile. | — |
+| `duo2 deck template inventory <pptx> [--slides 3,7] [--json]` | What is in a PowerPoint file, for making templates from it: theme colours and fonts (fonts not in Google Fonts are flagged, with a close substitute), every layout with its placeholders (type, idx, name, box in pt, font size, autofit, bullets or none) and decoration, and every slide with its layout, shapes (name, kind, box, size, first 60 characters) and a layout fingerprint. Slides with the same fingerprint are grouped; near groups list how far apart their boxes sit. Never writes the file. | — |
+| `duo2 deck template build <pack>` | Build a template pack's pptx from its definition and the deck named by `source:` in the definition's frontmatter. Each template names a layout (`layout:`) or a slide to promote (`from-slide: N`, with `shape:` on each slot naming the box that becomes it). Copies the theme, masters and chosen layouts, drops every slide, adds optional slots, writes the `# duo` lines (layout, fingerprint, idx) and checks your lines against the pptx, including whether each slot's limit fits its box. <pack> is a name, a folder or the .md. | — |
+| `duo2 deck template specimen <pack> [--out <deck.md>]` | Write a deck that uses every template of the pack once, each slot filled to its limit with sample text, and export it. Look at the result to see what breaks. | — |
+| `duo2 deck template pick [<pack>]` | Start the template picker in the deck viewer for the user. Needs the deck viewer (the Slides view), which isn't built yet. | — |
+| `duo2 deck template picked` | The template and slides the user picked in the deck viewer. Needs the deck viewer (the Slides view), which isn't built yet. | — |
+| `duo2 deck import <pptx> [--pack <p> \| --new-pack <name>] [--plan <file>] [--out <deck.md>]` | Turn an existing PowerPoint file into a Duo deck. Without --plan: print the slide groups (identical layout fingerprints), near groups and, for each group, the pack template that fits best, for you to plan with. With --plan: apply your plan (which group becomes which template, optional slots to add, new templates to make, loose boxes mapped to slots), amend or create the pack, convert the text, notes and comments (as Review marks), and print the import report. Never writes the pptx. | — |
+| `duo2 deck migrate [--pack <p>] [--dry-run]` | After a pack renamed a slot (`renamed: {old: new}` in the template's definition), rewrite the slot headings of every deck in the project that uses the pack, printing a diff. --dry-run prints it without writing. | — |
+
 ## Send to Claude
 
 | Command | What it does | In the app |

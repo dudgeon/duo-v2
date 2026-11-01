@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Viewer options with split view</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.t2{color:#5b636d}
+.opt{background:#ffffff;border:1px solid #c9cdd3;border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.rec{border:1.5px solid #1f2328}
+.win{height:200px;border:1px solid #c9cdd3;border-radius:4px;display:flex;overflow:hidden;background:#f3f4f6}
+.side{width:16%;background:#ffffff;border-right:1px solid #c9cdd3}
+.con{width:24%;background:#15171b}
+.src{background:#ffffff;padding:7px;display:flex;flex-direction:column;gap:5px;box-sizing:border-box}
+.bar{height:5px;border-radius:2px;background:#d5d9de}
+.hot{background:#1f2328;opacity:.45}
+.sl{background:#ffffff;border:1px solid #c9cdd3;aspect-ratio:16/9;display:flex;flex-direction:column;gap:3px;padding:5px;box-sizing:border-box}
+.slides{padding:6px;display:flex;flex-direction:column;gap:5px;box-sizing:border-box}
+.div{width:5px;background:#c9cdd3;flex:none}
+.h{font:600 15px/20px -apple-system,system-ui,sans-serif}
+ul{margin:0;padding-left:16px}
+li{margin:2px 0}
+.dep{font-size:12px;line-height:18px;color:#5b636d;border-top:1px solid #c9cdd3;padding-top:8px}
+.tag{font:600 10px/14px -apple-system,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#5b636d}
+</style>
+</helmet>
+<div style="width:1600px;height:900px;box-sizing:border-box;padding:28px 40px;background:#f3f4f6;color:#1f2328;font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;display:flex;flex-direction:column;gap:14px">
+  <div style="display:flex;flex-direction:column;gap:2px">
+    <span><span class="h" style="font-size:18px">Q-350, after split view: source and slides side by side</span> <span class="t2">· [P] sketches; the window is drawn as sidebar · console · right pane</span></span>
+    <span class="t2">Geoff: "split view is the correct way to handle the side-by-side of source editing and rendered preview." These variants use split view; split view's own study (session split-view) frames the final choice. Every variant draws the export with the renderer Duo ships and syncs both ways: the caret's slide shows; a click on a slide finds its line.</span>
+  </div>
+  <div style="flex:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;min-height:0">
+    <div class="opt rec">
+      <span class="tag">Split view · recommended</span>
+      <span class="h">S1 · Two sides of a split in the right pane</span>
+      <div class="win">
+        <div class="side"></div><div class="con" style="width:20%"></div>
+        <div class="src" style="width:28%"><div class="bar" style="width:60%"></div><div class="bar hot" style="width:80%"></div><div class="bar hot" style="width:50%"></div><div class="bar" style="width:70%"></div><div class="bar" style="width:55%"></div></div>
+        <div class="div"></div>
+        <div class="slides" style="flex:1"><div class="sl" style="outline:1.5px solid #1f2328"><div class="bar hot" style="width:50%"></div><div class="bar" style="width:30%"></div></div><div class="sl"></div></div>
+      </div>
+      <ul><li>The file's tab holds both sides; the divider drags</li><li>Formatting bar and mic over the source side only</li><li>The slides' bar: ‹ › Slide n, problems, Select Shape, Export ⌄</li></ul>
+      <div class="dep">Needs split view's "same file, two views" (R1). The right pane widens to fit both; the console gives way first, as DL-129 says.</div>
+    </div>
+    <div class="opt">
+      <span class="tag">Split view</span>
+      <span class="h">S2 · Slides in a pane of their own</span>
+      <div class="win">
+        <div class="side"></div><div class="con" style="width:18%"></div>
+        <div class="src" style="width:26%;border-right:1px solid #c9cdd3"><div class="bar" style="width:60%"></div><div class="bar hot" style="width:80%"></div><div class="bar" style="width:50%"></div><div class="bar" style="width:70%"></div></div>
+        <div class="slides" style="flex:1;background:#f3f4f6"><div class="sl" style="outline:1.5px solid #1f2328"><div class="bar hot" style="width:50%"></div></div><div class="sl"></div></div>
+      </div>
+      <ul><li>Source stays in the right pane; slides open as a further pane beside it</li><li>Same as doc beside doc (legacy Split View), with the second pane bound to the first</li><li>More room for slides</li></ul>
+      <div class="dep">Fits if split view adds panes rather than splitting one. Two tab strips to keep in step.</div>
+    </div>
+    <div class="opt">
+      <span class="tag">Split view · narrow</span>
+      <span class="h">S3 · Stacked: slides over source</span>
+      <div class="win">
+        <div class="side"></div><div class="con" style="width:36%"></div>
+        <div style="flex:1;display:flex;flex-direction:column">
+          <div class="slides" style="height:46%"><div class="sl" style="width:70%;outline:1.5px solid #1f2328"><div class="bar hot" style="width:50%"></div></div></div>
+          <div style="height:5px;background:#c9cdd3"></div>
+          <div class="src" style="flex:1"><div class="bar hot" style="width:60%"></div><div class="bar" style="width:80%"></div><div class="bar" style="width:50%"></div></div>
+        </div>
+      </div>
+      <ul><li>When the pane is too narrow for slides side by side (under about 360 pt a side)</li><li>The current slide on top, its source below</li><li>Switches from S1 on its own as the pane narrows</li></ul>
+      <div class="dep">Split view's call on how a split folds (R7). Decks only need both sides kept reachable.</div>
+    </div>
+    <div class="opt">
+      <span class="tag">Without split view</span>
+      <span class="h">F · Source / Slides toggle in one tab</span>
+      <div class="win">
+        <div class="side"></div><div class="con" style="width:30%"></div>
+        <div style="flex:1;display:flex;flex-direction:column;background:#ffffff">
+          <div style="height:22px;display:flex;align-items:center;gap:4px;padding:0 6px;border-bottom:1px solid #c9cdd3"><span style="font-size:9px;border:1px solid #8b939c;border-radius:4px;padding:0 4px">Source</span><span style="font-size:9px;border:1px solid #8b939c;border-radius:4px;padding:0 4px;background:#e9ecef">Slides</span></div>
+          <div class="slides" style="flex:1;background:#f3f4f6"><div class="sl"><div class="bar hot" style="width:50%"></div></div><div class="sl"></div></div>
+        </div>
+      </div>
+      <ul><li>The same deck provider, one side at a time</li><li>The toggle keeps your place: slide n ↔ its lines</li><li>Ships with no split view at all</li></ul>
+      <div class="dep">The fallback if split view slips. Also what S1 folds to in the narrowest panes.</div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px">
+    <div class="opt" style="background:transparent;border-style:dashed;border-color:#8b939c">
+      <span class="tag">Now, before any of these</span>
+      <span><b>F′ · Export, then open the pptx.</b> <span class="t2">P1 adds no viewer: <span style="font-family:'SF Mono',Menlo,monospace;font-size:12px">duo2 deck export</span> writes the pptx and the existing deck viewer shows it. Nothing to decide.</span></span>
+    </div>
+    <div class="opt" style="background:transparent;border-style:dashed;border-color:#8b939c">
+      <span class="tag">Dropped</span>
+      <span><b>A separate HTML preview.</b> <span class="t2">A second engine that drifts from the file; Anthropic's pptx skill dropped html2pptx for this reason.</span></span>
+    </div>
+    <div class="opt" style="background:transparent;border-style:dashed;border-color:#8b939c">
+      <span class="tag">Later, maybe</span>
+      <span><b>Typing on a slide.</b> <span class="t2">The start of a WYSIWYG editor; possible on top of S1 (ENH-296), never instead of the source.</span></span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1600,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

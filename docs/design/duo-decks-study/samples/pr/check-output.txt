@@ -1,0 +1,4 @@
+decks/broken.md:18: slide 2 (bullets), body: has 7 points; the template allows 6. Split the slide; never shrink the text
+decks/broken.md:35: slide 3 (kpi), value: is 10 characters; the template allows 7. Shorten it, or split the slide
+decks/broken.md:46: slide 4 (comparison): no template "comparison" in northwind.md; use one of title, section, bullets, two-column, kpi, quote, image, table
+3 problems

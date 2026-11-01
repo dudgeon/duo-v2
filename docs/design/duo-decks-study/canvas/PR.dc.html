@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A deck edit in a pull request</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.mono{font:12px/20px "SF Mono",Menlo,monospace}
+.t2{color:#5b636d}
+.cap{font-size:12px;line-height:18px;color:#5b636d}
+.hunk{background:#e8f0fa;color:#5b636d}
+.add{background:#e6f4ea;color:#2f7d32}
+.del{background:#fdecea;color:#b42318}
+.ctx{color:#1f2328}
+.d div{padding:0 12px;white-space:pre}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.pair img{width:100%;display:block;border:1px solid #c9cdd3}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;box-sizing:border-box;padding:32px 40px;background:#f3f4f6;color:#1f2328;font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;display:flex;gap:28px">
+  <div style="width:640px;flex:none;display:flex;flex-direction:column;gap:10px">
+    <span class="cap">On the code host: a teammate's PR, "Autumn numbers and what still breaks". This is the whole diff (samples/pr/field-trial-review.diff).</span>
+    <div style="background:#ffffff;border:1px solid #c9cdd3;border-radius:6px;overflow:hidden">
+      <div style="padding:8px 12px;border-bottom:1px solid #c9cdd3;display:flex;gap:10px" class="mono"><b>decks/field-trial-review.md</b><span style="color:#2f7d32">+11</span><span style="color:#b42318">−2</span></div>
+      <div class="mono d" style="font-size:11.5px;line-height:19px;padding:4px 0">
+<div class="hunk">@@ -29,13 +29,13 @@</div>
+<div class="ctx"> # Unattended rows</div>
+<div class="ctx"> </div>
+<div class="ctx"> ## value</div>
+<div class="del">-86%</div>
+<div class="add">+88%</div>
+<div class="ctx"> </div>
+<div class="ctx"> ## label</div>
+<div class="ctx"> of rows finished with no one stepping in</div>
+<div class="ctx"> </div>
+<div class="ctx"> ## context</div>
+<div class="del">-Up from 61% in the spring trial, over 412 rows on three farms.</div>
+<div class="add">+Up from 61% in the spring trial, over 431 rows on three farms.</div>
+<div class="hunk">@@ -83,6 +83,14 @@</div>
+<div class="ctx"> ---</div>
+<div class="ctx"> </div>
+<div class="add">+&lt;!-- slide: bullets --&gt;</div>
+<div class="add">+# What still breaks</div>
+<div class="add">+</div>
+<div class="add">+- Mud on the camera after heavy rain</div>
+<div class="add">+- Rows narrower than 2.4 m</div>
+<div class="add">+</div>
+<div class="add">+---</div>
+<div class="add">+</div>
+<div class="ctx"> &lt;!-- slide: section --&gt;</div>
+<div class="ctx"> # Next season</div>
+<div class="hunk">@@ -97,6 +105,7 @@</div>
+<div class="ctx"> - A second gripper design to compare</div>
+<div class="ctx"> - Battery swaps without stopping the row</div>
+<div class="add">+- A night-picking test in December</div>
+      </div>
+    </div>
+    <span class="t2">Every hunk shows which slide and which slot it's in, from its context lines. The exported pptx is committed too (DL-270), so the PR also lists it as a binary change; reviewers read the Markdown.</span>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;gap:12px;min-width:0">
+    <span class="cap">[P] In Duo, on the PR's branch (P3). There's no rendering bot: builds stay off CI.</span>
+    <div class="mono" style="background:#15171b;color:#e6e8eb;border-radius:6px;padding:12px 14px;white-space:pre;font-size:11.5px;line-height:18px"><span style="color:#9aa1ab">$ duo2 deck diff decks/field-trial-review.md main</span>
+changed  3  Unattended rows     value, context
+added    8  What still breaks   (bullets)
+changed 10  Asks                body: 1 point added
+moved    —  none</div>
+    <span style="font-weight:600">Slide 3, before and after</span>
+    <div class="pair"><img src="/_blob/693221054a4d386f6deaf182d6216c40" alt="Slide 3 before: 86%"><img src="/_blob/de5093a4e51b746f5758d0e83e034110" alt="Slide 3 after: 88%"></div>
+    <span style="font-weight:600">Added: slide 8, and slide 10</span>
+    <div class="pair"><img src="/_blob/218633f229b73390566003da781af283" alt="New slide 8, What still breaks"><img src="/_blob/047f1cf94e0205ac82a76ffee613df82" alt="Slide 10, Asks, with the new point"></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

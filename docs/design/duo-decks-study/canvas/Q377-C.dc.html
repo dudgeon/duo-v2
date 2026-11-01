@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Make templates: C, one menu</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.t2{color:#5b636d}
+.mono{font:12px/19px "SF Mono",Menlo,monospace}
+.btn{font:12px/16px -apple-system,system-ui,sans-serif;padding:4px 10px;border:1px solid #8b939c;border-radius:6px;background:#ffffff;color:#1f2328}
+.mi{height:26px;display:flex;align-items:center;padding:0 12px;border-radius:4px;gap:8px}
+.cap{font-size:12px;line-height:18px;color:#5b636d}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;box-sizing:border-box;padding:28px 40px;background:#f3f4f6;color:#1f2328;font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;display:flex;gap:28px">
+  <div style="width:820px;flex:none;display:flex;flex-direction:column;gap:10px">
+    <span class="cap">[P] C · One menu on any pptx, in the viewer's bar and on right-click in Files: everything Duo Decks does with an existing deck.</span>
+    <div style="flex:1;background:#ffffff;border:1px solid #c9cdd3;border-radius:6px;display:flex;flex-direction:column;overflow:visible;position:relative">
+      <div style="height:36px;display:flex;align-items:center;gap:18px;padding:0 20px;border-bottom:1px solid #c9cdd3"><span class="t2">Project</span><span style="font-weight:600">grower-update.pptx</span></div>
+      <div style="height:44px;display:flex;align-items:center;gap:8px;padding:0 20px;border-bottom:1px solid #c9cdd3">
+        <button class="btn" aria-label="Previous slide">‹</button><button class="btn" aria-label="Next slide">›</button><span>Slide 7 of 16</span><span style="flex:1"></span>
+        <button class="btn">Select Shape</button><button class="btn" style="background:#e9ecef">Duo Decks ⌄</button><button class="btn">Open With ⌄</button>
+      </div>
+      <div style="flex:1;background:#f3f4f6;padding:16px 20px">
+        <img src="/_blob/5fdd134cd41712ecf577a8d525304a74" alt="slide 7" style="width:62%;display:block;border:1px solid #c9cdd3">
+      </div>
+      <div style="position:absolute;right:120px;top:84px;width:330px;background:#ffffff;border:1px solid #c9cdd3;border-radius:10px;box-shadow:0 8px 24px rgba(31,35,40,.16);padding:6px">
+        <div class="mi" style="background:#e9ecef">Make This Slide a Template…</div>
+        <div class="mi">Make Templates from Slides…</div>
+        <div style="height:1px;background:#c9cdd3;margin:5px 8px"></div>
+        <div class="mi">Convert to Duo Deck…</div>
+        <div class="mi">New Template Pack from This Deck…</div>
+      </div>
+    </div>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;gap:14px;min-width:0">
+    <span style="font:600 18px/24px -apple-system,system-ui,sans-serif">C · One "Duo Decks" menu on a pptx</span>
+    <span>The menu sits in the viewer's bar and on right-click in Files. It holds the four things you can do with an existing deck:</span>
+    <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px">
+      <li><b>Make This Slide a Template…</b>: the slide on screen, straight to Claude.</li>
+      <li><b>Make Templates from Slides…</b>: A's picking mode.</li>
+      <li><b>Convert to Duo Deck…</b>: M3b.</li>
+      <li><b>New Template Pack from This Deck…</b>: every distinct layout, coalesced (Q-398).</li>
+    </ul>
+    <span>The commonest case, one slide, is two clicks. The rest are discoverable in one place, and nothing new is added to the bar but a menu.</span>
+    <span class="t2" style="font-size:12px">Against: a menu hides the picking. "Duo Decks" as a menu title names the feature, not the action. It's a superset of A, so it's more to build at once (it can arrive in steps).</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

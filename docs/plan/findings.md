@@ -4929,3 +4929,124 @@ Geoff, 2026-10-31: "this is an issue in manually typed inptus as well as transcr
   - Back in chat before the carry was made, the held phrases join the composer and the dictation ends. Back in chat after it, the dictation finishes, then the composer opens on Claude's prompt. A carry that fails returns the held phrases to the composer.
   - **Proved live:** `scripts/check-composer-carry-live.sh` on 2.1.284 and 2.1.311 (2 of 2 each), with a 15 s spoken file dictated at speaking pace and Terminal chosen 4 s in. 1.5 s and 2.5 s after the switch, `voice-log` read `state=listening target=terminal(…)` with levels 0.59 and 0.83. At the end Claude's prompt held the whole passage once, from "This sentence was dictated into chat" to "while I kept talking.". The mock got no message. DuoChecks 2653/0, with 7 checks for the moved dictation.
 - **Not carried:** nothing of a dictation is lost now; its words wait while a question is up. Below 2.1.269, back in chat the composer stays empty while the words wait in Claude's prompt, to ride ahead of the next send (F-254, Q-375). Undo: in Duo, going back to chat brings the words back to the composer; whether Claude Code's own undo takes back a hand-over in one step wasn't checked.
+## F-460 · Google Slides keeps a pptx's placeholders and layouts, and flattens the rest (duo-decks, 2026-10-31; Q-355)
+
+A python-pptx deck uploaded to Geoff's Drive with conversion on, then read back and exported as pptx and PDF (`docs/design/duo-decks-study/research-pptx-google-and-templates.md` §3; one-slide round trip, see F-461).
+- **Kept:** the slide's link to its layout, the master's and layouts' placeholders, placeholder `type` and `idx` (including dt/ftr/sldNum 10/11/12), exact EMU geometry, theme colours as `schemeClr` (`tx1` comes back as `dk1`), slide size.
+- **Changed:** layouts are renamed to their type (`Title Slide` → `TITLE`); every shape becomes `Google Shape;N;pN`; inherited formatting is written onto every shape and run (explicit `xfrm`, size, typeface); the theme font scheme is rewritten (to Arial) with the resolved font baked into runs; docProps are dropped; a notes master and notes slides are always added.
+- **So:** a placeholder-filled deck stays editable and can be mapped back to its template by placeholder type/idx plus geometry, never by names. Absolute text boxes look the same but carry nothing to map. Template fonts should be Google Fonts or carry a substitute.
+- **Full test, 2026-10-31 (Q-355, Geoff's OK; Claude in Chrome in his Chrome, folder "Duo Decks tests"):**
+  - Three synthetic decks went up byte-exact (sizes match), through Drive's own drop handler from a page-side file input. Each was converted with File › Save as Google Slides.
+  - **All 10 Northwind layouts are in Slides' Layout menu under their own names**, unused ones and the custom `cust` layouts ("Big Number" with idx 13–15, "Quote") included.
+  - The master's gradient bar, the logo, the footer and slide number, the native table (style, banding, editable cells in Inter), the picture placeholder, nested bullets and speaker notes all came through.
+  - **The python-pptx chart became a picture** (Slides offers "Replace image").
+  - The heading font Avenir Next shows as "Avenir" and Inter stays Inter.
+  - So layout names survive in Slides' own menu even though its pptx export renames them to their type (above).
+  - Evidence: `docs/design/duo-decks-study/img/google-layouts-kept.png`.
+
+## F-461 · The Drive connector can't upload binaries intact (duo-decks, 2026-10-31)
+
+The claude.ai Google Drive connector's `create_file` takes the file as a base64 string the model writes out, and the copy corrupts at about one character in 13,000. Every pptx over about 10 KB failed ("Invalid conversion requested") or arrived with changed bytes; Sonnet subagents failed the same way. Downloads are exact (the base64 comes back verbatim in the transcript). A Google test or feature that sends files needs a byte-exact path: Drive's API from a local process, a tool that takes a file path (Claude in Chrome's `file_upload`), or Drive for desktop, which isn't on the Mac mini.
+
+## F-462 · pandoc's pptx writer fills a template's placeholders but chooses among 7 layouts itself (duo-decks, 2026-10-31)
+
+Tested with pandoc 3.13 (`research-formats.md`): `--reference-doc` slides keep the reference's master and layouts and put text in their real placeholders, but pandoc picks one of seven layouts by name (Title Slide, Title and Content, Section Header, Two Content, Comparison, Content with Caption, Blank) from the slide's content; a custom layout in the reference was dropped and can't be chosen per slide. The official `pandoc.wasm` (62 MB, GPL-2+) made a correct 10-slide pptx in about 170 ms under Node's WASI, so it could run in a web view, but its layout model doesn't fit Duo Decks.
+
+## F-463 · Duo has no OOXML or zip writer; a Swift one is small (duo-decks, 2026-10-31)
+
+`Pptx.Zip` (`Sources/DuoSearch/Pptx.swift`) only reads. No Swift package writes pptx usefully. Compression encodes raw DEFLATE and libz has `crc32`, so a zip writer is about 100 lines beside the reader; a placeholder-fill pptx writer on a template package is about 1–2k lines with tests. DuoSearch is linked by `duo2`, so the writer can back `local` verbs that run with Duo closed and inside Claude's sandbox. The vendored `@aiden0z/pptx-renderer` draws any pptx it writes (DL-121).
+
+## F-464 · A deck as Markdown costs about 30–45 tokens a slide and diffs line by line (duo-decks, 2026-10-31)
+
+Measured on the same 10-slide content (`research-formats.md`): pandoc Markdown 1,054 characters, Slidev 1,114, Marp 1,209, the Duo sketch 1,424 (about 356 tokens), a python-pptx script 2,139, pptxgenjs 3,093, pandoc's minimal slide XML 12,448 (about 3,100 tokens). The study's 9-slide sample deck is 1,726 characters against 22,911 of exported slide XML. A one-word edit is a one-line diff in every Markdown form; a committed pptx is "Binary files differ", and its unzipped slide XML is one line per file.
+
+## F-465 · How other agents build decks: the patterns Duo Decks takes (duo-decks, 2026-10-31)
+
+From `research-agentic-landscape.md`: Anthropic's pptx skill dropped html2pptx in February 2026 for theme-first masters with named placeholders, XSD checks and a LibreOffice look. Claude's Slides artifact type stores a deck index plus one closed-subset HTML file per slide with stable ids, blocks on build errors that name the fix, says "nothing shrinks; split the slide", and never re-reads its work unless asked. Presenton's Template V2 and PPTAgent induce slot schemas with text capacities from existing decks (PPTAgent: 95.0% success falls to 78.8% without schemas). ppt-master compiles a closed SVG dialect to DrawingML behind a checker. The patterns taken: a layout catalogue with slot schemas, a closed vocabulary with a checker, template induction by the model certified by the tool, placeholder fill over the user's own pptx, capacity limits with "split, don't shrink".
+
+## F-466 · New slides don't get footer or slide-number placeholders unless the writer copies them (duo-decks, 2026-10-31)
+
+python-pptx's `add_slide` leaves a layout's date, footer and slide-number placeholders off the new slide (PowerPoint adds them when "show footer" is on), so a deck loses its footer and numbers. The prototype (`docs/design/duo-decks-study/prototypes/compile/deck.py`) clones them from the layout. Slide → layout placeholders inherit by `idx`, layout → master by `type`; custom body slots should use idx 13 and up because 10–12 are date, footer and number.
+
+## F-488 · A byte-exact upload to Drive through Claude in Chrome (duo-decks, 2026-10-31)
+
+Drive's own uploader opens a native file picker, which Claude in Chrome can't drive. What worked in Geoff's Chrome:
+1. A script added a file `<input>` to the Drive folder page.
+2. `file_upload` filled it.
+3. A synthetic `dragenter`/`dragover`/`drop` on the file list, carrying those files in a `DataTransfer`, set Drive's own uploader going. The three pptx files arrived at their exact sizes.
+
+File › Save as Google Slides then made converted copies, each opening in a new tab outside the automation's tab group, so it can't close them. Use it only with the account owner's OK, as here (Q-355).
+
+## F-497 · Google Slides imports a pptx's classic comments, not its threaded ones (duo-decks, 2026-10-31; Q-397)
+
+Two synthetic copies of the field-trial deck, each with a comment and a reply on slide 3 (`research-comments.md`, built by hand-written XML). Uploaded byte-exact to Geoff's "Duo Decks tests" folder with his OK (the F-488 method) and converted with File › Save as Google Slides.
+- **Legacy comments** (`ppt/comments/comment1.xml`): both comments show on slide 3 with their authors ("geoff", "sam"), times and text, each marked "From imported document". The reply arrives as a **separate comment, not threaded**. They're attached to the slide, not an element. The Drive connector's `read_file_content` with comments listed none of them. Evidence: `docs/design/duo-decks-study/img/google-legacy-comments.png`.
+- **Modern threaded comments** (`modernComment_*.xml`, anchored to the value placeholder, with a reply): **nothing came through** in Slides, and LibreOffice 26.8.1 drops them too.
+  - Caveat: no PowerPoint was available to confirm the hand-written file is one PowerPoint itself would accept.
+- **So:** if Duo ever exports comments, legacy comments are the portable form. Each one goes on its slide with its author, and the slot and thread id go in the text (`[#c1 on value]`). Threads and resolved state don't survive.
+
+## F-498 · The Swift deck writer works, and is deterministic (duo-decks P0, 2026-10-31; DL-267, DL-270)
+
+The P0 spike is in `Sources/DuoSearch/Deck/`, about 820 lines in all:
+- `ZipWriter.swift`, 76 lines;
+- `DeckParse.swift`, 247: parser and anchor map, reusing `Review.parse` for DL-284's marks;
+- `DeckCheck.swift`, 113;
+- `PptxWriter.swift`, 320;
+- `DeckInspect.swift`, 60.
+
+The check is `Sources/DuoChecks/DeckChecks.swift` (`DUO_CHECKS=deck`, 39 passed). Write-up: `docs/design/duo-decks-study/p0-spike.md`.
+
+What it does to the sample deck and the Northwind pack:
+- **The slides:** 9, each on its named layout, placeholders filled by idx with no geometry of their own.
+- **On every slide:** footer and slide number cloned from the layout (F-466).
+- **Notes:** on slides 2 and 9; a notes master is added when the pack has none.
+- **Picture and table:** a crop-to-fill picture, and a 5 × 3 table.
+- **Source hash:** `duoSourceSha` in custom properties.
+- **Review marks:** comments are stripped; highlights export as their text; pending suggestions export as the text before the change.
+
+It is byte-identical across runs and processes: one sha-256, 44,047 bytes, about 10 ms on a debug build. python-pptx reads it, and LibreOffice draws it the same as the Python prototype. The checker refuses the broken copy with the prototype's three messages.
+
+Left over:
+- the pack's stale metadata is inherited (`lastModifiedBy`, a 4:3 `sldSz` type, the thumbnail), so `deck template build` should clean it;
+- JPEG pictures are untested;
+- no `duo2 deck` verbs yet;
+- not yet through Google or Duo's own viewer.
+
+## F-499 · Duo Decks P1: the duo2 deck verbs, the built-in pack and the skill (duo-decks, 2026-10-31)
+
+The deck code moved to its own target, `Sources/DuoDeck/` (it depends on DuoControl for `Review.parse` and DuoSearch for the pptx reader; duo2, DuoKit and DuoChecks depend on it).
+
+Built, all local verbs in a `deck` family:
+- **Verbs:** `deck templates · check · export · insert · new · change`. `deck render` is registered, and exits 2 "needs the viewer".
+- **Notices:** empty slots are notices, not errors.
+- **Carry-over:** DL-285's rules as a pure `Deck.remap`, with pack overrides; leftovers go to the notes (DL-281).
+- **Exports:** dated, with only the newest kept (DL-282, DL-286); same bytes for the same source.
+- **Built-in pack:** `duo-plain` (Inter, eight layouts), generated by `scripts/gen-duo-plain.py` and embedded as base64, because `bundle.sh` ships duo2 alone.
+- **Skill:** a Decks section in the generated duo2 skill, its verbs checked by DuoChecks.
+
+Results: the full DuoChecks gives 2722 passed, 0 failed (`docs/design/duo-decks-study/p1.md`). The lead re-ran the verbs on a scratch copy: check, templates, change, which moved `body` to the notes, export twice to one dated file, and new/insert on duo-plain.
+
+Found then: pack lookup stops at the nearest `_PROJECT.md`. A deck outside any project sees only its own folder's `templates/decks/`, then Home's and the built-in pack. That's fine for projects, worth a clearer error elsewhere.
+
+## F-513 · Duo Decks P2: templates from decks, the fit check, rename maps and import (duo-decks, 2026-11-01; DL-291 to DL-294)
+
+Built in `Sources/DuoDeck/` as local `duo2 deck` verbs. The P2 commits are 09d7ec74 to 43409944, plus e78a450d.
+
+What it does:
+- **Inventory:** `template inventory` lists the theme, the fonts (flagging those Google lacks, with the closest Google family, from a hand-written list of about 170), the layouts and placeholders, the slides, and each slide's layout fingerprint. It groups identical fingerprints and lists near ones with their drift.
+- **Build:** `template build` turns slides of loose boxes into real layouts, adds optional slots, writes and checks the `# duo` lines, and cleans stale metadata. A rebuild gives the same bytes.
+- **Specimen:** `template specimen` writes and exports a deck that uses every template.
+- **Measured fit (DL-292):** in check, build and specimen, using CoreText. A font missing on the Mac is measured in a stand-in: Inter as Helvetica Neue widened 7%.
+- **Rename maps (DL-293):** `migrate` applies them, printing a diff.
+- **Import (DL-294):** `import` prints a survey for Claude, or converts with Claude's plan: notes, comments as signed Review marks, charts as placeholder pictures with their data in the notes, and anything unmapped to the notes. It never writes the source.
+- **Viewer verbs:** `template pick` and `picked` are registered for the viewer (DL-291).
+
+Verified under the lock:
+- the full build completes;
+- DuoChecks passes 2821 of 2821 (the deck blocks are 187 of them);
+- `docs/cli/duo2.md` regenerates unchanged;
+- a by-hand run on the import fixture found the near group (one extra box, 6 pt drift).
+
+The specimen showed nine overflows in the sample pack's own limits, which is the fit check doing its job.
+
+Weak spot: the survey's "best" template for a chart slide was `table`. That's a heuristic, and Claude's plan decides.

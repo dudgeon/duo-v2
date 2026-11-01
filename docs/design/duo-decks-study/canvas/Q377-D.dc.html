@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Make templates: D, by asking Claude</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.t2{color:#5b636d}
+.mono{font:12px/19px "SF Mono",Menlo,monospace}
+.cap{font-size:12px;line-height:18px;color:#5b636d}
+.th img{width:100%;display:block;border:1px solid #2b2f36}
+.th{display:flex;flex-direction:column;gap:2px;font:11px/14px "SF Mono",Menlo,monospace;color:#9aa1ab}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;box-sizing:border-box;padding:28px 40px;background:#f3f4f6;color:#1f2328;font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;display:flex;gap:28px">
+  <div style="width:820px;flex:none;display:flex;flex-direction:column;gap:10px">
+    <span class="cap">[P] D · No new UI. You ask in the session; Claude shows a numbered contact sheet that Duo renders, and you answer with numbers.</span>
+    <div class="mono" style="flex:1;background:#15171b;color:#e6e8eb;border-radius:6px;padding:18px;display:flex;flex-direction:column;gap:12px;font-size:12px">
+      <div><span style="color:#9aa1ab">&gt;</span> make templates from grower-update.pptx</div>
+      <div style="color:#9aa1ab">● Bash(duo2 deck template inventory grower-update.pptx --sheet)<br>&#160;&#160;⎿ 16 slides, 9 distinct layouts · contact sheet: .duo/sheet-grower-update.png</div>
+      <div>It has 9 distinct layouts. These look like the ones worth keeping:</div>
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px">
+        <div class="th"><img src="/_blob/6efe542afd1ac269ac055eb0cdc50034" alt="2">2 · bullets</div>
+        <div class="th"><img src="/_blob/693221054a4d386f6deaf182d6216c40" alt="3">3 · big number</div>
+        <div class="th"><img src="/_blob/b483f9c8d2a80b1440c6fc4a99b49a66" alt="4">4 · two columns</div>
+        <div class="th"><img src="/_blob/5fdd134cd41712ecf577a8d525304a74" alt="7">7 · quote</div>
+      </div>
+      <div>Which should become templates? You can say numbers, or "all of them".</div>
+      <div><span style="color:#9aa1ab">&gt;</span> 3 and 7, into northwind</div>
+    </div>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;gap:14px;min-width:0">
+    <span style="font:600 18px/24px -apple-system,system-ui,sans-serif">D · Only by asking Claude</span>
+    <span>Duo adds no button. Claude runs the inventory, and Duo writes a numbered contact sheet of the deck's distinct layouts, which Claude shows (in chat as an image; in the terminal as a file link). You answer in words.</span>
+    <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px">
+      <li>Nothing to build in the app beyond the verbs P2 needs anyway.</li>
+      <li>Claude can suggest which slides are worth it, and group look-alikes first.</li>
+      <li>Works the same on the work Mac and in any terminal.</li>
+    </ul>
+    <span class="t2" style="font-size:12px">Against: you pick by number, not by pointing. In the terminal the sheet is a file to open. Nothing in the viewer tells you it's possible. It's possible alongside A, B or C in any case.</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

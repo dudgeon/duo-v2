@@ -28,6 +28,9 @@ let args = [action.verb] + rest   // what the local verbs below read (args[0] is
 switch action.id {
 case .search, .searchStatus:
     exit(runSearch(action.verb, rest))
+case .deckTemplates, .deckCheck, .deckExport, .deckInsert, .deckNew, .deckChange, .deckRender,
+     .deckTemplateInventory, .deckTemplateBuild, .deckTemplateSpecimen, .deckImport, .deckMigrate:
+    exit(runDeck(action.verb, rest))
 case .help:
     if rest.first == "--markdown" { print(DuoAction.markdown(), terminator: "") } else { print(DuoAction.help(family: rest.first), terminator: "") }
 case .legacy:
@@ -187,6 +190,9 @@ default:
     // Directing works with Duo closed (DL-231): a verb with an offline form runs on Claude's own files.
     guard let (endpoint, source) = ControlEndpoint.discover() else {
         if let code = runOffline(action.id, rest) { exit(code) }
+        if action.id == .deckTemplatePick || action.id == .deckTemplatePicked {
+            fail("\(action.verb) needs the deck viewer in Duo (the Slides view), and Duo isn't running. The viewer isn't built yet; `duo2 deck template build` and `specimen` work without it.", code: 69)
+        }
         fail("Duo isn't running. Run `duo2 doctor`.", code: 69)
     }
     let request = ControlRequest(token: endpoint.token, command: action.verb, args: rest,

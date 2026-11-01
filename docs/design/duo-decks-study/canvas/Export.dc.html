@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Export and Google Slides</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.mono{font:12px/19px "SF Mono",Menlo,monospace}
+.t2{color:#5b636d}
+.cap{font-size:12px;line-height:18px;color:#5b636d}
+.btn{font:12px/16px -apple-system,system-ui,sans-serif;padding:4px 10px;border:1px solid #8b939c;border-radius:6px;background:#ffffff;color:#1f2328}
+.mi{height:24px;display:flex;align-items:center;padding:0 12px;border-radius:4px}
+.node{background:#ffffff;border:1px solid #c9cdd3;border-radius:6px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+table{border-collapse:collapse;width:100%}
+td,th{text-align:left;padding:6px 10px;border-bottom:1px solid #c9cdd3;vertical-align:top}
+th{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#5b636d}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;box-sizing:border-box;padding:32px 40px;background:#f3f4f6;color:#1f2328;font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;display:flex;gap:32px">
+  <div style="width:560px;flex:none;display:flex;flex-direction:column;gap:12px">
+    <span class="cap">[P] Export ⌄ in the deck's bar, open. One menu, no new window.</span>
+    <div style="background:#ffffff;border:1px solid #c9cdd3;border-radius:6px;overflow:visible;position:relative;height:330px">
+      <div style="height:44px;display:flex;align-items:center;gap:8px;padding:0 16px;border-bottom:1px solid #c9cdd3">
+        <span>Slide 3 of 10</span><span class="t2">· kpi</span><span style="flex:1"></span>
+        <button class="btn">Select Shape</button><button class="btn" style="background:#e9ecef">Export ⌄</button>
+      </div>
+      <div style="position:absolute;right:12px;top:46px;width:300px;background:#ffffff;border:1px solid #c9cdd3;border-radius:10px;box-shadow:0 8px 24px rgba(31,35,40,.16);padding:6px">
+        <div class="mi" style="background:#e9ecef">Export as PowerPoint…</div>
+        <div class="mi">Export Again <span class="t2" style="margin-left:auto">decks/field-trial-review.pptx</span></div>
+        <div style="height:1px;background:#c9cdd3;margin:5px 8px"></div>
+        <div class="mi t2">Upload to Google Slides… <span style="margin-left:auto;font-size:11px">later</span></div>
+        <div style="height:1px;background:#c9cdd3;margin:5px 8px"></div>
+        <div class="mi">Copy Export Command</div>
+      </div>
+    </div>
+    <span class="cap">[P] After it's written: a notice under the tabs, as downloads have (DL-132 h).</span>
+    <div style="background:#ffffff;border:1px solid #c9cdd3;border-radius:6px;padding:10px 14px;display:flex;align-items:center;gap:10px">
+      <span>Exported <b>field-trial-review.pptx</b> · 10 slides</span><span style="flex:1"></span><button class="btn">Show in Finder</button><button class="btn">Open With ⌄</button>
+    </div>
+    <div class="node" style="background:transparent;border-style:dashed;border-color:#8b939c">
+      <b>The same thing from Claude, or with Duo closed</b>
+      <span class="mono">duo2 deck export decks/field-trial-review.md</span>
+      <span class="t2">A local verb in the signed app: no Python, Node or LibreOffice, so it runs on the work Mac and in Claude's sandbox. Same input, same bytes.</span>
+    </div>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;gap:12px;min-width:0">
+    <span class="cap">The path, and what survives each hop. Tested: a one-slide round trip through Google (F-460). The full test is Q-355.</span>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="node" style="flex:1"><span class="mono">deck.md</span><span class="t2">+ the pack</span></div>
+      <span class="t2" aria-hidden="true">→ writer →</span>
+      <div class="node" style="flex:1"><span class="mono">deck.pptx</span><span class="t2">the pack's layouts, filled</span></div>
+      <span class="t2" aria-hidden="true">→ upload →</span>
+      <div class="node" style="flex:1"><b>Google Slides</b><span class="t2">by hand in v1</span></div>
+    </div>
+    <div style="background:#ffffff;border:1px solid #c9cdd3;border-radius:6px;padding:4px 6px">
+      <table>
+        <tr><th>In the pptx</th><th>After Google import</th><th></th></tr>
+        <tr><td>Each slide on its layout</td><td>Kept; layouts renamed to their type</td><td class="t2">tested</td></tr>
+        <tr><td>Placeholders, type and idx</td><td>Kept</td><td class="t2">tested</td></tr>
+        <tr><td>Geometry</td><td>Kept exactly, written onto every shape</td><td class="t2">tested</td></tr>
+        <tr><td>Theme colours</td><td>Kept as theme colours</td><td class="t2">tested</td></tr>
+        <tr><td>Theme fonts</td><td>Resolved into every run; fonts Google lacks are swapped</td><td class="t2">tested</td></tr>
+        <tr><td>Shape names</td><td>Replaced ("Google Shape;21;p3")</td><td class="t2">tested</td></tr>
+        <tr><td>Speaker notes</td><td>Kept</td><td class="t2">tested</td></tr>
+        <tr><td>Tables, pictures, gradients, custom layouts</td><td>Kept; every layout keeps its name in Slides' Layout menu</td><td class="t2">tested</td></tr>
+        <tr><td>Charts</td><td>Become a picture; not in v1</td><td class="t2">tested</td></tr>
+        <tr><td>SmartArt</td><td>Duo never writes it</td><td class="t2">—</td></tr>
+      </table>
+    </div>
+    <span class="t2">Why placeholders: the deck looks the same either way, but only a placeholder deck stays editable in Slides ("Apply layout" works) and can be mapped back onto the pack later (ENH-297).</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
