@@ -5162,3 +5162,19 @@ What's left:
 - the thumbnails are a stand-in drawn from slot kinds (Q-415);
 - the editor's context-menu New Slide… is not built (Q-416);
 - ⌃⌘N wasn't exercised through the real menu; the captures call the same `duo.deckNewSlide()`.
+
+## F-530 · The deck preview went blank after every edit (duo-decks, 2026-11-01; fixed 2c96dae7, on main as 6ffc5fc8)
+
+Found while running the P3 walk's tests first: window captures after a valid edit showed the slides pane blank. A probe of the live page's DOM (harness `deck-probe`, 9d765c91) settled it as a real bug, not a capture artefact (F-120). It had two causes in `Vendor/pptx-renderer/deck.js` and `deck.html`:
+
+1. **The old drawing stayed in the page's flow.** pptx-renderer sets `position: relative` inline on its container on every render, and `destroy()` doesn't clear it. That beat `.staged { position: absolute }`. After the no-flash swap, the old, empty, 100vh-tall container sat above the new slides, which were drawn a screen below the top. The swap also left the visible container with id `spare`, so `#host` CSS (spacing, rules, the Make Templates grid) stopped applying after any redraw.
+2. **Overlapping redraws.** A `show(bytes:)` arriving during a refresh drew into the same spare. Each swap wiped the other, leaving zero slides.
+
+The fix:
+- `.staged` is `position: absolute !important`;
+- the ids follow the roles on a swap;
+- open and refresh run one at a time, with superseded requests skipped, so the newest bytes always draw.
+
+There's still no flash. DuoChecks (`deckviewer`) drives an offscreen viewer through one edit and two quick edits, and three checks for each cause fail without the fix. Full DuoChecks gives 5416/0. Keeping the scroll at a scrolled-down position wasn't checked live.
+
+The lesson: a library's inline styles outlive `destroy()`, so staging CSS that has to win needs `!important`, or its own wrapper element. Write-up: `docs/design/duo-decks-study/redraw-blank.md`.
