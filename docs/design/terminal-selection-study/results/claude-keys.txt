@@ -1,0 +1,85 @@
+none                               | all: cursor L2:12
+left                               | all: cursor L2:11
+right                              | all: cursor L2:13
+up                                 | all: cursor L1:12
+down                               | all: cursor L3:12
+home CSI H                         | all: cursor L2:0
+end CSI F                          | all: cursor L2:18
+home CSI 1~                        | all: cursor L2:0
+end CSI 4~                         | all: cursor L2:18
+home SS3 H                         | all: cursor L2:0
+end SS3 F                          | all: cursor L2:18
+ctrl+a raw                         | all: cursor L2:0
+ctrl+a csi-u                       | all: cursor L2:0
+ctrl+e raw                         | all: cursor L2:18
+ctrl+e csi-u                       | all: cursor L2:18
+ctrl+b raw                         | all: cursor L2:11
+ctrl+b csi-u                       | all: cursor L2:11
+ctrl+f raw                         | all: cursor L2:13
+ctrl+f csi-u                       | all: cursor L2:13
+ctrl+n raw                         | all: cursor L3:12
+ctrl+n csi-u                       | all: cursor L3:12
+ctrl+p raw                         | all: cursor L1:12
+ctrl+p csi-u                       | all: cursor L1:12
+ctrl+t raw                         | all: cursor L2:12
+ctrl+t csi-u                       | all: cursor L2:12
+ctrl+o raw                         | all: BOX GONE
+ctrl+o csi-u                       | all: BAD SETUP BOX GONE
+ctrl+d raw                         | all: BAD SETUP cursor L2:12  text: alpha beta gamma / delta epsilo zeta / eta theta iotan zeta / eta theta iotan zeta / eta theta iota
+ctrl+d csi-u                       | all: cursor L2:12  text: alpha beta gamma / delta epsilo zeta / eta theta iota
+ctrl+h raw                         | all: cursor L2:11  text: alpha beta gamma / delta epsiln zeta / eta theta iota
+ctrl+h csi-u                       | all: cursor L2:11  text: alpha beta gamma / delta epsiln zeta / eta theta iota
+ctrl+k raw                         | all: cursor L2:12  text: alpha beta gamma / delta epsilo / eta theta iota
+ctrl+k csi-u                       | all: cursor L2:12  text: alpha beta gamma / delta epsilo / eta theta iota
+ctrl+u raw                         | all: cursor L2:0  text: alpha beta gamma / n zeta / eta theta iota
+ctrl+u csi-u                       | all: cursor L2:0  text: alpha beta gamma / n zeta / eta theta iota
+ctrl+w raw                         | all: cursor L2:6  text: alpha beta gamma / delta n zeta / eta theta iota
+ctrl+w csi-u                       | all: cursor L2:6  text: alpha beta gamma / delta n zeta / eta theta iota
+ctrl+y raw                         | all: cursor L2:18  text: alpha beta gamma / delta epsiloepsilon zeta / eta theta iota
+ctrl+y csi-u                       | all: cursor L2:18  text: alpha beta gamma / delta epsiloepsilon zeta / eta theta iota
+ctrl+k then ctrl+y raw             | all: cursor L2:18
+ctrl+k then ctrl+y csi-u           | all: cursor L2:18
+ctrl+_ undo raw (after ctrl+w)     | all: cursor L2:12
+ctrl+_ undo csi-u (after ctrl+w)   | all: cursor L2:12
+esc b                              | all: cursor L2:6
+esc f                              | all: cursor L2:13
+esc d                              | all: cursor L2:12  text: alpha beta gamma / delta epsilo zeta / eta theta iota
+esc DEL                            | all: cursor L2:6  text: alpha beta gamma / delta n zeta / eta theta iota
+alt+b csi-u                        | all: cursor L2:6
+alt+f csi-u                        | all: cursor L2:13
+alt+backspace csi-u                | all: cursor L2:6  text: alpha beta gamma / delta n zeta / eta theta iota
+alt+left CSI 1;3D                  | all: cursor L2:6
+alt+right CSI 1;3C                 | all: cursor L2:13
+super+left CSI 1;9D                | all: cursor L2:0
+super+right CSI 1;9C               | all: cursor L2:18
+super+up CSI 1;9A                  | all: cursor L1:12
+super+down CSI 1;9B                | all: cursor L3:12
+super+shift+left CSI 1;10D         | all: cursor L2:0
+super+shift+right CSI 1;10C        | all: cursor L2:18
+shift+left CSI 1;2D                | all: cursor L2:11
+shift+right CSI 1;2C               | all: cursor L2:13
+shift+up CSI 1;2A                  | all: cursor L2:12
+shift+down CSI 1;2B                | all: cursor L2:12
+shift+home CSI 1;2H                | all: cursor L2:0
+shift+end CSI 1;2F                 | all: cursor L2:18
+alt+shift+left CSI 1;4D            | all: cursor L2:6
+ctrl+home CSI 1;5H                 | all: cursor L2:12
+ctrl+end CSI 1;5F                  | all: cursor L2:12
+ctrl+left CSI 1;5D                 | all: cursor L2:6
+ctrl+right CSI 1;5C                | all: cursor L2:13
+fwd delete CSI 3~                  | all: cursor L2:12  text: alpha beta gamma / delta epsilo zeta / eta theta iota
+alt+fwd delete CSI 3;3~            | all: cursor L2:12  text: alpha beta gamma / delta epsilo / eta theta iota
+backspace DEL                      | all: cursor L2:11  text: alpha beta gamma / delta epsiln zeta / eta theta iota
+backspace csi-u 127                | all: cursor L2:11  text: alpha beta gamma / delta epsiln zeta / eta theta iota
+super+backspace csi-u              | all: cursor L2:0  text: alpha beta gamma / n zeta / eta theta iota
+super+a csi-u                      | all: cursor L2:13  text: alpha beta gamma / delta epsiloan zeta / eta theta iota
+super+z csi-u                      | all: cursor L2:13  text: alpha beta gamma / delta epsilozn zeta / eta theta iota
+super+shift+z csi-u                | all: cursor L2:13  text: alpha beta gamma / delta epsiloZn zeta / eta theta iota
+super+c csi-u                      | all: cursor L2:12
+super+x csi-u                      | all: cursor L2:13  text: alpha beta gamma / delta epsiloxn zeta / eta theta iota
+pageup CSI 5~                      | all: cursor L2:12
+pagedown CSI 6~                    | all: cursor L2:12
+r-311-kitty ['\x1b[>5u', 'pop']
+r-284-kitty ['\x1b[>5u', 'pop']
+r-311-legacy []
+r-284-legacy []

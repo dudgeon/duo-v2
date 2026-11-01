@@ -186,6 +186,8 @@ public final class TerminalSession {
         view.registerForDraggedTypes([.fileURL])  // files dropped in type their paths (DL-117)
         view.processDelegate = ProcessWatcher.shared
         ProcessWatcher.shared.sessions[ObjectIdentifier(view)] = self
+        // Mac editing keys and clean copies in Claude's prompt (DL-274).
+        if case .shell = command {} else { view.runsClaude = true; view.installCopyCleaning() }
         if running { start() }
         // A steady block, no blink (DB-2): DECSCUSR 2, as a program would ask for it.
         view.feed(text: "\u{1b}[2 q")
@@ -307,8 +309,8 @@ public enum TerminalKeys {
     /// not asked for the kitty keyboard protocol; with it on, SwiftTerm sends Shift+Enter and Claude
     /// Code (2.1.288+) reads that itself. 2.1.219 doesn't ask, so ⇧↩ would otherwise send. ⌘↩ sends CR
     /// without the protocol (SwiftTerm's `interpretKeyEvents` drops it), so it sends as DL-241 has it. ⌘⌫ sends ^U,
-    /// delete to the line start, in both modes: SwiftTerm sends nothing without the protocol, and
-    /// Claude Code doesn't read a Super+Backspace report with it.
+    /// delete to the line start, in both modes: SwiftTerm sends nothing without the protocol (2.1.284 and later read
+    /// its Super+Backspace report the same way, F-473). Claude's prompt keys are `PromptKeys` (DL-274).
     public static func bytes(keyCode: UInt16, modifiers: NSEvent.ModifierFlags, enhanced: Bool) -> [UInt8]? {
         let mods = modifiers.intersection([.shift, .control, .option, .command])
         switch (keyCode, mods) {
@@ -368,14 +370,134 @@ public final class GuardedTerminalView: LocalProcessTerminalView {
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             let (code, mods, win) = (event.keyCode, event.modifierFlags, event.window)
             let handled = MainActor.assumeIsolated { () -> Bool in
-                guard let self, self.window === win, self.window?.firstResponder === self,
-                      let bytes = TerminalKeys.bytes(keyCode: code, modifiers: mods,
+                guard let self, self.window === win, self.window?.firstResponder === self else { return false }
+                // Seen here, before the menus: ⌘↑ (All Projects) and ⌘Z (Undo) are theirs everywhere else.
+                if self.runsClaude, self.process?.running == true, let k = PromptKey.chord(keyCode: code, modifiers: mods) {
+                    return self.promptKey(k)
+                }
+                guard let bytes = TerminalKeys.bytes(keyCode: code, modifiers: mods,
                                                      enhanced: !self.keyboardEnhancementFlags.isEmpty) else { return false }
                 self.send(bytes)
                 return true
             }
             return handled ? nil : event
         }
+    }
+
+    // MARK: Mac editing keys in Claude's prompt (DL-274)
+
+    /// Set by the session: this terminal runs Claude Code, not a shell.
+    public var runsClaude = false
+    /// A ⌘↑ or ⌘↓ still stepping through a full box.
+    private var promptJump: Task<Void, Never>?
+
+    /// The box as drawn now, if the caret is in it and no question is up.
+    public func promptBox() -> PromptBox? {
+        let snap = terminalStateSnapshot()
+        return PromptBox.find(rows: visibleRowsText(0..<snap.dimensions.rows), cursor: (snap.cursor.row, snap.cursor.col))
+    }
+
+    /// Whether the key was taken (nothing else sees it).
+    public func promptKey(_ k: PromptKey) -> Bool {
+        if promptJump != nil, k == .toStart || k == .toEnd { return true }   // one jump at a time
+        let box = promptBox()
+        guard let bytes = PromptKeys.bytes(k, box: box, enhanced: !keyboardEnhancementFlags.isEmpty) else { return false }
+        if !bytes.isEmpty { send(bytes) }
+        // A full box may hold more than it shows: go on a row at a time until Claude has nothing more that way.
+        if let b = box, b.full, k == .toStart || k == .toEnd {
+            let toStart = k == .toStart
+            promptJump = Task { @MainActor [weak self] in
+                await self?.stepThroughFullBox(toStart: toStart)
+                self?.promptJump = nil
+            }
+        }
+        return true
+    }
+
+    /// With the caret on the box's first (last) row: one ↑ (↓) at a time, read back, until `PromptKeys.next` says done.
+    private func stepThroughFullBox(toStart: Bool) async {
+        guard var before = await settledBox(from: nil) else { return }
+        for _ in 0..<2000 {
+            // Claude re-centres a scrolled box on the caret: back to its edge row first, then probe.
+            let edge = toStart ? before.above : before.below
+            if edge > 0 {
+                send(Array(repeating: toStart ? PromptKeys.up : PromptKeys.down, count: edge).flatMap { $0 })
+                guard let b = await settledBox(from: before) else { return }
+                before = b
+                continue
+            }
+            send(toStart ? PromptKeys.up : PromptKeys.down)
+            let after = await settledBox(from: before)
+            switch PromptKeys.next(toStart: toStart, before: before, after: after) {
+            case .done(let keys), .history(let keys): send(keys); return
+            case .stop: return
+            case .more(let keys):
+                if !keys.isEmpty { send(keys) }
+                guard let b = await settledBox(from: after) else { return }
+                before = b
+            }
+        }
+    }
+
+    /// The box once Claude has drawn the keys sent: it differs from `old`, or has held still for 250 ms.
+    private func settledBox(from old: PromptBox?) async -> PromptBox? {
+        var last = promptBox(), still = 0
+        for _ in 0..<40 {
+            try? await Task.sleep(nanoseconds: 15_000_000)
+            let now = promptBox()
+            if let o = old, let n = now, n != o, n == last { return n }   // changed, and drawn twice the same
+            still = now == last ? still + 1 : 0
+            last = now
+            if still >= 16 { return now }
+        }
+        return last
+    }
+
+    // MARK: Copying from Claude's prompt (DL-274)
+
+    /// Claude copies its own selections twice on a Mac: OSC 52 through the terminal and `pbcopy`, whichever lands last
+    /// (F-504). Its text is screen text, so the clean text goes on the pasteboard, and again for a moment if the raw
+    /// text arrives after it. `pasteboard` is a private one in DuoChecks.
+    public var pasteboard = NSPasteboard.general
+    private var copyCleaner: CopyCleaningDelegate?
+
+    /// Puts Duo between SwiftTerm and this view for OSC 52 (`clipboardCopy` isn't open to override).
+    public func installCopyCleaning() {
+        let d = CopyCleaningDelegate(base: self)
+        copyCleaner = d
+        terminalDelegate = d
+    }
+
+    /// The prompt text a copy holds, cleaned (`PromptCopy`), from the screen as it is now.
+    func cleanedCopy(_ text: String) -> String {
+        guard runsClaude else { return text }
+        let snap = terminalStateSnapshot()
+        return PromptCopy.clean(text, rows: visibleRowsText(0..<snap.dimensions.rows), cols: snap.dimensions.cols)
+    }
+
+    /// OSC 52 from the program.
+    func programCopied(_ text: String) {
+        let clean = cleanedCopy(text)
+        put(clean)
+        guard clean != text else { return }
+        // `pbcopy` may land after the OSC 52: put the clean text back whenever the raw text shows up in the next 1.5 s.
+        for ms in [60, 150, 300, 600, 1000, 1500] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(ms)) { [weak self] in
+                guard let self, self.pasteboard.string(forType: .string) == text else { return }
+                self.put(clean)
+            }
+        }
+    }
+
+    private func put(_ s: String) {
+        pasteboard.clearContents()
+        pasteboard.setString(s, forType: .string)
+    }
+
+    /// Edit ▸ Copy on SwiftTerm's own selection (⇧-drag, Select All): cleaned the same way when it is the prompt's.
+    public override func copy(_ sender: Any) {
+        guard runsClaude, let s = getSelection(), !s.isEmpty else { return super.copy(sender) }
+        put(cleanedCopy(s))
     }
 
     // MARK: Files dropped in (DL-117)
@@ -563,4 +685,40 @@ struct TerminalSlot: NSViewRepresentable {
             }
         }
     }
+}
+
+/// Stands between SwiftTerm and a Claude terminal so Duo sees the program's OSC 52 copies (DL-274); every other call
+/// goes on to the view, which is its own delegate otherwise.
+@MainActor
+final class CopyCleaningDelegate: TerminalViewDelegate {
+    unowned let base: GuardedTerminalView
+    init(base: GuardedTerminalView) { self.base = base }
+
+    func clipboardCopy(source: TerminalView, content: Data) {
+        guard let text = String(data: content, encoding: .utf8) else { return base.clipboardCopy(source: source, content: content) }
+        base.programCopied(text)
+    }
+    func sizeChanged(source: TerminalView, newCols: Int, newRows: Int) { base.sizeChanged(source: source, newCols: newCols, newRows: newRows) }
+    func setTerminalTitle(source: TerminalView, title: String) { base.setTerminalTitle(source: source, title: title) }
+    func hostCurrentDirectoryUpdate(source: TerminalView, directory: String?) { base.hostCurrentDirectoryUpdate(source: source, directory: directory) }
+    func send(source: TerminalView, data: ArraySlice<UInt8>) { base.send(source: source, data: data) }
+    func scrolled(source: TerminalView, position: Double) { base.scrolled(source: source, position: position) }
+    func requestOpenLink(source: TerminalView, link: String, params: [String: String]) { base.requestOpenLink(source: source, link: link, params: params) }
+    func bell(source: TerminalView) { base.bell(source: source) }
+    func clipboardRead(source: TerminalView) -> Data? { base.clipboardRead(source: source) }
+    func kittyClipboardCapabilities(source: TerminalView) -> KittyClipboardCapabilities { base.kittyClipboardCapabilities(source: source) }
+    func kittyClipboardAvailableMimeTypes(source: TerminalView, location: KittyClipboardLocation) -> [String]? {
+        base.kittyClipboardAvailableMimeTypes(source: source, location: location)
+    }
+    func kittyClipboardRead(source: TerminalView, location: KittyClipboardLocation, mimeType: String) -> KittyClipboardReadResult? {
+        base.kittyClipboardRead(source: source, location: location, mimeType: mimeType)
+    }
+    func kittyClipboardWrite(source: TerminalView, location: KittyClipboardLocation, content: KittyClipboardWriteContent) -> KittyClipboardWriteResult {
+        base.kittyClipboardWrite(source: source, location: location, content: content)
+    }
+    func kittyClipboardRequestPermission(source: TerminalView, request: KittyClipboardPermissionRequest) -> KittyClipboardPermissionResult {
+        base.kittyClipboardRequestPermission(source: source, request: request)
+    }
+    func iTermContent(source: TerminalView, content: ArraySlice<UInt8>) { base.iTermContent(source: source, content: content) }
+    func rangeChanged(source: TerminalView, startY: Int, endY: Int) { base.rangeChanged(source: source, startY: startY, endY: endY) }
 }

@@ -1,0 +1,127 @@
+vim mode: INSERT and NORMAL
+==== 311
+## insert: footer
+    start {'row': 2, 'col': 16} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota ']
+      footer: ['  ⚠ Transcript saving is off — inherited CLAUDE_CODE_CHIL…', '  -- INSERT -- ⏵⏵ auto mode on (shift+tab to cycle)']
+    insert {'row': 2, 'col': 16} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota ']
+      footer: ['  ⚠ Transcript saving is off — inherited CLAUDE_CODE_CHIL…', '  -- INSERT -- ⏵⏵ auto mode on (shift+tab to cycle)']
+## insert: up up home, X
+    start {'row': 2, 'col': 16} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota ']
+    peek text 'Xalpha beta gamma\ndelta epsilon zeta\neta theta iota'
+## insert: down x2 end from row 0
+    start {'row': 0, 'col': 2} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta theta iotaX'
+## insert: alt+d csi-u mid word
+    start {'row': 2, 'col': 10} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta thet iota'
+## insert: ctrl+w then ctrl+_ undo
+    start {'row': 2, 'col': 16} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota ']
+    after ctrl+w {'row': 2, 'col': 12} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta  ']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta theta iota'
+## normal: footer
+    start {'row': 2, 'col': 15} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota']
+      footer: ['  ⚠ Transcript saving is off — inherited CLAUDE_CODE_CHIL…', '  ⏵⏵ auto mode on (shift+tab to cycle)']
+    normal {'row': 2, 'col': 15} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota']
+      footer: ['  ⚠ Transcript saving is off — inherited CLAUDE_CODE_CHIL…', '  ⏵⏵ auto mode on (shift+tab to cycle)']
+## normal: up up home, then i X
+    start {'row': 2, 'col': 15} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota']
+    peek text 'alpha beta gaXmma\ndelta epsilon zeta\neta theta iota'
+## normal: down x2 end from row 0, then a X
+    start {'row': 0, 'col': 2} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neXta theta iota'
+## normal: alt+d csi-u
+    start {'row': 2, 'col': 9} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota']
+    after {'row': 2, 'col': 9} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta the iota']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta the iota'
+## normal: dw then ctrl+_ undo
+    start {'row': 2, 'col': 2} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota']
+    after dw {'row': 2, 'col': 2} ['❯ alpha beta gamma', '  delta epsilon zeta', '  theta iota']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta theta iota'
+==== 284
+## insert: footer
+    start {'row': 2, 'col': 16} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota ']
+      footer: ['  ⚠ Transcript saving is off — inherited CLAUDE_CODE_CHIL…', '  -- INSERT -- ⏵⏵ auto mode on (shift+tab to cycle)']
+    insert {'row': 2, 'col': 16} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota ']
+      footer: ['  ⚠ Transcript saving is off — inherited CLAUDE_CODE_CHIL…', '  -- INSERT -- ⏵⏵ auto mode on (shift+tab to cycle)']
+## insert: up up home, X
+    start {'row': 2, 'col': 16} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota ']
+    peek text 'Xalpha beta gamma\ndelta epsilon zeta\neta theta iota'
+## insert: down x2 end from row 0
+    start {'row': 0, 'col': 2} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta theta iotaX'
+## insert: alt+d csi-u mid word
+    start {'row': 2, 'col': 10} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta thet iota'
+## insert: ctrl+w then ctrl+_ undo
+    start {'row': 2, 'col': 16} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota ']
+    after ctrl+w {'row': 2, 'col': 12} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta  ']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta theta iota'
+## normal: footer
+    start {'row': 2, 'col': 15} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota']
+      footer: ['  ⚠ Transcript saving is off — inherited CLAUDE_CODE_CHIL…', '  ⏵⏵ auto mode on (shift+tab to cycle)']
+    normal {'row': 2, 'col': 15} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota']
+      footer: ['  ⚠ Transcript saving is off — inherited CLAUDE_CODE_CHIL…', '  ⏵⏵ auto mode on (shift+tab to cycle)']
+## normal: up up home, then i X
+    start {'row': 2, 'col': 15} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota']
+    peek text 'alpha beta gaXmma\ndelta epsilon zeta\neta theta iota'
+## normal: down x2 end from row 0, then a X
+    start {'row': 0, 'col': 2} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neXta theta iota'
+## normal: alt+d csi-u
+    start {'row': 2, 'col': 9} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota']
+    after {'row': 2, 'col': 9} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta the iota']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta the iota'
+## normal: dw then ctrl+_ undo
+    start {'row': 2, 'col': 2} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota']
+    after dw {'row': 2, 'col': 2} ['❯ alpha beta gamma', '  delta epsilon zeta', '  theta iota']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta theta iota'
+
+⌃A/⌃E and the history step in NORMAL (vim9) and the default (def9)
+==== vim 311
+## up x2 then ctrl+a (csi-u)
+    start {'row': 2, 'col': 15} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota']
+    peek text 'Xalpha beta gamma\ndelta epsilon zeta\neta theta iota'
+## from row 0: down x2 then ctrl+e (csi-u)
+    start {'row': 0, 'col': 15} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta theta iotaX'
+## 12 lines (box full at 30 rows): up past the top, then down
+    start {'row': 9, 'col': 8} ['❯ line 3', '  line 4', '  line 5', '  line 6', '  line 7', '  line 8', '  line 9', '  line 10', '  line 11', '  line 12']
+    history? {'row': 0, 'col': 15} ['❯ HISTORY NEWEST']
+    back {'row': 0, 'col': 2} ['❯ line 1', '  line 2', '  line 3', '  line 4', '  line 5', '  line 6', '  line 7', '  line 8', '  line 9', '  line 10']
+    peek text 'Xline 1\nline 2\nline 3\nline 4\nline 5\nline 6\nline 7\nline 8\nline 9\nline 10\nline 11
+==== default 311
+## up x2 then ctrl+a (csi-u)
+    start {'row': 2, 'col': 16} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota ']
+    peek text 'Xalpha beta gamma\ndelta epsilon zeta\neta theta iota'
+## from row 0: down x2 then ctrl+e (csi-u)
+    start {'row': 0, 'col': 16} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta theta iotaX'
+## 12 lines (box full at 30 rows): up past the top, then down
+    start {'row': 9, 'col': 9} ['❯ line 3', '  line 4', '  line 5', '  line 6', '  line 7', '  line 8', '  line 9', '  line 10', '  line 11', '  line 12 ']
+    history? {'row': 0, 'col': 16} ['❯ HISTORY NEWEST ']
+    back {'row': 0, 'col': 2} ['❯ line 1', '  line 2', '  line 3', '  line 4', '  line 5', '  line 6', '  line 7', '  line 8', '  line 9', '  line 10']
+    peek text 'Xline 1\nline 2\nline 3\nline 4\nline 5\nline 6\nline 7\nline 8\nline 9\nline 10\nline 11
+==== vim 284
+## up x2 then ctrl+a (csi-u)
+    start {'row': 2, 'col': 15} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota']
+    peek text 'Xalpha beta gamma\ndelta epsilon zeta\neta theta iota'
+## from row 0: down x2 then ctrl+e (csi-u)
+    start {'row': 0, 'col': 15} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta theta iotaX'
+## 12 lines (box full at 30 rows): up past the top, then down
+    start {'row': 9, 'col': 8} ['❯ line 3', '  line 4', '  line 5', '  line 6', '  line 7', '  line 8', '  line 9', '  line 10', '  line 11', '  line 12']
+    history? {'row': 0, 'col': 15} ['❯ HISTORY NEWEST']
+    back {'row': 0, 'col': 2} ['❯ line 1', '  line 2', '  line 3', '  line 4', '  line 5', '  line 6', '  line 7', '  line 8', '  line 9', '  line 10']
+    peek text 'Xline 1\nline 2\nline 3\nline 4\nline 5\nline 6\nline 7\nline 8\nline 9\nline 10\nline 11
+==== default 284
+## up x2 then ctrl+a (csi-u)
+    start {'row': 2, 'col': 16} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota ']
+    peek text 'Xalpha beta gamma\ndelta epsilon zeta\neta theta iota'
+## from row 0: down x2 then ctrl+e (csi-u)
+    start {'row': 0, 'col': 16} ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta theta iotaX'
+## 12 lines (box full at 30 rows): up past the top, then down
+    start {'row': 9, 'col': 9} ['❯ line 3', '  line 4', '  line 5', '  line 6', '  line 7', '  line 8', '  line 9', '  line 10', '  line 11', '  line 12 ']
+    history? {'row': 0, 'col': 16} ['❯ HISTORY NEWEST ']
+    back {'row': 0, 'col': 2} ['❯ line 1', '  line 2', '  line 3', '  line 4', '  line 5', '  line 6', '  line 7', '  line 8', '  line 9', '  line 10']
+    peek text 'Xline 1\nline 2\nline 3\nline 4\nline 5\nline 6\nline 7\nline 8\nline 9\nline 10\nline 11

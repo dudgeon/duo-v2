@@ -1,0 +1,114 @@
+======== 311
+## drag, then nothing
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    dragged cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma                                          ', '  delta epsilon zeta', '  eta theta iota '] highlighted ['······beta gamma                                          ', 'delta ep', '·············· ']
+    osc52 after drag ['beta gamma\n  delta ep']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta theta iota'
+## drag, then backspace
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    bs cursor {'row': 0, 'col': 8} rows ['❯ alpha silon zeta', '  eta theta iota'] highlighted ['······s', '']
+    peek text 'alpha silon zeta\neta theta iota'
+## drag, then type X
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    typed cursor {'row': 2, 'col': 17} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iotaX '] highlighted ['', '', '··············· ']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta theta iotaX'
+## drag, then shift+left x2
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    extended cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma                                          ', '  delta epsilon zeta', '  eta theta iota '] highlighted ['······beta gamma                                          ', 'delta ', '·············· ']
+    peek text after bs 'alpha epsilon zeta\neta theta iota'
+## drag, then ctrl+c
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    osc52 ctrl+c ['beta gamma\n  delta ep', 'beta gamma\n  delta ep', 'beta gamma\n  delta ep', 'beta gamma\n  delta ep']
+    after cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta theta iota'
+## drag, then cmd+c (if it reached Claude)
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    osc52 cmd+c ['beta gamma\n  delta ep', 'beta gamma\n  delta ep']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta theta iota'
+## drag, then cmd+x (if it reached Claude)
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    osc52 cmd+x ['beta gamma\n  delta ep']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta theta iotax'
+## click to place caret
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    clicked cursor {'row': 0, 'col': 5} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota'] highlighted ['···h', '', '']
+    peek text 'alpXha beta gamma\ndelta epsilon zeta\neta theta iota'
+## double click word
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    dbl cursor {'row': 1, 'col': 10} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota'] highlighted ['', '······epsilon', '']
+    osc52 dbl ['epsilon']
+    peek text 'alpha beta gamma\ndelta  zeta\neta theta iota'
+## triple click line
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    tpl cursor {'row': 1, 'col': 10} rows ['❯ alpha beta gamma', '  delta epsilon zeta                                        ', '  eta theta iota'] highlighted ['', 'delta epsilon zeta                                        ', '']
+    osc52 tpl ['epsilon', '  delta epsilon zeta']
+    peek text 'alpha beta gamma\n\neta theta iota'
+## shift+click extends from caret
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    shift-click cursor {'row': 0, 'col': 6} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota'] highlighted ['····a', '', '']
+    peek text 'alpa beta gamma\ndelta epsilon zeta\neta theta iota'
+## drag beyond the box (into transcript)
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    out cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma                                          ', '  delta epsilon zeta', '  eta theta iota '] highlighted ['alpha beta gamma                                          ', 'delta', '·············· ']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta theta iot'
+## shift+right with no selection
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    shift-right cursor {'row': 2, 'col': 4} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota'] highlighted ['', '', '··a']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\nea theta iota'
+======== 284
+## drag, then nothing
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    dragged cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma                                          ', '  delta epsilon zeta', '  eta theta iota '] highlighted ['······beta gamma                                          ', 'delta ep', '·············· ']
+    osc52 after drag ['beta gamma\n  delta ep']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta theta iota'
+## drag, then backspace
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    bs cursor {'row': 0, 'col': 8} rows ['❯ alpha silon zeta', '  eta theta iota'] highlighted ['······s', '']
+    peek text 'alpha silon zeta\neta theta iota'
+## drag, then type X
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    typed cursor {'row': 2, 'col': 17} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iotaX '] highlighted ['', '', '··············· ']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta theta iotaX'
+## drag, then shift+left x2
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    extended cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma                                          ', '  delta epsilon zeta', '  eta theta iota '] highlighted ['······beta gamma                                          ', 'delta ', '·············· ']
+    peek text after bs 'alpha epsilon zeta\neta theta iota'
+## drag, then ctrl+c
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    osc52 ctrl+c ['beta gamma\n  delta ep', 'beta gamma\n  delta ep', 'beta gamma\n  delta ep', 'beta gamma\n  delta ep']
+    after cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta theta iota'
+## drag, then cmd+c (if it reached Claude)
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    osc52 cmd+c ['beta gamma\n  delta ep', 'beta gamma\n  delta ep']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta theta iota'
+## drag, then cmd+x (if it reached Claude)
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    osc52 cmd+x ['beta gamma\n  delta ep']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta theta iotax'
+## click to place caret
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    clicked cursor {'row': 0, 'col': 5} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota'] highlighted ['···h', '', '']
+    peek text 'alpXha beta gamma\ndelta epsilon zeta\neta theta iota'
+## double click word
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    dbl cursor {'row': 1, 'col': 10} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota'] highlighted ['', '······epsilon', '']
+    osc52 dbl ['epsilon']
+    peek text 'alpha beta gamma\ndelta  zeta\neta theta iota'
+## triple click line
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    tpl cursor {'row': 1, 'col': 10} rows ['❯ alpha beta gamma', '  delta epsilon zeta                                        ', '  eta theta iota'] highlighted ['', 'delta epsilon zeta                                        ', '']
+    osc52 tpl ['epsilon', '  delta epsilon zeta']
+    peek text 'alpha beta gamma\n\neta theta iota'
+## shift+click extends from caret
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    shift-click cursor {'row': 0, 'col': 6} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota'] highlighted ['····a', '', '']
+    peek text 'alpa beta gamma\ndelta epsilon zeta\neta theta iota'
+## drag beyond the box (into transcript)
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    out cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma                                          ', '  delta epsilon zeta', '  eta theta iota '] highlighted ['alpha beta gamma                                          ', 'delta', '·············· ']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\neta theta iot'
+## shift+right with no selection
+    start cursor {'row': 2, 'col': 16} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota '] highlighted ['', '', '·············· ']
+    shift-right cursor {'row': 2, 'col': 4} rows ['❯ alpha beta gamma', '  delta epsilon zeta', '  eta theta iota'] highlighted ['', '', '··a']
+    peek text 'alpha beta gamma\ndelta epsilon zeta\nea theta iota'
