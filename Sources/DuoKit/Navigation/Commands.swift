@@ -19,6 +19,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case previousTab        // ⌃⇧Tab
     case newMarkdown        // ⌘N: a new Markdown file in the project, named inline (DL-61, DL-62)
     case newFolder          // ⇧⌘N
+    case newDeck            // File › New › New Deck…: the New Deck sheet (P3-4; action: deck new; no shortcut, DL-297)
     case save               // ⌘S saves the open document now (it also autosaves)
     case bold               // ⌘B, only while the editor has focus (stack rec #9)
     case italic             // ⌘I, likewise
@@ -81,6 +82,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .previousTab: "Show Previous Tab"
         case .newMarkdown: "New Markdown File"
         case .newFolder: "New Folder"
+        case .newDeck: "New Deck…"
         case .save: "Save"
         case .bold: "Bold"
         case .italic: "Italic"
@@ -170,7 +172,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .voiceInput: KeyboardShortcut("d", modifiers: [.command, .shift])
         case .link: KeyboardShortcut("k", modifiers: .command)  // DL-108
         case .newSlide: KeyboardShortcut("n", modifiers: [.command, .control])  // DL-295: adds to DL-34's map; only in a deck
-        case .revertChange, .revertAllChanges, .chooseHome, .newTask, .newProject, .newProjectFromGitHub, .code, .heading1, .heading2, .heading3,
+        case .revertChange, .revertAllChanges, .chooseHome, .newTask, .newDeck, .newProject, .newProjectFromGitHub, .code, .heading1, .heading2, .heading3,
              .task, .body, .quote, .bullet, .numbered, .codeBlock, .toggleFormatBar, .addProperties, .duo2Reference, .whatsNew, .reportIssue, .explainTasks, .tableInsert, .tableRowAbove, .tableRowBelow,
              .tableColumnBefore, .tableColumnAfter, .tableDeleteRow, .tableDeleteColumn, .tableAlignLeft, .tableAlignCenter,
              .tableAlignRight, .showBoard, .showList: nil  // Show Board / Show List: Q-100
@@ -201,7 +203,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .closeSession: model.keyboardInRightPane ? model.closableRightTab != nil : model.visibleTerminal != nil
         case .previewInSplitView: model.canTogglePreviewInSplitView
         case .previousSplitSide, .nextSplitSide: model.showingSplit != nil
-        case .newMarkdown, .newFolder: model.terminalsMode == .live && model.projectFolder != nil
+        case .newMarkdown, .newFolder, .newDeck: model.terminalsMode == .live && model.projectFolder != nil
         case .save: model.terminalsMode == .live && model.editorOpened && model.editorIfLoaded?.url != nil
         case .bold, .italic, .strikethrough, .code, .link, .heading1, .heading2, .heading3, .task, .body, .quote, .bullet, .numbered, .codeBlock, .addProperties, .tableInsert: model.webFocus == .editor
         case .toggleFormatBar: true
@@ -284,6 +286,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
             else if model.keyboardInRightPane { if let doc = model.closableRightTab { model.closeDocument(doc) } }
             else { model.closeVisibleSession() }
         case .newMarkdown: model.newMarkdownFile(near: model.selectedFile)
+        case .newDeck: model.showNewDeck()
         case .newFolder: model.newFolder(near: model.selectedFile)
         case .save: model.editor.saveNow()
         case .toggleFormatBar: model.setFormatBarHidden(!model.formatBarHidden)
@@ -351,6 +354,7 @@ public struct DuoCommands: Commands {
             item(.newBrowserTab)
             Divider()
             item(.newMarkdown)
+            item(.newDeck)
             item(.newFolder)
             item(.newTask)
             item(.newProject)
