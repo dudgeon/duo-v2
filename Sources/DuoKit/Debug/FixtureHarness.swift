@@ -488,6 +488,10 @@ public enum FixtureHarness {
         case "bar-undo": model.editor.run("duo.undo(); return 1") { _ in }
         case "bar-return":   // Return while dictating, as the key monitor takes it: finish, then the editor's Return
             if let ed = model.editorIfLoaded { model.voice.finishWhenDone { _ in ed.dictationEnd { ed.dictationNewline() } } }
+        case "bar-js":   // bar-js:<script file>: the file's body runs in the editor's page; its return value goes to stderr
+            if parts.count > 1, let code = try? String(contentsOfFile: parts[1], encoding: .utf8) {
+                model.editor.run(code) { v in FileHandle.standardError.write(Data("bar-js: \(String(describing: v ?? "nil"))\n".utf8)) }
+            }
         case "bar-hide": model.setFormatBarHidden(true)
         case "bar-show": model.setFormatBarHidden(false)
         case "edit-bold": model.editor.run("duo.select(2, 9); duo.exec('bold'); return 1") { _ in }

@@ -402,6 +402,9 @@ const suggestTyping = EditorState.transactionFilter.of((tr) => {
 const A = [1, 2, 3, 4, 5];
 export const reviewTheme = EditorView.baseTheme({
   ".duo-rv-ins": { textDecoration: "underline", textUnderlineOffset: "3px" },
+  // F-458: CodeMirror's zero-width buffers around the hidden marks (`{++`, `++}`, the signature) are inline images, and a browser may
+  // break a line at one: a suggestion that ends a line left its full stop alone on the next. Out of the flow, they break nothing.
+  ".duo-rv ~ .cm-widgetBuffer": { position: "absolute" },
   ".duo-rv-del": { textDecoration: "line-through" },
   ...Object.fromEntries(A.map((n) => [`.duo-rv-a${n}`, { color: `var(--duo-review-${n})` }])),
   ".duo-rv-hl": { backgroundColor: "var(--duo-comment-highlight)" },
