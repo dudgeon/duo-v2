@@ -210,6 +210,10 @@ function applyOverlay() {
       pin.addEventListener('mouseleave', () => { if (!picking) place(null); });
       pin.addEventListener('click', (ev) => { ev.preventDefault(); ev.stopPropagation(); post({ kind: 'pin', thread: p.thread }); });
       item.append(pin);
+      if (el) {   // a box that reaches the slide's edge keeps its pin inside the slide
+        const lim = wr.right - ir.left - pin.offsetWidth - 4;
+        if (parseFloat(pin.style.left) > lim) pin.style.left = `${Math.round(lim)}px`;
+      }
     }
     if (slidePicking) {
       const t = el_('div', 'deck-tick'); t.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.4l2.4 2.4 4.6-5"/></svg>';

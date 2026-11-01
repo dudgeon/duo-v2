@@ -415,6 +415,19 @@ public enum FixtureHarness {
         case "tree-return": model.openSelectedFile()   // Return on the tree's selection
         // Split view (DL-275): split:<path>[/left|right] opens a file with its preview; split-swap, split-ratio:<r>,
         // split-focus:left|right, split-unfold, split-close, sidebar-peek:on|off.
+        case "deck-menu":   // deck-menu:problems|export|off: the deck bar's menu open (Duo Decks P3b)
+            if let p = DeckPreviewHub.current { p.menu = parts.count > 1 && parts[1] != "off" ? parts[1] : nil; p.viewer.onChange?() }
+        case "deck-hover":  // deck-hover:<row id>: a row of that menu under the pointer
+            if let p = DeckPreviewHub.current, parts.count > 1 { p.menuHover = parts[1]; p.viewer.onChange?() }
+        case "deck-export": DeckPreviewHub.current?.exportDeck()
+        case "deck-pin-hover":   // deck-pin-hover:<slide>/<shape id>: the slot's outline as under a pin's pointer
+            if let p = DeckPreviewHub.current, parts.count > 1 { p.viewer.hover(parts[1]) }
+        case "sheet-newdeck": model.showNewDeck(name: parts.count > 1 ? parts[1] : "")   // New Deck…'s sheet
+        case "sheet-convert": if parts.count > 1 { model.showConvertDeck(parts[1]) }   // sheet-convert:<pptx>: Convert to Duo Deck…'s sheet
+        case "slide-pick":   // slide-pick:3,7: Make Templates…'s tick boxes on the pptx showing, those slides ticked
+            let v = model.deckViewer
+            v.setSlidePicking(true)
+            v.setPickedSlides((parts.count > 1 ? parts[1] : "").split(separator: ",").compactMap { Int($0) })
         case "split": if parts.count > 1 { _ = model.openSplitView(parts[1]) }
         case "split-swap": model.swapSplitSides()
         case "split-ratio": if parts.count > 1, let r = Double(parts[1]) { model.setSplitRatio(r) }

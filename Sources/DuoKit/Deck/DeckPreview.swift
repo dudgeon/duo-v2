@@ -77,7 +77,7 @@ public enum DeckPreviewBuild {
         for (n, s) in slides.enumerated() {
             out.append(AnchorRange(anchor: "slide \(n + 1)", firstLine: s.line, lastLine: max(s.line, s.lastLine)))
             for slot in s.slots where slot.name != "_default" && slot.name != "_image" {
-                out.append(AnchorRange(anchor: "slide \(n + 1)/\(slot.name)", firstLine: slot.line, lastLine: max(slot.line, slot.lastLine)))
+                out.append(AnchorRange(anchor: "slide \(n + 1)/\(slot.name)", firstLine: slot.line, lastLine: max(slot.line, slot.lastLine, slot.blockEnd)))   // a comment on its own line at the slot's end is the slot's
             }
         }
         return out

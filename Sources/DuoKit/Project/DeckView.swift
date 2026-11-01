@@ -72,14 +72,15 @@ struct DeckBar: View {
                 let label = preview.rendering.export.label()
                 if !label.isEmpty {
                     Text(label).duoText(.pill).foregroundStyle(DuoColor.text2).multilineTextAlignment(.trailing).lineLimit(2).fixedSize(horizontal: false, vertical: true)
+                        .frame(width: 96, alignment: .trailing)
                         .accessibilityIdentifier("deck.export-state")
                 }
             }
             Button("Select Shape") { viewer.picking ? viewer.stopPicking() : viewer.startPicking() }
-                .buttonStyle(DuoButtonStyle(on: viewer.picking)).disabled(viewer.state != .ready)
+                .buttonStyle(DuoButtonStyle(on: viewer.picking)).disabled(viewer.state != .ready).fixedSize()
                 .accessibilityIdentifier("video.slide.select")   // anchors: the video cursor's target
             if let preview {
-                DeckExportButton(preview: preview)
+                DeckExportButton(preview: preview).fixedSize()
             } else {
                 DeckPptxButtons(viewer: viewer, path: path, folded: folded)
                 OpenWithMenu(path: path, file: file, bordered: true)

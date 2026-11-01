@@ -13,6 +13,7 @@ public struct DeckPackChoice: Identifiable, Hashable, Sendable {
     /// "this project", "Home" or "built in".
     public var scope: String
     public var templates: [String]
+    public init(name: String, scope: String, templates: [String]) { self.name = name; self.scope = scope; self.templates = templates }
     public var id: String { name }
     public var count: Int { templates.count }
     public var detail: String { "\(scope) · \(count) template\(count == 1 ? "" : "s")" }
@@ -277,7 +278,7 @@ struct ConvertDeckSheet: View {
             Text("Claude groups the slides, proposes which template each becomes, and asks before merging look-alike layouts. The pptx isn’t changed.")
                 .duoText(.control, lineHeight: DuoTextStyle.body.spec.lineHeight).foregroundStyle(DuoColor.text2).fixedSize(horizontal: false, vertical: true)
             SheetRow("Template pack", center: true) {
-                DeckSheetPopup(value: form.pack.isEmpty ? "A new pack from this deck" : form.pack, detail: form.packs.first { $0.name == form.pack }?.scope) {
+                DeckSheetPopup(value: form.pack.isEmpty ? "A new pack from this deck" : form.pack + (form.packs.first { $0.name == form.pack }.map { " · " + $0.scope } ?? "")) {
                     ForEach(form.packs) { p in Button("\(p.name) · \(p.detail)") { form.pack = p.name } }   // not an action: picks a field's value
                     Divider()
                     Button("A new pack from this deck") { form.pack = "" }   // not an action: picks a field's value

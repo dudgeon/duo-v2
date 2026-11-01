@@ -111,10 +111,10 @@ struct DeckPptxButtons: View {
             .accessibilityLabel("More")
         } else {
             Button("Make Templates…") { toggleMake() }   // action: deck template pick
-                .buttonStyle(DuoButtonStyle(on: viewer.slidePicking)).disabled(viewer.state != .ready)
+                .buttonStyle(DuoButtonStyle(on: viewer.slidePicking)).disabled(viewer.state != .ready).fixedSize()
                 .accessibilityIdentifier("deck.make-templates")
             Button("Convert to Duo Deck…") { model.showConvertDeck(path) }   // action: deck import
-                .buttonStyle(.duo).disabled(viewer.state != .ready)
+                .buttonStyle(.duo).disabled(viewer.state != .ready).fixedSize()
         }
     }
 
@@ -140,7 +140,7 @@ struct DeckSlidePickBar: View {
                     .duoText(.body).lineLimit(1)
             }
             Spacer(minLength: 8)
-            Button("Cancel") { viewer.setSlidePicking(false) }.buttonStyle(.duo)   // action: deck template pick
+            Button("Cancel") { viewer.setSlidePicking(false) }.buttonStyle(.duo).fixedSize()   // action: deck template pick
             Menu {
                 let packs = model.deckPackNames(near: file)
                 if packs.isEmpty { Text("No packs yet").disabled(true) }
@@ -155,7 +155,7 @@ struct DeckSlidePickBar: View {
                 model.sendTemplatesRequest(file: file, path: path, slides: viewer.pickedSlides, pack: nil)
                 viewer.setSlidePicking(false)
             }
-            .buttonStyle(DefaultSheetButtonStyle()).disabled(n == 0)
+            .buttonStyle(DefaultSheetButtonStyle()).disabled(n == 0).fixedSize()
             .accessibilityIdentifier("deck.make-with-claude")
         }
         .padding(.vertical, DuoMetric.noticePaddingY)
@@ -197,14 +197,14 @@ struct DeckMenuLayer: View {
                 Color.clear.contentShape(Rectangle()).onActivate { preview.menu = nil; preview.viewer.onChange?() }   // not an action: dismisses the menu
                 if which == "problems" {
                     DeckDropdown(preview: preview, items: preview.problemMenuItems(), width: 340) { preview.menu = nil; preview.viewer.onChange?() }
-                        .padding(.leading, 96).padding(.top, DuoMetric.deckBarHeight - 6)
+                        .padding(.leading, 96).padding(.top, 4)
                 } else {
                     HStack {
                         Spacer(minLength: 0)
                         DeckDropdown(preview: preview, items: preview.exportMenuItems(), width: 270) { preview.menu = nil; preview.viewer.onChange?() }
                             .padding(.trailing, 10)
                     }
-                    .padding(.top, DuoMetric.deckBarHeight - 8)
+                    .padding(.top, 4)
                 }
             }
         }

@@ -98,7 +98,7 @@ extension DeckPreview {
     }
 
     /// Checks and exports `file`; the notice says what happened.
-    nonisolated static func exportNote(file: URL, slides: Int) -> ExportNotice {
+    nonisolated public static func exportNote(file: URL, slides: Int) -> ExportNotice {
         let dirs = Deck.packDirs(near: file.deletingLastPathComponent())
         do {
             let c = try Deck.check(deck: file, packDirs: dirs)
