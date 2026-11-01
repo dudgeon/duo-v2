@@ -4796,7 +4796,7 @@ Making room does two things at once: the sidebar folds (a `motionPaneToggle` sli
 
 ## F-502 · Preview render time (split-view-build, 2026-10-31; C-136)
 
-Timed under `--exclusive` (`DUO_CHECKS=split-perf swift run DuoChecks`, a debug build, so release is faster): the Markdown preview's HTML and anchor map take 3.8 ms for 200 lines, 38 ms for 2,000 lines (46 KB) and 377 ms for 20,000 lines (471 KB). That is the conversion only; WebKit loads the page after. The conversion runs off the main thread (`Task.detached`), and a newer revision wins at the gate, so typing never waits for it. The render waits 250 ms after typing pauses.
+Timed under `--exclusive` (`DUO_CHECKS=split-perf`, best of five): on a release build the Markdown preview's HTML and anchor map take 3.7 ms for 200 lines, 34 ms for 2,000 lines (46 KB) and 343 ms for 20,000 lines (471 KB); a debug build was 3.8, 38 and 377 ms, so the cost is the parse and string work, not debug overhead. A 2,000-line note is about a tenth of a second of background work, a 20,000-line one about a third of a second, and typing never waits for it. That is the conversion only; WebKit loads the page after. The conversion runs off the main thread (`Task.detached`), and a newer revision wins at the gate, so typing never waits for it. The render waits 250 ms after typing pauses. (`scripts/timing-lock.sh` fails when run from the main checkout: `git rev-parse --git-common-dir` prints a relative `.git` there, so its `cd .git/..` fails. I called `gpu-lock.sh --exclusive` with `GPU_LOCK_ENFORCE=1` directly, which is what it runs.)
 
 ## F-503 · What slice 1 does not do yet (split-view-build, 2026-10-31)
 
