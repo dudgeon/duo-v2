@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>View and edit source</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.bd{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;color:#1f2328;background:#eceef1;box-sizing:border-box}
+h1.t{font-size:28px;line-height:36px;font-weight:600;margin:0}
+h2.t{font-size:17px;line-height:24px;font-weight:600;margin:0}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.66px;text-transform:uppercase;color:#5b636d;display:flex;gap:8px;align-items:center}
+.P{font:10px/14px ui-monospace,'SF Mono',Menlo,monospace;color:#5b636d;border:1px dashed #8b939c;border-radius:3px;padding:0 3px;letter-spacing:0;text-transform:none;font-weight:400;white-space:nowrap}
+.light{--ground:#f3f4f6;--pane:#ffffff;--sel:#e9ecef;--text:#1f2328;--text2:#5b636d;--rule:#c9cdd3;--edge:#8b939c;--doc:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;--ds:13px;--dl:20px;--tag:#1d5fa8;--attr:#7b3fb5;--str:#2f7d32;--cm:#5b636d;--r1:#b0244f;--r3:#2e7a3a}
+.pane{box-sizing:border-box;background:var(--pane);color:var(--text);border:1px solid var(--rule);display:flex;flex-direction:column;overflow:hidden;font-size:13px;line-height:20px;position:relative}
+.tabs{flex:none;height:36px;box-sizing:border-box;display:flex;align-items:center;gap:20px;padding:0 10px 0 16px;border-bottom:1px solid var(--rule);color:var(--text2);font-size:12px}
+.tabs b{color:var(--text);font-weight:600}
+.sp{flex:1}
+.src{flex:1;padding:14px 14px 14px 12px;overflow:hidden;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;line-height:19px;white-space:pre-wrap}
+.msrc{flex:1;padding:18px 22px;overflow:hidden;font-family:var(--doc);font-size:13px;line-height:20px;white-space:pre-wrap}
+.t{color:var(--tag)}.a{color:var(--attr)}.s{color:var(--str)}.c{color:var(--cm);font-style:italic}.m{color:var(--text2)}.hb{font-weight:600}
+.ri{color:var(--r3)}.rc{color:var(--r1)}
+.seg{flex:none;display:flex;height:22px;box-sizing:border-box;border:1px solid var(--edge);border-radius:6px;overflow:hidden;font-size:11px;line-height:20px}
+.seg span{padding:0 8px;color:var(--text2)}
+.seg span.on{background:var(--sel);color:var(--text);font-weight:600}
+.seg span+span{border-left:1px solid var(--edge)}
+.cap{font-size:12px;line-height:17px;color:#5b636d;margin-top:8px}
+.card{background:#fff;border:1px solid #c9cdd3;border-radius:6px;padding:16px 18px;box-sizing:border-box}
+.page{flex:1;padding:18px 22px;font-family:-apple-system,system-ui,sans-serif;background:#fff;color:#1b1b1b;overflow:hidden;font-size:13px;line-height:20px}
+.page h3{font-size:20px;line-height:26px;font-weight:600;margin:0 0 6px}
+.page .up{color:#2f7d32}
+.page ul{margin:6px 0 10px;padding-left:20px}
+.page .chart{height:56px;border-radius:6px;background:#f1f5f9;display:flex;align-items:flex-end;gap:8px;padding:8px 10px;box-sizing:border-box}
+.page .chart i{display:block;width:20px;background:#94a3b8;border-radius:2px}
+.spec{font-size:13px;line-height:19px;color:#1f2328}
+.spec p{margin:0 0 8px}
+.spec ul{margin:0;padding-left:18px}
+.spec li{margin:0 0 6px}
+.badge{font-size:11px;line-height:16px;font-weight:600;padding:1px 7px;border-radius:9px;background:#1f2328;color:#fff}
+.mono{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11.5px}
+</style>
+</helmet>
+<div class="bd light" style="width: 1560px; height: 1240px; padding: 48px 56px; display: flex; flex-direction: column; gap: 28px;">
+  <div style="display: flex; flex-direction: column; gap: 6px;">
+    <h1 class="t">View and edit source, for Markdown and HTML</h1>
+    <div style="font-size: 14px; line-height: 21px; color: #5b636d; max-width: 1100px;">Geoff, 2026-11-01: “your markdown preview feature sounds half-baked; please have director start a full feature exploration for view/edit source, and get rid of markdown preview”. Research: <span class="mono">docs/design/view-edit-source-study/README.md</span>. Every new mark on these boards is a proposal <span class="P">[P]</span>.</div>
+  </div>
+
+  <div class="lbl">Today</div>
+  <div style="display: flex; gap: 24px;">
+    <div style="width: 468px;">
+      <div class="pane" style="height: 300px;">
+        <div class="tabs"><b>refunds-review.md</b><span>notes.md</span></div>
+        <div class="msrc">---
+title: Refunds review
+suggest-edits: true
+---
+# Refunds review
+Refunds fell **12%** in Q3{&gt;&gt;@claude 2026-11-01 #c4: source? &lt;&lt;}.
+## Next
+- [ ] Check the {~~July~&gt;June~~} baseline
+| Reason | Count |
+|---|---|</div>
+      </div>
+      <div class="cap"><b style="color:#1f2328">Markdown · View › Source Mode.</b> Per document, in place, no chord. Plain text: no colours, no line numbers; review marks and YAML as typed. The live editor already shows the caret's line raw.</div>
+    </div>
+    <div style="width: 468px;">
+      <div class="pane" style="height: 300px;">
+        <div class="tabs"><b>q3-refunds.html</b><span>refunds-review.md</span></div>
+        <div class="page">
+          <h3>Refunds, Q3</h3>
+          <div>Down <span class="up">12%</span> since July.</div>
+          <ul><li>Card disputes: 41</li><li>Late delivery: 28</li><li>Wrong size: 17</li></ul>
+          <div class="chart"><i style="height:38px"></i><i style="height:30px"></i><i style="height:22px"></i><i style="height:26px"></i><i style="height:18px"></i></div>
+        </div>
+      </div>
+      <div class="cap"><b style="color:#1f2328">HTML · the viewer only.</b> Read-only, reloads from disk every second, picker sends to Claude. No way to see or fix the text Claude wrote (ENH-66, “fix later”).</div>
+    </div>
+    <div style="width: 468px;">
+      <div class="pane" style="height: 300px;">
+        <div class="tabs"><b>q3-refunds.html ⫼ Page</b></div>
+        <div style="flex: 1; display: flex; min-height: 0;">
+          <div class="msrc" style="flex: 1; padding: 14px; font-size: 12px; line-height: 18px; border-right: 1px solid var(--rule);">&lt;h1&gt;Refunds, Q3&lt;/h1&gt;
+&lt;p class="lede"&gt;Down &lt;span class="up"&gt;12%&lt;/span&gt; since July.&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Card disputes: 41&lt;/li&gt;
+  &lt;li&gt;Late delivery: 28&lt;/li&gt;</div>
+          <div class="page" style="flex: 1; padding: 14px;"><h3 style="font-size: 16px; line-height: 22px;">Refunds, Q3</h3><div>Down <span class="up">12%</span> since July.</div><ul><li>Card disputes: 41</li><li>Late delivery: 28</li></ul></div>
+        </div>
+      </div>
+      <div class="cap"><b style="color:#1f2328">Split view’s pair (⌥⌘P).</b> The source side is the Markdown editor reading HTML as Markdown: no highlighting, no sync. The Markdown preview pair is being removed.</div>
+    </div>
+  </div>
+
+  <div class="lbl">The options</div>
+  <div style="display: flex; gap: 24px;">
+    <div class="card" style="width: 468px; border: 1.5px solid #1f2328; display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 8px;"><h2 class="t">A · One Source toggle</h2><span class="badge">Recommended</span></div>
+      <div class="pane" style="height: 118px;">
+        <div class="tabs"><b>q3-refunds.html</b><span class="sp"></span><span class="seg"><span>Page</span><span class="on">Source</span></span><span class="P">[P]</span></div>
+        <div class="src" style="padding: 10px 12px;"><span class="t">&lt;h1&gt;</span>Refunds, Q3<span class="t">&lt;/h1&gt;</span>
+<span class="t">&lt;p</span> <span class="a">class</span>=<span class="s">"lede"</span><span class="t">&gt;</span>Down <span class="t">&lt;span</span> <span class="a">class</span>=<span class="s">"up"</span><span class="t">&gt;</span>12%…</div>
+      </div>
+      <div class="spec">View › Source, <b>⌥⌘U</b> <span class="P">[P]</span>, per document, in place, for Markdown and HTML alike. Highlighted, editable, saved as today (DL-77). The split’s pair uses the same source side. <b>About a week.</b></div>
+    </div>
+    <div class="card" style="width: 468px; display: flex; flex-direction: column; gap: 10px;">
+      <h2 class="t">B · Source beside, in the split</h2>
+      <div class="pane" style="height: 118px;">
+        <div class="tabs"><b>q3-refunds.html ⫼ Source</b></div>
+        <div style="flex: 1; display: flex; min-height: 0;">
+          <div class="page" style="padding: 10px 12px;"><b>Refunds, Q3</b><br>Down <span class="up">12%</span>…</div>
+          <div class="src" style="padding: 10px 12px; border-left: 1px solid var(--rule);"><span class="t">&lt;h1&gt;</span>Refunds…<span class="t">&lt;/h1&gt;</span></div>
+        </div>
+      </div>
+      <div class="spec">Source is always the split’s other side: ⌥⌘P shows Source in Split View for HTML and Markdown, with scroll sync. Markdown’s pair is one file in two editable views (amends DL-278). No in-place mode. <b>About two weeks.</b></div>
+    </div>
+    <div class="card" style="width: 468px; display: flex; flex-direction: column; gap: 10px;">
+      <h2 class="t">C · Source in place, block by block</h2>
+      <div class="pane" style="height: 118px;">
+        <div class="tabs"><b>q3-refunds.html</b></div>
+        <div class="page" style="padding: 10px 12px; position: relative;"><span style="outline: 1.5px solid #1d5fa8; outline-offset: 2px; border-radius: 2px;">Down <span class="up">12%</span> since July.</span> <span class="P">[P] &lt;/&gt;</span>
+          <div class="src" style="margin-top: 8px; padding: 6px 8px; border: 1px solid #c9cdd3; border-radius: 6px; background: #fff; flex: none;"><span class="t">&lt;p</span> <span class="a">class</span>=<span class="s">"lede"</span><span class="t">&gt;</span>Down…</div>
+        </div>
+      </div>
+      <div class="spec">The caret or ⌥-click reveals one block’s source: frontmatter, a table, a comment, a slide marker. In HTML, an element’s source opens under it on the page. Whole-file Source Mode stays. <b>Three weeks or more</b>; the HTML half is a research risk.</div>
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 24px;">
+    <div class="card" style="width: 960px;">
+      <div class="lbl" style="margin-bottom: 8px;">Why A</div>
+      <ul class="spec">
+        <li><b>It is what Geoff wants source for:</b> checking exact Markdown, fixing HTML Claude wrote, seeing frontmatter and review marks as typed, copying exact text. Each is a whole-file, in-place, editable job.</li>
+        <li><b>Apps that render in place use a toggle</b> (Obsidian, Typora); side by side belongs to editors whose text is plain (VS Code, iA Writer). ⌥⌘U is the Mac’s View Source (Safari, Chrome).</li>
+        <li><b>It costs the least.</b> The HTML, CSS and JS parsers are already in the editor’s bundle (F-514: adding the HTML language grew it 5 bytes). Source Mode’s compartments exist; DL-77’s saving is language-blind.</li>
+        <li><b>It works at 360</b> with nothing to fold; the page beside its source stays one ⌥⌘P away, now highlighted.</li>
+      </ul>
+    </div>
+    <div class="card" style="width: 468px;">
+      <div class="lbl" style="margin-bottom: 8px;">Asked on these boards</div>
+      <ul class="spec">
+        <li>Which option (DL-299).</li>
+        <li>⌥⌘U for Source, and the Page | Source switch in the tab strip (DL-300, amends DL-34).</li>
+        <li>The highlight tokens (board “Highlighting”).</li>
+        <li>The formatting bar in Markdown source (amends DL-266 3).</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1560,"height":1240}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
