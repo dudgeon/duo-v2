@@ -228,6 +228,9 @@ out=$(cd "$T" && GPU_LOCK="$L" "$T/wt/scripts/timing-lock.sh" "test tl" echo hi 
 [ "$out" = "stub lock: --exclusive test tl echo hi" ] && ok "timing-lock.sh from a work tree finds the main checkout's gpu-lock.sh" || bad "timing-lock.sh from a work tree said: $out"
 out=$(cd "$T" && GPU_LOCK="$L" "$M/scripts/timing-lock.sh" "test tl" echo hi 2>&1)   # the main checkout itself: git says ".git"
 [ "$out" = "stub lock: --exclusive test tl echo hi" ] && ok "timing-lock.sh from the main checkout, from another directory" || bad "timing-lock.sh from the main checkout said: $out"
+out=$(cd "$T" && GPU_LOCK="$L" MERGE_GATE_TREE="$T/mgtree" MERGE_GATE_LOG="$T/mg.tsv" MERGE_GATE_ONLY=none "$M/scripts/merge-gate.sh" HEAD 2>&1); mrc=$?   # same for merge-gate.sh
+[ "$mrc" = 0 ] && grep -q "^merge-gate: .* in $T/mgtree" <<<"$out" && ok "merge-gate.sh from the main checkout, from another directory" || bad "merge-gate.sh said ($mrc): $out"
+git -C "$M" worktree remove --force "$T/mgtree" >/dev/null 2>&1
 echo "max hold: $fails failure(s)"
 rm -rf "$T"
 [ "$fails" = 0 ]

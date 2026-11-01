@@ -20,7 +20,7 @@ set -uo pipefail
 ref="${1:?usage: GPU_LOCK=<lock dir> scripts/merge-gate.sh <sha|branch>}"
 : "${GPU_LOCK:?set GPU_LOCK to the lock folder of this machine (machine-local; the director gives it in each brief)}"
 here="$(cd "$(dirname "$0")/.." && pwd)"
-main="$(cd "$(git -C "$here" rev-parse --git-common-dir)/.." && pwd)"
+main="$(cd "$(git -C "$here" rev-parse --path-format=absolute --git-common-dir)/.." && pwd)"
 lock="$main/scripts/gpu-lock.sh"
 [ -x "$lock" ] || { echo "merge-gate: $lock is missing" >&2; exit 2; }
 export GPU_LOCK_ENFORCE=1   # a hung gate is ended at its lock's time limit, not left holding it (F-510)
