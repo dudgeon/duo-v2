@@ -9,8 +9,8 @@ extension Deck {
     /// boxes), notes go in a notes slide (a notes master is added when the pack has none), and the
     /// deck's sha-256 is stored as the custom property `duoSourceSha`. The same deck and pack give
     /// the same bytes.
-    public static func export(deck: URL, packDirs: [URL]) throws -> Data {
-        let checked = try check(deck: deck, packDirs: packDirs)
+    public static func export(deck: URL, packDirs: [URL], measureFit: Bool = true) throws -> Data {
+        let checked = try check(deck: deck, packDirs: packDirs, measureFit: measureFit)
         guard checked.problems.isEmpty, let pack = checked.pack else {
             throw Failure(description: report(deck.path, checked.problems))
         }
@@ -170,7 +170,11 @@ struct PptxWriter {
             override("ppt/theme/theme\(theme).xml", "application/vnd.openxmlformats-officedocument.theme+xml")
         }
         var notesMasterRel: String?
-        if anyNotes {
+        // A pack made from a real deck already lists its notes master in presentation.xml: don't list a second one.
+        let presHasNotesMaster = presXML.contains("<p:notesMasterIdLst>")
+        if anyNotes && presHasNotesMaster {
+            notesMasterRel = "existing"
+        } else if anyNotes {
             notesMasterRel = "rId\(nextRel)"; nextRel += 1
             newRels += "<Relationship Id=\"\(notesMasterRel!)\" Type=\"\(Self.relBase)/notesMaster\" Target=\"notesMasters/\((notesMasterPart as NSString).lastPathComponent)\"/>"
         }
@@ -302,7 +306,7 @@ struct PptxWriter {
         let defaultsXML = defaults.keys.sorted().filter { !ct.contains("Extension=\"\($0)\"") }.map { "<Default Extension=\"\($0)\" ContentType=\"\(defaults[$0]!)\"/>" }.joined()
         ct = ct.replacingOccurrences(of: "</Types>", with: defaultsXML + overrides.joined() + "</Types>")
         presRels = presRels.replacingOccurrences(of: "</Relationships>", with: newRels + "</Relationships>")
-        let nmList = notesMasterRel.map { "<p:notesMasterIdLst><p:notesMasterId r:id=\"\($0)\"/></p:notesMasterIdLst>" } ?? ""
+        let nmList = notesMasterRel.flatMap { $0 == "existing" ? nil : "<p:notesMasterIdLst><p:notesMasterId r:id=\"\($0)\"/></p:notesMasterIdLst>" } ?? ""
         presXML = presXML.replacingOccurrences(of: "<p:sldIdLst/>", with: nmList + "<p:sldIdLst>\(sldIds)</p:sldIdLst>")
         if let t = front["title"], let r = core.range(of: "<dc:title>.*?</dc:title>", options: .regularExpression) {
             core.replaceSubrange(r, with: "<dc:title>\(Self.esc(t))</dc:title>")

@@ -78,6 +78,15 @@ public enum Deck {
         public var cols: Int?
         public var aspect: Double?
         public var isDefault: Bool
+        /// Lines the template expects (guidance; the measured fit is what the checker enforces).
+        public var lines: Int?
+        /// An optional slot may be left out of a slide without a notice (lifecycle M3b).
+        public var optional = false
+        /// Build inputs: the source slide's box that becomes this slot, or `box: x y w h` in pt.
+        public var shape: String?
+        public var box: String?
+        /// Build input: the font size in pt for a placeholder made from `box:`.
+        public var size: Double?
     }
 
     public struct Template: Equatable, Sendable {
@@ -89,6 +98,13 @@ public enum Deck {
         /// A pack's own carry-over for changing to this template (DL-285): `from: {bullets: {body: left}}`
         /// in its yaml block means "from `bullets`, the `body` slot goes to `left`". Wins over Duo's rules.
         public var overrides: [String: [String: String]] = [:]
+        /// `renamed: {context: note}`: a slot this template used to have, and what it is called now (DL-293).
+        public var renamed: [String: String] = [:]
+        /// Build inputs: promote this slide of the source into the template's layout; take the shapes
+        /// of added slots from this slide; read both from this pptx instead of the pack's `source:`.
+        public var fromSlide: Int?
+        public var shapeSlide: Int?
+        public var source: String?
         public func slot(_ n: String) -> SlotSpec? { slots.first { $0.name == n } }
         public var defaultSlot: SlotSpec? { slots.first(where: \.isDefault) }
     }
@@ -281,6 +297,7 @@ public enum Deck {
 
     static func scalar(_ s: String) -> Any {
         let t = s.trimmingCharacters(in: .whitespaces)
+        if t.count >= 2, (t.hasPrefix("\"") && t.hasSuffix("\"")) || (t.hasPrefix("'") && t.hasSuffix("'")) { return String(t.dropFirst().dropLast()) }
         if let i = Int(t) { return i }
         if let d = Double(t) { return d }
         if t == "true" { return true }
@@ -338,10 +355,26 @@ public enum Deck {
         return out
     }
 
+    /// `{context: note}`: a flat flow map of plain words.
+    static func flatMap(_ text: String?) -> [String: String] {
+        guard let text, text.hasPrefix("{"), text.hasSuffix("}") else { return [:] }
+        var out: [String: String] = [:]
+        for part in text.dropFirst().dropLast().split(separator: ",") {
+            guard let c = part.firstIndex(of: ":") else { continue }
+            let k = part[..<c].trimmingCharacters(in: .whitespaces), v = part[part.index(after: c)...].trimmingCharacters(in: .whitespaces)
+            if !k.isEmpty, !v.isEmpty { out[k] = v }
+        }
+        return out
+    }
+
     public static func loadPack(_ name: String, in dirs: [URL]) throws -> Pack {
         guard let md = dirs.map({ $0.appending(path: name).appending(path: "\(name).md") }).first(where: { FileManager.default.fileExists(atPath: $0.path) }) else {
             throw Failure(description: "no template pack \"\(name)\" in \(dirs.map(\.path).joined(separator: ", "))")
         }
+        return try loadPack(md: md, name: name)
+    }
+
+    public static func loadPack(md: URL, name: String) throws -> Pack {
         let lines = try String(contentsOf: md, encoding: .utf8).components(separatedBy: "\n")
         guard let (front, end) = frontmatter(lines) else { throw Failure(description: "\(md.lastPathComponent): no frontmatter") }
         var templates: [Template] = []
@@ -360,11 +393,18 @@ public enum Deck {
             let specs = y.slots.map { n, m -> SlotSpec in
                 SlotSpec(name: n, idx: m["idx"] as? Int ?? 0, kind: m["kind"] as? String ?? "text", max: m["max"] as? Int,
                          items: m["items"] as? Int, levels: m["levels"] as? Int, rows: m["rows"] as? Int, cols: m["cols"] as? Int,
-                         aspect: (m["aspect"] as? Double) ?? (m["aspect"] as? Int).map(Double.init), isDefault: m["default"] as? Bool ?? false)
+                         aspect: (m["aspect"] as? Double) ?? (m["aspect"] as? Int).map(Double.init), isDefault: m["default"] as? Bool ?? false,
+                         lines: m["lines"] as? Int, optional: m["optional"] as? Bool ?? false,
+                         shape: (m["shape"]).map { "\($0)" }, box: (m["box"]).map { "\($0)" },
+                         size: (m["size"] as? Double) ?? (m["size"] as? Int).map(Double.init))
             }
             var tpl = Template(name: name, purpose: purpose.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines),
                                layout: y.top["layout"] ?? "", fingerprint: y.top["fingerprint"] ?? "", slots: specs)
             tpl.overrides = overrides(y.top["from"])
+            tpl.renamed = flatMap(y.top["renamed"])
+            tpl.fromSlide = y.top["from-slide"].flatMap { Int($0) }
+            tpl.shapeSlide = y.top["shape-slide"].flatMap { Int($0) }
+            tpl.source = y.top["source"]
             templates.append(tpl)
         }
         return Pack(name: name, md: md, front: front, templates: templates)

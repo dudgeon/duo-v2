@@ -28,8 +28,8 @@ extension Deck {
     /// Writes the export into `dir` (default: beside the deck) and removes the deck's previous dated
     /// exports. Nothing is removed if the export fails. The bytes depend only on the source and the
     /// pack; only the name carries the time.
-    public static func writeExport(deck: URL, packDirs: [URL], dir: URL? = nil, now: Date = Date(), timeZone: TimeZone = .current) throws -> Exported {
-        let data = try export(deck: deck, packDirs: packDirs)
+    public static func writeExport(deck: URL, packDirs: [URL], dir: URL? = nil, now: Date = Date(), timeZone: TimeZone = .current, measureFit: Bool = true) throws -> Exported {
+        let data = try export(deck: deck, packDirs: packDirs, measureFit: measureFit)
         let out = dir ?? deck.deletingLastPathComponent()
         let name = deck.deletingPathExtension().lastPathComponent
         let fm = FileManager.default
