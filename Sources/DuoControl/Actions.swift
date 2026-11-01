@@ -93,6 +93,9 @@ public enum ActionID: String, CaseIterable, Sendable {
     // Duo Decks (DL-267 to DL-290): Markdown decks, template packs, the pptx export
     case deckTemplates = "deck templates", deckCheck = "deck check", deckExport = "deck export", deckInsert = "deck insert"
     case deckNew = "deck new", deckChange = "deck change", deckRender = "deck render"
+    // Duo Decks P2: templates from your decks
+    case deckTemplateInventory = "deck template inventory", deckTemplateBuild = "deck template build", deckTemplateSpecimen = "deck template specimen"
+    case deckTemplatePick = "deck template pick", deckTemplatePicked = "deck template picked", deckImport = "deck import", deckMigrate = "deck migrate"
     // Send to Claude
     case sendFile = "send file", sendSession = "send session", sendProject = "send project", sendSelection = "send selection"
     case sendElement = "send element", sendText = "send text", selection
@@ -521,6 +524,25 @@ extension DuoAction {
         .init(.deckRender, .deck, "<deck> [<n>]",
               "Draw a slide as a PNG. Not built yet: it needs Duo's viewer (WebKit), which the deck work reaches in a later phase. Export the deck and open the pptx in Duo meanwhile.",
               local: true),
+        .init(.deckTemplateInventory, .deck, "<pptx> [--slides 3,7] [--json]",
+              "What is in a PowerPoint file, for making templates from it: theme colours and fonts (fonts not in Google Fonts are flagged, with a close substitute), every layout with its placeholders (type, idx, name, box in pt, font size, autofit, bullets or none) and decoration, and every slide with its layout, shapes (name, kind, box, size, first 60 characters) and a layout fingerprint. Slides with the same fingerprint are grouped; near groups list how far apart their boxes sit. Never writes the file.",
+              local: true),
+        .init(.deckTemplateBuild, .deck, "<pack>",
+              "Build a template pack's pptx from its definition and the deck named by `source:` in the definition's frontmatter. Each template names a layout (`layout:`) or a slide to promote (`from-slide: N`, with `shape:` on each slot naming the box that becomes it). Copies the theme, masters and chosen layouts, drops every slide, adds optional slots, writes the `# duo` lines (layout, fingerprint, idx) and checks your lines against the pptx, including whether each slot's limit fits its box. <pack> is a name, a folder or the .md.",
+              local: true),
+        .init(.deckTemplateSpecimen, .deck, "<pack> [--out <deck.md>]",
+              "Write a deck that uses every template of the pack once, each slot filled to its limit with sample text, and export it. Look at the result to see what breaks.",
+              local: true),
+        .init(.deckTemplatePick, .deck, "[<pack>]",
+              "Start the template picker in the deck viewer for the user. Needs the deck viewer (the Slides view), which isn't built yet."),
+        .init(.deckTemplatePicked, .deck, "",
+              "The template and slides the user picked in the deck viewer. Needs the deck viewer (the Slides view), which isn't built yet."),
+        .init(.deckImport, .deck, "<pptx> [--pack <p> | --new-pack <name>] [--plan <file>] [--out <deck.md>]",
+              "Turn an existing PowerPoint file into a Duo deck. Without --plan: print the slide groups (identical layout fingerprints), near groups and, for each group, the pack template that fits best, for you to plan with. With --plan: apply your plan (which group becomes which template, optional slots to add, new templates to make, loose boxes mapped to slots), amend or create the pack, convert the text, notes and comments (as Review marks), and print the import report. Never writes the pptx.",
+              local: true),
+        .init(.deckMigrate, .deck, "[--pack <p>] [--dry-run]",
+              "After a pack renamed a slot (`renamed: {old: new}` in the template's definition), rewrite the slot headings of every deck in the project that uses the pack, printing a diff. --dry-run prints it without writing.",
+              local: true),
 
         // Search
         .init(.search, .search, "<query> | --similar <path> [-k N] [--project P] [--kind file|session|memory] [--exact]",
@@ -535,6 +557,8 @@ extension DuoAction {
     /// Finds the action for a command line: two-word verbs first ("file rename"), then one word.
     /// Old spellings keep working.
     public static func resolve(_ args: [String]) -> (DuoAction, rest: [String])? {
+        // Three-word verbs first ("deck template build"): the deck template family.
+        if args.count >= 3, let id = ActionID(rawValue: args.prefix(3).joined(separator: " ")) { return (byID[id]!, Array(args.dropFirst(3))) }
         let words = args.prefix(2).map { aliases[$0] ?? $0 }
         if words.count == 2, let id = ActionID(rawValue: words.joined(separator: " ")) { return (byID[id]!, Array(args.dropFirst(2))) }
         if let w = words.first {

@@ -10,12 +10,20 @@ func runDeck(_ verb: String, _ argv: [String]) -> Int32 {
     func usage(_ u: String) -> Int32 { err("usage: duo2 \(u)"); return 64 }
 
     var words: [String] = [], out: String?, after: Int?, template: String?
+    var slidesArg: String?, pack: String?, newPack: String?, plan: String?
+    var json = false, dryRun = false
     var i = 0
     while i < argv.count {
         switch argv[i] {
         case "--out": i += 1; out = argv.indices.contains(i) ? argv[i] : nil
         case "--after": i += 1; after = argv.indices.contains(i) ? Int(argv[i]) : nil
         case "--template": i += 1; template = argv.indices.contains(i) ? argv[i] : nil
+        case "--slides": i += 1; slidesArg = argv.indices.contains(i) ? argv[i] : nil
+        case "--pack": i += 1; pack = argv.indices.contains(i) ? argv[i] : nil
+        case "--new-pack": i += 1; newPack = argv.indices.contains(i) ? argv[i] : nil
+        case "--plan": i += 1; plan = argv.indices.contains(i) ? argv[i] : nil
+        case "--json": json = true
+        case "--dry-run": dryRun = true
         default: words.append(argv[i])
         }
         i += 1
@@ -23,6 +31,19 @@ func runDeck(_ verb: String, _ argv: [String]) -> Int32 {
     func url(_ p: String) -> URL { URL(fileURLWithPath: p, relativeTo: URL(fileURLWithPath: FileManager.default.currentDirectoryPath)).standardizedFileURL }
     func dirs(for deck: URL) -> [URL] { Deck.packDirs(near: deck.deletingLastPathComponent()) }
     func read(_ u: URL) -> String? { try? String(contentsOf: u, encoding: .utf8) }
+    /// A pack named by its .md, its folder, or its name (looked up from here).
+    func packMD(_ arg: String) throws -> URL {
+        let u = url(arg)
+        var isDir: ObjCBool = false
+        if FileManager.default.fileExists(atPath: u.path, isDirectory: &isDir) {
+            if !isDir.boolValue, u.pathExtension == "md" { return u }
+            let inner = u.appending(path: "\(u.lastPathComponent).md")
+            if isDir.boolValue, FileManager.default.fileExists(atPath: inner.path) { return inner }
+        }
+        let cwd = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+        if let f = Deck.packs(in: Deck.packDirs(near: cwd)).first(where: { $0.name == arg }) { return f.md }
+        throw Deck.Failure(description: "no template pack \"\(arg)\": give its .md, its folder, or a name under templates/decks/")
+    }
 
     do {
         switch verb {
@@ -106,6 +127,72 @@ func runDeck(_ verb: String, _ argv: [String]) -> Int32 {
             }
             let empty = c.remap.slots.filter { $0.name != "title" && $0.raw.isEmpty && $0.lines.isEmpty }.map(\.name)
             if !empty.isEmpty { say("  empty now: " + empty.joined(separator: ", ")) }
+            return 0
+
+        case "deck template inventory":
+            guard let p = words.first else { return usage("deck template inventory <pptx> [--slides 3,7] [--json]") }
+            guard FileManager.default.fileExists(atPath: url(p).path) else { err("duo2: can't read \(p)"); return 1 }
+            let r = try TemplateInventory.read(url(p), slides: try slidesArg.map(TemplateInventory.parseSlides))
+            say(json ? try TemplateInventory.json(r) : TemplateInventory.render(r))
+            return 0
+
+        case "deck template build":
+            guard let p = words.first else { return usage("deck template build <pack>") }
+            let md = try packMD(p)
+            let r = try Deck.buildPack(md: md)
+            let shown = md.lastPathComponent
+            for pr in r.problems { err("\(shown):\(pr.line): \(pr.message)") }
+            if !r.problems.isEmpty { err("duo2: not built: fix the problems above and run it again"); return 1 }
+            say("built \(r.pptx.path) (\(r.bytes / 1024) KB)")
+            for n in r.notes { say("  \(n)") }
+            if r.definitionChanged { say("updated \(md.path): the # duo lines (layout, fingerprint, idx)") }
+            for pr in r.fitProblems { say("\(shown):\(pr.line): \(pr.message)") }
+            if !r.fitProblems.isEmpty { say("\(r.fitProblems.count) limit\(r.fitProblems.count == 1 ? "" : "s") too high: set max to the largest that fits, then build again") }
+            return r.fitProblems.isEmpty ? 0 : 1
+
+        case "deck template specimen":
+            guard let p = words.first else { return usage("deck template specimen <pack> [--out <deck.md>]") }
+            let md = try packMD(p)
+            let r = try Deck.writeSpecimen(md: md, out: out.map(url))
+            say("wrote \(r.deck.path)")
+            say("wrote \(r.export.url.path) (\(r.export.bytes) bytes)")
+            for x in r.export.removed { say("removed the earlier export \(x.lastPathComponent)") }
+            for pr in r.fit { say("\(r.deck.lastPathComponent):\(pr.line): \(pr.message)") }
+            if !r.fit.isEmpty { say("\(r.fit.count) slot\(r.fit.count == 1 ? "" : "s") overflow in the specimen: lower the limit named, then build and run specimen again") }
+            return 0
+
+        case "deck import":
+            guard let p = words.first else { return usage("deck import <pptx> [--pack <p> | --new-pack <name>] [--plan <file>] [--out <deck.md>]") }
+            let pptx = url(p)
+            guard FileManager.default.fileExists(atPath: pptx.path) else { err("duo2: can't read \(p)"); return 1 }
+            let cwd = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+            guard let planPath = plan else {
+                var pk: Deck.Pack?
+                if let name = pack { pk = try Deck.loadPack(name, in: Deck.packDirs(near: cwd)) }
+                let s = try DeckImportPlan.survey(pptx, pack: pk)
+                say(json ? try DeckImportPlan.json(s) : DeckImportPlan.render(s))
+                return 0
+            }
+            guard let planText = read(url(planPath)) else { err("duo2: can't read the plan \(planPath)"); return 1 }
+            let o = try Deck.importDeck(pptx: pptx, plan: try DeckImportPlan.parse(planText), pack: pack, newPack: newPack, out: out.map(url), cwd: cwd)
+            say("wrote \(o.deck.path)")
+            say(o.report)
+            return o.problems.isEmpty ? 0 : 1
+
+        case "deck migrate":
+            let cwd = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+            let root = DirectorPlace.resolve(from: cwd).project
+            let ms = Deck.migrations(root: root, packDirs: Deck.packDirs(near: cwd), pack: pack)
+            if ms.isEmpty { say("no deck in \(root.path) uses a slot name its pack has renamed"); return 0 }
+            var n = 0
+            for m in ms {
+                let rel = m.deck.path.hasPrefix(root.path + "/") ? String(m.deck.path.dropFirst(root.path.count + 1)) : m.deck.path
+                say(Deck.unifiedDiff(path: rel, old: m.before, new: m.after))
+                n += m.changes.count
+                if !dryRun { try m.after.write(to: m.deck, atomically: true, encoding: .utf8) }
+            }
+            say(dryRun ? "\(n) slot heading\(n == 1 ? "" : "s") would be renamed in \(ms.count) deck\(ms.count == 1 ? "" : "s") (dry run: nothing written)"
+                       : "renamed \(n) slot heading\(n == 1 ? "" : "s") in \(ms.count) deck\(ms.count == 1 ? "" : "s")")
             return 0
 
         case "deck render":

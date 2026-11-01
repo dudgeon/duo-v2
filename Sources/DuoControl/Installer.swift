@@ -110,7 +110,17 @@ public enum Installer {
         - After every edit run `duo2 deck check <deck>` and fix every problem it names before you stop. It prints `file:line: slide n (template), slot: what's wrong and the fix`. Empty slots are notices, not errors.
         - To give a slide another template: `duo2 deck change <deck> <n> <template>`. Text with no slot in the new template goes to that slide's speaker notes under "Not placed after changing to …", never dropped; read what it printed and move the text where it belongs.
         - To hand it over: `duo2 deck export <deck>` writes `<deck> YYYY-MM-DD HHmm.pptx` beside the deck and removes the previous one. Comments (`{>>@name …<<}`) stay in the Markdown and are left out of the pptx.
+        - If the pack changed a slot's name, the check says `renamed "old" to "new" in <pack>.md; run duo2 deck migrate`. `duo2 deck migrate [--pack <p>] [--dry-run]` rewrites those headings in every deck of the project and prints a diff; run it with --dry-run first and show the user.
+        - A fit problem (`does not fit: 2 lines at 18 pt; the box holds 1`) means the text is too long for its box: cut words or split the slide. Never ask for a smaller font.
         - Don't run python-pptx, pptxgenjs or `soffice`. `duo2 deck render` (a picture of a slide) isn't built yet.
+
+        ### Making templates from the user's deck
+
+        Only when the user asks, and never invent a template they haven't approved.
+        1. `duo2 deck template inventory <deck.pptx> [--slides 3,7] [--json]` lists the theme, fonts (it flags any not in Google Fonts and names a close one), each layout's placeholders, and each slide's shapes with a layout fingerprint; identical fingerprints are grouped and near ones listed with how far apart their boxes are. Read it instead of opening the pptx.
+        2. With the user, choose the slides that become templates; name each template and its slots, say what it is for, set the limits, and say which shapes are decoration. Ask when two readings of a box would change what goes where. Write `templates/decks/<pack>/<pack>.md`: frontmatter `type: deck-template`, `source: <the pptx>`; per template a purpose line and a yaml block with `layout: <an existing layout>` or, for a slide of loose boxes, `from-slide: <n>` and `shape: <box name>` on each slot, `optional: true` on slots a slide may leave out. The lines marked `# duo` are Duo's.
+        3. `duo2 deck template build <pack>` makes the pptx, promotes loose-box slides into layouts, fills the `# duo` lines and checks your lines against it; fix every problem it names (it also names the largest limit that fits a box). Then `duo2 deck template specimen <pack>` writes a deck that uses each template once at its limits and exports it: show the user.
+        4. To turn the user's whole pptx into a Duo deck: `duo2 deck import <deck.pptx> --pack <pack>` (or `--new-pack <name>`) prints the slide groups and the best template for each. Write a plan, put every merge of look-alike layouts to the user first (one template with optional slots, or keep them apart), then `duo2 deck import <deck.pptx> --pack <pack> --plan <plan.yaml> --out <deck.md>` converts the text, notes and comments and prints a report. Read the report: charts become a placeholder picture, and anything that mapped nowhere is in the notes.
 
         ## Families
 
