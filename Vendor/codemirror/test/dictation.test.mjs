@@ -51,6 +51,9 @@ const undoOnce = (st) => { let out = st; undo({ state: st, dispatch: (tr) => { o
   st = apply(st, phraseSpec(st, "words", { first: false, t0: 5 }));
   const t = st.doc.toString();
   check((t.match(/\{\+\+/g) || []).length === 1 && t.includes("and more words"), "with Suggest Edits on the phrases are one signed insertion: " + JSON.stringify(t));
+  // The signed rewrite of a phrase is still the dictation's own (else the page would think the user broke in).
+  const tr = st.update(phraseSpec(st, "again", { first: false, t0: 5 }));
+  check(!breaksDictation(tr), "a phrase rewritten as a signed insertion is still the dictation's own, not a user edit");
 }
 
 // What counts as the user breaking in.

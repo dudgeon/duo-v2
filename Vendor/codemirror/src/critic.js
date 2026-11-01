@@ -10,7 +10,7 @@
 // The scan runs over the whole document, not per paragraph, so a mark that spans paragraphs reads
 // as one (Q-244). Marks inside fenced or inline code are text. The text stays the truth (LR-30):
 // drawing hides the marks' syntax with decorations and never rewrites the document.
-import { StateField, StateEffect, EditorState, EditorSelection } from "@codemirror/state";
+import { StateField, StateEffect, EditorState, EditorSelection, Transaction } from "@codemirror/state";
 import { EditorView, Decoration, hoverTooltip } from "@codemirror/view";
 
 const OPENERS = [["{++", "++}", "ins"], ["{--", "--}", "del"], ["{~~", "~~}", "sub"], ["{==", "==}", "hl"], ["{>>", "<<}", "cm"]];
@@ -392,7 +392,9 @@ const suggestTyping = EditorState.transactionFilter.of((tr) => {
   if (h.from !== h.to && ownInsertionAt(st, h.from, h.to)) return tr;
   const author = st.field(reviewerField), id = nextIds(st.doc)();
   const old = st.sliceDoc(h.from, h.to), m = markFor(old, h.insert, author, id);
-  return { changes: { from: h.from, to: h.to, insert: m.text }, selection: EditorSelection.cursor(h.from + m.caret), userEvent: tr.isUserEvent("delete") ? "delete.backward" : "input.type", scrollIntoView: true };
+  return { changes: { from: h.from, to: h.to, insert: m.text }, selection: EditorSelection.cursor(h.from + m.caret), userEvent: tr.isUserEvent("delete") ? "delete.backward" : "input.type", scrollIntoView: true,
+    // The rewritten change keeps the original's annotations (a dictation's own mark, its history time and isolation), not its user event.
+    annotations: tr.annotations.filter((a) => a.type !== Transaction.userEvent) };
 });
 
 // ---------- theme ----------

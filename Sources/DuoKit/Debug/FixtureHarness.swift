@@ -454,6 +454,21 @@ public enum FixtureHarness {
         case "restore-state":
             let s = model.currentRestoreState()
             FileHandle.standardError.write(Data("restore-state: project=\(s.project.map { URL(fileURLWithPath: $0).lastPathComponent } ?? "-") \(s.projects.map { "\(URL(fileURLWithPath: $0.folder).lastPathComponent):\($0.sessions.count)s/\($0.documents.joined(separator: "+"))/\($0.rightTab ?? "-")" }.joined(separator: " "))\n".utf8))
+        // The formatting bar's states (DL-266), for captures and live checks in a background instance whose window isn't key.
+        case "bar-focus":   // bar-focus[:<ref>]: the editor takes the keyboard as a click would (webFocus), so the bar shows
+            let ref = parts.count > 1 && parts[1] == "second" ? EditorRef.second : EditorRef.main
+            model.editors.active = ref; model.webFocus = .editor; model.editorRevision += 1
+        case "bar-select":   // bar-select:<from>[-<to>]: the caret or selection, as a click or drag leaves it
+            let r = (parts.count > 1 ? parts[1] : "0").split(separator: "-").compactMap { Int($0) }
+            model.editor.run("duo.select(a, b); return 1", ["a": r.first ?? 0, "b": r.last ?? 0]) { _ in }
+        case "bar-listen":   // the mic listening on the showing document (hint row, filled mic)
+            if let u = model.editorIfLoaded?.url { model.voice.showFixture(.listening, target: .document(u.path), level: 0.6, onMicrophone: false) }
+        case "bar-nomic":    // no microphone connected: the faint struck mic
+            model.voice.deviceSource = VideoTargets.FixedMicrophone(usable: false)
+        case "bar-mic":      // a microphone is connected (a fixed device, not the Mac's)
+            model.voice.deviceSource = VideoTargets.FixedMicrophone(usable: true)
+        case "bar-hide": model.setFormatBarHidden(true)
+        case "bar-show": model.setFormatBarHidden(false)
         case "edit-bold": model.editor.run("duo.select(2, 9); duo.exec('bold'); return 1") { _ in }
         case "editor-snapshot":
             let out = parts.count > 1 ? parts[1] : "/tmp/editor.png"

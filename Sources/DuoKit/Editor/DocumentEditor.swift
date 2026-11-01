@@ -25,7 +25,7 @@ public struct ReviewSummary: Equatable, Sendable {
 }
 
 public enum EditorMessage: String, CaseIterable {
-    case openLink, image, pasteImage, tableMenu, noteEdit, ready, selection, copyCode
+    case openLink, image, pasteImage, noteEdit, ready, selection, copyCode
     case propertiesFolded, propertyType, propertyDate, propertyMenu, propertyAdd, propertyReference
     case review, reviewAction
     case dictation
@@ -487,8 +487,6 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
             return
         case .pasteImage:
             savePastedImage(body); return
-        case .tableMenu:
-            tableMenu(body["menu"] as? String ?? "", at: NSPoint(x: body["x"] as? Double ?? 0, y: (body["y"] as? Double ?? 0) + 2)); return
         case .noteEdit:
             // The properties block's own controls (the references field) ask Swift to write (DL-167 step 4).
             let link = body["link"] as? String ?? "", target = body["target"] as? String ?? ""
@@ -879,7 +877,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         if pageReady { webView.evaluateJavaScript("window.duo && duo.setFormatBar(\(on))") }
     }
     /// A user edit or click ended a dictation the page was running (DL-266): the voice input finishes too.
-    var onDictationBreak: (() -> Void)?
+    public var onDictationBreak: (() -> Void)?
 
     // MARK: Dictation into the document (DL-266)
 
@@ -977,20 +975,5 @@ struct DocumentEditorView: NSViewRepresentable {
             super.layout()
             current?.frame = bounds
         }
-    }
-}
-
-extension EditorController {
-    /// The table bar's Align ▾ and Delete ▾ (DL-113): the system's menu under the button, with
-    /// the same items as Format › Table.
-    func tableMenu(_ which: String, at point: NSPoint) {
-        let menu = NSMenu()
-        let items: [(String, String)] = which == "align"
-            ? [("Left", "tableAlignLeft"), ("Center", "tableAlignCenter"), ("Right", "tableAlignRight")]
-            : [("Delete Row", "tableDeleteRow"), ("Delete Column", "tableDeleteColumn")]
-        for (title, name) in items {
-            menu.addItem(ActionMenuItem(title) { [weak self] in self?.run("duo.exec(f); return 1", ["f": name]) { _ in } })  // action: doc table
-        }
-        menu.popUp(positioning: nil, at: point, in: webView)
     }
 }

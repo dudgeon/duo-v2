@@ -6,28 +6,35 @@ import SwiftUI
 /// of the editor while a Markdown document has the keyboard, so the text never moves. Style ⌄, Bold, Italic, Link, Insert Table
 /// and ⋯ at the left; the mic at the trailing end. In a table, + Row, + Column, Align ⌄ and Delete ⌄ take Style's place (the
 /// in-document table bar is gone). Listening, the controls give way to the hint row. Clicks never take the keyboard from the text.
-enum FormatBarLogic {
+public enum FormatBarLogic {
     /// When the bar shows (DL-266): the pane's focus rule, DL-165. It stays while one of its menus is open and while a dictation runs.
-    static func shows(editorHasKeyboard: Bool, isMarkdown: Bool, hidden: Bool, source: Bool, readOnly: Bool, templatePreview: Bool,
+    public static func shows(editorHasKeyboard: Bool, isMarkdown: Bool, hidden: Bool, source: Bool, readOnly: Bool, templatePreview: Bool,
                       menuOpen: Bool, dictating: Bool) -> Bool {
         isMarkdown && !hidden && !source && !readOnly && !templatePreview && (editorHasKeyboard || menuOpen || dictating)
     }
 
     /// Style ⌄'s items, in order: the title and the `duo2 doc format` word.
-    static let styles: [(title: String, command: String)] = [
+    public static let styles: [(title: String, command: String)] = [
         ("Body", "body"), ("Heading 1", "heading1"), ("Heading 2", "heading2"), ("Heading 3", "heading3"), ("Quote", "quote"),
         ("Bulleted List", "bullet"), ("Numbered List", "numbered"), ("Task", "task"), ("Code Block", "codeblock"),
     ]
 
     /// The paragraph at the caret, named for Style's label.
-    static func styleTitle(_ block: String) -> String {
+    public static func styleTitle(_ block: String) -> String {
         if let s = styles.first(where: { $0.command == block }) { return s.title }
         if block.hasPrefix("heading"), let n = Int(block.dropFirst(7)) { return "Heading \(n)" }
         return "Body"
     }
 
     /// Under 420 the table's Align and Delete fold into ⋯.
-    static func foldsTableMenus(width: CGFloat) -> Bool { width < 420 }
+    public static func foldsTableMenus(width: CGFloat) -> Bool { width < 420 }
+
+    /// The controls left to right (DL-266): Style, B, I, Link, Table and ⋯; in a table, + Row, + Column, Align and Delete take
+    /// Style's place after B, I and Link (Align and Delete fold into ⋯ under 420). The mic is always at the trailing end.
+    public static func controls(inTable: Bool, width: CGFloat) -> [String] {
+        guard inTable else { return ["style", "bold", "italic", "link", "table", "more"] }
+        return ["bold", "italic", "link", "row", "column"] + (foldsTableMenus(width: width) ? [] : ["align", "delete"]) + ["more"]
+    }
 
     // Measures from `bar` (handoff §The bar).
     static let leading: CGFloat = 22, trailing: CGFloat = 20
@@ -67,10 +74,9 @@ struct MarkdownFormatBar: View {
         let mine: Bool = { if case .document(let p)? = voice.target, p == e.url?.path { return true }; return false }()
         let state = mine ? voice.state : .idle
         GeometryReader { g in
-            let folds = FormatBarLogic.foldsTableMenus(width: g.size.width)
             HStack(spacing: 0) {
                 if mine, ChatVoiceLine.shows(state) { hintRow(state) }
-                else { controls(e, folds: folds) }
+                else { controls(e, width: g.size.width) }
                 Spacer(minLength: 0)
                 mic(state: state, mine: mine)
             }
@@ -85,25 +91,29 @@ struct MarkdownFormatBar: View {
 
     // MARK: Controls
 
-    @ViewBuilder private func controls(_ e: EditorController, folds: Bool) -> some View {
-        let inTable = e.inTable
+    @ViewBuilder private func controls(_ e: EditorController, width: CGFloat) -> some View {
+        let ids = FormatBarLogic.controls(inTable: e.inTable, width: width)
         HStack(spacing: FormatBarLogic.gap) {
-            if !inTable { styleMenu(e) ; separator }
-            glyph("bold", help: "Bold ⌘B", on: e.caretMarks.contains("bold")) { Text("B").font(.system(size: FormatBarLogic.markSize, weight: .bold)) } run: { format("bold") }
-            glyph("italic", help: "Italic ⌘I", on: e.caretMarks.contains("italic")) { Text("I").font(.system(size: FormatBarLogic.markSize, weight: .regular).italic()) } run: { format("italic") }
-            glyph("link", help: "Link ⌘K", on: e.caretMarks.contains("link")) { Image(systemName: "link").font(.system(size: FormatBarLogic.markSize)) } run: { format("link") }
-            if inTable {
-                separator
-                wordButton("+ Row", help: "Add Row Below") { format("tableRowBelow") }
-                wordButton("+ Column", help: "Add Column After") { format("tableColumnAfter") }
-                if !folds {
-                    menuButton("Align", help: "Align Column") { alignMenu() }
-                    menuButton("Delete", help: "Delete Row or Column") { deleteMenu() }
-                }
-            } else {
-                glyph("table", help: "Insert Table", on: false) { Image(systemName: "tablecells").font(.system(size: FormatBarLogic.markSize)) } run: { format("tableInsert") }
+            ForEach(ids, id: \.self) { id in
+                control(id, e, folds: FormatBarLogic.foldsTableMenus(width: width) && e.inTable)
+                // The one separator: after Style, or before the table's own controls.
+                if id == "style" || (e.inTable && id == "link") { separator }
             }
-            glyph("more", help: "More", on: model.formatBarMenuOpen) { Image(systemName: "ellipsis").font(.system(size: FormatBarLogic.markSize)) } run: { popUp("more", moreMenu(e, folds: folds && inTable)) }
+        }
+    }
+
+    @ViewBuilder private func control(_ id: String, _ e: EditorController, folds: Bool) -> some View {
+        switch id {
+        case "style": styleMenu(e)
+        case "bold": glyph("bold", help: "Bold ⌘B", on: e.caretMarks.contains("bold")) { Text("B").font(.system(size: FormatBarLogic.markSize, weight: .bold)) } run: { format("bold") }
+        case "italic": glyph("italic", help: "Italic ⌘I", on: e.caretMarks.contains("italic")) { Text("I").font(.system(size: FormatBarLogic.markSize, weight: .regular).italic()) } run: { format("italic") }
+        case "link": glyph("link", help: "Link ⌘K", on: e.caretMarks.contains("link")) { Image(systemName: "link").font(.system(size: FormatBarLogic.markSize)) } run: { format("link") }
+        case "table": glyph("table", help: "Insert Table", on: false) { Image(systemName: "tablecells").font(.system(size: FormatBarLogic.markSize)) } run: { format("tableInsert") }
+        case "row": wordButton("+ Row", help: "Add Row Below") { format("tableRowBelow") }
+        case "column": wordButton("+ Column", help: "Add Column After") { format("tableColumnAfter") }
+        case "align": menuButton("Align", help: "Align Column") { alignMenu() }
+        case "delete": menuButton("Delete", help: "Delete Row or Column") { deleteMenu() }
+        default: glyph("more", help: "More", on: model.formatBarMenuOpen) { Image(systemName: "ellipsis").font(.system(size: FormatBarLogic.markSize)) } run: { popUp("more", moreMenu(e, folds: folds)) }
         }
     }
 
@@ -229,7 +239,7 @@ struct MarkdownFormatBar: View {
         HStack(spacing: 6) {
             switch state {
             case .listening:
-                VoiceBars(levels: voice.levels, color: DuoColor.text2).frame(width: 12)
+                VoiceBars(levels: voice.levels, color: DuoColor.text).frame(width: 12)
                 Text("Listening").duoText(.chatMeta).foregroundStyle(DuoColor.text)
                 Text(voice.holding ? "· Let go of ⇧⌘D to finish" : "· ⇧⌘D or the mic finishes · esc ends").duoText(.chatMeta).foregroundStyle(DuoColor.text2)
                     .lineLimit(1).truncationMode(.tail)

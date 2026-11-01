@@ -638,7 +638,7 @@ public struct Invocation: Sendable {
     public var flags: [String: String] = [:]
 
     /// Flags that take no value.
-    public static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "use-folder", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "full-page", "session", "open", "sessions", "keep-sessions", "synthetic", "resolved", "force", "session-only", "left", "right", "hidden", "anyway", "not-now", "no-interview", "cancel", "fetch", "background", "in-duo", "suggest", "closed", "unsent", "take-over", "handed-back", "no-worker", "adopt", "clear", "refresh", "no-open", "log", "add"]
+    public static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "use-folder", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "full-page", "session", "open", "sessions", "keep-sessions", "synthetic", "resolved", "force", "session-only", "left", "right", "hidden", "anyway", "not-now", "no-interview", "cancel", "fetch", "background", "in-duo", "suggest", "closed", "unsent", "take-over", "handed-back", "no-worker", "adopt", "clear", "refresh", "no-open", "log", "add", "doc"]
 
     /// Flags whose value is optional: the next word is theirs unless it's another flag.
     public static let optionalValues: Set<String> = ["remote-control"]
