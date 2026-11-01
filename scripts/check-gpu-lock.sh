@@ -20,6 +20,8 @@
 # The time limit (F-510), ending in "PASS" or "FAIL" lines (the script exits 1 if any FAIL):
 #  - a hung command that ignores TERM is KILLed past its limit, with its child, and the hold released; the next waiter runs;
 #  - the loud line and the <lock>.log line are written; the exit status is 124; a bystander process outside is untouched;
+#  - a caller that sets no limit is warned, not killed, until the backstop (6 h); GPU_LOCK_MAX_REASON turns the backstop off;
+#    GPU_LOCK_ENFORCE=1 enforces the default;
 #  - a normal command's exit code passes through; shared slots are as before; no limit needs a reason; --status lists.
 #   scripts/check-gpu-lock.sh   (about 55 s, in /tmp)
 set -u
@@ -182,6 +184,20 @@ grep -q "next start" "$LOG" && ok "the queue moved on: the next waiter ran" || b
 "$R/scripts/gpu-lock.sh" "test exit" bash -c 'exit 7' 2> /dev/null; [ $? = 7 ] && ok "a normal command's exit code 7 passes through" || bad "exit code lost"
 "$R/scripts/gpu-lock.sh" --shared "test ok" true 2> /dev/null; [ $? = 0 ] && ok "a quick shared command exits 0" || bad "shared exit code"
 "$R/scripts/gpu-lock.sh" "test nope" /no/such/command 2> /dev/null; [ $? = 127 ] && ok "a command that can't start exits 127" || bad "missing command status"
+
+# A caller that sets no limit: warned at the default, not killed, until the backstop; the default and backstop are shrunk
+# with test hooks (GPU_LOCK_DEFAULT_MIN, GPU_LOCK_BACKSTOP_MIN).
+export GPU_LOCK_DEFAULT_MIN=0.03 GPU_LOCK_WARN_EVERY_MIN=0.03 GPU_LOCK_BACKSTOP_MIN=0.1 GPU_LOCK_GRACE=2
+"$R/scripts/gpu-lock.sh" "test nolimit-warn" sleep 5 2> "$T/w.err"; wst=$?
+[ "$wst" = 0 ] && grep -q "WARNING: test nolimit-warn has held" "$T/w.err" && ! grep -q exceeded "$T/w.err" && ok "no limit set: warned at the default, not killed" || bad "warn-only: status $wst: $(cat "$T/w.err")"
+[ "$(grep -c WARNING "$T/w.err")" -ge 2 ] && ok "the warning repeats" || bad "the warning did not repeat"
+grep -q "warning after .* no limit set" "$L.log" && ok "the warning is in <lock>.log" || bad "no warning in the log"
+"$R/scripts/gpu-lock.sh" "test backstop" sleep 300 2> "$T/b.err"; bst=$?
+[ "$bst" = 124 ] && grep -q "test backstop exceeded 0.1 min; ended" "$T/b.err" && ok "the backstop ends a hung command that set no limit" || bad "backstop: status $bst: $(cat "$T/b.err")"
+GPU_LOCK_BACKSTOP_MIN=0.05 GPU_LOCK_MAX_REASON="long render" "$R/scripts/gpu-lock.sh" "test reason" sleep 6 2> /dev/null; [ $? = 0 ] && ok "GPU_LOCK_MAX_REASON turns the backstop off" || bad "backstop ignored the reason"
+GPU_LOCK_ENFORCE=1 "$R/scripts/gpu-lock.sh" "test enforce" sleep 300 2> "$T/e.err"; est=$?
+[ "$est" = 124 ] && grep -q "test enforce exceeded 0.03 min" "$T/e.err" && ok "GPU_LOCK_ENFORCE=1 enforces the default limit" || bad "enforce: status $est"
+unset GPU_LOCK_DEFAULT_MIN GPU_LOCK_WARN_EVERY_MIN GPU_LOCK_BACKSTOP_MIN GPU_LOCK_GRACE
 
 # Shared slots: two run at once, a third waits, and a hung shared job is ended without blocking the others.
 : > "$LOG"

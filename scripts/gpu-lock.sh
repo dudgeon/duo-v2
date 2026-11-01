@@ -10,10 +10,13 @@
 # An owner is "<name> <pid>". A live owner is waited for; an owner whose pid is gone is cleared (a job that died
 # without releasing), and so is a hold that has had no owner for GPU_LOCK_ORPHAN seconds (default 60: one that died
 # between its mkdir and writing `owner`). The hold is released when the command ends, however it ends.
-# A hold has a time limit (F-510): GPU_LOCK_MAX_MIN minutes, default 60 exclusive and 45 shared, counted from when the
-# command starts. Past it the command's own process group gets TERM, then KILL after GPU_LOCK_GRACE seconds (default 15),
-# the hold is released, "gpu-lock: <owner> exceeded <n> min; ended" goes to stderr and a line to <lock>.log; the exit
-# status is 124. GPU_LOCK_MAX_MIN=0 means no limit and needs GPU_LOCK_MAX_REASON (voice fine-tunes that run for hours).
+# A hold has a time limit (F-510), counted from when the command starts. A caller that sets GPU_LOCK_MAX_MIN (minutes) or
+# GPU_LOCK_ENFORCE=1 gets it enforced: 60 min exclusive and 45 shared by default; past it the command's own process group
+# gets TERM, then KILL after GPU_LOCK_GRACE seconds (default 15), the hold is released, "gpu-lock: <owner> exceeded <n>
+# min; ended" goes to stderr and a line to <lock>.log, and the exit status is 124. GPU_LOCK_MAX_MIN=0 means no limit and
+# needs GPU_LOCK_MAX_REASON. A caller that sets neither (a long render from another repo) is only warned about: at 60
+# (45) min and every GPU_LOCK_WARN_EVERY_MIN (15) after, to stderr and <lock>.log, never killed before the backstop of
+# GPU_LOCK_BACKSTOP_MIN (360 min = 6 h), which GPU_LOCK_MAX_REASON turns off (voice fine-tunes that run for hours).
 #   GPU_LOCK=<lock dir> scripts/gpu-lock.sh --status   lists every holder and waiter with its age.
 # The lock's path is machine-local, so it comes from $GPU_LOCK, never from this file.
 #
@@ -44,12 +47,21 @@ shift
 queue="$lock.queue"
 shared="$lock.shared"
 case "$kind" in exclusive) default_min=60 ;; *) default_min=45 ;; esac
+[ -z "${GPU_LOCK_DEFAULT_MIN:-}" ] || default_min="$GPU_LOCK_DEFAULT_MIN"   # a test hook
 max_min="${GPU_LOCK_MAX_MIN:-$default_min}"
 [[ "$max_min" =~ ^[0-9]*\.?[0-9]+$ ]] || { echo "gpu-lock: GPU_LOCK_MAX_MIN must be a number of minutes" >&2; exit 2; }
 if awk -v m="$max_min" 'BEGIN { exit !(m == 0) }'; then
   [ -n "${GPU_LOCK_MAX_REASON:-}" ] || { echo "gpu-lock: GPU_LOCK_MAX_MIN=0 (no limit) needs GPU_LOCK_MAX_REASON saying why" >&2; exit 2; }
 fi
-limit_s=$(awk -v m="$max_min" 'BEGIN { printf "%d", m * 60 + 0.999 }')
+secs() { awk -v m="$1" 'BEGIN { printf "%d", m * 60 + 0.999 }'; }
+warn_s=0; warn_every_s=$(secs "${GPU_LOCK_WARN_EVERY_MIN:-15}")
+if [ -n "${GPU_LOCK_MAX_MIN:-}" ] || [ "${GPU_LOCK_ENFORCE:-}" = 1 ]; then
+  limit_min="$max_min"          # enforced
+else
+  warn_s=$(secs "$max_min")     # warned only, until the backstop
+  limit_min="${GPU_LOCK_BACKSTOP_MIN:-360}"; [ -z "${GPU_LOCK_MAX_REASON:-}" ] || limit_min=0
+fi
+limit_s=$(secs "$limit_min")
 grace="${GPU_LOCK_GRACE:-15}"
 slots="${GPU_LOCK_SHARED_SLOTS:-2}"
 poll="${GPU_LOCK_POLL:-2}"
@@ -176,14 +188,24 @@ watch=$!
 perl -e 'setpgrp(0, 0); exec { $ARGV[0] } @ARGV; print STDERR "gpu-lock: cannot run $ARGV[0]: $!\n"; exit 127' "$@" &
 child=$!
 trap 'kill -TERM -- -"$child" 2>/dev/null || kill -TERM "$child" 2>/dev/null' TERM INT
-logline() { echo "$(date '+%F %T') | $name | $kind | limit ${max_min} min | $*" >> "$lock.log" 2>/dev/null; }
+logline() { echo "$(date '+%F %T') | $name | $kind | limit ${limit_min} min | $*" >> "$lock.log" 2>/dev/null; }
 over="$(mktemp "${TMPDIR:-/tmp}/gpu-lock-over.XXXXXX")"; rm -f "$over"
 wd=""
-if [ "$limit_s" -gt 0 ]; then
+if [ "$limit_s" -gt 0 ] || [ "$warn_s" -gt 0 ]; then
   me_pid=$$
-  ( end=$((SECONDS + limit_s))
-    while [ "$SECONDS" -lt "$end" ]; do kill -0 "$me_pid" 2>/dev/null && kill -0 "$child" 2>/dev/null || exit 0; sleep 1; done
-    echo "gpu-lock: $name exceeded $max_min min; ended" >&2
+  ( start=$SECONDS; next_warn=$warn_s
+    while :; do
+      kill -0 "$me_pid" 2>/dev/null && kill -0 "$child" 2>/dev/null || exit 0
+      el=$((SECONDS - start))
+      [ "$limit_s" -gt 0 ] && [ "$el" -ge "$limit_s" ] && break
+      if [ "$warn_s" -gt 0 ] && [ "$el" -ge "$next_warn" ]; then
+        echo "gpu-lock: WARNING: $name has held the $kind lock for $((el / 60)) min and set no GPU_LOCK_MAX_MIN; it is not ended before $limit_min min" >&2
+        logline "warning after $((el / 60)) min, no limit set"
+        next_warn=$((next_warn + warn_every_s))
+      fi
+      sleep 1
+    done
+    echo "gpu-lock: $name exceeded $limit_min min; ended" >&2
     : > "$over"
     # Kill the command's own group only, and only if it really is one (never this script's group, never Duo's).
     pg=$(ps -o pgid= -p "$child" 2>/dev/null | tr -d ' ')
@@ -194,9 +216,8 @@ if [ "$limit_s" -gt 0 ]; then
     logline "exceeded the limit: $res"
   ) &
   wd=$!
-elif [ -n "${GPU_LOCK_MAX_REASON:-}" ]; then
-  logline "no time limit: $GPU_LOCK_MAX_REASON"
 fi
+[ "$limit_s" -gt 0 ] || [ -z "${GPU_LOCK_MAX_REASON:-}" ] || logline "no time limit: $GPU_LOCK_MAX_REASON"
 while :; do wait "$child"; status=$?; kill -0 "$child" 2>/dev/null || break; done
 if [ -n "$wd" ]; then
   if [ -e "$over" ]; then wait "$wd"; status=124; else kill "$wd" 2>/dev/null; fi

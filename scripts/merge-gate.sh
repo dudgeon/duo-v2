@@ -23,6 +23,7 @@ here="$(cd "$(dirname "$0")/.." && pwd)"
 main="$(cd "$(git -C "$here" rev-parse --git-common-dir)/.." && pwd)"
 lock="$main/scripts/gpu-lock.sh"
 [ -x "$lock" ] || { echo "merge-gate: $lock is missing" >&2; exit 2; }
+export GPU_LOCK_ENFORCE=1   # a hung gate is ended at its lock's time limit, not left holding it (F-510)
 sha="$(git -C "$main" rev-parse --verify "$ref^{commit}")" || { echo "merge-gate: no such commit: $ref" >&2; exit 2; }
 tree="${MERGE_GATE_TREE:-$main/.claude/worktrees/director-check}"
 if [ -d "$tree" ]; then
