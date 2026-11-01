@@ -118,7 +118,7 @@ public enum Deck {
         public func template(_ n: String) -> Template? { templates.first { $0.name == n } }
     }
 
-    public struct Failure: Error, CustomStringConvertible { public let description: String }
+    public struct Failure: Error, CustomStringConvertible { public let description: String; public init(description: String) { self.description = description } }
 
     // MARK: the deck
 
