@@ -195,3 +195,21 @@ import Foundation
     check(PreviewProviders.kind(forFile: "a.md") == .markdown && PreviewProviders.kind(forFile: "a.html") == .html && PreviewProviders.kind(forFile: "a.png") == nil, "Markdown and HTML preview; a picture doesn't")
     check(PreviewProviders.kind(forFile: "a.pptx") == nil, "a deck has no preview until Duo Decks registers its provider")
 }
+
+/// C-136: what a Markdown preview render costs, timed under the exclusive lock (`DUO_CHECKS=split-perf`).
+@MainActor func splitViewPerf() {
+    print("split view: preview render time (C-136)")
+    for lines in [200, 2000, 20000] {
+        var md = "# Title\n\n"
+        for i in 0..<lines / 4 { md += "## Section \(i)\n\nA paragraph with **bold**, `code` and a [link](https://x.y/\(i)).\n\n- one\n- two\n\n" }
+        var best = Double.infinity
+        for _ in 0..<5 {
+            let t0 = DispatchTime.now().uptimeNanoseconds
+            let page = MarkdownPreviewHTML.page(md, colors: ("#fff", "#000", "#555", "#ccc"))
+            let map = MarkdownPreviewHTML.anchorMap(md)
+            best = min(best, Double(DispatchTime.now().uptimeNanoseconds - t0) / 1e6)
+            check(!page.isEmpty && !map.isEmpty, "rendered \(lines) lines")
+        }
+        print("  \(lines) lines (\(md.utf8.count / 1024) KB): \(String(format: "%.1f", best)) ms to HTML and anchor map")
+    }
+}

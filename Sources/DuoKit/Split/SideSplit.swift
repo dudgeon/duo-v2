@@ -43,7 +43,8 @@ final class SideSplitView: NSSplitView {
     }
 
     override func layout() {
-        let isFolded = SplitGeometry.folded(width: Double(bounds.width))
+        // The pane's whole width: a folded split gives 16 pt of it to its rail.
+        let isFolded = SplitGeometry.folded(width: Double(bounds.width) + (folded ? SplitRoom.railWidth : 0))
         applying = true
         if isFolded {
             // Only the active side shows; the other is kept, hidden (never torn down).
@@ -70,7 +71,8 @@ final class SideSplitView: NSSplitView {
     }
 
     func didResize() {
-        guard !applying, !folded, arrangedSubviews.count == 2, bounds.width > 0 else { return }
+        // Only a drag of the divider changes the ratio; a window or pane resize doesn't.
+        guard !applying, !folded, arrangedSubviews.count == 2, bounds.width > 0, NSEvent.pressedMouseButtons & 1 != 0 else { return }
         let r = SplitGeometry.ratio(left: Double(arrangedSubviews[0].frame.width), width: Double(bounds.width))
         if abs(r - ratio) > 0.002 { ratio = r; onRatio?(r) }
     }

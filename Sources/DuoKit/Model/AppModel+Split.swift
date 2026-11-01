@@ -198,7 +198,14 @@ extension AppModel {
         guard let t = showingSplit else { return "no split view showing" }
         let name = { (r: SplitRole) in r == .source ? t.source : (t.with ?? t.kind.sideName) }
         let left = name(t.role(at: .left)), right = name(t.role(at: .right))
-        return "left: \(left)\nright: \(right)\nactive: \(t.activeSide.rawValue)\nratio: \(String(format: "%.3f", t.ratio))\nfolded: \(t.folded)\nsidebar folded by the split: \(splits.sidebarFolded)"
+        let panes = splits.paneHost.map { $0.arrangedSubviews.map { Int($0.frame.width) } } ?? []
+        return "panes: \(panes)
+left: \(left)
+right: \(right)
+active: \(t.activeSide.rawValue)
+ratio: \(String(format: "%.3f", t.ratio))
+folded: \(t.folded)
+sidebar folded by the split: \(splits.sidebarFolded)"
     }
 
     // MARK: - Making room (DL-276)
@@ -208,8 +215,13 @@ extension AppModel {
         let width = Double(host.bounds.width)
         let plan = SplitRoom.plan(window: width, sidebarShown: !leftCollapsedProject)
         splits.taken = SplitRoom.Taken(rightWidth: Double(host.lastPaneWidth), sidebarWasShown: !leftCollapsedProject, foldedSidebar: plan.foldsSidebar)
-        if plan.foldsSidebar { leftCollapsedProject = true }
-        host.setLastPaneWidth(CGFloat(plan.rightWidth))
+        if plan.foldsSidebar {
+            leftCollapsed = true
+            // The sidebar's slide runs on its own clock and would put the right pane back: widen it once the slide ends.
+            splits.applyRightWidthSoon(plan.rightWidth, after: 0.35)
+        } else {
+            host.setLastPaneWidth(CGFloat(plan.rightWidth))
+        }
     }
 
     /// Closing the last split gives back exactly what it took.
@@ -217,8 +229,12 @@ extension AppModel {
         guard let taken = splits.taken else { return }
         splits.taken = nil
         splits.peek = false
-        splits.paneHost?.setLastPaneWidth(CGFloat(taken.rightWidth))
-        if taken.foldedSidebar, taken.sidebarWasShown { leftCollapsedProject = false }
+        if taken.foldedSidebar, taken.sidebarWasShown {
+            leftCollapsedProject = false
+            splits.applyRightWidthSoon(taken.rightWidth, after: 0.35)   // after the sidebar's slide, which would undo it
+        } else {
+            splits.paneHost?.setLastPaneWidth(CGFloat(taken.rightWidth))
+        }
     }
 
     /// ⌃⌘S: the sidebar, or while the split folded it, a peek over the console.

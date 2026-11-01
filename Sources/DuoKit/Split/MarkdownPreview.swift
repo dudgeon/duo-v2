@@ -108,9 +108,18 @@ public final class MarkdownPreviewProvider: NSObject, PreviewProvider, WKNavigat
             webView.effectiveAppearance.performAsCurrentDrawingAppearance { r = c.usingColorSpace(.sRGB) ?? c }
             return String(format: "#%02X%02X%02X", Int(r.redComponent * 255), Int(r.greenComponent * 255), Int(r.blueComponent * 255))
         }
-        let page = MarkdownPreviewHTML.page(text, colors: (hex(DuoNSColor.pane), hex(DuoNSColor.text), hex(DuoNSColor.text2), hex(DuoNSColor.rule)))
-        webView.loadHTMLString(page, baseURL: nil)
-        emit?(.anchorMap(rev: rev, MarkdownPreviewHTML.anchorMap(text)))
+        let colors = (hex(DuoNSColor.pane), hex(DuoNSColor.text), hex(DuoNSColor.text2), hex(DuoNSColor.rule))
+        // The HTML and the anchor map are made off the main thread (rule 6); a newer render that arrives
+        // meanwhile wins, and this one is dropped at the gate on its way back.
+        Task.detached(priority: .userInitiated) { [weak self] in
+            let page = MarkdownPreviewHTML.page(text, colors: colors)
+            let map = MarkdownPreviewHTML.anchorMap(text)
+            await MainActor.run {
+                guard let self, self.gate.newest == rev else { return }
+                self.webView.loadHTMLString(page, baseURL: nil)
+                self.emit?(.anchorMap(rev: rev, map))
+            }
+        }
     }
 
     public func reveal(anchor: String, reason: RevealReason) {

@@ -56,6 +56,7 @@ func repoFixture() throws -> Fixture {
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "pair" { return try splitDocsChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "editorperf" { return try editorPerfChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "split" { return try splitViewChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "split-perf" { return splitViewPerf() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "docxlook" { return try docxLookChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "tabs" { return try tabOrderChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "newsession" { return try newSessionChecks() }

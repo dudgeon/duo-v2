@@ -32,9 +32,9 @@ public final class SplitState {
     public var sidebarFolded: Bool { taken?.foldedSidebar == true }
     public var any: Bool { tabs.values.contains { !$0.isEmpty } }
 
-    func applyRightWidthSoon(_ w: Double) {
+    func applyRightWidthSoon(_ w: Double, after delay: Double = 0.4) {
         pendingRightWidth = nil
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
             MainActor.assumeIsolated { self?.paneHost?.setLastPaneWidth(CGFloat(w)) }
         }
     }

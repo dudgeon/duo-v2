@@ -99,6 +99,9 @@ public final class PreviewPolicy {
     public static let renderPause: Duration = .milliseconds(250)
     public var caretFollow = true
     public var scrollFollow = false
+    /// Where the preview's comment requests go: split view wires these to the editor's `openThread` and
+    /// `addComment` (slice 2's EditorController API), which never take the keyboard.
+    public var onRequest: ((PreviewEvent) -> Void)?
 
     /// The editor's current revision: every buffer change makes a new one.
     public private(set) var rev = 0
@@ -140,7 +143,7 @@ public final class PreviewPolicy {
             if origin == .reveal || a == revealing { revealing = nil; return false }   // our own reveal coming back
             current = a
         case .activate(let a, _): current = a
-        case .openThread, .addComment: break   // routed to the editor by the caller (`routes`)
+        case .openThread, .addComment: onRequest?(e)   // R11, R12: the editor's review margin, never taking focus from the preview
         }
         return true
     }
