@@ -461,6 +461,46 @@ public enum FixtureHarness {
         case "restore-state":
             let s = model.currentRestoreState()
             FileHandle.standardError.write(Data("restore-state: project=\(s.project.map { URL(fileURLWithPath: $0).lastPathComponent } ?? "-") \(s.projects.map { "\(URL(fileURLWithPath: $0.folder).lastPathComponent):\($0.sessions.count)s/\($0.documents.joined(separator: "+"))/\($0.rightTab ?? "-")" }.joined(separator: " "))\n".utf8))
+        // The formatting bar's states (DL-266), for captures and live checks in a background instance whose window isn't key.
+        case "bar-focus":   // bar-focus[:<ref>]: the editor takes the keyboard as a click would (webFocus), so the bar shows
+            let ref = parts.count > 1 && parts[1] == "second" ? EditorRef.second : EditorRef.main
+            model.editors.active = ref; model.webFocus = .editor; model.editorRevision += 1
+        case "bar-select":   // bar-select:<from>[-<to>]: the caret or selection, as a click or drag leaves it
+            let r = (parts.count > 1 ? parts[1] : "0").split(separator: "-").compactMap { Int($0) }
+            model.editor.run("duo.select(a, b); return 1", ["a": r.first ?? 0, "b": r.last ?? 0]) { _ in }
+        case "bar-listen":   // the mic listening on the showing document (hint row, filled mic)
+            if let u = model.editorIfLoaded?.url { model.voice.showFixture(.listening, target: .document(u.path), level: 0.6, onMicrophone: false) }
+        case "bar-nomic":    // no microphone connected: the faint struck mic
+            model.voice.deviceSource = VideoTargets.FixedMicrophone(usable: false)
+        case "bar-mic":      // a microphone is connected (a fixed device, not the Mac's)
+            model.voice.deviceSource = VideoTargets.FixedMicrophone(usable: true)
+        case "dictation-probe":   // Q-181: macOS's own Dictation talks to the focused view as NSTextInputClient (marked text, then insertText); does the editor take it?
+            let e = model.editor, w = e.webView
+            w.window?.makeFirstResponder(w)
+            let client = w.inputContext?.client
+            let none = NSRange(location: NSNotFound, length: 0)
+            var out = "dictation-probe: inputContext=\(w.inputContext != nil) client=\(client.map { String(describing: type(of: $0)) } ?? "nil") firstResponder=\(w.window?.firstResponder === w)\n"
+            client?.setMarkedText("hello wor", selectedRange: NSRange(location: 9, length: 0), replacementRange: none)
+            client?.insertText("hello world", replacementRange: none)
+            e.run("return duo.text()") { v in
+                FileHandle.standardError.write(Data((out + "dictation-probe: text now ends with: \(String(((v as? String) ?? "").suffix(40)).debugDescription)\n").utf8))
+            }
+        case "bar-dictate":   // bar-dictate:<audio file>: a spoken file through voice input into the showing document (as duo2 voice file --doc)
+            if let u = model.editorIfLoaded?.url, parts.count > 1 { model.voice.start(.document(u.path), source: .file(URL(fileURLWithPath: parts[1]))) }
+        case "bar-text":   // the document's text and undo depth, to stderr
+            model.editor.run("return [duo.text(), duo.undoDepth(), duo.dictActive()]") { v in
+                let a = v as? [Any] ?? []
+                FileHandle.standardError.write(Data("bar-text: depth=\(a.count > 1 ? "\(a[1])" : "?") dictActive=\(a.count > 2 ? "\(a[2])" : "?") text=\(String(describing: a.first ?? "").debugDescription)\n".utf8))
+            }
+        case "bar-undo": model.editor.run("duo.undo(); return 1") { _ in }
+        case "bar-return":   // Return while dictating, as the key monitor takes it: finish, then the editor's Return
+            if let ed = model.editorIfLoaded { model.voice.finishWhenDone { _ in ed.dictationEnd { ed.dictationNewline() } } }
+        case "bar-js":   // bar-js:<script file>: the file's body runs in the editor's page; its return value goes to stderr
+            if parts.count > 1, let code = try? String(contentsOfFile: parts[1], encoding: .utf8) {
+                model.editor.run(code) { v in FileHandle.standardError.write(Data("bar-js: \(String(describing: v ?? "nil"))\n".utf8)) }
+            }
+        case "bar-hide": model.setFormatBarHidden(true)
+        case "bar-show": model.setFormatBarHidden(false)
         case "edit-bold": model.editor.run("duo.select(2, 9); duo.exec('bold'); return 1") { _ in }
         case "editor-snapshot":
             let out = parts.count > 1 ? parts[1] : "/tmp/editor.png"

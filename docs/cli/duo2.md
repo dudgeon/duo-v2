@@ -36,6 +36,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 view sort recent\|name` | Order All projects' map by newest activity or by name (View › Sort Projects By). | Sort Projects By, map sort popup |
 | `duo2 view filter [text]` | Narrow All projects' middle, whichever shows: the Board to projects and folders whose name or path has the text, the List to sessions about it; no text clears it. | Filter folders, Filter sessions |
 | `duo2 view home board\|list\|toggle [--archived on\|off]` | All projects' middle (DL-142): the Board (the map) or the List, every session across projects by recency (View › Show Board / Show List). Duo remembers the choice. --archived shows or hides the List's Archived fold (its Group popup's Show Archived). | Board, List, Show Board, Show List, Group By Recent, Show Archived, list group popup |
+| `duo2 view format-bar show\|hide\|toggle` | Show or hide the Markdown formatting bar over the editor (View › Hide Formatting Bar). It shows only while a Markdown document has the keyboard. | Hide Formatting Bar, Show Formatting Bar, Formatting Bar |
 | `duo2 view hidden on\|off\|toggle` | Show or hide dotfiles in the project's file tree (View › Show Hidden Files). | Show Hidden Files |
 | `duo2 view folder <folder> open\|close` | Open or close a folder in the project's file tree. | folder row |
 
@@ -192,7 +193,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 doc selection` | The text selected in the editor, with its file and lines. | — |
 | `duo2 doc select <line> [to-line]` | Select lines in the showing document. | — |
 | `duo2 doc save` | Save the showing document now (it also autosaves). | Save |
-| `duo2 doc format bold\|italic\|strikethrough\|code\|link\|heading1\|heading2\|heading3\|task\|properties` | Format the selection (bold, italic, strikethrough, code, a link waiting for its address), make its lines headings or tasks (again takes it off), or start the properties block. | Bold, Italic, Strikethrough, Code, Link…, Heading 1, Heading 2, Heading 3, Task, Add Properties |
+| `duo2 doc format bold\|italic\|strikethrough\|code\|link\|heading1\|heading2\|heading3\|task\|body\|quote\|bullet\|numbered\|codeblock\|properties` | Format the selection (bold, italic, strikethrough, code, a link waiting for its address), make its lines headings, quotes, bulleted or numbered items or tasks (again takes it off; body clears the mark), fence them as a code block, or start the properties block. | Bold, Italic, Strikethrough, Code, Link…, Heading 1, Heading 2, Heading 3, Task, Body, Quote, Bulleted List, Numbered List, Code Block, Add Properties, Style |
 | `duo2 doc table insert\|row-above\|row-below\|column-before\|column-after\|delete-row\|delete-column\|align-left\|align-center\|align-right\|next\|previous` | Edit the table at the caret as Markdown, its columns kept lined up: insert a 3 × 2 table, add or delete a row or column, align a column, or move to the next or previous cell (the last cell's next adds a row). | Insert Table, Add Row Above, Add Row Below, Add Column Before, Add Column After, Delete Row, Delete Column, Left, Center, Right, + Row, + Column, Align, Delete |
 | `duo2 doc find <text>` | Find text in the showing document and select the next match. | Find |
 | `duo2 doc mode [source\|preview\|toggle]` | Show the document as its text (source) or rendered (preview), as View › Source Mode does; remembered per document. With nothing, says which it shows now (DL-167). | Source Mode |
@@ -296,10 +297,10 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 send selection [--to <id> \| --new]` | Put the user's selection (document or HTML page) into a session's prompt. | Send Selection to Claude, Send Selection To, Send Image to Claude, Send Image To |
 | `duo2 send element [--to <id> \| --new]` | Put the picked HTML element, or the shape picked on a slide, into a session's prompt. | Send to Claude, Send To, New Session |
 | `duo2 send text <text> [--to <id> \| --new]` | Type text into a session's prompt for the user to finish and send. | — |
-| `duo2 voice start [<id> \| shell]` | Start voice input in a session (the one showing by default): words go into its chat composer, or its terminal prompt a phrase at a time; Return is never pressed. Needs the user to have allowed the microphone in Duo; never asks in a scripted or isolated Duo. | Start Voice Input, Voice Input |
-| `duo2 voice stop [<id> \| shell]` | Finish voice input: the last phrases land, nothing is sent. | Stop Voice Input |
-| `duo2 voice status [<id> \| shell]` | Whether voice input is listening, downloading Apple's speech model, or off, and why. | — |
-| `duo2 voice file <audio file> [<id> \| shell]` | Feed an audio file (absolute path or ~) through voice input into a session's composer or prompt, as if spoken. The scripted twin of the mic; never touches the microphone. | — |
+| `duo2 voice start [<id> \| shell \| --doc]` | With --doc (or while a Markdown document has the keyboard), words go into the document at the caret, a phrase at a time, one undo for the whole dictation, signed as a suggestion when Suggest Edits is on; Return finishes then adds a line. Otherwise: start voice input in a session (the one showing by default): words go into its chat composer, or its terminal prompt a phrase at a time; Return is never pressed. Needs the user to have allowed the microphone in Duo; never asks in a scripted or isolated Duo. | Start Voice Input, Voice Input |
+| `duo2 voice stop [<id> \| shell \| --doc]` | Finish voice input: the last phrases land, nothing is sent. | Stop Voice Input |
+| `duo2 voice status [<id> \| shell \| --doc]` | Whether voice input is listening (and into which document), downloading Apple's speech model, or off, and why. | — |
+| `duo2 voice file <audio file> [<id> \| shell \| --doc]` | Feed an audio file (absolute path or ~) through voice input into a session's composer or prompt, as if spoken. The scripted twin of the mic; never touches the microphone. | — |
 | `duo2 selection` | What the user has selected or picked right now, in the editor or an HTML page. | — |
 
 ## Search

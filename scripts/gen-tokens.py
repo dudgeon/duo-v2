@@ -113,6 +113,7 @@ w(f"    public static let tabPeek: CGFloat = {num(s['tabPeek'])}")   # how much 
 w(f"    public static let tabEdgeScroll: CGFloat = {num(s['tabEdgeScroll'])}")   # a dragged tab this near an end scrolls the strip
 w(f"    public static let tabNeedsYouDot: CGFloat = {num(s['tabNeedsYouDot'])}")   # a needs-you tab out of view, in the fade
 w(f"    public static let deckBarHeight: CGFloat = {num(s['deckBarHeight'])}")   # the PowerPoint viewer's bar (DL-125)
+w(f"    public static let formatBarHeight: CGFloat = {num(s['formatBarHeight'])}")   # the Markdown formatting bar, laid over the editor (DL-266)
 w(f"    public static let docxMenuWidth: CGFloat = {num(s['docxMenuWidth'])}")   # the Word viewer's Markup menu (docx-viewer-handoff W4)
 w(f"    public static let docxMenuTop: CGFloat = {num(s['docxMenuTop'])}")
 w(f"    public static let docxBarTrailing: CGFloat = {num(s['docxBarTrailing'])}")   # the Word viewer's bar runs close to the right edge, as the board draws it

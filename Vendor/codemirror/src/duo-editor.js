@@ -3,12 +3,13 @@
 // save writes back exactly what was read plus the user's edits (LR-30).
 import { EditorState, ChangeSet, StateField, StateEffect, RangeSetBuilder, Text, Compartment, Prec } from "@codemirror/state";
 import { EditorView, ViewPlugin, Decoration, WidgetType, keymap } from "@codemirror/view";
-import { defaultKeymap, history, historyKeymap, undo, undoDepth } from "@codemirror/commands";
+import { defaultKeymap, history, historyKeymap, undo, undoDepth, insertNewlineAndIndent } from "@codemirror/commands";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { syntaxTree } from "@codemirror/language";
 import { autocompletion, startCompletion, completionStatus, acceptCompletion } from "@codemirror/autocomplete";
 import { marginExtensions, marginTheme, composeComment, activate, setDelivery, addThread, replyTo, closeThread, reopenThread, deleteThread } from "./margin.js";
 import { reviewCore, reviewDrawing, reviewSummary, setMarkup as setReviewMarkup, setReviewer, onReviewAction, resolveSuggestion, resolveAll as resolveAllSuggestions, step as stepReview, suggestHunks, reviewField, suggestEditsOn } from "./critic.js";
+import { tailField, dictationTheme, phraseSpec, endSpec, breaksDictation, setTail } from "./dictation.js";
 import { renumberLists, renumberAfter, listIndentKeys } from "./lists.js";
 import { search, searchKeymap, SearchQuery, setSearchQuery, getSearchQuery, findNext, findPrevious, openSearchPanel, closeSearchPanel, replaceNext } from "@codemirror/search";
 
@@ -1324,12 +1325,11 @@ const clearOnUserEdit = EditorView.updateListener.of((u) => {
 // (n of them, one more than the rows for the `---` line) together fill what the widget was, and a table
 // too short for that is padded to it, so nothing below moves when the caret enters or leaves.
 // A row draws 29 (4 + 20 + 4 + its rule) and the table one more for the last rule, in Chromium and WebKit alike.
-const TABLE_BAR = 28;
 // A row is a line plus its cell padding and rule (29 at the 13/20 page); the page's size and line height are the app's tokens.
 const docVar = (name, fallback) => parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || fallback;
 const tableHeight = (rows) => {
   const line = docVar("--duo-document-line", 20), pad = 8 * docVar("--duo-document-size", 13) / 13;   // a cell's padding, 4 above and below
-  return Math.max((line + pad + 1) * rows + 1, line * (rows + 1) + TABLE_BAR);
+  return Math.max((line + pad + 1) * rows + 1, line * (rows + 1));
 };
 class TableWidget extends WidgetType {
   constructor(rows, align) { super(); this.rows = rows; this.align = align; }
@@ -1610,27 +1610,6 @@ function insertImage(md, id) {
   return true;
 }
 
-// The bar over a table while the caret is in it (DL-113, tables-handoff `tables-bar`).
-class TableBarWidget extends WidgetType {
-  eq() { return true; }
-  toDOM() {
-    const d = document.createElement("div");
-    d.className = "duo-table-bar";
-    d.innerHTML = `<button type="button" data-a="row">+ Row</button><button type="button" data-a="column">+ Column</button>` +
-                  `<button type="button" data-a="align">Align ▾</button><button type="button" data-a="delete">Delete ▾</button>`;
-    d.addEventListener("mousedown", (e) => {
-      const b = e.target.closest("button"); if (!b) return;
-      e.preventDefault();
-      const a = b.dataset.a;
-      if (a === "row") addRow(true);
-      else if (a === "column") addColumn(true);
-      else { const r = b.getBoundingClientRect(); post("tableMenu", { menu: a, x: r.left, y: r.bottom }); }
-    });
-    return d;
-  }
-  ignoreEvent() { return true; }
-}
-
 // An image on its own line: the picture (Duo reads the file and hands it over, since the page
 // can't), radius 6 with a `rule` border, its alt text as a 12 `text2` caption. A missing file is a
 // dashed box naming it.
@@ -1698,8 +1677,8 @@ function blockDecorations(state) {
         if (node.name === "Table") {
           const a = state.doc.lineAt(node.from), b = state.doc.lineAt(node.to);
           for (let n = a.number; n <= b.number; n++) if (active.has(n)) {
-            out.push(Decoration.widget({ widget: new TableBarWidget(), block: true, side: -1 }).range(a.from));
-            const per = (tableHeight(b.number - a.number) - TABLE_BAR) / (b.number - a.number + 1);
+            // The 28 the in-document bar took goes to the source rows; the controls live in the format bar (DL-266).
+            const per = tableHeight(b.number - a.number) / (b.number - a.number + 1);
             for (let n = a.number; n <= b.number; n++) out.push(Decoration.line({ class: "duo-table-src", attributes: { style: `min-height:${per}px` } }).range(state.doc.line(n).from));
             return false;
           }
@@ -1852,9 +1831,6 @@ const duoTheme = EditorView.theme({
   ".cm-line.duo-blank": { height: "10px", lineHeight: "10px" },
   ".duo-hr": { display: "inline-block", width: "100%", height: "1px", verticalAlign: "middle", backgroundColor: "var(--duo-rule)" },
   ".duo-table th, .duo-table td": { padding: `${S(4)} ${S(8)}`, border: "1px solid var(--duo-rule)", whiteSpace: "nowrap" },
-  ".duo-table-bar": { display: "flow-root", boxSizing: "border-box", height: `${TABLE_BAR}px`, paddingBottom: "6px" },
-  ".duo-table-bar button": { fontFamily: "var(--duo-font-ui)", fontSize: "12px", lineHeight: "16px", padding: "2px 8px", border: "1px solid var(--duo-control-edge)",
-                             borderRadius: "6px", background: "var(--duo-pane)", color: "var(--duo-text)", cursor: "default", whiteSpace: "nowrap" },
   ".duo-table th": { backgroundColor: "var(--duo-ground)", fontWeight: "var(--duo-document-heading-weight)" },
   ".duo-figure": { display: "flow-root", padding: "4px 0" },
   ".duo-img": { maxWidth: "100%", borderRadius: "6px", border: "1px solid var(--duo-rule)" },
@@ -1890,7 +1866,7 @@ const duoTheme = EditorView.theme({
   ".duo-added-fading": { borderRadius: "var(--duo-radius-card)", animation: "duo-highlight-out calc(var(--duo-motion-highlight-out-ms, 0) * 1ms) ease-in-out both" },
   ".duo-task": { display: "inline-flex", margin: "0 8px 0 0", verticalAlign: "-1px", cursor: "default", textIndent: "0" },
   // The properties block (frontmatter-handoff §2, slice2 task-note): sizes from tokens size.propertiesBlock.
-  "&.duo-has-fm .cm-content, .cm-content.duo-has-fm": { paddingTop: "14px" },
+  "&.duo-has-fm .cm-content, .cm-content.duo-has-fm": { paddingTop: "var(--duo-document-padding-y)" },   // was 14: the formatting bar needs the 24 here too (Q-411),
   ".duo-fm-head": { display: "flex", alignItems: "center", gap: "6px", margin: "0 -8px", paddingBottom: "6px", fontFamily: "var(--duo-font-ui)", fontSize: "13px", lineHeight: "20px", color: "var(--duo-text2)" },
   ".duo-fm-label": { fontSize: "11px", lineHeight: "16px", fontWeight: "600", letterSpacing: "0.06em" },
   ".duo-fm-plus": { marginLeft: "auto", cursor: "default" },
@@ -2106,9 +2082,29 @@ function create(parent, text, source) {
 // building a new one. Memory is bounded by the open tabs: Duo says when one closes.
 const held = new Map();   // id → { state, scroll, base, sepInfo }
 let shownId = null;
+// What is at the caret, for the formatting bar (DL-266): the marks that cover it (the whole selection,
+// when there is one) and the paragraph's style.
+const INLINE_MARKS = { StrongEmphasis: "bold", Emphasis: "italic", Strikethrough: "strike", InlineCode: "code", Link: "link" };
+function caretFormat(state) {
+  const r = state.selection.main, tree = syntaxTree(state);
+  const marksAt = (pos) => {
+    const out = new Set();
+    for (let n = tree.resolveInner(pos, -1); n; n = n.parent) if (INLINE_MARKS[n.name]) out.add(INLINE_MARKS[n.name]);
+    return out;
+  };
+  let marks = marksAt(r.head);
+  if (!r.empty) { const a = marksAt(r.from), b = marksAt(r.to - 1); marks = new Set([...a].filter((m) => b.has(m))); }
+  const line = state.doc.lineAt(r.head).text;
+  let fenced = false;
+  for (let n = tree.resolveInner(r.head, -1); n; n = n.parent) if (n.name === "FencedCode" || n.name === "CodeBlock") fenced = true;
+  const h = /^(#{1,6})[ \t]/.exec(line);
+  const block = fenced ? "codeblock" : h ? "heading" + h[1].length : /^\s*[-*+][ \t]+\[[ xX]\]/.test(line) ? "task"
+    : isBullet(line) ? "bullet" : isNumbered(line) ? "numbered" : /^\s*>/.test(line) ? "quote" : "body";
+  return { marks: [...marks], block };
+}
 const selectionReport = (state) => {
   const r = state.selection.main, claude = state.field(changesField);
-  return { doc: shownId, from: r.from, to: r.to, empty: r.empty, dirty: !state.doc.eq(baseDoc),
+  return { doc: shownId, from: r.from, to: r.to, empty: r.empty, dirty: !state.doc.eq(baseDoc), ...caretFormat(state),
            claudeChanges: claude.length, atClaudeChange: claude.some((c) => r.head >= c.from && r.head <= c.to), inTable: !!tableAt(state, r.head) };
 };
 function show(id, diskText, opts) {
@@ -2214,8 +2210,12 @@ function extensions(readOnly) {
       keymap.of(listIndentKeys),
       keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap].filter((b) => !DUO_CHORDS.has(b.key))),
       EditorView.contentAttributes.of({ spellcheck: "true", autocorrect: "on", autocapitalize: "on" }),
+      tailField, dictationTheme,
+      // The formatting bar lies over the top 24 of the viewport (DL-266): the caret, a find match or a review step never stops under it.
+      EditorView.scrollMargins.of(() => (formatBarOn ? { top: FORMAT_BAR } : null)),
       EditorView.updateListener.of((u) => {
         if (stash) return;   // a preview: not the document
+        if (dictating && u.transactions.some(breaksDictation)) { dictating = null; post("dictation", { op: "break" }); }
         if (u.selectionSet || u.docChanged) {
           // Never stringify the document per keystroke: 1.2 MB × every edit was 280 MB of garbage (F-34).
           post("selection", selectionReport(u.state));
@@ -2284,7 +2284,45 @@ function addProperties() {
   startCompletion(view);
 }
 
+// Paragraph styles for the formatting bar (DL-266): each is `lineMark` with one mark. A line has one
+// block mark, so choosing a style replaces a heading, quote or list mark the line already has.
+const BLOCK_MARK = /^(?:#{1,6}[ \t]+|>[ \t]?|\s*(?:[-*+][ \t]+(?:\[[ xX]\][ \t]+)?|\d+[.)][ \t]+))/;
+function bodyStyle() {
+  const state = view.state, changes = [], seen = new Set();
+  for (const r of state.selection.ranges) for (let n = state.doc.lineAt(r.from).number; n <= state.doc.lineAt(r.to).number; n++) {
+    if (seen.has(n)) continue;
+    seen.add(n);
+    const l = state.doc.line(n), old = BLOCK_MARK.exec(l.text)?.[0] ?? "";
+    if (old) changes.push({ from: l.from, to: l.from + old.length });
+  }
+  if (changes.length) view.dispatch({ changes, userEvent: "input.format" });
+}
+// Code Block fences the selected lines; with the caret already in a fenced block, takes the fence off.
+function codeBlock() {
+  const state = view.state, r = state.selection.main;
+  let node = syntaxTree(state).resolveInner(r.head, -1);
+  while (node && node.name !== "FencedCode" && node.parent) node = node.parent;
+  if (node && node.name === "FencedCode") {
+    const a = state.doc.lineAt(node.from), b = state.doc.lineAt(node.to);
+    const changes = [{ from: a.from, to: Math.min(a.to + 1, state.doc.length) }];
+    if (b.number > a.number && /^\s*(```|~~~)\s*$/.test(b.text)) changes.push({ from: Math.max(a.to + 1, b.from - 1), to: b.to });
+    view.dispatch({ changes, userEvent: "input.format" });
+    return;
+  }
+  // A selection that ends at a line's start doesn't take that line.
+  const endPos = !r.empty && r.to > r.from && state.doc.lineAt(r.to).from === r.to ? r.to - 1 : r.to;
+  const first = state.doc.lineAt(r.from), last = state.doc.lineAt(endPos);
+  view.dispatch({ changes: [{ from: first.from, insert: "```\n" }, { from: last.to, insert: "\n```" }], selection: { anchor: r.from + 4, head: r.to + 4 }, userEvent: "input.format" });
+}
+const isBullet = (t) => /^\s*[-*+][ \t]+(?!\[[ xX]\])/.test(t);
+const isNumbered = (t) => /^\s*\d+[.)][ \t]/.test(t);
+
 const commands = {
+  body: bodyStyle,
+  quote: () => lineMark("> ", BLOCK_MARK, (t) => /^>/.test(t)),
+  bullet: () => lineMark("- ", BLOCK_MARK, isBullet),
+  numbered: () => lineMark("1. ", BLOCK_MARK, isNumbered),
+  codeblock: codeBlock,
   bold: () => wrap("**"),
   italic: () => wrap("*"),
   strikethrough: () => wrap("~~"),
@@ -2538,7 +2576,43 @@ function bench(n) {
   return { p50: times[Math.floor(n * 0.5)], p95: times[Math.floor(n * 0.95)], max: times[n - 1] };
 }
 
+// The formatting bar (DL-266) is Swift's, laid over the editor; the page only keeps its 24 out of the way of scrolling.
+const FORMAT_BAR = 24;
+let formatBarOn = false;
+// Dictation into the document: { t0, first } while one runs. `breaksDictation` ends it when the user types or clicks.
+let dictating = null;
+
 window.duo = {
+  setFormatBar: (on) => { formatBarOn = !!on; return true; },
+  // Dictating (DL-266): dictBegin → dictTail(text)* / dictPhrase(text)* → dictEnd. Phrases land at the caret one change each,
+  // stamped with the start time so the history joins them into one undo step.
+  dictBegin: () => {
+    if (!view || view.state.readOnly) return false;
+    dictating = { t0: Date.now(), first: true };
+    view.focus();
+    return true;
+  },
+  dictPhrase: (text) => {
+    if (!dictating || !text) return false;
+    view.dispatch(phraseSpec(view.state, text, dictating));
+    dictating.first = false;
+    return true;
+  },
+  dictTail: (text) => {
+    if (!dictating) return false;
+    view.dispatch({ effects: setTail.of({ at: view.state.selection.main.to, text: text || "" }) });
+    return true;
+  },
+  dictEnd: () => {
+    if (!dictating) return false;
+    const used = !dictating.first;
+    dictating = null;
+    if (used) view.dispatch(endSpec(view.state)); else view.dispatch({ effects: setTail.of({ at: 0, text: "" }) });
+    return true;
+  },
+  dictActive: () => !!dictating,
+  // Return after a dictation: the editor's own Return.
+  newline: () => { insertNewlineAndIndent(view); return true; },
   // The note's context from Duo: { task, sessions: { id: { state, name, wait } } } (S2-5).
   setContext: (c) => { view.dispatch({ effects: setContext.of(c) }); return true; },
   insertImage,

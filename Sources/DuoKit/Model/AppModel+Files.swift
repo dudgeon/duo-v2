@@ -33,6 +33,13 @@ extension AppModel {
         set { if let p = currentProject?.name { openDocumentsByProject[p] = newValue } }
     }
 
+    /// View › Hide Formatting Bar (DL-266).
+    public func setFormatBarHidden(_ hidden: Bool) {
+        formatBarHidden = hidden
+        DuoState.update { $0.formatBarHidden = hidden }
+        editorRevision += 1
+    }
+
     /// View › Show Hidden Files (DL-105): dotfiles in every project's tree, remembered.
     public func setShowHiddenFiles(_ on: Bool) {
         showHiddenFiles = on
