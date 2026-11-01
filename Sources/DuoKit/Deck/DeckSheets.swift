@@ -17,6 +17,7 @@ public struct DeckPackChoice: Identifiable, Hashable, Sendable {
     public var id: String { name }
     public var count: Int { templates.count }
     public var detail: String { "\(scope) · \(count) template\(count == 1 ? "" : "s")" }
+    public var menuTitle: String { "\(name) · \(detail)" }
 }
 
 @MainActor @Observable public final class NewDeckForm {
@@ -56,6 +57,7 @@ public struct DeckPackChoice: Identifiable, Hashable, Sendable {
 }
 
 public enum DeckSheets {
+    public static let newPackTitle = "A new pack from this deck"
     /// `Autumn trial` → `autumn-trial`.
     public static func slug(_ name: String) -> String {
         let s = name.lowercased().map { $0.isLetter || $0.isNumber ? String($0) : "-" }.joined()
@@ -179,7 +181,7 @@ struct DeckPackStrip: View {
             ForEach(Array((pack?.templates ?? []).prefix(8).enumerated()), id: \.offset) { i, name in
                 RoundedRectangle(cornerRadius: 2).fill(i == 1 ? DuoColor.text2.opacity(0.35) : DuoColor.pane)
                     .overlay(RoundedRectangle(cornerRadius: 2).strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
-                    .overlay(Text(name).font(.system(size: 6)).foregroundStyle(DuoColor.text2).lineLimit(1).padding(.horizontal, 2))
+                    .overlay(alignment: .topLeading) { DuoColor.text2.opacity(0.5).frame(width: 14, height: 2).padding(4) }
                     .aspectRatio(16 / 9, contentMode: .fit)
                     .accessibilityLabel(name)
             }
@@ -230,7 +232,7 @@ struct NewDeckSheet: View {
             SheetRow("Template pack") {
                 VStack(alignment: .leading, spacing: 6) {
                     DeckSheetPopup(value: form.pack, detail: form.chosen?.detail) {
-                        ForEach(form.packs) { p in Button("\(p.name) · \(p.detail)") { form.pack = p.name } }   // not an action: picks a field's value
+                        ForEach(form.packs) { p in Button(p.menuTitle) { form.pack = p.name } }   // not an action: picks a field's value
                     }
                     DeckPackStrip(pack: form.chosen)
                 }
@@ -279,9 +281,9 @@ struct ConvertDeckSheet: View {
                 .duoText(.control, lineHeight: DuoTextStyle.body.spec.lineHeight).foregroundStyle(DuoColor.text2).fixedSize(horizontal: false, vertical: true)
             SheetRow("Template pack", center: true) {
                 DeckSheetPopup(value: form.pack.isEmpty ? "A new pack from this deck" : form.pack + (form.packs.first { $0.name == form.pack }.map { " · " + $0.scope } ?? "")) {
-                    ForEach(form.packs) { p in Button("\(p.name) · \(p.detail)") { form.pack = p.name } }   // not an action: picks a field's value
+                    ForEach(form.packs) { p in Button(p.menuTitle) { form.pack = p.name } }   // not an action: picks a field's value
                     Divider()
-                    Button("A new pack from this deck") { form.pack = "" }   // not an action: picks a field's value
+                    Button(DeckSheets.newPackTitle) { form.pack = "" }   // not an action: picks a field's value
                 }
             }
             SheetRow("") { Text("Also: another pack, or a new pack from this deck").duoText(.pill).foregroundStyle(DuoColor.text2) }

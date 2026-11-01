@@ -63,9 +63,9 @@ struct DeckProblemsButton: View {
     var body: some View {
         let _ = model.pickerRevision
         let n = preview.errors.count
-        Button { preview.toggleMenu("problems") } label: {   // action: deck problems
+        Button { preview.toggleDropdown("problems") } label: {   // action: deck problems
             HStack(spacing: 4) {
-                Image(systemName: "exclamationmark.triangle").font(.system(size: 10, weight: .regular))
+                Image(systemName: "exclamationmark.triangle").font(.system(size: DuoSymbolSize.chevron, weight: .regular))
                 Text("\(n) problem\(n == 1 ? "" : "s")").fontWeight(.semibold)
                 Image(systemName: "chevron.down").font(.system(size: DuoSymbolSize.chevron, weight: .semibold))
             }
@@ -85,7 +85,7 @@ struct DeckExportButton: View {
 
     var body: some View {
         let _ = model.pickerRevision
-        Button { preview.toggleMenu("export") } label: {   // action: deck export
+        Button { preview.toggleDropdown("export") } label: {   // action: deck export
             HStack(spacing: 4) { Text("Export"); Image(systemName: "chevron.down").font(.system(size: DuoSymbolSize.chevron, weight: .semibold)) }
         }
         .buttonStyle(DuoButtonStyle(on: preview.menu == "export"))
@@ -98,14 +98,25 @@ struct DeckPptxButtons: View {
     @Environment(AppModel.self) private var model
     let viewer: DeckViewer
     let path: String
-    var folded = false
+    /// 0: both buttons; 1: both in a ⋯ menu (under 460); 2: the narrowest pane, where Open With goes in the ⋯ menu too.
+    var folded = 0
+    var file: URL? = nil
 
     var body: some View {
-        if folded {
+        if folded > 0 {
             Menu {
                 Button("Make Templates…") { toggleMake() }   // action: deck template pick
                     .disabled(viewer.state != .ready)
                 Button("Convert to Duo Deck…") { model.showConvertDeck(path) }   // action: deck import
+                if folded > 1, let file {
+                    Divider()
+                    ForEach(Array(FileActions.apps(for: file).enumerated()), id: \.offset) { i, app in
+                        Button(FileManager.default.displayName(atPath: app.path) + (i == 0 ? " (default)" : "")) {
+                            NSWorkspace.shared.open([file], withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
+                        }
+                    }
+                    Button("Other…") { model.openWithChosenApp(path) }
+                }
             } label: { Text("⋯") }
             .menuStyle(.button).buttonStyle(.duo).fixedSize().menuIndicator(.hidden)
             .accessibilityLabel("More")

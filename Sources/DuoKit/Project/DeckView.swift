@@ -49,16 +49,17 @@ struct DeckBar: View {
         // A pane narrower than the board's 460 shortens the count to "2/5" (DL-132 j, q68-narrow);
         // while drawing, ‹ › and Select Shape are dimmed (q68-drawing).
         ViewThatFits(in: .horizontal) {
-            bar(long: true, folded: false)
-            bar(long: false, folded: false)
-            bar(long: false, folded: true)
+            bar(long: true, folded: 0)
+            bar(long: false, folded: 0)
+            bar(long: false, folded: 1)
+            bar(long: false, folded: 2)
         }
         .padding(.horizontal, DuoMetric.noticePaddingX)
         .frame(height: DuoMetric.deckBarHeight)
         .overlay(alignment: .bottom) { DuoColor.rule.frame(height: DuoMetric.borderHairline) }
     }
 
-    private func bar(long: Bool, folded: Bool) -> some View {
+    private func bar(long: Bool, folded: Int) -> some View {
         HStack(spacing: DuoSpace.gapButtonToButton) {
             Button { viewer.go(viewer.slide - 1) } label: { Text("‹") }   // action: slide go
                 .buttonStyle(.duo).disabled(viewer.slide <= 1).help("Previous Slide").accessibilityLabel("Previous Slide")
@@ -82,8 +83,8 @@ struct DeckBar: View {
             if let preview {
                 DeckExportButton(preview: preview).fixedSize()
             } else {
-                DeckPptxButtons(viewer: viewer, path: path, folded: folded)
-                OpenWithMenu(path: path, file: file, bordered: true)
+                DeckPptxButtons(viewer: viewer, path: path, folded: folded, file: file)
+                if folded < 2 { OpenWithMenu(path: path, file: file, bordered: true) }
             }
         }
     }

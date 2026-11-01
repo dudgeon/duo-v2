@@ -26,7 +26,7 @@ extension DeckPreview {
 
     func pushOverlay() { viewer.setOverlay(overlayJSON()) }
 
-    public func toggleMenu(_ which: String) {
+    public func toggleDropdown(_ which: String) {
         menu = menu == which ? nil : which
         menuHover = nil
         viewer.onChange?()

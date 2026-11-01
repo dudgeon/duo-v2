@@ -9,6 +9,9 @@ import Foundation
 
 /// Files that list folders without the rule, and why that's safe. Keys are paths under `Sources/`.
 let walkGuardExempt: [String: String] = [
+    "DuoKit/Deck/AppModel+DeckP3b.swift": "one listing of the deck's own folder, for its dated exports",
+    "DuoKit/Deck/DeckCards.swift": "one listing of the deck's own folder, for its dated exports",
+    "DuoKit/Deck/DeckSheets.swift": "the project folder's top-level folders (New Deck's Folder menu) and the packs' folders",
     "DuoKit/Chat/ChatSignal.swift": "the mod's own copy, in Duo's support folder",
     "DuoKit/Claude/ClaudeStorage.swift": "Claude's config folder (~/.claude/projects)",
     "DuoKit/Editor/HTMLViewer.swift": "one listing of the open page's own folder",
