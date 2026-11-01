@@ -1,0 +1,59 @@
+diff --git a/Sources/DuoKit/Model/AppModel+Split.swift b/Sources/DuoKit/Model/AppModel+Split.swift
+index 701144e4..4b448198 100644
+--- a/Sources/DuoKit/Model/AppModel+Split.swift
++++ b/Sources/DuoKit/Model/AppModel+Split.swift
+@@ -99,6 +99,10 @@ extension AppModel {
+         let policy = splits.policy(project, path)
+         policy.onRequest = { [weak self, weak policy] e in if let policy { self?.previewRequest(e, policy) } }   // R11, R12
+         if t.kind == .markdown { splits.markdown.emit = { [weak policy] e in policy?.accept(e) } }
++        if t.kind == .deck, let file = liveFile(path) {
++            splits.deck.bind(path: path, file: file, model: self)
++            splits.deck.emit = { [weak policy] e in policy?.accept(e) }
++        }
+         let render: @MainActor (Int) -> Void = { [weak self] rev in self?.renderPreview(path, rev: rev) }
+         editor(.main).onBufferChange = { [weak policy] in policy?.bufferChanged(render: render) }
+         // The editor opens the file after this view appears: render once it has, and again a moment later.
+@@ -116,7 +120,8 @@ extension AppModel {
+             case .html:
+                 let root = Self.isOutsideFile(path) ? file.deletingLastPathComponent() : (self.projectFolder ?? file.deletingLastPathComponent())
+                 self.htmlViewer.renderBuffer(text, file: file, root: root)
+-            case .deck, .document: break   // Duo Decks' provider (preview-provider)
++            case .deck: self.splits.deck.render(text: text, rev: rev)
++            case .document: break
+             }
+         }
+     }
+@@ -183,7 +188,7 @@ extension AppModel {
+         case .markdown: splits.markdown.webView
+         case .html: htmlViewerIfLoaded?.webView
+         case .document: editorIfLoaded(.second)?.webView
+-        case .deck: nil
++        case .deck: splits.deck.viewer.webView
+         }
+     }
+ 
+diff --git a/Sources/DuoKit/Split/SideSplit.swift b/Sources/DuoKit/Split/SideSplit.swift
+index 1a07be5f..442ab7f7 100644
+--- a/Sources/DuoKit/Split/SideSplit.swift
++++ b/Sources/DuoKit/Split/SideSplit.swift
+@@ -208,7 +208,7 @@ struct SplitPreviewSide: View {
+                 if let w = model.splitTab(path)?.with, let f = model.liveFile(w) ?? model.keptFile(w) {
+                     DocumentStack(file: f, ref: .second)
+                 } else { DuoColor.pane }
+-            case .deck: DuoColor.pane   // Duo Decks' provider fills this (preview-provider)
++            case .deck: WebPreviewView(web: model.splits.deck.view).background(DuoColor.pane)   // Duo Decks' provider: the viewer's 44 bar, the slides, the picker bar
+             }
+         }
+     }
+diff --git a/Sources/DuoKit/Split/SplitState.swift b/Sources/DuoKit/Split/SplitState.swift
+index 159e280a..dc678d06 100644
+--- a/Sources/DuoKit/Split/SplitState.swift
++++ b/Sources/DuoKit/Split/SplitState.swift
+@@ -26,6 +26,7 @@ public final class SplitState {
+     @ObservationIgnored var pendingRightWidth: Double?
+     @ObservationIgnored var policies: [String: PreviewPolicy] = [:]
+     @ObservationIgnored public lazy var markdown = MarkdownPreviewProvider()
++    @ObservationIgnored public lazy var deck = DeckPreview()
+ 
+     public init() {}
+ 
