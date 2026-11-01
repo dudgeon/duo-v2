@@ -21,7 +21,7 @@ import Foundation
 
     // The table swap: Style's place goes to + Row, + Column, Align and Delete; they fold into ⋯ under 420.
     check(L.controls(inTable: false, width: 460) == ["style", "bold", "italic", "link", "table", "more"], "out of a table: Style, B, I, Link, Table, ⋯")
-    check(L.controls(inTable: true, width: 460) == ["bold", "italic", "link", "row", "column", "align", "delete", "more"], "in a table at 460: B, I, Link, + Row, + Column, Align, Delete, ⋯ (no Style)")
+    check(L.controls(inTable: true, width: 460) == ["bold", "italic", "link", "row", "column", "align", "delete"], "in a table at 460: B, I, Link, + Row, + Column, Align, Delete (no Style, as the board draws it)")
     check(L.controls(inTable: true, width: 360) == ["bold", "italic", "link", "row", "column", "more"], "in a table at 360: Align and Delete fold into ⋯")
     check(!L.controls(inTable: false, width: 360).contains("mic") && !L.controls(inTable: true, width: 360).contains("mic"), "the mic is not a control that folds: it is always the trailing end")
     check(L.styles.map(\.command) == ["body", "heading1", "heading2", "heading3", "quote", "bullet", "numbered", "task", "codeblock"], "Style offers Body, Heading 1–3, Quote, Bulleted List, Numbered List, Task, Code Block")

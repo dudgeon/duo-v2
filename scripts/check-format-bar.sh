@@ -33,7 +33,7 @@ open="open:refunds-api-spec,open-file:$doc,wait:2"
 # run <state> <appearance> <width> <actions>
 run() {
   local n="$1-$2"
-  rm -rf $root/cc-$n $root/sup-$n; mkdir -p $root/cc-$n $root/sup-$n
+  chmod -R u+w $root/cc-$n $root/sup-$n 2>/dev/null; rm -rf $root/cc-$n $root/sup-$n; mkdir -p $root/cc-$n $root/sup-$n
   env -u DUO_SUPPORT_DIR DUO_APPEARANCE=$2 DUO_EXTRA_ENV="DUO_SUPPORT_DIR=$root/sup-$n CLAUDE_CONFIG_DIR=$root/cc-$n DUO_APPEARANCE=$2" DUO_TIMEOUT=${DUO_TIMEOUT:-60} \
     scripts/run-live.sh $ws "$out/$n.png" "$open,right-width:$3,$4" "$out/$n.log" >/dev/null
   sleep 1
@@ -41,9 +41,9 @@ run() {
 }
 for a in light dark classic; do
   run rest $a 460 "wait:1"
-  run top $a 460 "bar-focus,bar-select:30,wait:2"
-  run table $a 460 "bar-focus,bar-select:120,wait:2"
-  run table-narrow $a 360 "bar-focus,bar-select:120,wait:2"
+  run top $a 460 "bar-focus,bar-select:30,bar-mic,wait:2"
+  run table $a 460 "bar-focus,bar-select:120,bar-mic,wait:2"
+  run table-narrow $a 360 "bar-focus,bar-select:120,bar-mic,wait:2"
 done
 run listening dark 460 "bar-focus,bar-select:30,bar-mic,bar-listen,wait:2"
 run nomic classic 460 "bar-focus,bar-select:30,bar-nomic,wait:2"

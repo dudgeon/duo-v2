@@ -33,13 +33,14 @@ public enum FormatBarLogic {
     /// Style's place after B, I and Link (Align and Delete fold into ⋯ under 420). The mic is always at the trailing end.
     public static func controls(inTable: Bool, width: CGFloat) -> [String] {
         guard inTable else { return ["style", "bold", "italic", "link", "table", "more"] }
-        return ["bold", "italic", "link", "row", "column"] + (foldsTableMenus(width: width) ? [] : ["align", "delete"]) + ["more"]
+        // As the board draws it: at 460 the table's controls fill the bar (no ⋯, no Insert Table); under 420 ⋯ holds Align and Delete.
+        return ["bold", "italic", "link", "row", "column"] + (foldsTableMenus(width: width) ? ["more"] : ["align", "delete"])
     }
 
     // Measures from `bar` (handoff §The bar).
-    static let leading: CGFloat = 22, trailing: CGFloat = 20
-    static let glyphWidth: CGFloat = 24, controlHeight: CGFloat = 20, glyphRadius: CGFloat = 5, markSize: CGFloat = 13
-    static let micDiameter: CGFloat = 20, micGlyph: CGFloat = 12, separatorHeight: CGFloat = 12, gap: CGFloat = 2
+    static let leading: CGFloat = 22, trailing: CGFloat = 12
+    static let glyphWidth: CGFloat = 24, controlHeight: CGFloat = 20, glyphRadius: CGFloat = 5, markSize: CGFloat = 13, symbolSize: CGFloat = 10.5
+    static let micDiameter: CGFloat = 20, micGlyph: CGFloat = 12, micSymbol: CGFloat = 9.5, separatorHeight: CGFloat = 12, gap: CGFloat = 2
 }
 
 /// Where the bar goes: over the editor of this side, on a Markdown document.
@@ -107,13 +108,13 @@ struct MarkdownFormatBar: View {
         case "style": styleMenu(e)
         case "bold": glyph("bold", help: "Bold ⌘B", on: e.caretMarks.contains("bold")) { Text("B").font(.system(size: FormatBarLogic.markSize, weight: .bold)) } run: { format("bold") }
         case "italic": glyph("italic", help: "Italic ⌘I", on: e.caretMarks.contains("italic")) { Text("I").font(.system(size: FormatBarLogic.markSize, weight: .regular).italic()) } run: { format("italic") }
-        case "link": glyph("link", help: "Link ⌘K", on: e.caretMarks.contains("link")) { Image(systemName: "link").font(.system(size: FormatBarLogic.markSize)) } run: { format("link") }
-        case "table": glyph("table", help: "Insert Table", on: false) { Image(systemName: "tablecells").font(.system(size: FormatBarLogic.markSize)) } run: { format("tableInsert") }
+        case "link": glyph("link", help: "Link ⌘K", on: e.caretMarks.contains("link")) { Image(systemName: "link").font(.system(size: FormatBarLogic.symbolSize)) } run: { format("link") }
+        case "table": glyph("table", help: "Insert Table", on: false) { Image(systemName: "tablecells").font(.system(size: FormatBarLogic.symbolSize)) } run: { format("tableInsert") }
         case "row": wordButton("+ Row", help: "Add Row Below") { format("tableRowBelow") }
         case "column": wordButton("+ Column", help: "Add Column After") { format("tableColumnAfter") }
         case "align": menuButton("Align", help: "Align Column") { alignMenu() }
         case "delete": menuButton("Delete", help: "Delete Row or Column") { deleteMenu() }
-        default: glyph("more", help: "More", on: model.formatBarMenuOpen) { Image(systemName: "ellipsis").font(.system(size: FormatBarLogic.markSize)) } run: { popUp("more", moreMenu(e, folds: folds)) }
+        default: glyph("more", help: "More", on: model.formatBarMenuOpen) { Image(systemName: "ellipsis").font(.system(size: FormatBarLogic.symbolSize)) } run: { popUp("more", moreMenu(e, folds: folds)) }
         }
     }
 
@@ -133,10 +134,9 @@ struct MarkdownFormatBar: View {
 
     private func wordLabel(_ title: String, chevron: Bool, on: Bool) -> some View {
         HStack(spacing: 1) {
-            Text(title).duoText(.control)
-            if chevron { Image(systemName: "chevron.down").font(.system(size: DuoSymbolSize.chevronSmall, weight: .semibold)) }
+            Text(title).duoText(.control).foregroundStyle(DuoColor.text)
+            if chevron { Image(systemName: "chevron.down").font(.system(size: DuoSymbolSize.chevronSmall, weight: .semibold)).foregroundStyle(DuoColor.text2) }
         }
-        .foregroundStyle(on ? DuoColor.text : DuoColor.text2)
         .padding(.horizontal, 6)
         .frame(height: FormatBarLogic.controlHeight)
         .background(RoundedRectangle(cornerRadius: FormatBarLogic.glyphRadius).fill(on ? DuoColor.selected : .clear))
@@ -261,7 +261,7 @@ struct MarkdownFormatBar: View {
         return ZStack {
             Circle().fill(listening ? DuoColor.text : lit ? DuoColor.selected : Color.clear)
             Image(systemName: slashed ? "mic.slash" : "mic")
-                .font(.system(size: FormatBarLogic.micGlyph, weight: .regular))
+                .font(.system(size: FormatBarLogic.micSymbol, weight: .regular))
                 .foregroundStyle(listening ? DuoColor.pane : slashed ? DuoColor.controlEdge : lit ? DuoColor.text : DuoColor.text2)
         }
         .frame(width: FormatBarLogic.micDiameter, height: FormatBarLogic.micDiameter)
