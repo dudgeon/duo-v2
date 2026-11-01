@@ -5050,3 +5050,21 @@ Verified under the lock:
 The specimen showed nine overflows in the sample pack's own limits, which is the fit check doing its job.
 
 Weak spot: the survey's "best" template for a chart slide was `table`. That's a heuristic, and Claude's plan decides.
+
+## F-518 · Q-181 answered as far as a background run can: the editor is a text input client, the system's Dictation was not run (md-format-bar, 2026-11-01)
+
+The editor's web view is first responder and takes marked and inserted text like any editable web content; a probe (`dictation-probe` in the harness: `setMarkedText` then `insertText` through the view's input context) found `inputContext` nil in a background instance, because its window is never key. So macOS's own fn-fn Dictation couldn't be exercised without a visible, key window, which needs Geoff's OK (asked in the report). Duo's mic doesn't depend on it or fight it: the mic is a button and ⇧⌘D, and its words arrive as ordinary `input.type` changes. Q-181 stays open for the editor, to be closed by a 30-second foreground check.
+
+## F-519 · Suggest Edits rewrote a dictated phrase without its annotations, so the page took it for the user typing (md-format-bar, 2026-11-01; DL-237, DL-266)
+
+`suggestTyping` (critic.js) returns a fresh spec for a single-hunk `input.*` change, and the spec carried only `userEvent`: the dictation's own mark, its history timestamp and `isolateHistory` were dropped. With Suggest Edits on, the first phrase landed as `{++…++}` and was then read as a break-in, ending the dictation; the second phrase was lost. Found by the live check, not by the node test (which didn't look at the mark). The spec now passes `tr.annotations` except the user event; `test/dictation.test.mjs` checks that a signed phrase is still the dictation's own. Typing under Suggest Edits is unchanged.
+
+## F-520 · Live proof of dictation into a document, on the real recognizer (md-format-bar, 2026-11-01; DL-266)
+
+Isolated background instance, fixture Home with the refunds project: a spoken file (`say`, then `DUO_VOICE_FILE_REALTIME=1`) through `VoiceInput` with target `.document` into `notes.md`, caret inside a list item. Apple's recognizer settled the phrases a few seconds apart, they landed at the caret with single spaces ("- o Who approves assing refunds over a $1000? Does a partial refund reset the limit?ne"), the undo depth went 0 → 1, and one `duo.undo` took the whole dictation out. The recognizer's own misses ("assing", "$1000") are its. The harness's `bar-dictate`, `bar-text`, `bar-undo` and `bar-return` drive this (`scripts/bar-live.sh`).
+
+## F-521 · F-458's cause and fix: CodeMirror's zero-width buffer images are break opportunities (md-format-bar, 2026-11-01; DL-237)
+
+A suggestion that ends a line left its full stop on the next, in Dark and Light alike, at 457–460 pt (and 321) with the review margin narrowing the column. The hidden marks (`{++`, `++}`, the signature) are `Decoration.replace`, and CodeMirror puts `<img class="cm-widgetBuffer">` around each; a browser may break at an inline image. A probe that steps the page's width 300–560 and checks where the full stop sits found 5 bad widths; with the buffers out of the flow (`.duo-rv ~ .cm-widgetBuffer { position: absolute }` in the review theme) it finds none, in 522 cases; `display: none` also fixes it, `word-break` and `nowrap` don't. The probe is `bar-js:` with `/private/tmp/mdb/wrap-probe.js`'s approach (a page script run from the harness).
+
+F-457 (the table bar's buttons 1 apart) is moot: the in-document table bar is gone (DL-266). Its controls are in the formatting bar at the board's spacing.

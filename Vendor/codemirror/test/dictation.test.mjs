@@ -56,6 +56,16 @@ const undoOnce = (st) => { let out = st; undo({ state: st, dispatch: (tr) => { o
   check(!breaksDictation(tr), "a phrase rewritten as a signed insertion is still the dictation's own, not a user edit");
 }
 
+// C-129 (tested for the bar's build): formatting under Suggest Edits. A one-line change is a suggestion; a change to several lines
+// (a paragraph style on a selection) is several hunks and passes through untracked.
+{
+  let st = mk("---\nsuggest-edits: true\n---\nfirst\nsecond\n", [reviewCore]);
+  const one = st.update({ changes: { from: 28, insert: "## " }, userEvent: "input.format" }).state.doc.toString();
+  check(one.includes("{++## ++}"), "C-129: a one-line style change under Suggest Edits is a signed insertion");
+  const two = st.update({ changes: [{ from: 28, insert: "- " }, { from: 34, insert: "- " }], userEvent: "input.format" }).state.doc.toString();
+  check(!two.includes("{++") && two.includes("- first") && two.includes("- second"), "C-129: a style change on two lines is plain text, untracked (decided: left as is, recorded)");
+}
+
 // What counts as the user breaking in.
 {
   const st = mk("abc");
