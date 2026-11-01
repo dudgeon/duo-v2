@@ -1,20 +1,18 @@
 {
  "chat": {
   "phrases": [
-   "Can you check the glare cases against Denise's photos",
-   "and tell me which ones still fail?"
+   "Please update the PRD with the latest changes to the UI design."
   ],
-  "text": "Can you check the glare cases against Denise's photos and tell me which ones still fail?",
-  "duration_s": 7.9,
+  "text": "Please update the PRD with the latest changes to the UI design.",
+  "duration_s": 5.6,
   "voice": "Geoff's (geoff-voxcpm2-v2)"
  },
  "terminal": {
   "phrases": [
-   "Add a glare warning to the scan screen",
-   "and keep it under ten words."
+   "Can you add the new design to the release notes too?"
   ],
-  "text": "Add a glare warning to the scan screen and keep it under ten words.",
-  "duration_s": 7.9,
+  "text": "Can you add the new design to the release notes too?",
+  "duration_s": 5.12,
   "voice": "Geoff's (geoff-voxcpm2-v2)"
  }
 }

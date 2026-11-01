@@ -13,7 +13,7 @@
       "version": "0.2.22",
       "lines": [
         "Voice input, and Classic",
-        "A mic in chat and the terminal, and the v1 paper look"
+        "Talk to Claude by voice, and the v1 paper look"
       ]
     },
     "events": {
@@ -56,7 +56,7 @@
         ]
       }
     ],
-    "shotSha": "6ca154664ec4"
+    "shotSha": "62f7c94cb596"
   },
   "S1": {
     "kind": "drawn",
@@ -67,7 +67,7 @@
       "video-vv-chat-rest"
     ],
     "pauses": {
-      "1": 9.4
+      "1": 6.6
     },
     "tail": 0.5,
     "beats": [
@@ -91,32 +91,31 @@
         "id": "mic-mark",
         "at": {
           "line": 1,
-          "word": "mic"
+          "word": "voice"
         },
         "in": "video-vv-chat-rest",
         "mark": "voice.mic",
-        "hold": 1.3
+        "hold": 1.6
       },
       {
         "id": "mic-click",
         "at": {
           "line": 1,
-          "word": "now",
-          "offset": 0.5
+          "word": "macos",
+          "offset": 1.1
         },
         "click": "voice.mic",
         "in": "video-vv-chat-rest",
         "rec": "video-vv-chat-rec",
         "recFrom": 0.4,
-        "recFor": 8.6,
+        "recFor": 6.2,
         "audio": "chat"
       },
       {
         "id": "words-mark",
         "at": {
           "line": 2,
-          "word": "phrase",
-          "nth": 2
+          "word": "second"
         },
         "in": "video-vv-chat-rec",
         "mark": "video.composer",
@@ -163,7 +162,7 @@
         ]
       }
     ],
-    "shotSha": "e804ea0a818f"
+    "shotSha": "d5ccf43b95b4"
   },
   "S2": {
     "kind": "drawn",
@@ -174,7 +173,7 @@
       "video-vv-chat-sent"
     ],
     "pauses": {
-      "1": 9.4
+      "1": 6.4
     },
     "tail": 0.5,
     "beats": [
@@ -200,7 +199,7 @@
         "id": "termmic-mark",
         "at": {
           "line": 1,
-          "word": "beside"
+          "word": "terminal"
         },
         "in": "video-vv-term-live",
         "mark": "video.vv.termmic",
@@ -214,11 +213,11 @@
           "offset": 0.5
         },
         "key": "⇧⌘D",
-        "keyHold": 6.4,
+        "keyHold": 4.6,
         "in": "video-vv-term-live",
         "rec": "video-vv-term-rec",
         "recFrom": 0.4,
-        "recFor": 8.6,
+        "recFor": 5.8,
         "audio": "terminal"
       }
     ],
@@ -245,15 +244,15 @@
         ]
       }
     ],
-    "shotSha": "5878739fcfa8"
+    "shotSha": "8e0f0d029d14"
   },
-  "S3": {
+  "S4": {
     "kind": "drawn",
     "scene": "rel-app",
     "transitionIn": "rel-carry",
-    "leadIn": 0.6,
+    "leadIn": 0.8,
     "states": [
-      "video-vv-term-done"
+      "video-vv-term-rec"
     ],
     "tail": 1,
     "beats": [
@@ -261,65 +260,19 @@
         "id": "back",
         "at": {
           "line": 1,
-          "offset": -0.3
+          "offset": -0.7
         },
         "click": "video.tab.middle.3",
-        "in": "video-vv-term-done",
-        "state": "video-vv-nomic",
-        "cam": {
-          "rel": "video.pane.middle",
-          "dx": 44.9,
-          "dy": 648.3,
-          "w": 749.1,
-          "h": 421.4
-        },
-        "dur": 1
+        "in": "video-vv-term-rec",
+        "state": "video-vv-chat-sent"
       },
-      {
-        "id": "nomic-mark",
-        "at": {
-          "line": 1,
-          "word": "struck"
-        },
-        "in": "video-vv-nomic",
-        "mark": "voice.mic",
-        "hold": 1.5
-      }
-    ],
-    "requires": [
-      {
-        "what": "Back in the chat, the camera close on the composer",
-        "by": [
-          "#back"
-        ]
-      },
-      {
-        "what": "The mic is faint with a line through it, as with no microphone connected",
-        "by": [
-          "#nomic-mark",
-          "state:video-vv-nomic"
-        ]
-      }
-    ],
-    "shotSha": "be09ff632b35"
-  },
-  "S4": {
-    "kind": "drawn",
-    "scene": "rel-app",
-    "transitionIn": "rel-carry",
-    "leadIn": 0.5,
-    "states": [
-      "video-vv-nomic"
-    ],
-    "tail": 1,
-    "beats": [
       {
         "id": "wide",
         "at": {
           "line": 1,
-          "offset": -0.4
+          "offset": -0.2
         },
-        "in": "video-vv-nomic",
+        "in": "video-vv-chat-sent",
         "cam": {
           "rel": "video.pane.middle",
           "dx": 80.4,
@@ -336,7 +289,7 @@
           "word": "settings",
           "offset": -0.2
         },
-        "in": "video-vv-nomic",
+        "in": "video-vv-chat-sent",
         "overlay": {
           "state": "video-vc-settings-light",
           "x": 560,
@@ -362,7 +315,7 @@
           "line": 1,
           "word": "appearance"
         },
-        "in": "video-vv-nomic",
+        "in": "video-vv-chat-sent",
         "menu": {
           "on": {
             "x": 705,
@@ -466,31 +419,25 @@
         "hold": 1.2
       },
       {
-        "id": "dock",
+        "id": "buttons-mark",
         "at": {
-          "line": 2,
-          "word": "dock"
+          "line": 3,
+          "word": "buttons"
+        },
+        "in": "video-vc-classic",
+        "mark": "New session or shell",
+        "hold": 1.8
+      },
+      {
+        "id": "pull-back",
+        "at": {
+          "line": 3,
+          "word": "buttons",
+          "offset": 1
         },
         "in": "video-vc-classic",
         "cam": "wide",
-        "dur": 1,
-        "band": "down"
-      },
-      {
-        "id": "dock-mark",
-        "at": {
-          "line": 2,
-          "word": "icon",
-          "offset": 0.2
-        },
-        "in": "video-vc-classic",
-        "mark": {
-          "x": 1123,
-          "y": 1123,
-          "w": 72.5,
-          "h": 72.5
-        },
-        "hold": 1.2
+        "dur": 1
       }
     ],
     "requires": [
@@ -527,14 +474,68 @@
         ]
       },
       {
-        "what": "On \"Dock icon\" it pulls back to the desk, where Duo's Dock icon has the Classic colours",
+        "what": "On \"new buttons\" the camera is at the end of the middle pane's tab strip: the + and the split pill, one click each (DL-253)",
         "by": [
-          "#dock",
-          "#dock-mark"
+          "#buttons-mark"
         ]
       }
     ],
-    "shotSha": "501b8daeb300"
+    "shotSha": "e140ed33aac2"
+  },
+  "$cutNoMic": {
+    "kind": "drawn",
+    "scene": "rel-app",
+    "transitionIn": "rel-carry",
+    "leadIn": 0.6,
+    "states": [
+      "video-vv-term-done"
+    ],
+    "tail": 1,
+    "beats": [
+      {
+        "id": "back",
+        "at": {
+          "line": 1,
+          "offset": -0.3
+        },
+        "click": "video.tab.middle.3",
+        "in": "video-vv-term-done",
+        "state": "video-vv-nomic",
+        "cam": {
+          "rel": "video.pane.middle",
+          "dx": 44.9,
+          "dy": 648.3,
+          "w": 749.1,
+          "h": 421.4
+        },
+        "dur": 1
+      },
+      {
+        "id": "nomic-mark",
+        "at": {
+          "line": 1,
+          "word": "struck"
+        },
+        "in": "video-vv-nomic",
+        "mark": "voice.mic",
+        "hold": 1.5
+      }
+    ],
+    "requires": [
+      {
+        "what": "Back in the chat, the camera close on the composer",
+        "by": [
+          "#back"
+        ]
+      },
+      {
+        "what": "The mic is faint with a line through it, as with no microphone connected",
+        "by": [
+          "#nomic-mark",
+          "state:video-vv-nomic"
+        ]
+      }
+    ]
   },
   "S5": {
     "kind": "drawn",
@@ -549,25 +550,27 @@
       "version": "0.2.22",
       "lines": [
         "Voice input, and Classic",
-        "A mic in chat and the terminal, and the v1 paper look"
+        "Talk to Claude by voice, and the v1 paper look"
       ],
       "icon": "classic",
-      "bandDown": true
+      "foot": [
+        "github.com/dudgeon/duo-v2/issues",
+        "Duo › Check for Updates…"
+      ]
     },
     "events": {
       "fold": {
         "line": 1,
-        "word": "update",
-        "offset": -0.2
+        "word": "github",
+        "offset": -0.9
       },
       "card": {
         "line": 1,
-        "word": "try"
+        "word": "issue"
       },
       "foot": {
         "line": 1,
-        "word": "try",
-        "offset": 0.4
+        "word": "github"
       }
     },
     "requires": [
@@ -579,7 +582,7 @@
         ]
       },
       {
-        "what": "The title card returns, with the Classic icon and \"Duo › Check for Updates…\" under it",
+        "what": "The title card returns with the Classic icon, with \"github.com/dudgeon/duo-v2/issues\" and \"Duo › Check for Updates…\" under it",
         "by": [
           "event:card",
           "event:foot",
@@ -593,6 +596,6 @@
         ]
       }
     ],
-    "shotSha": "856bf238d738"
+    "shotSha": "3c8253584c68"
   }
 }

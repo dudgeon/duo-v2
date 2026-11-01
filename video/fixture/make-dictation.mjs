@@ -14,8 +14,9 @@ import {filmPaths, filmStyle} from '../pipeline/film.mjs';
 
 const here = join(dirname(fileURLToPath(import.meta.url)), '..');
 const TAKES = {
-  chat: ["Can you check the glare cases against Denise's photos", 'and tell me which ones still fail?'],
-  terminal: ['Add a glare warning to the scan screen', 'and keep it under ten words.'],
+  // Something ordinary (Geoff, Nov 1: "the demo transcription is strange; please just use something benign").
+  chat: ['Please update the PRD with the latest changes to the UI design.'],
+  terminal: ['Can you add the new design to the release notes too?'],
 };
 const PAUSE = 0.7, LEAD = 0.4, TAIL = 1.2;   // seconds: between phrases, before the first, after the last
 const paths = filmPaths(here, 'release-0-2-22');

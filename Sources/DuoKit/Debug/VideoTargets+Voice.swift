@@ -73,7 +73,7 @@ extension VideoTargets {
         model.voice.deviceSource = FixedMicrophone(usable: mic)
         model.voice.hasMicrophone = { mic }
         func key(_ n: String) -> String { model.fixture.sessions.first { $0.project == project && $0.name == n }?.tabKey ?? n }
-        if name == "chat-sent", let i = model.fixture.sessions.firstIndex(where: { $0.project == project && $0.name == autoAdd }) {
+        if name == "chat-sent" || name == "classic", let i = model.fixture.sessions.firstIndex(where: { $0.project == project && $0.name == autoAdd }) {
             let k = model.fixture.sessions[i].tabKey
             model.fixtureChats[k] = s6Chat(dir.appending(path: "chat-vv-sent"), cwd: v.cwd, picked: false, key: k)
         }

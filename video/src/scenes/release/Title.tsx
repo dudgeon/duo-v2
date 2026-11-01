@@ -20,7 +20,7 @@ const lerp = (a: number, b: number, u: number) => a + (b - a) * u;
 
 export type Stills = {window: {w: number; h: number}; src: Record<string, string>; first: string; last: string};
 /** The card's words (shots.json `words`): the version after "Duo", two lines under it, and the icon (Duo's, or its Classic one). */
-export type Words = {version: string; lines: [string, string]; icon?: 'classic'};
+export type Words = {version: string; lines: [string, string]; icon?: 'classic'; foot?: string[]};
 const WORDS_0_2_21: Words = {version: '0.2.21', lines: ['Review in Markdown', 'Comments, suggested edits and @claude']};
 type Scene = SceneProps['scene'] & {stills?: Stills; duration?: number; words?: Words};
 
@@ -56,7 +56,7 @@ const Words = ({x, title, sub, ink, wipe, foot, words = WORDS_0_2_21}: {x: numbe
     </div>
     {foot !== undefined && (
       <div style={{fontFamily: tokens.font.mono, fontSize: 30, marginTop: 36, opacity: 0.86 * foot, transform: `translateY(${(1 - foot) * 10}px)`}}>
-        Duo › Check for Updates…
+        {(words.foot ?? ['Duo › Check for Updates…']).map((f) => <div key={f}>{f}</div>)}
       </div>
     )}
   </div>
