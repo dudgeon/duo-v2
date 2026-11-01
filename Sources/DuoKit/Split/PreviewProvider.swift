@@ -85,7 +85,7 @@ public enum PreviewProviders {
     public static func kind(forFile file: String, frontmatter: [String: String] = [:]) -> PreviewKind? {
         for e in extra where e.test(file, frontmatter) { return e.kind }
         switch (file as NSString).pathExtension.lowercased() {
-        case "md", "markdown": return .markdown
+        // Markdown has no preview: it renders live in the editor (Geoff, 2026-11-01); view/edit source is being explored.
         case "html", "htm": return .html
         default: return nil
         }

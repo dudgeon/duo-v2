@@ -4821,10 +4821,13 @@ Making room does two things at once: the sidebar folds (a `motionPaneToggle` sli
 
 ## F-502 · Preview render time (split-view-build, 2026-10-31; C-136)
 
+**Removed 2026-11-01:** Geoff dropped the Markdown preview ("markdown editing is inherently wysiwyg/live rendering"; he'd rather see view/edit source), so the converter timed here is gone. The numbers stay as the cost of rendering Markdown to HTML in Swift, should a Markdown view return.
+
 Timed under `--exclusive` (`DUO_CHECKS=split-perf`, best of five): on a release build the Markdown preview's HTML and anchor map take 3.7 ms for 200 lines, 34 ms for 2,000 lines (46 KB) and 343 ms for 20,000 lines (471 KB); a debug build was 3.8, 38 and 377 ms, so the cost is the parse and string work, not debug overhead. A 2,000-line note is about a tenth of a second of background work, a 20,000-line one about a third of a second, and typing never waits for it. That is the conversion only; WebKit loads the page after. The conversion runs off the main thread (`Task.detached`), and a newer revision wins at the gate, so typing never waits for it. The render waits 250 ms after typing pauses. (`scripts/timing-lock.sh` fails when run from the main checkout: `git rev-parse --git-common-dir` prints a relative `.git` there, so its `cd .git/..` fails. I called `gpu-lock.sh --exclusive` with `GPU_LOCK_ENFORCE=1` directly, which is what it runs.)
 
 ## F-503 · What slice 1 does not do yet (split-view-build, 2026-10-31)
 
+- **No Markdown preview (Geoff, 2026-11-01).** The provider and its HTML converter were removed; `PreviewKind.markdown` stays in the enum only so the contract doesn't change under slice 2 and Duo Decks, and nothing offers it. View/edit source for Markdown and HTML is a design exploration the director started.
 - **Caret-follow and the source-lines mark.** The editor's page doesn't report the caret's line to Swift (only `selection` facts), and adding it means rebuilding `Vendor/codemirror/dist/cm6.js`. `PreviewPolicy` has the policy (`anchorToReveal(forLine:)`, loop suppression) and DuoChecks cover it; nothing feeds it a line yet. Q-399.
 - **A page rendered from the buffer** loads through `loadHTMLString` with the folder as its base address, which WebKit may not let read local images until the editor's autosave (a second after typing) lets it load from disk again. Q-400.
 - **The deck provider** is Duo Decks' (`PreviewProviders.extra`); `deck` is never offered until it registers.

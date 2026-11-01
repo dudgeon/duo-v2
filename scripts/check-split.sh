@@ -37,7 +37,7 @@ expect() {
 open="open:garden"
 for size in 1440x900 1280x800; do
   fresh m$size
-  run m$size $size "$open,split:review.md,wait:3,split-report"
+  run m$size $size "$open,split:page.html,wait:3,split-report"
   expect "$size: a split is made" $out/m$size.log "active: left"
   expect "$size: the sidebar folded to its rail" $out/m$size.log "sidebar folded by the split: true"
   expect "$size: not folded to one side" $out/m$size.log "folded: false"
@@ -46,24 +46,24 @@ fresh html
 run html 1440x900 "$open,split:page.html,wait:3,split-report"
 expect "html: a page beside its source" $out/html.log "right: Page"
 fresh swap
-run swap 1440x900 "$open,split:review.md,wait:2,split-swap,split-focus:left,wait:1,split-report"
-expect "swap: the preview is on the left" $out/swap.log "left: Preview"
+run swap 1440x900 "$open,split:page.html,wait:2,split-swap,split-focus:left,wait:1,split-report"
+expect "swap: the page is on the left" $out/swap.log "left: Page"
 fresh peek
-run peek 1440x900 "$open,split:review.md,wait:2,sidebar-peek:on,wait:2,split-report"
+run peek 1440x900 "$open,split:page.html,wait:2,sidebar-peek:on,wait:2,split-report"
 fresh narrow
-run narrow 1280x800 "$open,split:review.md,wait:2,right-width:600,wait:2,split-report"
+run narrow 1280x800 "$open,split:page.html,wait:2,right-width:600,wait:2,split-report"
 expect "narrow: under two sides the split folds" $out/narrow.log "folded: true"
 fresh unfold
-run unfold 1280x800 "$open,split:review.md,wait:2,right-width:600,wait:2,split-unfold,wait:2,split-report"
+run unfold 1280x800 "$open,split:page.html,wait:2,right-width:600,wait:2,split-unfold,wait:2,split-report"
 expect "unfold: the console narrows for two sides" $out/unfold.log "folded: false"
 fresh close
-run close 1440x900 "$open,split:review.md,wait:2,split-close,wait:2,split-report"
+run close 1440x900 "$open,split:page.html,wait:2,split-close,wait:2,split-report"
 expect "close: the split is gone" $out/close.log "no split view showing"
 
 # split-themes: the same split in Dark and Classic (Light is the runs above)
 for theme in dark classic; do
   fresh theme-$theme
-  APPEARANCE=$theme run theme-$theme 1440x900 "$open,split:review.md,wait:3,split-report"
+  APPEARANCE=$theme run theme-$theme 1440x900 "$open,split:page.html,wait:3,split-report"
   expect "$theme: a split is made" $out/theme-$theme.log "active: left"
 done
 

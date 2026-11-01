@@ -98,7 +98,6 @@ extension AppModel {
         guard let project = currentProject?.name, let t = splitTabs[path] else { return }
         let policy = splits.policy(project, path)
         policy.onRequest = { [weak self, weak policy] e in if let policy { self?.previewRequest(e, policy) } }   // R11, R12
-        if t.kind == .markdown { splits.markdown.emit = { [weak policy] e in policy?.accept(e) } }
         let render: @MainActor (Int) -> Void = { [weak self] rev in self?.renderPreview(path, rev: rev) }
         editor(.main).onBufferChange = { [weak policy] in policy?.bufferChanged(render: render) }
         // The editor opens the file after this view appears: render once it has, and again a moment later.
@@ -112,11 +111,10 @@ extension AppModel {
         editor(.main).currentText { [weak self] text in
             guard let self, let text, self.splitTabs[path] != nil else { return }
             switch t.kind {
-            case .markdown: self.splits.markdown.render(text: text, rev: rev)
             case .html:
                 let root = Self.isOutsideFile(path) ? file.deletingLastPathComponent() : (self.projectFolder ?? file.deletingLastPathComponent())
                 self.htmlViewer.renderBuffer(text, file: file, root: root)
-            case .deck, .document: break   // Duo Decks' provider (preview-provider)
+            case .deck, .document, .markdown: break   // Duo Decks' provider (preview-provider)
             }
         }
     }
@@ -180,10 +178,9 @@ extension AppModel {
 
     func previewWebView(for t: SplitTab) -> NSView? {
         switch t.kind {
-        case .markdown: splits.markdown.webView
         case .html: htmlViewerIfLoaded?.webView
         case .document: editorIfLoaded(.second)?.webView
-        case .deck: nil
+        case .deck, .markdown: nil
         }
     }
 

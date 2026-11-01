@@ -25,7 +25,6 @@ public final class SplitState {
     /// A restored split's room, applied once the layout exists.
     @ObservationIgnored var pendingRightWidth: Double?
     @ObservationIgnored var policies: [String: PreviewPolicy] = [:]
-    @ObservationIgnored public lazy var markdown = MarkdownPreviewProvider()
 
     public init() {}
 

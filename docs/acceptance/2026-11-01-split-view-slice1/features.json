@@ -1,7 +1,7 @@
 {
  "sprint": "2026-11-01-split-view-slice1",
  "title": "Duo acceptance: split view, slice 1",
- "intro": "A file beside its own preview, in one tab of the right pane (DL-275 to DL-278), with Geoff's making-room rule (DL-276). Slice 2, two documents side by side, is a separate walk. Still to come: the formatting bar over the source, the source-lines mark in the margin (Q-399), a deck's preview (Duo Decks), comments from a preview (slice 2's wiring) and Search's ⌥⌘↩.",
+ "intro": "A file beside its own preview, in one tab of the right pane (DL-275 to DL-278), with Geoff's making-room rule (DL-276). Slice 2, two documents side by side, is a separate walk. No Markdown preview (it renders live in the editor; view/edit source for Markdown and HTML is being explored). Still to come: the formatting bar over the source, a deck's preview (Duo Decks), comments from a preview (slice 2's wiring) and Search's ⌥⌘↩.",
  "setup": [
   "Use a window about 1440 wide to see the sidebar fold to its rail."
  ],
@@ -12,65 +12,18 @@
  },
  "features": [
   {
-   "id": "split-open-markdown",
-   "group": "In checkout: a file beside its preview",
-   "title": "Show a Markdown file's preview in Split View",
-   "what": "⌥⌘P (View › Show Preview in Split View, or the tab's menu) puts the showing file and its rendered preview side by side in one tab. Preview Beside is called Split View in every menu (Geoff, on the canvas).",
-   "steps": [
-    "Open `checkout`, then `docs/prd.md`.",
-    "Press ⌥⌘P.",
-    "Type a word into the source and wait a moment.",
-    "Press ⌥⌘P again."
-   ],
-   "expect": "One tab reads `prd.md ⧉ Preview`, the source on the left and the rendered document on the right, a 1 pt rule between them. Your typed word shows in the preview about a quarter second after you stop, before you save. The second ⌥⌘P closes the split and leaves `prd.md` as an ordinary tab. A deck's preview isn't here: Duo Decks provides it.",
-   "ref": "DL-275, DL-277, F-500, F-502",
-   "commit": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9",
-   "alsoCommits": [
-    "5e276cf3c6f71390190141eef33480503c82caf6",
-    "b28dcd79c3ef2ef234eb3027021472cafa08f48c",
-    "6710570b32684db5169010bbff46d330d2370618"
-   ],
-   "workMac": "as-is",
-   "workMacWhy": "Any Markdown file in any project",
-   "links": [
-    {
-     "label": "split-deck screen",
-     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/split-view-handoff/screens/split-deck.html"
-    },
-    {
-     "label": "design canvas",
-     "url": "https://claude.ai/artifact/8j6ukv88cvTqvdSEoHnEc1"
-    }
-   ],
-   "setup": [
-    "open checkout",
-    "doc open docs/prd.md"
-   ],
-   "claude": {
-    "result": "passed",
-    "did": [
-     "Opened a split on a fixture workspace in isolated background runs (`scripts/check-split.sh`) and read its state from the harness's `split-report` (the same report `duo2 split` prints).",
-     "Captured it in Light, Dark and Classic and compared the layout with the screen (F-512)."
-    ],
-    "didnt": [],
-    "human": [
-     "How the preview reads beside your editor, and whether the 250 ms feels right."
-    ],
-    "at": "2026-11-01"
-   }
-  },
-  {
    "id": "split-open-html",
    "group": "In checkout: a file beside its preview",
-   "title": "An HTML page beside its source",
-   "what": "A `.html` file splits with its page drawn from the unsaved text.",
+   "title": "Show a page in Split View (⌥⌘P)",
+   "what": "⌥⌘P (View › Show Preview in Split View, or the tab's menu) puts a local HTML file's source and its page side by side in one tab. The page is drawn from the unsaved text. Markdown has no preview: it already renders live in the editor (view/edit source is being explored).",
    "steps": [
     "Open `prototypes/checkout.html` in `checkout`.",
     "Press ⌥⌘P.",
-    "Edit a heading in the source."
+    "Edit a heading in the source.",
+    "Press ⌥⌘P again."
    ],
-   "expect": "The page shows on the right, the source on the left. Your edit shows in the page without saving. Images beside the file may appear a second late, until the editor saves (Q-400).",
-   "ref": "DL-275, Q-400",
+   "expect": "One tab reads `checkout.html ⧉ Page`, the source on the left and the page on the right, a 1 pt rule between them. Your edit shows in the page without saving. Images beside the file may appear a second late, until the editor saves (Q-400). The second ⌥⌘P closes the split and leaves `checkout.html` as an ordinary tab. A deck's preview isn't here: Duo Decks provides it.",
+   "ref": "DL-275, DL-277, F-500, Q-400",
    "commit": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9",
    "alsoCommits": [
     "5e276cf3c6f71390190141eef33480503c82caf6",
@@ -83,6 +36,10 @@
     {
      "label": "split-deck screen",
      "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/split-view-handoff/screens/split-deck.html"
+    },
+    {
+     "label": "design canvas",
+     "url": "https://claude.ai/artifact/8j6ukv88cvTqvdSEoHnEc1"
     }
    ],
    "setup": [
@@ -109,11 +66,11 @@
    "title": "The split tab: two names, the active side, the × on each",
    "what": "One tab holds both sides: their names joined by the split mark, the active side's in semibold, the other dimmed; each name has its own × under the pointer.",
    "steps": [
-    "With the split open, click the source, then the preview.",
-    "Point at the tab and click the × on `Preview`.",
+    "With the split open, click the source, then the page.",
+    "Point at the tab and click the × on `Page`.",
     "Open the split again; on the source's × click."
    ],
-   "expect": "The 2 pt active-pane rule spans only the active side and moves when you click the other. The × on `Preview` closes the preview and leaves the source tab. The × on the source closes the whole split with its tab. Right-click the tab: Close Split View, Swap Sides.",
+   "expect": "The 2 pt active-pane rule spans only the active side and moves when you click the other. The × on `Page` closes the page side and leaves the source tab. The × on the source closes the whole split with its tab. Right-click the tab: Close Split View, Swap Sides.",
    "ref": "DL-275, DL-165",
    "commit": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9",
    "alsoCommits": [
@@ -131,13 +88,13 @@
    ],
    "setup": [
     "open checkout",
-    "doc open docs/prd.md",
-    "split docs/prd.md"
+    "doc open prototypes/checkout.html",
+    "split prototypes/checkout.html"
    ],
    "claude": {
     "result": "passed",
     "did": [
-     "Made, swapped and closed each side in the model and checked the state each time (DuoChecks `split`, 2247 checks); swapped and closed in live runs through the harness."
+     "Made, swapped and closed each side in the model and checked the state each time (DuoChecks `split`); swapped and closed in live runs through the harness."
     ],
     "didnt": [
      "Clicked the × with a pointer."
@@ -177,8 +134,8 @@
    ],
    "setup": [
     "open checkout",
-    "doc open docs/prd.md",
-    "split docs/prd.md",
+    "doc open prototypes/checkout.html",
+    "split prototypes/checkout.html",
     "split ratio 0.4"
    ],
    "claude": {
@@ -226,7 +183,7 @@
    ],
    "setup": [
     "open checkout",
-    "doc open docs/prd.md"
+    "doc open prototypes/checkout.html"
    ],
    "claude": {
     "result": "passed",
@@ -269,8 +226,8 @@
    ],
    "setup": [
     "open checkout",
-    "doc open docs/prd.md",
-    "split docs/prd.md"
+    "doc open prototypes/checkout.html",
+    "split prototypes/checkout.html"
    ],
    "claude": {
     "result": "partial",
@@ -296,7 +253,7 @@
     "Click the rail at the right pane's far right.",
     "Or run `duo2 split unfold`."
    ],
-   "expect": "The source fills the pane; the tab still shows both names with the hidden one dimmed. The rail has the split mark 10 from its top and the tooltip `Show Preview in Split View`. Clicking it widens the right pane, the console never under 480, and the preview becomes the active side.",
+   "expect": "The source fills the pane; the tab still shows both names with the hidden one dimmed. The rail has the split mark 10 from its top and the tooltip `Show Page in Split View`. Clicking it widens the right pane, the console never under 480, and the page becomes the active side.",
    "ref": "DL-275, Q-366",
    "commit": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9",
    "alsoCommits": [
@@ -314,8 +271,8 @@
    ],
    "setup": [
     "open checkout",
-    "doc open docs/prd.md",
-    "split docs/prd.md"
+    "doc open prototypes/checkout.html",
+    "split prototypes/checkout.html"
    ],
    "claude": {
     "result": "passed",
@@ -336,10 +293,10 @@
    "what": "⇧⌘[ and ⇧⌘] switch the active side. ⌘W closes the active side and never the console's session. ⌘D sends the active side's selection. ⌘S saves the one document from either side.",
    "steps": [
     "With a split open and a Claude session in the console, press ⇧⌘].",
-    "Select some text in the preview and press ⌘D.",
-    "Press ⌘W with the preview active, then reopen the split and press ⌘W with the source active."
+    "Select some text in the page and press ⌘D.",
+    "Press ⌘W with the page active, then reopen the split and press ⌘W with the source active."
    ],
-   "expect": "The rule moves with ⇧⌘[ and ⇧⌘]. ⌘D sends the preview's selected text to the console's session. ⌘W on the preview closes the preview and leaves the source tab; on the source it closes the split with its tab. The console's session is untouched both times. ⌥⌘← and ⌥⌘→ no longer step between panes (DL-289) and don't step between sides.",
+   "expect": "The rule moves with ⇧⌘[ and ⇧⌘]. ⌘D sends the page's selected text to the console's session. ⌘W on the page closes the page side and leaves the source tab; on the source it closes the split with its tab. The console's session is untouched both times. ⌥⌘← and ⌥⌘→ no longer step between panes (DL-289) and don't step between sides.",
    "ref": "DL-277, DL-289, F-479, F-495",
    "commit": "61d6996e800cfc0e66d5e0df60fe4bd4f3bbfbf9",
    "alsoCommits": [
@@ -357,8 +314,8 @@
    ],
    "setup": [
     "open checkout",
-    "doc open docs/prd.md",
-    "split docs/prd.md",
+    "doc open prototypes/checkout.html",
+    "split prototypes/checkout.html",
     "session-running checkout"
    ],
    "claude": {
@@ -403,8 +360,8 @@
    ],
    "setup": [
     "open checkout",
-    "doc open docs/prd.md",
-    "split docs/prd.md",
+    "doc open prototypes/checkout.html",
+    "split prototypes/checkout.html",
     "split ratio 0.4"
    ],
    "claude": {
@@ -448,8 +405,8 @@
    ],
    "setup": [
     "open checkout",
-    "doc open docs/prd.md",
-    "split docs/prd.md"
+    "doc open prototypes/checkout.html",
+    "split prototypes/checkout.html"
    ],
    "claude": {
     "result": "passed",
@@ -469,7 +426,7 @@
    "title": "`duo2 split`",
    "what": "Everything the split does has a verb: `duo2 split <file>`, `split` (a report), `split close [--side]`, `split focus`, `split swap`, `split ratio`, `split unfold`, and `view sidebar peek`.",
    "steps": [
-    "Run `duo2 split docs/prd.md`, then `duo2 split`.",
+    "Run `duo2 split prototypes/checkout.html`, then `duo2 split`.",
     "Run `duo2 split swap`, `duo2 split ratio 0.3`, `duo2 split focus right`, `duo2 split close`."
    ],
    "expect": "The report names both sides, the active side, the ratio, whether it is folded and whether the split folded the sidebar. `split --with` (two documents) is slice 2's.",
@@ -484,7 +441,7 @@
    "workMacWhy": "Needs the `duo2` command in a terminal",
    "setup": [
     "open checkout",
-    "doc open docs/prd.md"
+    "doc open prototypes/checkout.html"
    ],
    "claude": {
     "result": "passed",
@@ -506,7 +463,7 @@
    "steps": [
     "Run `DUO_CHECKS=split swift run DuoChecks`."
    ],
-   "expect": "2247 checks pass, covering the revision gate, stale maps, echo suppression, the narrowest anchor, the routing table by side, narrow widths and swaps. Nothing to see in the app; Duo Decks' viewer and slice 2 build on it.",
+   "expect": "The split checks pass, covering the revision gate, stale maps, echo suppression, the narrowest anchor, the routing table by side, narrow widths and swaps. Nothing to see in the app; Duo Decks' viewer and slice 2 build on it.",
    "ref": "DL-275",
    "commit": "7c128884ee57ea83521c9605d5e4ec251b10c400",
    "alsoCommits": [
@@ -520,7 +477,7 @@
    "claude": {
     "result": "passed",
     "did": [
-     "Ran the split checks: 2247 passed, 0 failed."
+     "Ran the split checks: all passed."
     ],
     "didnt": [],
     "human": [],
