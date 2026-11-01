@@ -5,6 +5,7 @@
 # prompt (scripts/scale-tui.py). Fails if CPU doesn't settle or the main thread stalls.
 #
 #   scripts/check-scale.sh                       build, then check build/Duo.app
+#   GPU_LOCK=… scripts/timing-lock.sh check-scale scripts/check-scale.sh   under the exclusive lock, ended if it hangs (F-510)
 #   NO_BUILD=1 scripts/check-scale.sh            reuse build/Duo.app
 #   APP=<Duo.app> scripts/check-scale.sh         check another build (e.g. a release's, for a before/after)
 #   SECONDS_RUN=60 (default)                     how long each launch runs

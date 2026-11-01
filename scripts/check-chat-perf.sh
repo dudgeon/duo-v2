@@ -3,6 +3,7 @@
 # session (82 MB, 95 turns, 3,600 tool calls) and fails if any phase is over its budget.
 #
 #   scripts/check-chat-perf.sh            build first
+#   GPU_LOCK=… scripts/timing-lock.sh check-chat-perf scripts/check-chat-perf.sh   under the exclusive lock, ended if it hangs (F-510)
 #   NO_BUILD=1 scripts/check-chat-perf.sh reuse build/Duo.app
 #
 # Budgets are main-thread stalls measured by the run's watchdog, with room for a busy Mac; before
