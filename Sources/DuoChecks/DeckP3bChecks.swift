@@ -134,6 +134,48 @@ import Foundation
         v.setSlidePicking(true)
         check(v.slidePicking && !v.picking, "slide picking on turns Select Shape off")
     }
+    // A redraw after an edit (split view) shows the new slides at the top of the pane, not under an empty,
+    // hidden, viewport-tall old drawing; two edits in quick succession end with the newest drawn (redraw-blank.md).
+    do {
+        _ = NSApplication.shared
+        let v = DeckViewer(resources: repoRoot().appending(path: "Vendor/pptx-renderer"))
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 470, height: 800), styleMask: [.borderless], backing: .buffered, defer: false)
+        window.contentView = v.webView
+        func spin(_ seconds: Double, until done: () -> Bool) {
+            let end = Date().addingTimeInterval(seconds)
+            while !done(), Date() < end { RunLoop.main.run(until: Date().addingTimeInterval(0.02)) }
+        }
+        func probe(_ find: String) -> [String: Any] {
+            var out: [String: Any]?
+            v.webView.callAsyncJavaScript("return JSON.stringify(__duo.probe(f))", arguments: ["f": find], in: nil, in: .page) { r in
+                if case .success(let s) = r, let d = (s as? String)?.data(using: .utf8) { out = (try? JSONSerialization.jsonObject(with: d)) as? [String: Any] ?? [:] } else { out = [:] }
+            }
+            spin(5) { out != nil }
+            return out ?? [:]
+        }
+        func drawn(_ t: String) -> Data? { DeckPreviewBuild.build(text: t, file: deck, packDirs: packs).bytes }
+        if let first = drawn(text), let a = drawn(text.replacingOccurrences(of: "86%", with: "87%")), let b = drawn(text.replacingOccurrences(of: "86%", with: "88%")) {
+            v.show(bytes: first, name: "field-trial-review.md")
+            spin(30) { v.state == .ready }
+            let before = probe("86%")
+            let top = { (p: [String: Any]) in ((p["sizes"] as? [[Int]])?.first?[2]) ?? -1 }
+            func settled(_ p: [String: Any], _ n: Int) -> Bool { (p["refreshed"] as? Int ?? 0) >= n && (p["waiting"] as? Int ?? 1) == 0 && (p["inFlight"] as? Int ?? 1) == 0 }
+            check(before["found"] as? Bool == true && top(before) >= 0 && top(before) < 60, "the first drawing's slide 1 is at the pane's top (\(top(before)))")
+            v.show(bytes: a, name: "field-trial-review.md")
+            var one: [String: Any] = [:]
+            spin(30) { one = probe("87%"); return settled(one, 1) }
+            check(one["found"] as? Bool == true && top(one) == top(before), "one edit: the redrawn slides are at the pane's top, with the new text (top \(top(one)))")
+            v.show(bytes: first, name: "field-trial-review.md")
+            v.show(bytes: b, name: "field-trial-review.md")   // a second edit while the first redraw is under way
+            var after: [String: Any] = [:]
+            spin(30) { after = probe("88%"); return settled(after, 2) && after["found"] as? Bool == true }
+            check(after["found"] as? Bool == true && after["items"] as? Int == 9 && after["spareItems"] as? Int == 0,
+                  "after two quick edits the visible drawing has the newest text and all 9 slides (\(after["found"] ?? "?"), \(after["items"] ?? "?"))")
+            check(top(after) == top(before) && after["host"] as? String == "host" && after["visibility"] as? String == "visible",
+                  "the redrawn slides are where the first drawing's were, in #host, visible (top \(top(after)), host \(after["host"] ?? "?"))")
+            check((after["bodyHeight"] as? Int ?? 0) == (before["bodyHeight"] as? Int ?? -1), "the hidden spare adds nothing to the page's height (\(before["bodyHeight"] ?? "?") → \(after["bodyHeight"] ?? "?"))")
+        } else { check(false, "the sample deck exports for the redraw check") }
+    }
     let ui = Set(DuoAction.all.flatMap(\.ui))
     for label in ["Problems", "Add Comment", "Export Again", "Export as PowerPoint…", "Show Export in Finder", "Make Templates…", "Make Templates with Claude", "Add to Pack"] {
         check(ui.contains(label), "\"\(label)\" is named by an action")
