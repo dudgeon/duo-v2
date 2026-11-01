@@ -5050,3 +5050,9 @@ Verified under the lock:
 The specimen showed nine overflows in the sample pack's own limits, which is the fit check doing its job.
 
 Weak spot: the survey's "best" template for a chart slide was `table`. That's a heuristic, and Claude's plan decides.
+
+## F-522: the search scrim didn't reach the toolbar's items
+
+With search open, the Sessions/Tasks toggle and the toolbar's search field stayed bright. The scrim is a content overlay; an `NSToolbar` item is hosted in its own view above the content, so the content's scrim passes under it. The target says the scrim covers "the whole window, toolbar included" (search-handoff README, scrim row; DL-76), so Geoff's report matches the design. The screens' backdrop doesn't show the toolbar separately.
+
+Fix: `dimmedUnderSearch()` on each toolbar item (`Shell/DuoToolbar.swift`) draws the same `scrim` over the item's own shape (masked by its alpha, so the toolbar's empty space isn't dimmed twice), fades with `scrimIn`/`scrimOut` (off with Reduce Motion, as the other scrim fades), and a click on a dimmed item closes search as a click on the content does. A DuoCheck (`searchScrimToolbarChecks`) counts items against the modifier. Window captures in Light, Dark and Classic (`build/ui-scrim/`) show the field and breadcrumb dimmed; before, the field was bright white.
