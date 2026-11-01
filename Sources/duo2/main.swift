@@ -191,7 +191,7 @@ default:
     guard let (endpoint, source) = ControlEndpoint.discover() else {
         if let code = runOffline(action.id, rest) { exit(code) }
         if action.id == .deckTemplatePick || action.id == .deckTemplatePicked {
-            fail("\(action.verb) needs the deck viewer in Duo (the Slides view), and Duo isn't running. The viewer isn't built yet; `duo2 deck template build` and `specimen` work without it.", code: 69)
+            fail("\(action.verb) needs the deck viewer in Duo, and Duo isn't running. `duo2 deck template build` and `specimen` work without it.", code: 69)
         }
         fail("Duo isn't running. Run `duo2 doctor`.", code: 69)
     }

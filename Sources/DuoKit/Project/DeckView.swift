@@ -25,7 +25,7 @@ struct DeckView: View {
                 // The slides end where the picker bar starts: nothing draws under it (board C).
                 DeckWebHost(viewer: viewer)
                     .overlay { if viewer.state == .loading, viewer.listed > 0 { DeckDrawingFrames(count: viewer.listed) } }
-                DeckPickerBar(viewer: viewer)
+                if viewer.slidePicking { DeckSlidePickBar(viewer: viewer, path: path, file: file) } else { DeckPickerBar(viewer: viewer) }
             }
         }
         .onAppear { viewer.open(file); viewer.wake() }
@@ -34,35 +34,57 @@ struct DeckView: View {
     }
 }
 
-/// A: ‹ › Slide n of N, then Select Shape and Open With; 44 high with a `rule` below.
+/// A: ‹ › Slide n of N, then Select Shape and Open With; 44 high with a `rule` below. A Markdown deck's
+/// bar (`preview` set, P3-3) adds Problems ⌄ and the export state, and ends in Export ⌄; a plain .pptx's
+/// gains Make Templates… and Convert to Duo Deck… (P3-4), folded into ⋯ under 460.
 struct DeckBar: View {
     @Environment(AppModel.self) private var model
     let viewer: DeckViewer
     let path: String
     let file: URL
+    var preview: DeckPreview? = nil
 
     var body: some View {
         let _ = model.pickerRevision   // the viewer isn't observable: its changes bump this
+        // A pane narrower than the board's 460 shortens the count to "2/5" (DL-132 j, q68-narrow);
+        // while drawing, ‹ › and Select Shape are dimmed (q68-drawing).
+        ViewThatFits(in: .horizontal) {
+            bar(long: true, folded: false)
+            bar(long: false, folded: false)
+            bar(long: false, folded: true)
+        }
+        .padding(.horizontal, DuoMetric.noticePaddingX)
+        .frame(height: DuoMetric.deckBarHeight)
+        .overlay(alignment: .bottom) { DuoColor.rule.frame(height: DuoMetric.borderHairline) }
+    }
+
+    private func bar(long: Bool, folded: Bool) -> some View {
         HStack(spacing: DuoSpace.gapButtonToButton) {
             Button { viewer.go(viewer.slide - 1) } label: { Text("‹") }   // action: slide go
                 .buttonStyle(.duo).disabled(viewer.slide <= 1).help("Previous Slide").accessibilityLabel("Previous Slide")
             Button { viewer.go(viewer.slide + 1) } label: { Text("›") }   // action: slide go
                 .buttonStyle(.duo).disabled(viewer.slide >= viewer.count).help("Next Slide").accessibilityLabel("Next Slide")
-            // A pane narrower than the board's 460 shortens the count to "2/5" (DL-132 j, q68-narrow);
-            // while drawing, ‹ › and Select Shape are dimmed (q68-drawing).
-            ViewThatFits(in: .horizontal) {
-                count(viewer.count > 0 ? "Slide \(viewer.slide) of \(viewer.count)" : "Drawing slides…")
-                count(viewer.count > 0 ? "\(viewer.slide)/\(viewer.count)" : "…")
-            }
+            if long { count(viewer.count > 0 ? "Slide \(viewer.slide) of \(viewer.count)" : "Drawing slides…") }
+            else { count(viewer.count > 0 ? "\(viewer.slide)/\(viewer.count)" : "…") }
+            if let preview, !preview.errors.isEmpty { DeckProblemsButton(preview: preview).padding(.leading, 6) }
             Spacer(minLength: 8)
+            if let preview {
+                let label = preview.rendering.export.label()
+                if !label.isEmpty {
+                    Text(label).duoText(.pill).foregroundStyle(DuoColor.text2).multilineTextAlignment(.trailing).lineLimit(2).fixedSize(horizontal: false, vertical: true)
+                        .accessibilityIdentifier("deck.export-state")
+                }
+            }
             Button("Select Shape") { viewer.picking ? viewer.stopPicking() : viewer.startPicking() }
                 .buttonStyle(DuoButtonStyle(on: viewer.picking)).disabled(viewer.state != .ready)
                 .accessibilityIdentifier("video.slide.select")   // anchors: the video cursor's target
-            OpenWithMenu(path: path, file: file, bordered: true)
+            if let preview {
+                DeckExportButton(preview: preview)
+            } else {
+                DeckPptxButtons(viewer: viewer, path: path, folded: folded)
+                OpenWithMenu(path: path, file: file, bordered: true)
+            }
         }
-        .padding(.horizontal, DuoMetric.noticePaddingX)
-        .frame(height: DuoMetric.deckBarHeight)
-        .overlay(alignment: .bottom) { DuoColor.rule.frame(height: DuoMetric.borderHairline) }
     }
 }
 
@@ -76,6 +98,8 @@ extension DeckBar {
 struct DeckPickerBar: View {
     @Environment(AppModel.self) private var model
     let viewer: DeckViewer
+    /// A Markdown deck's provider: its picked bar gains Add Comment first (P3-1).
+    var preview: DeckPreview? = nil
 
     var body: some View {
         let _ = model.pickerRevision
@@ -91,7 +115,7 @@ struct DeckPickerBar: View {
                     if case .failure(let why) = model.sendTarget {
                         Text("\(why.reason): use Send To.").duoText(.body).foregroundStyle(DuoColor.text2)
                     }
-                    PickerButtonRow(viewer: viewer)
+                    PickerButtonRow(viewer: viewer, addComment: preview.map { p in { p.addCommentForPicked() } })
                 } else {
                     HStack(spacing: DuoSpace.gapButtonToButton) {
                         Text("Click a shape on a slide to select it. Esc to stop.").duoText(.body).fixedSize(horizontal: false, vertical: true)
@@ -115,28 +139,38 @@ struct DeckPickerBar: View {
 struct PickerButtonRow: View {
     @Environment(AppModel.self) private var model
     let viewer: any PageHost
+    /// Add Comment, first and the default, on a Markdown deck's slot (P3-1).
+    var addComment: (() -> Void)? = nil
 
     var body: some View {
         ViewThatFits(in: .horizontal) {
-            HStack(spacing: DuoSpace.gapButtonToButton) { send; another; Spacer(minLength: 0); cancel }
+            HStack(spacing: DuoSpace.gapButtonToButton) { comment; send; another; Spacer(minLength: 0); cancel }
             VStack(alignment: .leading, spacing: DuoSpace.gapButtonToButton) {
-                HStack(spacing: DuoSpace.gapButtonToButton) { send }
+                HStack(spacing: DuoSpace.gapButtonToButton) { comment; send }
                 HStack(spacing: DuoSpace.gapButtonToButton) { another; Spacer(minLength: 0); cancel }
             }
         }
     }
 
-    /// Send to Claude (default) and Send To ⌄.
+    @ViewBuilder private var comment: some View {
+        if let addComment {
+            Button("Add Comment") { addComment() }   // action: deck comment
+                .buttonStyle(DefaultSheetButtonStyle()).keyboardShortcut(.defaultAction)
+                .accessibilityIdentifier("deck.add-comment")
+        }
+    }
+
+    /// Send to Claude (default, unless Add Comment is) and Send To ⌄.
     @ViewBuilder private var send: some View {
         switch model.sendTarget {
         case .success(let t):
             Button("Send to Claude") { model.sendPickedElement(to: t.key) }
-                .buttonStyle(DefaultSheetButtonStyle()).keyboardShortcut(.defaultAction)
+                .modifier(SendToStyle(isDefault: addComment == nil))
                 .accessibilityIdentifier("video.picker.send")   // anchors: the video cursor's target
         case .failure(let why):
             Button("Send to Claude") {}.buttonStyle(DefaultSheetButtonStyle()).disabled(true).help(why.reason)
         }
-        let sendToDefault = (try? model.sendTarget.get()) == nil   // with no session, Send To is the way (q68-no-session)
+        let sendToDefault = (try? model.sendTarget.get()) == nil && addComment == nil   // with no session, Send To is the way (q68-no-session)
         Menu {
             let visible = (try? model.sendTarget.get())?.key
             ForEach(model.sendTargets.filter { $0.key != visible }) { t in

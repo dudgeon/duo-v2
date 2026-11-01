@@ -41,6 +41,18 @@ public final class DeckViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
     public var onSlideChange: ((Int) -> Void)?
     /// A shape was picked (or the picker ended, nil).
     public var onPicked: ((SendFormat.Element?) -> Void)?
+    /// A button on a card under a slide was pressed: the card's index in what `setOverlay` was given, and the button's id.
+    public var onCard: ((Int, String) -> Void)?
+    /// A comment pin was clicked: the thread it opens.
+    public var onPin: ((String) -> Void)?
+
+    // MARK: Picking slides (Make Templates, DL-291)
+
+    /// The slide tick boxes are showing, and the slides ticked (from 1, ascending).
+    public private(set) var slidePicking = false
+    public private(set) var pickedSlides: [Int] = []
+    /// What Duo draws round the slides, kept so a redraw (or a restarted page) has it before the slides arrive.
+    private var overlay: [String: Any] = [:]
 
     static let scheme = "duo-deck"
     /// Where the page is when there's no app bundle around it (checks run from the checkout).
@@ -96,10 +108,40 @@ public final class DeckViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         let call = first ? "return __duo.open(n, s, v)" : "return __duo.refresh(n, s, v)"
         let run = { [weak self] in
             guard let self else { return }
+            self.sendOverlay()
             self.webView.callAsyncJavaScript(call, arguments: ["n": name, "s": at, "v": Int(Date().timeIntervalSince1970 * 1000)],
                                              in: nil, in: .page, completionHandler: nil)
         }
         if loaded { run() } else { pending = run }
+    }
+
+    /// Cards, pins, each slide's template and the slot-to-shape map, drawn round the slides (P3b). `o` is
+    /// `{cards: [{slide, kind, slot, message, buttons: [{id, label}]}], pins: [{slide, slot, count, thread}],
+    /// templates: [name], shapes: {slide: {slot: shape id}}}`.
+    public func setOverlay(_ o: [String: Any]) {
+        overlay = o
+        if loaded { sendOverlay() }
+    }
+
+    private func sendOverlay() {
+        webView.callAsyncJavaScript("return __duo.overlay(o)", arguments: ["o": overlay], in: nil, in: .page, completionHandler: nil)
+    }
+
+    /// Turns the slide tick boxes on or off; ticks are cleared when they go off.
+    public func setSlidePicking(_ on: Bool) {
+        guard on != slidePicking else { return }
+        if on { stopPicking() }
+        slidePicking = on
+        if !on { pickedSlides = [] }
+        webView.callAsyncJavaScript("return __duo.slidePicking(on)", arguments: ["on": on], in: nil, in: .page, completionHandler: nil)
+        onChange?()
+    }
+
+    /// Sets the ticked slides (`duo2 deck template pick 3,7`).
+    public func setPickedSlides(_ slides: [Int]) {
+        pickedSlides = Array(Set(slides.filter { $0 >= 1 && $0 <= max(count, 1) })).sorted()
+        webView.callAsyncJavaScript("return __duo.setSlidePicks(l)", arguments: ["l": pickedSlides], in: nil, in: .page, completionHandler: nil)
+        onChange?()
     }
 
     /// The bytes `show(bytes:name:)` was given, if the viewer is drawing from memory.
@@ -119,6 +161,7 @@ public final class DeckViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         let name = file.lastPathComponent
         let run = { [weak self] in
             guard let self else { return }
+            self.sendOverlay()
             self.webView.callAsyncJavaScript("return __duo.open(n, s, v)", arguments: ["n": name, "s": start, "v": Int(Date().timeIntervalSince1970 * 1000)],
                                              in: nil, in: .page, completionHandler: nil)
         }
@@ -216,6 +259,16 @@ public final class DeckViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         case "slide":
             slide = body["slide"] as? Int ?? slide
             onSlideChange?(slide)
+        case "slidePicks":
+            pickedSlides = (body["slides"] as? [Int]) ?? []
+        case "slidePickEnded":
+            slidePicking = false; pickedSlides = []
+        case "card":
+            if let i = body["index"] as? Int, let b = body["button"] as? String { onCard?(i, b) }
+            return
+        case "pin":
+            if let t = body["thread"] as? String { onPin?(t) }
+            return
         case "blocked":
             let what = body["what"] as? String ?? ""
             blocked.append(what)
