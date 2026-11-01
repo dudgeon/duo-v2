@@ -35,6 +35,12 @@ public final class DeckViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
     private var stamp: Date?
     private var timer: Timer?
     private var dormant = false
+    /// A deck drawn from memory (`show(bytes:)`), instead of from `url`.
+    private var memory: Data?
+    /// The page reported the slide on screen changing (a scroll, ‹ ›, Page Up/Down).
+    public var onSlideChange: ((Int) -> Void)?
+    /// A shape was picked (or the picker ended, nil).
+    public var onPicked: ((SendFormat.Element?) -> Void)?
 
     static let scheme = "duo-deck"
     /// Where the page is when there's no app bundle around it (checks run from the checkout).
@@ -74,8 +80,34 @@ public final class DeckViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
     /// Draws the file again, keeping the slide (Duo also does this when the file changes).
     public func reload() { load(slide: max(slide, 1)) }
 
+    /// Draws a deck from bytes held in memory (split view's deck preview renders the editor's buffer and
+    /// never writes a file). The first drawing shows "Drawing slides…"; each later one is made out of
+    /// sight and swapped in, so the slides keep their scroll and the current slide (no flash).
+    /// Nothing is watched: the caller says when the deck changed.
+    public func show(bytes: Data, name: String) {
+        timer?.invalidate(); timer = nil
+        let first = memory == nil || state != .ready
+        memory = bytes
+        url = nil
+        picked = nil; picking = false
+        if first { count = 0; slide = 0; state = .loading }
+        onChange?()
+        let at = max(slide, 1)
+        let call = first ? "return __duo.open(n, s, v)" : "return __duo.refresh(n, s, v)"
+        let run = { [weak self] in
+            guard let self else { return }
+            self.webView.callAsyncJavaScript(call, arguments: ["n": name, "s": at, "v": Int(Date().timeIntervalSince1970 * 1000)],
+                                             in: nil, in: .page, completionHandler: nil)
+        }
+        if loaded { run() } else { pending = run }
+    }
+
+    /// The bytes `show(bytes:name:)` was given, if the viewer is drawing from memory.
+    public var shownBytes: Data? { memory }
+
     private func load(slide start: Int) {
         guard let file = url else { return }
+        memory = nil
         picked = nil; picking = false; count = 0; slide = 0
         stamp = Self.modified(file)
         if let why = Self.problem(file) {
@@ -183,6 +215,7 @@ public final class DeckViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
             settle()
         case "slide":
             slide = body["slide"] as? Int ?? slide
+            onSlideChange?(slide)
         case "blocked":
             let what = body["what"] as? String ?? ""
             blocked.append(what)
@@ -190,6 +223,7 @@ public final class DeckViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
             return
         case "picked", "pickEnded":
             handlePageMessage(message)
+            onPicked?(picked)
             return
         default: return
         }
@@ -215,6 +249,12 @@ public final class DeckViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         case "deck.pptx": file = url; type = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
         default: file = nil; type = "text/plain"
         }
+        if name == "deck.pptx", url == nil, let memory {
+            task.didReceive(HTTPURLResponse(url: u, statusCode: 200, httpVersion: "HTTP/1.1",
+                                            headerFields: ["Content-Type": type, "Content-Length": String(memory.count), "Cache-Control": "no-store"])!)
+            task.didReceive(memory)
+            return task.didFinish()
+        }
         guard let file, let data = try? Data(contentsOf: file, options: .mappedIfSafe) else {
             return task.didFailWithError(URLError(.fileDoesNotExist))
         }
@@ -239,7 +279,7 @@ public final class DeckViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         DuoLog.write("deck: web content process terminated")
         loaded = false
         webView.load(URLRequest(url: URL(string: "\(Self.scheme)://app/deck.html")!))
-        load(slide: max(slide, 1))
+        if let memory { state = .ready; show(bytes: memory, name: "deck.md") } else { load(slide: max(slide, 1)) }
     }
 
     /// The page itself didn't load (the app's copy is missing): say so rather than "Drawing…" forever.

@@ -4,7 +4,8 @@
 import { PptxViewer, RECOMMENDED_ZIP_LIMITS } from './pptx-renderer.js';
 
 const post = (m) => { try { webkit.messageHandlers.duoDeck.postMessage(m); } catch (_) {} };
-const host = document.getElementById('host');
+let host = document.getElementById('host');
+let spare = document.getElementById('spare');   // a redraw is made here, out of sight, then swapped in
 const outline = document.getElementById('outline');
 const tag = document.getElementById('tag');
 let viewer = null, title = '', current = 0, picking = false, hovered = null, frozen = null, hidden = false;
@@ -156,6 +157,36 @@ window.__duo = {
       });
       items().forEach(decorate);
       if (slide > 1) go(slide, true); else track();   // opening lands on the slide, no scroll
+      post({ kind: 'ready', count: count(), slide: current, width: viewer.slideWidth, height: viewer.slideHeight });
+      return { count: count() };
+    } catch (err) {
+      post({ kind: 'failed', reason: String(err && err.message || err) });
+      return { error: String(err && err.message || err) };
+    }
+  },
+  // Draws the deck again (an edit in the split view's source, DL-275): the new drawing is made out of
+  // sight and swapped in, so the slides don't blink and the pane keeps its scroll and its slide.
+  async refresh(name, slide, v) {
+    if (!viewer) return window.__duo.open(name, slide, v);
+    title = name;
+    stop();
+    const y = scrollY, keep = current;
+    try {
+      const res = await fetch(`deck.pptx?v=${v}`);
+      if (!res.ok) throw new Error(`deck.pptx: ${res.status}`);
+      const bytes = new Uint8Array(await res.arrayBuffer());
+      spare.innerHTML = '';
+      const next = await PptxViewer.open(bytes, spare, {
+        zipLimits: RECOMMENDED_ZIP_LIMITS, fitMode: 'contain', pdfjs: false,
+        onSlideRendered: (_, el) => decorate(el.closest?.('[data-slide-index]') || el),
+      });
+      const old = viewer, oldHost = host;
+      viewer = next; host = spare; spare = oldHost;
+      host.classList.remove('staged'); spare.classList.add('staged');
+      old.destroy(); spare.innerHTML = '';
+      current = Math.min(keep, count()) || 1;
+      items().forEach(decorate);
+      scrollTo(0, y); track();
       post({ kind: 'ready', count: count(), slide: current, width: viewer.slideWidth, height: viewer.slideHeight });
       return { count: count() };
     } catch (err) {
