@@ -398,6 +398,9 @@ public final class AppModel {
     /// Sparkle's "Check for Updates", when the app started it (release builds).
     @ObservationIgnored public var sparkleCheck: (() -> Void)?
     public var newProjectForm: NewProjectForm?
+    /// New Deck… and Convert to Duo Deck… (Duo Decks P3-4).
+    public var newDeckForm: NewDeckForm?
+    public var convertDeckForm: ConvertDeckForm?
     /// Each project's repository, when its folder is in one (DL-149, DL-157), by project name.
     public var repos: [String: RepoView] = [:]
     /// The Push sheet (board 6), when it's up.
