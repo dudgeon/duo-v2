@@ -142,6 +142,7 @@ public final class DeckPreview: NSObject, PreviewProvider {
     public func bind(path: String, file: URL, model: AppModel?) {
         self.path = path
         self.file = file
+        DeckPreviewHub.current = self
         if let model, self.model !== model {
             self.model = model
             viewer.onChange = { [weak model] in model?.pickerRevision += 1 }
@@ -211,6 +212,12 @@ public final class DeckPreview: NSObject, PreviewProvider {
     public func anchor(forLine line: Int) -> String? {
         rendering.anchors.filter { $0.contains(line: line) }.min { ($0.lastLine - $0.firstLine) < ($1.lastLine - $1.firstLine) }?.anchor
     }
+}
+
+/// The deck preview split view is showing, for `duo2 deck …` (set when a provider is bound to a split tab).
+@MainActor
+public enum DeckPreviewHub {
+    public static weak var current: DeckPreview?
 }
 
 /// The deck preview's body: the viewer's own bar, the slides, the picker bar (DL-125's A, B, C), as in the right pane.

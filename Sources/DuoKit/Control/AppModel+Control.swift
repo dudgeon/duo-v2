@@ -958,6 +958,8 @@ extension AppModel {
              .deckTemplates, .deckCheck, .deckExport, .deckInsert, .deckNew, .deckChange, .deckRender,
              .deckTemplateInventory, .deckTemplateBuild, .deckTemplateSpecimen, .deckImport, .deckMigrate:
             done(.fail("`duo2 \(id.rawValue)` runs in the CLI, not the app"))
+        case .deckShowing, .deckGo, .deckPick:
+            deckPreviewVerb(id, inv, done)
         case .deckTemplatePick, .deckTemplatePicked:
             done(.fail("`duo2 \(id.rawValue)` needs the deck viewer (the Slides view), which isn't built yet; template picking arrives with it"))
         }
