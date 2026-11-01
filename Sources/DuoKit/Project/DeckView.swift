@@ -48,18 +48,29 @@ struct DeckBar: View {
         let _ = model.pickerRevision   // the viewer isn't observable: its changes bump this
         // A pane narrower than the board's 460 shortens the count to "2/5" (DL-132 j, q68-narrow);
         // while drawing, ‹ › and Select Shape are dimmed (q68-drawing).
-        ViewThatFits(in: .horizontal) {
-            bar(long: true, folded: 0)
-            bar(long: false, folded: 0)
-            bar(long: false, folded: 1)
-            bar(long: false, folded: 2)
+        Group {
+            if preview != nil {
+                // The export state gives way last: it is dropped only when even the short count can't fit it.
+                ViewThatFits(in: .horizontal) {
+                    bar(long: true, folded: 0, state: true)
+                    bar(long: false, folded: 0, state: true)
+                    bar(long: false, folded: 0, state: false)
+                }
+            } else {
+                ViewThatFits(in: .horizontal) {
+                    bar(long: true, folded: 0, state: false)
+                    bar(long: false, folded: 0, state: false)
+                    bar(long: false, folded: 1, state: false)
+                    bar(long: false, folded: 2, state: false)
+                }
+            }
         }
         .padding(.horizontal, DuoMetric.noticePaddingX)
         .frame(height: DuoMetric.deckBarHeight)
         .overlay(alignment: .bottom) { DuoColor.rule.frame(height: DuoMetric.borderHairline) }
     }
 
-    private func bar(long: Bool, folded: Int) -> some View {
+    private func bar(long: Bool, folded: Int, state: Bool) -> some View {
         HStack(spacing: DuoSpace.gapButtonToButton) {
             Button { viewer.go(viewer.slide - 1) } label: { Text("‹") }   // action: slide go
                 .buttonStyle(.duo).disabled(viewer.slide <= 1).help("Previous Slide").accessibilityLabel("Previous Slide")
@@ -67,13 +78,13 @@ struct DeckBar: View {
                 .buttonStyle(.duo).disabled(viewer.slide >= viewer.count).help("Next Slide").accessibilityLabel("Next Slide")
             if long { count(viewer.count > 0 ? "Slide \(viewer.slide) of \(viewer.count)" : "Drawing slides…") }
             else { count(viewer.count > 0 ? "\(viewer.slide)/\(viewer.count)" : "…") }
-            if let preview, !preview.errors.isEmpty { DeckProblemsButton(preview: preview).padding(.leading, 6) }
-            Spacer(minLength: 8)
-            if let preview {
+            if let preview, !preview.errors.isEmpty { DeckProblemsButton(preview: preview) }
+            Spacer(minLength: 0)
+            if let preview, state {
                 let label = preview.rendering.export.label()
                 if !label.isEmpty {
                     Text(label).duoText(.pill).foregroundStyle(DuoColor.text2).multilineTextAlignment(.trailing).lineLimit(2).fixedSize(horizontal: false, vertical: true)
-                        .frame(width: 96, alignment: .trailing)
+                        .minimumScaleFactor(0.9).frame(width: 60, alignment: .trailing)
                         .accessibilityIdentifier("deck.export-state")
                 }
             }

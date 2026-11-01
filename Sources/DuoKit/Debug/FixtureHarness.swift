@@ -419,7 +419,14 @@ public enum FixtureHarness {
             if let p = DeckPreviewHub.current { p.menu = parts.count > 1 && parts[1] != "off" ? parts[1] : nil; p.viewer.onChange?() }
         case "deck-hover":  // deck-hover:<row id>: a row of that menu under the pointer
             if let p = DeckPreviewHub.current, parts.count > 1 { p.menuHover = parts[1]; p.viewer.onChange?() }
-        case "deck-export": DeckPreviewHub.current?.exportDeck()
+        case "deck-export": whenDeckReady { $0.exportDeck() }   // once the deck is drawn
+        case "deck-edit":   // deck-edit:<find>=><replacement>: on the deck's file on disk, once it is drawn (a user's edit elsewhere)
+            let p = (parts.count > 1 ? parts[1] : "").components(separatedBy: "=>")
+            whenDeckReady { preview in
+                if p.count == 2, let url = preview.file, let text = try? String(contentsOf: url, encoding: .utf8) {
+                    try? text.replacingOccurrences(of: p[0], with: p[1]).write(to: url, atomically: true, encoding: .utf8)
+                }
+            }
         case "deck-pin-hover":   // deck-pin-hover:<slide>/<shape id>: the slot's outline as under a pin's pointer
             if let p = DeckPreviewHub.current, parts.count > 1 { p.viewer.hover(parts[1]) }
         case "sheet-newdeck": model.showNewDeck(name: parts.count > 1 ? parts[1] : "")   // New Deck…'s sheet
@@ -1250,6 +1257,16 @@ public enum FixtureHarness {
         case let a where a.hasPrefix("wait"): break
         case let a where a.hasPrefix("perf-"): ChatPerf.perform(parts, on: model)   // chat mode's performance runs (F-157)
         default: FileHandle.standardError.write(Data("Unknown action '\(action)'\n".utf8))
+        }
+    }
+
+    /// Runs `then` on the deck preview once it has drawn its slides (polls for up to two minutes).
+    static func whenDeckReady(_ then: @escaping @MainActor (DeckPreview) -> Void) {
+        Task { @MainActor in
+            for _ in 0..<240 {
+                if let p = DeckPreviewHub.current, p.viewer.state == .ready, p.viewer.count > 0 { return then(p) }
+                try? await Task.sleep(for: .milliseconds(500))
+            }
         }
     }
 
