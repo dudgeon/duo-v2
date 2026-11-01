@@ -37,6 +37,8 @@
   .slide-picked > .deck-slide { outline: 2px solid var(--duo-text) !important; }
   .slide-picked > .deck-number { color: var(--duo-text); font-weight: 600; }
   body.slide-picking #host [data-slide-index] { cursor: default; }
+  #host.grid { display: grid; column-gap: 16px; align-items: start; align-content: start; }
+  #host.grid [data-slide-index] { margin: 0 0 16px 0 !important; min-width: 0; }
   #outline { position: absolute; pointer-events: none; box-sizing: border-box; display: none; z-index: 10; }
   #outline.hover { border: 1px dashed var(--duo-text); }
   #outline.frozen { border: 1.5px solid var(--duo-text); }

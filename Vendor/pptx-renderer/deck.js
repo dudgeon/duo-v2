@@ -230,12 +230,32 @@ function markPicks() {
     item.classList.toggle('slide-picking', slidePicking);
   }
 }
-function setSlidePicking(on) {
+// While picking slides they lie in a grid (board 9A): 2 columns under 640 pt of pane, 3 from there. The renderer
+// sizes a slide to the host's width times its zoom, so the zoom is the column's share of the width; leaving puts
+// it back to 1 and returns to the slide that was on screen.
+const GRID_GAP = 16;
+const gridCols = () => window.innerWidth < 640 ? 2 : 3;
+async function fitGrid(on) {
+  if (!viewer) return;
+  const w = host.clientWidth || 1;
+  const cols = on ? gridCols() : 1;
+  host.style.gridTemplateColumns = on ? `repeat(${cols}, minmax(0, 1fr))` : '';
+  const z = on ? ((w - (cols - 1) * GRID_GAP) / cols) / w : 1;
+  await viewer.setZoom(Math.max(10, z * 100));
+  items().forEach(decorate);
+  applyOverlay();
+}
+async function setSlidePicking(on) {
+  const keep = current;
   slidePicking = on;
   if (!on) slidePicks = new Set();
   document.body.classList.toggle('slide-picking', on);
-  applyOverlay();
+  host.classList.toggle('grid', on);
+  await fitGrid(on);
+  if (keep > 0) go(keep, true);
+  track();
 }
+window.addEventListener('resize', () => { if (slidePicking) fitGrid(true); });
 
 
 window.__duo = {
@@ -284,6 +304,7 @@ window.__duo = {
       old.destroy(); spare.innerHTML = '';
       current = Math.min(keep, count()) || 1;
       items().forEach(decorate);
+      if (slidePicking) { host.classList.add('grid'); await fitGrid(true); }
       applyOverlay();
       scrollTo(0, y); track();
       post({ kind: 'ready', count: count(), slide: current, width: viewer.slideWidth, height: viewer.slideHeight });
@@ -295,7 +316,7 @@ window.__duo = {
   },
   // Duo's marks: { cards, pins, templates, shapes } (see DeckViewer.setOverlay); drawn now, and after each redraw.
   overlay(o) { overlay = Object.assign({ cards: [], pins: [], templates: [], shapes: {} }, o); applyOverlay(); return true; },
-  slidePicking: (on) => { setSlidePicking(!!on); return true; },
+  slidePicking: async (on) => { await setSlidePicking(!!on); return true; },
   setSlidePicks: (list) => { slidePicks = new Set(list); markPicks(); return true; },
   overlayState: () => ({ cards: host.querySelectorAll('.deck-card').length, pins: host.querySelectorAll('.deck-pin').length, ticks: host.querySelectorAll('.deck-tick').length }),
   go, current: () => current, count,
