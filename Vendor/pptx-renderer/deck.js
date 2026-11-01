@@ -13,6 +13,8 @@ let viewer = null, title = '', current = 0, picking = false, hovered = null, fro
 // template beside its number, and tick boxes while slides are being picked (Make Templates, DL-291).
 let overlay = { cards: [], pins: [], templates: [], shapes: {} };
 let slidePicking = false, slidePicks = new Set();
+// How many redraws were asked for and finished, for `deck-probe` (checks and the harness).
+const stats = { opens: 0, refreshes: 0, refreshed: 0, inFlight: 0, waiting: 0 };
 
 const items = () => [...host.querySelectorAll('[data-slide-index]')];
 const count = () => viewer ? viewer.slideCount : 0;
@@ -259,11 +261,24 @@ async function setSlidePicking(on) {
 window.addEventListener('resize', () => { if (slidePicking) fitGrid(true); });
 
 
-window.__duo = {
+// One drawing at a time (open and refresh share `#host`/`#spare`): two edits in quick succession would
+// otherwise draw into the same spare and swap each other's slides away. A request that a newer one
+// superseded while it waited is skipped; the newest always draws.
+let queue = Promise.resolve(), asked = 0;
+function serial(fn) {
+  const mine = ++asked;
+  stats.waiting++;
+  const run = queue.then(() => mine === asked ? fn() : { superseded: true }).finally(() => { stats.waiting--; });
+  queue = run.catch(() => {});
+  return run;
+}
+
+const draw = {
   // Opens the deck DeckViewer serves at deck.pptx (`v` defeats caching); shows `slide` (from 1).
   async open(name, slide, v) {
     title = name;
     stop();
+    stats.opens++;
     viewer?.destroy(); viewer = null; current = 0; host.innerHTML = '';
     try {
       const res = await fetch(`deck.pptx?v=${v}`);
@@ -286,10 +301,11 @@ window.__duo = {
   // Draws the deck again (an edit in the split view's source, DL-275): the new drawing is made out of
   // sight and swapped in, so the slides don't blink and the pane keeps its scroll and its slide.
   async refresh(name, slide, v) {
-    if (!viewer) return window.__duo.open(name, slide, v);
+    if (!viewer) return draw.open(name, slide, v);
     title = name;
     stop();
     const y = scrollY, keep = current;
+    stats.refreshes++; stats.inFlight++;
     try {
       const res = await fetch(`deck.pptx?v=${v}`);
       if (!res.ok) throw new Error(`deck.pptx: ${res.status}`);
@@ -301,6 +317,8 @@ window.__duo = {
       });
       const old = viewer, oldHost = host;
       viewer = next; host = spare; spare = oldHost;
+      // The ids follow the roles: the stylesheet's #host rules (slide spacing, rule, grid) are the visible drawing's.
+      spare.id = ''; host.id = 'host'; spare.id = 'spare';
       host.classList.remove('staged'); spare.classList.add('staged');
       old.destroy(); spare.innerHTML = '';
       current = Math.min(keep, count()) || 1;
@@ -313,8 +331,13 @@ window.__duo = {
     } catch (err) {
       post({ kind: 'failed', reason: String(err && err.message || err) });
       return { error: String(err && err.message || err) };
-    }
+    } finally { stats.inFlight--; stats.refreshed++; }
   },
+};
+
+window.__duo = {
+  open: (name, slide, v) => serial(() => draw.open(name, slide, v)),
+  refresh: (name, slide, v) => serial(() => draw.refresh(name, slide, v)),
   // Duo's marks: { cards, pins, templates, shapes } (see DeckViewer.setOverlay); drawn now, and after each redraw.
   overlay(o) { overlay = Object.assign({ cards: [], pins: [], templates: [], shapes: {} }, o); applyOverlay(); return true; },
   slidePicking: async (on) => { await setSlidePicking(!!on); return true; },
@@ -330,6 +353,16 @@ window.__duo = {
   hideOutline: () => { hidden = true; place(null); },
   showOutline: () => { hidden = false; place(frozen); },
   selection: () => null,
+  // What is on screen, from the DOM (redraw-blank.md): the visible container, its slides and their sizes.
+  probe: (find) => {
+    const cs = getComputedStyle(host), its = items();
+    return { count: count(), current, host: host.id, hostClass: host.className, spare: spare.id, spareClass: spare.className,
+      items: its.length, spareItems: spare.querySelectorAll('[data-slide-index]').length,
+      sizes: its.slice(0, 3).map((it) => { const r = it.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height), Math.round(r.top)]; }),
+      shapes: host.querySelectorAll('[data-duo-shape-id]').length, found: find ? (host.textContent || '').includes(find) : null,
+      visibility: cs.visibility, display: cs.display, position: cs.position,
+      scrollY: Math.round(scrollY), bodyHeight: document.body.scrollHeight, ...stats };
+  },
 };
 // Anything the page's policy blocks is reported, so a renderer change that needs more shows up.
 document.addEventListener('securitypolicyviolation', (e) => post({ kind: 'blocked', what: `${e.violatedDirective} ${e.blockedURI}` }));
