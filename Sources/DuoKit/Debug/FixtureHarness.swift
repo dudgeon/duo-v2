@@ -427,6 +427,15 @@ public enum FixtureHarness {
                     try? text.replacingOccurrences(of: p[0], with: p[1]).write(to: url, atomically: true, encoding: .utf8)
                 }
             }
+        case "deck-probe":   // deck-probe[:<label>]: one stderr line, the deck page's DOM as drawn (visible container, slides, sizes, redraws)
+            let label = parts.count > 1 ? parts[1] : ""
+            if let p = DeckPreviewHub.current {
+                p.viewer.webView.callAsyncJavaScript("return JSON.stringify(window.__duo && __duo.probe ? __duo.probe() : null)", arguments: [:], in: nil, in: .page) { r in
+                    let v: String
+                    switch r { case .success(let s): v = s as? String ?? "nil"; case .failure(let e): v = "error \(e.localizedDescription)" }
+                    FileHandle.standardError.write(Data("deck-probe \(label): state=\(p.viewer.state) \(v)\n".utf8))
+                }
+            } else { FileHandle.standardError.write(Data("deck-probe \(label): no deck preview\n".utf8)) }
         case "deck-pin-hover":   // deck-pin-hover:<slide>/<shape id>: the slot's outline as under a pin's pointer
             if let p = DeckPreviewHub.current, parts.count > 1 { p.viewer.hover(parts[1]) }
         case "sheet-newdeck": model.showNewDeck(name: parts.count > 1 ? parts[1] : "")   // New Deck…'s sheet

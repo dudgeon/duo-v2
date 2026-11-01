@@ -13,7 +13,9 @@
   body { padding: 16px 20px 0; }
   #host, #spare { min-height: 100vh; }
   /* The drawing being made for a redraw: laid out like the visible one, but unseen and out of the page's height. */
-  .staged { position: absolute; top: 16px; left: 20px; right: 20px; visibility: hidden; pointer-events: none; }
+  /* !important: the renderer sets `position: relative` on its container inline, which would leave the hidden
+     drawing in the flow, a viewport tall, above the slides after a redraw (redraw-blank.md). */
+  .staged { position: absolute !important; top: 16px; left: 20px; right: 20px; visibility: hidden; pointer-events: none; }
   /* The renderer's slide items: a number above each, a rule round it, no shadow (Duo has none). */
   #host [data-slide-index] { margin: 0 0 16px 0 !important; width: auto !important; }
   #host [data-slide-index] > div.deck-slide { box-shadow: none !important; outline: 1px solid var(--duo-rule); }
