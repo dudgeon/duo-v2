@@ -7,14 +7,14 @@ import Foundation
 /// back to the page, which applies it as one undo step.
 extension EditorController {
     /// The pack a deck's text names, found from the file's folder (project, then Home, then built in).
-    static func deckPack(for text: String, file: URL?) -> Deck.Pack? {
+    public static func deckPack(for text: String, file: URL?) -> Deck.Pack? {
         guard let file else { return nil }
         let name = Deck.parse(text).front["template"] ?? Deck.builtInPackName
         return try? Deck.loadPack(name, in: Deck.packDirs(near: file.deletingLastPathComponent()))
     }
 
     /// What the picker lists: `{ pack, templates: [{ name, purpose, slots: [{ name, kind }] }] }`.
-    static func deckTemplatesJSON(_ pack: Deck.Pack) -> String {
+    public static func deckTemplatesJSON(_ pack: Deck.Pack) -> String {
         let ts: [[String: Any]] = pack.templates.map { t in
             ["name": t.name,
              "purpose": t.purpose.split(separator: "\n").first.map(String.init) ?? "",
@@ -26,14 +26,14 @@ extension EditorController {
     }
 
     /// The first and last line (1-based) of the slide holding `line`, nil above the first slide.
-    static func deckAnchor(text: String, line: Int) -> (first: Int, last: Int)? {
+    public static func deckAnchor(text: String, line: Int) -> (first: Int, last: Int)? {
         let slides = Deck.parse(text).slides
         guard let s = slides.last(where: { $0.line <= line }) else { return nil }
         return (s.line, max(s.lastLine, s.line))
     }
 
     /// The result of a pick: the deck's new text and the line the caret goes to (the new slide's title, or the changed slide's marker).
-    static func deckPicked(op: String, slide: Int, template: String, text: String, pack: Deck.Pack) throws -> (text: String, line: Int) {
+    public static func deckPicked(op: String, slide: Int, template: String, text: String, pack: Deck.Pack) throws -> (text: String, line: Int) {
         guard let t = pack.template(template) else { throw Deck.Failure(description: "no template \"\(template)\" in \(pack.md.lastPathComponent)") }
         if op == "insert" {
             let new = try Deck.insertSlide(source: text, template: t, after: slide)
