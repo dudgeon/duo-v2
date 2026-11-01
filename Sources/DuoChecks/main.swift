@@ -2142,6 +2142,7 @@ func repoFixture() throws -> Fixture {
     print("the window's root reads no session's state (F-208, ENH-46)")
     do {
         freezeGuardChecks()  // FreezeGuardChecks.swift: F-208 and F-225 scans, by declaration (C-84)
+        searchScrimToolbarChecks()  // F-522
         // F-226: a chat the size of the one that froze (24 items, 86 steps) has no lazy stack at all.
         check(!ChatFeedShape.isLazy(items: 24, steps: 86) && !ChatFeedShape.isLazy(items: 48, steps: 250)
               && ChatFeedShape.isLazy(items: 49, steps: 10) && ChatFeedShape.isLazy(items: 10, steps: 251) && ChatFeedShape.isLazy(items: 100, steps: 1945),
