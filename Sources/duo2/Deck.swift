@@ -117,7 +117,7 @@ func runDeck(_ verb: String, _ argv: [String]) -> Int32 {
             return 64
         }
     } catch {
-        err("duo2: \(error)")
+        err("duo2: " + ((error as? Deck.Failure)?.description ?? error.localizedDescription))
         return 1
     }
 }

@@ -133,6 +133,7 @@ extension Deck {
             out.append("")
             out.append("> [!note]")
             out += oldNotes.map { $0.isEmpty ? ">" : "> \($0)" }
+            if !oldNotes.isEmpty, !r.notes.isEmpty { out.append(">") }
             out += r.notes.map { $0.isEmpty ? ">" : "> \($0)" }
         }
         out += tail

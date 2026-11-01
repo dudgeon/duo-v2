@@ -132,6 +132,7 @@ def build(out):
         pass
     title_rpr = tx.find('p:titleStyle/a:lvl1pPr/a:defRPr', NS)
     title_rpr.set('sz', '3600'); title_rpr.set('b', '1')
+    tx.find('p:titleStyle/a:lvl1pPr', NS).set('algn', 'l')   # titles read from the left, like the text under them
 
     L = list(prs.slide_layouts)
     # drop the two vertical-text layouts
