@@ -59,7 +59,7 @@ export const LakeCaptions = ({t, lines, bottom = 40}: {t: number; lines: Line[];
   </AbsoluteFill>
 );
 
-type Extra = {audio?: {at: number; clip: string}[]; dockIcon?: {at: number; icon: string}; bandDown?: number};
+type Extra = {audio?: {at: number; clip: string; from?: number}[]; dockIcon?: {at: number; icon: string}; bandDown?: number};
 type Scene = SceneProps['scene'] & {app?: AppData & Extra; transitionIn?: {name: string}};
 
 export const ReleaseApp = ({t, scene}: SceneProps) => {
@@ -75,7 +75,7 @@ export const ReleaseApp = ({t, scene}: SceneProps) => {
     <>
       {s.app ? <AppScene t={t} data={s.app} dockIcon={dock} /> : null}
       {(s.app?.audio ?? []).map((a, i) => (
-        <Sequence key={i} from={Math.round(a.at * fps)}><Audio src={CLIPS[a.clip]} /></Sequence>
+        <Sequence key={i} from={Math.round(a.at * fps)}><Audio src={CLIPS[a.clip]} startFrom={Math.round((a.from ?? 0) * fps)} /></Sequence>
       ))}
       <CaptionBand t={t} lines={scene.lines ?? []} u={u} />
     </>

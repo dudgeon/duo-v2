@@ -210,7 +210,7 @@ function planApp({scene, shot, lines, tr, prev, prevShot, captures, events, styl
     if (b.overlay) (data.overlays ??= []).push({at, until: b.overlay.until !== undefined ? when(b.overlay.until, at) : 1e9, src: cap(use(b.overlay.state)).src, scale: b.overlay.scale ?? style.capture.scale,
       region: b.overlay.region, x: b.overlay.x, y: b.overlay.y, title: b.overlay.title});
     // audio: a clip the scene plays from here (the 0.2.22 film's dictation, heard as the mic hears it).
-    if (b.audio) (data.audio ??= []).push({at, clip: b.audio});
+    if (b.audio) (data.audio ??= []).push({at, clip: b.audio, from: b.recFrom ?? 0});
     if (b.dockIcon !== undefined) data.dockIcon = {at, icon: b.dockIcon};
     // band: 'down': the caption band drops away from here (the Dock sits where it would be).
     if (b.band === 'down') data.bandDown = at;
@@ -220,9 +220,11 @@ function planApp({scene, shot, lines, tr, prev, prevShot, captures, events, styl
       const c = cap(use(b.rec));
       if (!c.rec) throw new BuildError(`shots: ${scene.id} plays ${b.rec}, which has no recording`);
       const [x, y, w, h] = c.rec.region;
-      (data.recs ??= []).push({at, until: at + c.rec.duration, src: c.rec.src, region: {x, y, w, h}});
-      data.steps.push({at: +(at + c.rec.duration).toFixed(3), state: b.rec});
-      data.ends.push(at + c.rec.duration + 0.3);
+      // recFrom: start that far in (with the beat's audio, so they stay together); recFor: stop once the app is at rest.
+      const from = b.recFrom ?? 0, dur = Math.min(c.rec.duration - from, b.recFor ?? Infinity);
+      (data.recs ??= []).push({at, until: at + dur, from, src: c.rec.src, region: {x, y, w, h}});
+      data.steps.push({at: +(at + dur).toFixed(3), state: b.rec});
+      data.ends.push(at + dur + 0.3);
     }
     if (b.wipe) (data.wipes ??= []).push({at, dur: b.wipe.dur ?? 1.2, state: use(b.wipe.state), rect: camRect(b.wipe.on, 'wipe'), ...(b.wipe.chars ? {chars: b.wipe.chars} : {})});
     if (b.mark) data.marks.push({at, until: at + (b.hold ?? 2.2), rect: camRect(b.mark, 'mark'), quote: b.quote});

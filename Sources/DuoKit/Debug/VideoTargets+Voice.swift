@@ -49,6 +49,14 @@ extension VideoTargets {
 
     static var vvDir: URL?
 
+    /// The recorded Claude screen with `typed` in its prompt row (the input box's last `❯ `), the cursor after it.
+    static func vvPrompt(_ screen: String, _ typed: String) -> String {
+        var rows = screen.components(separatedBy: "\n")
+        guard let p = rows.lastIndex(where: { $0.contains("❯") }) else { return screen }
+        rows[p] = rows[p].replacingOccurrences(of: "❯\u{1b}[0m ", with: "❯\u{1b}[0m " + typed)
+        return rows.joined(separator: "\n")
+    }
+
     static func applyVoice(_ screen: String, _ model: AppModel) {
         let name = String(screen.dropFirst("video-v?-".count))
         // Read where they're read: the terminal mic on a recorded screen (a shell, as fixture terminals are), the file fed at
@@ -70,16 +78,13 @@ extension VideoTargets {
             model.fixtureChats[k] = s6Chat(dir.appending(path: "chat-vv-sent"), cwd: v.cwd, picked: false, key: k)
         }
         if name == "term-live" || name == "term-rec" {
-            // A real shell tab, in front, running prompt-echo.py: the recorded Claude screen whose prompt row takes what voice
-            // input pastes, so the delivery (a bracketed paste per settled phrase) is the app's own.
+            // The Tighten PRD goals tab, in front: its recorded Claude screen. A live shell's text isn't in a window capture
+            // (F-25), so the dictation's pastes are drawn into this screen as they're delivered (`vv-rec` routes voice input's
+            // paste there, F-483); everything before the write is voice input's own.
             let k = key(tighten)
-            let live = model.terminals.session(k, command: .shell, cwd: model.liveFolders[project]?.path ?? NSTemporaryDirectory())
-            model.fixtureTerminals[k] = live
+            let text = (try? String(contentsOf: dir.appending(path: "terms/tighten-prd.ans"), encoding: .utf8)) ?? ""
+            model.fixtureTerminals[k] = TerminalSession(key: k, screen: vvPrompt(text, ""))
             model.consoleTab = k
-            let helper = dir.appending(path: "terms/prompt-echo.py").path, screen = dir.appending(path: "terms/tighten-prd.ans").path
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                MainActor.assumeIsolated { live.view.send(txt: "clear; exec /usr/bin/python3 '\(helper)' '\(screen)'\r") }
-            }
         }
         if let t = vvTerm(name) {
             // The Tighten PRD goals tab in front, its recorded screen with what has been pasted into Claude's prompt so far.
@@ -103,9 +108,9 @@ extension VideoTargets {
         let measure = ["wait:0.4", "video:vv-measure"]
         // Recorded: the dictation runs for real while the window is drawn 15 times a second (`vv-rec`), then the capture
         // is the moment after.
-        if name == "chat-rec" { return ["wait:2", "video:vv-rec=chat|12", "wait:12.6"] + measure }
+        if name == "chat-rec" { return ["wait:5", "video:vv-rec=chat|11", "wait:11.6"] + measure }
         if name == "term-live" { return ["wait:3.5"] + measure }
-        if name == "term-rec" { return ["wait:3.5", "video:vv-rec=terminal|11", "wait:11.6"] + measure }
+        if name == "term-rec" { return ["wait:5", "video:vv-rec=terminal|10", "wait:10.6"] + measure }
         if name.hasPrefix("chat-at-"), let tenths = Int(name.dropFirst("chat-at-".count)) {
             // The dictation runs as it would from the mic; the capture is taken this far in.
             return ["wait:2", "video:vv-feed=chat", "wait:\(Double(tenths) / 10)", "video:vv-measure"]
@@ -136,6 +141,21 @@ extension VideoTargets {
             let a = arg.split(separator: "|").map(String.init)
             guard let dir = vvDir, let k = model.consoleTab, a.count == 2, let secs = Double(a[1]) else { return }
             let target: VoiceTarget = model.fixtureChats[k] != nil ? .chat(k) : .terminal(k)
+            FileHandle.standardError.write(Data("vv-rec: target \(target) terminal=\(model.fixtureTerminals[k] != nil)\n".utf8))
+            if case .terminal = target, model.fixtureTerminals[k] != nil {
+                // Each settled phrase as voice input delivers it (one paste, a space before all but the first) goes into the
+                // recorded Claude prompt. A terminal in a background window doesn't redraw what's fed to it later, so the
+                // screen is drawn again with the prompt holding everything pasted so far (F-483).
+                let host = model.voice.host   // nil in a fixture state, which wires no voice host
+                let screen = (try? String(contentsOf: dir.appending(path: "terms/tighten-prd.ans"), encoding: .utf8)) ?? ""
+                var typed = ""
+                model.voice.host = VoiceInput.Host(update: host?.update ?? { _, _, _ in }, paste: { _, phrase, first in
+                    FileHandle.standardError.write(Data("vv-paste: \(phrase.debugDescription)\n".utf8))
+                    typed += (first ? "" : " ") + phrase
+                    model.fixtureTerminals[k] = TerminalSession(key: k, screen: vvPrompt(screen, typed))
+                    return .sent
+                }, ended: host?.ended ?? { _, _ in })
+            }
             vvRecord(model, seconds: secs, region: CGRect(x: 300, y: 40, width: 840, height: 1061))
             model.voice.start(target, source: .file(dir.appending(path: "dictation/\(a[0]).wav")))
             vvTrace(model)
@@ -165,8 +185,8 @@ extension VideoTargets {
     /// times.json (each frame's seconds from the first). `pipeline/capture.mjs` makes them a video.
     static func vvRecord(_ model: AppModel, seconds: Double, region: CGRect, fps: Double = 15) {
         guard let dirPath = ProcessInfo.processInfo.environment["DUO_VIDEO_REC_DIR"],
-              let window = NSApp.windows.filter({ $0.isVisible }).max(by: { $0.frame.width < $1.frame.width }),
-              let frame = window.contentView?.superview else { return }
+              let window = NSApp.windows.filter({ $0.frame.width > 1000 }).max(by: { $0.frame.width < $1.frame.width }),   // the main window, once it exists (a background launch may not count it visible)
+              let frame = window.contentView?.superview else { FileHandle.standardError.write(Data("vv-rec: no window yet\n".utf8)); return }
         let dir = URL(fileURLWithPath: dirPath)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let scale = WindowCapture.scale
@@ -181,15 +201,22 @@ extension VideoTargets {
             guard let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(rect.width * scale), pixelsHigh: Int(rect.height * scale), bitsPerSample: 8,
                                              samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0) else { return }
             rep.size = rect.size
-            if let under = WindowCapture.underlay, let ctx = NSGraphicsContext(bitmapImageRep: rep) {
-                NSGraphicsContext.saveGraphicsState(); NSGraphicsContext.current = ctx
-                under.setFill(); NSRect(origin: .zero, size: rect.size).fill()
-                NSGraphicsContext.restoreGraphicsState()
-            }
             frame.layoutSubtreeIfNeeded()
             frame.cacheDisplay(in: rect, to: rep)
+            // A terminal's background is transparent in the drawing (F-25): paint the console colour under it, as the capture does.
+            var out = rep
+            if let under = WindowCapture.underlay, let flat = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: rep.pixelsWide, pixelsHigh: rep.pixelsHigh,
+                bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0) {
+                flat.size = rect.size   // before the context, which takes its scale from it
+                guard let ctx = NSGraphicsContext(bitmapImageRep: flat) else { return }
+                NSGraphicsContext.saveGraphicsState(); NSGraphicsContext.current = ctx
+                under.setFill(); NSRect(origin: .zero, size: rect.size).fill()
+                rep.draw(in: NSRect(origin: .zero, size: rect.size))
+                NSGraphicsContext.restoreGraphicsState()
+                out = flat
+            }
             let url = dir.appending(path: String(format: "frame-%04d.png", n))
-            nonisolated(unsafe) let r = rep
+            nonisolated(unsafe) let r = out
             encode.async(group: group) { try? r.representation(using: .png, properties: [:])?.write(to: url) }
         }
         func tick() {

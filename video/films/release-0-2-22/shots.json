@@ -67,7 +67,7 @@
       "video-vv-chat-rest"
     ],
     "pauses": {
-      "1": 11.6
+      "1": 9.4
     },
     "tail": 0.5,
     "beats": [
@@ -107,6 +107,8 @@
         "click": "voice.mic",
         "in": "video-vv-chat-rest",
         "rec": "video-vv-chat-rec",
+        "recFrom": 0.4,
+        "recFor": 8.6,
         "audio": "chat"
       },
       {
@@ -172,7 +174,7 @@
       "video-vv-chat-sent"
     ],
     "pauses": {
-      "1": 11.2
+      "1": 9.4
     },
     "tail": 0.5,
     "beats": [
@@ -212,9 +214,11 @@
           "offset": 0.5
         },
         "key": "⇧⌘D",
-        "keyHold": 6.8,
+        "keyHold": 6.4,
         "in": "video-vv-term-live",
         "rec": "video-vv-term-rec",
+        "recFrom": 0.4,
+        "recFor": 8.6,
         "audio": "terminal"
       }
     ],

@@ -18,12 +18,12 @@ const S = {
       {what: 'Beside "Duo 0.2.22", "Voice input, and Classic" over "A mic in chat and the terminal, and the v1 paper look"', by: ['event:title', 'event:sub']},
       {what: 'The settled frame is the thumbnail (frame 0)', by: ['event:sub', 'src:build.mjs']},
       {what: 'The words wipe back, the icon drops into the Dock, and the window opens out of it on Sam\'s shelf-scan project in Light', by: ['src:src/scenes/release/Title.tsx', 'state:video-vv-chat-rest']}]},
-  S1: {kind: 'drawn', scene: 'rel-app', transitionIn: 'rel-open', leadIn: 0.9, states: ['video-vv-chat-rest'], pauses: {1: 11.6}, tail: 0.5,
+  S1: {kind: 'drawn', scene: 'rel-app', transitionIn: 'rel-open', leadIn: 0.9, states: ['video-vv-chat-rest'], pauses: {1: 9.4}, tail: 0.5,
     beats: [
       {id: 'push', at: {line: 1, offset: -0.6}, in: 'video-vv-chat-rest', cam: M(663), dur: 1.2},
       {id: 'mic-mark', at: {line: 1, word: 'mic'}, in: 'video-vv-chat-rest', mark: 'voice.mic', hold: 1.3},
       // The real app, recorded while it hears the dictation (video-vv-chat-rec): the words land when the recognizer writes them.
-      {id: 'mic-click', at: after(0.5), click: 'voice.mic', in: 'video-vv-chat-rest', rec: 'video-vv-chat-rec', audio: 'chat'},
+      {id: 'mic-click', at: after(0.5), click: 'voice.mic', in: 'video-vv-chat-rest', rec: 'video-vv-chat-rec', recFrom: 0.4, recFor: 8.6, audio: 'chat'},
       {id: 'words-mark', at: {line: 2, word: 'phrase', nth: 2}, in: 'video-vv-chat-rec', mark: 'video.composer', hold: 1.6},
       {id: 'return', at: {line: 3, word: 'return'}, key: '↩', in: 'video-vv-chat-sent', state: 'video-vv-chat-sent', stateAfter: 0.08}],
     requires: [
@@ -31,12 +31,12 @@ const S = {
       {what: 'The cursor clicks the mic: it fills, and the hint row\'s level meter moves with the voice', by: ['#mic-click']},
       {what: 'We hear Sam\'s dictation, and the words land in the composer as the recognizer settles them, a phrase at a time, at the real delay of a run on this Mac (the meter moving with nothing written, then each phrase); nothing is sent', by: ['#mic-click', '#words-mark', 'state:video-vv-chat-rec']},
       {what: 'On "press Return" the Return key shows as a keycap and the message goes into the chat', by: ['#return']}]},
-  S2: {kind: 'drawn', scene: 'rel-app', transitionIn: 'rel-carry', leadIn: 0.6, states: ['video-vv-chat-sent'], pauses: {1: 11.2}, tail: 0.5,
+  S2: {kind: 'drawn', scene: 'rel-app', transitionIn: 'rel-carry', leadIn: 0.6, states: ['video-vv-chat-sent'], pauses: {1: 9.4}, tail: 0.5,
     beats: [
       {id: 'tab', at: {line: 1, offset: -0.2}, click: 'video.tab.middle.0', in: 'video-vv-chat-sent', state: 'video-vv-term-live', cam: M(250), dur: 1.0},
       {id: 'termmic-mark', at: {line: 1, word: 'beside'}, in: 'video-vv-term-live', mark: 'video.vv.termmic', hold: 1.4},
       // ⇧⌘D held while the dictation is heard; the real app recorded (video-vv-term-rec): bars, and each phrase pasted as it settles.
-      {id: 'hold', at: {line: 1, word: 'talk', offset: 0.5}, key: '⇧⌘D', keyHold: 6.8, in: 'video-vv-term-live', rec: 'video-vv-term-rec', audio: 'terminal'}],
+      {id: 'hold', at: {line: 1, word: 'talk', offset: 0.5}, key: '⇧⌘D', keyHold: 6.4, in: 'video-vv-term-live', rec: 'video-vv-term-rec', recFrom: 0.4, recFor: 8.6, audio: 'terminal'}],
     requires: [
       {what: 'The cursor clicks the Tighten PRD goals tab: Claude Code\'s terminal with the small mic beside its input box', by: ['#tab', '#termmic-mark']},
       {what: 'On "Shift-Command-D" the keys show held; the mic turns into three level bars that move as Sam speaks', by: ['#hold', 'state:video-vv-term-rec']},

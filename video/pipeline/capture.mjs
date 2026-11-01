@@ -43,16 +43,16 @@ export function captureStates(states, {repo, cache, pub, scale, fixture, force =
         const recDir = join(cc, `${key}.rec`);
         if (state.includes('-rec')) { rmSync(recDir, {recursive: true, force: true}); env.DUO_VIDEO_REC_DIR = recDir; }
         const then = settings ? `render-settings:${png},wait:3,anchors:${anchors}` : `anchors:${anchors}`;
-        const r = spawnSync('/usr/bin/open', ['-g', '-W', '-n', '--env', `DUO_SUPPORT_DIR=${support}`, '--env', 'DUO_APPEARANCE=light', ...(env.DUO_VIDEO_REC_DIR ? ['--env', `DUO_VIDEO_REC_DIR=${recDir}`] : []), app, '--args', '--state', state,
+        const r = spawnSync('/usr/bin/open', ['-g', '-W', '-n', ...(state.includes('-rec') ? ['--stderr', join(cc, `${key}.log`)] : []), '--env', `DUO_SUPPORT_DIR=${support}`, '--env', 'DUO_APPEARANCE=light', ...(env.DUO_VIDEO_REC_DIR ? ['--env', `DUO_VIDEO_REC_DIR=${recDir}`] : []), app, '--args', '--state', state,
           '--capture-scale', String(scale), ...(fx ? ['--fixture', fx] : []), '--then', then, '--capture-window', settings ? `${png}.window.png` : png], {env, timeout: 90000});
         if (settings) rmSync(`${png}.window.png`, {force: true});
         rmSync(support, {recursive: true, force: true});
         ok = r.status === 0 && existsSync(png);
       }
       if (!ok) throw new BuildError(`capture: ${state} produced no PNG (is it a fixture state?)`);
-      if (state.includes('-rec')) recordingToVideo(recDir, join(cc, `${key}.mp4`), state);
       taken++;
     }
+    if (state.includes('-rec') && !existsSync(join(cc, `${key}.mp4`))) recordingToVideo(join(cc, `${key}.rec`), join(cc, `${key}.mp4`), state);
     const dims = execFileSync('/usr/bin/sips', ['-g', 'pixelWidth', '-g', 'pixelHeight', png]).toString();
     const pw = +dims.match(/pixelWidth: (\d+)/)[1], ph = +dims.match(/pixelHeight: (\d+)/)[1];
     copyFileSync(png, join(pub, 'capture', `${state}.png`));

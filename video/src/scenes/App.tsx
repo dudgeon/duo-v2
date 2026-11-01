@@ -34,7 +34,7 @@ export type AppData = {
   steps: AppStep[]; clicks: AppClick[]; drags: AppDrag[]; cams: AppCam[]; marks: AppMark[]; menus: AppMenu[];
   keys?: AppKey[]; wipes?: AppWipe[]; overlays?: AppOverlay[];
   // The real app recorded while it worked: a video of a region of the window, in window points, from at to until.
-  recs?: {at: number; until: number; src: string; region: Rect}[];
+  recs?: {at: number; until: number; from?: number; src: string; region: Rect}[];
   running?: boolean; startCam?: Rect | null;
 };
 
@@ -176,7 +176,7 @@ export const AppScene = ({t, data, dockIcon}: {t: number; data: AppData; dockIco
           </>}
           {(data.recs ?? []).map((r, i) => (
             <Sequence key={`rec${i}`} from={Math.round(r.at * fps)} durationInFrames={Math.max(1, Math.round((r.until - r.at) * fps))} layout="none">
-              <OffthreadVideo src={staticFile(r.src)} muted style={{position: 'absolute', left: r.region.x * K, top: r.region.y * K, width: r.region.w * K, height: r.region.h * K}} />
+              <OffthreadVideo src={staticFile(r.src)} startFrom={Math.round((r.from ?? 0) * fps)} muted style={{position: 'absolute', left: r.region.x * K, top: r.region.y * K, width: r.region.w * K, height: r.region.h * K}} />
             </Sequence>
           ))}
           {(data.wipes ?? []).map((w, i) => {
