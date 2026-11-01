@@ -252,8 +252,9 @@ async function setSlidePicking(on) {
   document.body.classList.toggle('slide-picking', on);
   host.classList.toggle('grid', on);
   await fitGrid(on);
-  if (keep > 0) go(keep, true);
-  track();
+  // The slides settle (the renderer mounts them as it lays out) before the page scrolls to the slide kept.
+  for (let i = 0; i < 3; i++) { await new Promise((r) => setTimeout(r, 60)); if (keep > 0) go(keep, true); }
+  if (keep > 0) { current = keep; post({ kind: 'slide', slide: current, count: count() }); for (const it of items()) it.querySelector(':scope > .deck-number')?.classList.toggle('current', +it.dataset.slideIndex === keep - 1); }
 }
 window.addEventListener('resize', () => { if (slidePicking) fitGrid(true); });
 

@@ -435,6 +435,7 @@ public enum FixtureHarness {
             let v = model.deckViewer
             v.setSlidePicking(true)
             v.setPickedSlides((parts.count > 1 ? parts[1] : "").split(separator: ",").compactMap { Int($0) })
+        case "slide-pick-off": model.deckViewer.setSlidePicking(false)   // Esc / Cancel: back to one slide per row at the same slide
         case "split": if parts.count > 1 { _ = model.openSplitView(parts[1]) }
         case "split-swap": model.swapSplitSides()
         case "split-ratio": if parts.count > 1, let r = Double(parts[1]) { model.setSplitRatio(r) }
