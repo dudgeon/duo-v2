@@ -160,9 +160,10 @@ func deckP1Checks(tmp: URL, study: URL, deck: URL, packs: [URL]) throws {
 
     // the skill
     let skill = Installer.skill()
-    let verbs = skill.matches(of: /`duo2 (deck [a-z]+)/).map { String($0.1) }
+    let verbs = skill.matches(of: /`duo2 (deck [a-z]+(?: [a-z]+)?(?: [a-z]+)?)/).map { String($0.1) }
     check(skill.contains("## Decks") && !verbs.isEmpty && verbs.allSatisfy { DuoAction.resolve($0.split(separator: " ").map(String.init)) != nil },
           "the skill's Decks section names only real verbs (\(Set(verbs).sorted()))")
     check(skill.contains("Don't run python-pptx") && skill.contains("Never open a pack's pptx") && skill.contains("`duo2 deck check <deck>`"), "the Decks section carries the rules")
-    check(DuoAction.all.filter { $0.family == .deck }.allSatisfy { $0.local && $0.ui.isEmpty }, "the deck verbs are local and CLI-only (no UI yet, nothing for Parity to match)")
+    check(DuoAction.all.filter { $0.family == .deck }.allSatisfy { ($0.local || [.deckTemplatePick, .deckTemplatePicked].contains($0.id)) && $0.ui.isEmpty }, "the deck verbs are local and CLI-only, except pick and picked, which wait for the deck viewer (no UI yet, nothing for Parity to match)")
+    try deckP2Checks(tmp: tmp, study: study)
 }
