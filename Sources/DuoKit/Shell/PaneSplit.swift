@@ -192,6 +192,16 @@ final class DuoSplitView: NSSplitView {
     /// Collapse requests that arrive before the view has a size are applied after first layout;
     /// collapsing a zero-sized split view leaves its panes in an inconsistent order.
     private var pendingCollapse: [Int: Bool] = [:]
+    /// Collapse requests that arrived during a slide: applied, last one wins, when it ends.
+    private var queuedCollapse: [Int: Bool] = [:]
+    /// The split's width changed (the window resized): split view decides whether the sidebar folds (DL-276).
+    var onResize: ((CGFloat) -> Void)?
+    private var lastReportedWidth: CGFloat = 0
+
+    override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize)
+        if abs(newSize.width - lastReportedWidth) >= 1 { lastReportedWidth = newSize.width; onResize?(newSize.width) }
+    }
 
     override var dividerThickness: CGFloat { 1 }
 
@@ -314,7 +324,11 @@ final class DuoSplitView: NSSplitView {
     /// resized once (LR-14).
     func setCollapsed(_ collapsed: Bool, paneAt i: Int) {
         guard placed else { pendingCollapse[i] = collapsed; return }
-        guard !isAnimatingPane, arrangedSubviews.indices.contains(i), isSubviewCollapsed(arrangedSubviews[i]) != collapsed,
+        if isAnimatingPane { queuedCollapse[i] = collapsed; return }
+        // A pane at no width counts as hidden: `adjustSubviews` (after a divider is set from code, as split view's
+        // making room does) leaves a collapsed pane 0 wide but no longer "collapsed", and showing it was skipped
+        // (the sidebar didn't come back after Close Split View, F-527).
+        guard arrangedSubviews.indices.contains(i), isHidden(paneAt: i) != collapsed,
               let flex = designWidths.firstIndex(where: { $0 == nil }) else { return }
         guard window != nil, !MotionSettings.shared.reduce, PaneMotion.enabled else {
             snapCollapsed(collapsed, paneAt: i); return
@@ -344,11 +358,17 @@ final class DuoSplitView: NSSplitView {
                 return
             }
             isAnimatingPane = false
+            let queued = queuedCollapse
+            queuedCollapse.removeAll()
+            defer { for (j, c) in queued.sorted(by: { $0.key < $1.key }) { setCollapsed(c, paneAt: j) } }
             if collapsed { snapCollapsed(true, paneAt: i, saving: false) }
             PaneMotion.ended()
         }
         tick()
     }
+
+    /// Collapsed, or squeezed to nothing.
+    func isHidden(paneAt i: Int) -> Bool { isSubviewCollapsed(arrangedSubviews[i]) || arrangedSubviews[i].frame.width < 1 }
 
     /// The width a hidden pane comes back at: where it was, else its design width.
     private func openWidth(_ i: Int) -> CGFloat {

@@ -119,7 +119,7 @@ public enum SplitRoom {
     public static func plan(window: Double, sidebarShown: Bool) -> Plan {
         let folds = sidebarShown && window < foldSidebarBelow
         let sidebar = folds ? railWidth : (sidebarShown ? sidebarWidth : 0)
-        return Plan(rightWidth: max(0, window - sidebar - consoleMin), foldsSidebar: folds)
+        return Plan(rightWidth: max(0, window - sidebar - consoleMin - 2), foldsSidebar: folds)   // 2: the pane dividers
     }
 
     /// What the split took, to give back on close.
