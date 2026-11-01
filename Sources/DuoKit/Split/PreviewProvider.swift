@@ -56,6 +56,9 @@ public protocol PreviewProvider: AnyObject {
     /// The provider's whole view, with its own bar (a deck's 44 bar, the HTML viewer's picker): split
     /// view hosts it as the preview side and draws no bar of its own.
     var view: NSView { get }
+    /// The split it now previews: its tab key and file, before the first `render` (a deck reads its
+    /// folder's template and pictures from here). Optional; the default does nothing.
+    func bind(path: String, file: URL, model: AppModel)
     /// Whether this provider can preview `file` (its project-relative path or `file:` key) with this frontmatter.
     static func canPreview(file: String, frontmatter: [String: String]) -> Bool
     /// Draws `text`, the editor's buffer at revision `rev` (unsaved edits included). Never writes a file.
@@ -63,6 +66,10 @@ public protocol PreviewProvider: AnyObject {
     func reveal(anchor: String, reason: RevealReason)
     /// Where the provider's events go: split view's `PreviewPolicy`.
     var emit: ((PreviewEvent) -> Void)? { get set }
+}
+
+public extension PreviewProvider {
+    func bind(path: String, file: URL, model: AppModel) {}
 }
 
 /// A provider drops a render older than its newest.
