@@ -137,6 +137,20 @@ public final class DeckViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         onChange?()
     }
 
+    /// Select Shape on: slide picking goes off (the two modes are never on together).
+    public func startPicking() {
+        if slidePicking { setSlidePicking(false) }
+        picked = nil
+        picking = true
+        webView.callAsyncJavaScript("window.__duo && __duo.start()", arguments: [:], in: nil, in: world, completionHandler: nil)
+        webView.window?.makeFirstResponder(webView)
+        onChange?()
+    }
+
+    /// Make Templates… and Convert to Duo Deck… are live once the deck is drawn, and stay live while slides are
+    /// picked (Make Templates… then shows pressed and leaves the mode; make-templates board).
+    public static func pptxButtonsEnabled(_ state: State) -> Bool { state == .ready }
+
     /// Sets the ticked slides (`duo2 deck template pick 3,7`).
     public func setPickedSlides(_ slides: [Int]) {
         pickedSlides = Array(Set(slides.filter { $0 >= 1 && $0 <= max(count, 1) })).sorted()

@@ -120,6 +120,20 @@ import Foundation
     }
     check(DuoAction.resolve(["deck", "export", "x.md"])?.0.verb == "deck export" && DuoAction.resolve(["deck", "export", "x.md"])?.0.local == true, "deck export stays the local verb")
     check(!DuoAction.byID[.deckTemplatePick]!.summary.contains("isn't built"), "deck template pick is built")
+    // Make Templates… / Convert to Duo Deck…: live when the deck is drawn (also while picking slides), dimmed otherwise;
+    // Select Shape and slide picking are never both on.
+    check(DeckViewer.pptxButtonsEnabled(.ready) && !DeckViewer.pptxButtonsEnabled(.loading) && !DeckViewer.pptxButtonsEnabled(.failed("x")),
+          "the pptx bar's Make Templates… and Convert to Duo Deck… are live when the deck is drawn")
+    do {
+        _ = NSApplication.shared
+        let v = DeckViewer(resources: repoRoot().appending(path: "Vendor/pptx-renderer"))
+        v.setSlidePicking(true)
+        check(v.slidePicking && !v.picking, "slide picking on: Select Shape is off")
+        v.startPicking()
+        check(v.picking && !v.slidePicking, "Select Shape on turns slide picking off")
+        v.setSlidePicking(true)
+        check(v.slidePicking && !v.picking, "slide picking on turns Select Shape off")
+    }
     let ui = Set(DuoAction.all.flatMap(\.ui))
     for label in ["Problems", "Add Comment", "Export Again", "Export as PowerPoint…", "Show Export in Finder", "Make Templates…", "Make Templates with Claude", "Add to Pack"] {
         check(ui.contains(label), "\"\(label)\" is named by an action")

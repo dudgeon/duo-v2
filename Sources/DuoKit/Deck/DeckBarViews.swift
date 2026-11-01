@@ -126,11 +126,15 @@ struct DeckPptxButtons: View {
     var file: URL? = nil
 
     var body: some View {
+        // The viewer isn't observable: without this the buttons keep the state they were first drawn in (dimmed, while loading).
+        let _ = model.pickerRevision
+        let live = DeckViewer.pptxButtonsEnabled(viewer.state)
         if folded > 0 {
             Menu {
                 Button("Make Templates…") { toggleMake() }   // action: deck template pick
-                    .disabled(viewer.state != .ready)
+                    .disabled(!live)
                 Button("Convert to Duo Deck…") { model.showConvertDeck(path) }   // action: deck import
+                    .disabled(!live)
                 if folded > 1, let file {
                     Divider()
                     ForEach(Array(FileActions.apps(for: file).enumerated()), id: \.offset) { i, app in
@@ -145,10 +149,10 @@ struct DeckPptxButtons: View {
             .accessibilityLabel("More")
         } else {
             Button("Make Templates…") { toggleMake() }   // action: deck template pick
-                .buttonStyle(DuoButtonStyle(on: viewer.slidePicking)).disabled(viewer.state != .ready).fixedSize()
+                .buttonStyle(DuoButtonStyle(on: viewer.slidePicking)).disabled(!live).fixedSize()
                 .accessibilityIdentifier("deck.make-templates")
             Button("Convert to Duo Deck…") { model.showConvertDeck(path) }   // action: deck import
-                .buttonStyle(.duo).disabled(viewer.state != .ready).fixedSize()
+                .buttonStyle(.duo).disabled(!live).fixedSize()
         }
     }
 
