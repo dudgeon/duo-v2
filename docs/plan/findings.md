@@ -4805,3 +4805,14 @@ Timed under `--exclusive` (`DUO_CHECKS=split-perf swift run DuoChecks`, a debug 
 - **The deck provider** is Duo Decks' (`PreviewProviders.extra`); `deck` is never offered until it registers.
 - **R11 and R12** (`openThread`, `addComment` from a preview) arrive at `PreviewPolicy.onRequest`; wiring them to the editor waits for slice 2's `editor.addComment(lines:quiet:done:)` and `openThread(id:line:done:)`.
 - **Search's ⌥⌘↩** and the tree's "Show Preview in Split View" aren't wired (slice 2 adds Open in Split View). Q-402.
+
+## F-504 · How slice 1 compares with its screens (split-view-build, 2026-11-01)
+
+(Numbered past the reserved F-500 to F-503: the director's gate asked for this comparison.) The split boards are annotated canvases, not 1440 × 900 windows, so `compare.sh` can't take them whole. `proof/compare-split-deck.png` crops the board's window, scales it to a Light capture at 1440 × 900 (TARGET | BUILD | DIFFERENCE), and I read it region by region, with `fold.png` against `proof/fold-1280.png`:
+- **Proportions:** the console is 33–34% of the window in both, the two sides each about a third. Rail, console, source, preview are in the same order and widths.
+- **Strip:** `Project  review.md ⧉ Preview` with the active name semibold in `text`, the other `text2`, the mark between; the active-pane rule spans the source side only, across the top of the strip.
+- **Rails:** the sidebar's rail at the window's left with its glyph (no needs-you dot in the capture: nothing needed it); the split's rail at the right pane's far right with the mark 10 from the top, a `rule` on its left, the hidden name dimmed. Folded, the source fills the pane.
+- **Peek:** the sidebar over the console at 300, with the shadow, the split unmoved (`proof/peek-1440.png`).
+- **Themes:** `proof/theme-dark.png` and `proof/theme-classic.png`.
+- **Not matched, because they are not built:** the formatting bar over the source, the source-lines mark (Q-399) and the deck's own bar (Duo Decks'). The Markdown preview's type is the editor's reading look by eye, not measured. No pixel diff was run with `pixels.py`.
+

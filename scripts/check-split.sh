@@ -23,7 +23,7 @@ fresh() {
 run() {
   local png=$out/$1.png err=$out/$1.log
   rm -f $png
-  env -u DUO_SUPPORT_DIR DUO_SUPPORT_DIR=$root/sup-$1 CLAUDE_CONFIG_DIR=$root/cc-$1 ANTHROPIC_MODEL=claude-haiku-5-5 \
+  env -u DUO_SUPPORT_DIR DUO_SUPPORT_DIR=$root/sup-$1 CLAUDE_CONFIG_DIR=$root/cc-$1 ANTHROPIC_MODEL=claude-haiku-5-5 DUO_APPEARANCE=${APPEARANCE:-light} \
     $app/Contents/MacOS/Duo --workspace $ws --window $2 --capture-window $png --then "$3" 2>$err &
   local pid=$!
   for i in {1..${DUO_TIMEOUT:-60}}; do [[ -f $png ]] && break; sleep 1; done
@@ -59,6 +59,13 @@ expect "unfold: the console narrows for two sides" $out/unfold.log "folded: fals
 fresh close
 run close 1440x900 "$open,split:review.md,wait:2,split-close,wait:2,split-report"
 expect "close: the split is gone" $out/close.log "no split view showing"
+
+# split-themes: the same split in Dark and Classic (Light is the runs above)
+for theme in dark classic; do
+  fresh theme-$theme
+  APPEARANCE=$theme run theme-$theme 1440x900 "$open,split:review.md,wait:3,split-report"
+  expect "$theme: a split is made" $out/theme-$theme.log "active: left"
+done
 
 echo "$((total-fails))/$total passed"
 exit $((fails > 0))
