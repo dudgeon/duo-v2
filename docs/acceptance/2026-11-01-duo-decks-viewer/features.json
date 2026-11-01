@@ -73,7 +73,8 @@
       "ref": "DL-269, F-523, F-526",
       "commit": "8697b3f9bbdc40f1e256b3600223accb802e17ee",
       "alsoCommits": [
-        "362feef00129c7dfca8071f5d5b56ce2ed9b76c0"
+        "362feef00129c7dfca8071f5d5b56ce2ed9b76c0",
+        "2c96dae7a7dfa68e07c3b1737750d2fb5d94817b"
       ],
       "workMac": "small",
       "workMacWhy": "Any deck in a project",
@@ -90,16 +91,17 @@
       "claude": {
         "result": "partial",
         "did": [
-          "Changed 86% to 88% in the editor (a scripted user-type, then also a disk edit): the source showed 88%.",
-          "`duo2 deck go 4` and `deck go 3` moved the caret to those slides' lines (42-53, 29-39)."
+          "Re-ran on a build of 0a7e52a2 (includes the F-530 redraw fix 2c96dae7): changed 86% to 88% in the editor (scripted user-type). After about a second the slides pane shows the slides from the top (slide 1 first, slide 3 reads 88%), not blank; the source also reads 88%.",
+          "deck-probe after the edit: visible container is #host, 9 slides at tops 16, 296, 576 (same as before the edit), page height 2519 unchanged, one refresh done, none in flight. Probed again 1 s later: unchanged.",
+          "Moved the caret to slide 6 (`duo2 deck go 6`, reporting lines 66-74): the bar read 'Slide 6 of 9', the probe's current slide went 1 to 6, and the slides scrolled to slide 6 (table), after the 88% edit."
         ],
         "didnt": [
-          "In every capture taken after a valid edit (88%) the right-hand slides pane was blank grey under the bar, with the source and bar intact. A no-edit capture, and a capture after an edit that produced a problem, drew the slides. So either the redraw leaves the pane empty or the capture (WebKit snapshot, F-120) misses the redrawn page; I could not tell which from here.",
-          "Did not check the 2 pt margin mark while moving the caret by clicking, or that scroll position is kept."
+          "The harness's bar-select does not move the preview (current stayed 1), so I moved the caret with duo2 deck go instead of a click; a real click in the source was not tried.",
+          "Did not see the 2 pt margin mark: the source pane stayed scrolled to the top, so slide 6's lines were off screen in the capture. Did not check that the scroll position is kept across the redraw (both probes ran at the top)."
         ],
         "human": [
-          "Type in slide 3 and watch whether the slides redraw about a quarter second later without a flash or a blank pane. If it blanks for real, that is a bug in the redraw after a valid edit.",
-          "Click between slides and watch the margin mark and bar count follow."
+          "Click into slide 6's lines in the source and look for the thin grey mark in the left margin spanning that slide's lines; check the slides follow.",
+          "Type in slide 3 while scrolled partway down the slides and check the pane keeps its place."
         ],
         "at": "2026-11-01"
       }
@@ -117,7 +119,8 @@
       "ref": "DL-281, DL-285, DL-296, DL-303, F-526",
       "commit": "362feef00129c7dfca8071f5d5b56ce2ed9b76c0",
       "alsoCommits": [
-        "592067b2a2b3e2c206fab8f8cc1425a14f398a1f"
+        "592067b2a2b3e2c206fab8f8cc1425a14f398a1f",
+        "2c96dae7a7dfa68e07c3b1737750d2fb5d94817b"
       ],
       "workMac": "small",
       "workMacWhy": "Any deck in a project",
@@ -138,16 +141,17 @@
       "claude": {
         "result": "partial",
         "did": [
-          "Chips read 'Slide n · template' with a chevron and a thin rule above, and the source has no <!-- slide: --> text.",
-          "Clicked slide 2's chip in a scripted run: the picker listed the pack's templates (title, section, bullets, two-column, kpi...) with thumbnails and the footer 'change · esc cancel · type to filter 8 templates'.",
-          "Chose two-column: slide 2 became two-column with empty left and right, and its four points sit in the speaker-notes quote under 'Not placed after changing to two-column: body'."
+          "Re-ran on a build of 0a7e52a2 (includes the F-530 fix). Changed slide 2 to two-column with `duo2 deck change` on the open deck (a change on disk, in an isolated instance). Slide 2 became two-column: the chip reads 'Slide 2 · two-column', the source shows empty left and right, and the slides pane drew slide 2 as two-column with an empty body and the title only.",
+          "The speaker notes (the note quote) hold 'Not placed after changing to two-column: body' and the four points.",
+          "The slides pane drew fine after the change, with the card under slide 2: '4 points moved to the notes when this became two-column.' and four buttons, Move to left, Move to right, Split with Claude and Undo Change."
         ],
         "didnt": [
-          "The slides pane was blank in that capture (the same blank-after-edit as the redraw card), so I did not see the card under slide 2 with Move to left, Move to right, Split with Claude and Undo Change.",
-          "Did not press Cmd-Z or check the file on disk for the comment markers."
+          "The change came through the CLI on disk, not by clicking the chip and choosing from the picker, so the picker path was not re-run (it was seen in the earlier run).",
+          "Did not press the card's buttons, press Cmd-Z, or check that the comment markers are still on disk."
         ],
         "human": [
-          "Look at the card under slide 2 after the change and its four buttons; press Cmd-Z once."
+          "Click the chip, choose two-column, and press Cmd-Z once: the change should undo in one step.",
+          "Try Move to left on the card."
         ],
         "at": "2026-11-01"
       }
