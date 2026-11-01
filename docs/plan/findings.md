@@ -4822,3 +4822,26 @@ Built, all local verbs in a `deck` family:
 Results: the full DuoChecks gives 2722 passed, 0 failed (`docs/design/duo-decks-study/p1.md`). The lead re-ran the verbs on a scratch copy: check, templates, change, which moved `body` to the notes, export twice to one dated file, and new/insert on duo-plain.
 
 Found then: pack lookup stops at the nearest `_PROJECT.md`. A deck outside any project sees only its own folder's `templates/decks/`, then Home's and the built-in pack. That's fine for projects, worth a clearer error elsewhere.
+
+## F-513 · Duo Decks P2: templates from decks, the fit check, rename maps and import (duo-decks, 2026-11-01; DL-291 to DL-294)
+
+Built in `Sources/DuoDeck/` as local `duo2 deck` verbs. The P2 commits are 09d7ec74 to 43409944, plus e78a450d.
+
+What it does:
+- **Inventory:** `template inventory` lists the theme, the fonts (flagging those Google lacks, with the closest Google family, from a hand-written list of about 170), the layouts and placeholders, the slides, and each slide's layout fingerprint. It groups identical fingerprints and lists near ones with their drift.
+- **Build:** `template build` turns slides of loose boxes into real layouts, adds optional slots, writes and checks the `# duo` lines, and cleans stale metadata. A rebuild gives the same bytes.
+- **Specimen:** `template specimen` writes and exports a deck that uses every template.
+- **Measured fit (DL-292):** in check, build and specimen, using CoreText. A font missing on the Mac is measured in a stand-in: Inter as Helvetica Neue widened 7%.
+- **Rename maps (DL-293):** `migrate` applies them, printing a diff.
+- **Import (DL-294):** `import` prints a survey for Claude, or converts with Claude's plan: notes, comments as signed Review marks, charts as placeholder pictures with their data in the notes, and anything unmapped to the notes. It never writes the source.
+- **Viewer verbs:** `template pick` and `picked` are registered for the viewer (DL-291).
+
+Verified under the lock:
+- the full build completes;
+- DuoChecks passes 2821 of 2821 (the deck blocks are 187 of them);
+- `docs/cli/duo2.md` regenerates unchanged;
+- a by-hand run on the import fixture found the near group (one extra box, 6 pt drift).
+
+The specimen showed nine overflows in the sample pack's own limits, which is the fit check doing its job.
+
+Weak spot: the survey's "best" template for a chart slide was `table`. That's a heuristic, and Claude's plan decides.
