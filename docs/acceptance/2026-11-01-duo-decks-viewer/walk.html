@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Duo acceptance: Duo Decks, the deck viewer (P3)</title>
+<style>
+:root {
+  --bg: #f6f6f4; --card: #ffffff; --ink: #1d1d1f; --muted: #6e6e73; --line: #e2e2e0;
+  --chip: #efefec; --accent: #2f6fde; --ok: #1f8a4c; --ok-bg: #e5f4ea; --bad: #c4362c; --bad-bg: #fbe9e7;
+  --later: #8a6a12; --later-bg: #f8f0d8; --code: #f1f1ee;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1b1d; --card: #252528; --ink: #ececee; --muted: #9a9aa0; --line: #38383c;
+    --chip: #303034; --accent: #6b9cf0; --ok: #5ccb8a; --ok-bg: #1d3427; --bad: #f0786d; --bad-bg: #3d2220;
+    --later: #e2c264; --later-bg: #3a321b; --code: #2e2e32;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1b1b1d; --card: #252528; --ink: #ececee; --muted: #9a9aa0; --line: #38383c;
+  --chip: #303034; --accent: #6b9cf0; --ok: #5ccb8a; --ok-bg: #1d3427; --bad: #f0786d; --bad-bg: #3d2220;
+  --later: #e2c264; --later-bg: #3a321b; --code: #2e2e32;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 14px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; }
+code { font: 12.5px "SF Mono", ui-monospace, Menlo, monospace; background: var(--code); padding: 1px 4px; border-radius: 4px; overflow-wrap: anywhere; }
+header { position: sticky; top: 0; z-index: 2; background: var(--bg); border-bottom: 1px solid var(--line); }
+.bar { max-width: 860px; margin: 0 auto; padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+h1 { font-size: 17px; margin: 0; flex: 1 1 260px; }
+.progress { flex: 1 1 100%; height: 6px; border-radius: 3px; background: var(--chip); overflow: hidden; display: flex; }
+.progress span { display: block; height: 100%; }
+.counts { color: var(--muted); font-size: 12.5px; }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; }
+button { font: inherit; color: inherit; cursor: pointer; border: 1px solid var(--line); background: var(--card); border-radius: 7px; padding: 5px 11px; }
+button:hover { border-color: var(--muted); }
+.linkbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.linkbtn { display: inline-block; padding: 4px 10px; border: 1px solid var(--accent); border-radius: 6px; color: var(--accent); text-decoration: none; font-size: 13px; }
+.linkbtn:hover { text-decoration: underline; }
+a.lnk { color: var(--accent); }
+button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.filters button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.primary:hover { border-color: var(--accent); filter: brightness(1.08); }
+main { max-width: 860px; margin: 0 auto; padding: 8px 16px 80px; }
+.intro { color: var(--muted); margin: 14px 0 4px; }
+.setup { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin: 10px 0 6px; }
+.setup ol { margin: 4px 0; padding-left: 20px; }
+.store { font-size: 12px; color: var(--muted); margin: 6px 0 0; }
+h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 26px 0 8px; }
+.card { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 10px; padding: 12px 14px; margin: 0 0 10px; }
+.card.accepted { border-left-color: var(--ok); }
+.card.rejected { border-left-color: var(--bad); }
+.card.deferred { border-left-color: var(--later); }
+.top { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.top h3 { font-size: 15px; margin: 0; flex: 1 1 240px; }
+.ref { font-size: 11.5px; color: var(--muted); }
+.pill { font-size: 11.5px; padding: 1px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); }
+.pill.accepted { background: var(--ok-bg); color: var(--ok); }
+.pill.rejected { background: var(--bad-bg); color: var(--bad); }
+.pill.deferred { background: var(--later-bg); color: var(--later); }
+.what { margin: 4px 0 8px; color: var(--muted); }
+.label { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); margin-top: 6px; }
+ol.steps { margin: 2px 0 6px; padding-left: 20px; }
+.expect { margin: 2px 0 10px; }
+.actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.actions .accept[aria-pressed="true"] { background: var(--ok); border-color: var(--ok); color: #fff; }
+.actions .reject[aria-pressed="true"] { background: var(--bad); border-color: var(--bad); color: #fff; }
+.actions .defer[aria-pressed="true"] { background: var(--later); border-color: var(--later); color: #fff; }
+.saved { font-size: 11.5px; color: var(--muted); margin-left: auto; }
+.commit { font-size: 12px; color: var(--muted); margin: 6px 0 2px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.commit a { color: var(--muted); }
+.commit code { cursor: copy; }
+button.primary:disabled { opacity: .45; cursor: default; }
+.tosend { border-color: var(--accent); color: var(--accent); }
+.tosend:disabled { opacity: .45; cursor: default; border-color: var(--line); color: var(--muted); }
+.sent { font-size: 11.5px; color: var(--muted); }
+.sent.ok { color: var(--ok); }
+.sent.err { color: var(--bad); }
+.chan { font-size: 12px; color: var(--muted); }
+.chan.ok { color: var(--ok); }
+.dsend { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+textarea { width: 100%; min-height: 54px; margin-top: 8px; resize: vertical; font: inherit; color: inherit;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 7px 9px; }
+.hidden { display: none; }
+/* Set up test, Claude's attempt, cleared items */
+.setupbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 2px 0 8px; }
+a.setupbtn { display: inline-block; text-decoration: none; color: #fff; background: var(--accent); border-radius: 7px; padding: 4px 11px; font-weight: 600; font-size: 13px; }
+a.setupbtn:hover { filter: brightness(1.08); }
+.setupbar .alt { font-size: 12px; color: var(--muted); }
+.claude { border: 1px dashed var(--line); border-radius: 8px; padding: 7px 10px; margin: 6px 0 10px; background: var(--bg); }
+.claude .head { display: flex; gap: 8px; align-items: center; font-size: 12.5px; font-weight: 600; }
+.claude ul { margin: 2px 0 4px; padding-left: 18px; }
+.claude .lbl { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); margin-top: 4px; }
+.pill.passed { background: var(--ok-bg); color: var(--ok); }
+.pill.failed { background: var(--bad-bg); color: var(--bad); }
+.pill.partial { background: var(--later-bg); color: var(--later); }
+.cleared-note { font-size: 12.5px; color: var(--muted); margin: 6px 0; }
+.group-note { font-size: 13px; color: var(--muted); margin: -4px 0 10px; }
+/* Decisions */
+#decisions h2 .count { font-weight: 400; text-transform: none; letter-spacing: 0; }
+.decision { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 10px; padding: 12px 14px; margin: 0 0 12px; }
+.decision.answered { border-left-color: var(--ok); }
+.decision .context p { margin: 4px 0 6px; }
+.decision .context ul { margin: 2px 0 6px; padding-left: 20px; }
+.options { display: grid; gap: 8px; margin: 8px 0 4px; }
+.option { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; align-items: start; border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px; cursor: pointer; background: var(--bg); }
+.option:hover { border-color: var(--muted); }
+.option.chosen { border-color: var(--ok); box-shadow: 0 0 0 1px var(--ok) inset; background: var(--ok-bg); }
+.option input { margin-top: 3px; }
+.option .olabel { font-weight: 600; }
+.option .rec { font-size: 11px; font-weight: 600; color: var(--accent); margin-left: 6px; }
+.option .odesc { grid-column: 2; color: var(--muted); }
+.option .mock { grid-column: 2; margin-top: 6px; overflow-x: auto; }
+.decision .chosen-note { font-size: 12.5px; color: var(--ok); margin-left: auto; }
+/* Mini mockups: Duo's light look, whatever the page theme */
+.mk { --t: #1f2328; --t2: #6e7781; --rule: #e1e4e8; --sel: #eef1f4; --pane: #fff; --ground: #f6f7f8; --edge: #d0d7de;
+  font: 12px/1.35 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; color: var(--t); display: inline-block; min-width: 0; max-width: 100%; }
+.mk code, .mk .mono { font: 11.5px "SF Mono", ui-monospace, Menlo, monospace; background: none; padding: 0; }
+.mk-menu { background: rgba(246,246,246,.98); border: 1px solid #c8c8c8; border-radius: 7px; padding: 4px; box-shadow: 0 6px 18px rgba(0,0,0,.18); width: 270px; }
+.mk-menu .ttl { font-weight: 600; padding: 2px 8px 4px; color: #555; }
+.mk-item { display: flex; justify-content: space-between; gap: 16px; padding: 3px 8px; border-radius: 4px; white-space: nowrap; }
+.mk-item.hl { background: #2f6fde; color: #fff; }
+.mk-item.hl .k { color: #fff; }
+.mk-item.dim { color: #aaa; }
+.mk-item .k { color: #777; }
+.mk-sep { height: 1px; background: #ddd; margin: 4px 6px; }
+.mk-modal { background: var(--pane); border: 1px solid var(--rule); border-radius: 10px; box-shadow: 0 8px 24px rgba(31,35,40,.16); width: 440px; max-width: 100%; overflow: hidden; }
+.mk-field { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--rule); font-size: 14px; }
+.mk-field .q { flex: 1; }
+.mk-field .ph { flex: 1; color: var(--t2); }
+.mk-scope { display: inline-flex; border: 1px solid var(--edge); border-radius: 5px; font-size: 11px; overflow: hidden; }
+.mk-scope span { padding: 1px 6px; color: var(--t2); }
+.mk-scope span.on { background: var(--sel); color: var(--t); font-weight: 600; }
+.mk-filters { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; padding: 6px 10px 7px; border-bottom: 1px solid var(--rule); }
+.mk-pop { border: 1px solid var(--edge); border-radius: 5px; padding: 1px 7px; background: #fff; }
+.mk-pop.set { background: var(--sel); font-weight: 600; }
+.mk-pop.focus { outline: 2px solid #2f6fde; outline-offset: 1px; }
+.mk-chip { border-radius: 10px; padding: 1px 7px; background: var(--t); color: #fff; font-size: 11px; }
+.mk-hint { margin-left: auto; color: var(--t2); font-size: 11px; }
+.mk-row { padding: 5px 8px; margin: 2px 6px; border-radius: 6px; }
+.mk-row.sel { background: var(--sel); }
+.mk-row .t { font-weight: 600; }
+.mk-row .m { color: var(--t2); font-size: 11px; }
+.mk-pill { border: 1px solid var(--edge); border-radius: 8px; padding: 0 5px; font-size: 10px; color: var(--t2); margin-left: 4px; }
+.mk-foot { display: flex; justify-content: space-between; gap: 10px; padding: 5px 10px; background: var(--ground); border-top: 1px solid var(--rule); font-size: 11px; }
+.mk-foot .r { color: var(--t2); }
+.mk-body { padding: 6px 0; }
+.mk-sec { padding: 4px 12px 2px; font-size: 10px; font-weight: 600; letter-spacing: .04em; color: var(--t2); }
+.mk-help { padding: 2px 12px; color: var(--t2); }
+.mk-caption { font-size: 11.5px; color: var(--muted); margin-top: 4px; }
+.mk-side { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-start; }
+dialog { max-width: min(720px, calc(100vw - 32px)); width: 100%; border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--ink); padding: 16px; }
+dialog::backdrop { background: rgba(0,0,0,.35); }
+dialog textarea { min-height: 320px; font: 12.5px "SF Mono", ui-monospace, Menlo, monospace; }
+.row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+.row .note { margin-right: auto; color: var(--muted); font-size: 12.5px; }
+/* Work Mac rating chip */
+.wm { font-size: 11.5px; padding: 1px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); white-space: nowrap; cursor: help; }
+.wm.as-is { background: var(--ok-bg); color: var(--ok); }
+.wm.small { background: var(--later-bg); color: var(--later); }
+.wm.home { background: var(--chip); color: var(--muted); }
+.wmwhy { font-size: 12px; color: var(--muted); margin: 0 0 6px; }
+.filters button[data-toggle][aria-pressed="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+.mobile-only { display: none; }
+.desk-only { display: inline-block; }
+pre, code, .card, .decision, .what, .expect, ol.steps, .commit { overflow-wrap: anywhere; }
+.mock, .tablewrap, .card table, .decision table { max-width: 100%; }
+.card table, .decision table { display: block; overflow-x: auto; }
+@media (max-width: 760px) {
+  body { font-size: 15px; }
+  .bar { padding: 8px 16px; gap: 6px 8px; }
+  h1 { font-size: 15px; flex: 1 1 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .counts { font-size: 11px; line-height: 1.25; flex: 1 1 80px; min-width: 0; }
+  .bar button { padding: 8px 10px; }
+  .long { display: none; }
+  details.aboutwalk { margin: 12px 0; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 0 12px; }
+  details.aboutwalk summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 600; }
+  details.aboutwalk .intro { margin-top: 0; }
+  .progress { height: 4px; order: 5; }
+  .chan { flex: 1 1 100%; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; order: 4; }
+  .filters { flex-wrap: nowrap; overflow-x: auto; max-width: 100%; padding-bottom: 2px; order: 6; -webkit-overflow-scrolling: touch; }
+  .filters button { flex: 0 0 auto; white-space: nowrap; }
+  button { min-height: 44px; min-width: 44px; padding: 8px 14px; }
+  a.setupbtn { min-height: 44px; display: inline-flex; align-items: center; padding: 8px 14px; }
+  main { padding: 4px 16px 80px; }
+  .card, .decision { padding: 12px; }
+  .actions { gap: 8px; }
+  .actions button.accept, .actions button.reject, .actions button.defer { flex: 1 1 28%; }
+  .saved { margin-left: 0; flex: 1 1 100%; }
+  .option { padding: 12px; min-height: 44px; grid-template-columns: 28px 1fr; align-items: center; }
+  .option input { width: 22px; height: 22px; margin: 0; }
+  .option .odesc, .option .mock { grid-column: 1 / -1; }
+  textarea { font-size: 16px; min-height: 80px; }
+  .commit code { display: inline-block; padding: 8px 4px; }
+  .mock { overflow-x: auto; }
+  .mk-menu, .mk-modal { max-width: none; }
+  .mobile-only { display: inline-block; }
+  .desk-only { display: none; }
+  dialog { padding: 12px; }
+  dialog textarea { min-height: 50vh; font-size: 13px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <h1 id="title"></h1>
+    <span class="counts" id="counts"></span>
+    <button class="primary" id="sendall" disabled title="Sends the whole summary to the Claude session watching this page">Send all<span class="long"> to Claude</span></button>
+    <button id="copy">Copy<span class="long"> feedback</span></button>
+    <span class="chan" id="chan" aria-live="polite">Checking for Claude…</span>
+    <div class="progress" id="progress" aria-hidden="true"></div>
+    <div class="filters" role="group" aria-label="Show">
+      <button data-f="all" aria-pressed="true">All</button>
+      <button data-f="todo" aria-pressed="false">To do</button>
+      <button data-f="accepted" aria-pressed="false">Accepted</button>
+      <button data-f="rejected" aria-pressed="false">Rejected</button>
+      <button data-f="deferred" aria-pressed="false">Not now</button>
+      <button id="onlyasis" data-toggle="1" aria-pressed="false" class="desk-only" title="Show only features walkable on the work Mac with a stock install">Work Mac: as-is</button>
+      <button id="mobileorder" data-toggle="1" aria-pressed="false" class="desk-only" title="Order the page the way it appears on a phone: decisions, then as-is, small setup, home only">Mobile order</button>
+      <button id="clear" title="Hide accepted tests and answered decisions (they stay recorded)">Clear done</button>
+      <button id="showcleared" aria-pressed="false">Show cleared</button>
+    </div>
+  </div>
+</header>
+<main>
+  <div id="about">
+  <p class="intro" id="intro"></p>
+  <div class="setup"><div class="label">Before you start</div><ol id="setup"></ol>
+    <p class="store" id="store">Connecting to saved verdicts…</p></div>
+  </div>
+  <section id="decisions" class="hidden"></section>
+  <div id="list"></div>
+</main>
+<dialog id="dlg">
+  <strong>Feedback for Claude</strong>
+  <textarea id="out" readonly></textarea>
+  <div class="row"><span class="note" id="dlgnote"></span><button id="close">Close</button></div>
+</dialog>
+
+<script type="application/json" id="data">{"sprint": "2026-11-01-duo-decks-viewer", "title": "Duo acceptance: Duo Decks, the deck viewer (P3)", "intro": "Duo Decks' viewer, end to end: a Markdown deck opens beside its slides, the slides redraw as you type, templates are picked with ⌃⌘N or a chip, problems and exports live in the deck's bar, comments pin to slides, and a plain PowerPoint can become templates or a Duo deck. Everything here was approved on the [Duo Decks canvas](https://claude.ai/artifact/Sk28K1tkHgwk6gHs7RFGqQ) (boards 9A and 10 to 13) and split view's [split-deck screen](https://github.com/dudgeon/duo-v2/blob/main/docs/design/split-view-handoff/screens/split-deck.html). The sample deck, its Northwind pack and the plain pptx are synthetic, in the checkout project.", "setup": ["A window about 1440 wide, so the deck's split has room for both sides."], "groupNotes": {"In checkout: a Duo deck beside its slides": "The checkout project with decks/field-trial-review.md and its pack in templates/decks/northwind (the fixtures). The first card opens the deck; the rest of the group carries on from it.", "In checkout: problems, export and comments": "Carries on from the deck left open above.", "In checkout: starting from a PowerPoint": "docs/grower-update.pptx, a plain synthetic deck.", "The command line": "duo2 against the acceptance Duo, with the deck open."}, "features": [{"id": "deck-split-open", "group": "In checkout: a Duo deck beside its slides", "title": "A deck opens beside its slides", "what": "A Markdown file with `type: deck` opens as one split tab: its source on the left, its slides on the right, drawn from the deck exported in memory (DL-269).", "steps": ["Open `decks/field-trial-review.md` in `checkout`."], "expect": "One tab reads `field-trial-review.md ⫼ Slides`. The left side is the Markdown; the right side is the deck's slides at the side's width with the deck bar on top (‹ › n/N, Select Shape, Export ⌄). The slides look like the Northwind pack (teal and orange, the logo and footer). If the window is narrow the split folds to one side with a rail at the far right; click it to unfold.", "ref": "DL-269, DL-275, F-523", "commit": "8697b3f9bbdc40f1e256b3600223accb802e17ee", "alsoCommits": ["30ee8fc131f4f124c86770ac21468516bf6f3960", "f133cd78b64919cf7c0d5cfd14e72724777fd722", "9078b4877a560357b806d97d70d2b8002fcd690e"], "workMac": "small", "workMacWhy": "Needs a deck and a template pack in a project; copy the fixture's decks/ and templates/decks/ folders", "links": [{"label": "split-deck screen", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/split-view-handoff/screens/split-deck.html"}, {"label": "Duo Decks canvas", "url": "https://claude.ai/artifact/Sk28K1tkHgwk6gHs7RFGqQ"}], "setup": ["open checkout", "doc open decks/field-trial-review.md"], "claude": {"result": "passed", "did": ["Opened decks/field-trial-review.md in a scratch workspace (isolated Duo, 1440 wide) as a split and captured the window.", "The tab reads field-trial-review.md, a split icon and Slides; Markdown on the left; the right side shows the Northwind slides (teal/orange bar, logo, footer) with the bar on top: back and forward arrows, 'Slide 1 of 9', Select Shape, Export with a chevron.", "`duo2 deck` reported the deck on screen as slide 1 of 9."], "didnt": ["Did not try a narrow window to see the split fold to one side with the rail."], "human": ["Narrow the window and click the rail to unfold. The bar says 'Slide 1 of 9' (and '1/9' once it has a problem), not 'n/N' literally."], "at": "2026-11-01"}, "commitInfo": [{"sha": "8697b3f9bbdc40f1e256b3600223accb802e17ee", "subject": "Duo Decks P3a: DeckPreview provider (in-memory pptx, anchor map, problems, comments, shape to slot) and its registration"}, {"sha": "30ee8fc131f4f124c86770ac21468516bf6f3960", "subject": "Duo Decks: register the deck preview with split view (PreviewProviders.register), replacing the append to extra"}, {"sha": "f133cd78b64919cf7c0d5cfd14e72724777fd722", "subject": "Duo Decks: DeckPreview satisfies PreviewProvider.bind with the protocol's exact signature, so split view's call reaches it"}, {"sha": "9078b4877a560357b806d97d70d2b8002fcd690e", "subject": "Duo Decks P3a: checks (30 provider checks), live proof captures, p3a notes and the split-view wiring patch, duo2 reference"}]}, {"id": "deck-live-redraw", "group": "In checkout: a Duo deck beside its slides", "title": "The slides redraw as you type, and follow the caret", "what": "Edit the source and the slides redraw about a quarter of a second after you stop, without saving or flashing. The caret's slide becomes the current one, and a 2 pt mark in the left margin shows which lines belong to it.", "steps": ["In slide 3 (Unattended rows) change `86%` to `88%`, and stop typing.", "Click into slide 6's lines, then slide 2's."], "expect": "Slide 3 shows 88% without a save and keeps its scroll position. As the caret moves, the slides scroll to the caret's slide and the bar's count follows; a thin grey bar in the source's left margin spans the current slide's lines. Nothing is written to disk until you save.", "ref": "DL-269, F-523, F-526", "commit": "8697b3f9bbdc40f1e256b3600223accb802e17ee", "alsoCommits": ["362feef00129c7dfca8071f5d5b56ce2ed9b76c0", "2c96dae7a7dfa68e07c3b1737750d2fb5d94817b"], "workMac": "small", "workMacWhy": "Any deck in a project", "links": [{"label": "split-deck screen", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/split-view-handoff/screens/split-deck.html"}], "setup": ["open checkout", "doc open decks/field-trial-review.md"], "claude": {"result": "partial", "did": ["Re-ran on a build of 0a7e52a2 (includes the F-530 redraw fix 2c96dae7): changed 86% to 88% in the editor (scripted user-type). After about a second the slides pane shows the slides from the top (slide 1 first, slide 3 reads 88%), not blank; the source also reads 88%.", "deck-probe after the edit: visible container is #host, 9 slides at tops 16, 296, 576 (same as before the edit), page height 2519 unchanged, one refresh done, none in flight. Probed again 1 s later: unchanged.", "Moved the caret to slide 6 (`duo2 deck go 6`, reporting lines 66-74): the bar read 'Slide 6 of 9', the probe's current slide went 1 to 6, and the slides scrolled to slide 6 (table), after the 88% edit."], "didnt": ["The harness's bar-select does not move the preview (current stayed 1), so I moved the caret with duo2 deck go instead of a click; a real click in the source was not tried.", "Did not see the 2 pt margin mark: the source pane stayed scrolled to the top, so slide 6's lines were off screen in the capture. Did not check that the scroll position is kept across the redraw (both probes ran at the top)."], "human": ["Click into slide 6's lines in the source and look for the thin grey mark in the left margin spanning that slide's lines; check the slides follow.", "Type in slide 3 while scrolled partway down the slides and check the pane keeps its place."], "at": "2026-11-01"}, "commitInfo": [{"sha": "8697b3f9bbdc40f1e256b3600223accb802e17ee", "subject": "Duo Decks P3a: DeckPreview provider (in-memory pptx, anchor map, problems, comments, shape to slot) and its registration"}, {"sha": "362feef00129c7dfca8071f5d5b56ce2ed9b76c0", "subject": "Duo Decks editor: slide chip, ⌃⌘N template picker, anchor mark, revealDeckSlot (DL-295, DL-296, DL-303)"}, {"sha": "2c96dae7a7dfa68e07c3b1737750d2fb5d94817b", "subject": "Deck preview: a redraw after an edit no longer leaves the pane blank"}]}, {"id": "deck-slide-chip", "group": "In checkout: a Duo deck beside its slides", "title": "Slide chips instead of markup, and changing a slide's template", "what": "Each `<!-- slide: … -->` line shows as a chip, \"Slide n · template ⌄\". Clicking it lists the pack's templates; choosing one changes the slide's template, carrying content over by Duo's rules and moving what doesn't fit to the slide's speaker notes (DL-285, DL-281, DL-296).", "steps": ["Look at the source: no `<!-- slide: … -->` text.", "Click slide 2's chip (`bullets`) and choose `two-column`."], "expect": "Chips read \"Slide 2 · bullets ⌄\" and so on, with a thin rule above. After the change slide 2 is two-column with empty columns; its four points are in its speaker notes under \"Not placed after changing to two-column: body\", and a card under the slide says the points moved, with Move to left, Move to right, Split with Claude and Undo Change. One ⌘Z undoes the change. The file on disk still holds the comment markers (Obsidian and GitHub hide them too).", "ref": "DL-281, DL-285, DL-296, DL-303, F-526", "commit": "362feef00129c7dfca8071f5d5b56ce2ed9b76c0", "alsoCommits": ["592067b2a2b3e2c206fab8f8cc1425a14f398a1f", "2c96dae7a7dfa68e07c3b1737750d2fb5d94817b"], "workMac": "small", "workMacWhy": "Any deck in a project", "links": [{"label": "P3-2 picker board", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/duo-decks-handoff/screens/P3-2-picker.html"}, {"label": "P3-3 cards board", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/duo-decks-handoff/screens/P3-3-problems.html"}], "setup": ["open checkout", "doc open decks/field-trial-review.md"], "claude": {"result": "partial", "did": ["Re-ran on a build of 0a7e52a2 (includes the F-530 fix). Changed slide 2 to two-column with `duo2 deck change` on the open deck (a change on disk, in an isolated instance). Slide 2 became two-column: the chip reads 'Slide 2 · two-column', the source shows empty left and right, and the slides pane drew slide 2 as two-column with an empty body and the title only.", "The speaker notes (the note quote) hold 'Not placed after changing to two-column: body' and the four points.", "The slides pane drew fine after the change, with the card under slide 2: '4 points moved to the notes when this became two-column.' and four buttons, Move to left, Move to right, Split with Claude and Undo Change."], "didnt": ["The change came through the CLI on disk, not by clicking the chip and choosing from the picker, so the picker path was not re-run (it was seen in the earlier run).", "Did not press the card's buttons, press Cmd-Z, or check that the comment markers are still on disk."], "human": ["Click the chip, choose two-column, and press Cmd-Z once: the change should undo in one step.", "Try Move to left on the card."], "at": "2026-11-01"}, "commitInfo": [{"sha": "362feef00129c7dfca8071f5d5b56ce2ed9b76c0", "subject": "Duo Decks editor: slide chip, ⌃⌘N template picker, anchor mark, revealDeckSlot (DL-295, DL-296, DL-303)"}, {"sha": "592067b2a2b3e2c206fab8f8cc1425a14f398a1f", "subject": "Duo Decks P3b: the deck bar (Problems, export state, Export menu, notice), cards under slides, comment pins, Add Comment, pptx Make Templates mode, the verbs"}, {"sha": "2c96dae7a7dfa68e07c3b1737750d2fb5d94817b", "subject": "Deck preview: a redraw after an edit no longer leaves the pane blank"}]}, {"id": "deck-new-slide", "group": "In checkout: a Duo deck beside its slides", "title": "⌃⌘N adds a slide from a template", "what": "⌃⌘N (Format › New Slide, only in a deck) adds a chip under the caret's slide with the pack's templates listed; typing filters; Return inserts the template's skeleton (DL-295).", "steps": ["Put the caret in slide 3.", "Press ⌃⌘N, type `k`, press Return.", "Type a title."], "expect": "A list at the caret shows each template with a small picture, its name and its purpose; `k` leaves kpi. Return inserts a kpi slide after slide 3: a title line with the caret in it and headings value, label, context. The new slide appears on the right as you type. The pictures in the list are stand-ins drawn from each template's slots, not real slide thumbnails yet (Q-415). New Slide… isn't in the editor's right-click menu (Q-416).", "ref": "DL-295, DL-303, F-526, Q-415, Q-416", "commit": "362feef00129c7dfca8071f5d5b56ce2ed9b76c0", "alsoCommits": ["acef4a344a29fbcb50d1ce64bb503bb5c353e1f3"], "workMac": "small", "workMacWhy": "Any deck in a project", "links": [{"label": "P3-2 picker board", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/duo-decks-handoff/screens/P3-2-picker.html"}], "setup": ["open checkout", "doc open decks/field-trial-review.md"], "claude": {"result": "partial", "did": ["Put the caret in slide 3, opened New Slide and typed k (scripted through the editor): a list at the caret showed kpi alone with its small picture, name and purpose and 'insert · esc cancel · type to filter 8 templates', and the new chip read 'Slide 4 · k' under slide 3."], "didnt": ["Did not press Return or type a title (no key injection without a visible window), so I did not see the kpi skeleton inserted.", "Did not press the shortcut through the menu or check that New Slide is absent from the right-click menu."], "human": ["Press the shortcut in slide 3, type k, Return, type a title; check the new slide appears on the right as you type and that New Slide isn't in the right-click menu."], "at": "2026-11-01"}, "commitInfo": [{"sha": "362feef00129c7dfca8071f5d5b56ce2ed9b76c0", "subject": "Duo Decks editor: slide chip, ⌃⌘N template picker, anchor mark, revealDeckSlot (DL-295, DL-296, DL-303)"}, {"sha": "acef4a344a29fbcb50d1ce64bb503bb5c353e1f3", "subject": "Deck editor: harness hooks, capture script, DuoChecks follow deck.js, duo2 reference regenerated"}]}, {"id": "deck-problems-bar", "group": "In checkout: problems, export and comments", "title": "Problems in the deck's bar and under the slide", "what": "When the deck breaks its templates, the bar shows Problems ⌄ and the slide gets a card saying what and offering a fix (DL-304, DL-298).", "steps": ["In slide 3 change the value to `86 percent of rows`.", "Open Problems ⌄ and choose the problem.", "Change the first slide's chip to an unknown name by editing the file in another editor, or type a slide marker by hand with `kip`, if you want to see a one-answer fix."], "expect": "\"⚠ 1 problem ⌄\" appears after the slide count; its menu lists the problem and choosing it shows slide 3 and the source line. Under slide 3 a card says the value is too long for kpi, with Go to Line and Send to Claude. An unknown template with one near match offers \"Use kpi\". The menus are drawn in the page and don't take arrow keys yet (C-144).", "ref": "DL-304, DL-298, C-144", "commit": "592067b2a2b3e2c206fab8f8cc1425a14f398a1f", "alsoCommits": ["4f70e8e4f5d9e142c25ff81dd1b80c36084b609d", "f4f77c2fff5b1a9c484bccfab4e05cc2e9765dc8"], "workMac": "small", "workMacWhy": "Any deck in a project", "links": [{"label": "P3-3 board", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/duo-decks-handoff/screens/P3-3-problems.html"}], "setup": ["open checkout", "doc open decks/field-trial-review.md"], "claude": {"result": "partial", "did": ["Changed the value to '86 percent' (and '86 percent of rows' through duo2): the bar read '1/9 1 problem' with a chevron and the menu listed '3 · value: is 10 characters; the template allo...  line 31'.", "`duo2 deck problems` said slide 3 (kpi) value is 18 characters and the template allows 7, with the line.", "A hand-typed unknown marker 'kip' gave a problem: no template kip in northwind.md, listing the real ones."], "didnt": ["Did not see the card under slide 3 with Go to Line and Send to Claude (it needs the slides pane drawn after the edit).", "The unknown-template check lists the alternatives; I did not see a one-click 'Use kpi' in the UI.", "Menus not tested for arrow keys."], "human": ["Look for the card under slide 3 (Go to Line, Send to Claude) and for 'Use kpi' on a mistyped marker."], "at": "2026-11-01"}, "commitInfo": [{"sha": "592067b2a2b3e2c206fab8f8cc1425a14f398a1f", "subject": "Duo Decks P3b: the deck bar (Problems, export state, Export menu, notice), cards under slides, comment pins, Add Comment, pptx Make Templates mode, the verbs"}, {"sha": "4f70e8e4f5d9e142c25ff81dd1b80c36084b609d", "subject": "Duo Decks P3b: pin stays inside the slide, bar widths, harness actions, 56 viewer checks (DUO_CHECKS=deckviewer)"}, {"sha": "f4f77c2fff5b1a9c484bccfab4e05cc2e9765dc8", "subject": "Duo Decks P3b: parity labels, the narrowest pptx bar, verb checks widened; duo2 reference regenerated; full DuoChecks 5407 pass"}]}, {"id": "deck-export", "group": "In checkout: problems, export and comments", "title": "Export ⌄: a dated PowerPoint, and the export state", "what": "Export ⌄ writes `<deck> YYYY-MM-DD HHmm.pptx` beside the deck, replacing the previous export (DL-282, DL-286); the bar says whether the export is current.", "steps": ["Undo the long value from the last card.", "Export ⌄ › Export as PowerPoint….", "Edit a word in the deck.", "Export ⌄ › Export Again, then Show Export in Finder."], "expect": "A notice says \"Exported field-trial-review 2026-11-… .pptx · 9 slides\" with Show in Finder and Open With ⌄. The bar then reads \"Exported now\" (or a few minutes ago); after your edit it reads \"Changed since export\". Export Again names the file it replaces and leaves only the newest one in decks/. Upload to Google Slides… is dimmed (later, ENH-307). Opening the exported file shows the same slides in the PowerPoint viewer.", "ref": "DL-282, DL-286, DL-304", "commit": "592067b2a2b3e2c206fab8f8cc1425a14f398a1f", "alsoCommits": ["21127fd18c1b460f107cf5125aea4f482e921a31"], "workMac": "small", "workMacWhy": "Any deck in a project; writes a pptx beside it", "links": [{"label": "P3-3 board", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/duo-decks-handoff/screens/P3-3-problems.html"}], "setup": ["open checkout", "doc open decks/field-trial-review.md"], "claude": {"result": "partial", "did": ["Export through duo2 wrote 'field-trial-review 2026-11-01 1724.pptx' (9 slides) beside the deck; a second Export Again replaced it, leaving one pptx in decks/.", "In a captured run the notice read 'Exported field-trial-review 2026-11-01 1725.pptx · 9 slides' with Show in Finder, Open With and OK, and the bar read 'Exported just now'.", "The Export menu showed Export as PowerPoint..., Export Again (replaces 2026-11-01 1725), Show Export in Finder and a dimmed 'Upload to Google Slides... later'."], "didnt": ["Did not see 'Changed since export' after an edit or open the pptx in a viewer.", "`duo2 deck export decks/field-trial-review.md` with a relative path failed ('no such file') while Export Again worked.", "Running `deck export show` revealed the file in Finder on this Mac, a slip on my part in an unattended run; nothing else was affected."], "human": ["Edit a word after exporting and check the bar changes to 'Changed since export'; open the pptx in PowerPoint or Keynote."], "at": "2026-11-01"}, "commitInfo": [{"sha": "592067b2a2b3e2c206fab8f8cc1425a14f398a1f", "subject": "Duo Decks P3b: the deck bar (Problems, export state, Export menu, notice), cards under slides, comment pins, Add Comment, pptx Make Templates mode, the verbs"}, {"sha": "21127fd18c1b460f107cf5125aea4f482e921a31", "subject": "Duo Decks P3b: the md bar keeps the export state until it can't fit, harness waits for the drawing (deck-edit, deck-export)"}]}, {"id": "deck-comment-pins", "group": "In checkout: problems, export and comments", "title": "Comment on a slide, and see the pin", "what": "Select Shape, pick a slot, Add Comment: the comment is written into the Markdown on its own line in that slot (Review in Markdown's convention), and a pin appears at the slot's corner; clicking the pin opens the thread in the source's margin (DL-284, DL-302).", "steps": ["Select Shape, click slide 3's big number.", "In the bar at the foot, press Add Comment and write `Rounded from 87.6?`.", "Click the pin that appears on slide 3."], "expect": "The foot bar reads \"value on slide 3 · '86%'\" with Add Comment first. The margin composer opens on the value's lines without taking the keyboard from the slides; posting writes a signed comment line into the value slot. A small capsule with a speech mark and 1 appears at the value's top right; clicking it opens the thread in the source's margin. The comment never appears on the slide or in an export.", "ref": "DL-284, DL-302, DL-290", "commit": "592067b2a2b3e2c206fab8f8cc1425a14f398a1f", "alsoCommits": ["4f70e8e4f5d9e142c25ff81dd1b80c36084b609d"], "workMac": "small", "workMacWhy": "Any deck in a project", "links": [{"label": "P3-1 board", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/duo-decks-handoff/screens/P3-1-comments.html"}], "setup": ["open checkout", "doc open decks/field-trial-review.md"], "claude": {"result": "partial", "did": ["`duo2 deck comment 3/value` wrote a signed comment line under the value slot in the Markdown (and slide-level ones under slides 2 and 3).", "In a captured run the slides show small capsules with a speech mark and 1 at each commented slot's top right (slides 2 and 3, and the value's corner); the margin shows the threads as cards beside the source.", "The comment text isn't drawn on the slides."], "didnt": ["Did not click Select Shape and pick the value, press Add Comment in the foot bar or click a pin (needs a mouse)."], "human": ["Select Shape, click the big number, Add Comment, write 'Rounded from 87.6?', and click the pin; check the foot bar reads \"value on slide 3 · '86%'\"."], "at": "2026-11-01"}, "commitInfo": [{"sha": "592067b2a2b3e2c206fab8f8cc1425a14f398a1f", "subject": "Duo Decks P3b: the deck bar (Problems, export state, Export menu, notice), cards under slides, comment pins, Add Comment, pptx Make Templates mode, the verbs"}, {"sha": "4f70e8e4f5d9e142c25ff81dd1b80c36084b609d", "subject": "Duo Decks P3b: pin stays inside the slide, bar widths, harness actions, 56 viewer checks (DUO_CHECKS=deckviewer)"}]}, {"id": "pptx-make-templates", "group": "In checkout: starting from a PowerPoint", "title": "Make Templates… on a PowerPoint", "what": "On a plain pptx the bar's Make Templates… turns the slides into a grid with tick boxes; Make Templates with Claude pastes the pick and the inventory line into Claude's prompt without Return (DL-291).", "steps": ["Open `docs/grower-update.pptx`.", "Press Make Templates…, tick slides 3 and 7.", "Press Make Templates with Claude (a Claude session in checkout, or Send To)."], "expect": "The slides lie in a grid (two columns in a narrow pane, three when wider) with tick boxes; Make Templates… shows pressed. The foot bar reads \"2 slides picked\" with Cancel, Add to Pack ⌄ and Make Templates with Claude. Claude's prompt gets the request and `duo2 deck template inventory … --slides 3,7`, not sent. Leaving the mode returns to the same slide.", "ref": "DL-291", "commit": "592067b2a2b3e2c206fab8f8cc1425a14f398a1f", "alsoCommits": ["66ac7273bda4d4e422d5e86763036e1664958dd8", "ef43ca789c429d8f7d10af1ba4cc675588d509b8", "7b40a2de05060ec913364a20f263c95a942964ef"], "workMac": "as-is", "workMacWhy": "Any .pptx of his own", "links": [{"label": "board 9A (make-templates)", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/duo-decks-handoff/screens/make-templates.html"}], "setup": ["open checkout", "doc open docs/grower-update.pptx"], "claude": {"result": "partial", "did": ["Opened docs/grower-update.pptx: Make Templates... turned the slides into a grid (three columns at this width) with tick boxes and showed pressed.", "With slide 3 ticked the foot bar read '1 slide picked · click slides to pick them; Esc to stop' with Cancel, Add to Pack and Make Templates with Claude."], "didnt": ["Ticked one slide, not two (the harness takes one slide in its argument), and did not press Make Templates with Claude, so what it pastes into Claude's prompt is untested.", "Did not leave the mode to see it return to the same slide."], "human": ["Tick slides 3 and 7, press Make Templates with Claude in a Claude session and check the prompt gets the request and the `duo2 deck template inventory ... --slides 3,7` line, unsent."], "at": "2026-11-01"}, "commitInfo": [{"sha": "592067b2a2b3e2c206fab8f8cc1425a14f398a1f", "subject": "Duo Decks P3b: the deck bar (Problems, export state, Export menu, notice), cards under slides, comment pins, Add Comment, pptx Make Templates mode, the verbs"}, {"sha": "66ac7273bda4d4e422d5e86763036e1664958dd8", "subject": "Duo Decks P3b fix-up: Make Templates shows the slides as a grid (2 columns under 640 pt, 3 from 640), one per row again on leaving"}, {"sha": "ef43ca789c429d8f7d10af1ba4cc675588d509b8", "subject": "Duo Decks P3b fix-up: grid keeps the slide when leaving, grid proofs (Light/Dark/Classic at 470 and 820), proof folder 17 MB to 3.5 MB, p3b.md fix-up section"}, {"sha": "7b40a2de05060ec913364a20f263c95a942964ef", "subject": "Duo Decks P3b fix-up: Make Templates… pressed while picking, both pptx buttons live (the bar read a stale state), Select Shape and slide picking exclusive; 820 proofs recaptured"}]}, {"id": "pptx-convert-sheet", "group": "In checkout: starting from a PowerPoint", "title": "Convert to Duo Deck…", "what": "Convert to Duo Deck… opens a Duo sheet (pack, Into); Convert with Claude hands the conversion to the session with the `duo2 deck import` line (DL-294, DL-305).", "steps": ["With `docs/grower-update.pptx` open, press Convert to Duo Deck….", "Press Convert with Claude."], "expect": "A sheet hangs from the toolbar: \"Convert grower-update.pptx to a Duo deck\", Template pack northwind · this project, Into decks/grower-update.md, Cancel and Convert with Claude. Convert pastes the request and the import line into Claude's prompt without Return; the plan, Claude's questions about merging look-alike layouts and the report happen in the session. The pptx isn't changed.", "ref": "DL-294, DL-305", "commit": "9c6f1df4b3dd445ed566171027d6102b2cce52b3", "alsoCommits": [], "workMac": "as-is", "workMacWhy": "Any .pptx of his own", "links": [{"label": "P3-4 board", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/duo-decks-handoff/screens/P3-4-sheets.html"}], "setup": ["open checkout", "doc open docs/grower-update.pptx"], "claude": {"result": "partial", "did": ["Convert to Duo Deck... opened a sheet hanging from the toolbar: 'Convert grower-update.pptx to a Duo deck', the explanation, Template pack 'northwind · this project', Into 'decks/grower-update.md', Cancel and Convert with Claude."], "didnt": ["Did not press Convert with Claude (no live Claude session here), so the pasted request and import line are untested."], "human": ["Press Convert with Claude in a project with a Claude session and check the prompt is filled, not sent, and the pptx is unchanged."], "at": "2026-11-01"}, "commitInfo": [{"sha": "9c6f1df4b3dd445ed566171027d6102b2cce52b3", "subject": "Duo Decks P3b: New Deck... and Convert to Duo Deck... sheets (P3-4), from Files' + menu and right-click"}]}, {"id": "deck-new-sheet", "group": "In checkout: starting from a PowerPoint", "title": "File › New › New Deck…", "what": "New Deck… (File › New and Files' + menu) opens a sheet with a name, a folder, the template pack and what to start with; Create writes the deck and opens it in its split tab (DL-297, DL-305).", "steps": ["File › New › New Deck….", "Name it `autumn-trial`, keep northwind and A title slide, press Create."], "expect": "The sheet lists northwind (this project, 8 templates) above Duo Plain (built in), with a strip of template tiles. Create makes `decks/autumn-trial.md` with one title slide and opens it beside its slide. The tiles are wireframes until real thumbnails exist (Q-415). No shortcut.", "ref": "DL-297, DL-305, Q-415", "commit": "9c6f1df4b3dd445ed566171027d6102b2cce52b3", "alsoCommits": ["1c7f791da12673374436e7257bfaca3fa89dcc90"], "workMac": "as-is", "workMacWhy": "Uses the built-in pack if a project has none", "links": [{"label": "P3-4 board", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/duo-decks-handoff/screens/P3-4-sheets.html"}], "setup": ["open checkout"], "claude": {"result": "partial", "did": ["The New Deck sheet opened with Name autumn-trial, Folder decks/, Template pack 'northwind this project · 8 templates', a strip of eight wireframe template tiles, and 'Start with' A title slide / One slide of each template, with Cancel and Create.", "`duo2 deck new decks/autumn-trial.md --template northwind` made a deck with type: deck, template northwind and one title slide."], "didnt": ["Could not press Create from a script, so I did not see the deck open in its split tab.", "Did not open the pack list to check Duo Plain (built in) sits below northwind, or File > New > New Deck... through the menu."], "human": ["File > New > New Deck..., name it autumn-trial, press Create; check it opens beside its slide and the pack list shows Duo Plain."], "at": "2026-11-01"}, "commitInfo": [{"sha": "9c6f1df4b3dd445ed566171027d6102b2cce52b3", "subject": "Duo Decks P3b: New Deck... and Convert to Duo Deck... sheets (P3-4), from Files' + menu and right-click"}, {"sha": "1c7f791da12673374436e7257bfaca3fa89dcc90", "subject": "Duo Decks P3b fix-up: File > New > New Deck… (no shortcut, DL-297; names duo2 deck new)"}]}, {"id": "deck-cli-verbs", "group": "The command line", "title": "duo2 deck: the slide on screen, going to a slide, problems and comments", "what": "`duo2 deck`, `deck go`, `deck pick`, `deck problems`, `deck comments` and `deck comment` let Claude see and move the deck viewer and comment on slides (DL-71).", "steps": ["With the deck open, run `duo2 deck`, then `duo2 deck go 4`.", "Run `duo2 deck problems`, `duo2 deck comments`.", "Run `duo2 deck comment 2 \"Too many words\"`."], "expect": "`duo2 deck` names the deck, the slide on screen and the lines the caret is in; `deck go 4` moves both sides to slide 4. `deck problems` lists errors and notices with lines; `deck comments` lists threads by slide and slot. `deck comment` writes a signed comment under slide 2's marker and a pin appears on slide 2.", "ref": "DL-71, F-523", "commit": "64491b417805f23dffc88149535046da433c2899", "alsoCommits": ["aaf07964b02b79d832482c468202ddb8e05673f7", "938483b780b72e1a00e8589d2a7e9e6c9c908144", "592067b2a2b3e2c206fab8f8cc1425a14f398a1f"], "workMac": "as-is", "workMacWhy": "duo2 ships in the app; reads, plus one comment in his own deck", "links": [{"label": "duo2 reference", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/cli/duo2.md"}], "setup": ["open checkout", "doc open decks/field-trial-review.md"], "claude": {"result": "passed", "did": ["`duo2 deck` named the deck, slide and caret lines; `deck go 4` moved to slide 4 (lines 42-53) and `deck go 3` to slide 3.", "`deck problems` listed the error with its line (and '0 problems' when clean); `deck comments` listed threads by slide and slot.", "`deck comment 2 \"Too many words\"` wrote a signed comment under slide 2's heading and a pin appeared on slide 2; `deck comment 3/value` did the same for a slot.", "`deck pick` turned the picker on."], "didnt": ["`deck export <relative path>` failed with 'no such file' (see the export card); `deck render` says it isn't built yet."], "human": [], "at": "2026-11-01"}, "commitInfo": [{"sha": "64491b417805f23dffc88149535046da433c2899", "subject": "Duo Decks P3a: the deck verbs (deck, deck go, deck pick) handled by the app"}, {"sha": "aaf07964b02b79d832482c468202ddb8e05673f7", "subject": "Actions: duo2 deck, deck go, deck pick (the deck in split view)"}, {"sha": "938483b780b72e1a00e8589d2a7e9e6c9c908144", "subject": "Actions: duo2 deck problems, comments, comment, export again, export show (P3b)"}, {"sha": "592067b2a2b3e2c206fab8f8cc1425a14f398a1f", "subject": "Duo Decks P3b: the deck bar (Problems, export state, Export menu, notice), cards under slides, comment pins, Add Comment, pptx Make Templates mode, the verbs"}]}], "repo": "https://github.com/dudgeon/duo-v2", "builtAt": "aff416cb4fda56e05be18511782f70fd898f4dea"}</script>
+<script>
+const DATA = JSON.parse(document.getElementById("data").textContent);
+const KEY = "acceptance:" + DATA.sprint;
+const LABEL = { accepted: "Accepted", rejected: "Rejected", deferred: "Not now", "": "To do" };
+let verdicts = {};   // id -> {status, comment, at}
+let answers = {};    // decision id -> {choice, other, comment, at}
+let db = null, filter = "all", showCleared = false, onlyAsIs = false, forceMobile = false;
+const WM_LABEL = { "as-is": "Work Mac: as-is", small: "Work Mac: small setup", home: "Home Mac only" };
+const WM_ORDER = ["as-is", "small", "home"];
+const WM_SHORT = { "as-is": "Work Mac, as-is", small: "Work Mac, small setup", home: "Home Mac only" };
+const mq = window.matchMedia ? window.matchMedia("(max-width: 760px)") : { matches: false };
+const mobileOrder = () => mq.matches || forceMobile;
+// Send to Claude (comments capability): reaches the Claude session watching this page; its reply
+// arrives as a comment in the thread. Each card keeps one thread, so later sends reply into it.
+let comments = null, canSend = "off";
+let threads = {};
+try { threads = JSON.parse(localStorage.getItem("acceptance-threads:" + (JSON.parse(document.getElementById("data").textContent).sprint)) || "{}"); } catch (e) { threads = {}; }
+const keepThreads = () => { try { localStorage.setItem("acceptance-threads:" + DATA.sprint, JSON.stringify(threads)); } catch (e) {} };
+async function sendToClaude(key, anchorEl, text, statusEl) {
+  if (!comments || canSend !== "available") { statusEl.className = "sent err"; statusEl.textContent = "No Claude session is listening; it's saved here."; return false; }
+  statusEl.className = "sent"; statusEl.textContent = "Sending…";
+  const body = text.length > 3900 ? text.slice(0, 3900) + "\n… (more on the page; read the saved verdicts)" : text;
+  try {
+    let r;
+    if (threads[key]) {
+      try { r = await comments.sendToClaude({ threadId: threads[key], text: body }); }
+      catch (e) { if (e && e.code === "not_found") { delete threads[key]; } else throw e; }
+    }
+    if (!r) r = await comments.sendToClaude({ anchor: await comments.anchorFor(anchorEl), text: body });
+    threads[key] = r.threadId; keepThreads();
+    statusEl.className = "sent ok"; statusEl.textContent = "Sent to Claude; its reply arrives as a comment here.";
+    return true;
+  } catch (e) {
+    const code = e && e.code;
+    statusEl.className = "sent err";
+    statusEl.textContent = code === "consent_required" ? "Allow comments from this page, then send again."
+      : code === "claude_unavailable" ? "No Claude session could take it; it's saved here."
+      : code === "rate_limited" ? "Sending too fast; wait a moment."
+      : "Couldn't send (" + (code || "error") + "); it's saved here.";
+    return false;
+  }
+}
+function featureText(f) {
+  const v = verdicts[f.id] || {};
+  return `Walk ${DATA.sprint} · test \`${f.id}\`: ${f.title}${f.ref ? " (" + f.ref + ")" : ""}; ${commitText(f)}; ${WM_LABEL[f.workMac] || f.workMac}\nVerdict: ${LABEL[v.status || ""]}` + ((v.comment || "").trim() ? `\nComment: ${v.comment.trim()}` : "");
+}
+function decisionText(d) {
+  const a = answers[d.id] || {}, o = (d.options || []).find(x => x.id === a.choice);
+  return `Walk ${DATA.sprint} · decision \`${d.id}\`: ${d.title}${d.ref ? " (" + d.ref + ")" : ""}\nChoice: ${a.choice ? (o ? o.label : "Something else") : "not answered"}` + ((a.comment || "").trim() ? `\nComment: ${a.comment.trim()}` : "");
+}
+function sendable() {
+  document.querySelectorAll(".tosend[data-k]").forEach(b => {
+    const [kind, id] = b.dataset.k.split(":");
+    const has = kind === "f" ? !!((verdicts[id]?.status) || (verdicts[id]?.comment || "").trim()) : !!((answers[id]?.choice) || (answers[id]?.comment || "").trim());
+    b.disabled = canSend !== "available" || !has;
+    b.title = canSend === "available" ? (has ? "Send this to Claude now" : "Give a verdict or a comment first") : "No Claude session is listening right now";
+  });
+  const all = $("#sendall"); if (all) all.disabled = canSend !== "available";
+}
+
+function local(read, value) {
+  try { if (read) return JSON.parse(localStorage.getItem(KEY) || "{}"); localStorage.setItem(KEY, JSON.stringify(value)); }
+  catch (e) { return read ? {} : undefined; }
+}
+verdicts = local(true);
+try { answers = JSON.parse(localStorage.getItem(KEY + ":decisions") || "{}"); } catch (e) { answers = {}; }
+
+const $ = (s, el = document) => el.querySelector(s);
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+
+// Inline `code`, **bold** and *italic* in the walk's text.
+function rich(parent, text) {
+  text.split(/(\[[^\]]+\]\(https?:\/\/[^)\s]+\)|`[^`]+`|\*\*[^*]+\*\*|\*[^*\s][^*]*\*)/).forEach(part => {
+    const lk = part.match(/^\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)$/);
+    if (lk) { const a = el("a", "lnk", lk[1]); a.href = lk[2]; a.target = "_blank"; a.rel = "noopener"; parent.append(a); }
+    else if (part.length > 2 && part.startsWith("`") && part.endsWith("`")) parent.append(el("code", null, part.slice(1, -1)));
+    else if (part.length > 4 && part.startsWith("**") && part.endsWith("**")) parent.append(el("strong", null, part.slice(2, -2)));
+    else if (part.length > 2 && part.startsWith("*") && part.endsWith("*")) parent.append(el("em", null, part.slice(1, -1)));
+    else parent.append(document.createTextNode(part));
+  });
+  return parent;
+}
+
+$("#title").textContent = DATA.title;
+document.title = DATA.title;
+rich($("#intro"), DATA.intro || "");
+(DATA.setup || []).forEach(s => $("#setup").append(rich(el("li"), s)));
+
+const cards = {};
+// A card's or decision's `links` as buttons that open in a new tab.
+function linkBar(links) {
+  if (!links || !links.length) return null;
+  const bar = el("div", "linkbar");
+  links.forEach(l => { const a = el("a", "linkbtn", l.label + " ↗"); a.href = l.url; a.target = "_blank"; a.rel = "noopener"; bar.append(a); });
+  return bar;
+}
+
+function build() {
+  const list = $("#list");
+  DATA.features.forEach(f => {
+    const c = el("section", "card"); c.id = "f-" + f.id;
+    const top = el("div", "top");
+    top.append(el("h3", null, f.title));
+    if (f.ref) top.append(el("span", "ref", f.ref));
+    const pill = el("span", "pill"); top.append(pill);
+    const wm = el("span", "wm " + f.workMac, WM_LABEL[f.workMac] || f.workMac); wm.title = f.workMacWhy || WM_LABEL[f.workMac] || ""; top.append(wm);
+    c.append(top);
+    const lb = linkBar(f.links); if (lb) c.append(lb);
+    if (f.workMacWhy) c.append(el("p", "wmwhy", f.workMacWhy));
+    if (f.what) c.append(rich(el("p", "what"), f.what));
+    c.append(commitLine(f));
+    if (f.setup && f.setup.length) {
+      const bar = el("div", "setupbar");
+      const a = el("a", "setupbtn", "Set up test"); a.href = "duo2://walk-setup?id=" + encodeURIComponent(f.id);
+      a.title = "Duo arranges the fixtures for this test: " + f.setup.join(" · ");
+      bar.append(a);
+      const alt = el("span", "alt"); alt.append("or in a terminal: "); alt.append(el("code", null, "duo2 walk setup " + f.id)); bar.append(alt);
+      c.append(bar);
+    }
+    if (f.claude) {
+      const b = el("div", "claude");
+      const head = el("div", "head"); head.append("Claude tried this"); head.append(el("span", "pill " + (f.claude.result || ""), f.claude.result || "not run"));
+      if (f.claude.at) head.append(el("span", "ref", f.claude.at));
+      b.append(head);
+      const list = (lbl, items) => { if (!items || !items.length) return; b.append(el("div", "lbl", lbl)); const ul = el("ul"); items.forEach(x => ul.append(rich(el("li"), x))); b.append(ul); };
+      list("Did and saw", f.claude.did);
+      list("Didn't or couldn't", f.claude.didnt);
+      list("Needs your judgment", f.claude.human);
+      c.append(b);
+    }
+    c.append(el("div", "label", "Try"));
+    const ol = el("ol", "steps"); f.steps.forEach(s => ol.append(rich(el("li"), s))); c.append(ol);
+    c.append(el("div", "label", "Expect"));
+    c.append(rich(el("p", "expect"), f.expect));
+    const acts = el("div", "actions");
+    const mk = (cls, text, status) => { const b = el("button", cls, text); b.setAttribute("aria-pressed", "false"); b.onclick = () => setStatus(f.id, status); acts.append(b); return b; };
+    const btns = { accepted: mk("accept", "Accept", "accepted"), rejected: mk("reject", "Reject", "rejected"), deferred: mk("defer", "Not now", "deferred") };
+    const send = el("button", "tosend", "Send to Claude"); send.dataset.k = "f:" + f.id;
+    const sent = el("span", "sent");
+    send.onclick = async () => {
+      // A comment still being typed goes with it.
+      if ((verdicts[f.id]?.comment || "") !== ta.value) await write(f.id, { comment: ta.value });
+      sendToClaude("f:" + f.id, c, featureText(f), sent);
+    };
+    acts.append(send); acts.append(sent);
+    const saved = el("span", "saved"); acts.append(saved);
+    c.append(acts);
+    const ta = el("textarea"); ta.placeholder = "Comments (what you saw, what's wrong, what you'd change)";
+    let timer;
+    ta.oninput = () => { clearTimeout(timer); saved.textContent = "…"; timer = setTimeout(() => setComment(f.id, ta.value), 700); };
+    ta.onblur = () => { clearTimeout(timer); if ((verdicts[f.id]?.comment || "") !== ta.value) setComment(f.id, ta.value); };
+    c.append(ta);
+    cards[f.id] = { c, pill, btns, ta, saved };
+  });
+  layout();
+}
+
+// Order: walk order on desktop; on a phone (or with "Mobile order") decisions, then as-is, small, home.
+let sections = [];
+let lastMode = null;
+function layout() {
+  const mobile = mobileOrder();
+  lastMode = mobile;
+  placeAbout(mobile);
+  const list = $("#list"); list.textContent = "";
+  sections = [];
+  const groups = [];
+  DATA.features.forEach(f => {
+    let g = groups.find(x => x.name === f.group);
+    if (!g) groups.push(g = { name: f.group, fs: [] });
+    g.fs.push(f);
+  });
+  const add = (title, fs, group) => {
+    if (!fs.length) return;
+    const h = el("h2", null, title);
+    const note = (DATA.groupNotes || {})[group];
+    const n = note ? rich(el("p", "group-note"), note) : null;
+    list.append(h); if (n) list.append(n);
+    fs.forEach(f => list.append(cards[f.id].c));
+    sections.push({ h, n, fs });
+  };
+  if (!mobile) {
+    // consecutive runs, as the walk is written
+    const runs = [];
+    DATA.features.forEach(f => { let r = runs[runs.length - 1]; if (!r || r.name !== f.group) runs.push(r = { name: f.group, fs: [] }); r.fs.push(f); });
+    runs.forEach(r => add(r.name, r.fs, r.name));
+  } else {
+    WM_ORDER.forEach(r => groups.forEach(g => add(WM_SHORT[r] + " · " + g.name, g.fs.filter(f => f.workMac === r), g.name)));
+  }
+}
+let aboutDetails = null;
+function placeAbout(mobile) {
+  const about = $("#about"), ds = $("#decisions");
+  if (mobile) {
+    if (!aboutDetails) { aboutDetails = el("details", "aboutwalk"); aboutDetails.append(el("summary", null, "About this walk and setup")); }
+    aboutDetails.append(about);
+    ds.after(aboutDetails);
+  } else {
+    ds.before(about);
+    if (aboutDetails) aboutDetails.remove();
+  }
+}
+function relayout() { layout(); render(); }
+if (mq.addEventListener) mq.addEventListener("change", relayout); else if (mq.addListener) mq.addListener(relayout);
+
+// The commit that built the feature, so a rejected one can be reverted (Geoff, 2026-10-05).
+const short = (sha) => sha.slice(0, 7);
+function commitLine(f) {
+  const line = el("div", "commit");
+  if (!f.commitInfo || !f.commitInfo.length) { line.append(el("span", null, f.noCommit || "No commit recorded")); return line; }
+  const [first, ...later] = f.commitInfo;
+  const link = (c) => { const a = el("a", null, short(c.sha)); a.href = `${DATA.repo}/commit/${c.sha}`; a.target = "_blank"; a.rel = "noopener"; a.title = c.subject; return a; };
+  const built = el("span"); built.append("Built in "); built.append(link(first)); built.append(" · " + first.subject.slice(0, 80) + (first.subject.length > 80 ? "…" : "")); line.append(built);
+  if (later.length) { const a = el("span"); a.append("changed in "); later.forEach((c, i) => { if (i) a.append(", "); a.append(link(c)); }); line.append(a); }
+  const cmd = "git revert " + f.commitInfo.map(c => short(c.sha)).reverse().join(" ");
+  const code = el("code", null, cmd); code.title = "Copy the revert command";
+  code.onclick = () => { try { navigator.clipboard.writeText(cmd); code.textContent = "Copied"; setTimeout(() => code.textContent = cmd, 1200); } catch (e) {} };
+  const r = el("span"); r.append("revert: "); r.append(code); line.append(r);
+  return line;
+}
+const commitText = (f) => f.commitInfo && f.commitInfo.length ? `commit ${f.commitInfo.map(c => short(c.sha)).join(", ")}` : "no commit";
+
+function render() {
+  const n = { accepted: 0, rejected: 0, deferred: 0, "": 0 };
+  DATA.features.forEach(f => {
+    const v = verdicts[f.id] || {}, s = v.status || "", k = cards[f.id];
+    n[s] = (n[s] || 0) + 1;
+    k.c.className = "card " + s;
+    k.pill.className = "pill " + s; k.pill.textContent = LABEL[s];
+    for (const [st, b] of Object.entries(k.btns)) b.setAttribute("aria-pressed", String(s === st));
+    if (document.activeElement !== k.ta && k.ta.value !== (v.comment || "")) k.ta.value = v.comment || "";
+    const show = (filter === "all" || (filter === "todo" ? !s : s === filter)) && (showCleared || !v.cleared) && (!onlyAsIs || f.workMac === "as-is");
+    k.c.classList.toggle("hidden", !show);
+  });
+  sections.forEach(s => {
+    const any = s.fs.some(f => !cards[f.id].c.classList.contains("hidden"));
+    s.h.classList.toggle("hidden", !any);
+    if (s.n) s.n.classList.toggle("hidden", !any);
+  });
+  $("#mobileorder").setAttribute("aria-pressed", String(forceMobile));
+  $("#onlyasis").setAttribute("aria-pressed", String(onlyAsIs));
+  const total = DATA.features.length;
+  sendable();
+  $("#counts").textContent = `${n.accepted} accepted · ${n.rejected} rejected · ${n.deferred} not now · ${n[""]} to do (${total})`;
+  const p = $("#progress"); p.textContent = "";
+  [["accepted", "var(--ok)"], ["rejected", "var(--bad)"], ["deferred", "var(--later)"]].forEach(([s, col]) => {
+    const span = el("span"); span.style.width = (100 * n[s] / total) + "%"; span.style.background = col; p.append(span);
+  });
+}
+
+async function write(id, patch) {
+  const k = cards[id];
+  const next = Object.assign({ status: "", comment: "" }, verdicts[id], patch, { at: new Date().toISOString() });
+  verdicts[id] = next;
+  local(false, verdicts);
+  render();
+  if (!db) { k.saved.textContent = "Saved in this browser"; return; }
+  k.saved.textContent = "Saving…";
+  try { await db.doc("verdicts/" + id).set(next); k.saved.textContent = "Saved"; }
+  catch (e) { k.saved.textContent = "Not saved (" + (e.code || e.message || "error") + "), kept in this browser"; }
+}
+function setStatus(id, status) {
+  const cur = verdicts[id]?.status || "";
+  write(id, { status: cur === status ? "" : status, comment: cards[id].ta.value });
+}
+function setComment(id, comment) { write(id, { comment }); }
+
+$("#onlyasis").onclick = () => { onlyAsIs = !onlyAsIs; render(); };
+$("#mobileorder").onclick = () => { forceMobile = !forceMobile; relayout(); };
+document.querySelectorAll(".filters button[data-f]").forEach(b => b.onclick = () => {
+  filter = b.dataset.f;
+  document.querySelectorAll(".filters button[data-f]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  render();
+});
+
+function feedback() {
+  const by = s => DATA.features.filter(f => (verdicts[f.id]?.status || "") === s);
+  const line = f => {
+    const c = (verdicts[f.id]?.comment || "").trim();
+    return `- **${f.title}** (\`${f.id}\`${f.ref ? ", " + f.ref : ""}; ${commitText(f)}; ${WM_LABEL[f.workMac] || f.workMac})` + (c ? `\n  ${c.replace(/\n/g, "\n  ")}` : "");
+  };
+  const out = [`# Acceptance feedback: ${DATA.title}`, `Sprint \`${DATA.sprint}\` · built at ${(DATA.builtAt || "").slice(0, 7)} · ${new Date().toLocaleString()}`, ""];
+  const sec = (name, list, all) => {
+    const items = all ? list : list.filter(f => (verdicts[f.id]?.comment || "").trim());
+    if (!items.length) return;
+    out.push(`## ${name} (${list.length})`, ...items.map(line), "");
+    if (!all && items.length < list.length) out.splice(out.length - 1, 0, `- ${list.length - items.length} more with no comment`);
+  };
+  const ds = DATA.decisions || [];
+  if (ds.length) {
+    out.push(`## Decisions (${ds.filter(d => answers[d.id]?.choice).length} of ${ds.length} answered)`);
+    ds.forEach(d => {
+      const a = answers[d.id] || {};
+      const o = (d.options || []).find(x => x.id === a.choice);
+      const pick = a.choice ? (o ? o.label : "Something else") : "not answered";
+      out.push(`- **${d.title}** (\`${d.id}\`${d.ref ? ", " + d.ref : ""}): ${pick}` + ((a.comment || "").trim() ? `\n  ${a.comment.trim().replace(/\n/g, "\n  ")}` : ""));
+    });
+    out.push("");
+  }
+  sec("Rejected", by("rejected"), true);
+  sec("Accepted, with comments", by("accepted"), false);
+  sec("Not now", by("deferred"), true);
+  const todo = DATA.features.filter(f => !verdicts[f.id]?.status);
+  if (todo.length) out.push(`## Not yet tested (${todo.length})`, todo.map(f => f.id).join(", "), "");
+  const loose = todo.filter(f => (verdicts[f.id]?.comment || "").trim());
+  if (loose.length) out.push(`## Comments on untested items`, ...loose.map(line), "");
+  return out.join("\n");
+}
+
+// Clear done: accepted tests and answered decisions are hidden (marked cleared, still recorded).
+$("#clear").onclick = async () => {
+  const fs = DATA.features.filter(f => verdicts[f.id]?.status === "accepted" && !verdicts[f.id]?.cleared);
+  const ds = (DATA.decisions || []).filter(d => answers[d.id]?.choice && !answers[d.id]?.cleared);
+  if (!fs.length && !ds.length) return;
+  for (const f of fs) await write(f.id, { cleared: true });
+  for (const d of ds) await writeAnswer(d.id, { cleared: true });
+  render(); renderDecisions();
+};
+$("#showcleared").onclick = () => {
+  showCleared = !showCleared;
+  $("#showcleared").setAttribute("aria-pressed", String(showCleared));
+  render(); renderDecisions();
+};
+
+$("#copy").onclick = async () => {
+  const text = feedback();
+  $("#out").value = text;
+  const extra = db ? " Claude can also read your verdicts directly." : "";
+  $("#dlgnote").textContent = "Select all and copy, then paste it into Claude." + extra;
+  $("#dlg").showModal();
+  $("#out").select();
+  // The clipboard can be refused (or never answer) inside a frame; the dialog is the fallback.
+  Promise.race([navigator.clipboard.writeText(text), new Promise((_, no) => setTimeout(no, 1500))])
+    .then(() => { $("#dlgnote").textContent = "Copied. Paste it into Claude." + extra; }, () => {});
+};
+$("#close").onclick = () => $("#dlg").close();
+$("#sendall").onclick = async () => {
+  const st = $("#chan");
+  await sendToClaude("all", $("header"), feedback(), st);
+};
+
+// Send to Claude lights up when a session is watching; re-checked every 30 s.
+(async () => {
+  try { comments = await window.claude?.use?.("comments"); } catch (e) { comments = null; }
+  const check = async () => {
+    try { canSend = comments ? await comments.canSendToClaude() : "off"; } catch (e) { canSend = "off"; }
+    const chan = $("#chan");
+    if (!chan.textContent.startsWith("Sen")) {
+      chan.className = "chan" + (canSend === "available" ? " ok" : "");
+      chan.textContent = canSend === "available" ? "Claude is listening: sends reach it directly"
+        : canSend === "no_session" ? "No Claude session is listening; verdicts are saved for it"
+        : canSend === "writers_only" ? "Only the page's editors can send to Claude"
+        : "Verdicts are saved for Claude to read";
+    }
+    sendable();
+  };
+  await check();
+  setInterval(check, 30000);
+})();
+
+// Decisions Geoff makes from the page: context, options (with small mockups), a pick, comments.
+const dcards = {};
+function buildDecisions() {
+  const list = DATA.decisions || [];
+  if (!list.length) return;
+  const sec = $("#decisions");
+  sec.classList.remove("hidden");
+  const h = el("h2", null, "Decisions for you ");
+  h.append(el("span", "count", ""));
+  sec.append(h);
+  if (DATA.decisionsIntro) sec.append(rich(el("p", "intro"), DATA.decisionsIntro));
+  list.forEach(d => {
+    const c = el("section", "decision"); c.id = "d-" + d.id;
+    const top = el("div", "top");
+    top.append(el("h3", null, d.title));
+    if (d.ref) top.append(el("span", "ref", d.ref));
+    const state = el("span", "pill"); top.append(state);
+    c.append(top);
+    const dlb = linkBar(d.links); if (dlb) c.append(dlb);
+    const ctx = el("div", "context");
+    (d.context || []).forEach(p => {
+      if (Array.isArray(p)) { const ul = el("ul"); p.forEach(x => ul.append(rich(el("li"), x))); ctx.append(ul); }
+      else ctx.append(rich(el("p"), p));
+    });
+    c.append(ctx);
+    const opts = el("div", "options");
+    const radios = {};
+    (d.options || []).concat([{ id: "other", label: "Something else", desc: "Say what in the comment below." }]).forEach(o => {
+      const lab = el("label", "option");
+      const r = el("input"); r.type = "radio"; r.name = "d-" + d.id; r.value = o.id;
+      r.onchange = () => writeAnswer(d.id, { choice: o.id });
+      lab.append(r);
+      const head = el("div"); head.append(el("span", "olabel", o.label)); if (o.recommended) head.append(el("span", "rec", "Recommended"));
+      lab.append(head);
+      if (o.desc) lab.append(rich(el("div", "odesc"), o.desc));
+      if (o.mockup) { const m = el("div", "mock"); m.innerHTML = o.mockup; lab.append(m); }
+      opts.append(lab);
+      radios[o.id] = { r, lab };
+    });
+    c.append(opts);
+    const ta = el("textarea"); ta.placeholder = "Comments (why, conditions, what to change)";
+    let timer;
+    ta.oninput = () => { clearTimeout(timer); timer = setTimeout(() => writeAnswer(d.id, { comment: ta.value }), 700); };
+    ta.onblur = () => { clearTimeout(timer); if ((answers[d.id]?.comment || "") !== ta.value) writeAnswer(d.id, { comment: ta.value }); };
+    c.append(ta);
+    const row = el("div", "dsend");
+    const send = el("button", "tosend", "Send to Claude"); send.dataset.k = "d:" + d.id;
+    const sent = el("span", "sent");
+    send.onclick = async () => {
+      if ((answers[d.id]?.comment || "") !== ta.value) await writeAnswer(d.id, { comment: ta.value });
+      sendToClaude("d:" + d.id, c, decisionText(d), sent);
+    };
+    row.append(send); row.append(sent);
+    const saved = el("div", "saved"); row.append(saved);
+    c.append(row);
+    sec.append(c);
+    dcards[d.id] = { c, state, radios, ta, saved, d };
+  });
+}
+
+function renderDecisions() {
+  const list = DATA.decisions || [];
+  if (!list.length) return;
+  let n = 0;
+  list.forEach(d => {
+    const a = answers[d.id] || {}, k = dcards[d.id];
+    if (a.choice) n++;
+    k.c.classList.toggle("answered", !!a.choice);
+    k.c.classList.toggle("hidden", !!a.cleared && !showCleared);
+    const opt = (d.options || []).find(o => o.id === a.choice);
+    k.state.className = "pill" + (a.choice ? " accepted" : "");
+    k.state.textContent = a.choice ? (opt ? opt.label : "Something else") : "Open";
+    for (const [id, { r, lab }] of Object.entries(k.radios)) { r.checked = a.choice === id; lab.classList.toggle("chosen", a.choice === id); }
+    if (document.activeElement !== k.ta && k.ta.value !== (a.comment || "")) k.ta.value = a.comment || "";
+  });
+  $("#decisions .count").textContent = `(${n} of ${list.length} answered)`;
+  sendable();
+}
+
+async function writeAnswer(id, patch) {
+  const k = dcards[id];
+  const next = Object.assign({ choice: "", comment: "" }, answers[id], patch, { at: new Date().toISOString() });
+  answers[id] = next;
+  try { localStorage.setItem(KEY + ":decisions", JSON.stringify(answers)); } catch (e) {}
+  renderDecisions();
+  if (!db) { k.saved.textContent = "Saved in this browser"; return; }
+  k.saved.textContent = "Saving…";
+  try { await db.doc("decisions/" + id).set(next); k.saved.textContent = "Saved"; }
+  catch (e) { k.saved.textContent = "Not saved (" + (e.code || e.message || "error") + "), kept in this browser"; }
+}
+
+buildDecisions();
+renderDecisions();
+build();
+render();
+
+(async () => {
+  try { db = await window.claude?.use?.("db"); } catch (e) { db = null; }
+  if (!db) { $("#store").textContent = "Verdicts are saved in this browser only. Use Copy feedback to send them to Claude."; return; }
+  $("#store").textContent = "Verdicts are saved with this page; you can stop and come back any time, and Claude can read them.";
+  // Anything recorded in this browser before the store connected goes up once.
+  const remote = await db.collection("verdicts").get().catch(() => null);
+  const have = new Set(remote ? remote.docs.map(d => d.id) : []);
+  for (const [id, v] of Object.entries(verdicts)) if (!have.has(id) && cards[id] && (v.status || v.comment)) db.doc("verdicts/" + id).set(v).catch(() => {});
+  const remoteD = await db.collection("decisions").get().catch(() => null);
+  const haveD = new Set(remoteD ? remoteD.docs.map(d => d.id) : []);
+  for (const [id, a] of Object.entries(answers)) if (!haveD.has(id) && dcards[id] && (a.choice || a.comment)) db.doc("decisions/" + id).set(a).catch(() => {});
+  db.collection("decisions").onSnapshot(snap => {
+    snap.docs.forEach(d => { if (dcards[d.id]) answers[d.id] = d.data(); });
+    try { localStorage.setItem(KEY + ":decisions", JSON.stringify(answers)); } catch (e) {}
+    renderDecisions();
+  }, () => {});
+  db.collection("verdicts").onSnapshot(snap => {
+    snap.docs.forEach(d => { if (cards[d.id]) verdicts[d.id] = d.data(); });
+    local(false, verdicts);
+    render();
+  }, e => { $("#store").textContent = "Lost the connection to saved verdicts (" + (e.code || "error") + "); changes are kept in this browser."; });
+})();
+</script>
+</body>
+</html>
