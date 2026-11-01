@@ -19,7 +19,9 @@ export type AppClick = {at: number; x: number; y: number; right?: boolean};
 export type AppDrag = {at: number; dur: number; from: {x: number; y: number}; to: {x: number; y: number}; reveal?: {state: string; rect: Rect}};
 export type AppCam = {at: number; dur: number; rect: Rect | null};       // null: back to the whole desk
 export type AppMark = {at: number; until: number; rect: Rect; quote?: string};
-export type AppKey = {at: number; label: string};
+export type AppKey = {at: number; label: string; hold?: number};
+// A second window over the main one (Duo's Settings): a capture's region, at window points, with a drawn title bar, from at to until.
+export type AppOverlay = {at: number; until: number; src: string; scale: number; region: Rect; x: number; y: number; title?: string};
 // A wipe: `state` drawn over the picture inside `rect`, left to right over dur (typing that renders as it's typed).
 export type AppWipe = {at: number; dur: number; state: string; rect: Rect; chars?: number};
 export type AppMenu = {at: number; until: number; x: number; y: number; items: string[]; hi?: {at: number; item: string}};
@@ -30,7 +32,7 @@ export type AppData = {
   entry?: {base: string; panes: Record<string, string>; until: number; rects?: Record<string, Rect>};
   panes: Record<string, Rect>;
   steps: AppStep[]; clicks: AppClick[]; drags: AppDrag[]; cams: AppCam[]; marks: AppMark[]; menus: AppMenu[];
-  keys?: AppKey[]; wipes?: AppWipe[];
+  keys?: AppKey[]; wipes?: AppWipe[]; overlays?: AppOverlay[];
   running?: boolean; startCam?: Rect | null;
 };
 
@@ -85,7 +87,8 @@ const KeyCap = ({label, u, down}: {label: string; u: number; down: number}) => {
   );
 };
 
-export const AppScene = ({t, data}: {t: number; data: AppData}) => {
+/** dockIcon: an icon image for Duo's Dock tile (Classic's, DL-252), else the drawn mark. */
+export const AppScene = ({t, data, dockIcon}: {t: number; data: AppData; dockIcon?: string}) => {
   const win = {x: (W - data.window.w * K) / 2, y: 38, w: data.window.w * K, h: data.window.h * K};
   const toFrame = (r: Rect): Rect => ({x: win.x + r.x * K, y: win.y + r.y * K, w: r.w * K, h: r.h * K});
 
@@ -151,7 +154,7 @@ export const AppScene = ({t, data}: {t: number; data: AppData}) => {
       <div style={{position: 'absolute', left: 0, top: 0, width: W, height: H, transformOrigin: '0 0', transform: `scale(${cs}) translate(${-cam.x}px, ${-cam.y}px)`}}>
         <Wallpaper w={W} h={H} />
         <MenuBar app="Duo" />
-        <Dock running={data.running ?? true} />
+        <Dock running={data.running ?? true} icon={dockIcon} />
         <div style={{position: 'absolute', left: win.x, top: win.y, width: win.w, height: win.h, borderRadius: 12, overflow: 'hidden',
           boxShadow: '0 30px 80px rgba(0,0,0,0.42), 0 0 0 0.5px rgba(0,0,0,0.4)'}}>
           {inEntry ? (
@@ -194,6 +197,24 @@ export const AppScene = ({t, data}: {t: number; data: AppData}) => {
             return <Crop key={`rv${i}`} src={data.src[d.reveal.state]} scale={data.scale} region={region} rect={{x: x0 * K, y: r.y * K, w: w * K, h: r.h * K}} />;
           })}
         </div>
+        {(data.overlays ?? []).map((o, i) => {
+          if (t < o.at || t >= o.until) return null;
+          // macOS draws a window coming forward at once; the title bar is drawn (the capture is the view, not the window).
+          const p = toFrame({x: o.x, y: o.y, w: o.region.w, h: o.region.h}), bar = 28 * K;
+          return (
+            <div key={`ov${i}`} style={{position: 'absolute', left: p.x, top: p.y - bar, width: p.w, height: p.h + bar, borderRadius: 12, overflow: 'hidden', background: '#ECECEE',
+              boxShadow: '0 22px 60px rgba(0,0,0,0.38), 0 0 0 0.5px rgba(0,0,0,0.35)'}}>
+              <div style={{height: bar, position: 'relative', fontFamily: tokens.font.ui, fontSize: 13 * K, fontWeight: 600, color: '#3a3a3c', textAlign: 'center', lineHeight: `${bar}px`}}>
+                {[0, 1, 2].map((j) => <div key={j} style={{position: 'absolute', left: (13 + 20 * j) * K, top: 8 * K, width: 12 * K, height: 12 * K, borderRadius: 6 * K,
+                  background: ['#FF5F57', '#FEBC2E', '#28C840'][j]}} />)}
+                {o.title}
+              </div>
+              <div style={{position: 'absolute', left: 0, top: bar, width: p.w, height: p.h, overflow: 'hidden'}}>
+                <Img src={staticFile(o.src)} style={{position: 'absolute', left: -o.region.x * K, top: -o.region.y * K, transformOrigin: '0 0', transform: `scale(${K / o.scale})`, maxWidth: 'none'}} />
+              </div>
+            </div>
+          );
+        })}
         {data.menus.map((mn, i) => {
           if (t < mn.at || t > mn.until) return null;
           const p = toFrame({x: mn.x, y: mn.y, w: 0, h: 0});
@@ -214,9 +235,11 @@ export const AppScene = ({t, data}: {t: number; data: AppData}) => {
           );
         })}
         {(data.keys ?? []).map((k, i) => {
-          if (t < k.at - 0.05 || t > k.at + 1.1) return null;
-          const u = ramp(t, k.at - 0.05, k.at + 0.1) * (1 - ramp(t, k.at + 0.85, k.at + 1.1));
-          const down = interpolate(t - k.at, [0, 0.06, 0.18], [0, 1, 0], clamp);
+          // hold: the keys stay down that long (hold-to-talk), then come up and go.
+          const h = k.hold ?? 0;
+          if (t < k.at - 0.05 || t > k.at + h + 1.1) return null;
+          const u = ramp(t, k.at - 0.05, k.at + 0.1) * (1 - ramp(t, k.at + h + 0.85, k.at + h + 1.1));
+          const down = h ? interpolate(t - k.at, [0, 0.06, h, h + 0.12], [0, 1, 1, 0], clamp) : interpolate(t - k.at, [0, 0.06, 0.18], [0, 1, 0], clamp);
           return <KeyCap key={`k${i}`} label={k.label} u={u} down={down} />;
         })}
         {cursor}

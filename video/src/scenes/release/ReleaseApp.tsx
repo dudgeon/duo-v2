@@ -1,9 +1,15 @@
 import {createElement, Fragment, type ComponentType} from 'react';
-import {AbsoluteFill, interpolate} from 'remotion';
+import {AbsoluteFill, Audio, interpolate, Sequence, useVideoConfig} from 'remotion';
 import {AppScene, type AppData} from '../App';
 import {smootherstep} from '../../lib/camera';
 import tokens from '../../../style/tokens.json';
 import type {SceneProps} from '../registry';
+import classicIcon from './classic-icon.png';
+import chatClip from '../../../fixture/dictation/chat.wav';
+import terminalClip from '../../../fixture/dictation/terminal.wav';
+
+/** The 0.2.22 film's dictation clips (fixture/make-dictation.py), heard as the mic hears them. */
+const CLIPS: Record<string, string> = {chat: chatClip, terminal: terminalClip};
 
 // The 0.2.21 film's app scenes (`rel-app`): the intro's AppScene as it is (the real window on the desk, cursor, camera,
 // outline traces), planned by plan.mjs exactly as an `app` scene. Captions (Q-297) never sit on the picture's subject:
@@ -47,21 +53,30 @@ export const CaptionBand = ({t, lines, u = 1}: {t: number; lines: Line[]; u?: nu
 );
 
 /** Over the title card: low over the lake, with a soft shadow for the bright water. */
-export const LakeCaptions = ({t, lines}: {t: number; lines: Line[]}) => (
+export const LakeCaptions = ({t, lines, bottom = 40}: {t: number; lines: Line[]; bottom?: number}) => (
   <AbsoluteFill style={{filter: 'drop-shadow(0 1px 8px rgba(0,0,0,0.55))'}}>
-    <Lines t={t} lines={lines} style={{bottom: 40, height: 80}} />
+    <Lines t={t} lines={lines} style={{bottom, height: 80}} />
   </AbsoluteFill>
 );
 
-type Scene = SceneProps['scene'] & {app?: AppData; transitionIn?: {name: string}};
+type Extra = {audio?: {at: number; clip: string}[]; dockIcon?: {at: number; icon: string}; bandDown?: number};
+type Scene = SceneProps['scene'] & {app?: AppData & Extra; transitionIn?: {name: string}};
 
 export const ReleaseApp = ({t, scene}: SceneProps) => {
   const s = scene as Scene;
+  const {fps} = useVideoConfig();
   // The first app scene opens on the title card's last picture, which has no band: it rises there.
-  const u = s.transitionIn?.name === 'rel-open' ? ramp(t, 0.1, 0.6) : 1;
+  // A shot can drop it again (`band: 'down'`), where the Dock would be under it.
+  const down = s.app?.bandDown !== undefined ? ramp(t, s.app.bandDown, s.app.bandDown + 0.4) : 0;
+  const u = (s.transitionIn?.name === 'rel-open' ? ramp(t, 0.1, 0.6) : 1) * (1 - down);
+  // Classic (DL-252) recolours Duo's icon in the Dock from the moment it's chosen.
+  const d = s.app?.dockIcon, dock = d && t >= d.at && d.icon === 'classic' ? classicIcon : undefined;
   return (
     <>
-      {s.app ? <AppScene t={t} data={s.app} /> : null}
+      {s.app ? <AppScene t={t} data={s.app} dockIcon={dock} /> : null}
+      {(s.app?.audio ?? []).map((a, i) => (
+        <Sequence key={i} from={Math.round(a.at * fps)}><Audio src={CLIPS[a.clip]} /></Sequence>
+      ))}
       <CaptionBand t={t} lines={scene.lines ?? []} u={u} />
     </>
   );
@@ -71,8 +86,10 @@ export const ReleaseApp = ({t, scene}: SceneProps) => {
  *  folds into its Dock tile (the band would hide the Dock), and the rest of the line reads over the lake under the card. */
 export const endCaptioned = (C: ComponentType<SceneProps>): ComponentType<SceneProps> => (p: SceneProps) => {
   const f0 = p.ev.fold ?? 1, lines = p.scene.lines ?? [];
-  const lake = ramp(p.t, f0 + 0.35, f0 + 0.7);
+  // The scene before may have dropped the band already (its Dock beat): then the line reads over the lake from the start.
+  const bandDown = (p.scene as {words?: {bandDown?: boolean}}).words?.bandDown === true;
+  const lake = bandDown ? 1 : ramp(p.t, f0 + 0.35, f0 + 0.7);
   return createElement(Fragment, null, createElement(C, p),
-    createElement(CaptionBand, {t: p.t, lines, u: 1 - ramp(p.t, f0 - 0.15, f0 + 0.3)}),
-    lake > 0 ? createElement('div', {style: {position: 'absolute', inset: 0, opacity: lake}}, createElement(LakeCaptions, {t: p.t, lines})) : null);
+    bandDown ? null : createElement(CaptionBand, {t: p.t, lines, u: 1 - ramp(p.t, f0 - 0.15, f0 + 0.3)}),
+    lake > 0 ? createElement('div', {style: {position: 'absolute', inset: 0, opacity: lake}}, createElement(LakeCaptions, {t: p.t, lines, bottom: bandDown ? 100 : 40})) : null);   // above the Dock while it shows
 };

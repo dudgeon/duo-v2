@@ -1,0 +1,5 @@
+{
+ "$note": "What macOS's on-device recognizer settled, phrase by phrase, when Duo's voice input heard dictation/<id>.wav through its file path at the spoken pace (the run of 2026-10-31, video:vv-feed with its trace). The film's captures of the chat are that run itself; the terminal's prompt shows these phrases, pasted as voice input pastes them (a space between).",
+ "chat": {"phrases": ["Can you check the glare cases against Denise's photos?", "And tell me which ones still fail?"], "settled_s": [4.1, 7.4]},
+ "terminal": {"phrases": ["Add a glare warning to the scan screen.", "And keep it under 10 words."], "settled_s": [4.0, 6.7]}
+}

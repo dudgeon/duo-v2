@@ -1,0 +1,154 @@
+import AppKit
+import Foundation
+
+/// The 0.2.22 release film (`video/films/release-0-2-22`): Classic (DL-252) and voice input (DL-260 to DL-272), as window states
+/// (`--state video-vc-*` and `video-vv-*`, with `--fixture video/fixture/fixture.json`). They stand on scene 5's project (the
+/// shelf-scan window the intro and the 0.2.21 film use, Auto-add decision in chat), with:
+/// - Classic: the window in Classic (the appearance is the app's own setting, applied as Settings does);
+///   `video-vc-settings-*` are the Settings view itself, which `pipeline/capture.mjs` draws with `render-settings`.
+/// - Voice, in chat: a real dictation of a spoken file (`video/fixture/dictation/chat.wav`) through voice input's own file
+///   path at the pace it was spoken, so the recognizer settles a phrase at a time as it does from a microphone; each
+///   `video-vv-chat-at-<tenths>` state is that run, captured that many tenths of a second in.
+/// - Voice, in the terminal: the Tighten PRD goals tab's recorded Claude screen with the mic beside its input box, listening
+///   with the level bars (from the chat run's levels), and the phrases in Claude's prompt as they were pasted.
+/// - No microphone: the faint, struck-through mic (DL-265).
+/// A microphone is "connected" in every state but `video-vv-nomic` (a fixed device, so the capture doesn't depend on the Mac's).
+extension VideoTargets {
+    nonisolated static let vvScreens = [
+        "video-vc-classic", "video-vc-settings-light", "video-vc-settings-classic",
+        "video-vv-chat-rest", "video-vv-chat-sent", "video-vv-nomic",
+        "video-vv-chat-at-05", "video-vv-chat-at-10", "video-vv-chat-at-15", "video-vv-chat-at-20", "video-vv-chat-at-25", "video-vv-chat-at-30",
+        "video-vv-chat-at-35", "video-vv-chat-at-40", "video-vv-chat-at-45", "video-vv-chat-at-50", "video-vv-chat-at-55", "video-vv-chat-at-60",
+        "video-vv-chat-at-65", "video-vv-chat-at-70", "video-vv-chat-at-75", "video-vv-chat-at-80",
+        "video-vv-term-rest", "video-vv-term-l0", "video-vv-term-l1", "video-vv-term-l2", "video-vv-term-l3", "video-vv-term-done"]
+
+    static let tighten = "Tighten PRD goals"
+
+    /// A microphone that is (or isn't) there, whatever the Mac has.
+    final class FixedMicrophone: VoiceDeviceSource {
+        let usable: Bool
+        init(usable: Bool) { self.usable = usable }
+        func current() -> (name: String?, usable: Bool) { (usable ? "MacBook Air Microphone" : nil, usable) }
+        func observe(_ changed: @escaping @MainActor () -> Void) {}
+    }
+
+    /// The terminal states' level bars and how much of the dictation has been pasted into Claude's prompt.
+    nonisolated struct VVTerm { var listening: Bool, levels: [Double], phrases: Int }
+    nonisolated static func vvTerm(_ name: String) -> VVTerm? {
+        switch name {
+        case "term-rest": return .init(listening: false, levels: [], phrases: 0)
+        case "term-l0": return .init(listening: true, levels: [0.35, 0.8, 0.55], phrases: 0)
+        case "term-l1": return .init(listening: true, levels: [0.7, 0.45, 0.9], phrases: 0)
+        case "term-l2": return .init(listening: true, levels: [0.5, 0.85, 0.4], phrases: 1)
+        case "term-l3": return .init(listening: true, levels: [0.2, 0.3, 0.15], phrases: 2)
+        case "term-done": return .init(listening: false, levels: [], phrases: 2)
+        default: return nil
+        }
+    }
+
+    static var vvDir: URL?
+
+    static func applyVoice(_ screen: String, _ model: AppModel) {
+        let name = String(screen.dropFirst("video-v?-".count))
+        // Read where they're read: the terminal mic on a recorded screen (a shell, as fixture terminals are), the file fed at
+        // its spoken pace with its levels, and the appearance this state shows.
+        setenv("DUO_VOICE_MIC_ON_SHELL", "1", 1)
+        setenv("DUO_VOICE_FILE_REALTIME", "1", 1)
+        if screen.hasSuffix("-classic") { setenv("DUO_APPEARANCE", "classic", 1); AppearanceSetting.apply() }
+        applyS4S5("video-s5-chat", to: model)
+        guard let v = model.fixture.videoS2, let base = model.fixture.baseDir else { return }
+        let dir = URL(fileURLWithPath: base)
+        vvDir = dir
+        let project = v.project ?? "shelf-scan"
+        let mic = screen != "video-vv-nomic"
+        model.voice.deviceSource = FixedMicrophone(usable: mic)
+        model.voice.hasMicrophone = { mic }
+        func key(_ n: String) -> String { model.fixture.sessions.first { $0.project == project && $0.name == n }?.tabKey ?? n }
+        if name == "chat-sent", let i = model.fixture.sessions.firstIndex(where: { $0.project == project && $0.name == autoAdd }) {
+            let k = model.fixture.sessions[i].tabKey
+            model.fixtureChats[k] = s6Chat(dir.appending(path: "chat-vv-sent"), cwd: v.cwd, picked: false, key: k)
+        }
+        if let t = vvTerm(name) {
+            // The Tighten PRD goals tab in front, its recorded screen with what has been pasted into Claude's prompt so far.
+            let k = key(tighten)
+            // The phrases as macOS's recognizer settled them from the spoken file (dictation/recognized.json).
+            let words = (try? Data(contentsOf: dir.appending(path: "dictation/recognized.json"))).flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
+            let phrases = ((words?["terminal"] as? [String: Any])?["phrases"] as? [String]) ?? []
+            let typed = phrases.prefix(t.phrases).joined(separator: " ")
+            let screenText = (try? String(contentsOf: dir.appending(path: "terms/tighten-prd.ans"), encoding: .utf8)) ?? ""
+            // The prompt row is the input box's `❯ ` line: the last one on the screen.
+            var rows = screenText.components(separatedBy: "\n")
+            if let p = rows.lastIndex(where: { $0.contains("❯") }) { rows[p] = rows[p].replacingOccurrences(of: "❯\u{1b}[0m ", with: "❯\u{1b}[0m " + typed) }
+            model.fixtureTerminals[k] = TerminalSession(key: k, screen: rows.joined(separator: "\n"))
+            model.consoleTab = k
+        }
+    }
+
+    /// The `--then` actions a 0.2.22 state needs once its window exists.
+    nonisolated static func vvActions(_ screen: String) -> [String] {
+        let name = String(screen.dropFirst("video-v?-".count))
+        let measure = ["wait:0.4", "video:vv-measure"]
+        if name.hasPrefix("chat-at-"), let tenths = Int(name.dropFirst("chat-at-".count)) {
+            // The dictation runs as it would from the mic; the capture is taken this far in.
+            return ["wait:2", "video:vv-feed=chat", "wait:\(Double(tenths) / 10)", "video:vv-measure"]
+        }
+        if let t = vvTerm(name) {
+            let levels = t.levels.map { String($0) }.joined(separator: "|")
+            return ["wait:2"] + (t.listening ? ["video:vv-listen=\(levels)"] : []) + measure
+        }
+        if name == "nomic" { return ["wait:2", "video:vv-hover"] + measure }
+        return ["wait:2"] + measure
+    }
+
+    /// One `video:vv-*` action (`act` sends them here).
+    static func vvAct(_ verb: String, _ arg: String, on model: AppModel) {
+        switch verb {
+        case "vv-feed":   // voice input on the chat composer, from the spoken file, as the mic would hear it
+            guard let dir = vvDir, let k = model.consoleTab else { return }
+            model.voice.start(.chat(k), source: .file(dir.appending(path: "dictation/\(arg).wav")))
+            vvTrace(model)
+        case "vv-listen":   // the terminal mic listening, its bars at these three levels (oldest first), as 20 Hz polls leave them
+            guard let k = model.consoleTab, let t = model.fixtureTerminals[k], let slot = t.view.superview as? TerminalSlot.SlotView else { return }
+            for l in arg.split(separator: "|").compactMap({ Double($0) }) {
+                model.voice.showFixture(.listening, target: .terminal(k), level: l, onMicrophone: true)
+                slot.mic.tick()
+            }
+            slot.mic.needsDisplay = true
+        case "vv-hover":   // the pointer resting on the chat mic: its tooltip is drawn by the film (macOS draws tooltips outside the window)
+            break
+        case "vv-measure": vvMeasure(model)
+        default: FileHandle.standardError.write(Data("video: unknown action \(verb)\n".utf8))
+        }
+    }
+
+    /// Ten times a second while it runs: what the recognizer has settled and is still hearing, and the level (for the report).
+    static func vvTrace(_ model: AppModel) {
+        let t0 = Date()
+        func step() {
+            let v = model.voice
+            FileHandle.standardError.write(Data(String(format: "vv-trace: %.1f state=%@ level=%.2f settled=%@ volatile=%@\n", Date().timeIntervalSince(t0),
+                "\(v.state)", v.level, v.transcript.settled.joined(separator: " / ").debugDescription, v.transcript.volatile.debugDescription).utf8))
+            if v.state.isActive || Date().timeIntervalSince(t0) < 1 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { MainActor.assumeIsolated { step() } }
+            }
+        }
+        step()
+    }
+
+    /// `video.vv.*`: the chat composer and the terminal mic, in window points (`--then anchors:` adds them).
+    static func vvMeasure(_ model: AppModel) {
+        func put(_ id: String, _ v: NSView?) {
+            guard let v, let w = v.window else { return }
+            let r = v.convert(v.bounds, to: nil)
+            Anchors.web[id] = CGRect(x: r.minX, y: w.frame.height - r.maxY, width: r.width, height: r.height)
+        }
+        if let k = model.consoleTab {
+            put("video.vv.composer", (model.chats.existing(k) ?? model.fixtureChats[k])?.composerView)
+            if let t = model.fixtureTerminals[k], let slot = t.view.superview as? TerminalSlot.SlotView {
+                put("video.vv.termmic", slot.mic.isHidden ? nil : slot.mic)
+                put("video.vv.terminal", t.view)
+            }
+        }
+        FileHandle.standardError.write(Data("video:vv-measure: \(Anchors.web.keys.filter { $0.hasPrefix("video.vv.") }.sorted())\n".utf8))
+    }
+}

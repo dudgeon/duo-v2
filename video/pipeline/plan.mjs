@@ -73,7 +73,7 @@ export const TRANSITIONS = {
   // The director film's scenes (src/scenes/director/): each opens on the last picture of the scene before and carries
   // its shapes on (the board's layouts, board.ts), so the move between them is the next scene's own entry.
   'board-carry': {kind: 'graphic', from: [...DIRECTOR_SCENES, 'paper-card'], to: DIRECTOR_SCENES, in: 0.4},
-  // The 0.2.21 release film (src/scenes/release-0-2-21/). Out of the title card: logo-to-dock's moves, then Duo's window opens out
+  // The 0.2.21 release film (src/scenes/release/). Out of the title card: logo-to-dock's moves, then Duo's window opens out
   // of its Dock tile onto the desk, ending on the next scene's first picture.
   'rel-open': {kind: 'graphic', from: 'rel-title', to: 'rel-app', out: 1.8},
   // Its app scenes carry on from each other as 'carry-on' does: the same picture, and the scene's own first beat moves us.
@@ -205,7 +205,15 @@ function planApp({scene, shot, lines, tr, prev, prevShot, captures, events, styl
       data.clicks.push({at, ...p, right: true});
     }
     // key: a shortcut's keycaps as it's pressed; wipe: a state revealed left to right inside an anchor (typing).
-    if (b.key) (data.keys ??= []).push({at, label: b.key});
+    if (b.key) (data.keys ??= []).push({at, label: b.key, ...(b.keyHold ? {hold: b.keyHold} : {})});
+    // overlay: a second window (the release films' Settings): a capture's region, placed in window points, until a time.
+    if (b.overlay) (data.overlays ??= []).push({at, until: b.overlay.until !== undefined ? when(b.overlay.until, at) : 1e9, src: cap(use(b.overlay.state)).src, scale: b.overlay.scale ?? style.capture.scale,
+      region: b.overlay.region, x: b.overlay.x, y: b.overlay.y, title: b.overlay.title});
+    // audio: a clip the scene plays from here (the 0.2.22 film's dictation, heard as the mic hears it).
+    if (b.audio) (data.audio ??= []).push({at, clip: b.audio});
+    if (b.dockIcon !== undefined) data.dockIcon = {at, icon: b.dockIcon};
+    // band: 'down': the caption band drops away from here (the Dock sits where it would be).
+    if (b.band === 'down') data.bandDown = at;
     if (b.wipe) (data.wipes ??= []).push({at, dur: b.wipe.dur ?? 1.2, state: use(b.wipe.state), rect: camRect(b.wipe.on, 'wipe'), ...(b.wipe.chars ? {chars: b.wipe.chars} : {})});
     if (b.mark) data.marks.push({at, until: at + (b.hold ?? 2.2), rect: camRect(b.mark, 'mark'), quote: b.quote});
     if (b.state) { state = use(b.state); data.steps.push({at: +(at + (b.stateAfter ?? 0.1)).toFixed(3), state, ...(b.fade ? {fade: b.fade} : {})}); }
@@ -340,6 +348,7 @@ export function plan({scenes, shots, voiced, captures, style, used}) {
       // A registered scene that shows captures (the release film's title and ending): their pictures, by state.
       if (shot.scene === 'rel-title' || shot.scene === 'rel-end') {
         const caps = (shot.states ?? []).map((st) => { if (!captures[st]) throw new BuildError(`shots: ${scene.id} needs a capture of ${st}`); return [st, captures[st]]; });
+        if (shot.words) s.words = shot.words;   // the card's own words (a film's version and lines)
         if (caps.length) s.stills = {window: {w: caps[0][1].widthPt, h: caps[0][1].heightPt}, src: Object.fromEntries(caps.map(([st, c]) => [st, c.src])), first: caps[0][0], last: caps[caps.length - 1][0]};
       }
       if (shot.scene === 'morph') {

@@ -1,0 +1,18 @@
+{
+ "chat": {
+  "phrases": [
+   "Can you check the glare cases against Denise's photos",
+   "and tell me which ones still fail?"
+  ],
+  "text": "Can you check the glare cases against Denise's photos and tell me which ones still fail?",
+  "duration_s": 7.12
+ },
+ "terminal": {
+  "phrases": [
+   "Add a glare warning to the scan screen",
+   "and keep it under ten words."
+  ],
+  "text": "Add a glare warning to the scan screen and keep it under ten words.",
+  "duration_s": 6.48
+ }
+}
