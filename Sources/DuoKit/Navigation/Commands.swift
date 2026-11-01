@@ -45,6 +45,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case heading1, heading2, heading3  // Format › Heading ▸
     case task               // Format › Task: a `- [ ]` line
     case body, quote, bullet, numbered, codeBlock   // Format › the paragraph styles the formatting bar's Style ⌄ offers (DL-266)
+    case newSlide           // ⌃⌘N: Format › New Slide, in a deck: a new chip under the caret's slide, the template picker open (DL-295)
     case toggleFormatBar    // View › Hide / Show Formatting Bar (DL-266)
     case addProperties      // Format › Add Properties (frontmatter-handoff's frontmatter-none)
     // Format › Table ▸ (DL-113, tables-handoff): Markdown commands; no chords (DL-34)
@@ -112,6 +113,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .numbered: "Numbered List"
         case .codeBlock: "Code Block"
         case .toggleFormatBar: "Formatting Bar"
+        case .newSlide: "New Slide"
         case .addProperties: "Add Properties"
         case .tableInsert: "Insert Table"
         case .tableRowAbove: "Add Row Above"
@@ -167,6 +169,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .sendSelection: KeyboardShortcut("d", modifiers: .command)
         case .voiceInput: KeyboardShortcut("d", modifiers: [.command, .shift])
         case .link: KeyboardShortcut("k", modifiers: .command)  // DL-108
+        case .newSlide: KeyboardShortcut("n", modifiers: [.command, .control])  // DL-295: adds to DL-34's map; only in a deck
         case .revertChange, .revertAllChanges, .chooseHome, .newTask, .newProject, .newProjectFromGitHub, .code, .heading1, .heading2, .heading3,
              .task, .body, .quote, .bullet, .numbered, .codeBlock, .toggleFormatBar, .addProperties, .duo2Reference, .whatsNew, .reportIssue, .explainTasks, .tableInsert, .tableRowAbove, .tableRowBelow,
              .tableColumnBefore, .tableColumnAfter, .tableDeleteRow, .tableDeleteColumn, .tableAlignLeft, .tableAlignCenter,
@@ -202,6 +205,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .save: model.terminalsMode == .live && model.editorOpened && model.editorIfLoaded?.url != nil
         case .bold, .italic, .strikethrough, .code, .link, .heading1, .heading2, .heading3, .task, .body, .quote, .bullet, .numbered, .codeBlock, .addProperties, .tableInsert: model.webFocus == .editor
         case .toggleFormatBar: true
+        case .newSlide: model.webFocus == .editor && (model.editorIfLoaded?.isDeck ?? false)
         case .tableRowAbove, .tableRowBelow, .tableColumnBefore, .tableColumnAfter, .tableDeleteRow, .tableDeleteColumn,
              .tableAlignLeft, .tableAlignCenter, .tableAlignRight: model.webFocus == .editor && (model.editorIfLoaded?.inTable ?? false)
         case .newTask: model.terminalsMode == .live && model.currentProject.map { !$0.isFolderOnly } == true
@@ -283,6 +287,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .newFolder: model.newFolder(near: model.selectedFile)
         case .save: model.editor.saveNow()
         case .toggleFormatBar: model.setFormatBarHidden(!model.formatBarHidden)
+        case .newSlide: model.editor.newSlide()
         case .bold, .italic, .strikethrough, .code, .link, .heading1, .heading2, .heading3, .task, .body, .quote, .bullet, .numbered, .codeBlock, .addProperties, .tableInsert, .tableRowAbove,
              .tableRowBelow, .tableColumnBefore, .tableColumnAfter, .tableDeleteRow, .tableDeleteColumn, .tableAlignLeft,
              .tableAlignCenter, .tableAlignRight:
@@ -383,6 +388,8 @@ public struct DuoCommands: Commands {
             item(.numbered)
             item(.task)
             item(.codeBlock)
+            Divider()
+            item(.newSlide)   // enabled only in a deck (DL-295)
             // Tables (DL-113): edited as Markdown; the bar over a table has the same items.
             Menu("Table") {
                 item(.tableInsert)
