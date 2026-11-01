@@ -17,7 +17,11 @@
 #  - dead holders in both shared slots are cleared, for an exclusive job and for a shared one.
 # Expect: the dead ticket cleared, A then B then C in ticket order, no two holders ever overlapping, F's ticket gone,
 # and G running once the ownerless lock is cleared.
-#   scripts/check-gpu-lock.sh   (about 40 s, in /tmp)
+# The time limit (F-510), ending in "PASS" or "FAIL" lines (the script exits 1 if any FAIL):
+#  - a hung command that ignores TERM is KILLed past its limit, with its child, and the hold released; the next waiter runs;
+#  - the loud line and the <lock>.log line are written; the exit status is 124; a bystander process outside is untouched;
+#  - a normal command's exit code passes through; shared slots are as before; no limit needs a reason; --status lists.
+#   scripts/check-gpu-lock.sh   (about 55 s, in /tmp)
 set -u
 R="$(cd "$(dirname "$0")/.." && pwd)"; T="$(mktemp -d /tmp/lockq.XXXX)"; L="$T/gpu.lock"; LOG="$T/events.log"
 export GPU_LOCK="$L" GPU_LOCK_POLL=0.2
@@ -141,4 +145,63 @@ for i in 1 2; do sleep 0 & d=$!; wait $d; mkdir "$L.shared/$i"; echo "ghost $d" 
 for i in 1 2; do sleep 0 & d=$!; wait $d; mkdir "$L.shared/$i"; echo "ghost $d" > "$L.shared/$i/owner"; done
 "$R/scripts/gpu-lock.sh" --shared "test Z" true 2> "$T/Z.err"
 grep -q "clearing a stale lock" "$T/Z.err" && grep -q "taken by test Z" "$T/Z.err" && echo "Z (shared) cleared a dead shared holder and ran: ok"
+
+echo "--- max hold (F-510)"
+fails=0
+ok() { echo "PASS: $1"; }
+bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
+rm -f "$L.log"; : > "$LOG"
+cat > "$T/hung.sh" <<'EOS'
+#!/bin/bash
+# Ignores TERM, and starts a child that does too: only a KILL of the group ends it.
+trap '' TERM
+sleep 300 &
+echo $! > "$HUNG_CHILD"
+while :; do sleep 1; done
+EOS
+chmod +x "$T/hung.sh"
+sleep 300 & bystander=$!
+export HUNG_CHILD="$T/hung.child"
+t0=$(date +%s)
+GPU_LOCK_MAX_MIN=0.05 GPU_LOCK_GRACE=2 "$R/scripts/gpu-lock.sh" "test hung" "$T/hung.sh" 2> "$T/hung.err" & hp=$!
+sleep 0.5
+"$R/scripts/gpu-lock.sh" "test next" bash -c "ev 'next start'; ev 'next end'" 2> "$T/next.err" & np=$!
+wait $hp; hs=$?
+el=$(( $(date +%s) - t0 ))
+wait $np
+[ "$hs" = 124 ] && ok "the hung command ended with status 124" || bad "hung status was $hs"
+[ "$el" -ge 3 ] && [ "$el" -le 10 ] && ok "it ended $el s in (limit 3 s + TERM grace 2 s)" || bad "it ran $el s"
+grep -q "gpu-lock: test hung exceeded 0.05 min; ended" "$T/hung.err" && ok "the loud line was printed" || bad "no loud line: $(cat "$T/hung.err")"
+grep -q "| test hung | exclusive | limit 0.05 min |" "$L.log" 2>/dev/null && ok "<lock>.log has the line" || bad "no log line"
+kill -0 "$(cat "$HUNG_CHILD")" 2>/dev/null && bad "the hung command's child is still running" || ok "the command's child was killed too"
+kill -0 $bystander 2>/dev/null && ok "a process outside the command was left alone" || bad "the bystander was killed"
+kill $bystander 2>/dev/null; wait $bystander 2>/dev/null
+grep -q "next start" "$LOG" && ok "the queue moved on: the next waiter ran" || bad "the next waiter never ran"
+[ ! -d "$L" ] && ok "the lock was released" || bad "the lock is still held"
+
+"$R/scripts/gpu-lock.sh" "test exit" bash -c 'exit 7' 2> /dev/null; [ $? = 7 ] && ok "a normal command's exit code 7 passes through" || bad "exit code lost"
+"$R/scripts/gpu-lock.sh" --shared "test ok" true 2> /dev/null; [ $? = 0 ] && ok "a quick shared command exits 0" || bad "shared exit code"
+"$R/scripts/gpu-lock.sh" "test nope" /no/such/command 2> /dev/null; [ $? = 127 ] && ok "a command that can't start exits 127" || bad "missing command status"
+
+# Shared slots: two run at once, a third waits, and a hung shared job is ended without blocking the others.
+: > "$LOG"
+for j in P1 P2 P3; do job shared $j 1.5 & sleep 0.1; done
+wait
+holds | grep -q "at most 2 shared at once; no exclusive overlap" && ok "shared slots: two at once, as before" || bad "shared slots changed"
+GPU_LOCK_MAX_MIN=0.05 GPU_LOCK_GRACE=2 "$R/scripts/gpu-lock.sh" --shared "test hungshared" sleep 300 2> "$T/hs.err"; [ $? = 124 ] && grep -q "| shared |" "$L.log" && ok "a hung shared job is ended too (45 min default, per-run override)" || bad "hung shared job"
+[ -z "$(ls -A "$L.shared")" ] && ok "its slot was released" || bad "slot still held"
+
+# No limit needs a reason.
+GPU_LOCK_MAX_MIN=0 "$R/scripts/gpu-lock.sh" "test nolimit" true 2> "$T/nl.err"; [ $? = 2 ] && ok "no limit without a reason is refused" || bad "no-limit was allowed without a reason"
+GPU_LOCK_MAX_MIN=0 GPU_LOCK_MAX_REASON="voice fine-tune" "$R/scripts/gpu-lock.sh" "test nolimit" true 2> /dev/null; [ $? = 0 ] && grep -q "no time limit: voice fine-tune" "$L.log" && ok "no limit with a reason runs, and is logged" || bad "no limit with reason"
+
+# --status
+"$R/scripts/gpu-lock.sh" "test held" sleep 3 2> /dev/null & sleep 1
+"$R/scripts/gpu-lock.sh" "test waiter" true 2> /dev/null & sleep 1
+st=$("$R/scripts/gpu-lock.sh" --status)
+echo "$st" | grep -q "exclusive holder: test held .*held 0m0" && echo "$st" | grep -q "waiting: .*test waiter .*for 0m0" && ok "--status lists the holder and the waiter with ages" || bad "--status said: $st"
+wait
+[ "$("$R/scripts/gpu-lock.sh" --status)" = "no holder, no waiter" ] && ok "--status on an idle lock" || bad "--status idle"
+echo "max hold: $fails failure(s)"
 rm -rf "$T"
+[ "$fails" = 0 ]

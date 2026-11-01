@@ -14,6 +14,7 @@ Every session shares one Mac mini (32 GB, 12 cores). Heavy jobs coordinate throu
   - A job's output that says "clearing a stale lock", or shows the "WARNING: the lock was taken", means its timings are suspect: re-run it.
 - **Waiters queue in order** (FIFO tickets in `<lock>.queue/`). See who holds and who waits:
   `cat $GPU_LOCK/owner $GPU_LOCK.shared/*/owner; for f in $GPU_LOCK.queue/0*; do cat "$f"; done` (the exclusive holder, the shared holders, then the queue).
+- **A hold has a time limit** (F-510): 60 min exclusive, 45 shared, from when the command starts; past it the script TERMs, then KILLs, the command's own process group, releases, prints `gpu-lock: <owner> exceeded <n> min; ended` and appends to `<lock>.log` (exit 124). Raise it per run with `GPU_LOCK_MAX_MIN=<minutes>`; `0` (no limit) needs `GPU_LOCK_MAX_REASON=<why>`, for voice fine-tunes. `gpu-lock.sh --status` lists holders and waiters with ages.
 - **Every brief** names the lock line, with the job's kind, and says to release right after each batch.
 - **Merge checks:** run the build-and-check part shared, and the timing part (`check-chat-perf`, `check-scale`, the visible gate) exclusive.
 - **Watch memory, too:** `sysctl vm.swapusage`, plus the idle Claude sessions in memory. Ask Geoff before stopping his own sessions.

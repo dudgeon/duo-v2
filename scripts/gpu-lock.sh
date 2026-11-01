@@ -10,6 +10,11 @@
 # An owner is "<name> <pid>". A live owner is waited for; an owner whose pid is gone is cleared (a job that died
 # without releasing), and so is a hold that has had no owner for GPU_LOCK_ORPHAN seconds (default 60: one that died
 # between its mkdir and writing `owner`). The hold is released when the command ends, however it ends.
+# A hold has a time limit (F-510): GPU_LOCK_MAX_MIN minutes, default 60 exclusive and 45 shared, counted from when the
+# command starts. Past it the command's own process group gets TERM, then KILL after GPU_LOCK_GRACE seconds (default 15),
+# the hold is released, "gpu-lock: <owner> exceeded <n> min; ended" goes to stderr and a line to <lock>.log; the exit
+# status is 124. GPU_LOCK_MAX_MIN=0 means no limit and needs GPU_LOCK_MAX_REASON (voice fine-tunes that run for hours).
+#   GPU_LOCK=<lock dir> scripts/gpu-lock.sh --status   lists every holder and waiter with its age.
 # The lock's path is machine-local, so it comes from $GPU_LOCK, never from this file.
 #
 # Waiters queue in order (tickets in <lock>.queue/), and only the front ticket may take a hold, so a long job isn't
@@ -19,13 +24,33 @@
 # wait for shared jobs already running, so use this script.
 set -u
 kind=exclusive
-case "${1:-}" in --shared) kind=shared; shift ;; --exclusive) shift ;; esac
 lock="${GPU_LOCK:?set GPU_LOCK to the lock directory}"
+if [ "${1:-}" = "--status" ]; then
+  now=$(date +%s)
+  age() { local m; m=$(stat -f %m "$1" 2>/dev/null) || return 1; m=$((now - m)); printf '%dm%02ds' $((m / 60)) $((m % 60)); }
+  found=""
+  [ -f "$lock/owner" ] && { echo "exclusive holder: $(cat "$lock/owner"), held $(age "$lock/owner")"; found=1; }
+  for o in "$lock.shared"/*/owner; do [ -f "$o" ] && { echo "shared holder:    $(cat "$o"), held $(age "$o")"; found=1; }; done
+  for t in $(ls "$lock.queue" 2>/dev/null | grep -E '^[0-9]{10}$' | sort); do
+    [ -f "$lock.queue/$t" ] && { echo "waiting:          $(cat "$lock.queue/$t" 2>/dev/null), for $(age "$lock.queue/$t")"; found=1; }
+  done
+  [ -n "$found" ] || echo "no holder, no waiter"
+  exit 0
+fi
+case "${1:-}" in --shared) kind=shared; shift ;; --exclusive) shift ;; esac
 name="${1:?usage: GPU_LOCK=<dir> scripts/gpu-lock.sh [--exclusive|--shared] <owner name> <command...>}"
 shift
 [ $# -gt 0 ] || { echo "gpu-lock: no command" >&2; exit 2; }
 queue="$lock.queue"
 shared="$lock.shared"
+case "$kind" in exclusive) default_min=60 ;; *) default_min=45 ;; esac
+max_min="${GPU_LOCK_MAX_MIN:-$default_min}"
+[[ "$max_min" =~ ^[0-9]*\.?[0-9]+$ ]] || { echo "gpu-lock: GPU_LOCK_MAX_MIN must be a number of minutes" >&2; exit 2; }
+if awk -v m="$max_min" 'BEGIN { exit !(m == 0) }'; then
+  [ -n "${GPU_LOCK_MAX_REASON:-}" ] || { echo "gpu-lock: GPU_LOCK_MAX_MIN=0 (no limit) needs GPU_LOCK_MAX_REASON saying why" >&2; exit 2; }
+fi
+limit_s=$(awk -v m="$max_min" 'BEGIN { printf "%d", m * 60 + 0.999 }')
+grace="${GPU_LOCK_GRACE:-15}"
 slots="${GPU_LOCK_SHARED_SLOTS:-2}"
 poll="${GPU_LOCK_POLL:-2}"
 orphan="${GPU_LOCK_ORPHAN:-60}"
@@ -146,9 +171,35 @@ fi
     [ "$o" = "$me" ] || { echo "gpu-lock: WARNING: the lock was taken from $name while its job runs (owner now: $o). Some script released a lock it didn't hold." >&2; exit 0; }
   done ) &
 watch=$!
-# The job runs as a child, so a TERM to this script reaches it (and the hold is still released after).
-"$@" &
+# The job runs as a child in its own process group, so a TERM to this script reaches it, and the time limit can end it and
+# everything it started without touching anything else (F-510). The hold is still released after.
+perl -e 'setpgrp(0, 0); exec { $ARGV[0] } @ARGV; print STDERR "gpu-lock: cannot run $ARGV[0]: $!\n"; exit 127' "$@" &
 child=$!
-trap 'kill -TERM "$child" 2>/dev/null' TERM INT
+trap 'kill -TERM -- -"$child" 2>/dev/null || kill -TERM "$child" 2>/dev/null' TERM INT
+logline() { echo "$(date '+%F %T') | $name | $kind | limit ${max_min} min | $*" >> "$lock.log" 2>/dev/null; }
+over="$(mktemp "${TMPDIR:-/tmp}/gpu-lock-over.XXXXXX")"; rm -f "$over"
+wd=""
+if [ "$limit_s" -gt 0 ]; then
+  me_pid=$$
+  ( end=$((SECONDS + limit_s))
+    while [ "$SECONDS" -lt "$end" ]; do kill -0 "$me_pid" 2>/dev/null && kill -0 "$child" 2>/dev/null || exit 0; sleep 1; done
+    echo "gpu-lock: $name exceeded $max_min min; ended" >&2
+    : > "$over"
+    # Kill the command's own group only, and only if it really is one (never this script's group, never Duo's).
+    pg=$(ps -o pgid= -p "$child" 2>/dev/null | tr -d ' ')
+    sig() { if [ "$pg" = "$child" ]; then kill -"$1" -- -"$child" 2>/dev/null; else kill -"$1" "$child" 2>/dev/null; fi; }
+    sig TERM; res="TERM sent; ended"
+    t=0; while [ "$t" -lt "$grace" ] && sig 0; do sleep 1; t=$((t + 1)); done
+    if sig 0; then sig KILL; res="TERM sent, still running after $grace s; KILL sent"; fi
+    logline "exceeded the limit: $res"
+  ) &
+  wd=$!
+elif [ -n "${GPU_LOCK_MAX_REASON:-}" ]; then
+  logline "no time limit: $GPU_LOCK_MAX_REASON"
+fi
 while :; do wait "$child"; status=$?; kill -0 "$child" 2>/dev/null || break; done
+if [ -n "$wd" ]; then
+  if [ -e "$over" ]; then wait "$wd"; status=124; else kill "$wd" 2>/dev/null; fi
+fi
+rm -f "$over"
 exit "$status"

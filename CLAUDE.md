@@ -58,7 +58,7 @@ The Mac is shared by every session. Heavy jobs run through the **main checkout's
 - **`--exclusive` (the default):** model work, video renders, and every timing measurement (`check-chat-perf`, `check-scale`, perf and idle-CPU runs).
 - **`--shared`:** builds, DuoChecks, captures and pixel checks. Up to two run at once, and none starts while an exclusive job holds the lock or waits at the front of the queue.
 
-Release after each batch. A run whose lock output says "clearing a stale lock", or shows a "taken" WARNING, has suspect timings, so re-run it. Details: `docs/director/gpu-lock.md`.
+Release after each batch. A run whose lock output says "clearing a stale lock", or shows a "taken" WARNING, has suspect timings, so re-run it. A hold is ended after 60 min (exclusive) or 45 (shared) unless `GPU_LOCK_MAX_MIN` says otherwise (`0` needs `GPU_LOCK_MAX_REASON`), and `gpu-lock.sh --status` lists holders (F-510). Details: `docs/director/gpu-lock.md`.
 
 ## Visible test runs
 
