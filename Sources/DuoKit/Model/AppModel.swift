@@ -181,6 +181,13 @@ public final class AppModel {
     var tabDragPointer: (pane: DuoPane, x: CGFloat)?
     /// The file tree (DL-105): hidden files on or off, and the folders open in each project's tree.
     public var showHiddenFiles = DuoState.load().showHiddenFiles
+    /// View › Hide Formatting Bar (DL-266): the Markdown bar over the editor, remembered.
+    public var formatBarHidden = DuoState.load().formatBarHidden
+    /// The formatting bar's control under the pointer, and the one whose menu is open (the bar stays while a menu is).
+    var formatBarHover: String?
+    var formatBarMenuOpen = false
+    /// Where each of the bar's menu buttons is, in the window's content view (to pop its menu under it).
+    @ObservationIgnored var formatBarFrames: [String: CGRect] = [:]
     /// Documents shown in Source mode (DL-167), by standardized path; remembered.
     public var sourceDocuments = Set(DuoState.load().sourceDocuments)
     /// The main window is full screen (View › Enter / Exit Full Screen, DL-108).

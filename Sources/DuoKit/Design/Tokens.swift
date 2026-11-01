@@ -173,6 +173,7 @@ public enum DuoMetric {
     public static let tabEdgeScroll: CGFloat = 32.0
     public static let tabNeedsYouDot: CGFloat = 6.0
     public static let deckBarHeight: CGFloat = 44.0
+    public static let formatBarHeight: CGFloat = 24.0
     public static let docxMenuWidth: CGFloat = 246.0
     public static let docxMenuTop: CGFloat = 39.0
     public static let docxBarTrailing: CGFloat = 6.0
@@ -339,7 +340,7 @@ public enum DuoSpace {
     public static let questionBoxPadding = EdgeInsets(top: 8.0, leading: 10.0, bottom: 8.0, trailing: 10.0)
     public static let buttonPadding = EdgeInsets(top: 4.0, leading: 10.0, bottom: 4.0, trailing: 10.0)
     public static let popoverPadding = EdgeInsets(top: 14.0, leading: 16.0, bottom: 16.0, trailing: 16.0)
-    public static let documentPadding = EdgeInsets(top: 22.0, leading: 28.0, bottom: 22.0, trailing: 28.0)
+    public static let documentPadding = EdgeInsets(top: 24.0, leading: 28.0, bottom: 24.0, trailing: 28.0)
     public static let gapTileRows: CGFloat = 2.0
     public static let gapGlyphToLabel: CGFloat = 6.0
     public static let gapButtonToButton: CGFloat = 6.0
@@ -687,6 +688,6 @@ public enum DuoWebTokens {
         ("chat-plan-heading", 15.0, 22.0),
         ("card-title", 13.0, 18.0),
     ]
-    public static let documentPaddingY: CGFloat = 22.0
+    public static let documentPaddingY: CGFloat = 24.0
     public static let documentPaddingX: CGFloat = 28.0
 }

@@ -285,6 +285,8 @@ public struct DuoState: Codable, Sendable, Equatable {
     public var homeView: String?
     /// View › Show Hidden Files (DL-105).
     public var showHiddenFiles = false
+    /// View › Hide Formatting Bar (DL-266): the Markdown bar over the editor is turned off.
+    public var formatBarHidden = false
     /// Explainers the user said Don't show again to (DL-172), by id; Settings › General brings them back.
     public var dismissedExplainers: [String] = []
     /// Sessions set to Keep Running (DL-192): never parked, and started at launch instead of when shown. By session id.
@@ -320,6 +322,7 @@ public struct DuoState: Codable, Sendable, Equatable {
         dismissedExplainers = try c.decodeIfPresent([String].self, forKey: .dismissedExplainers) ?? []
         keepRunning = try c.decodeIfPresent([String].self, forKey: .keepRunning) ?? []
         startFolders = try c.decodeIfPresent([String].self, forKey: .startFolders) ?? []
+        formatBarHidden = try c.decodeIfPresent(Bool.self, forKey: .formatBarHidden) ?? false
     }
 
     public static func load(_ url: URL = DuoPaths.state) -> DuoState {

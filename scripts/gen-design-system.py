@@ -172,6 +172,7 @@ layout = [
     {"name": "tabEdgeScroll", "value": px(s["tabEdgeScroll"]), "usage": "A dragged tab this close to an end of the strip scrolls it that way."},
     {"name": "tabNeedsYouDot", "value": px(s["tabNeedsYouDot"]), "usage": "The needs-you dot in a fade, for a tab out of view."},
     {"name": "deckBarHeight", "value": px(s["deckBarHeight"]), "usage": "The PowerPoint viewer's bar under the tabs (DL-125)."},
+    {"name": "formatBarHeight", "value": px(s["formatBarHeight"]), "usage": "The Markdown formatting bar, laid over the top of the editor while a document has the keyboard (DL-266)."},
     {"name": "docxMenuWidth", "value": px(s["docxMenuWidth"]), "usage": "The Word viewer's Markup menu, padding included (docx-viewer-handoff W4)."},
     {"name": "docxMenuTop", "value": px(s["docxMenuTop"]), "usage": "Where that menu starts below the viewer's bar top: 4 under the Markup button."},
     {"name": "docxBarTrailing", "value": px(s["docxBarTrailing"]), "usage": "The Word viewer's bar: space right of Open With (the board's four buttons run to 10 from the pane's edge; 6 here because Duo's buttons are a few points wider)."},

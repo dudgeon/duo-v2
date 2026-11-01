@@ -44,6 +44,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case link               // ⌘K: Format › Link…, free since DL-80
     case heading1, heading2, heading3  // Format › Heading ▸
     case task               // Format › Task: a `- [ ]` line
+    case body, quote, bullet, numbered, codeBlock   // Format › the paragraph styles the formatting bar's Style ⌄ offers (DL-266)
+    case toggleFormatBar    // View › Hide / Show Formatting Bar (DL-266)
     case addProperties      // Format › Add Properties (frontmatter-handoff's frontmatter-none)
     // Format › Table ▸ (DL-113, tables-handoff): Markdown commands; no chords (DL-34)
     case tableInsert, tableRowAbove, tableRowBelow, tableColumnBefore, tableColumnAfter
@@ -104,6 +106,12 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .heading2: "Heading 2"
         case .heading3: "Heading 3"
         case .task: "Task"
+        case .body: "Body"
+        case .quote: "Quote"
+        case .bullet: "Bulleted List"
+        case .numbered: "Numbered List"
+        case .codeBlock: "Code Block"
+        case .toggleFormatBar: "Formatting Bar"
         case .addProperties: "Add Properties"
         case .tableInsert: "Insert Table"
         case .tableRowAbove: "Add Row Above"
@@ -160,7 +168,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .voiceInput: KeyboardShortcut("d", modifiers: [.command, .shift])
         case .link: KeyboardShortcut("k", modifiers: .command)  // DL-108
         case .revertChange, .revertAllChanges, .chooseHome, .newTask, .newProject, .newProjectFromGitHub, .code, .heading1, .heading2, .heading3,
-             .task, .addProperties, .duo2Reference, .whatsNew, .reportIssue, .explainTasks, .tableInsert, .tableRowAbove, .tableRowBelow,
+             .task, .body, .quote, .bullet, .numbered, .codeBlock, .toggleFormatBar, .addProperties, .duo2Reference, .whatsNew, .reportIssue, .explainTasks, .tableInsert, .tableRowAbove, .tableRowBelow,
              .tableColumnBefore, .tableColumnAfter, .tableDeleteRow, .tableDeleteColumn, .tableAlignLeft, .tableAlignCenter,
              .tableAlignRight, .showBoard, .showList: nil  // Show Board / Show List: Q-100
         case .nextPane, .previousPane: nil  // ⌥⌘→ / ⌥⌘← freed (DL-289)
@@ -192,7 +200,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .previousSplitSide, .nextSplitSide: model.showingSplit != nil
         case .newMarkdown, .newFolder: model.terminalsMode == .live && model.projectFolder != nil
         case .save: model.terminalsMode == .live && model.editorOpened && model.editorIfLoaded?.url != nil
-        case .bold, .italic, .strikethrough, .code, .link, .heading1, .heading2, .heading3, .task, .addProperties, .tableInsert: model.webFocus == .editor
+        case .bold, .italic, .strikethrough, .code, .link, .heading1, .heading2, .heading3, .task, .body, .quote, .bullet, .numbered, .codeBlock, .addProperties, .tableInsert: model.webFocus == .editor
+        case .toggleFormatBar: true
         case .tableRowAbove, .tableRowBelow, .tableColumnBefore, .tableColumnAfter, .tableDeleteRow, .tableDeleteColumn,
              .tableAlignLeft, .tableAlignCenter, .tableAlignRight: model.webFocus == .editor && (model.editorIfLoaded?.inTable ?? false)
         case .newTask: model.terminalsMode == .live && model.currentProject.map { !$0.isFolderOnly } == true
@@ -228,6 +237,11 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .heading2: "heading2"
         case .heading3: "heading3"
         case .task: "task"
+        case .body: "body"
+        case .quote: "quote"
+        case .bullet: "bullet"
+        case .numbered: "numbered"
+        case .codeBlock: "codeblock"
         case .addProperties: "properties"
         default: nil
         }
@@ -268,7 +282,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .newMarkdown: model.newMarkdownFile(near: model.selectedFile)
         case .newFolder: model.newFolder(near: model.selectedFile)
         case .save: model.editor.saveNow()
-        case .bold, .italic, .strikethrough, .code, .link, .heading1, .heading2, .heading3, .task, .addProperties, .tableInsert, .tableRowAbove,
+        case .toggleFormatBar: model.setFormatBarHidden(!model.formatBarHidden)
+        case .bold, .italic, .strikethrough, .code, .link, .heading1, .heading2, .heading3, .task, .body, .quote, .bullet, .numbered, .codeBlock, .addProperties, .tableInsert, .tableRowAbove,
              .tableRowBelow, .tableColumnBefore, .tableColumnAfter, .tableDeleteRow, .tableDeleteColumn, .tableAlignLeft,
              .tableAlignCenter, .tableAlignRight:
             model.editor.run("duo.exec(f); return 1", ["f": (formatName ?? tableName)!]) { _ in }
@@ -356,12 +371,18 @@ public struct DuoCommands: Commands {
             item(.code)
             item(.link)
             Divider()
+            // The paragraph styles the formatting bar's Style ⌄ offers (DL-266).
+            item(.body)
             Menu("Heading") {
                 item(.heading1)
                 item(.heading2)
                 item(.heading3)
             }
+            item(.quote)
+            item(.bullet)
+            item(.numbered)
             item(.task)
+            item(.codeBlock)
             // Tables (DL-113): edited as Markdown; the bar over a table has the same items.
             Menu("Table") {
                 item(.tableInsert)
@@ -425,6 +446,8 @@ public struct DuoCommands: Commands {
             // Dotfiles in the project's tree (DL-105).
             Toggle("Show Hidden Files", isOn: Binding(get: { model.showHiddenFiles }, set: { model.setShowHiddenFiles($0) }))
             // The document's own mode (DL-167): its text as typed, the live preview off. Remembered per document.
+            // The Markdown formatting bar over the editor (DL-266).
+            Button(model.formatBarHidden ? "Show Formatting Bar" : "Hide Formatting Bar") { DuoCommand.toggleFormatBar.perform(in: model) }  // action: view format-bar
             Toggle("Source Mode", isOn: Binding(get: { model.showingSourceMode }, set: { model.setSourceMode($0) }))
                 .disabled(model.terminalsMode != .live || model.editorIfLoaded?.url == nil)
             // The map's order (DL-104), the same choice as its Sort popup.

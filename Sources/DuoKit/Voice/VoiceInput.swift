@@ -8,13 +8,20 @@ import Observation
 public enum VoiceTarget: Equatable, Sendable {
     case chat(String)
     case terminal(String)
-    public var key: String { switch self { case .chat(let k), .terminal(let k): k } }
+    /// A Markdown document in the editor (DL-266): words land at the caret a phrase at a time. The key is its path.
+    case document(String)
+    public var key: String { switch self { case .chat(let k), .terminal(let k), .document(let k): k } }
 }
 
 public enum VoicePasteResult: Equatable, Sendable {
     case sent
     /// Why not (a question is waiting): listening stops and the unsent words go to the clipboard.
     case blocked(String)
+}
+
+/// What a dictation does to a document (DL-266): begin it, add a settled phrase, show the words still changing, end it.
+public enum DocumentDictation: Equatable, Sendable {
+    case begin, phrase(String), tail(String), end
 }
 
 /// A line over the terminal mic or under the chat field that goes after 6 s.
@@ -76,6 +83,8 @@ public final class VoiceInput {
         public var paste: (VoiceTarget, String, _ first: Bool) -> VoicePasteResult
         /// The dictation is over; `kept` false means Esc discarded it (chat removes its words).
         public var ended: (VoiceTarget, _ kept: Bool) -> Void
+        /// Document (DL-266): the document's own steps. `.begin` returns false when it can't take words (read-only).
+        public var document: (VoiceTarget, DocumentDictation) -> Bool = { _, _ in false }
         public init(update: @escaping (VoiceTarget, VoiceTranscript, Bool) -> Void,
                     paste: @escaping (VoiceTarget, String, Bool) -> VoicePasteResult,
                     ended: @escaping (VoiceTarget, Bool) -> Void) {
@@ -207,6 +216,7 @@ public final class VoiceInput {
         self.target = target
         transcript = VoiceTranscript()
         sentPhrases = 0
+        documentBegun = false
         heldPhrases = nil
         notice = nil
         unsentWords = nil
@@ -361,7 +371,38 @@ public final class VoiceInput {
         switch target {
         case .chat: host?.update(target, transcript, false)
         case .terminal: if let phrase { deliver(phrase, to: target) }
+        case .document:
+            if !documentBegun {
+                guard host?.document(target, .begin) == true else { return stopDocument(target) }
+                documentBegun = true
+            }
+            if let phrase { _ = host?.document(target, .phrase(phrase)) }
+            _ = host?.document(target, .tail(transcript.volatile))
         }
+    }
+
+    /// The document dictation has begun in the page (its `.begin` is sent with the first words).
+    @ObservationIgnored private var documentBegun = false
+
+    /// A last phrase into the document, beginning the dictation if no words had come before it.
+    private func landInDocument(_ phrase: String, _ t: VoiceTarget) {
+        if !documentBegun {
+            guard host?.document(t, .begin) == true else { return }
+            documentBegun = true
+        }
+        _ = host?.document(t, .phrase(phrase))
+    }
+
+    /// The document can't take words (read-only, closed): listening stops with a line.
+    private func stopDocument(_ target: VoiceTarget) {
+        generation += 1
+        stopCapture()
+        runTask?.cancel()
+        Task { await recognizer?.cancel() }
+        state = .failed("This document can’t take words.")
+        documentBegun = false
+        expireLine()
+        finishedRun()
     }
 
     // MARK: Chat to the terminal (Q-374)
@@ -460,7 +501,7 @@ public final class VoiceInput {
         runTask?.cancel()
         let t = target
         Task { await recognizer?.cancel() }
-        _ = transcript.settleTail()
+        if let phrase = transcript.settleTail(), case .document = t { landInDocument(phrase, t!) }
         state = why
         if let t {
             if case .chat = t { host?.update(t, transcript, true) }
@@ -502,7 +543,10 @@ public final class VoiceInput {
 
     private func completed() {
         guard let t = target else { return finishedRun() }
-        if let phrase = transcript.settleTail(), case .terminal = t { deliver(phrase, to: t) }
+        if let phrase = transcript.settleTail() {
+            if case .terminal = t { deliver(phrase, to: t) }
+            if case .document = t { landInDocument(phrase, t) }
+        }
         guard state.isActive else { return }
         if case .chat = t { host?.update(t, transcript, true) }
         state = .idle

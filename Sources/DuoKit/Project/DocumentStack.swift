@@ -26,7 +26,9 @@ struct DocumentStack: View {
             // A template (DL-146): what it's for, Preview and Reset over it.
             if templates, let info = model.templateInfo(forFile: file) { TemplateBar(info: info) }
             MarkdownReviewSlot(file: file)   // DL-237: marks, comments or Suggest Edits on
+            // The formatting bar (DL-266) is laid over the editor's top 24, so the text never moves.
             DocumentEditorView(editors: model.editors, ref: ref, file: file)
+                .overlay(alignment: .top) { MarkdownFormatBarSlot(file: file) }
         }
         .environment(\.editorSide, ref)
         .modifier(NoticeMotion(key: DocumentStateBar.key(model, ref)))

@@ -165,6 +165,9 @@ extension AppModel {
                 listShowsArchived = a == "on"
             }
             done(.ok("All projects shows the \(homeView.title)\(homeView == .list && !listShowsArchived ? ", archived sessions hidden" : "")."))
+        case .viewFormatBar:
+            switch inv[0] { case "show": setFormatBarHidden(false); case "hide": setFormatBarHidden(true); default: setFormatBarHidden(!formatBarHidden) }
+            done(.ok(formatBarHidden ? "Formatting bar hidden." : "Formatting bar on (it shows while a Markdown document has the keyboard)."))
         case .viewHidden:
             switch inv[0] { case "on": setShowHiddenFiles(true); case "off": setShowHiddenFiles(false); default: setShowHiddenFiles(!showHiddenFiles) }
             done(.ok(showHiddenFiles ? "Hidden files showing." : "Hidden files hidden."))
