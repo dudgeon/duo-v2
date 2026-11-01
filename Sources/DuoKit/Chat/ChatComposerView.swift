@@ -791,12 +791,19 @@ final class ComposerTextView: NSTextView, @preconcurrency NSLayoutManagerDelegat
 extension ChatSession {
     /// Text typed in the terminal is Claude's prompt: the composer opens on it (handoff `composer`).
     /// The screen can't tell typed text from a dim suggestion (F-108), so the real buffer is asked.
+    /// Pictures this composer put there stay its chips: the words come back without their tokens (ENH-292).
     func prefillComposer() {
-        guard let input = screen.input, ui.composer.isEmpty, ui.composerBasis == nil, ui.heldTokens.isEmpty, !input.isEmpty, !input.hasPrefix("/"), !sending else { return }
+        guard let input = screen.input, ui.composer.isEmpty, ui.composerBasis == nil, !input.isEmpty, !input.hasPrefix("/"), !sending else { return }
         guard usesExternalEditor else { return }   // pasting needs an empty prompt anyway
+        let held = ui.heldTokens
         Task {
-            guard let real = await peekPrompt(), ui.composer.isEmpty else { return }
-            ui.composer = real
+            guard let real = await peekPrompt(), ui.composer.isEmpty, ui.heldTokens == held else { return }
+            if held.isEmpty {
+                ui.composer = real
+            } else {
+                guard Set(ChatPaste.tokens(in: real)).isSubset(of: Set(held)) else { return }
+                ui.composer = ChatPaste.carried(prompt: real, text: "")
+            }
             ui.composerBasis = real
         }
     }

@@ -41,15 +41,38 @@ extension ChatSession {
         let wasBusy = s.kind == .busy
         sending = true
         defer { sending = false; composing = false }
+        let placed = await place(plan, on: s)
+        if let why = placed.refused { return finish(.refused(why)) }
+        let shown = placed.shown
+        // Shown before Return: the prompt's hook can arrive within the pause after it, and must
+        // find this bubble to match.
+        log.sent(shown, images: plan.keep.compactMap { ui.images[$0].flatMap(ChatImage.init) }, time: now, queued: wasBusy, planMode: s.mode == .plan)
+        lastCommand = text.hasPrefix("/") ? (String(text.prefix { !$0.isWhitespace }), Date()) : nil
+        _ = await press(.enter)
+        // A dictation still open in the field ends with the send, so the field clears (DL-263).
+        composerView?.dropDictation()
+        if let v = VoiceInput.current, v.target == .chat(key), v.state.isActive { v.discard() }
+        ui.composer = ""
+        ui.composerBasis = nil
+        forgetImages()
+        return .done
+    }
+
+    /// The composer's words into Claude's prompt as a send puts them there, short of Return, and the echo checked; nil
+    /// `refused` when they are there. `shown` is the words as the bubble shows them, with whatever was carried ahead.
+    /// A send refuses a prompt that holds words it can't account for; a carry (`carry`, ENH-292) keeps them ahead of the
+    /// composer's instead, and does nothing when the prompt already holds the words.
+    func place(_ plan: ChatPaste.SendPlan, on s: ChatScreen, carry: Bool = false) async -> (refused: String?, shown: String) {
         var echo = plan.message
         var shown = plan.paste   // the words as your bubble shows them: with whatever was carried ahead of them
-        let composerShowedPrompt = ui.composerBasis != nil
+        var composerShowedPrompt = ui.composerBasis != nil
         if usesExternalEditor, let dir = composeDir {
             // What Claude's prompt really holds: known when the composer opened on it; empty when the
             // screen shows nothing there; otherwise asked (a dim suggestion reads as text, F-108).
             var known = ui.composerBasis ?? ((s.input ?? "").isEmpty ? "" : nil)
             if known == nil { known = await peekPrompt() }
-            guard var basis = known else { return finish(.refused("couldn’t read Claude’s prompt")) }
+            guard var basis = known else { return ("couldn’t read Claude’s prompt", shown) }
+            if carry, Self.holds(basis, plan.message) { return (nil, shown) }
             var retried = false
             while true {
                 echo = plan.message; shown = plan.paste
@@ -57,7 +80,7 @@ extension ChatSession {
                 // path drafted into a New Session in Task, DL-112): those stay ahead of the text (F-254).
                 let carried = composerShowedPrompt ? "" : ChatPaste.carried(prompt: basis, text: plan.paste)
                 if !carried.isEmpty { echo = carried + " " + echo; shown = carried + " " + shown }
-                do { try ChatCompose.leave(.init(text: echo, basis: basis), in: dir, session: composeKey) } catch { return finish(.refused("couldn’t hand the text over (\(error.localizedDescription))")) }
+                do { try ChatCompose.leave(.init(text: echo, basis: basis), in: dir, session: composeKey) } catch { return ("couldn’t hand the text over (\(error.localizedDescription))", shown) }
                 composing = true
                 terminal?.sendKeys(ChatKey.ctrlG.bytes)
                 // The TUI runs the editor (its screen goes blank), then redraws with the new input.
@@ -73,16 +96,20 @@ extension ChatSession {
                     try? FileManager.default.removeItem(at: ChatCompose.refusedFile(dir, composeKey))
                     // Claude's prompt is empty after all (sent or cleared since chat last read it): nothing of yours
                     // is there to keep, so the text goes onto the empty prompt instead of the terminal coming up (F-449).
-                    if !retried, held.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, back {
+                    // A carry keeps whatever it holds, ahead of the composer's words, or leaves it if they are there.
+                    let empty = held.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                    if !retried, back, empty || carry {
                         retried = true
-                        basis = ""
+                        basis = empty ? "" : held.trimmingCharacters(in: .newlines)
+                        composerShowedPrompt = false
+                        if carry, Self.holds(basis, plan.message) { return (nil, shown) }
                         continue
                     }
-                    return finish(.refused("Claude’s prompt changed in the terminal (it holds “\(held.prefix(40))”), so your text wasn’t put in"))
+                    return ("Claude’s prompt changed in the terminal (it holds “\(held.prefix(40))”), so your text wasn’t put in", shown)
                 }
                 guard back else {
                     try? FileManager.default.removeItem(at: ChatCompose.handoverFile(dir, composeKey))
-                    return finish(.refused("Claude Code didn’t open its editor"))
+                    return ("Claude Code didn’t open its editor", shown)
                 }
                 break
             }
@@ -93,11 +120,12 @@ extension ChatSession {
             var prompt = s.input ?? ""
             // Words on screen may be a dim suggestion, which the paste replaces (F-303): ask before carrying them.
             if !prompt.isEmpty, ui.heldTokens.isEmpty, ui.composerBasis == nil {
-                guard let suggestion = await promptIsSuggestion() else { return finish(.refused("couldn’t read Claude’s prompt")) }
+                guard let suggestion = await promptIsSuggestion() else { return ("couldn’t read Claude’s prompt", shown) }
                 if suggestion { prompt = "" }
             }
-            guard !prompt.hasPrefix("/"), Set(ChatPaste.tokens(in: prompt)).isSubset(of: Set(ui.heldTokens)) else { return finish(.refused("Claude’s prompt already holds “\(prompt.prefix(40))”")) }
-            if !ui.heldTokens.isEmpty, let why = await removeImageTokens(plan.remove, from: prompt) { return finish(.refused(why)) }
+            if carry, plan.remove.isEmpty, Self.holds(prompt, plan.message) { return (nil, shown) }
+            guard !prompt.hasPrefix("/"), Set(ChatPaste.tokens(in: prompt)).isSubset(of: Set(ui.heldTokens)) else { return ("Claude’s prompt already holds “\(prompt.prefix(40))”", shown) }
+            if !ui.heldTokens.isEmpty, let why = await removeImageTokens(plan.remove, from: prompt) { return (why, shown) }
             let left = ui.heldTokens.isEmpty ? prompt : reread().input ?? ""
             let carried = ChatPaste.carried(prompt: left, text: "")
             var pasted = plan.paste
@@ -112,20 +140,15 @@ extension ChatSession {
         }
         let echoed = reread()
         guard echoed.kind == .idle || echoed.kind == .busy, Self.echoMatches(echoed.input ?? "", echo) else {
-            return finish(.refused("your text didn’t appear in Claude’s prompt as sent"))
+            return ("your text didn’t appear in Claude’s prompt as sent", shown)
         }
-        // Shown before Return: the prompt's hook can arrive within the pause after it, and must
-        // find this bubble to match.
-        log.sent(shown, images: plan.keep.compactMap { ui.images[$0].flatMap(ChatImage.init) }, time: now, queued: wasBusy, planMode: s.mode == .plan)
-        lastCommand = text.hasPrefix("/") ? (String(text.prefix { !$0.isWhitespace }), Date()) : nil
-        _ = await press(.enter)
-        // A dictation still open in the field ends with the send, so the field clears (DL-263).
-        composerView?.dropDictation()
-        if let v = VoiceInput.current, v.target == .chat(key), v.state.isActive { v.discard() }
-        ui.composer = ""
-        ui.composerBasis = nil
-        forgetImages()
-        return .done
+        return (nil, shown)
+    }
+
+    /// Claude's prompt already holds these words (a carry made twice, or a refused send that put them there).
+    public static func holds(_ prompt: String, _ words: String) -> Bool {
+        let w = words.chatNorm
+        return !w.isEmpty && prompt.chatNorm.contains(w)
     }
 
     /// The model chip and the effort chip (DL-168): `/model` or `/effort` into Claude's own prompt, so DL-143's card docks.
