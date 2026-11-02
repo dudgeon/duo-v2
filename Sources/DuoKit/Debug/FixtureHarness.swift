@@ -1029,6 +1029,11 @@ public enum FixtureHarness {
                 }
                 if let intent { let sig = c.screen.sig; Task { let r = await c.ask(intent, sig: sig); FileHandle.standardError.write(Data("chat-ask: \(r.ok ? "ok" : "refused: \(r.why ?? "")")\n".utf8)) } }
             }
+        case "chat-working":   // one line: what chat reads, the spinner, and the working line it draws (F-539)
+            if let k = model.visibleSessionId, let c = model.chat(for: k) {
+                c.reread()
+                FileHandle.standardError.write(Data("chat-working: screen=\(c.screen.kind.rawValue) showing=\(c.showsChat ? "chat" : "terminal") line=\(c.workingLine ?? "-") status=\(c.screen.status ?? "-")\n".utf8))
+            } else { FileHandle.standardError.write(Data("chat-working: no chat\n".utf8)) }
         case "chat-state":   // what the chat shows, for a scripted run's log
             if let k = model.visibleSessionId, let c = model.chat(for: k) {
                 var lines = ["chat-state: \(k.prefix(8)) mode=\(c.mode.rawValue) showing=\(c.showsChat ? "chat" : "terminal") screen=\(c.screen.kind.rawValue) card=\(c.cardUp) fallback=\(c.fallback?.message ?? "-") version=\(c.cliVersion ?? "-") hooks=\(c.log.hooksSeen) streams=\(c.log.streams) compose=\(c.usesExternalEditor)",

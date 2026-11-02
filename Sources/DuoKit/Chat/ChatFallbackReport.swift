@@ -75,7 +75,7 @@ public enum ChatFallbackReport {
             ("permission “Esc to cancel”", s.permissionCancel), ("review title", s.reviewTitle), ("review question", s.reviewQuestion),
             ("question nav", s.questionNav), ("model title", s.modelTitle), ("model footer", s.modelFooter),
             ("effort title", s.effortTitle), ("effort footer", s.effortFooter), ("switch/change confirm", s.confirmTitle),
-            ("busy (esc to interrupt)", s.busy), ("mode row", "(\(s.modePlan)|\(s.modeAcceptEdits)|\(s.modeManual)|\(s.modeAuto)|\(s.modeBypass))"),
+            ("busy (esc to interrupt)", s.busy), ("spinner going", s.spinnerActive), ("mode row", "(\(s.modePlan)|\(s.modeAcceptEdits)|\(s.modeManual)|\(s.modeAuto)|\(s.modeBypass))"),
             ("`/` command menu", s.commandMenu),
         ]
         for (n, p) in named { out.append("\(n): " + first(p)) }

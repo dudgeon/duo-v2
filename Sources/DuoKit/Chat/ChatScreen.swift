@@ -45,6 +45,10 @@ public struct ChatSignatures: Sendable, Equatable {
     public var modeBypass = #"bypass permissions on"#
     /// The spinner line above the input box: `✻ Sautéed for 2s`, `✻ 529 Overloaded · Retrying …`.
     public var status = #"^[✻✽✶✳✢·*] \S"#
+    /// A spinner still going: its verb ends in an ellipsis (`✻ Moseying… (12s · ↓ 102 tokens)`, `· Leavening… (1s · thinking)`),
+    /// or the retry line. A finished one reads `✻ Cooked for 48s · done 8:49 AM`. The footer's `esc to interrupt` is cut short
+    /// under about 58 columns (`· esc …`, both 2.1.284 and 2.1.316), so this is the busy sign a narrow pane still has (F-539).
+    public var spinnerActive = #"^[✻✽✶✳✢·*] (?:\p{L}[\p{L}'’-]*…|.*Retrying)"#
     public var interrupted = #"Interrupted · What should Claude do instead\?"#
     /// The input box's placeholder (dim in the TUI; SwiftTerm doesn't expose cell attributes to a
     /// host, so it is named here, F-108). `Try "fix lint errors"`.
@@ -417,6 +421,8 @@ public enum ChatScreenReader {
             r.effort = effort
             let above = rules.count >= 2 ? Array(t[0..<rules[rules.count - 2]]) : []
             r.status = above.reversed().first { $0.chatIs(s.status) }?.chatTrim
+            // Busy while the spinner is going, even when the footer's `esc to interrupt` doesn't fit (F-539).
+            if !busy, r.status?.chatIs(s.spinnerActive) == true { r.kind = .busy }
             // "Interrupted · What should Claude do instead?" under the last reply, with nothing after it.
             if let i = above.lastIndex(where: { $0.chatIs(s.interrupted) }) {
                 r.interrupted = !above[(i + 1)...].contains { $0.hasPrefix("❯") || $0.hasPrefix("⏺") }
