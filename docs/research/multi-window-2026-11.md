@@ -210,7 +210,7 @@ From `/Users/geoff/repos/duo` (ENH-191, its PRD `docs/prd/enh-191-multi-window.m
 
 Each row is also in `docs/plan/concerns-and-questions.md`. The recommended option is listed first. The boards are on the canvas https://claude.ai/artifact/46yWPpDZn16Qtfrfhbuaw1, and the spec is https://claude.ai/artifact/GaK5hPxTAxphXEZJSoXaYA. No question needs a new board: slice 1's visible parts are on boards 1, 9 and 10.
 
-**Review page (round 3):** https://claude.ai/artifact/AGbtfeMam8uoHD3aYhigX9 (`docs/research/multi-window-review.html`). It covers Q-99, Q-429, Q-431, Q-435 (in three parts), and Q-426 and Q-427 from the power-user audit. Each card has a Send button. Answers are saved in the page's db as `answers/<id>` (the ids are `q99-when`, `q429-scope`, `q431-home`, `q435-palette`, `q435-new`, `q435-classic`, `q426-browser` and `q427-notice`) and also sent to Claude. The window colours were drawn after round 2, on boards 4a to 4c.
+**Review page (round 3):** https://claude.ai/artifact/AH33RCyja4xoCDUihYndZo (`docs/research/multi-window-review.html`). It covers Q-99, Q-429, Q-431, Q-435 (in three parts), and Q-426 and Q-427 from the power-user audit. Each card has a Send button. Answers are saved in the page's db as `answers/<id>` (the ids are `q99-when`, `q429-scope`, `q431-home`, `q435-palette`, `q435-new`, `q435-classic`, `q426-browser` and `q427-notice`) and also sent to Claude. The window colours were drawn after round 2, on boards 4a to 4c.
 
 | Q | Question | Options (recommended first) | Shown on |
 |---|---|---|---|
