@@ -2,7 +2,7 @@
 
 **Why now.** A power user (v1) relies on several windows to move between projects, and Geoff wants multi-window. This round starts from the first one (`docs/research/multi-window.md`, 2026-10-07), DL-141, the studies canvas https://claude.ai/artifact/46yWPpDZn16Qtfrfhbuaw1 (`docs/design/multi-window-studies/`) and the spec page https://claude.ai/artifact/GaK5hPxTAxphXEZJSoXaYA. It doesn't redo them. It covers what has changed, the architecture in today's code, a build plan whose first slice is small, and the questions Geoff has left to answer.
 
-Records: F-537, F-538, C-146, ENH-318, Q-428 to Q-432. Q-95 to Q-99 have been updated.
+Records: F-537, F-538, C-146, ENH-318, Q-428 to Q-432. Q-95 to Q-99 have been updated. Round 3 (later on 2026-11-02) added DL-308 (Q-428 answered), ENH-319 and F-542 (a base colour per window) and Q-435. Its review page for Geoff is listed under "Decisions for Geoff".
 
 ## Recommendation in five lines
 
@@ -10,7 +10,7 @@ Records: F-537, F-538, C-146, ENH-318, Q-428 to Q-432. Q-95 to Q-99 have been up
 2. **Slice 0** makes that cut with nothing visible changing. **Slice 1** is the slice for the power user (v1): New Window ⌥⌘N, Open in New Window, each window titled with its project, and switching with ⌘\` and the Window menu.
 3. **One rule until Q-97 is answered: a project is in one window.** Opening a project that already has a window brings that window forward (Xcode, Zed). This keeps C-43 and the two-editor problem out of slices 0 to 2, and it doesn't conflict with DL-141.
 4. **`duo2` acts on the window that holds the caller's session.** With no session, it acts on the primary window, never the key window (v1's lesson). Only the on-screen verbs (about 50 of 248) need a `--window`.
-5. **Build slices 0 and 1 now, past build plan §3a, giving the power user as the reason.** Then build restore and needs-you (slice 2). Pins, tints and one session in two windows (slice 3) wait for Q-95 to Q-97.
+5. **Build slices 0 and 1 now, past build plan §3a, giving the power user as the reason.** Then build restore and needs-you (slice 2). Window base colours (ENH-319) get their own slice once Q-435 is answered. Pins and one session in two windows (slice 3) wait for Q-95 to Q-97. Q-428 is answered: a project lives in one window (DL-308).
 
 ## 1. Status
 
@@ -129,10 +129,37 @@ Each slice ends with DuoChecks, the check-ui states unchanged or compared with t
 - **Needs-you:** each window's chip counts sessions not shown in it (board 8, Q-98 D8). A notification click and the peek's jump bring forward the project's window. Duo's windows go in the Window menu with needs-you marks (board 9, Q-98 D9). The Dock menu opens the right window.
 - **Checks:** relaunch with two windows; a notification click into a window in the background.
 
+### Colour slice: a base colour per window (ENH-319, after slice 1 and Q-435)
+
+Geoff, 2026-11-02, answering Q-99: "One user request for multi window mode is to set different base colors per window instance; because window instances can be used to isolate user mental context, this helps context switching; we could even have each new window automatically pop in a new color; would need to be mutually exclusive w classic mode".
+
+**Where it fits.** It needs one `AppModel` per window (slice 0) and a second window (slice 1), and nothing from Q-95 to Q-97. So it is its own slice, which can run beside slice 2 once Q-435 is answered. It replaces the "tints" part of slice 3: a base colour is board 4's option B (toolbar at full colour, panes at half) carried into dark, and Q-435 folds in Q-96's D4, D5 and D11.
+
+**The design** is on the canvas https://claude.ai/artifact/46yWPpDZn16Qtfrfhbuaw1, boards 4a to 4c, all [P]:
+- **Board 4a · A base colour for each window, light and dark.** Sky, Sage, Lilac, Sand and None, each with a light and a dark ground, pane and swatch. The colour changes the toolbar ground and the pane shade. The console, text, rules, selected row, cards, fields, the document's page and the needs-you orange stay as they are.
+  - Contrast: text is 12.4:1 or better everywhere.
+  - text2 is 5.59:1 or better on a coloured pane in light, and 6.18:1 or better in dark.
+  - The light toolbar's needs-you chip keeps F-169's white fill, because the orange is 4.07–4.35:1 on a coloured light ground.
+- **Board 4b · A new window's colour, and changing it.**
+  - Recommended: a new window takes the first colour no open window has (Sky, Sage, Lilac, Sand, then round again). The first window stays None. A switch, "Colour new windows automatically", turns this off.
+  - The alternative: new windows open plain.
+  - To change a colour: the swatch after the project's name opens the five colours and the switch, or Window › Window Colour ▸, or `duo2 window colour <name>` (DL-71).
+- **Board 4c · Window colours and Classic.**
+  - Recommended: Classic turns window colours off. Every window shows Classic and the swatch leaves the toolbar. Window › Window Colour is dimmed with the reason. Each window gets its colour back when you leave Classic.
+  - The alternative: window colours make Classic unavailable until every window is None.
+
+**What it touches (F-542).** A window colour is a palette of window themes over the design tokens. It is not a fourth scheme like Classic, because a scheme resolves inside `NSColor`'s dynamic provider, which sees only the `NSAppearance`, and an appearance doesn't say which window it is drawing.
+- **Tokens:** a `windowColour.<name>.light|dark.ground|pane|swatch` block in `build-handoff/tokens.json`. `gen-tokens.py` generates `DuoWindowColour`, and `gen-design-system.py` and the design system's `surfaces.md` add it as well.
+- **Resolution:** the four tokens a colour overrides (`ground`, `pane`, `chatGround` and `toolOutputFill`) resolve through an environment value, `windowColour`, which each window's `RootView` sets from its `AppModel`. They become a `ShapeStyle` with `resolve(in:)`. That covers about 150 SwiftUI uses. The 18 AppKit uses (`DuoNSColor.ground` and `.pane`) ask the window's model.
+  - A DuoChecks gate keeps the plain constants out of window-coloured views.
+  - Web views (the editor, the HTML pages, decks) don't change, because the document's page keeps its colour.
+- **Classic:** while `DuoScheme.classicActive` is set, `windowColour` resolves to None. That one line is the exclusion.
+- **State:** `AppModel.windowColour`, saved per window in the restore file's `windows[]` (slice 2). "Colour new windows automatically" goes in `DuoState`.
+- **Size:** 1 build session, plus the captures of 4a in light and dark.
+
 ### Slice 3: the rest of DL-141 (after Q-95 to Q-97)
 
 - **Pin and the pinned-jump rule** (boards 2 and 3).
-- **Tints:** `windowTint*` tokens through `gen-tokens.py`, and the white needs-you chip of F-169 (boards 4 and 5).
 - **Relaxing the one-project rule into D6 and D7:**
   - a session in two windows, live in one and in chat in the other (F-168);
   - a document read-only away from its editor, with Edit Here, through `DocumentHomes`.
@@ -145,7 +172,8 @@ Each slice ends with DuoChecks, the check-ui states unchanged or compared with t
 | 0 | 2 | nothing |
 | 1 | 1–2 | menu items, titles, the Home stand-in |
 | 2 | 1 | the chip, the Window menu, restore |
-| 3 | 2–3 | pins, tints, chat elsewhere, read-only documents |
+| colour | 1 | the window colours (boards 4a to 4c) |
+| 3 | 2–3 | pins, chat elsewhere, read-only documents |
 
 Slices 0 and 1 total 3 to 4 sessions, against v1's 13 to 17 engineer-weeks. They're cheap because the one-project rule leaves out what made v1 expensive: anything shown anywhere, focus routing, and a renderer per window.
 
@@ -182,10 +210,13 @@ From `/Users/geoff/repos/duo` (ENH-191, its PRD `docs/prd/enh-191-multi-window.m
 
 Each row is also in `docs/plan/concerns-and-questions.md`. The recommended option is listed first. The boards are on the canvas https://claude.ai/artifact/46yWPpDZn16Qtfrfhbuaw1, and the spec is https://claude.ai/artifact/GaK5hPxTAxphXEZJSoXaYA. No question needs a new board: slice 1's visible parts are on boards 1, 9 and 10.
 
+**Review page (round 3):** https://claude.ai/artifact/AGbtfeMam8uoHD3aYhigX9 (`docs/research/multi-window-review.html`). It covers Q-99, Q-429, Q-431, Q-435 (in three parts), and Q-426 and Q-427 from the power-user audit. Each card has a Send button. Answers are saved in the page's db as `answers/<id>` (the ids are `q99-when`, `q429-scope`, `q431-home`, `q435-palette`, `q435-new`, `q435-classic`, `q426-browser` and `q427-notice`) and also sent to Claude. The window colours were drawn after round 2, on boards 4a to 4c.
+
 | Q | Question | Options (recommended first) | Shown on |
 |---|---|---|---|
 | **Q-99** (open) | When to build | **Slices 0 and 1 now**, logged past §3a for the power user (v1), then slice 2; slices 0 to 2 now; slice 0 only; after v1 | spec D12 |
-| **Q-428** | A project already open in another window, until Q-97 is decided | **That window comes forward** (one project, one window); DL-141's D6 and D7 from the start (live in one window, chat or read-only in the other), which adds about one slice before the power user gets anything | board 6 · A session open in two windows; board 1 |
+| **Q-428** (answered) | A project already open in another window, until Q-97 is decided | **Answered 2026-11-02, "Bring its window": DL-308.** That window comes forward, so a project is in one window | board 6 · A session open in two windows; board 1 |
+| **Q-435** | Window base colours (ENH-319) | **The palette as drawn; a new window takes the next unused colour, with a switch to turn that off; Classic turns colours off**; more or redrawn colours; new windows open plain; window colours make Classic unavailable | boards 4a · A base colour for each window, light and dark, 4b · A new window's colour, and changing it, 4c · Window colours and Classic |
 | **Q-429** | What slice 1 includes | **New Window ⌥⌘N and Open in New Window (board 1 A), titles, the system Window menu**; also Pin (board 2); also tints (boards 4 and 5) | board 1 · How a new window opens; board 2; board 4 |
 | **Q-430** | Which window `duo2` acts on | **The caller's session's window, else the primary window, never the key window, plus `--window`**; the caller's window, else the key window; always the key window | this doc, section 2 |
 | **Q-431** | Home across windows in slice 1 | **All projects in every window, Home live in one, with a "Show Here" stand-in in the others** (Q-98 D10 later adds chat there); All projects only in the first window (other windows are project windows); Home's chat in every window now (D10 A, with F-183's focus check per window) | board 10 · What happens to Home |
