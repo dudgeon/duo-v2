@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Twelve window colours</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1720px; height: 2060px; box-sizing: border-box; padding: 40px 48px; display: flex; flex-direction: column; gap: 20px; background: #F3F4F6; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 13px; line-height: 20px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; color: #5B636D">DECISION 4a′ · Q-441 · SUPERSEDES 4a · ENH-319 · DL-312</span>
+<span style="font-size: 22px; line-height: 28px; font-weight: 600">Twelve window colours, light and dark [P]</span>
+<span style="color: #5B636D; white-space: normal; max-width: 1480px">Geoff: “we will need more colors; at least 12 … I care less about which specific colors and more that they are cohesive and feel consistent with one another”. One recipe, twelve hues: every colour has the same OKLCH lightness and chroma for each surface, and the hues sit 22.5° apart on an arc from 92° to 339.5° that skips orange and red (needs-you is at 38° in light, 48° in dark). Neighbouring hues alternate two tiers, A lighter and softer, B deeper and richer, so neighbours differ in lightness and chroma as well as hue. Same coverage as 4a: ground (the toolbar), pane (sidebar, tab strips, right pane), chatGround and toolOutputFill take the colour; the console, cards, fields, the document's page, the selected row, text and needs-you never change. None stays the first window's colour.</span>
+</div>
+
+<span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; color: #5B636D">THE TWELVE, IN HUE ORDER: LIGHT ABOVE, DARK BELOW [P]</span>
+<div style="display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 12px">
+<sc-for list="{{cols}}" as="c" hint-placeholder-count="12">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; flex-direction: column; border: 1px solid #C9CDD3; border-radius: 6px; overflow: hidden">
+<div style="display: flex; align-items: center; justify-content: center; height: 46px; background: {{c.lg}}"><span style="width: 22px; height: 22px; border-radius: 50%; border: 1px solid #8B939C; background: {{c.ls}}"></span></div>
+<div style="height: 18px; background: {{c.lp}}; border-top: 1px solid #C9CDD3"></div>
+<div style="display: flex; align-items: center; justify-content: center; height: 46px; background: {{c.dg}}"><span style="width: 22px; height: 22px; border-radius: 50%; border: 1px solid #6E7681; background: {{c.ds}}"></span></div>
+<div style="height: 18px; background: {{c.dp}}; border-top: 1px solid #2B2F36"></div>
+</div>
+<span style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-weight: 600">{{c.name}}</span><span style="color: #5B636D; font-size: 12px">{{c.order}}</span></span>
+<span style="color: #5B636D; font-size: 12px; line-height: 16px">{{c.hue}}</span>
+</div>
+</sc-for>
+</div>
+
+<span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; color: #5B636D">THE ORDER NEW WINDOWS GET THEM IN [P]</span>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px">
+<span style="display: flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border: 1px solid #C9CDD3; border-radius: 13px; background: #FFFFFF"><span style="width: 12px; height: 12px; border-radius: 50%; border: 1px solid #8B939C; background: #FFFFFF"></span><span style="color: #5B636D">First window</span><span style="font-weight: 600">None</span></span>
+<sc-for list="{{seq}}" as="s" hint-placeholder-count="12">
+<span style="display: flex; align-items: center; gap: 6px"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M3 1.5 7 5 3 8.5" fill="none" stroke="#8B939C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg><span style="display: flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border: 1px solid #C9CDD3; border-radius: 13px; background: #FFFFFF"><span style="color: #5B636D; font-size: 12px">{{s.n}}</span><span style="width: 12px; height: 12px; border-radius: 50%; border: 1px solid #8B939C; background: {{s.sw}}"></span><span style="font-weight: 600">{{s.name}}</span></span></span>
+</sc-for>
+</div>
+<span style="color: #5B636D; white-space: normal; max-width: 1480px">A new window takes the first colour in this list that no open window has (DL-312), so two open windows never share one until all twelve are in use; then it goes round again. Each step is five places round the hue order, 112.5° on, and changes tier, so the colours a person meets one after another are always far apart. Sky comes first, as on 4a.</span>
+</div>
+
+<span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; color: #5B636D">LIGHT [P]</span>
+<div style="display: grid; grid-template-columns: repeat(6, 260px); gap: 14px 12px">
+<sc-for list="{{cols}}" as="c" hint-placeholder-count="12">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="width: 260px; height: 162px; overflow: hidden"><div style="transform: scale(0.5); transform-origin: top left; width: 520px; height: 325px"><dc-import name="WinColour12" mode="light" colour="{{c.id}}" project="{{c.project}}" hint-size="520px,325px"></dc-import></div></div>
+<span style="display: flex; gap: 6px; align-items: baseline"><span style="font-weight: 600">{{c.name}}</span><span style="color: #5B636D; font-size: 12px">{{c.lg}}</span></span>
+</div>
+</sc-for>
+</div>
+
+<span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; color: #5B636D">DARK [P]</span>
+<div style="display: grid; grid-template-columns: repeat(6, 260px); gap: 14px 12px">
+<sc-for list="{{cols}}" as="c" hint-placeholder-count="12">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="width: 260px; height: 162px; overflow: hidden"><div style="transform: scale(0.5); transform-origin: top left; width: 520px; height: 325px"><dc-import name="WinColour12" mode="dark" colour="{{c.id}}" project="{{c.project}}" hint-size="520px,325px"></dc-import></div></div>
+<span style="display: flex; gap: 6px; align-items: baseline"><span style="font-weight: 600">{{c.name}}</span><span style="color: #5B636D; font-size: 12px">{{c.dg}}</span></span>
+</div>
+</sc-for>
+</div>
+
+<div style="display: flex; flex-direction: column; border: 1px solid #C9CDD3; border-radius: 6px; background: #FFFFFF; font-size: 12px; line-height: 18px">
+<div style="display: grid; grid-template-columns: 96px 84px 1fr 290px 1fr 180px; gap: 12px; padding: 6px 12px; border-bottom: 1px solid #C9CDD3; font-weight: 600; color: #5B636D"><span>Colour</span><span>Hue · tier</span><span>Light ground · pane · chat · tool · swatch</span><span>Light: text / text2 · needs-you on pane (ground)</span><span>Dark ground · pane · chat · tool · swatch</span><span>Dark: same</span></div>
+<sc-for list="{{cols}}" as="c" hint-placeholder-count="12">
+<div style="display: grid; grid-template-columns: 96px 84px 1fr 290px 1fr 180px; gap: 12px; padding: 3px 12px; border-top: 1px solid #E9ECEF"><span style="font-weight: 600">{{c.name}}</span><span style="color: #5B636D">{{c.hue}}</span><span style="font-family: 'SF Mono', ui-monospace, monospace; font-size: 11px">{{c.lightAll}}</span><span>{{c.lightCr}}</span><span style="font-family: 'SF Mono', ui-monospace, monospace; font-size: 11px">{{c.darkAll}}</span><span>{{c.darkCr}}</span></div>
+</sc-for>
+<span style="padding: 6px 12px; border-top: 1px solid #C9CDD3; color: #5B636D; white-space: normal">Text and text2 figures are the lowest across all four coloured surfaces. Text (#1F2328 light, #E6E8EB dark) is 11.75:1 or more and text2 (#5B636D, #9AA1AB) 4.53:1 or more on every one, light and dark. Needs-you on the pane shade, where its section label sits, is 4.69:1 or more in light. On a light coloured toolbar it is under 4.5:1, so the needs-you chip keeps its white fill there (F-169), as on 4a. In dark every value passes. Proposed tokens: windowColour.&lt;name&gt;.light|dark.ground|pane|chatGround|toolOutputFill|swatch.</span>
+</div>
+
+<div style="display: flex; gap: 20px">
+<div style="flex: 3; display: flex; flex-direction: column; border: 1px solid #C9CDD3; border-radius: 6px; background: #FFFFFF; font-size: 12px; line-height: 18px">
+<div style="display: grid; grid-template-columns: 130px repeat(4, minmax(0, 1fr)); gap: 12px; padding: 6px 12px; border-bottom: 1px solid #C9CDD3; font-weight: 600; color: #5B636D"><span>OKLCH recipe</span><span>Light, tier A</span><span>Light, tier B</span><span>Dark, tier A</span><span>Dark, tier B</span></div>
+<sc-for list="{{recipe}}" as="r" hint-placeholder-count="5">
+<div style="display: grid; grid-template-columns: 130px repeat(4, minmax(0, 1fr)); gap: 12px; padding: 3px 12px; border-top: 1px solid #E9ECEF; font-family: 'SF Mono', ui-monospace, monospace; font-size: 11px"><span style="font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 12px; font-weight: 600">{{r.role}}</span><span>{{r.la}}</span><span>{{r.lb}}</span><span>{{r.da}}</span><span>{{r.db}}</span></div>
+</sc-for>
+</div>
+<div style="flex: 2; display: flex; flex-direction: column; gap: 6px; padding: 10px 14px; border: 1px solid #C9CDD3; border-radius: 6px; background: #FFFFFF; font-size: 12px; line-height: 18px; white-space: normal">
+<span style="font-weight: 600">How it is derived, and how to add more</span>
+<span>Hue of colour i = 92° + 22.5° × i, for i = 0 to 11. Tier = A when i is even, B when odd. Each surface takes the tier's L and C at that hue. Every value is inside sRGB, and the chroma is capped by the narrowest hue, teal.</span>
+<span>To add more, keep the recipe and put new hues halfway between the old ones (92° + 11.25° + 22.5° × i), giving 24 on the same arc, and give them a third tier between A and B. Then re-run the contrast check: docs/design/multi-window-studies/palette/window_palette.py.</span>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1720,"height":2060}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {"cols": [{"id": "sand", "name": "Sand", "project": "checkout-redesign", "hue": "h 92 · A", "order": "#7", "lg": "#ECE6D3", "lp": "#F9F7EF", "ls": "#BEAA6B", "dg": "#1D190D", "dp": "#231F14", "ds": "#B19D5F", "lightAll": "#ECE6D3 · #F9F7EF · #ECE6D3 · #F4F0E4 · #BEAA6B", "darkAll": "#1D190D · #231F14 · #141109 · #1D190D · #B19D5F", "lightCr": "12.66 / 4.88 · 4.83 (4.15 → chip on white)", "darkCr": "13.39 / 6.31 · 5.86 (6.26)"}, {"id": "pear", "name": "Pear", "project": "vendor-review", "hue": "h 114.5 · B", "order": "#12", "lg": "#DFE3C8", "lp": "#F4F6EB", "ls": "#8B9348", "dg": "#1E200F", "dp": "#242617", "ds": "#7F873C", "lightAll": "#DFE3C8 · #F4F6EB · #DFE3C8 · #EBEEDD · #8B9348", "darkAll": "#1E200F · #242617 · #15160A · #1E200F · #7F873C", "lightCr": "12.01 / 4.63 · 4.74 (3.94 → chip on white)", "darkCr": "12.54 / 5.91 · 5.49 (5.91)"}, {"id": "moss", "name": "Moss", "project": "pricing", "hue": "h 137 · A", "order": "#5", "lg": "#DEEBDA", "lp": "#F4F8F2", "ls": "#92B883", "dg": "#151C12", "dp": "#1B2218", "ds": "#85AB76", "lightAll": "#DEEBDA · #F4F8F2 · #DEEBDA · #EBF3E8 · #92B883", "darkAll": "#151C12 · #1B2218 · #0E130C · #151C12 · #85AB76", "lightCr": "12.79 / 4.93 · 4.82 (4.19 → chip on white)", "darkCr": "13.28 / 6.25 · 5.81 (6.21)"}, {"id": "sage", "name": "Sage", "project": "ops-notes", "hue": "h 159.5 · B", "order": "#10", "lg": "#CCE7D7", "lp": "#EDF8F1", "ls": "#509F76", "dg": "#112219", "dp": "#192820", "ds": "#43926B", "lightAll": "#CCE7D7 · #EDF8F1 · #CCE7D7 · #E0F1E7 · #509F76", "darkAll": "#112219 · #192820 · #0C1811 · #112219 · #43926B", "lightCr": "12.02 / 4.63 · 4.76 (3.94 → chip on white)", "darkCr": "12.53 / 5.90 · 5.49 (5.91)"}, {"id": "mint", "name": "Mint", "project": "refunds", "hue": "h 182 · A", "order": "#3", "lg": "#D4ECE7", "lp": "#F0F9F7", "ls": "#69BDAF", "dg": "#0D1D1A", "dp": "#142220", "ds": "#5CB0A2", "lightAll": "#D4ECE7 · #F0F9F7 · #D4ECE7 · #E5F4F1 · #69BDAF", "darkAll": "#0D1D1A · #142220 · #091412 · #0D1D1A · #5CB0A2", "lightCr": "12.75 / 4.91 · 4.83 (4.18 → chip on white)", "darkCr": "13.37 / 6.30 · 5.86 (6.20)"}, {"id": "teal", "name": "Teal", "project": "onboarding", "hue": "h 204.5 · B", "order": "#8", "lg": "#C5E7EB", "lp": "#EAF7F9", "ls": "#279DA8", "dg": "#0A2225", "dp": "#14282A", "ds": "#0F919C", "lightAll": "#C5E7EB · #EAF7F9 · #C5E7EB · #DCF0F3 · #279DA8", "darkAll": "#0A2225 · #14282A · #08181A · #0A2225 · #0F919C", "lightCr": "12.04 / 4.64 · 4.73 (3.95 → chip on white)", "darkCr": "12.52 / 5.90 · 5.48 (5.91)"}, {"id": "sky", "name": "Sky", "project": "billing", "hue": "h 227 · A", "order": "#1", "lg": "#D5EAF4", "lp": "#F0F8FC", "ls": "#6DB6D5", "dg": "#0E1C21", "dp": "#152127", "ds": "#61A9C8", "lightAll": "#D5EAF4 · #F0F8FC · #D5EAF4 · #E6F3F9 · #6DB6D5", "darkAll": "#0E1C21 · #152127 · #0A1317 · #0E1C21 · #61A9C8", "lightCr": "12.72 / 4.90 · 4.82 (4.17 → chip on white)", "darkCr": "13.38 / 6.30 · 5.86 (6.21)"}, {"id": "cornflower", "name": "Cornflower", "project": "search", "hue": "h 249.5 · B", "order": "#6", "lg": "#CEE2F7", "lp": "#EEF5FE", "ls": "#5A91C7", "dg": "#131F2C", "dp": "#1A2530", "ds": "#4E84BA", "lightAll": "#CEE2F7 · #EEF5FE · #CEE2F7 · #E1EDFA · #5A91C7", "darkAll": "#131F2C · #1A2530 · #0D161F · #131F2C · #4E84BA", "lightCr": "11.92 / 4.59 · 4.72 (3.91 → chip on white)", "darkCr": "12.66 / 5.96 · 5.54 (5.95)"}, {"id": "iris", "name": "Iris", "project": "mobile-app", "hue": "h 272 · A", "order": "#11", "lg": "#E0E6F8", "lp": "#F4F7FE", "ls": "#98A8E1", "dg": "#161924", "dp": "#1C1F29", "ds": "#8C9BD4", "lightAll": "#E0E6F8 · #F4F7FE · #E0E6F8 · #ECF0FB · #98A8E1", "darkAll": "#161924 · #1C1F29 · #0F1119 · #161924 · #8C9BD4", "lightCr": "12.67 / 4.88 · 4.83 (4.15 → chip on white)", "darkCr": "13.39 / 6.31 · 5.86 (6.25)"}, {"id": "lilac", "name": "Lilac", "project": "data-export", "hue": "h 294.5 · B", "order": "#4", "lg": "#E1DCF6", "lp": "#F5F3FD", "ls": "#9080C3", "dg": "#1F1B2B", "dp": "#25222F", "ds": "#8474B6", "lightAll": "#E1DCF6 · #F5F3FD · #E1DCF6 · #ECE9FA · #9080C3", "darkAll": "#1F1B2B · #25222F · #15131E · #1F1B2B · #8474B6", "lightCr": "11.86 / 4.57 · 4.72 (3.89 → chip on white)", "darkCr": "12.69 / 5.98 · 5.56 (5.99)"}, {"id": "orchid", "name": "Orchid", "project": "support-bot", "hue": "h 317 · A", "order": "#9", "lg": "#EDE1F2", "lp": "#FAF5FB", "ls": "#C19ACF", "dg": "#1E1620", "dp": "#231C26", "ds": "#B48EC2", "lightAll": "#EDE1F2 · #FAF5FB · #EDE1F2 · #F5EDF7 · #C19ACF", "darkAll": "#1E1620 · #231C26 · #140F16 · #1E1620 · #B48EC2", "lightCr": "12.53 / 4.83 · 4.81 (4.11 → chip on white)", "darkCr": "13.52 / 6.37 · 5.92 (6.29)"}, {"id": "mauve", "name": "Mauve", "project": "launch-plan", "hue": "h 339.5 · B", "order": "#2", "lg": "#F1D7E7", "lp": "#FBF1F7", "ls": "#B474A0", "dg": "#281823", "dp": "#2D1F28", "ds": "#A86893", "lightAll": "#F1D7E7 · #FBF1F7 · #F1D7E7 · #F7E6F1 · #B474A0", "darkAll": "#281823 · #2D1F28 · #1C1118 · #281823 · #A86893", "lightCr": "11.75 / 4.53 · 4.69 (3.85 → chip on white)", "darkCr": "12.78 / 6.02 · 5.60 (6.02)"}], "seq": [{"n": "1", "name": "Sky", "sw": "#6DB6D5", "swd": "#61A9C8"}, {"n": "2", "name": "Mauve", "sw": "#B474A0", "swd": "#A86893"}, {"n": "3", "name": "Mint", "sw": "#69BDAF", "swd": "#5CB0A2"}, {"n": "4", "name": "Lilac", "sw": "#9080C3", "swd": "#8474B6"}, {"n": "5", "name": "Moss", "sw": "#92B883", "swd": "#85AB76"}, {"n": "6", "name": "Cornflower", "sw": "#5A91C7", "swd": "#4E84BA"}, {"n": "7", "name": "Sand", "sw": "#BEAA6B", "swd": "#B19D5F"}, {"n": "8", "name": "Teal", "sw": "#279DA8", "swd": "#0F919C"}, {"n": "9", "name": "Orchid", "sw": "#C19ACF", "swd": "#B48EC2"}, {"n": "10", "name": "Sage", "sw": "#509F76", "swd": "#43926B"}, {"n": "11", "name": "Iris", "sw": "#98A8E1", "swd": "#8C9BD4"}, {"n": "12", "name": "Pear", "sw": "#8B9348", "swd": "#7F873C"}], "recipe": [{"role": "ground", "la": "L 0.925  C 0.026", "lb": "L 0.905  C 0.036", "da": "L 0.215  C 0.022", "db": "L 0.235  C 0.030"}, {"role": "pane", "la": "L 0.975  C 0.010", "lb": "L 0.968  C 0.014", "da": "L 0.240  C 0.020", "db": "L 0.260  C 0.026"}, {"role": "chatGround", "la": "L 0.925  C 0.026", "lb": "L 0.905  C 0.036", "da": "L 0.180  C 0.016", "db": "L 0.195  C 0.022"}, {"role": "toolOutputFill", "la": "L 0.955  C 0.016", "lb": "L 0.942  C 0.022", "da": "L 0.215  C 0.022", "db": "L 0.235  C 0.030"}, {"role": "swatch", "la": "L 0.740  C 0.085", "lb": "L 0.640  C 0.100", "da": "L 0.700  C 0.085", "db": "L 0.600  C 0.100"}]};
+  }
+}
+</script>
+</body>
+</html>
