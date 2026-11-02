@@ -1,4 +1,5 @@
 import Foundation
+import DuoControl
 
 /// Registers the deck preview with split view (Duo Decks P3). Called once at app start, from
 /// `DuoApp.init` (Sources/Duo/DuoApp.swift), outside `Split/`.
@@ -13,6 +14,7 @@ public enum DeckPreviewRegistration {
     nonisolated(unsafe) public static var frontmatterOf: (@Sendable (String) -> [String: String])?
 
     @Sendable public static func test(_ file: String, _ frontmatter: [String: String]) -> Bool {
+        guard DeckFeature.enabled else { return false }   // Duo Decks off: plain Markdown (DL-307)
         let md = ["md", "markdown"].contains((file as NSString).pathExtension.lowercased())
         guard md else { return false }
         if !frontmatter.isEmpty { return frontmatter["type"] == "deck" }

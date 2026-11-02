@@ -13,6 +13,8 @@ function post(kind, body) {
 
 // `type: deck` in the first frontmatter block.
 export function isDeckDoc(state) {
+  // Duo Decks off in this build (DL-307): Duo sets this at document start, and a deck is plain Markdown.
+  if (typeof window !== "undefined" && window.__duoDecksOff) return false;
   const d = state.doc;
   if (d.lines < 2 || d.line(1).text.trim() !== "---") return false;
   for (let i = 2; i <= Math.min(d.lines, 40); i++) {

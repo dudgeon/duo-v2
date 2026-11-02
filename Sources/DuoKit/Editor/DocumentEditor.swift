@@ -1,4 +1,5 @@
 import AppKit
+import DuoControl
 import SwiftUI
 import WebKit
 
@@ -130,6 +131,11 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         // The chords the menus own, from the command registry (DL-167 step 6): the page keeps none of its own.
         webView.configuration.userContentController.addUserScript(WKUserScript(
             source: EditorChords.script(), injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        // Duo Decks off (DL-307): the page treats a `type: deck` note as plain Markdown (no chips, picker or anchors).
+        if !DeckFeature.enabled {
+            webView.configuration.userContentController.addUserScript(WKUserScript(
+                source: "window.__duoDecksOff = true;", injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        }
         webView.navigationDelegate = self
         webView.setValue(false, forKey: "drawsBackground")
         loadPage()

@@ -1,4 +1,5 @@
 import SwiftUI
+import DuoControl
 
 // Inside a project (handoff §3.3). Targets: screens/project.html, flow-zoom-2.html, flow-zoom-3.html.
 
@@ -1031,7 +1032,7 @@ struct NewItemsMenu: View {
     var body: some View {
         Button("New Markdown File") { model.newMarkdownFile(near: near) }
         Button("New Folder") { model.newFolder(near: near) }
-        Button("New Deck…") { model.showNewDeck() }   // action: deck new
+        if DeckFeature.enabled { Button("New Deck…") { model.showNewDeck() } }   // action: deck new; absent with Decks off (DL-307)
         Menu("New from Template") {
             let templates = model.templates
             if templates.isEmpty {
@@ -1085,7 +1086,7 @@ struct FileMenu: View {
         if !outside {
             Divider()
             NewItemsMenu(near: path)
-            if !isFolder, path.lowercased().hasSuffix(".pptx") {
+            if DeckFeature.enabled, !isFolder, path.lowercased().hasSuffix(".pptx") {   // absent with Decks off (DL-307)
                 Button("Convert to Duo Deck…") { model.showConvertDeck(path) }   // action: deck import
             }
             Divider()

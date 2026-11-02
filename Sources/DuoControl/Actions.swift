@@ -9,6 +9,9 @@ import Foundation
 public enum ActionFamily: String, CaseIterable, Sendable {
     case app, view, split, projects, sessions, director, files, repo, docs, review, html, slides, deck, send, search, setup
 
+    /// The families `duo2 help`, the primer and the skill show: `deck` only while Duo Decks is on (DeckFeature, DL-307).
+    public static var shown: [ActionFamily] { allCases.filter { $0 != .deck || DeckFeature.enabled } }
+
     public var title: String {
         switch self {
         case .app: "Duo"
@@ -600,6 +603,12 @@ extension DuoAction {
     /// Old spellings keep working.
     public static func resolve(_ args: [String]) -> (DuoAction, rest: [String])? {
         // Three-word verbs first ("deck template build"): the deck template family.
+        guard let found = resolveAll(args) else { return nil }
+        // Duo Decks off (DL-307): its verbs are unknown, as before they existed.
+        return found.0.family == .deck && !DeckFeature.enabled ? nil : found
+    }
+
+    static func resolveAll(_ args: [String]) -> (DuoAction, rest: [String])? {
         if args.count >= 3, let id = ActionID(rawValue: args.prefix(3).joined(separator: " ")) { return (byID[id]!, Array(args.dropFirst(3))) }
         let words = args.prefix(2).map { aliases[$0] ?? $0 }
         if words.count == 2, let id = ActionID(rawValue: words.joined(separator: " ")) { return (byID[id]!, Array(args.dropFirst(2))) }
@@ -707,13 +716,13 @@ public struct Invocation: Sendable {
 
 extension DuoAction {
     public static func help(family: String? = nil) -> String {
-        if let family, let f = ActionFamily.allCases.first(where: { $0.rawValue == family || $0.title.lowercased() == family.lowercased() }) {
+        if let family, let f = ActionFamily.shown.first(where: { $0.rawValue == family || $0.title.lowercased() == family.lowercased() }) {
             return "\(f.title)\n\n" + table(all.filter { $0.family == f }) + "\nEvery verb takes --json.\n"
         }
         var out = "duo2 talks to the Duo app: everything a person can do in Duo, Claude can do here.\n\nEveryday:\n"
-        out += table(all.filter(\.everyday))
+        out += table(all.filter { $0.everyday && ActionFamily.shown.contains($0.family) })
         out += "\nAll verbs, by family (duo2 help <family>):\n"
-        out += ActionFamily.allCases.map { f in
+        out += ActionFamily.shown.map { f in
             "  \(f.rawValue.padding(toLength: 9, withPad: " ", startingAt: 0)) " + all.filter { $0.family == f }.map(\.verb).joined(separator: ", ")
         }.joined(separator: "\n")
         return out + "\n\nEvery verb takes --json. Errors go to stderr with a non-zero exit.\n"
@@ -753,7 +762,7 @@ extension DuoAction {
     public static func primer(sessionID: String? = nil, cli: String? = nil) -> String {
         var text = "You are running inside Duo, a Mac app that organizes the user's Claude Code sessions into projects and shows their documents. "
             + "The `duo2` command talks to Duo; it is on PATH and needs no approval. Everything the user can do in Duo, you can do with it "
-            + "(`duo2 help`, then `duo2 help <family>`: " + ActionFamily.allCases.map(\.rawValue).joined(separator: ", ") + "). Everyday:\n"
+            + "(`duo2 help`, then `duo2 help <family>`: " + ActionFamily.shown.map(\.rawValue).joined(separator: ", ") + "). Everyday:\n"
             + all.filter(\.everyday).map { "- `\($0.usage)`: \($0.summary)" }.joined(separator: "\n")
             + "\nFor questions across projects, or about meaning rather than exact text, run `duo2 search \"<question>\"` before grep or reading folders. "
             + "Read only the lines it points to. Its scores only compare results within one search. Use `--exact` for identifiers."

@@ -63,6 +63,7 @@ func repoFixture() throws -> Fixture {
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "deck" { return try deckChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "deckpreview" { return try deckP3aChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "deckviewer" { return try deckP3bChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "deckhidden" { return try deckHiddenChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "tabs" { return try tabOrderChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "newsession" { return try newSessionChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "newsessionrow" { return try newSessionRowChecks() }
@@ -2477,6 +2478,7 @@ func repoFixture() throws -> Fixture {
     try deckChecks()
     try deckP3aChecks()
     try deckP3bChecks()
+    try deckHiddenChecks()
 
     print("a Word document as Markdown (ENH-14, DL-123)")
     let wordDocs = repoRoot().appending(path: "Spikes/DocxToMarkdown/docs")

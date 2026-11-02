@@ -1,4 +1,5 @@
 import DuoDeck
+import DuoControl
 import Foundation
 
 /// The deck's editor pieces (DL-295, DL-296, DL-303): the page draws the slide chip, the template picker and the
@@ -49,7 +50,7 @@ extension EditorController {
     func handleDeck(_ kind: EditorMessage, _ body: [String: Any]) {
         switch kind {
         case .deckDoc:
-            isDeck = body["deck"] as? Bool == true
+            isDeck = DeckFeature.enabled && body["deck"] as? Bool == true   // the page also reads __duoDecksOff (DL-307)
             onStateChange?()
             guard isDeck else { return }
             currentText { [weak self] text in

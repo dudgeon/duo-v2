@@ -1,4 +1,5 @@
 import AppKit
+import DuoControl
 import SwiftUI
 
 /// Every Duo chord in one table (LR-60). Menus are generated from it, so a chord is changed in
@@ -203,11 +204,12 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .closeSession: model.keyboardInRightPane ? model.closableRightTab != nil : model.visibleTerminal != nil
         case .previewInSplitView: model.canTogglePreviewInSplitView
         case .previousSplitSide, .nextSplitSide: model.showingSplit != nil
-        case .newMarkdown, .newFolder, .newDeck: model.terminalsMode == .live && model.projectFolder != nil
+        case .newDeck: DeckFeature.enabled && model.terminalsMode == .live && model.projectFolder != nil
+        case .newMarkdown, .newFolder: model.terminalsMode == .live && model.projectFolder != nil
         case .save: model.terminalsMode == .live && model.editorOpened && model.editorIfLoaded?.url != nil
         case .bold, .italic, .strikethrough, .code, .link, .heading1, .heading2, .heading3, .task, .body, .quote, .bullet, .numbered, .codeBlock, .addProperties, .tableInsert: model.webFocus == .editor
         case .toggleFormatBar: true
-        case .newSlide: model.webFocus == .editor && (model.editorIfLoaded?.isDeck ?? false)
+        case .newSlide: DeckFeature.enabled && model.webFocus == .editor && (model.editorIfLoaded?.isDeck ?? false)
         case .tableRowAbove, .tableRowBelow, .tableColumnBefore, .tableColumnAfter, .tableDeleteRow, .tableDeleteColumn,
              .tableAlignLeft, .tableAlignCenter, .tableAlignRight: model.webFocus == .editor && (model.editorIfLoaded?.inTable ?? false)
         case .newTask: model.terminalsMode == .live && model.currentProject.map { !$0.isFolderOnly } == true
@@ -354,7 +356,7 @@ public struct DuoCommands: Commands {
             item(.newBrowserTab)
             Divider()
             item(.newMarkdown)
-            item(.newDeck)
+            if DeckFeature.enabled { item(.newDeck) }   // Duo Decks off: absent (DL-307)
             item(.newFolder)
             item(.newTask)
             item(.newProject)
@@ -393,7 +395,7 @@ public struct DuoCommands: Commands {
             item(.task)
             item(.codeBlock)
             Divider()
-            item(.newSlide)   // enabled only in a deck (DL-295)
+            if DeckFeature.enabled { item(.newSlide) }   // enabled only in a deck (DL-295); absent with Decks off (DL-307)
             // Tables (DL-113): edited as Markdown; the bar over a table has the same items.
             Menu("Table") {
                 item(.tableInsert)
