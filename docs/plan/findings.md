@@ -5265,3 +5265,27 @@ Read from `/Users/geoff/repos/duo`: `docs/prd/enh-191-multi-window.md`, tasks.md
   - The git watcher was last-armer-wins.
 - **CLI routing in v1:** `--window N`, then `DUO_WINDOW` stamped on each terminal, then the primary (lowest-id) window. v2 shouldn't stamp the window into a session's environment, because a session's project can move between windows. It resolves the window from the session each time (Q-430).
 - The first round cited lessons 31 and 32 of `legacy-duo-product-review.md` for windows, but those are about the accessibility tree. The window lines are 36, 81, 192, 229 and 235.
+## F-534 · An open document follows Claude's edits on disk; a wholesale rewrite gets no banner (power-user-audit, 2026-11-02; DL-77, LR-32)
+
+A power user's v1 report (a doc open in the editor didn't pick up Claude's edits; v1 0.9.1 added a diff banner for bigger changes), tested on main `1f974b71` in an isolated Duo. Detail in `docs/research/power-user-v1-feedback.md`.
+- A small edit written in place, and one written by temp file and rename, reach the open editor within 3 s, highlighted as Claude's. No banner.
+- A rewrite of every line of a clean document also reloads silently with the highlight (`power-user-v1-feedback/large-change-reload.png`). v1's "most of this document was replaced" banner (LR-32: Keep mine, Load new, View diff) has no v2 counterpart. DL-77 dropped the banner on every dirty change, but nothing replaced the one for a big clean change either.
+- With unsaved edits: a change on other lines merges silently; the same line shows the Keep Mine / Use Theirs bar, pauses saving and keeps `conflict-mine` and `conflict-theirs` in history (`conflict-bar.png`).
+- Quirk, not chased: after a clean outside reload, `duo2 doc status` says "open in Duo with unsaved edits" and keeps saying it, while the file on disk isn't rewritten (mtime unchanged after 9 s). The highlighted change probably counts as dirty. Claude reads that line to decide whether to touch the file, so it can mislead.
+- Not tested: a file over a few thousand lines, or an edit during an IME composition.
+
+## F-535 · Where a web link goes (power-user-audit, 2026-11-02; DL-3, DL-99, DL-124)
+
+- By default Duo's browser takes only files and localhost; every other `http(s)` link goes to the system browser. The allow list (`allowed-sites.txt`, Settings › Browser › Edit…) is empty on a new install. This is already what the power user asked for and what Geoff proposed to her.
+- Notes, tasks, chat and local HTML pages all use `AppModel.openLink`; the terminal uses SwiftTerm's `openDefaultLink` (system browser, even for an allowed host).
+- Live: `duo2 browser open https://example.com` makes a tab holding the page ("isn't on the allow list") with Allow and Open in Browser; nothing loads.
+- Gap: no "never use Duo's browser" switch, and the two routes disagree for an allowed host (note link: a Duo tab; terminal link: the system browser). No click was made on a real link (it would launch the system browser and take focus).
+
+## F-536 · A 129 s dictation runs clean into the document and the composer (power-user-audit, 2026-11-02; DL-260, DL-261)
+
+The 90 s blank/terminal-error report (v1, unresolved) isn't reproduced. `say` made 129 s of speech (350 words, 25 sentences); `duo2 voice file` and the harness's `voice-file:` fed it through the real `VoiceInput` and SpeechAnalyzer at the pace spoken (`DUO_VOICE_FILE_REALTIME=1`).
+- Document (`--doc`): all 25 phrases landed, 674 recognizer results, state back to off, no error, RSS 229 MB falling to about 120 MB.
+- Composer: text ends at "number 25", state idle, RSS 236 MB falling to about 213 MB, screen intact.
+- Not exercised: a real microphone (AVAudioEngine, device or route changes, Bluetooth), the terminal prompt target, a person's pauses (the only timer is the 15 s "nothing heard" stop), and Apple's older recognizer (used only where SpeechTranscriber has no model for the language), which has its own time limit. Geoff's question to her (OS transcription or something else, and which target) was unanswered.
+- A hands-on 3-minute run on Geoff's own Mac is ENH-317.
+- `duo2 voice file` blocks until the file ends; killing the CLI doesn't stop the dictation (a second call said "already on").
