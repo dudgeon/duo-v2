@@ -5347,3 +5347,52 @@ A publish whose `files` included `audio/*.m4a` was refused whole: "extension .m4
 - Save wrote `answers/q99-when` with every field (read back with ArtifactData, then deleted).
 - Copy decisions put the full text on the macOS clipboard.
 - **The first send to Claude raises claude.ai's own consent dialog** ("Let this artifact send messages to your Claude session?"). The answer is already saved to the db before it appears. Geoff answers it once per page; the worker closed it without choosing, so the comment wasn't sent.
+
+
+## F-548 · Multi-window slice 0 as built: one AppCore, a model per window, nothing visible changes (2026-11-02; DL-311, F-537, C-146)
+
+Built on `build/multi-window-slice0` from main `2c9a2bdb`, as `docs/research/multi-window-2026-11.md` §3 slice 0 planned. Still one window.
+
+- **The cut.** `DuoKit/Model/AppCore.swift` holds 73 stored properties that were `AppModel`'s, plus the split tabs by project (`SplitTabs`, shared by each window's `SplitState`) and the one `VoiceInput`.
+  - App-wide: the fixture, live folders, terminals, chats, the timers, `seen`, `notified`, keep-running, parked tabs, detached forks, restore bookkeeping, repos, issues, conversions, settings flags.
+  - Per project: open documents, last console and right tabs, tab order, shells and their titles, web tabs, the tree's open folders and browse roots, source-mode documents.
+  - `AppModel` keeps the rest and forwards each moved name (`get`/`set`/`_modify { yield &core.x }`), so no call site changed. `@Observable` tracks through the forwarders because `AppCore` is observable itself.
+  - Left per window on purpose: the fixture-mode extras (`fixtureChats`, `fixtureTerminals`, `fixtureEnded` and the rest, set per capture by the harness), view caches (`propertyCorpus`, `baseOrderCache`), `markdownMarkup`, `mapSort`/`homeView`, and `lastSent`/`lastDrafted`/`lastInterview`.
+  - `AppModel(core:)` makes a window's model; `AppModel(fixture:)` still makes a model with a core of its own, so the checks and the harness are unchanged.
+- **The loop runs once** (C-146). `AppCore.startLoop` starts one 2 s timer and one minute clock. Each tick runs `refreshLive` and the trust scan through `core.primary`. A `refreshLive` called on another window's model goes to the primary.
+  - After the snapshot, the app-wide passes run once: notify, director pruning, review delivery, archive, GitIgnore, moving files, restore.
+  - Each window then does its own part: the seen mark for its visible session, map order, its editor's note context, repo and issues for the project it shows, its Home tab.
+  - `followSessionChanges`, shell promotion and `closeShell` move every window's console or Home tab with the session.
+  - The bodies of the passes still live in `AppModel` extensions and run on the primary's model, so they read window 1's state (C-150).
+- **Counted.** `AppCore.passCounts` counts each pass. `core.snapshotSource` lets the checks hand a refresh a stand-in snapshot, so it touches no real folder.
+  - `DUO_CHECKS=core` (also in the full run, 27 checks) builds two models on one core and checks one scan, one snapshot, and one each of notify, prune, deliver, GitIgnore and move per refresh. It checks the window part twice, the loop started once from two windows, at most one archive pass a minute, and that per-window state stays apart while per-project memory is shared.
+- **Windows by identity.** `AppModel.window` (weak, set in `MainWindow.show`) replaces the eight product `title == "Duo"` lookups: DuoAlert (now `present(_:from:)`), pane focus, Full Screen, the List's filter focus, `paneWindow`, undo in Organize and in `duo2 undo`, and the walk.
+  - The harness's lookups (17 lines) and ChatPerf's 3 go through `FixtureHarness.window(n)`.
+  - Window 1 keeps the title "Duo", so scripts and captures that look for it still work.
+- **Questions.** `DuoQuestion.target` is `.any`, `.window(id)` or `.project(name)`. `SheetCenter.current(for:)` gives a window only its own question, and `sheetIsUp` and `SheetOverlay` use it.
+  - Every question asked from an `AppModel` extension now passes `from: self`.
+  - Launch questions (install, appearance, GitIgnore, voice's first press) stay `.any`: they show in the key window's model, else the primary's.
+- **Keys and menus.** `PaneKeyMonitor` and `ChatKeys` stay one monitor for the app, and each finds the model of the event's window (`core.model(for:)`, `model(forWindowNumber:)`). `DuoCommands` acts on `core.keyModel`; `MainWindow` sets `core.keyWindowID` on `didBecomeKey`.
+- **C-44 and C-43.** `PaneMotion` counts slides per window and posts its end with the window as the object. A slot lays out only for its own window's slide; a hidden terminal still waits for every window.
+  - `SlotView.show` removes the view it held only while it is still that slot's subview.
+- **`duo2`.** `ControlServer` calls `core.handle`, which hands the request to the primary's `handle`, as before.
+- **Proof, same captures as main.** `scripts/check-ui.sh`'s six states are pixel-identical to main `2c9a2bdb`'s (0 differing pixels each, 2880 × 1722, compared pixel by pixel).
+- **Proof, same captures and checks as main.** Main is `2c9a2bdb`, built from a scratch export; each comparison is pixel by pixel.
+  - `scripts/check-ui.sh`'s six states are pixel-identical to main's (0 differing pixels each, 2880 × 1722).
+  - `scripts/check-split.sh` passes 23/23, as main does. 17 of its 18 captures are pixel-identical to main's.
+  - The 18th, `close` (Close Split View at 1440 × 900), sometimes catches the HTML page before WebKit draws it. Three runs of each build put one blank page on main and one on the branch; the others match.
+  - DuoChecks: 5,479 passed, 0 failed, with `DUO_CHECKS=core`'s 27 checks in the full run.
+  - `check-background.sh` (merge-gate's ui-chat-background): 144 passed. The screen was locked, so its front-app half proves only that much.
+  - `check-context.sh`: 7/7.
+  - `duo2 help --markdown` is byte-identical to `docs/cli/duo2.md`.
+  - `check-scale.sh` ran under `timing-lock.sh`, the branch then main in one exclusive hold. Both had no stalls (none of 1 s, none of 250 ms) and restored their tabs. Mean CPU after 15 s: branch 11.1%, main 12.9%. Both are over the 10% budget: F-549.
+
+## F-549 · check-scale's idle CPU is over budget on main, too (2026-11-02; multi-window slice 0)
+
+While proving slice 0 (F-548), `scripts/check-scale.sh` ran on main `2c9a2bdb`'s build twice under the exclusive lock, an hour apart.
+- **Mean CPU after 15 s:** 12.7% and then 12.9%, over the 10% budget, so the check fails on main.
+- **Stalls:** none of 1 s and none of 250 ms.
+- **The slice 0 branch,** in the same hold, measured 11.1%.
+- **Earlier runs** recorded 1.4% to 4.4% (F-297: 1.4%; F-308: 4.4%).
+
+The cause isn't known. The per-second samples on both builds have several 14% to 21% seconds after the settle, which points to load on the Mac (other sessions' Claude processes run outside the lock) or a change on main since. Not investigated here. Re-run check-scale on a quiet Mac, then bisect main if it still fails.
