@@ -499,7 +499,12 @@ load(Math.min(store.get("at", 0), CH.length - 1));
 (async () => {
   try { db = await window.claude?.use?.("db"); } catch (e) { db = null; }
   if (!db) return;
-  db.collection("answers").onSnapshot(s => { s.docs.forEach(d => { answers[d.id] = d.data(); }); store.set("answers", answers); renderAside(); }, () => {});
+  db.collection("answers").onSnapshot(s => {
+    // The db is the truth whenever there is one: an answer deleted there, or kept only in this browser, must not come back.
+    const seen = new Set(); s.docs.forEach(d => { answers[d.id] = d.data(); seen.add(d.id); });
+    for (const k of Object.keys(answers)) if (!seen.has(k)) { delete answers[k]; delete drafts[k]; }
+    for (const k of Object.keys(drafts)) if (!seen.has(k) && k !== "final") delete drafts[k];
+    store.set("answers", answers); renderAside(); }, () => {});
 })();
 window.__dw = { load, play, pause, playOption, summary, get cur() { return cur; }, get mode() { return mode; }, get t() { return clock?.t; } };
 })();
