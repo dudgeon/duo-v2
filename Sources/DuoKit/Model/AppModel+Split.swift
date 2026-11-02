@@ -199,7 +199,9 @@ extension AppModel {
 
     /// `duo2 split` with nothing else: the sides, active side, ratio, folded, and the sidebar.
     public func splitReport() -> String {
-        let panes = splits.paneHost.map { $0.arrangedSubviews.map { Int($0.frame.width) } } ?? []
+        // A hidden pane reads 0: a collapsed NSSplitView pane keeps its old frame (F-9), which made a folded
+        // sidebar look shown in this report (F-531).
+        let panes = splits.paneHost.map { h in h.arrangedSubviews.indices.map { h.isHidden(paneAt: $0) ? 0 : Int(h.arrangedSubviews[$0].frame.width) } } ?? []
         guard let t = showingSplit else { return "no split view showing\npanes: \(panes)\nsidebar hidden: \(leftCollapsedProject)\nroom taken: \(splits.taken != nil)" }
         let name = { (r: SplitRole) in r == .source ? t.source : (t.with ?? t.kind.sideName) }
         let left = name(t.role(at: .left)), right = name(t.role(at: .right))
