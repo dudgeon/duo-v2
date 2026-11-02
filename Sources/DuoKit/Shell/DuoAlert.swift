@@ -6,14 +6,16 @@ import AppKit
 /// (F-54). A sheet blocks only the window. Sheets queue: a second waits for the first.
 @MainActor
 public enum DuoAlert {
-    public static func present(_ alert: NSAlert, then: @escaping @MainActor (NSApplication.ModalResponse) -> Void = { _ in }) {
-        guard let window = NSApp.windows.first(where: { $0.title == "Duo" && $0.isVisible }) else {
+    /// On the asking model's window; with none given, the key window's, else the primary's (multi-window slice 0).
+    public static func present(_ alert: NSAlert, from model: AppModel? = nil, then: @escaping @MainActor (NSApplication.ModalResponse) -> Void = { _ in }) {
+        let core = model?.core ?? AppCore.current
+        guard let window = (model?.window ?? core?.keyModel?.window).flatMap({ $0.isVisible ? $0 : nil }) else {
             // No window yet (launch): try again shortly rather than block.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { MainActor.assumeIsolated { present(alert, then: then) } }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { MainActor.assumeIsolated { present(alert, from: model, then: then) } }
             return
         }
         if window.attachedSheet != nil {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { MainActor.assumeIsolated { present(alert, then: then) } }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { MainActor.assumeIsolated { present(alert, from: model, then: then) } }
             return
         }
         alert.beginSheetModal(for: window) { r in MainActor.assumeIsolated { then(r) } }

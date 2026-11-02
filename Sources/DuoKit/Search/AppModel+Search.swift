@@ -400,7 +400,7 @@ extension AppModel {
     public func showSearchIndexDetails() {
         if case .unreadable(let e) = search.phase {
             let a = NSAlert(); a.messageText = "Search can’t read its index"; a.informativeText = "\(SearchPaths.index.path)\n\n\(e)"
-            DuoAlert.present(a)
+            DuoAlert.present(a, from: self)
         }
     }
 

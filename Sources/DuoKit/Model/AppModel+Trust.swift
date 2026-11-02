@@ -101,7 +101,7 @@ extension AppModel {
             .init(label: "Cancel", isCancel: true) { done?("cancelled") },
             .init(label: "Trust Folder", isDefault: true) { [weak self] in self?.writeTrust(key, source: source, done: done) },
         ]
-        SheetCenter.shared.ask(q)
+        SheetCenter.shared.ask(from: self, q)
     }
 
     /// The write, after the sheet's yes.

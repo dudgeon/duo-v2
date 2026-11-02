@@ -645,16 +645,21 @@ struct TerminalSlot: NSViewRepresentable {
         override init(frame: NSRect) {
             super.init(frame: frame)
             clipsToBounds = true   // a terminal held at its size while a pane slides (DL-129)
-            NotificationCenter.default.addObserver(self, selector: #selector(paneMotionEnded), name: PaneMotion.endedNotification, object: nil)
+            NotificationCenter.default.addObserver(self, selector: #selector(paneMotionEnded(_:)), name: PaneMotion.endedNotification, object: nil)
         }
 
         required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
-        @objc private func paneMotionEnded() { needsLayout = true }
+        /// A slide ended: in this slot's window (C-44), or with no window named.
+        @objc private func paneMotionEnded(_ note: Notification) {
+            guard note.object == nil || note.object as AnyObject? === window else { return }
+            needsLayout = true
+        }
 
         func show(_ view: NSView) {
             guard view !== current else { return }
-            current?.removeFromSuperview()
+            // Only a view this slot still holds (C-43): one another slot (another window's) took stays where it is.
+            if let current, current.superview === self { current.removeFromSuperview() }
             view.removeFromSuperview()
             addSubview(view)
             addSubview(mic, positioned: .above, relativeTo: view)
@@ -672,7 +677,7 @@ struct TerminalSlot: NSViewRepresentable {
             // The terminal fills the slot, inset like the targets' console body. GuardedTerminalView
             // enforces the 8×1 floor if the slot gets smaller (LR-14). While a pane slides (DL-129)
             // it keeps its size, clipped, and takes the new one when the slide ends.
-            guard PaneMotion.running == 0 || current?.frame.isEmpty != false else { return }
+            guard PaneMotion.running(in: window) == 0 || current?.frame.isEmpty != false else { return }
             // Only a terminal this slot still holds: one another slot took keeps that slot's size.
             // Sizing it from here too made two slots resize one terminal by turns, and each size
             // made Claude Code redraw (F-208).

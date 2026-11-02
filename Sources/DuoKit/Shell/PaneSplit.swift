@@ -348,7 +348,8 @@ final class DuoSplitView: NSSplitView {
         let start = views.map { isSubviewCollapsed($0) ? 0 : $0.frame.width }
         let duration = DuoMotionToken.paneToggle.duration
         isAnimatingPane = true
-        PaneMotion.began()
+        let motionWindow = window
+        PaneMotion.began(in: motionWindow)
         let began = CACurrentMediaTime()
         func step(_ t: CGFloat) {
             let e = t < 0.5 ? 2 * t * t : 1 - pow(-2 * t + 2, 2) / 2   // ease-in-out
@@ -369,7 +370,7 @@ final class DuoSplitView: NSSplitView {
             queuedCollapse.removeAll()
             defer { for (j, c) in queued.sorted(by: { $0.key < $1.key }) { setCollapsed(c, paneAt: j) } }
             if collapsed { snapCollapsed(true, paneAt: i, saving: false) }
-            PaneMotion.ended()
+            PaneMotion.ended(in: motionWindow)
         }
         tick()
     }
@@ -415,15 +416,27 @@ public enum PaneWidths {
 }
 
 /// A pane sliding in or out (DL-129). Terminals hold their size while it runs and take the new one
-/// when it ends, so a PTY is resized once (LR-14).
+/// when it ends, so a PTY is resized once (LR-14). Counted per window (C-44): a slide in one window
+/// doesn't hold another's terminals, and its end is posted with that window as the object.
 @MainActor public enum PaneMotion {
     public static let endedNotification = Notification.Name("DuoPaneMotionEnded")
     /// Off for captures, which must not catch a pane mid-slide.
     public static var enabled = true
-    public private(set) static var running = 0
-    static func began() { running += 1 }
-    static func ended() {
-        running = max(0, running - 1)
-        if running == 0 { NotificationCenter.default.post(name: endedNotification, object: nil) }
+    /// Slides running in each window, by the window's identity.
+    private static var byWindow: [ObjectIdentifier: Int] = [:]
+    /// Slides running in any window (a terminal out of every window waits for them all).
+    public static var running: Int { byWindow.values.reduce(0, +) }
+    /// Slides running in `window`.
+    public static func running(in window: NSWindow?) -> Int { window.map { byWindow[ObjectIdentifier($0)] ?? 0 } ?? running }
+    static func began(in window: NSWindow?) {
+        guard let window else { return }
+        byWindow[ObjectIdentifier(window), default: 0] += 1
+    }
+    static func ended(in window: NSWindow?) {
+        guard let window else { return }
+        let id = ObjectIdentifier(window)
+        let n = max(0, (byWindow[id] ?? 0) - 1)
+        byWindow[id] = n == 0 ? nil : n
+        if n == 0 { NotificationCenter.default.post(name: endedNotification, object: window) }
     }
 }

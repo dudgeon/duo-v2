@@ -301,7 +301,7 @@ extension AppModel {
     /// Runs a verb, reporting a failure the way macOS does.
     func run(_ body: () throws -> Void) {
         do { try body() } catch {
-            DuoAlert.present(NSAlert(error: error))
+            DuoAlert.present(NSAlert(error: error), from: self)
         }
     }
 

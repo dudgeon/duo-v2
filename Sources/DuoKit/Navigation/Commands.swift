@@ -336,9 +336,12 @@ public enum DuoCommand: String, CaseIterable, Sendable {
 
 /// The Go menu and the sidebar item in View, generated from `DuoCommand`.
 public struct DuoCommands: Commands {
-    let model: AppModel
+    /// The model the app made the menus with; they act on the key window's (multi-window slice 0).
+    let primary: AppModel
+    /// The key window's model, else the primary's.
+    var model: AppModel { primary.core.keyModel ?? primary }
 
-    public init(model: AppModel) { self.model = model }
+    public init(model: AppModel) { self.primary = model }
 
     public var body: some Commands {
         // The standard About panel, with the third-party notices as its credits (DL-176, C-82).
@@ -471,7 +474,7 @@ public struct DuoCommands: Commands {
             Divider()
             // The system's item, made here: AppKit's own isn't added to a SwiftUI View menu.
             Button(model.fullScreen ? "Exit Full Screen" : "Enter Full Screen") {
-                (NSApp.windows.first { $0.title == "Duo" } ?? NSApp.keyWindow)?.toggleFullScreen(nil)
+                (model.window ?? NSApp.keyWindow)?.toggleFullScreen(nil)
             }
             .keyboardShortcut("f", modifiers: [.command, .control])
         }

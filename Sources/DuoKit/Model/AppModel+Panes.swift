@@ -93,7 +93,7 @@ extension AppModel {
     }
 
     /// The main window; none in DuoChecks, which has no application.
-    var paneWindow: NSWindow? { NSApp == nil ? nil : NSApp.windows.first { $0.title == "Duo" } }
+    var paneWindow: NSWindow? { window }
 
     /// Moves the keyboard into `pane`: a terminal, the chat's composer, the editor or a page; the
     /// panes with no keyboard navigation yet just let go of the old responder.

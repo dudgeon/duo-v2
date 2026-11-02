@@ -54,7 +54,7 @@ enum ChatPerf {
             func whenLoaded(_ tries: Int) {
                 guard c.log.items.isEmpty, tries < 400 else {
                     let loaded = CACurrentMediaTime()
-                    let window = NSApp.windows.first { $0.title == "Duo" }
+                    let window = FixtureHarness.window()
                     window?.contentView?.layoutSubtreeIfNeeded()
                     window?.displayIfNeeded()
                     let drawn = CACurrentMediaTime()
@@ -103,7 +103,7 @@ enum ChatPerf {
                 if depth < 14 { for s in v.subviews where count(s) >= 8 { walk(s, depth + 1, &out) } }
             }
             var out: [String] = []
-            if let root = NSApp.windows.first(where: { $0.title == "Duo" })?.contentView { walk(root, 0, &out) }
+            if let root = FixtureHarness.window()?.contentView { walk(root, 0, &out) }
             FileHandle.standardError.write(Data(("views:\n" + out.joined(separator: "\n") + "\n").utf8))
             // The chat's document, by class: what each realized row costs AppKit.
             var classes: [String: Int] = [:]
@@ -196,7 +196,7 @@ enum ChatPerf {
     /// The chat's scroll view: the one with the tallest document in Duo's window.
     static func chatScroll() -> NSScrollView? {
         func all(_ v: NSView) -> [NSScrollView] { ((v as? NSScrollView).map { [$0] } ?? []) + v.subviews.flatMap(all) }
-        guard let w = NSApp.windows.first(where: { $0.title == "Duo" }), let root = w.contentView?.superview else { return nil }
+        guard let w = FixtureHarness.window(), let root = w.contentView?.superview else { return nil }
         return all(root).filter { $0.documentView != nil && $0.frame.width > 300 }.max { ($0.documentView?.bounds.height ?? 0) < ($1.documentView?.bounds.height ?? 0) }
     }
 

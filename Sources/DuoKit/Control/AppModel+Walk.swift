@@ -25,7 +25,7 @@ extension AppModel {
         guard let steps = file.setups[id] else { return done(.fail("no setup for test '\(id)'")) }
         let ws = URL(fileURLWithPath: (file.workspace as NSString).expandingTildeInPath)
         DuoFocus.take()
-        NSApp.windows.first { $0.title == "Duo" }?.makeKeyAndOrderFront(nil)
+        window?.makeKeyAndOrderFront(nil)
         var log: [String] = []
         let start: @MainActor () -> Void = { [weak self] in
             self?.runSteps(steps[...], repo: file.repo, log: log) { lines in

@@ -70,7 +70,7 @@ extension AppModel {
             FileHandle.standardError.write(Data("question: \(title) [\(q.choices.map(\.label).joined(separator: " | "))]\n".utf8))
         }
         // After the drag has finished, as for the map's drops (F-51).
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { MainActor.assumeIsolated { SheetCenter.shared.ask(q) } }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { MainActor.assumeIsolated { SheetCenter.shared.ask(from: self, q) } }
     }
 
     /// Moves (or copies) every planned item, then keeps tabs on the moved ones and offers undo.

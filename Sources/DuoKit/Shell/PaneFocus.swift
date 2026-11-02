@@ -58,13 +58,14 @@ extension AppModel {
         guard !PaneKeyMonitor.installed else { return }
         PaneKeyMonitor.installed = true
         UserTyping.install(terminals: terminals)   // what the user typed where, for a director's guards (DL-199)
-        NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] e in
+        // One monitor for the app: each key goes to the model of the window it was typed in (multi-window slice 0).
+        NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak core = self.core] e in
             // Return on the file tree's selected file opens it; only while no text field, terminal or page holds the keys (F-348).
             if [36, 76].contains(e.keyCode), e.modifierFlags.intersection([.command, .shift, .option, .control]).isEmpty {
                 let used = MainActor.assumeIsolated { () -> Bool in
-                    guard let self, let w = e.window, w.title == "Duo", w.attachedSheet == nil, w.firstResponder === w,
-                          !self.sheetIsUp, !self.search.isOpen, !self.peekOpen, !self.idleOpen, self.renamingPath == nil else { return false }
-                    return self.openSelectedFile()
+                    guard let w = e.window, let m = core?.model(for: w), w.attachedSheet == nil, w.firstResponder === w,
+                          !m.sheetIsUp, !m.search.isOpen, !m.peekOpen, !m.idleOpen, m.renamingPath == nil else { return false }
+                    return m.openSelectedFile()
                 }
                 return used ? nil : e
             }
@@ -73,14 +74,14 @@ extension AppModel {
             let mods = e.modifierFlags.intersection([.command, .shift, .option, .control])
             if (e.keyCode == 53 && mods.isEmpty) || (e.keyCode == 0 && mods == .command) {
                 let used = MainActor.assumeIsolated { () -> Bool in
-                    guard let self, let w = e.window, w.title == "Duo", w.attachedSheet == nil, !(w.firstResponder is NSTextView),
-                          !self.sheetIsUp, !self.search.isOpen, !self.peekOpen, !self.idleOpen,
-                          let list = self.selectionListWithKeyboard else { return false }
+                    guard let w = e.window, let m = core?.model(for: w), w.attachedSheet == nil, !(w.firstResponder is NSTextView),
+                          !m.sheetIsUp, !m.search.isOpen, !m.peekOpen, !m.idleOpen,
+                          let list = m.selectionListWithKeyboard else { return false }
                     if e.keyCode == 53 {
-                        guard self.sessionSelection.list == list, !self.sessionSelection.isEmpty else { return false }
-                        self.clearSessionSelection()
+                        guard m.sessionSelection.list == list, !m.sessionSelection.isEmpty else { return false }
+                        m.clearSessionSelection()
                     } else {
-                        self.selectAllSessions(list: list)
+                        m.selectAllSessions(list: list)
                     }
                     return true
                 }
@@ -88,9 +89,9 @@ extension AppModel {
             }
             guard let forward = PaneCycle.tabCycleDirection(keyCode: e.keyCode, flags: e.modifierFlags) else { return e }
             let used = MainActor.assumeIsolated { () -> Bool in
-                guard let self, let w = e.window, w.title == "Duo", w.attachedSheet == nil,
-                      !self.sheetIsUp, !self.search.isOpen, !self.peekOpen, !self.idleOpen else { return false }
-                self.cycleTab(forward: forward)
+                guard let w = e.window, let m = core?.model(for: w), w.attachedSheet == nil,
+                      !m.sheetIsUp, !m.search.isOpen, !m.peekOpen, !m.idleOpen else { return false }
+                m.cycleTab(forward: forward)
                 return true
             }
             return used ? nil : e

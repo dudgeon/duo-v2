@@ -65,7 +65,20 @@ public struct DuoQuestion: Identifiable {
     /// The cancel button sits apart at the left, as macOS sheets put the one that dismisses
     /// (the update question's Later, DL-132 b).
     public var leadingCancel = false
+    /// The window it shows in (multi-window slice 0): the asking window, a project's, or any (the key window, else the primary).
+    public var target: QuestionTarget = .any
     public var choices: [Choice]
+}
+
+/// Which window a question belongs to. With two windows, a question drawn by every `SheetOverlay`
+/// would show (and be answerable) twice.
+public enum QuestionTarget: Equatable, Sendable {
+    /// The key window's, else the primary's: launch questions asked outside any window.
+    case any
+    /// The window that asked (its model's `windowID`).
+    case window(ObjectIdentifier)
+    /// The window showing this project, else as `.any`.
+    case project(String)
 }
 
 /// Brings Duo forward, unless this instance is isolated (C-28, F-113): a scripted instance with
@@ -117,6 +130,21 @@ public struct DuoQuestion: Identifiable {
     public func ask(_ q: DuoQuestion) {
         queue.append(q)
         DuoFocus.take()
+    }
+
+    /// Asks in the window `model` draws.
+    public func ask(from model: AppModel, _ q: DuoQuestion) {
+        var q = q
+        if let id = model.windowID { q.target = .window(id) }
+        ask(q)
+    }
+
+    /// The question `model`'s window shows: the queue's first, when it belongs there.
+    public func current(for model: AppModel) -> DuoQuestion? {
+        guard let q = queue.first else { return nil }
+        // A model outside any core's window list (a check's) shows its questions itself.
+        guard let shows = model.core.model(for: q.target) else { return q }
+        return shows === model ? q : nil
     }
 
     /// Takes the current question off the queue, then runs the choice (which may ask another).
