@@ -1,0 +1,41 @@
+<style>
+#key { left: 270px; top: 24px; }
+.mw { top: 104px; width: 108px; height: 84px; }
+.mw .tb { height: 22px; font-size: 11px; padding: 0 6px; }
+.mw .tb::before { width: 6px; height: 6px; box-shadow: 9px 0 #c9cdd3, 18px 0 #c9cdd3; margin-right: 20px; }
+.mw .bd { top: 23px; }
+.mw .lp { width: 30%; padding: 6px 4px; } .mw .rp { width: 28%; padding: 6px 4px; } .mw .cn { padding: 6px 4px; }
+#n1 { left: 18px; } #n2 { left: 142px; } #n3 { left: 266px; } #n4 { left: 390px; } #n5 { left: 514px; }
+.nl { top: 196px; width: 108px; }
+#l1 { left: 18px; } #l2 { left: 142px; } #l3 { left: 266px; } #l4 { left: 390px; } #l5 { left: 514px; }
+#again { left: 142px; top: 240px; width: 108px; height: 84px; }
+#again-l { left: 262px; top: 268px; }
+#switch { left: 18px; top: 344px; display: flex; gap: 10px; align-items: center; font-size: 15px; }
+#switch .tg { width: 38px; height: 22px; border-radius: 11px; background: #1f2328; position: relative; }
+#switch .tg::after { content: ""; position: absolute; right: 3px; top: 3px; width: 16px; height: 16px; border-radius: 50%; background: #ffffff; }
+[data-state~="plain"] #n2, [data-state~="plain"] #n3, [data-state~="plain"] #n4, [data-state~="plain"] #n5 { --wg: #f3f4f6; --wp: #ffffff; --ws: transparent; }
+[data-state~="plain"] .nl:not(#l1) { opacity: 0; }
+#menu { left: 150px; top: 132px; width: 230px; }
+#menu .mi i { width: 14px; height: 14px; border-radius: 4px; display: inline-block; border: 1px solid rgba(31,35,40,.2); }
+</style>
+<div class="key" id="key" data-in="down" data-f>⌥⌘N</div>
+<div class="win mw c-none" id="n1" data-in="up" data-f><div class="tb">payments</div><div class="bd"><div class="lp"></div><div class="cn"></div><div class="rp"></div></div></div>
+<div class="win mw c-sky" id="n2" data-in="up" data-f><div class="tb">refunds <span class="sw" id="n2-sw"></span></div><div class="bd"><div class="lp"></div><div class="cn"></div><div class="rp"></div></div></div>
+<div class="win mw c-sage" id="n3" data-in="up" data-f><div class="tb">pricing <span class="sw"></span></div><div class="bd"><div class="lp"></div><div class="cn"></div><div class="rp"></div></div></div>
+<div class="win mw c-lilac" id="n4" data-in="up" data-f><div class="tb">ledger <span class="sw"></span></div><div class="bd"><div class="lp"></div><div class="cn"></div><div class="rp"></div></div></div>
+<div class="win mw c-sand" id="n5" data-in="up" data-f><div class="tb">payouts <span class="sw"></span></div><div class="bd"><div class="lp"></div><div class="cn"></div><div class="rp"></div></div></div>
+<div class="mlabel nl" id="l1" data-in="up">None · the first</div>
+<div class="mlabel nl" id="l2" data-in="up">Sky</div>
+<div class="mlabel nl" id="l3" data-in="up">Sage</div>
+<div class="mlabel nl" id="l4" data-in="up">Lilac</div>
+<div class="mlabel nl" id="l5" data-in="up">Sand</div>
+<div class="win mw c-sky" id="again" data-in="up" data-f><div class="tb">checkout <span class="sw"></span></div><div class="bd"><div class="lp"></div><div class="cn"></div><div class="rp"></div></div></div>
+<div class="s" id="again-l" data-in="right">the sixth: Sky again</div>
+<div id="switch" data-in="up" data-f><span class="tg"></span>Colour new windows automatically</div>
+<div class="menu" id="menu" data-in="scale" data-f>
+  <div class="mi"><i style="background:#ffffff"></i>None</div>
+  <div class="mi hl"><i style="background:#7FA6D9"></i>Sky</div>
+  <div class="mi"><i style="background:#7DB38E"></i>Sage</div>
+  <div class="mi"><i style="background:#A88FD0"></i>Lilac</div>
+  <div class="mi"><i style="background:#C9AE6E"></i>Sand</div>
+</div>

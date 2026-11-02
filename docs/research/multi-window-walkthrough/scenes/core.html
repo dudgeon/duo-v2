@@ -1,0 +1,42 @@
+<style>
+#model { left: 170px; top: 92px; width: 300px; height: 216px; border: 1.5px solid #1f2328; border-radius: 10px; background: #ffffff; z-index: 1; }
+#model .nm { position: absolute; left: 14px; top: 10px; font-size: 20px; line-height: 26px; font-weight: 600; transition: font-size .6s; }
+#quote { position: absolute; left: 14px; top: 40px; font: 15px/20px ui-monospace, "SF Mono", Menlo, monospace; color: #5b636d; transition: opacity .4s, left .8s, top .8s; white-space: nowrap; }
+[data-state~="app"] #model { left: 24px; top: 262px; width: 592px; height: 120px; }
+[data-state~="app"] #quote { left: 120px; top: 13px; }
+[data-state~="win"] #model { left: 24px; top: 262px; width: 290px; height: 120px; background: #DDE8F6; }
+[data-state~="win"] #quote { opacity: 0; }
+[data-state~="win"] #model .nm { font-size: 15px; }
+.band { border-radius: 10px; }
+#band-app { left: 24px; top: 24px; width: 592px; height: 104px; background: #15171b; }
+#band-proj { left: 24px; top: 142px; width: 592px; height: 104px; border: 1.5px solid #1f2328; background: #ffffff; }
+.band .nm { position: absolute; left: 14px; top: 10px; font-size: 15px; line-height: 20px; font-weight: 600; }
+#band-app .nm { color: #e6e8eb; } #band-app .nm i { color: #9aa1ab; font-style: normal; font-weight: 400; }
+#band-proj .nm i { color: #5b636d; font-style: normal; font-weight: 400; }
+#win2 { left: 326px; top: 262px; width: 290px; height: 120px; border: 1.5px solid #1f2328; border-radius: 10px; background: #DDEEE2; }
+#win2 .nm { position: absolute; left: 14px; top: 10px; font-size: 15px; font-weight: 600; }
+#win2 .s { position: absolute; left: 14px; top: 40px; width: 260px; }
+.chip { z-index: 2; width: 88px; justify-content: center; padding: 0 6px; }
+#c1 { left: 184px; top: 168px; } #c2 { left: 276px; top: 168px; } #c3 { left: 368px; top: 168px; }
+#c4 { left: 184px; top: 212px; } #c5 { left: 276px; top: 212px; } #c6 { left: 368px; top: 212px; }
+#c7 { left: 184px; top: 256px; } #c8 { left: 276px; top: 256px; } #c9 { left: 368px; top: 256px; }
+[data-state~="app"] #c1 { left: 40px; top: 66px; } [data-state~="app"] #c2 { left: 138px; top: 66px; } [data-state~="app"] #c3 { left: 236px; top: 66px; }
+[data-state~="app"] #c1, [data-state~="app"] #c2, [data-state~="app"] #c3 { background: #2b2f36; color: #e6e8eb; border-color: #2b2f36; }
+[data-state~="app"] #c4 { left: 40px; top: 318px; } [data-state~="app"] #c5 { left: 138px; top: 318px; } [data-state~="app"] #c6 { left: 236px; top: 318px; }
+[data-state~="app"] #c7 { left: 334px; top: 318px; } [data-state~="app"] #c8 { left: 432px; top: 318px; } [data-state~="app"] #c9 { left: 530px; top: 318px; }
+[data-state~="proj"] #c4 { left: 40px; top: 186px; } [data-state~="proj"] #c5 { left: 138px; top: 186px; } [data-state~="proj"] #c6 { left: 236px; top: 186px; }
+[data-state~="win"] #c7 { left: 38px; top: 318px; } [data-state~="win"] #c8 { left: 130px; top: 318px; } [data-state~="win"] #c9 { left: 222px; top: 318px; }
+</style>
+<div class="band" id="band-app" data-in="down" data-f><span class="nm">AppCore <i>· once per Duo</i></span></div>
+<div class="band" id="band-proj" data-in="down" data-f><span class="nm">Per project <i>· follows the project to any window</i></span></div>
+<div id="model" data-f><span class="nm">AppModel</span><span id="quote">“One instance per window”</span></div>
+<div id="win2" data-in="left" data-f><span class="nm">AppModel · window 2</span><span class="s">its own view, split and editors</span></div>
+<div class="chip" id="c1" data-in="scale">sessions</div>
+<div class="chip" id="c2" data-in="scale">terminals</div>
+<div class="chip" id="c3" data-in="scale">search</div>
+<div class="chip" id="c4" data-in="scale">tabs</div>
+<div class="chip" id="c5" data-in="scale">shells</div>
+<div class="chip" id="c6" data-in="scale">web tabs</div>
+<div class="chip" id="c7" data-in="scale">view</div>
+<div class="chip" id="c8" data-in="scale">split</div>
+<div class="chip" id="c9" data-in="scale">editors</div>

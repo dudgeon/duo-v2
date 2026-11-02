@@ -1,0 +1,49 @@
+<style>
+#h1 { left: 20px; top: 40px; width: 292px; height: 310px; }
+#h2 { left: 328px; top: 40px; width: 292px; height: 310px; }
+.home { width: 50%; background: #15171b; position: relative; overflow: hidden; }
+.home > div { position: absolute; inset: 0; padding: 12px 10px; display: flex; flex-direction: column; gap: 8px; transition: opacity .5s; }
+.home .live .p { font: 12px/16px ui-monospace, "SF Mono", Menlo, monospace; color: #e6e8eb; }
+.home .standin { align-items: center; justify-content: center; text-align: center; color: #e6e8eb; font-size: 13px; line-height: 18px; }
+.home .standin button { all: unset; cursor: pointer; border: 1px solid #9aa1ab; border-radius: 6px; padding: 5px 12px; font-size: 13px; color: #e6e8eb; }
+.home .chat { padding: 10px 8px; }
+.home .chat .q { align-self: flex-end; background: #2b2f36; color: #e6e8eb; border-radius: 8px; padding: 5px 8px; font-size: 11px; line-height: 15px; max-width: 85%; }
+.home .chat .a { color: #e6e8eb; font-size: 11px; line-height: 15px; }
+.home .chat .box { margin-top: auto; border: 1px solid #2b2f36; border-radius: 7px; height: 26px; }
+#h1 .standin, #h2 .live, .chat { opacity: 0; pointer-events: none; }
+[data-state~="swap"] #h1 .standin, [data-state~="swap"] #h2 .live { opacity: 1; pointer-events: auto; }
+[data-state~="swap"] #h1 .live, [data-state~="swap"] #h2 .standin { opacity: 0; pointer-events: none; }
+[data-state~="chat"] .chat { opacity: 1; } [data-state~="chat"] .live, [data-state~="chat"] .standin { opacity: 0; pointer-events: none; }
+.proj { display: none; }
+[data-state~="first"] #h2 .home, [data-state~="first"] #h2 .map { display: none; }
+[data-state~="first"] #h2 .proj { display: flex; }
+#h2 .t2 { transition: opacity .3s; }
+[data-state~="first"] #h2 .t2 { display: none; } #h2 .t3 { display: none; } [data-state~="first"] #h2 .t3 { display: inline; }
+#h1 .map, #h2 .map { grid-template-columns: 1fr; }
+#cap1 { left: 20px; top: 360px; width: 292px; } #cap2 { left: 328px; top: 360px; width: 292px; }
+</style>
+<div class="win c-none" id="h1" data-f>
+  <div class="tb">All projects · window 1</div>
+  <div class="bd">
+    <div class="home" id="home1" data-f>
+      <div class="live"><span class="p">Home</span><span class="b" style="background:#2b2f36;width:80%"></span><span class="b" style="background:#2b2f36;width:60%"></span><span class="p">› ▍</span></div>
+      <div class="standin"><span>Home is open in another window</span><button type="button" id="showback" data-tap="showback">Show Here</button></div>
+      <div class="chat"><span class="q">What needs me?</span><span class="a">Two sessions: refunds and pricing.</span><span class="box"></span></div>
+    </div>
+    <div class="map"><div class="tile">payments<i></i></div><div class="tile">refunds<i></i></div></div>
+  </div>
+</div>
+<div class="win c-none" id="h2" data-in="left" data-f>
+  <div class="tb"><span class="t2">All projects · window 2</span><span class="t3">refunds · window 2</span></div>
+  <div class="bd">
+    <div class="home" id="home2" data-f>
+      <div class="live"><span class="p">Home</span><span class="b" style="background:#2b2f36;width:80%"></span><span class="b" style="background:#2b2f36;width:60%"></span><span class="p">› ▍</span></div>
+      <div class="standin"><span>Home is open in another window</span><button type="button" id="showhere" data-tap="showhere">Show Here</button></div>
+      <div class="chat"><span class="q">Start the ledger check</span><span class="a">Started in pricing.</span><span class="box"></span></div>
+    </div>
+    <div class="map"><div class="tile">payments<i></i></div><div class="tile">refunds<i></i></div></div>
+    <div class="proj" style="flex:1"><div class="lp" style="width:36%"><span class="row sel">Refund flow</span></div><div class="cn"><span class="b" style="width:80%"></span><span class="b lit" style="width:40%"></span></div></div>
+  </div>
+</div>
+<div class="mlabel" id="cap1" data-in="up">Home's terminal lives here</div>
+<div class="mlabel" id="cap2" data-in="up">a stand-in until Q-98 D10 is drawn</div>

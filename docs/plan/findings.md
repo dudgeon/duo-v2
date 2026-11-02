@@ -5327,3 +5327,17 @@ Seen in F-539's first live capture (`docs/design/chat-mode-handoff/proof/working
 - **Cause.** On a change of content size, the feed scrolls back to the end only when it is no longer "at the bottom", and that test allows 60 pt of slack. The slack is there so that a small scroll doesn't count as leaving the end. The working line adds 32 pt (16 of gap and 16 of line), so the feed stayed where it was and the line hung under the edge for the whole turn. Streaming text that grew by less than 60 pt at a time lagged the same way.
 - **Fix** (`ChatView`'s `onScrollGeometryChange`): while following, it goes to the very end (within 1 pt) on any growth. Deciding that you scrolled away still uses the 60 pt slack. `follow` keeps F-225's limit (once per run-loop turn, at most 20 a second, then it stops following), so a feed that keeps changing size still can't loop.
 - **Proof:** the second live run's captures show the line whole, 16 pt under the card, at 5 s and at 45 s, on both versions. All of DuoChecks passes (5452 of 5452).
+
+## F-543 · The artifact host serves .mp3 but not .m4a (decision walkthrough, 2026-11-02; DL-309)
+
+A publish whose `files` included `audio/*.m4a` was refused whole: "extension .m4a is not served". The served media types are `.mp3 .wav .ogg .mp4 .webm`. The walkthrough builder writes 64 kb/s mono MP3 (`libmp3lame`); a 3-minute walkthrough with 28 clips and two JPEG captures is 2.7 MB. Supporting files published through `files` load from the page by a relative path (`audio/why.mp3`), so a page needs no `assets` capability for its own audio.
+
+## F-544 · The house voice, on lines written for a walkthrough (2026-11-02; DL-310)
+
+- **Speed:** Qwen3-TTS clone voices at an RTF of about 0.92 on this Mac, so a 3-minute walkthrough (62 lines) takes about 4 minutes of exclusive GPU, plus about 1 minute for the ASR check. The builder caches each line by its text and the voice, so an edit re-voices only the lines it changed (one line: 6 s).
+- **What the ASR check flags:** colour/color, none/nun, plain/plane and pane/pain are spelling, not errors. Record numbers voice well from `said` ("D L three oh eight" was heard as "DL308"). The one real miss: "I recommend Classic wins" came out as "classic winds… class classic". Reworded to "Classic takes over" and re-voiced, it passes.
+- **Narrated pace:** at tempo 1.1, about 3.1 words a second. A finding chapter of 6 lines (about 95 words) is 31 s, well inside the 45 s gate.
+
+## F-545 · Checking a walkthrough without a visible browser (2026-11-02)
+
+`check.mjs` and `filmstrip.mjs` in the skill drive the built page headless with `playwright-core` (the copy in `~/repos/thinking-about-risk/node_modules`, browsers cached in `~/Library/Caches/ms-playwright`, Chromium and WebKit), so nothing takes Geoff's screen. Headless Chromium plays the MP3s for real (`audio.currentTime` advances, cues fire on time, chapters chain into each other), grants clipboard read for the Copy check, and runs at 375 px. Two bugs only the moving frames showed: elements not yet shown were dimmed back to 22 % opacity by the focus rule (ghosts), and a scene's boxes overlapped while chips moved. Neither appears in end-state captures. What it can't show: the claude.ai runtime (db writes, `sendToClaude`) and iOS Safari's audio rules inside the artifact frame.

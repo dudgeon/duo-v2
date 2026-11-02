@@ -1,0 +1,26 @@
+<style>
+#wa { left: 24px; top: 30px; width: 360px; height: 250px; z-index: 2; }
+#wb { left: 256px; top: 104px; width: 360px; height: 250px; z-index: 1; transition: transform .6s cubic-bezier(.2,.7,.2,1), box-shadow .6s, opacity .45s; }
+[data-state~="front"] #wb { z-index: 3; transform: translateY(-8px); box-shadow: 0 18px 44px rgba(31,35,40,.28); }
+#wa .home { width: 34%; background: #15171b; padding: 12px 8px; display: flex; flex-direction: column; gap: 7px; }
+#tile-ref { transition: background-color .3s; }
+[data-state~="front"] #tile-ref { background: #e9ecef; }
+#dl308 { left: 24px; top: 330px; }
+#wb-cn .now { position: absolute; left: 10px; bottom: 10px; font: 12px/16px ui-monospace, "SF Mono", Menlo, monospace; color: #e6e8eb; white-space: nowrap; }
+</style>
+<div class="win c-none" id="wa" data-f>
+  <div class="tb">All projects</div>
+  <div class="bd">
+    <div class="home"><span class="b" style="background:#2b2f36;width:70%"></span><span class="b" style="background:#2b2f36;width:50%"></span><span class="b" style="background:#9aa1ab;width:30%"></span></div>
+    <div class="map"><div class="tile">payments<i></i></div><div class="tile" id="tile-ref" data-f>refunds<i></i></div><div class="tile">onboarding<i></i></div><div class="tile">pricing<i></i></div></div>
+  </div>
+</div>
+<div class="win c-none" id="wb" data-f>
+  <div class="tb">refunds</div>
+  <div class="bd">
+    <div class="lp"><span class="row sel">Refund flow</span><span class="row">Ledger check</span><span class="b" style="width:70%"></span></div>
+    <div class="cn" id="wb-cn" data-f><span class="b" style="width:80%"></span><span class="b" style="width:55%"></span><span class="b lit" style="width:35%"></span><span class="now">claude › at prompt</span></div>
+    <div class="rp"><span class="b" style="width:80%"></span><span class="b" style="width:60%"></span></div>
+  </div>
+</div>
+<div class="stamp" id="dl308" data-in="up" data-f>DL-308 · Bring its window</div>
