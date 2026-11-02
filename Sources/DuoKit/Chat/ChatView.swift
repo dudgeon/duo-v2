@@ -115,8 +115,11 @@ struct ChatPane: View {
                     ChatPerf.note("geo y \(Int(g[0])) h \(Int(g[2])) follows \(chat.followsBottom)")
                     if old.count == 3, old[2] != g[2] || old[1] != g[1] {
                         // Grown or the pane resized while following: back to the end, once, by us
-                        // (what the size-change anchor did). Otherwise you've left the end.
-                        if chat.followsBottom, !atBottom { follow(proxy) } else if !atBottom { chat.followsBottom = false }
+                        // (what the size-change anchor did). Otherwise you've left the end. Following
+                        // goes to the very end: the working line (32 pt) is less than the 60 pt that
+                        // says you're still there, and was left half under the composer (F-540).
+                        let atEnd = g[0] + g[1] >= g[2] - 1
+                        if chat.followsBottom, !atEnd { follow(proxy) } else if !atBottom { chat.followsBottom = false }
                         return
                     }
                     if old.count == 3, old[0] != g[0] { chat.followsBottom = atBottom }
@@ -435,15 +438,22 @@ struct ChatWorkingLine: View {
         }
     }
 
-    var currentText: String? {
-        let s = chat.screen
+    var currentText: String? { chat.workingLine }
+}
+
+extension ChatSession {
+    /// The line under the feed while Claude works (chat-polish `mixed`: `Working · 9s · Esc to interrupt`;
+    /// chat-mode `text`: `Writing · 14s · …`), or nil at the prompt. Shown for as long as the screen
+    /// reads busy, the silent stretches of a long tool or thinking included (F-539).
+    public var workingLine: String? {
+        let s = screen
         if let status = s.status, s.kind == .busy, status.contains("Retrying") {
             return status.replacingOccurrences(of: #"^[✻✽✶✳✢·*]\s*"#, with: "", options: .regularExpression)
                 .replacingOccurrences(of: " (mock)", with: "")
         }
-        guard s.kind == .busy || chat.log.writing else { return nil }
-        let secs = chat.log.turnStarted.map { max(0, Int(chat.now.timeIntervalSince($0))) }
-        let verb = chat.log.writing ? "Writing" : "Working"
+        guard s.kind == .busy || log.writing else { return nil }
+        let secs = log.turnStarted.map { max(0, Int(now.timeIntervalSince($0))) }
+        let verb = log.writing ? "Writing" : "Working"
         return [verb, secs.map { "\($0)s" }, "Esc to interrupt"].compactMap { $0 }.joined(separator: " · ")
     }
 }

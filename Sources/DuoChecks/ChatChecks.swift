@@ -100,6 +100,52 @@ func spikeScreen(_ name: String) -> String {
               && read[8].2.options.count == 3 && read[7].2.mode == .plan, "2.1.219's own words: a Bash permission's options, plan approval, plan mode")
     }
 
+    print("chat mode: working while the spinner is up, at any width (F-539)")
+    do {
+        // Real turns on Haiku 5.5 (a 45 s foreground python sleep, and the thinking before it) on 2.1.284, the work
+        // Mac's pin, and 2.1.316, at 48, 60 and 100 columns. Under ~58 the footer reads `· esc …`.
+        let fixtures: [(String, Int, ChatScreen.Kind)] = [
+            ("2.1.284/busy-start-48", 48, .busy), ("2.1.284/busy-tool-48", 48, .busy), ("2.1.284/busy-tool-late-48", 48, .busy),
+            ("2.1.284/busy-tool-60", 60, .busy), ("2.1.284/busy-tool-100", 100, .busy), ("2.1.284/done-60", 60, .idle), ("2.1.284/done-100", 100, .idle),
+            ("2.1.316/busy-thinking-48", 48, .busy), ("2.1.316/busy-tool-48", 48, .busy), ("2.1.316/busy-tool-60", 60, .busy),
+            ("2.1.316/busy-tool-100", 100, .busy), ("2.1.316/busy-thinking-100", 100, .busy), ("2.1.316/done-48", 48, .idle), ("2.1.316/done-100", 100, .idle),
+        ]
+        let texts = fixtures.map { spikeScreen("working-\($0.0).txt") }
+        check(texts.allSatisfy { !$0.isEmpty }, "the working fixtures are there (Spikes/chat-mode/screens/working-*)")
+        let narrow = zip(fixtures, texts).filter { $0.0.1 == 48 && $0.0.2 == .busy }
+        check(narrow.allSatisfy { !$0.1.contains("esc to interrupt") },
+              "at 48 columns the busy footer is cut to `esc …` on both versions (what hid it, F-539)")
+        let wrong = zip(fixtures, texts).compactMap { f, t -> String? in
+            let r = ChatScreenReader.read(t, cols: f.1)
+            return r.kind == f.2 ? nil : "\(f.0): \(r.kind.rawValue)"
+        }
+        check(wrong.isEmpty, "each working screen reads busy and each finished one idle, at 48, 60 and 100 columns (\(wrong))")
+        // Chat itself: the session that reads the narrow screen draws the working line for the whole silent tool run.
+        let tui = FakeTUI(spikeScreen("working-2.1.284/busy-start-48.txt")); tui.cols = 48
+        let c = ChatSession(key: "w1", mode: .chat)
+        c.attach(tui)
+        var lines: [String?] = [c.workingLine]
+        for n in ["busy-tool-48", "busy-tool-late-48"] { tui.show(spikeScreen("working-2.1.284/\(n).txt")); spin(0.15); lines.append(c.workingLine) }
+        check(lines.allSatisfy { $0?.hasPrefix("Working") == true && $0?.hasSuffix("Esc to interrupt") == true },
+              "a 48-column 2.1.284 chat shows `Working · … · Esc to interrupt` from the start of the turn to the end of a 45 s tool (\(lines))")
+        tui.show(spikeScreen("working-2.1.284/done-60.txt")); spin(0.15)
+        check(c.workingLine == nil && c.screen.kind == .idle, "and drops it when the turn is done")
+        // The rule for every captured screen: chat never reads idle while the CLI's spinner is going.
+        let root = repoRoot().appending(path: "Spikes/chat-mode/screens")
+        let all = (FileManager.default.enumerator(atPath: root.path(percentEncoded: false))?.allObjects as? [String] ?? []).filter { $0.hasSuffix(".txt") }
+        let sig = ChatSignatures.v2_1_291
+        let idleSpinning = all.sorted().filter { name in
+            let r = ChatScreenReader.read(spikeScreen(name))
+            return r.kind == .idle && r.status?.range(of: sig.spinnerActive, options: .regularExpression) != nil
+        }
+        check(all.count > 100 && idleSpinning.isEmpty, "no captured screen (\(all.count)) reads idle with the spinner going (\(idleSpinning))")
+        let finished = ["✻ Cooked for 48s · done 8:49 AM", "✻ Sautéed for 6s · done 8:44 AM · 1 shell still running", "✻ Crunched for 48s"]
+        let going = ["✻ Moseying… (12s · esc to interrupt)", "· Leavening… (1s · thinking)", "✶ Razzmatazzing…", "✻ 529 Overloaded · Retrying in 4s… (mock)"]
+        check(finished.allSatisfy { $0.range(of: sig.spinnerActive, options: .regularExpression) == nil }
+              && going.allSatisfy { $0.range(of: sig.spinnerActive, options: .regularExpression) != nil },
+              "a spinner is going while its verb ends in `…` (2.1.219's `Moseying… (12s · esc to interrupt)` too) or it's retrying; `Cooked for 48s` is done")
+    }
+
     print("chat mode: falling back to the terminal (spike's fallback rules, DL-118 §3)")
     do {
         let idleText = spikeScreen("tour-2.1.291/01-markdown.txt")
