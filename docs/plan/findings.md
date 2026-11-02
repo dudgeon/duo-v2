@@ -5221,3 +5221,47 @@ Proof on `scripts/bundle.sh release`:
 - Isolated captures (own support folder and scratch config, `open -g`) of the release build and of the installed 0.2.22, same workspace, are in `docs/design/duo-decks-handoff/proof/compare-decks-hidden-{pptx,deckmd,plain}.png` (0.2.22 | release | difference).
   - The .pptx captures differ only in the workspace's folder name in the Files path.
   - The `type: deck` note is plain Markdown in both. Its editor sits 10 pt lower in the release build, and a plain note without `type: deck` moves by the same amount. That shift comes from main's editor changes since 0.2.22 (the formatting bar work, DL-266), not from Decks.
+
+## F-537 · Window state today: three kinds, not two (multi-window round 2, 2026-11-02; DL-141)
+
+Read from main at 1f974b71 for `docs/research/multi-window-2026-11.md`. It updates F-167.
+
+- **One of everything.** `DuoApp.init` makes one `AppModel` (`Duo/DuoApp.swift:36`), one `ControlServer` whose handler is that model (`:54`) and one `MainWindow` (`:125`, titled "Duo", frame autosave "main"). The scene is `Settings {}` with `DuoCommands(model:)`.
+  - `AppModel`'s doc comment already says "One instance per window", and so do `SplitState` and `EditorSet` (F-506).
+  - The intent was per-window models, but only one is ever made.
+- **Three kinds of state.**
+  - **App-wide:** `fixture`, `liveFolders`, `terminals`, `chats`, the timers and live loop, `seen`, `notified`, keep-running, director registries, restore I/O, voice.
+  - **Per project**, kept on the model today: `openDocumentsByProject`, `lastConsoleTab`, `lastRightTab`, `shellTabs`, `consoleTabOrder`, `webTabs`, `parkedTabs`, `splits.tabs[project]`. It must follow the project between windows, so it is app-wide too.
+  - **Per window:** altitude, the tabs now showing, collapse and widths, the split's room, search UI, peek, filters, hover and drag, forms, focus, editors and viewers.
+- **The live loop mixes both** (C-146). `refreshLive` applies the snapshot, then:
+  - does window work: marks the visible session seen and settles the map;
+  - does app work: notifies, prunes director registries, delivers review comments, archives and moves files.
+- **Counts on 2026-11-02:**
+  - `title == "Duo"`: 30 lines. Eight are in product code: `DuoAlert.swift:10`, `AppModel+Panes.swift:96`, `Commands.swift:474`, `PaneFocus.swift:65`, `AppModel+Control.swift:49`, `AppModel+Organize.swift:318`, `AppModel+Walk.swift:28` and `SessionListFilter.swift:141`. The rest are in `FixtureHarness` and `ChatPerf`.
+  - `SheetCenter.shared` 68; `model.` 1,866; `@Environment(AppModel` 191.
+  - `currentProject` 180, `fixture` 176, `consoleTab` 170, `rightTab` 151, `altitude` 110, `terminals` 49.
+  - `duo2` has about 248 verbs, and about 50 of them act on what is on screen.
+- **Consequence:** keep `AppModel` as the window model and lift the app-wide and per-project state into an `AppCore` behind forwarding properties. That leaves the 1,866 call sites alone. A separate `WindowModel` would move about 1,000 of them.
+
+## F-538 · What v1's multi-window really cost (multi-window round 2, 2026-11-02; ENH-191 in the legacy repo)
+
+Read from `/Users/geoff/repos/duo`: `docs/prd/enh-191-multi-window.md`, tasks.md, `docs/DECISIONS.md:1049` and the git history. It corrects the first round's summary.
+
+- **The three releases were a staged build, not break-and-fix:**
+  - v0.9.1: write serialization, for a lost-update bug that predated windows.
+  - v0.9.2: the window registry as a "registry-of-one", identical with one window, with no visible feature.
+  - v0.10.0 (2026-06-08): window 2.
+  - No BUG entries were filed against window routing afterwards.
+  - The 13 to 17 engineer-weeks went into the spine. Electron's main process held about 128 reads and 37 sends to one `mainWindow`, plus 12 last-writer-wins caches.
+- **What broke while building:**
+  - Focus-based routing silently dropped sends to windows in the background. Testing missed it, because there the one window is focused. Identity routing and a grep gate fixed it.
+  - Closing the last window tore down the socket, so the CLI was dead after a Dock reopen.
+  - Context menus, popups and confirms crashed in window 2.
+  - Dialogs were parented to the main window.
+  - A per-window cache pruned from one window's ids erased the other window's.
+- **Left open in v1:**
+  - The per-request window target was module-global ("correct by discipline").
+  - A window closed just before a crash came back.
+  - The git watcher was last-armer-wins.
+- **CLI routing in v1:** `--window N`, then `DUO_WINDOW` stamped on each terminal, then the primary (lowest-id) window. v2 shouldn't stamp the window into a session's environment, because a session's project can move between windows. It resolves the window from the session each time (Q-430).
+- The first round cited lessons 31 and 32 of `legacy-duo-product-review.md` for windows, but those are about the accessibility tree. The window lines are 36, 81, 192, 229 and 235.
