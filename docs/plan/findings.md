@@ -5190,3 +5190,25 @@ Geoff, in Duo Dev on 8ba74b25: "left pane is literally not visible". At about 18
   - Symbolicated against the 8ba74b25 binary (UUID B0B017D9-…); output in /tmp/hangsym/out.txt. The 9f5b18e2 hangs (the longest 16.7 s) couldn't be symbolicated because that binary is gone, but their system frames have the same shape.
 - **The tab strip "Project ge.html"** after a document split closes is DL-225's scrolling strip at a 459-wide pane. Three document tabs overflow, the selected one is revealed whole, the tab before it peeks 32 pt (`tabPeek`) under the fade, and the overflow menu reads "3 ⌄". That's the strip as designed, not a split view bug. Q-423 (the split's tab strip) is where to take it if it should look different.
 
+
+## F-533 · Duo Decks hidden in a release build (duo-decks, 2026-11-02; DL-307)
+
+The switch is `DeckFeature.enabled`. It is on when the build is `DEBUG`, `DUO_DECKS=1` is set, or the `DuoDecks` default is YES (the app's domain, or `com.dudgeon.duo` for `duo2`). DuoChecks sets `DeckFeature.override`. It is read in these places:
+- `ActionFamily.shown`, for help, the primer and the skill's families;
+- `DuoAction.resolve`, where deck verbs are unknown to `duo2` and the app;
+- `Installer.decksSkill`;
+- `DeckPreviewRegistration.test`, where there is no deck split tab;
+- the File and Format menu items, and their enabled state;
+- the Files + and .pptx context menus;
+- `DeckBar`, which draws 0.2.22's bar for a plain .pptx;
+- the editor, where a document-start `window.__duoDecksOff` makes `isDeckDoc` false in `deck.js` (cm6.js rebuilt), and `isDeck` stays false.
+
+`docs/cli/duo2.md` still lists every verb: it is the full reference, and DuoChecks runs with Decks on.
+
+Checks: DuoChecks `deckhidden` covers both sides of the switch with 22 checks, including that Parity stays clean with Decks off. Full DuoChecks: 5442 passed, 0 failed.
+
+Proof on `scripts/bundle.sh release`:
+- The release `duo2 help` names no deck verb, and `duo2 deck check` is "unknown command"; with `DUO_DECKS=1` the family is back.
+- Isolated captures (own support folder and scratch config, `open -g`) of the release build and of the installed 0.2.22, same workspace, are in `docs/design/duo-decks-handoff/proof/compare-decks-hidden-{pptx,deckmd,plain}.png` (0.2.22 | release | difference).
+  - The .pptx captures differ only in the workspace's folder name in the Files path.
+  - The `type: deck` note is plain Markdown in both. Its editor sits 10 pt lower in the release build, and a plain note without `type: deck` moves by the same amount. That shift comes from main's editor changes since 0.2.22 (the formatting bar work, DL-266), not from Decks.

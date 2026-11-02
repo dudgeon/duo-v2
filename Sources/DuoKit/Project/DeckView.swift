@@ -1,4 +1,5 @@
 import AppKit
+import DuoControl
 import SwiftUI
 
 /// A PowerPoint deck in the right pane (DL-125; target pptx-handoff): the bar under the tabs (A),
@@ -45,10 +46,37 @@ struct DeckBar: View {
     var preview: DeckPreview? = nil
 
     var body: some View {
+        if preview == nil && !DeckFeature.enabled { legacyBar } else { deckBar }
+    }
+
+    /// Duo Decks off (DL-307): a plain .pptx's bar as 0.2.22 drew it, with no Make Templates… or Convert.
+    private var legacyBar: some View {
+        let _ = model.pickerRevision
+        return HStack(spacing: DuoSpace.gapButtonToButton) {
+            Button { viewer.go(viewer.slide - 1) } label: { Text("‹") }   // action: slide go
+                .buttonStyle(.duo).disabled(viewer.slide <= 1).help("Previous Slide").accessibilityLabel("Previous Slide")
+            Button { viewer.go(viewer.slide + 1) } label: { Text("›") }   // action: slide go
+                .buttonStyle(.duo).disabled(viewer.slide >= viewer.count).help("Next Slide").accessibilityLabel("Next Slide")
+            ViewThatFits(in: .horizontal) {
+                count(viewer.count > 0 ? "Slide \(viewer.slide) of \(viewer.count)" : "Drawing slides…").padding(.leading, 2)
+                count(viewer.count > 0 ? "\(viewer.slide)/\(viewer.count)" : "…").padding(.leading, 2)
+            }
+            Spacer(minLength: 8)
+            Button("Select Shape") { viewer.picking ? viewer.stopPicking() : viewer.startPicking() }
+                .buttonStyle(DuoButtonStyle(on: viewer.picking)).disabled(viewer.state != .ready)
+                .accessibilityIdentifier("video.slide.select")
+            OpenWithMenu(path: path, file: file, bordered: true)
+        }
+        .padding(.horizontal, DuoMetric.noticePaddingX)
+        .frame(height: DuoMetric.deckBarHeight)
+        .overlay(alignment: .bottom) { DuoColor.rule.frame(height: DuoMetric.borderHairline) }
+    }
+
+    private var deckBar: some View {
         let _ = model.pickerRevision   // the viewer isn't observable: its changes bump this
         // A pane narrower than the board's 460 shortens the count to "2/5" (DL-132 j, q68-narrow);
         // while drawing, ‹ › and Select Shape are dimmed (q68-drawing).
-        Group {
+        return Group {
             if let preview {
                 // The export state gives way last: it is dropped only when even the short count can't fit it
                 // (measured widths: the bar with the short count and Problems needs about 425 pt inside its padding).
