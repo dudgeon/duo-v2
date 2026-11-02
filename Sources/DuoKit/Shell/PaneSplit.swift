@@ -146,7 +146,7 @@ struct PaneSplit: NSViewRepresentable {
         func splitView(_ splitView: NSSplitView, constrainMinCoordinate proposed: CGFloat, ofSubviewAt i: Int) -> CGFloat {
             // Divider i sits after subview i: keep subview i at or above its minimum.
             let left = splitView.arrangedSubviews[i].frame.minX
-            return max(proposed, left + minWidth(i))
+            return max(proposed, left + minWidth(i, splitView))
         }
 
         func splitView(_ splitView: NSSplitView, constrainMaxCoordinate proposed: CGFloat, ofSubviewAt i: Int) -> CGFloat {
@@ -154,7 +154,7 @@ struct PaneSplit: NSViewRepresentable {
             let next = i + 1
             guard next < splitView.arrangedSubviews.count else { return proposed }
             let right = splitView.arrangedSubviews[next].frame.maxX
-            return min(proposed, right - minWidth(next) - splitView.dividerThickness)
+            return min(proposed, right - minWidth(next, splitView) - splitView.dividerThickness)
         }
 
         /// The window resized (DL-129): side panes keep the width they have and the middle pane
@@ -169,12 +169,14 @@ struct PaneSplit: NSViewRepresentable {
                 current: views.map { splitView.isSubviewCollapsed($0) ? 0 : $0.frame.width },
                 hidden: views.map { splitView.isSubviewCollapsed($0) },
                 total: splitView.bounds.width - CGFloat(views.count - 1) * splitView.dividerThickness,
-                flex: flex, minimums: panes.indices.map(minWidth))
+                flex: flex, minimums: panes.indices.map { minWidth($0, splitView) })
             split.place(widths)
         }
 
-        private func minWidth(_ i: Int) -> CGFloat {
-            i < panes.count ? max(0, panes[i].minWidth - 1) : 0
+        /// A pane's minimum, unless the split view holds another (split view squeezes the console to 400, DL-306).
+        private func minWidth(_ i: Int, _ splitView: NSSplitView) -> CGFloat {
+            let over = (splitView as? DuoSplitView)?.minimumOverrides[i]
+            return i < panes.count ? max(0, (over ?? panes[i].minWidth) - 1) : 0
         }
     }
 }
@@ -195,6 +197,8 @@ final class DuoSplitView: NSSplitView {
     /// Collapse requests that arrived during a slide: applied, last one wins, when it ends.
     private var queuedCollapse: [Int: Bool] = [:]
     /// The split's width changed (the window resized): split view decides whether the sidebar folds (DL-276).
+    /// Minimums set from outside the layout, by pane index: the console's while a split holds the room (DL-306).
+    var minimumOverrides: [Int: CGFloat] = [:]
     var onResize: ((CGFloat) -> Void)?
     /// The panes were first placed (the layout has a width): a restored split's room is decided now.
     var onPlaced: (() -> Void)?

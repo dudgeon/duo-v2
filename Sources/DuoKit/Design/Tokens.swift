@@ -162,7 +162,8 @@ public enum DuoMetric {
     public static let toolbarHeight: CGFloat = 38.0
     public static let tabStripHeight: CGFloat = 36.0
     public static let chatStripHeight: CGFloat = 28.0
-    public static let splitSideMin: CGFloat = 340.0
+    public static let splitSideMin: CGFloat = 300.0
+    public static let splitConsoleMin: CGFloat = 400.0
     public static let sidebarRail: CGFloat = 16.0
     public static let splitMarkWidth: CGFloat = 11.0
     public static let splitMarkHeight: CGFloat = 9.0

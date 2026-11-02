@@ -60,8 +60,8 @@ public struct SplitTab: Codable, Equatable, Sendable {
 /// The one owner of the divider's ratio and its clamp (legacy rule 5): the drag, double-click, restore
 /// and `duo2 split ratio` all go through it, so what was saved is what comes back.
 public enum SplitGeometry {
-    /// `splitSideMin` (Q-366's stand-in; the handoff's 340).
-    public static let sideMin: Double = 340
+    /// `splitSideMin`: 300 since DL-306 (it was Q-366's 340), so the sidebar keeps its place down to about 1,300.
+    public static let sideMin: Double = 300
     public static let divider: Double = 1
     /// `duo2 split ratio` takes 0.2 to 0.8.
     public static let ratioRange: ClosedRange<Double> = 0.2...0.8
@@ -96,18 +96,20 @@ public enum SplitGeometry {
     }
 }
 
-/// Geoff's making-room rule (DL-276): opening a split narrows the console to its 480 minimum; if the
-/// sidebar, the console and two sides don't fit, the sidebar folds. Closing gives back exactly what
+/// Making room (DL-276, with DL-306's fold rule: "Squeeze others first"): opening a split narrows the console
+/// to 400 (it is 480 otherwise) and the two sides to 300 each before the sidebar is touched; only if the
+/// sidebar, the console and two sides still don't fit does the sidebar fold. Closing gives back exactly what
 /// was taken.
 public enum SplitRoom {
-    public static let consoleMin: Double = 480
+    /// The console's minimum while a split holds the room (`splitConsoleMin`); 480 otherwise.
+    public static let consoleMin: Double = 400
     public static let sidebarWidth: Double = 300
     /// The folded sidebar's rail (`sidebarRail`), drawn in the console's leading edge.
     public static let railWidth: Double = 16
 
-    /// The window width under which the sidebar must fold: 300 + 480 + two sides + their divider
-    /// + the three pane edges (about 1,464 pt).
-    public static var foldSidebarBelow: Double { sidebarWidth + consoleMin + SplitGeometry.foldBelow + 3 }
+    /// The window width under which the sidebar must fold: 300 + 400 + two 300 sides and their divider + the
+    /// two pane dividers, 1,303 (DL-306's "about 1,300"; DL-276 had about 1,464).
+    public static var foldSidebarBelow: Double { sidebarWidth + consoleMin + 2 + SplitGeometry.foldBelow }
 
     public struct Plan: Equatable, Sendable {
         /// The right pane's width once the console is at its minimum (this includes its edge).

@@ -10,7 +10,7 @@ public final class SplitState {
     /// Split tabs by project, then by the source's path (the tab's key).
     public var tabs: [String: [String: SplitTab]] = [:]
     /// What the first split took to make room (DL-276); nil when none is open.
-    public var taken: SplitRoom.Taken?
+    public var taken: SplitRoom.Taken? { didSet { syncMinimums() } }
     /// The folded sidebar is peeking over the console.
     public var peek = false
     /// Which rail is under the pointer: "sidebar" or "split" (no `@State` in Duo, ADR-0001).
@@ -19,7 +19,7 @@ public final class SplitState {
     public var revision = 0
 
     /// The project layout's AppKit split, to set the right pane's width (registered by `PaneSplit`).
-    @ObservationIgnored weak var paneHost: DuoSplitView?
+    @ObservationIgnored weak var paneHost: DuoSplitView? { didSet { syncMinimums() } }
     /// A restored room waits to be re-decided for this window (`AppModel.reconcileRoom`).
     @ObservationIgnored var needsReconcile = false
     @ObservationIgnored var policies: [String: PreviewPolicy] = [:]
@@ -34,6 +34,9 @@ public final class SplitState {
         providers[kind] = p
         return p
     }
+
+    /// While a split holds the room the console may go down to 400 (DL-306); otherwise it keeps its 480.
+    func syncMinimums() { paneHost?.minimumOverrides = taken == nil ? [:] : [1: CGFloat(SplitRoom.consoleMin)] }
 
     public init() {}
 

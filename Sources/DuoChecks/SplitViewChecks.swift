@@ -8,7 +8,7 @@ import Foundation
     print("split view: the active side, one document per file, narrow widths, swaps (DL-275 to DL-278)")
 
     // Tokens agree with the geometry.
-    check(SplitGeometry.sideMin == Double(DuoMetric.splitSideMin), "splitSideMin is the token's 340")
+    check(SplitGeometry.sideMin == Double(DuoMetric.splitSideMin), "splitSideMin is the token's 300")
     check(SplitRoom.railWidth == Double(DuoMetric.sidebarRail), "the sidebar rail is the token's 16")
 
     // --- Narrow widths (legacy: sides squeezed to nothing)
@@ -18,14 +18,14 @@ import Foundation
             if SplitGeometry.folded(width: width) {
                 check(w.left == width && w.right == width, "folded \(Int(width)): each side gets the whole pane")
             } else {
-                check(w.left >= 340 && w.right >= 340 && abs(w.left + w.right + 1 - width) < 0.01, "width \(Int(width)) ratio \(ratio): sides \(w.left) + \(w.right), neither under 340, nothing lost")
+                check(w.left >= 300 && w.right >= 300 && abs(w.left + w.right + 1 - width) < 0.01, "width \(Int(width)) ratio \(ratio): sides \(w.left) + \(w.right), neither under 300, nothing lost")
             }
         }
     }
-    check(!SplitGeometry.folded(width: 681) && SplitGeometry.folded(width: 680), "a pane folds under 2 × 340 + 1")
+    check(!SplitGeometry.folded(width: 601) && SplitGeometry.folded(width: 600), "a pane folds under 2 × 300 + 1")
     check(SplitGeometry.clampedRatio(0.05) == 0.2 && SplitGeometry.clampedRatio(0.95) == 0.8 && SplitGeometry.clampedRatio(.nan) == 0.5, "the ratio clamps to 0.2–0.8")
     let dragged = SplitGeometry.ratio(left: 100, width: 1000)
-    check(SplitGeometry.widths(width: 1000, ratio: dragged).left == 340, "a drag past the minimum stops at 340")
+    check(SplitGeometry.widths(width: 1000, ratio: dragged).left == 300, "a drag past the minimum stops at 300")
     // Restore reproduces what was saved (rule 5).
     for r in [0.25, 0.4, 0.5, 0.63, 0.75] {
         let saved = SplitGeometry.widths(width: 960, ratio: r).left
@@ -33,25 +33,31 @@ import Foundation
         check(abs(saved - again) <= 1, "ratio \(r): the divider comes back where it was saved")
     }
 
-    // --- Making room (DL-276): the numbers in the handoff
+    // --- Making room (DL-276, with DL-306's "Squeeze others first"): the console to 400 and the sides to 300
+    // before the sidebar is touched, so it folds only under 1,303 (about 1,300).
+    check(SplitRoom.consoleMin == Double(DuoMetric.splitConsoleMin), "the console's split minimum is the token's 400")
     let r1440 = SplitRoom.plan(window: 1440, sidebarShown: true)
-    check(r1440.foldsSidebar && r1440.rightWidth == 942, "1440: the sidebar folds to its rail, the console is at 480")
-    check(abs(SplitGeometry.widths(width: r1440.rightWidth - 1, ratio: 0.5).left - 470) <= 1, "1440: sides of 470, as the handoff says")
+    check(!r1440.foldsSidebar && r1440.rightWidth == 1440 - 300 - 400 - 2, "1440: all three panes stay, the console is at 400 and the right pane takes the rest")
+    check(abs(SplitGeometry.widths(width: r1440.rightWidth - 1, ratio: 0.5).left - 368) <= 1 && !SplitGeometry.folded(width: r1440.rightWidth - 1), "1440: two sides of about 368")
     let r1280 = SplitRoom.plan(window: 1280, sidebarShown: true)
-    check(r1280.foldsSidebar && r1280.rightWidth == 782, "1280: the sidebar folds, the right pane takes the rest")
-    check(abs(SplitGeometry.widths(width: r1280.rightWidth - 1, ratio: 0.5).left - 391) <= 1, "1280: sides of about 391")
-    // F-531: the sidebar folds only when sidebar + console 480 + two 340 sides don't fit (about 1,464).
+    check(r1280.foldsSidebar && r1280.rightWidth == 1280 - 16 - 400 - 2, "1280: under 1,303 the sidebar folds to its rail, the right pane takes the rest")
+    check(abs(SplitGeometry.widths(width: r1280.rightWidth - 1, ratio: 0.5).left - 430) <= 1, "1280: sides of about 430 beside the rail")
+    // F-531, DL-306: the sidebar folds only when sidebar 300 + console 400 + two 300 sides don't fit.
     let r1810 = SplitRoom.plan(window: 1810, sidebarShown: true)
-    check(!r1810.foldsSidebar && r1810.rightWidth == 1810 - 300 - 480 - 2, "1810: the sidebar stays; the console narrows to 480 and the right pane takes the rest")
+    check(!r1810.foldsSidebar && r1810.rightWidth == 1810 - 300 - 400 - 2, "1810: the sidebar stays; the console narrows to 400 and the right pane takes the rest")
     check(!SplitGeometry.folded(width: r1810.rightWidth - 1), "1810: two sides fit")
-    check(SplitRoom.plan(window: 1440, sidebarShown: true).foldsSidebar && SplitRoom.plan(window: 1280, sidebarShown: true).foldsSidebar,
-          "1440 and 1280: sidebar 300 + 480 + two 340 sides don't fit, so the sidebar folds to its rail")
-    check(!SplitRoom.plan(window: 1464, sidebarShown: true).foldsSidebar && SplitRoom.plan(window: 1463, sidebarShown: true).foldsSidebar,
-          "the sidebar folds under 1,464 and not at it")
+    check(!SplitRoom.plan(window: 1303, sidebarShown: true).foldsSidebar && SplitRoom.plan(window: 1302, sidebarShown: true).foldsSidebar,
+          "the sidebar folds under 1,303 and not at it (300 + 400 + two 300 sides and their dividers)")
+    check(SplitRoom.plan(window: 1303, sidebarShown: true).rightWidth == 601 && !SplitGeometry.folded(width: 601) && SplitGeometry.folded(width: 600),
+          "at the edge the right pane is exactly two 300 sides and their divider, and one less folds the split")
+    check(!SplitRoom.plan(window: 1300, sidebarShown: true).foldsSidebar == false && SplitRoom.plan(window: 1300, sidebarShown: true).foldsSidebar,
+          "about 1,300 and under, it folds")
+    // The split folds to one side only when even the sidebar's rail leaves too little (never at the 1280 minimum window).
+    check(!SplitGeometry.folded(width: SplitRoom.plan(window: 1280, sidebarShown: true).rightWidth - 1), "at the 1280 window minimum two sides still fit with the sidebar folded")
     let wide = SplitRoom.plan(window: 1700, sidebarShown: true)
-    check(!wide.foldsSidebar && wide.rightWidth == 1700 - 300 - 480 - 2, "a wide window keeps the sidebar")
-    check(SplitRoom.plan(window: 1700, sidebarShown: false).rightWidth == 1700 - 480 - 2 && !SplitRoom.plan(window: 1000, sidebarShown: false).foldsSidebar, "a hidden sidebar is left alone")
-    check(abs(SplitRoom.foldSidebarBelow - 1464) <= 1, "the sidebar folds under about 1,464")
+    check(!wide.foldsSidebar && wide.rightWidth == 1700 - 300 - 400 - 2, "a wide window keeps the sidebar")
+    check(SplitRoom.plan(window: 1700, sidebarShown: false).rightWidth == 1700 - 400 - 2 && !SplitRoom.plan(window: 1000, sidebarShown: false).foldsSidebar, "a hidden sidebar is left alone")
+    check(abs(SplitRoom.foldSidebarBelow - 1303) <= 1, "the sidebar folds under about 1,300 (1,303 with the dividers)")
 
     // --- The routing table: every command × side (legacy: the active side was inferred)
     for command in SplitCommand.allCases {
