@@ -196,6 +196,8 @@ final class DuoSplitView: NSSplitView {
     private var queuedCollapse: [Int: Bool] = [:]
     /// The split's width changed (the window resized): split view decides whether the sidebar folds (DL-276).
     var onResize: ((CGFloat) -> Void)?
+    /// The panes were first placed (the layout has a width): a restored split's room is decided now.
+    var onPlaced: (() -> Void)?
     private var lastReportedWidth: CGFloat = 0
 
     override func setFrameSize(_ newSize: NSSize) {
@@ -283,6 +285,7 @@ final class DuoSplitView: NSSplitView {
         defer { layoutCover() }
         if !placed, bounds.width > 0 {
             placed = true
+            DispatchQueue.main.async { [weak self] in self?.onPlaced?() }
             placeAtDesignWidths()
             for (i, collapsed) in pendingCollapse.sorted(by: { $0.key < $1.key }) where isSubviewCollapsed(arrangedSubviews[i]) != collapsed { snapCollapsed(collapsed, paneAt: i) }   // as restored, no slide
             pendingCollapse.removeAll()

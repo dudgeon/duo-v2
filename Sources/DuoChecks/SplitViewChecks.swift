@@ -40,6 +40,14 @@ import Foundation
     let r1280 = SplitRoom.plan(window: 1280, sidebarShown: true)
     check(r1280.foldsSidebar && r1280.rightWidth == 782, "1280: the sidebar folds, the right pane takes the rest")
     check(abs(SplitGeometry.widths(width: r1280.rightWidth - 1, ratio: 0.5).left - 391) <= 1, "1280: sides of about 391")
+    // F-531: the sidebar folds only when sidebar + console 480 + two 340 sides don't fit (about 1,464).
+    let r1810 = SplitRoom.plan(window: 1810, sidebarShown: true)
+    check(!r1810.foldsSidebar && r1810.rightWidth == 1810 - 300 - 480 - 2, "1810: the sidebar stays; the console narrows to 480 and the right pane takes the rest")
+    check(!SplitGeometry.folded(width: r1810.rightWidth - 1), "1810: two sides fit")
+    check(SplitRoom.plan(window: 1440, sidebarShown: true).foldsSidebar && SplitRoom.plan(window: 1280, sidebarShown: true).foldsSidebar,
+          "1440 and 1280: sidebar 300 + 480 + two 340 sides don't fit, so the sidebar folds to its rail")
+    check(!SplitRoom.plan(window: 1464, sidebarShown: true).foldsSidebar && SplitRoom.plan(window: 1463, sidebarShown: true).foldsSidebar,
+          "the sidebar folds under 1,464 and not at it")
     let wide = SplitRoom.plan(window: 1700, sidebarShown: true)
     check(!wide.foldsSidebar && wide.rightWidth == 1700 - 300 - 480 - 2, "a wide window keeps the sidebar")
     check(SplitRoom.plan(window: 1700, sidebarShown: false).rightWidth == 1700 - 480 - 2 && !SplitRoom.plan(window: 1000, sidebarShown: false).foldsSidebar, "a hidden sidebar is left alone")
