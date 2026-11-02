@@ -1,0 +1,471 @@
+{
+ "recipe": {
+  "H0": 92.0,
+  "STEP": 22.5,
+  "N": 12,
+  "roles": {
+   "light": {
+    "ground": [
+     [
+      0.925,
+      0.026
+     ],
+     [
+      0.905,
+      0.036
+     ]
+    ],
+    "pane": [
+     [
+      0.975,
+      0.01
+     ],
+     [
+      0.968,
+      0.014
+     ]
+    ],
+    "chatGround": [
+     [
+      0.925,
+      0.026
+     ],
+     [
+      0.905,
+      0.036
+     ]
+    ],
+    "toolOutputFill": [
+     [
+      0.955,
+      0.016
+     ],
+     [
+      0.942,
+      0.022
+     ]
+    ],
+    "swatch": [
+     [
+      0.74,
+      0.085
+     ],
+     [
+      0.64,
+      0.1
+     ]
+    ]
+   },
+   "dark": {
+    "ground": [
+     [
+      0.215,
+      0.022
+     ],
+     [
+      0.235,
+      0.03
+     ]
+    ],
+    "pane": [
+     [
+      0.24,
+      0.02
+     ],
+     [
+      0.26,
+      0.026
+     ]
+    ],
+    "chatGround": [
+     [
+      0.18,
+      0.016
+     ],
+     [
+      0.195,
+      0.022
+     ]
+    ],
+    "toolOutputFill": [
+     [
+      0.215,
+      0.022
+     ],
+     [
+      0.235,
+      0.03
+     ]
+    ],
+    "swatch": [
+     [
+      0.7,
+      0.085
+     ],
+     [
+      0.6,
+      0.1
+     ]
+    ]
+   }
+  },
+  "orderStep": 5,
+  "orderStart": 6
+ },
+ "needsYouHue": [
+  38.4,
+  47.6
+ ],
+ "order": [
+  "sky",
+  "mauve",
+  "mint",
+  "lilac",
+  "moss",
+  "cornflower",
+  "sand",
+  "teal",
+  "orchid",
+  "sage",
+  "iris",
+  "pear"
+ ],
+ "colours": [
+  {
+   "id": "sand",
+   "name": "Sand",
+   "hue": 92.0,
+   "tier": "A",
+   "light": {
+    "ground": "#ECE6D3",
+    "pane": "#F9F7EF",
+    "chatGround": "#ECE6D3",
+    "toolOutputFill": "#F4F0E4",
+    "swatch": "#BEAA6B",
+    "minText": 12.66,
+    "minText2": 4.88,
+    "needsOnPane": 4.83,
+    "needsOnGround": 4.15
+   },
+   "dark": {
+    "ground": "#1D190D",
+    "pane": "#231F14",
+    "chatGround": "#141109",
+    "toolOutputFill": "#1D190D",
+    "swatch": "#B19D5F",
+    "minText": 13.39,
+    "minText2": 6.31,
+    "needsOnPane": 5.86,
+    "needsOnGround": 6.26
+   }
+  },
+  {
+   "id": "pear",
+   "name": "Pear",
+   "hue": 114.5,
+   "tier": "B",
+   "light": {
+    "ground": "#DFE3C8",
+    "pane": "#F4F6EB",
+    "chatGround": "#DFE3C8",
+    "toolOutputFill": "#EBEEDD",
+    "swatch": "#8B9348",
+    "minText": 12.01,
+    "minText2": 4.63,
+    "needsOnPane": 4.74,
+    "needsOnGround": 3.94
+   },
+   "dark": {
+    "ground": "#1E200F",
+    "pane": "#242617",
+    "chatGround": "#15160A",
+    "toolOutputFill": "#1E200F",
+    "swatch": "#7F873C",
+    "minText": 12.54,
+    "minText2": 5.91,
+    "needsOnPane": 5.49,
+    "needsOnGround": 5.91
+   }
+  },
+  {
+   "id": "moss",
+   "name": "Moss",
+   "hue": 137.0,
+   "tier": "A",
+   "light": {
+    "ground": "#DEEBDA",
+    "pane": "#F4F8F2",
+    "chatGround": "#DEEBDA",
+    "toolOutputFill": "#EBF3E8",
+    "swatch": "#92B883",
+    "minText": 12.79,
+    "minText2": 4.93,
+    "needsOnPane": 4.82,
+    "needsOnGround": 4.19
+   },
+   "dark": {
+    "ground": "#151C12",
+    "pane": "#1B2218",
+    "chatGround": "#0E130C",
+    "toolOutputFill": "#151C12",
+    "swatch": "#85AB76",
+    "minText": 13.28,
+    "minText2": 6.25,
+    "needsOnPane": 5.81,
+    "needsOnGround": 6.21
+   }
+  },
+  {
+   "id": "sage",
+   "name": "Sage",
+   "hue": 159.5,
+   "tier": "B",
+   "light": {
+    "ground": "#CCE7D7",
+    "pane": "#EDF8F1",
+    "chatGround": "#CCE7D7",
+    "toolOutputFill": "#E0F1E7",
+    "swatch": "#509F76",
+    "minText": 12.02,
+    "minText2": 4.63,
+    "needsOnPane": 4.76,
+    "needsOnGround": 3.94
+   },
+   "dark": {
+    "ground": "#112219",
+    "pane": "#192820",
+    "chatGround": "#0C1811",
+    "toolOutputFill": "#112219",
+    "swatch": "#43926B",
+    "minText": 12.53,
+    "minText2": 5.9,
+    "needsOnPane": 5.49,
+    "needsOnGround": 5.91
+   }
+  },
+  {
+   "id": "mint",
+   "name": "Mint",
+   "hue": 182.0,
+   "tier": "A",
+   "light": {
+    "ground": "#D4ECE7",
+    "pane": "#F0F9F7",
+    "chatGround": "#D4ECE7",
+    "toolOutputFill": "#E5F4F1",
+    "swatch": "#69BDAF",
+    "minText": 12.75,
+    "minText2": 4.91,
+    "needsOnPane": 4.83,
+    "needsOnGround": 4.18
+   },
+   "dark": {
+    "ground": "#0D1D1A",
+    "pane": "#142220",
+    "chatGround": "#091412",
+    "toolOutputFill": "#0D1D1A",
+    "swatch": "#5CB0A2",
+    "minText": 13.37,
+    "minText2": 6.3,
+    "needsOnPane": 5.86,
+    "needsOnGround": 6.2
+   }
+  },
+  {
+   "id": "teal",
+   "name": "Teal",
+   "hue": 204.5,
+   "tier": "B",
+   "light": {
+    "ground": "#C5E7EB",
+    "pane": "#EAF7F9",
+    "chatGround": "#C5E7EB",
+    "toolOutputFill": "#DCF0F3",
+    "swatch": "#279DA8",
+    "minText": 12.04,
+    "minText2": 4.64,
+    "needsOnPane": 4.73,
+    "needsOnGround": 3.95
+   },
+   "dark": {
+    "ground": "#0A2225",
+    "pane": "#14282A",
+    "chatGround": "#08181A",
+    "toolOutputFill": "#0A2225",
+    "swatch": "#0F919C",
+    "minText": 12.52,
+    "minText2": 5.9,
+    "needsOnPane": 5.48,
+    "needsOnGround": 5.91
+   }
+  },
+  {
+   "id": "sky",
+   "name": "Sky",
+   "hue": 227.0,
+   "tier": "A",
+   "light": {
+    "ground": "#D5EAF4",
+    "pane": "#F0F8FC",
+    "chatGround": "#D5EAF4",
+    "toolOutputFill": "#E6F3F9",
+    "swatch": "#6DB6D5",
+    "minText": 12.72,
+    "minText2": 4.9,
+    "needsOnPane": 4.82,
+    "needsOnGround": 4.17
+   },
+   "dark": {
+    "ground": "#0E1C21",
+    "pane": "#152127",
+    "chatGround": "#0A1317",
+    "toolOutputFill": "#0E1C21",
+    "swatch": "#61A9C8",
+    "minText": 13.38,
+    "minText2": 6.3,
+    "needsOnPane": 5.86,
+    "needsOnGround": 6.21
+   }
+  },
+  {
+   "id": "cornflower",
+   "name": "Cornflower",
+   "hue": 249.5,
+   "tier": "B",
+   "light": {
+    "ground": "#CEE2F7",
+    "pane": "#EEF5FE",
+    "chatGround": "#CEE2F7",
+    "toolOutputFill": "#E1EDFA",
+    "swatch": "#5A91C7",
+    "minText": 11.92,
+    "minText2": 4.59,
+    "needsOnPane": 4.72,
+    "needsOnGround": 3.91
+   },
+   "dark": {
+    "ground": "#131F2C",
+    "pane": "#1A2530",
+    "chatGround": "#0D161F",
+    "toolOutputFill": "#131F2C",
+    "swatch": "#4E84BA",
+    "minText": 12.66,
+    "minText2": 5.96,
+    "needsOnPane": 5.54,
+    "needsOnGround": 5.95
+   }
+  },
+  {
+   "id": "iris",
+   "name": "Iris",
+   "hue": 272.0,
+   "tier": "A",
+   "light": {
+    "ground": "#E0E6F8",
+    "pane": "#F4F7FE",
+    "chatGround": "#E0E6F8",
+    "toolOutputFill": "#ECF0FB",
+    "swatch": "#98A8E1",
+    "minText": 12.67,
+    "minText2": 4.88,
+    "needsOnPane": 4.83,
+    "needsOnGround": 4.15
+   },
+   "dark": {
+    "ground": "#161924",
+    "pane": "#1C1F29",
+    "chatGround": "#0F1119",
+    "toolOutputFill": "#161924",
+    "swatch": "#8C9BD4",
+    "minText": 13.39,
+    "minText2": 6.31,
+    "needsOnPane": 5.86,
+    "needsOnGround": 6.25
+   }
+  },
+  {
+   "id": "lilac",
+   "name": "Lilac",
+   "hue": 294.5,
+   "tier": "B",
+   "light": {
+    "ground": "#E1DCF6",
+    "pane": "#F5F3FD",
+    "chatGround": "#E1DCF6",
+    "toolOutputFill": "#ECE9FA",
+    "swatch": "#9080C3",
+    "minText": 11.86,
+    "minText2": 4.57,
+    "needsOnPane": 4.72,
+    "needsOnGround": 3.89
+   },
+   "dark": {
+    "ground": "#1F1B2B",
+    "pane": "#25222F",
+    "chatGround": "#15131E",
+    "toolOutputFill": "#1F1B2B",
+    "swatch": "#8474B6",
+    "minText": 12.69,
+    "minText2": 5.98,
+    "needsOnPane": 5.56,
+    "needsOnGround": 5.99
+   }
+  },
+  {
+   "id": "orchid",
+   "name": "Orchid",
+   "hue": 317.0,
+   "tier": "A",
+   "light": {
+    "ground": "#EDE1F2",
+    "pane": "#FAF5FB",
+    "chatGround": "#EDE1F2",
+    "toolOutputFill": "#F5EDF7",
+    "swatch": "#C19ACF",
+    "minText": 12.53,
+    "minText2": 4.83,
+    "needsOnPane": 4.81,
+    "needsOnGround": 4.11
+   },
+   "dark": {
+    "ground": "#1E1620",
+    "pane": "#231C26",
+    "chatGround": "#140F16",
+    "toolOutputFill": "#1E1620",
+    "swatch": "#B48EC2",
+    "minText": 13.52,
+    "minText2": 6.37,
+    "needsOnPane": 5.92,
+    "needsOnGround": 6.29
+   }
+  },
+  {
+   "id": "mauve",
+   "name": "Mauve",
+   "hue": 339.5,
+   "tier": "B",
+   "light": {
+    "ground": "#F1D7E7",
+    "pane": "#FBF1F7",
+    "chatGround": "#F1D7E7",
+    "toolOutputFill": "#F7E6F1",
+    "swatch": "#B474A0",
+    "minText": 11.75,
+    "minText2": 4.53,
+    "needsOnPane": 4.69,
+    "needsOnGround": 3.85
+   },
+   "dark": {
+    "ground": "#281823",
+    "pane": "#2D1F28",
+    "chatGround": "#1C1118",
+    "toolOutputFill": "#281823",
+    "swatch": "#A86893",
+    "minText": 12.78,
+    "minText2": 6.02,
+    "needsOnPane": 5.6,
+    "needsOnGround": 6.02
+   }
+  }
+ ]
+}

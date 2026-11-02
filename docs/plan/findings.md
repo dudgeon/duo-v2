@@ -5347,3 +5347,19 @@ A publish whose `files` included `audio/*.m4a` was refused whole: "extension .m4
 - Save wrote `answers/q99-when` with every field (read back with ArtifactData, then deleted).
 - Copy decisions put the full text on the macOS clipboard.
 - **The first send to Claude raises claude.ai's own consent dialog** ("Let this artifact send messages to your Claude session?"). The answer is already saved to the db before it appears. Geoff answers it once per page; the worker closed it without choosing, so the comment wasn't sent.
+
+## F-547 · Twelve window colours from one OKLCH recipe (multi-window, 2026-11-02; Q-441, DL-312)
+
+- **What the design system had:** no general-purpose palette. The tokens have two sets of hues, both made for other jobs:
+  - the terminal's ANSI colours (on the console);
+  - `reviewAuthor1–5`, text-strength colours that include a red and an amber.
+  - There is also a rule that nothing orange sits between red (h354) and yellow (h49).
+  - `windowColour` isn't in `tokens.json` yet: 4a's four colours were only on the canvas.
+- **The recipe** (`docs/design/multi-window-studies/palette/window_palette.py`, output in `palette.json`):
+  - hue = 92° + 22.5° × i for i = 0 to 11. The arc ends at 339.5°, so it skips orange and red: needs-you sits at OKLCH h38 in light and h48 in dark.
+  - Even i are tier A (lighter, softer), odd i tier B (deeper, richer), so neighbours differ in lightness and chroma as well as hue.
+  - Each surface (ground, pane, chatGround, toolOutputFill, swatch) has one (L, C) per tier and appearance.
+- **sRGB limits the chroma, teal worst.** At L 0.59 to 0.60 teal (h204) holds only about C 0.10, while violet holds 0.25. So a swatch can't be richer than C 0.10 at tier B's dark lightness if every hue is to keep the same chroma. Sand and Pear could go much further.
+- **Contrast is set by tier B in light.** Text2 #5B636D on a tier-B light ground is 4.53:1 (Mauve), 4.57 (Lilac), 4.59 (Cornflower). Deepening tier B's light ground past L 0.905 would fail. Tier A has about 0.35 to spare. Dark values pass easily (text2 5.90:1 or more).
+- **The order new windows get colours in** is five steps round the hue order each time (5 is coprime with 12, so all twelve come up). That puts each new colour 112.5° from the last and flips its tier. Sky is first, as on 4a.
+- **Names reused from 4a** (Sky, Sage, Lilac, Sand) now have new values; 4a's own files are kept unchanged for comparison.
