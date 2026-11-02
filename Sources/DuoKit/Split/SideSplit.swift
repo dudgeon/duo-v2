@@ -172,7 +172,7 @@ struct SplitBody: View {
                 .id(path)
                 .padding(.trailing, tab.folded ? DuoMetric.sidebarRail : 0)   // the active side fills the rest
                 .overlay(alignment: .trailing) { if tab.folded { SplitRail(tab: tab) } }
-                .onAppear { model.takeRoomIfNeeded(); if !tab.isDocPair { model.startPreview(path) } }   // a split shown again (another project's, restored) takes the room
+                .onAppear { model.takeRoomIfNeeded(); model.reconcileRoom(); if !tab.isDocPair { model.startPreview(path) } }   // a split shown again (another project's, restored) takes the room
                 .accessibilityIdentifier("video.right.document")
         }
     }

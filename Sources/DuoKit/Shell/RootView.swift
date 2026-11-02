@@ -104,6 +104,7 @@ struct ProjectLayout: View {
             onHost: { [weak model] split in
                 model?.splits.paneHost = split   // split view sets the right pane's width
                 split.onResize = { [weak model] w in model?.splitWindowResized(w) }   // and folds the sidebar only while too narrow (DL-276)
+                split.onPlaced = { [weak model] in model?.reconcileRoom() }   // a restored split's room, for this window (F-531)
             }
         )
     }

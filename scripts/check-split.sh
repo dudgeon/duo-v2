@@ -79,6 +79,24 @@ run widenclose 1440x900 "$open,split:page.html,wait:2,window-width:2200,wait:2,w
 expect "widenclose: after resizes, closing still brings the sidebar back" $out/widenclose.log "sidebar hidden: false"
 expect "minimum: the window can't be made smaller than 1280 x 800" $out/giveback.log "min 1280x800"
 
+# A split restored in a wider window than it was made in comes back with its sidebar and two sides (F-531):
+# launch at 1440 (the sidebar folds), quit, relaunch at 1810.
+relaunch() {   # relaunch <name> <size> <actions>: like run, on the same support folder, restoring
+  local png=$out/$1.png err=$out/$1.log
+  rm -f $png
+  env -u DUO_SUPPORT_DIR DUO_SUPPORT_DIR=$root/sup-rl CLAUDE_CONFIG_DIR=$root/cc-rl ANTHROPIC_MODEL=claude-haiku-5-5 DUO_APPEARANCE=${APPEARANCE:-light} DUO_RESTORE=1 \
+    $app/Contents/MacOS/Duo --workspace $ws --window $2 --capture-window $png --then "$3" 2>$err &
+  local pid=$!
+  for i in {1..${DUO_TIMEOUT:-60}}; do [[ -f $png ]] && break; sleep 1; done
+  sleep 6; kill -TERM $pid 2>/dev/null; for i in {1..15}; do kill -0 $pid 2>/dev/null || break; sleep 1; done
+}
+fresh rl; rm -rf $root/sup-rl $root/cc-rl; mkdir -p $root/sup-rl $root/cc-rl
+relaunch rl-1440 1440x900 "$open,split:page.html,wait:3,split-report,wait:6"
+expect "relaunch: at 1440 the sidebar folds" $out/rl-1440.log "sidebar folded by the split: true"
+relaunch rl-1810 1810x1000 "wait:5,split-report"
+expect "relaunch at 1810: the split comes back unfolded" $out/rl-1810.log "folded: false"
+expect "relaunch at 1810: with the sidebar" $out/rl-1810.log "sidebar folded by the split: false"
+
 # split-themes: the same split in Dark and Classic (Light is the runs above)
 for theme in dark classic; do
   fresh theme-$theme

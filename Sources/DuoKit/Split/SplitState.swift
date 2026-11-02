@@ -19,11 +19,9 @@ public final class SplitState {
     public var revision = 0
 
     /// The project layout's AppKit split, to set the right pane's width (registered by `PaneSplit`).
-    @ObservationIgnored weak var paneHost: DuoSplitView? {
-        didSet { if paneHost != nil, let w = pendingRightWidth { applyRightWidthSoon(w) } }
-    }
-    /// A restored split's room, applied once the layout exists.
-    @ObservationIgnored var pendingRightWidth: Double?
+    @ObservationIgnored weak var paneHost: DuoSplitView?
+    /// A restored room waits to be re-decided for this window (`AppModel.reconcileRoom`).
+    @ObservationIgnored var needsReconcile = false
     @ObservationIgnored var policies: [String: PreviewPolicy] = [:]
     @ObservationIgnored var resizeSettle: DispatchWorkItem?
     @ObservationIgnored private var providers: [PreviewKind: PreviewProvider] = [:]
@@ -43,7 +41,6 @@ public final class SplitState {
     public var any: Bool { tabs.values.contains { !$0.isEmpty } }
 
     func applyRightWidthSoon(_ w: Double, after delay: Double = 0.4) {
-        pendingRightWidth = nil
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
             MainActor.assumeIsolated { self?.paneHost?.setLastPaneWidth(CGFloat(w)) }
         }

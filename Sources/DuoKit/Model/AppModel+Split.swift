@@ -317,12 +317,31 @@ extension AppModel {
         if !out.isEmpty { splits.tabs[project] = out }
     }
 
+    /// A restored split's room is re-decided for the window it comes back in, once the layout has a width:
+    /// what was folded at 1440 isn't folded at 1810 (F-531). Only what to give back is kept from the file.
     func restoreRoom(_ taken: SplitRoom.Taken?) {
         guard splits.any, let taken else { return }
         splits.taken = taken
-        if taken.foldedSidebar { leftCollapsedProject = true }
-        let width = splits.paneHost.map { Double($0.bounds.width) } ?? 0
-        let right = SplitRoom.plan(window: width, sidebarShown: taken.sidebarWasShown).rightWidth
-        if width > 0 { splits.applyRightWidthSoon(right) } else { splits.pendingRightWidth = right }
+        splits.needsReconcile = true
+        DispatchQueue.main.async { [weak self] in self?.reconcileRoom() }   // after the restore opens its project
+    }
+
+    /// Makes the room match the split on screen, for this window: the sidebar folds only if it can't fit beside
+    /// the console's 480 and two sides, and the right pane widens so the console is at 480. Run once after a
+    /// restore, as soon as the layout has a width (a split never comes back folded with room to spare, F-531).
+    func reconcileRoom() {
+        guard splits.needsReconcile, !altitude.isAllProjects, let host = splits.paneHost, host.bounds.width > 0 else { return }
+        if splitTabs.isEmpty { splits.needsReconcile = false; giveBackRoom(); return }
+        guard showingSplit != nil else { return }   // when one shows (SplitBody asks again)
+        splits.needsReconcile = false
+        guard splits.taken != nil else { takeRoomIfNeeded(); return }
+        let width = Double(host.bounds.width)
+        let wasHidden = leftCollapsedProject
+        settleSidebarForWidth(width)
+        let sidebar = leftCollapsedProject ? (splits.sidebarFolded ? SplitRoom.railWidth : 0) : SplitRoom.sidebarWidth
+        let right = max(0, width - sidebar - SplitRoom.consoleMin - 2)
+        guard Double(host.lastPaneWidth) < right - 1 else { return }
+        if wasHidden != leftCollapsedProject { splits.applyRightWidthSoon(right, after: 0.35) }   // after the sidebar's slide
+        else { host.setLastPaneWidth(CGFloat(right)) }
     }
 }
