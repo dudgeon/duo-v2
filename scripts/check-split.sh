@@ -35,13 +35,20 @@ expect() {
 }
 
 open="open:garden"
-for size in 1440x900 1280x800; do
-  fresh m$size
-  run m$size $size "$open,split:page.html,wait:3,split-report"
-  expect "$size: a split is made" $out/m$size.log "active: left"
-  expect "$size: the sidebar folded to its rail" $out/m$size.log "sidebar folded by the split: true"
-  expect "$size: not folded to one side" $out/m$size.log "folded: false"
-done
+# DL-306: 1440 keeps all three panes (sidebar, console at 400, two sides); 1280 is under about 1,300, so the sidebar folds.
+fresh m1440x900
+run m1440x900 1440x900 "$open,split:page.html,wait:3,split-report"
+expect "1440x900: a split is made" $out/m1440x900.log "active: left"
+expect "1440x900: the sidebar stays" $out/m1440x900.log "sidebar folded by the split: false"
+expect "1440x900: not folded to one side" $out/m1440x900.log "folded: false"
+fresh m1310x800
+run m1310x800 1310x800 "$open,split:page.html,wait:3,split-report"
+expect "1310x800: the sidebar stays just over the edge (it folds under 1,303)" $out/m1310x800.log "sidebar folded by the split: false"
+fresh m1280x800
+run m1280x800 1280x800 "$open,split:page.html,wait:3,split-report"
+expect "1280x800: a split is made" $out/m1280x800.log "active: left"
+expect "1280x800: the sidebar folded to its rail" $out/m1280x800.log "sidebar folded by the split: true"
+expect "1280x800: not folded to one side" $out/m1280x800.log "folded: false"
 fresh html
 run html 1440x900 "$open,split:page.html,wait:3,split-report"
 expect "html: a page beside its source" $out/html.log "right: Page"
@@ -49,7 +56,7 @@ fresh swap
 run swap 1440x900 "$open,split:page.html,wait:2,split-swap,split-focus:left,wait:1,split-report"
 expect "swap: the page is on the left" $out/swap.log "left: Page"
 fresh peek
-run peek 1440x900 "$open,split:page.html,wait:2,sidebar-peek:on,wait:2,split-report"
+run peek 1280x800 "$open,split:page.html,wait:2,sidebar-peek:on,wait:2,split-report"
 fresh narrow
 run narrow 1280x800 "$open,split:page.html,wait:2,right-width:600,wait:2,split-report"
 expect "narrow: under two sides the split folds" $out/narrow.log "folded: true"
@@ -66,21 +73,21 @@ fresh wide
 run wide 2400x1200 "$open,split:page.html,wait:3,split-report"
 expect "wide: a wide window keeps the sidebar" $out/wide.log "sidebar folded by the split: false"
 fresh widen
-run widen 1440x900 "$open,split:page.html,wait:2,window-width:2200,wait:2,split-report"
+run widen 1280x800 "$open,split:page.html,wait:2,window-width:2200,wait:2,split-report"
 expect "widen: the sidebar comes back when the window is wide enough" $out/widen.log "sidebar folded by the split: false"
 fresh renarrow
-run renarrow 1440x900 "$open,split:page.html,wait:2,window-width:2200,wait:2,window-width:1440,wait:2,split-report"
+run renarrow 1280x800 "$open,split:page.html,wait:2,window-width:2200,wait:2,window-width:1280,wait:2,split-report"
 expect "renarrow: and folds again when it's narrow" $out/renarrow.log "sidebar folded by the split: true"
 fresh giveback
-run giveback 1440x900 "$open,split:page.html,wait:2,split-close,wait:2,split-report"
+run giveback 1280x800 "$open,split:page.html,wait:2,split-close,wait:2,split-report"
 expect "giveback: closing brings the sidebar back" $out/giveback.log "sidebar hidden: false"
 fresh widenclose
-run widenclose 1440x900 "$open,split:page.html,wait:2,window-width:2200,wait:2,window-width:1440,wait:2,split-close,wait:2,split-report"
+run widenclose 1280x800 "$open,split:page.html,wait:2,window-width:2200,wait:2,window-width:1280,wait:2,split-close,wait:2,split-report"
 expect "widenclose: after resizes, closing still brings the sidebar back" $out/widenclose.log "sidebar hidden: false"
 expect "minimum: the window can't be made smaller than 1280 x 800" $out/giveback.log "min 1280x800"
 
 # A split restored in a wider window than it was made in comes back with its sidebar and two sides (F-531):
-# launch at 1440 (the sidebar folds), quit, relaunch at 1810.
+# launch at 1280 (the sidebar folds), quit, relaunch at 1810.
 relaunch() {   # relaunch <name> <size> <actions>: like run, on the same support folder, restoring
   local png=$out/$1.png err=$out/$1.log
   rm -f $png
@@ -91,8 +98,8 @@ relaunch() {   # relaunch <name> <size> <actions>: like run, on the same support
   sleep 6; kill -TERM $pid 2>/dev/null; for i in {1..15}; do kill -0 $pid 2>/dev/null || break; sleep 1; done
 }
 fresh rl; rm -rf $root/sup-rl $root/cc-rl; mkdir -p $root/sup-rl $root/cc-rl
-relaunch rl-1440 1440x900 "$open,split:page.html,wait:3,split-report,wait:6"
-expect "relaunch: at 1440 the sidebar folds" $out/rl-1440.log "sidebar folded by the split: true"
+relaunch rl-1280 1280x800 "$open,split:page.html,wait:3,split-report,wait:6"
+expect "relaunch: at 1280 the sidebar folds" $out/rl-1280.log "sidebar folded by the split: true"
 relaunch rl-1810 1810x1000 "wait:5,split-report"
 expect "relaunch at 1810: the split comes back unfolded" $out/rl-1810.log "folded: false"
 expect "relaunch at 1810: with the sidebar" $out/rl-1810.log "sidebar folded by the split: false"

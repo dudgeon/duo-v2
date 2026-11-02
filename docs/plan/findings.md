@@ -5190,3 +5190,12 @@ Geoff, in Duo Dev on 8ba74b25: "left pane is literally not visible". At about 18
   - Symbolicated against the 8ba74b25 binary (UUID B0B017D9-…); output in /tmp/hangsym/out.txt. The 9f5b18e2 hangs (the longest 16.7 s) couldn't be symbolicated because that binary is gone, but their system frames have the same shape.
 - **The tab strip "Project ge.html"** after a document split closes is DL-225's scrolling strip at a 459-wide pane. Three document tabs overflow, the selected one is revealed whole, the tab before it peeks 32 pt (`tabPeek`) under the fade, and the overflow menu reads "3 ⌄". That's the strip as designed, not a split view bug. Q-423 (the split's tab strip) is where to take it if it should look different.
 
+## F-532 · Squeezing the console and the sides before the sidebar (split-view-build, 2026-11-02; DL-306)
+
+Geoff chose "Squeeze others first" for the fold rule (DL-306), so the sidebar keeps its place at 1440. Built as `SplitRoom` and the console's minimum:
+- **The numbers.** Opening a split puts the console at 400 and the right pane takes the rest (738 at 1440; sides of about 368). The sidebar folds to its rail only under 1,303 (300 + 400 + two 300 sides and their divider + the two pane dividers); the director's "about 1,300" is the same sum without the dividers.
+- **The console's 400 is held by the split view itself.** `DuoSplitView.minimumOverrides` carries a pane's minimum from outside the layout, set when the room is taken (`SplitState.taken`) and cleared when it is given back, so the 400 applies the moment the right pane is widened and the console's 480 returns after the split closes. Changing a pane's `minWidth` through the layout didn't work: the layout reaches the split only after the SwiftUI update, later than the `setPosition` that needs it.
+- **Tokens:** `splitSideMin` 340 → 300, new `splitConsoleMin` 400.
+- **Where the screens differ now.** `making-room` and `fold` draw the sidebar folded at 1440 with a console of 480 and sides of 470 (and 391 at 1280). Under DL-306 at 1440 the sidebar stays, the console is 400 and the sides about 368; at 1280 the sidebar still folds to its rail and the sides are about 430. The rail, the peek and the unfold look as drawn; only those widths changed.
+- **Checks:** DuoChecks pin 1810, 1440, 1303/1302 (the edge) and 1280; `scripts/check-split.sh` has 1440 and 1300 keeping the sidebar, 1280 folding it, and the relaunch cases at 1280 and 1810.
+
