@@ -5289,3 +5289,21 @@ The 90 s blank/terminal-error report (v1, unresolved) isn't reproduced. `say` ma
 - Not exercised: a real microphone (AVAudioEngine, device or route changes, Bluetooth), the terminal prompt target, a person's pauses (the only timer is the 15 s "nothing heard" stop), and Apple's older recognizer (used only where SpeechTranscriber has no model for the language), which has its own time limit. Geoff's question to her (OS transcription or something else, and which target) was unanswered.
 - A hands-on 3-minute run on Geoff's own Mac is ENH-317.
 - `duo2 voice file` blocks until the file ends; killing the CLI doesn't stop the dictation (a second call said "already on").
+
+## F-542 · A per-window colour can't ride on the NSColor tokens alone (multi-window round 3, 2026-11-02; ENH-319, Q-435)
+
+Read from main at 6d9eb748 for ENH-319.
+
+- **How a colour resolves today.** Every `DuoColor`/`DuoNSColor` token is an `NSColor(name:dynamicProvider:)` from `NSColor.duoDynamic(light:dark:classic:)` (`Design/ColorSupport.swift:17`). The provider gets only the drawing `NSAppearance`: it picks dark from the appearance and Classic from a process-wide flag, `DuoScheme.classicActive` (`Design/Appearance.swift:31`). Classic is therefore app-wide by construction (DL-252's "a scheme is only a tokens block").
+- **So a window's colour can't be one more scheme.** `NSAppearance` carries no window identity (the system's named appearances are shared instances), so a provider can't tell which window it is drawing for.
+- **What it takes instead:**
+  - The colour only overrides a few tokens: `ground` (39 SwiftUI and 8 AppKit uses), `pane` (105 and 10), `chatGround` (6) and `toolOutputFill` (4). The rest stay as they are: console, text, rules, selected, needs-you, cards, fields and the document's page.
+  - Those tokens resolve through a per-window value: an environment value `windowColour`, set on each window's `RootView`, and a `ShapeStyle` whose `resolve(in:)` reads it (macOS 26 target, so this is available). The AppKit uses ask the window's model.
+  - `gen-tokens.py` emits a `windowColour.<name>.light|dark.ground|pane|swatch` block.
+  - A DuoChecks gate keeps raw `DuoColor.ground`/`.pane` out of window-coloured views.
+  - The editor's page and the WKWebViews don't change, so no CSS work is needed.
+- **Classic excludes it in one place:** while `DuoScheme.classicActive` is set, `windowColour` resolves to None (board 4c A).
+- **Contrast** (4a's table):
+  - Light: text is 12.4:1 or better and text2 is 5.59:1 or better on every coloured pane. The orange on a coloured light ground is 4.07–4.35:1, so the toolbar chip keeps F-169's white fill.
+  - Dark: every pair is 5.7:1 or better.
+- **Found in passing:** Classic's own `text2` (#7B6F58) on its `ground` (#F0E9D6) is 4.07:1, under 4.5:1. It is 4.64:1 on `pane`. This predates multi-window. It affects Classic's toolbar crumbs and any text2 drawn on the ground.

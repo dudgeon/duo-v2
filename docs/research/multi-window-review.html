@@ -1,0 +1,281 @@
+<title>Duo Multi-Window Review</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,650&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one mobile-first column of decision cards (look first, the question, options with the recommendation first, a note,
+   Send). Built like recurring-jobs-decisions.html: each Send saves to db `answers/<id>` and calls comments.sendToClaude;
+   outcomes go to `diag/`. Published by the multi-window round 3 session for Geoff's review on 2026-11-02. */
+:root {
+  --bg: #f2f3f5; --panel: #ffffff; --ink: #1b1f27; --muted: #5b6270; --line: #d8dbe1;
+  --accent: #2f5bd3; --accent-ink: #ffffff; --accent-soft: #e4ebfb;
+  --look: #f7f8fa; --warn: #9a5a0c; --good: #2a7a46; --bad: #b03636;
+  --display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --body: "Atkinson Hyperlegible", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #13161c; --panel: #1b1f27; --ink: #e5e8ee; --muted: #9aa1ae; --line: #2e333d;
+  --accent: #8aa9f5; --accent-ink: #0f1626; --accent-soft: #232f4a;
+  --look: #161a21; --warn: #e8a75a; --good: #79c993; --bad: #ee8585; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #13161c; --panel: #1b1f27; --ink: #e5e8ee; --muted: #9aa1ae; --line: #2e333d;
+  --accent: #8aa9f5; --accent-ink: #0f1626; --accent-soft: #232f4a;
+  --look: #161a21; --warn: #e8a75a; --good: #79c993; --bad: #ee8585; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.5 var(--body); margin: 0; }
+.wrap { max-width: 780px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 14px 64px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; padding-block: 8px 14px; border-bottom: 1px solid var(--line); margin-bottom: 18px; }
+h1 { font: 650 1.7rem/1.1 var(--display); margin: 0; letter-spacing: -.015em; text-wrap: balance; }
+.sub { color: var(--muted); font-size: .92rem; }
+.headline { flex-basis: 100%; margin: 4px 0 0; max-width: 62ch; }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: .8rem; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.pill.ok { color: var(--good); border-color: currentColor; }
+.pill .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+section { margin-bottom: 28px; }
+section > h2 { font: 700 .76rem/1 var(--body); letter-spacing: .09em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; display: flex; gap: 8px; align-items: center; }
+.count { background: var(--warn); color: var(--panel); border-radius: 999px; padding: 2px 8px; font-size: .75rem; letter-spacing: 0; }
+.stack { display: grid; gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; min-width: 0; }
+.tag { display: inline-flex; gap: 6px; align-items: center; font: 600 .72rem/1 var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.tag .id { color: var(--accent); }
+.verdict { font: 600 .72rem/1 var(--mono); padding: 3px 7px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); }
+.verdict.design { background: transparent; border: 1px solid var(--warn); color: var(--warn); }
+.q h3 { font: 650 1.2rem/1.25 var(--display); margin: 8px 0 6px; text-wrap: balance; letter-spacing: -.005em; }
+.q p { margin: 0 0 10px; max-width: 66ch; }
+.look { background: var(--look); border: 1px dashed var(--line); border-radius: 10px; padding: 9px 12px; margin: 0 0 10px; font-size: .92rem; }
+.look .lbl { font: 600 .7rem var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 3px; }
+.look a { overflow-wrap: anywhere; }
+.ask { font-weight: 700; margin: 0 0 4px; max-width: 66ch; }
+code { font-family: var(--mono); font-size: .86em; overflow-wrap: anywhere; }
+.opts { display: grid; gap: 8px; margin: 10px 0 10px; }
+.opt { text-align: left; font: inherit; color: var(--ink); background: var(--bg); border: 1.5px solid var(--line); border-radius: 10px; padding: 11px 14px; min-height: 50px; cursor: pointer; display: grid; gap: 3px; }
+.opt:hover { border-color: var(--accent); }
+.opt[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.opt .rec { font: 600 .68rem var(--mono); color: var(--accent); text-transform: uppercase; letter-spacing: .05em; }
+.opt small { color: var(--muted); font-size: .88rem; line-height: 1.4; }
+textarea { width: 100%; font: inherit; color: var(--ink); background: var(--bg); border: 1.5px solid var(--line); border-radius: 10px; padding: 10px 12px; min-height: 60px; resize: vertical; }
+textarea:focus, .opt:focus-visible, .btn:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+.btn { font: 700 .95rem var(--body); border-radius: 10px; padding: 10px 16px; min-height: 46px; border: 1.5px solid var(--accent); background: var(--accent); color: var(--accent-ink); cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--accent); }
+.btn:disabled { opacity: .45; cursor: default; }
+.status { font-size: .85rem; color: var(--muted); }
+.status.ok { color: var(--good); } .status.err { color: var(--bad); }
+.answer { font-size: .9rem; background: var(--accent-soft); border-radius: 8px; padding: 8px 10px; margin-top: 10px; }
+.q.answered { border-color: var(--good); }
+.refs { font: .76rem var(--mono); color: var(--muted); margin-top: 8px; overflow-wrap: anywhere; }
+.done { display: grid; gap: 0; }
+.done div { padding: 8px 0; border-top: 1px solid var(--line); }
+.done div:first-child { border-top: 0; padding-top: 0; }
+.done b { display: block; }
+.done span { color: var(--muted); font-size: .92rem; }
+a { color: var(--accent); }
+@media (prefers-reduced-motion: no-preference) { .opt, .btn { transition: border-color .12s, background .12s; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Multi-window and the power user's two leftovers</h1>
+    <span class="pill" id="chan"><span class="dot"></span><span id="chantext">Connecting…</span></span>
+    <p class="headline sub">Six things to decide tonight: when to build multi-window, what its first slice holds, Home across windows, the new window colours (three parts), and two leftovers from the power user's audit. The recommendation is first on each card. Answers are saved on this page and sent to Claude, and the director reads them here.</p>
+  </header>
+
+  <section>
+    <h2>Already settled</h2>
+    <div class="card done">
+      <div><b>Q-428 · A project lives in one window</b><span>Your pick "Bring its window" is DL-308: opening a project from anywhere else brings its window forward.</span></div>
+      <div><b>The plan you're deciding on</b><span>A per-window model over a shared core: slice 0 (nothing visible), slice 1 (two windows), slice 2 (restore, needs-you), a colour slice, then slice 3 (pins, a session in two windows). <a href="https://github.com/dudgeon/duo-v2/blob/main/docs/research/multi-window-2026-11.md" target="_blank" rel="noopener">The research doc</a>.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Decisions <span class="count" id="count" hidden></span></h2>
+    <div class="stack" id="needs"></div>
+  </section>
+
+  <section>
+    <h2>Anything else</h2>
+    <div class="card" id="msgcard">
+      <label for="msgtext" class="sub">A question, a change, or "go with all the recommendations".</label>
+      <textarea id="msgtext" placeholder="e.g. Go with every recommendation, but start with Sage"></textarea>
+      <div class="row"><button class="btn" id="msgsend" type="button">Send</button><button class="btn ghost" id="allrec" type="button">Accept all recommendations</button><span class="status" id="msgstatus"></span></div>
+    </div>
+  </section>
+</div>
+
+<script>
+const CANVAS = "https://claude.ai/artifact/46yWPpDZn16Qtfrfhbuaw1";
+const SPEC = "https://claude.ai/artifact/GaK5hPxTAxphXEZJSoXaYA";
+const DOC = "https://github.com/dudgeon/duo-v2/blob/main/docs/research/multi-window-2026-11.md";
+const AUDIT = "https://github.com/dudgeon/duo-v2/blob/main/docs/research/power-user-v1-feedback.md";
+const NEEDS = [
+  { id: "q99-when", n: "Q-99", verdict: "Slices 0 and 1 now", title: "When to build multi-window",
+    what: "Slice 0 is two build sessions with nothing on screen: one model per window over a shared core. Slice 1 is one or two sessions: New Window, Open in New Window, windows titled by project. Together that's what the power user (v1) needs to switch projects in two windows. It goes past build plan §3a, which defers multi-window past v1, so the reason gets logged.",
+    look: [{ label: "The plan and its slices, §3 of the research doc", url: DOC + "#3-build-plan-option-1" }, { label: "The spec page, decision D12", url: SPEC }],
+    ask: "Look at the plan's slices in the research doc (§3) or the spec page's D12. When should multi-window be built?",
+    options: [
+      { id: "now-0-1", label: "Slices 0 and 1 now, then slice 2", recommended: true, desc: "Logged past §3a for the power user. Restore and needs-you follow." },
+      { id: "now-0-2", label: "Slices 0, 1 and 2 now", desc: "The window set survives relaunch from the start. About one more session." },
+      { id: "slice0", label: "Slice 0 only for now", desc: "The plumbing, with no visible change. Windows wait." },
+      { id: "after-v1", label: "Nothing until after v1", desc: "As §3a says today." } ] },
+  { id: "q429-scope", n: "Q-429", verdict: "Windows only, no pin or colour", title: "What slice 1 includes",
+    what: "The smallest thing that lets the power user switch projects in two windows: File › New Window (⌥⌘N), Project › Open in New Window plus the same item on a tile's and a sidebar row's right-click menu, each window titled with its project, and switching with ⌘` and the system's Window menu.",
+    look: [{ label: "Canvas, board 1 · How a new window opens (option A)", url: CANVAS }, { label: "Board 2 · Pinning a window to a project", url: CANVAS }],
+    ask: "Look at board 1 · How a new window opens on the multi-window canvas. What goes in slice 1?",
+    options: [
+      { id: "windows", label: "New Window, Open in New Window, titles, the system Window menu", recommended: true, desc: "Board 1's option A. No pin, no colour." },
+      { id: "plus-pin", label: "Also Pin (board 2)", desc: "Needs Q-95's D2 and D3 answered first." },
+      { id: "plus-colour", label: "Also window colours (boards 4a to 4c)", desc: "Needs Q-435 first. About one more session." } ] },
+  { id: "q431-home", n: "Q-431", verdict: "Home live in one window", title: "Home across windows in slice 1",
+    what: "Home has one terminal, and it can be live in only one window. A second window's All projects needs to show something in Home's pane.",
+    look: [{ label: "Canvas, board 10 · What happens to Home", url: CANVAS }],
+    ask: "Look at board 10 · What happens to Home on the multi-window canvas. What does a second window show in Home's pane?",
+    options: [
+      { id: "standin", label: "All projects in every window; Home live in one, Show Here in the others", recommended: true, desc: "Board 10's stand-in. Chat there can come later with Q-98's D10." },
+      { id: "first-only", label: "All projects only in the first window", desc: "Other windows hold one project each." },
+      { id: "chat-now", label: "Home's chat in every window now", desc: "Board 10's chat option, with a composer focus check per window. About half a slice more." } ] },
+  { id: "q435-palette", n: "Q-435 (1 of 3)", verdict: "The palette as drawn", title: "Window colours: the palette",
+    what: "From your note on Q-99: a base colour per window, to help switch context. The toolbar takes the colour and the sidebar and right pane a lighter shade, in light and dark. The console, text, cards, the document's page and the needs-you orange never change. Every text colour passes 4.5:1. On a light coloured toolbar the needs-you chip keeps a white fill, because the orange alone falls just under.",
+    look: [{ label: "Canvas, board 4a · A base colour for each window, light and dark", url: CANVAS }],
+    ask: "Look at board 4a · A base colour for each window, light and dark, on the multi-window canvas. Is that the palette?",
+    options: [
+      { id: "as-drawn", label: "Sky, Sage, Lilac, Sand and None, as drawn", recommended: true, desc: "Light and dark values with their contrast on the board." },
+      { id: "more", label: "More colours", desc: "Say which in the note. None may be orange or red." },
+      { id: "redraw", label: "Redraw them", desc: "Say what's off in the note." } ] },
+  { id: "q435-new", n: "Q-435 (2 of 3)", verdict: "Next colour automatically", title: "Window colours: a new window's colour",
+    what: "Your first window stays None, so Duo looks as it does today until you open a second. To change any window's colour: the swatch after the project's name, Window › Window Colour, or duo2 window colour.",
+    look: [{ label: "Canvas, board 4b · A new window's colour, and changing it", url: CANVAS }],
+    ask: "Look at board 4b · A new window's colour, and changing it, on the multi-window canvas. What colour does a new window get?",
+    options: [
+      { id: "auto", label: "The next colour no open window has", recommended: true, desc: "Sky, Sage, Lilac, Sand, then round again. A switch in the swatch's menu turns it off." },
+      { id: "plain", label: "New windows open plain; you pick", desc: "Nothing changes unless you ask." } ] },
+  { id: "q435-classic", n: "Q-435 (3 of 3)", verdict: "Classic turns colours off", title: "Window colours and Classic",
+    what: "Classic (DL-252) repaints the same grounds for the whole app, so the two can't be on together.",
+    look: [{ label: "Canvas, board 4c · Window colours and Classic", url: CANVAS }],
+    ask: "Look at board 4c · Window colours and Classic on the multi-window canvas. Which one gives way?",
+    options: [
+      { id: "classic-wins", label: "Classic turns window colours off", recommended: true, desc: "Every window goes Classic; each gets its colour back when you leave Classic." },
+      { id: "colours-win", label: "Window colours make Classic unavailable", desc: "Classic is dimmed until every window is None." } ] },
+  { id: "q426-browser", n: "Q-426", verdict: "Leave as is", title: "Links: Duo's browser for local files only",
+    what: "The power user asked for web links in her own browser. That is already the default: only files and localhost open in Duo, and every other link goes to the system browser unless you've added the site to the allow list (empty by default). Two loose ends: you can still add allowed sites or open ⌥⌘T, and a terminal link always goes to the system browser while a note link to an allowed site opens a Duo tab.",
+    look: [{ label: "Power-user audit, Test 4 · where a link goes", url: AUDIT + "#test-4-in-detail-where-a-link-goes" }],
+    ask: "Look at Test 4 in the power-user audit. Is the default enough?",
+    options: [
+      { id: "as-is", label: "Leave as is and tell her it's already so", recommended: true, desc: "No change." },
+      { id: "switch", label: "Add Settings › Browser › “Open every link in my browser”", desc: "ENH-316: one switch over the allow list, for the terminal too." },
+      { id: "terminal-follows", label: "Make the terminal follow the allow list", desc: "Terminal links to an allowed site open a Duo tab, as note links do." } ] },
+  { id: "q427-notice", n: "Q-427", verdict: "A small bar, needs a design", title: "A notice when Claude rewrites most of an open document",
+    what: "v1 showed “most of this document was replaced” with Keep mine, Load new and View diff when Claude rewrote more than half. v2 reloads quietly with the highlight and no notice. If you want one, it needs a design on a canvas before it's built (DL-26). Nothing is drawn yet.",
+    look: [{ label: "Capture: a 100 % rewrite reloading with no notice", url: "https://github.com/dudgeon/duo-v2/blob/main/docs/research/power-user-v1-feedback/large-change-reload.png" }, { label: "Power-user audit, Test 3", url: AUDIT + "#test-3-in-detail-outside-changes-to-an-open-document" }],
+    ask: "Look at the capture of the rewrite reloading quietly. Should a big rewrite show a notice?",
+    options: [
+      { id: "small-bar", label: "A small bar over half changed: “Claude replaced most of this document · Revert All · Dismiss”", recommended: true, desc: "Uses Revert All of Claude's Changes (ENH-4). A clean document only. Gets drawn on a canvas for you first." },
+      { id: "v1-banner", label: "v1's three-button banner", desc: "Keep mine, Load new, View diff. Also drawn first." },
+      { id: "nothing", label: "Nothing: the highlight is enough", desc: "ENH-315 stays an idea." } ] }
+];
+
+const $ = s => document.querySelector(s);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+let db = null, comments = null, canSend = "off";
+const answers = {}, picks = {}, notes = {};
+const ago = iso => { if (!iso) return ""; const s = (Date.now() - new Date(iso)) / 1000; if (isNaN(s)) return "";
+  return s < 90 ? "just now" : s < 5400 ? Math.round(s / 60) + " min ago" : s < 129600 ? Math.round(s / 3600) + " h ago" : new Date(iso).toLocaleDateString(); };
+
+let threadsKept = {};
+try { threadsKept = JSON.parse(localStorage.getItem("mw-review-threads") || "{}"); } catch (e) {}
+const keep = () => { try { localStorage.setItem("mw-review-threads", JSON.stringify(threadsKept)); } catch (e) {} };
+async function diag(key, outcome, e) { if (!db) return; try { await db.doc("diag/" + Date.now()).set({ key, outcome, canSend, code: (e && e.code) || null, message: (e && (e.message || String(e))) || null, at: new Date().toISOString() }); } catch (x) {} }
+async function send(key, anchorEl, text, statusEl) {
+  if (comments) { try { canSend = await comments.canSendToClaude(); } catch (e) {} }
+  if (!comments || canSend !== "available") { diag(key, "blocked"); statusEl.className = "status err"; statusEl.textContent = canSend === "no_session" ? "Claude isn't listening right now. Your answer is saved, and the director reads it here." : "Can't send from this view. Your answer is saved, and the director reads it here."; return false; }
+  statusEl.className = "status"; statusEl.textContent = "Sending…";
+  const msg = text.length > 3900 ? text.slice(0, 3900) + "\n…(cut; the full text is saved on the page)" : text;
+  try {
+    let r;
+    if (threadsKept[key]) { try { r = await comments.sendToClaude({ threadId: threadsKept[key], text: msg }); } catch (e) { if (e && e.code === "not_found") delete threadsKept[key]; else throw e; } }
+    if (!r) r = await comments.sendToClaude({ anchor: await comments.anchorFor(anchorEl), text: msg });
+    threadsKept[key] = r.threadId; keep(); diag(key, "sent:" + r.threadId);
+    statusEl.className = "status ok"; statusEl.textContent = "Sent. The reply appears as a comment here.";
+    return true;
+  } catch (e) {
+    diag(key, "error", e);
+    const c = e && e.code; statusEl.className = "status err";
+    statusEl.textContent = c === "consent_required" ? "Allow comments for this page, then send again." : c === "rate_limited" ? "Too fast. Wait a moment, then send again." : c === "claude_unavailable" ? "Claude couldn't take it. Your answer is saved." : "Couldn't send (" + (c || "error") + "). Your answer is saved.";
+    return false;
+  }
+}
+async function saveAnswer(id, a) { answers[id] = a; if (db) { try { await db.doc("answers/" + id).set(a); } catch (e) {} } }
+
+function card(n) {
+  const ans = answers[n.id];
+  const c = el("article", "card q" + (ans ? " answered" : "")); c.id = "n-" + n.id;
+  const t = el("div", "tag"); t.append(el("span", "id", n.n), ans ? "answered" : "open");
+  const v = el("span", "verdict" + (/design/i.test(n.verdict) ? " design" : ""), "Recommend: " + n.verdict);
+  const top = el("div", "row"); top.style.marginTop = "0"; top.style.justifyContent = "space-between"; top.append(t, v); c.append(top);
+  c.append(el("h3", "", n.title));
+  c.append(el("p", "", n.what));
+  const lk = el("div", "look"); lk.append(el("span", "lbl", "Look first"));
+  n.look.forEach((l, i) => { if (i) lk.append(document.createTextNode(" · ")); const a = el("a", "", l.label); a.href = l.url; a.target = "_blank"; a.rel = "noopener"; lk.append(a); });
+  c.append(lk);
+  c.append(el("p", "ask", n.ask));
+  const opts = n.options.slice().sort((x, y) => (y.recommended ? 1 : 0) - (x.recommended ? 1 : 0));
+  if (picks[n.id] == null && ans && ans.choice) picks[n.id] = ans.choice;
+  const og = el("div", "opts"); og.setAttribute("role", "group"); og.setAttribute("aria-label", n.title);
+  const ta = el("textarea"); ta.id = "t-" + n.id; ta.placeholder = "Add a note, or answer in your own words"; ta.value = notes[n.id] ?? (ans && ans.text) ?? "";
+  const row = el("div", "row"), sendBtn = el("button", "btn", ans ? "Send again" : "Send answer"), st = el("span", "status");
+  sendBtn.type = "button";
+  const ready = () => { sendBtn.disabled = !(picks[n.id] || ta.value.trim()); };
+  opts.forEach(o => {
+    const b = el("button", "opt"); b.type = "button"; b.setAttribute("aria-pressed", String(picks[n.id] === o.id));
+    if (o.recommended) b.append(el("span", "rec", "Recommended"));
+    b.append(el("b", "", o.label)); if (o.desc) b.append(el("small", "", o.desc));
+    b.onclick = () => { picks[n.id] = picks[n.id] === o.id ? null : o.id; og.querySelectorAll(".opt").forEach(x => x.setAttribute("aria-pressed", "false")); if (picks[n.id]) b.setAttribute("aria-pressed", "true"); ready(); };
+    og.append(b);
+  });
+  c.append(og);
+  ta.oninput = () => { notes[n.id] = ta.value; ready(); };
+  c.append(ta); ready();
+  sendBtn.onclick = async () => {
+    const o = opts.find(x => x.id === picks[n.id]);
+    const a = { q: n.n, choice: o ? o.id : "", label: o ? o.label : "", text: ta.value.trim(), at: new Date().toISOString() };
+    await saveAnswer(n.id, a);
+    await send("n:" + n.id, c, `Multi-window review · ${n.n} \`${n.id}\`: ${n.title}\nChoice: ${a.label || "(own words)"}` + (a.text ? `\nNote: ${a.text}` : "") + "\n(For director-duo-v2: also saved in this page's db, answers/" + n.id + ")", st);
+    render();
+  };
+  row.append(sendBtn, st); c.append(row);
+  if (ans) { const p = el("div", "answer"); p.append(el("b", "", "Your answer: "), (ans.label || "own words") + (ans.text ? " · " + ans.text : "") + " · " + ago(ans.at)); c.append(p); }
+  return c;
+}
+function render() {
+  const f = document.activeElement && document.activeElement.id;
+  $("#needs").replaceChildren(...NEEDS.map(card));
+  const open = NEEDS.filter(n => !answers[n.id]).length; const cnt = $("#count"); cnt.hidden = !open; cnt.textContent = open + " open";
+  if (f) { const x = document.getElementById(f); if (x) x.focus(); }
+}
+render();
+
+$("#msgsend").onclick = async () => { const t = $("#msgtext").value.trim(); if (!t) return; await saveAnswer("msg-" + Date.now(), { text: t, at: new Date().toISOString(), kind: "message" }); if (await send("msg", $("#msgcard"), "Multi-window review · message:\n" + t, $("#msgstatus"))) $("#msgtext").value = ""; };
+$("#allrec").onclick = async () => {
+  const at = new Date().toISOString();
+  for (const n of NEEDS) { const o = n.options.find(x => x.recommended); picks[n.id] = o.id; await saveAnswer(n.id, { q: n.n, choice: o.id, label: o.label, text: (notes[n.id] || "").trim(), at, via: "all-recommended" }); }
+  render();
+  const note = $("#msgtext").value.trim();
+  await send("all", $("#msgcard"), "Multi-window review · accept all recommendations: " + NEEDS.map(n => n.n + " " + n.options.find(x => x.recommended).id).join(", ") + (note ? "\nNote: " + note : ""), $("#msgstatus"));
+};
+
+(async () => {
+  try { comments = await window.claude?.use?.("comments"); } catch (e) { comments = null; }
+  const check = async () => {
+    try { canSend = comments ? await comments.canSendToClaude() : "off"; } catch (e) { canSend = "off"; }
+    $("#chan").className = "pill" + (canSend === "available" ? " ok" : "");
+    $("#chantext").textContent = canSend === "available" ? "Claude listening" : canSend === "no_session" ? "Claude away; answers are saved" : canSend === "writers_only" ? "Only editors can send" : "Answers are saved";
+  };
+  await check(); setInterval(check, 30000);
+})();
+(async () => {
+  try { db = await window.claude?.use?.("db"); } catch (e) { db = null; }
+  if (!db) return;
+  db.collection("answers").onSnapshot(s => { s.docs.forEach(d => { answers[d.id] = d.data(); }); render(); }, () => {});
+})();
+</script>

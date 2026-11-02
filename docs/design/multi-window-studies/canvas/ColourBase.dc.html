@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Window base colours</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1720px; height: 1040px; box-sizing: border-box; padding: 40px 48px; display: flex; flex-direction: column; gap: 22px; background: #F3F4F6; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 13px; line-height: 20px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; color: #5B636D">DECISION 4a · ENH-319 · Q-435</span>
+<span style="font-size: 22px; line-height: 28px; font-weight: 600">A base colour for each window, light and dark [P]</span>
+<span style="color: #5B636D; white-space: normal; max-width: 1400px">Geoff: “set different base colors per window instance; because window instances can be used to isolate user mental context, this helps context switching”. A base colour is board 4's option B carried into dark: the toolbar takes the colour's ground, the sidebar and right pane its pane shade. The console, cards, fields, the document's page, the selected row, text and the needs-you orange never change. Four colours and None, the same in both appearances.</span>
+</div>
+
+<span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; color: #5B636D">LIGHT [P]</span>
+<div style="display: grid; grid-template-columns: repeat(5, 312px); gap: 16px 15px">
+<sc-for list="{{cols}}" as="c" hint-placeholder-count="5">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="width: 312px; height: 195px"><div style="transform: scale(0.6); transform-origin: top left; width: 520px; height: 325px"><dc-import name="WinColour" mode="light" colour="{{c.id}}" project="{{c.project}}" hint-size="520px,325px"></dc-import></div></div>
+<span style="display: flex; gap: 6px; align-items: baseline"><span style="font-weight: 600">{{c.name}}</span><span style="color: #5B636D; font-size: 12px">{{c.light}}</span></span>
+</div>
+</sc-for>
+</div>
+
+<span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; color: #5B636D">DARK [P]</span>
+<div style="display: grid; grid-template-columns: repeat(5, 312px); gap: 16px 15px">
+<sc-for list="{{cols}}" as="c" hint-placeholder-count="5">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="width: 312px; height: 195px"><div style="transform: scale(0.6); transform-origin: top left; width: 520px; height: 325px"><dc-import name="WinColour" mode="dark" colour="{{c.id}}" project="{{c.project}}" hint-size="520px,325px"></dc-import></div></div>
+<span style="display: flex; gap: 6px; align-items: baseline"><span style="font-weight: 600">{{c.name}}</span><span style="color: #5B636D; font-size: 12px">{{c.dark}}</span></span>
+</div>
+</sc-for>
+</div>
+
+<div style="display: flex; flex-direction: column; border: 1px solid #C9CDD3; border-radius: 6px; background: #FFFFFF; font-size: 12px; line-height: 18px">
+<div style="display: grid; grid-template-columns: 90px 1fr 1fr 1fr 1fr; gap: 12px; padding: 6px 12px; border-bottom: 1px solid #C9CDD3; font-weight: 600; color: #5B636D"><span>Colour</span><span>Light ground · pane · swatch</span><span>Light: text2 / needs-you on pane (ground)</span><span>Dark ground · pane · swatch</span><span>Dark: text2 / needs-you on pane (ground)</span></div>
+<sc-for list="{{cols}}" as="c" hint-placeholder-count="5">
+<div style="display: grid; grid-template-columns: 90px 1fr 1fr 1fr 1fr; gap: 12px; padding: 4px 12px; border-top: 1px solid #E9ECEF"><span style="font-weight: 600">{{c.name}}</span><span style="font-family: 'SF Mono', ui-monospace, monospace">{{c.lightAll}}</span><span>{{c.lightCr}}</span><span style="font-family: 'SF Mono', ui-monospace, monospace">{{c.darkAll}}</span><span>{{c.darkCr}}</span></div>
+</sc-for>
+<span style="padding: 6px 12px; border-top: 1px solid #C9CDD3; color: #5B636D; white-space: normal">Text (#1F2328 light, #E6E8EB dark) is 12.4:1 or more everywhere. The orange on a light ground is under 4.5:1, so on a coloured toolbar the needs-you chip keeps a white fill (F-169), as drawn; the section labels sit on the pane shade, which passes. Proposed tokens: windowColour.&lt;name&gt;.light|dark.ground|pane|swatch.</span>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1720,"height":1040}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const cols = [
+      { id: 'none', name: 'None', project: 'refunds', light: '#F3F4F6', dark: '#131518', lightAll: '#F3F4F6 · #FFFFFF · —', darkAll: '#131518 · #181A1E · —', lightCr: '6.09 / 5.18 (5.53 / 4.71)', darkCr: '6.69 / 6.22 (7.02 / 6.53)' },
+      { id: 'sky', name: 'Sky', project: 'checkout-redesign', light: '#DDE8F6', dark: '#111A27', lightAll: '#DDE8F6 · #F2F7FC · #7FA6D9', darkAll: '#111A27 · #162131 · #5C86C0', lightCr: '5.65 / 4.80 (4.91 / 4.18 → chip on white)', darkCr: '6.22 / 5.78 (6.71 / 6.24)' },
+      { id: 'sage', name: 'Sage', project: 'vendor-review', light: '#DDEEE2', dark: '#111D17', lightAll: '#DDEEE2 · #F2F8F4 · #7DB38E', darkAll: '#111D17 · #16241D · #5E9A72', lightCr: '5.65 / 4.81 (5.04 / 4.29 → chip on white)', darkCr: '6.18 / 5.74 (6.65 / 6.18)' },
+      { id: 'lilac', name: 'Lilac', project: 'pricing', light: '#E8E1F3', dark: '#191528', lightAll: '#E8E1F3 · #F7F4FB · #A88FD0', darkAll: '#191528 · #1F1A31 · #8C73BA', lightCr: '5.59 / 4.76 (4.78 / 4.07 → chip on white)', darkCr: '6.45 / 5.99 (6.83 / 6.35)' },
+      { id: 'sand', name: 'Sand', project: 'ops-notes', light: '#F1EBDC', dark: '#1D1910', lightAll: '#F1EBDC · #FAF7F0 · #C9AE6E', darkAll: '#1D1910 · #241F15 · #A88F55', lightCr: '5.69 / 4.84 (5.12 / 4.35 → chip on white)', darkCr: '6.29 / 5.84 (6.72 / 6.25)' }
+    ];
+    return { cols };
+  }
+}
+</script>
+</body>
+</html>
