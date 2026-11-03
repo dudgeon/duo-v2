@@ -41,8 +41,10 @@ public final class AppModel {
     }
 
     /// The left pane is collapsed independently at each altitude (handoff §3.1).
-    /// All projects starts with its left sidebar collapsed, a project with it expanded (DL-315).
+    /// All projects' left sidebar starts closed until the person opens or closes it themselves
+    /// (`leftTouchedAllProjects`); a project's starts open (DL-315).
     public var leftCollapsedAllProjects = true
+    public var leftTouchedAllProjects = false
     public var leftCollapsedProject = false
     /// The right pane hidden (DL-129): the action column at All projects, the document pane in a project.
     public var rightCollapsedAllProjects = false
@@ -704,7 +706,7 @@ public final class AppModel {
     public var leftCollapsed: Bool {
         get { altitude.isAllProjects ? leftCollapsedAllProjects : leftCollapsedProject }
         set {
-            if altitude.isAllProjects { leftCollapsedAllProjects = newValue } else { leftCollapsedProject = newValue }
+            if altitude.isAllProjects { leftCollapsedAllProjects = newValue; leftTouchedAllProjects = true } else { leftCollapsedProject = newValue }
         }
     }
 

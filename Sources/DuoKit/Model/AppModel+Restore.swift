@@ -14,11 +14,14 @@ public struct RestoreState: Codable, Equatable, Sendable {
     public var project: String?
     public var leftCollapsedAllProjects = false
     public var leftCollapsedProject = false
-    /// Which sidebar defaults this file has been through (DL-315); absent in files from before them.
-    public var sidebarDefaults: Int? = nil
-    public static let sidebarDefaultsVersion = 1
-    /// All projects' sidebar on restore: a file from before DL-315 collapses once, then the saved toggle rules.
-    public var leftCollapsedAllProjectsOnRestore: Bool { sidebarDefaults == nil ? true : leftCollapsedAllProjects }
+    /// Whether the person has ever opened or closed All projects' left sidebar themselves (DL-315); absent in
+    /// files from before it, where a saved "collapsed" can only have been their doing and a saved "open" might be the old default.
+    public var leftTouchedAllProjects: Bool? = nil
+    /// All projects' sidebar on restore: as they left it if they touched it, closed if they never did.
+    public var leftAllProjectsOnRestore: (collapsed: Bool, touched: Bool) {
+        let touched = leftTouchedAllProjects ?? leftCollapsedAllProjects
+        return (touched ? leftCollapsedAllProjects : true, touched)
+    }
     /// The right pane hidden (DL-129); absent in files from before it.
     public var rightCollapsedAllProjects: Bool? = nil
     public var rightCollapsedProject: Bool? = nil
@@ -70,7 +73,7 @@ extension AppModel {
         s.root = liveRoot?.path
         s.leftCollapsedAllProjects = leftCollapsedAllProjects
         s.leftCollapsedProject = leftCollapsedProject
-        s.sidebarDefaults = RestoreState.sidebarDefaultsVersion
+        s.leftTouchedAllProjects = leftTouchedAllProjects
         s.rightCollapsedAllProjects = rightCollapsedAllProjects
         s.rightCollapsedProject = rightCollapsedProject
         s.homeTab = homeTab
@@ -156,7 +159,7 @@ extension AppModel {
             }
         }
         if let h = s.homeTab, let home = fixture.home?.name, fixture.sessions(inProject: home).contains(where: { $0.tabKey == h }) { homeTab = h }
-        leftCollapsedAllProjects = s.leftCollapsedAllProjectsOnRestore
+        (leftCollapsedAllProjects, leftTouchedAllProjects) = s.leftAllProjectsOnRestore
         leftCollapsedProject = s.leftCollapsedProject
         rightCollapsedAllProjects = s.rightCollapsedAllProjects ?? false
         rightCollapsedProject = s.rightCollapsedProject ?? false

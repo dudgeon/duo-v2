@@ -169,19 +169,20 @@ import Foundation
     let old = try JSONDecoder().decode(RestoreState.self, from: Data(#"{"version":1,"leftCollapsedAllProjects":false,"leftCollapsedProject":false,"projects":[]}"#.utf8))
     check(old.splitRoom == nil, "a restore file from before split view still reads")
 
-    // DL-315: All projects starts with its left sidebar collapsed, a project with it expanded; a saved toggle still wins
+    // DL-315: All projects' sidebar starts closed until the person toggles it; a project's starts open
     let fresh = AppModel(fixture: f)
-    check(fresh.leftCollapsedAllProjects && !fresh.leftCollapsedProject, "a new model: All projects' sidebar collapsed, a project's expanded")
-    check(fresh.currentRestoreState().leftCollapsedAllProjects && !fresh.currentRestoreState().leftCollapsedProject, "and a fresh save records those defaults")
-    fresh.leftCollapsedAllProjects = false; fresh.leftCollapsedProject = true
-    let toggled = fresh.currentRestoreState()
-    check(!toggled.leftCollapsedAllProjects && toggled.leftCollapsedProject, "a person's own toggles are what the restore file saves")
-    check(old.sidebarDefaults == nil && old.leftCollapsedAllProjectsOnRestore && !old.leftCollapsedProject, "an old file with no key: All projects collapses once on restore, a project's sidebar is read as saved")
-    var keyed = old; keyed.sidebarDefaults = 1
-    check(!keyed.leftCollapsedAllProjectsOnRestore, "a file with key 1 is read as saved")
-    check(toggled.sidebarDefaults == 1, "every save writes the key")
-    let reloaded = try JSONDecoder().decode(RestoreState.self, from: try JSONEncoder().encode(toggled))
-    check(!reloaded.leftCollapsedAllProjectsOnRestore && reloaded.leftCollapsedProject, "a toggle after the migration survives a save and reload")
+    check(fresh.leftCollapsedAllProjects && !fresh.leftTouchedAllProjects && !fresh.leftCollapsedProject, "untouched: All projects' sidebar starts closed, a project's open")
+    check(fresh.currentRestoreState().leftAllProjectsOnRestore == (collapsed: true, touched: false), "an untouched save restores closed, still untouched")
+    fresh.altitude = .allProjects; fresh.leftCollapsed = false
+    let openSave = fresh.currentRestoreState()
+    check(fresh.leftTouchedAllProjects && openSave.leftAllProjectsOnRestore == (collapsed: false, touched: true), "touched open: stays open across launches")
+    let reopened = try JSONDecoder().decode(RestoreState.self, from: try JSONEncoder().encode(openSave))
+    check(reopened.leftAllProjectsOnRestore == (collapsed: false, touched: true), "touched open survives a save and reload")
+    fresh.leftCollapsed = true
+    check(fresh.currentRestoreState().leftAllProjectsOnRestore == (collapsed: true, touched: true), "touched closed: stays closed across launches")
+    let oldTrue = try JSONDecoder().decode(RestoreState.self, from: Data(#"{"version":1,"leftCollapsedAllProjects":true,"leftCollapsedProject":false,"projects":[]}"#.utf8))
+    check(oldTrue.leftAllProjectsOnRestore == (collapsed: true, touched: true), "an old file with true counts as touched, and stays closed")
+    check(old.leftAllProjectsOnRestore == (collapsed: true, touched: false) && !old.leftCollapsedProject, "an old file with false counts as untouched, and starts closed; a project's sidebar is read as saved")
 
     // Restore validates: a split whose source is no longer a document is dropped; a wild ratio is clamped
     let m2 = AppModel(fixture: f)
