@@ -36,6 +36,10 @@ extension AppModel {
     // swiftlint:disable:next cyclomatic_complexity function_body_length
     func perform(_ id: ActionID, _ inv: Invocation, _ req: ControlRequest, _ done: @escaping @MainActor (Reply) -> Void) {
         switch id {
+        // MARK: Windows (multi-window slice 1)
+        case .windowList, .windowNew, .windowFocus, .windowClose, .windowColour, .windowHome:
+            windowVerb(id, inv, done)
+
         // MARK: Duo
         case .ping:
             done(.ok("Duo \(getpid()), \(terminalsMode == .live ? "live" : "fixture"), \(fixture.projects.count) projects"))
@@ -59,10 +63,10 @@ extension AppModel {
             guard let p = project(named: name) else { return done(noProject(name)) }
             var session: String?
             if let s = inv[1] { guard let found = findSession(s, in: p.name) else { return done(.fail("no session '\(s)' in \(p.name)")) }; session = found.name }
-            open(project: p.name, session: session)
+            let m = open(project: p.name, session: session)   // another window may show it (DL-308)
             if let f = inv.flags["file"] {
                 guard let rel = relativePath(f, project: p.name, cwd: req.cwd) else { return done(.fail("'\(f)' isn't in \(p.name)")) }
-                openDocument(rel)
+                m.openDocument(rel)
             }
             done(.ok("Opened \(p.name)."))
         case .peek:
@@ -354,7 +358,7 @@ extension AppModel {
             done(.ok(text, j))
         case .sessionOpen:
             guard let k = inv[0], let s = findSession(k, in: nil) else { return done(.fail("no session '\(inv[0] ?? "")'")) }
-            if s.project == fixture.home?.name, altitude.isAllProjects { homeTab = s.tabKey } else { open(project: s.project); openConsoleTab(s.tabKey) }
+            if s.project == fixture.home?.name, altitude.isAllProjects { homeTab = s.tabKey } else { open(project: s.project).openConsoleTab(s.tabKey) }
             done(.ok("Showing \(s.name)."))
         case .sessionClose:
             guard let k = inv[0] ?? visibleSessionId, let s = findSession(k, in: nil) ?? fixture.sessions.first(where: { $0.tabKey == k }) else { return done(.fail("no session to close")) }
@@ -619,8 +623,7 @@ extension AppModel {
             done(.ok(text, b.map { ["label": $0.label, "sessions": $0.rows.map { ["id": $0.id, "title": $0.name, "project": $0.project ?? "", "age": $0.age] }] as [String: Any] }))
         case .sessionFork:
             guard let k = inv[0], let s = findSession(k, in: nil), let sid = s.sessionId else { return done(.fail("usage: \(id.action.usage)")) }
-            open(project: s.project)
-            resumeAsFork(sid, in: s.project)
+            open(project: s.project).resumeAsFork(sid, in: s.project)
             done(.ok("Forked \(s.name) in \(s.project) as a new session with the same history."))
         case .sessionTrustFolder:
             guard let k = inv[0], let s = findSession(k, in: nil) else { return done(.fail("usage: \(id.action.usage)")) }
@@ -1491,6 +1494,11 @@ extension AppModel {
         let c = fixture.counts
         j["counts"] = ["needsYou": c.needsYou, "review": c.readyForReview, "working": c.working, "idle": c.idle]
         lines.append("\(c.needsYou) need you · \(c.readyForReview) to review · \(c.working) working · \(c.idle) idle")
+        if core.models.count > 1 {   // the windows (DL-311): this reply describes window \(windowNumber)
+            j["window"] = windowNumber
+            j["windows"] = core.models.map(\.windowJSON)
+            lines.append("window \(windowNumber) of \(core.models.count): " + core.models.map(\.windowLine).joined(separator: "; "))
+        }
         return .ok(lines.joined(separator: "\n"), j)
     }
 

@@ -54,7 +54,7 @@ struct ChatResultView: View {
         .textSelection(.enabled)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(EdgeInsets(top: 8 + 1, leading: 12 + 1, bottom: 8 + 1, trailing: 12 + 1))   // 8/12 inside a 1 pt border
-        .background(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).fill(DuoColor.toolOutputFill))
+        .background(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).fill(WindowTint.toolOutputFill))
         .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
     }
 }

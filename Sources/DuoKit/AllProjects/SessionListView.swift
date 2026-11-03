@@ -101,7 +101,7 @@ struct SessionListPane: View {
             }
         }
         .foregroundStyle(DuoColor.text)
-        .background(DuoColor.pane)
+        .background(WindowTint.pane)
         .accessibilityIdentifier("video.s3.list")   // anchors: the video camera's target
     }
 }

@@ -111,6 +111,7 @@ extension PopUp {
 
 struct ScrollingTabStrip<Pinned: View, Tabs: View, Plus: View, Edge: View>: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.windowColour) private var windowColour
     let pane: DuoPane
     /// The named space the tabs' frames are written in (`TabDraggable`); it spans the scrolling content.
     let space: String
@@ -119,6 +120,8 @@ struct ScrollingTabStrip<Pinned: View, Tabs: View, Plus: View, Edge: View>: View
     let selected: String?
     /// The strip's ground, for the fades; its rule and its dim text.
     let ground: Color
+    /// Set where the strip's ground takes the window's colour; `ground` is then the plain fallback.
+    var groundRole: WindowRole? = nil
     let rule: Color
     let dim: Color
     let font: DuoTextStyle
@@ -183,13 +186,15 @@ struct ScrollingTabStrip<Pinned: View, Tabs: View, Plus: View, Edge: View>: View
     }
 
     /// The tabs out of view at one end, with a needs-you dot for the first that needs you.
+    private var groundColor: Color { groundRole.map { Color(nsColor: WindowTint.nsColor($0, windowColour)) } ?? ground }
+
     @ViewBuilder private func fade(_ st: TabStripState, leading: Bool) -> some View {
         let more = leading ? st.offset > 0.5 : st.offset + st.viewport < st.content - 0.5
         if st.overflows, more {
             let hidden = hiddenKeys(st, leading: leading)
             let needy = hidden.filter(needsYou.contains)
             ZStack(alignment: leading ? .leading : .trailing) {
-                LinearGradient(colors: leading ? [ground, ground.opacity(0)] : [ground.opacity(0), ground],
+                LinearGradient(colors: leading ? [groundColor, groundColor.opacity(0)] : [groundColor.opacity(0), groundColor],
                                startPoint: .leading, endPoint: .trailing)
                     .frame(width: DuoMetric.tabFade).allowsHitTesting(false)
                 if let first = leading ? needy.last : needy.first {
@@ -264,6 +269,6 @@ struct ScrollingTabStrip<Pinned: View, Tabs: View, Plus: View, Edge: View>: View
             .onActivate { PopUp.showTabs(rows(), glyphs: glyphs, choose: { k in choose(k) }) }  // action: view tab
             .accessibilityLabel("All tabs, \(keys.count)")
         }
-        .background(ground)
+        .background(groundColor)
     }
 }

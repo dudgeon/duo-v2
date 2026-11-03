@@ -7,7 +7,7 @@ import Foundation
 // menu item or click in the app isn't tied to an action here or listed in `Parity.uiOnly`.
 
 public enum ActionFamily: String, CaseIterable, Sendable {
-    case app, view, split, projects, sessions, director, files, repo, docs, review, html, slides, deck, send, search, setup
+    case app, view, window, split, projects, sessions, director, files, repo, docs, review, html, slides, deck, send, search, setup
 
     /// The families `duo2 help`, the primer and the skill show: `deck` only while Duo Decks is on (DeckFeature, DL-307).
     public static var shown: [ActionFamily] { allCases.filter { $0 != .deck || DeckFeature.enabled } }
@@ -16,6 +16,7 @@ public enum ActionFamily: String, CaseIterable, Sendable {
         switch self {
         case .app: "Duo"
         case .view: "What's on screen"
+        case .window: "Windows"
         case .split: "Split view"
         case .projects: "Projects"
         case .sessions: "Sessions"
@@ -45,6 +46,9 @@ public enum ActionID: String, CaseIterable, Sendable {
     case split, splitClose = "split close", splitFocus = "split focus", splitSwap = "split swap", splitUnfold = "split unfold", splitRatio = "split ratio", splitSeparate = "split separate"
     case viewSidebar = "view sidebar", viewRight = "view right", viewTab = "view tab", viewTabMove = "view tab-move", viewPane = "view pane", viewGroup = "view group", viewSelect = "view select"
     case viewSort = "view sort", viewFilter = "view filter", viewHidden = "view hidden", viewFormatBar = "view format-bar", viewFolder = "view folder", viewHome = "view home"
+    // Windows (multi-window slice 1, DL-311)
+    case windowList = "window list", windowNew = "window new", windowFocus = "window focus", windowClose = "window close"
+    case windowColour = "window colour", windowHome = "window home"
     // Projects
     case projects, projectShow = "project show", projectMake = "project make", projectMerge = "project merge"
     case projectArchive = "project archive", projectUnarchive = "project unarchive"
@@ -165,7 +169,7 @@ extension DuoAction {
         .init(.uninstall, .setup, "", "Remove exactly what `duo2 install` added (anything you edited stays).", ui: ["Remove…"], local: true),
         .init(.settings, .setup, "[claude-path <path|auto> | notify on|off | dock-badge on|off | appearance system|light|dark|classic | explainers reset | macos]",
               "Duo's settings (S3-1): with no arguments, all of them, and what macOS allows; otherwise set one. The `claude` Duo runs, notifications when a session needs the user, the Dock badge; `appearance` (Match System, Light, Dark or Classic, DL-224, DL-252); `explainers reset` shows the explanations the user dismissed again (Settings › General); `macos` opens System Settings › Notifications › Duo.",
-              ui: ["Choose…", "Use Found One", "Open Notification Settings…", "Show dismissed explanations again", "Appearance"]),
+              ui: ["Choose…", "Use Found One", "Open Notification Settings…", "Show dismissed explanations again", "Appearance", "Appearance Settings…"]),
         .init(.walkSetup, .setup, "<test id>", "Put Duo in the state an acceptance-walk test starts from (the walk page's Set up test button, or `duo2://walk-setup?id=…`). Steps come from ~/DuoAcceptance/walk-setups.json, never from the caller.",
               ui: ["Set up test"]),
         .init(.compose, .setup, "<file>", "Claude Code's external editor in Duo's sessions (Ctrl+G; chat mode's composer, F-104, F-112): hands Claude the composer's text when chat mode asked for it, and otherwise opens your own editor ($VISUAL or $EDITOR as they were). Not for running by hand.", local: true),
@@ -207,6 +211,20 @@ extension DuoAction {
         .init(.viewFormatBar, .view, "show|hide|toggle", "Show or hide the Markdown formatting bar over the editor (View › Hide Formatting Bar). It shows only while a Markdown document has the keyboard.", ui: ["Hide Formatting Bar", "Show Formatting Bar", "Formatting Bar"]),
         .init(.viewHidden, .view, "on|off|toggle", "Show or hide dotfiles in the project's file tree (View › Show Hidden Files).", ui: ["Show Hidden Files"]),
         .init(.viewFolder, .view, "<folder> open|close", "Open or close a folder in the project's file tree.", ui: ["folder row"]),
+
+        // Windows (DL-311): every verb that acts on what's on screen also takes --window <n|project>; with none, it acts
+        // on the window showing the caller's session, else the primary window (the oldest open), never the key window (Q-430).
+        .init(.windowList, .window, "", "Duo's windows: each one's number, title (its project, or Duo at All projects), colour, and which is primary, key and Home's. Every verb that acts on what's on screen takes --window <n|project>; with none it acts on the window showing your session, else the primary window (Q-430)."),
+        .init(.windowNew, .window, "[<project>]", "Open a new window (File › New Window ⌥⌘N) at All projects, or on a project (Project › Open in New Window). A project already in a window brings that window forward instead: a project lives in one window (DL-308). A new window takes the next colour no open window has, while that's on (DL-312).",
+              ui: ["New Window", "Open in New Window"]),
+        .init(.windowFocus, .window, "<n|project>", "Bring a window forward (the Window menu, ⌘`; Go There on Home's pane in another window, DL-314).",
+              ui: ["Go There"]),
+        .init(.windowClose, .window, "[<n|project>]", "Close a window (File › Close Window ⇧⌘W); with none named, the one --window or your session picks. Its projects keep their tabs and sessions. The last window hides; Duo keeps running.",
+              ui: ["Close Window"]),
+        .init(.windowColour, .window, "[<colour>|none] [--auto on|off]", "A window's colour (Window › Window Colour, the swatch after the project's name; DL-312, DL-313): blue, ochre, purple, green, coral, teal, deep-blue, deep-ochre, deep-purple, deep-green, deep-coral, deep-teal, or none. --auto turns 'Colour new windows automatically' on or off. With nothing, the window's colour and the setting. Classic turns window colours off; each comes back after.",
+              ui: ["Window Colour", "Colour new windows automatically", "window swatch"]),
+        .init(.windowHome, .window, "", "Show Home's terminal in this window (Show Here, Q-431): Home is live in one window and the others say where it is.",
+              ui: ["Show Here"]),
 
         // Projects
         .init(.projects, .projects, "", "Projects and folders with sessions, with goal, health and next step.", everyday: true),
@@ -628,7 +646,6 @@ extension DuoAction {
 public enum Parity {
     public static let uiOnly: [String: String] = [
         "Explain Tasks": "Help › Explain Tasks shows an explanation to a person at the screen (DL-172); `duo2 task new` is the action it explains",
-        "Close Window": "window management",
         "Template picker's typing": "the New Slide list (⌃⌘N) and the slide chip's list filter their templates as you type, like the editor's autocomplete (DL-295); `duo2 deck templates` lists them and `deck insert` / `deck change` take the name",
         "Slide chip's look": "the editor draws each `<!-- slide: … -->` line as a chip (DL-296); the file is unchanged, `duo2 deck` reads the same lines",
         "Slide anchor mark": "a 2 pt mark in the editor's margin over the caret's slide (split view's R4); view state, `duo2 deck go` and `duo2 deck` report the current slide",

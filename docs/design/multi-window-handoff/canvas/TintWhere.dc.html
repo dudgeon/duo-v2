@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Choosing a tint</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1720px; height: 640px; box-sizing: border-box; padding: 40px 48px; display: flex; flex-direction: column; gap: 24px; background: #F3F4F6; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 13px; line-height: 20px">
+<div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 40px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; color: #5B636D">DECISION 5</span>
+<span style="font-size: 22px; line-height: 28px; font-weight: 600">Choosing a tint, and what it belongs to</span>
+<span style="color: #5B636D">Four proposed tints, plus None. Each has a ground (toolbar), a pane (half strength) and an edge shade. Tokens to add once approved.</span>
+</div>
+<div style="display: flex; gap: 14px; align-items: flex-end">
+<sc-for list="{{tints}}" as="t" hint-placeholder-count="5">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; line-height: 14px">
+<span style="display: flex; width: 56px; height: 36px; border: 1px solid #8B939C; border-radius: 6px; overflow: hidden"><span style="flex: 1; background: {{t.ground}}"></span><span style="flex: 1; background: {{t.pane}}"></span></span>
+<span style="font-weight: 600">{{t.name}}</span><span style="color: #5B636D">{{t.ground}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px">
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<span style="display: flex; gap: 8px; align-items: center"><span style="font-weight: 600">A · The window's own, from the View menu</span><span style="padding: 0 7px; border: 1px solid #8B939C; border-radius: 9px; font-size: 11px; line-height: 16px; background: #FFFFFF">recommended</span></span>
+<div style="height: 300px; position: relative; border: 1px solid #C9CDD3; border-radius: 6px; background: #FFFFFF">
+<div style="position: absolute; left: 16px; top: 14px; display: flex; gap: 14px"><span>File</span><span>Edit</span><span style="padding: 0 6px; border-radius: 4px; background: #E9ECEF; font-weight: 600">View</span><span>Project</span></div>
+<div style="position: absolute; left: 60px; top: 40px; width: 240px; display: flex; flex-direction: column; padding: 5px; border: 1px solid #C9CDD3; border-radius: 8px; background: #FFFFFF; box-shadow: 0 12px 32px rgba(31,35,40,0.22)">
+<span style="display: flex; padding: 2px 10px">Toggle Right Pane<span style="margin-left: auto; color: #5B636D">⌥⌘0</span></span>
+<span style="height: 1px; margin: 4px 8px; background: #C9CDD3"></span>
+<span style="display: flex; padding: 2px 10px">Pin Window to refunds</span>
+<span style="display: flex; padding: 2px 10px; border-radius: 4px; background: #E9ECEF; font-weight: 600">Window Tint<span style="margin-left: auto; font-weight: 400">›</span></span>
+<span style="height: 1px; margin: 4px 8px; background: #C9CDD3"></span>
+<span style="display: flex; padding: 2px 10px">Enter Full Screen<span style="margin-left: auto; color: #5B636D">⌃⌘F</span></span>
+</div>
+<div style="position: absolute; left: 296px; top: 104px; width: 150px; display: flex; flex-direction: column; padding: 5px; border: 1px solid #C9CDD3; border-radius: 8px; background: #FFFFFF; box-shadow: 0 12px 32px rgba(31,35,40,0.22)">
+<sc-for list="{{tints}}" as="t" hint-placeholder-count="5">
+<span style="display: flex; align-items: center; gap: 8px; padding: 2px 10px; border-radius: 4px; background: {{t.rowBg}}"><span style="width: 12px">{{t.check}}</span><span style="width: 12px; height: 12px; border: 1px solid #8B939C; border-radius: 50%; background: {{t.ground}}"></span>{{t.name}}</span>
+</sc-for>
+</div>
+</div>
+<span style="color: #5B636D; white-space: normal">Each window keeps its own tint through relaunch, whatever it shows. Also on the Pin button's menu and duo2 window tint &lt;name&gt;. The map's tile dot shows the tint of the window a project is open in.</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<span style="font-weight: 600">B · The project's, saved in PROJECT.md</span>
+<div style="height: 300px; position: relative; border: 1px solid #C9CDD3; border-radius: 6px; background: #FFFFFF">
+<div style="position: absolute; left: 20px; top: 20px; width: 220px; display: flex; flex-direction: column; padding: 10px 12px; border: 1px solid #C9CDD3; border-radius: 6px; background: #F3F4F6; font-family: 'SF Mono', ui-monospace, monospace; font-size: 12px; line-height: 19px">
+<span>---</span><span>goal: Cut refund time</span><span>health: On track</span><span style="font-weight: 600">tint: sage</span><span>---</span>
+</div>
+<div style="position: absolute; left: 260px; top: 30px; width: 190px; display: flex; flex-direction: column; gap: 3px; padding: 8px 10px; border: 1px solid #C9CDD3; border-radius: 6px; background: #DDEEE2"><span style="font-weight: 600">refunds</span><span style="color: #C2410C; font-size: 12px">1 needs you</span></div>
+<span style="position: absolute; left: 260px; top: 104px; width: 200px; font-size: 12px; color: #5B636D; white-space: normal">Its tile, and any window showing refunds, take sage.</span>
+</div>
+<span style="color: #5B636D; white-space: normal">refunds looks the same wherever it is, and its tile matches its window. A plain-file truth, but a free window changes colour as you move between projects.</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<span style="font-weight: 600">C · Given out on its own to pinned windows</span>
+<div style="position: relative; width: 494px; height: 300px">
+<div style="position: absolute; left: 0; top: 0; width: 364px; height: 228px"><div style="transform: scale(0.7); transform-origin: top left; width: 520px; height: 325px"><dc-import name="Win" altitude="project" project="refunds" pin="on" tint="sage" key="no" s1="Refund rules" s2="Policy diff" s3="Ops notes" doc="rules.md" hint-size="520px,325px"></dc-import></div></div>
+<div style="position: absolute; left: 130px; top: 72px; width: 364px; height: 228px"><div style="transform: scale(0.7); transform-origin: top left; width: 520px; height: 325px"><dc-import name="Win" altitude="project" project="checkout-redesign" pin="on" tint="lilac" hint-size="520px,325px"></dc-import></div></div>
+</div>
+<span style="color: #5B636D; white-space: normal">Pinning a window gives it the next unused tint; free windows stay untinted. Nothing to choose, but the colours mean nothing you picked.</span>
+</div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1720,"height":640}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const tints = [
+      { name: 'None', ground: '#F3F4F6', pane: '#FFFFFF' },
+      { name: 'Sky', ground: '#DDE8F6', pane: '#F2F7FC' },
+      { name: 'Sage', ground: '#DDEEE2', pane: '#F2F8F4' },
+      { name: 'Lilac', ground: '#E8E1F3', pane: '#F7F4FB' },
+      { name: 'Sand', ground: '#F1EBDC', pane: '#FAF7F0' }
+    ].map((t) => ({ ...t, check: t.name === 'Sage' ? '✓' : '', rowBg: t.name === 'Sage' ? '#E9ECEF' : 'transparent' }));
+    return { tints };
+  }
+}
+</script>
+</body>
+</html>

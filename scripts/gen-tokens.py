@@ -374,6 +374,33 @@ w(f"    public static let documentPaddingX: CGFloat = {num(dp['horizontal'])}")
 w("}")
 w("")
 
+# Window colours (DL-313): a window's base colour, by id, in the order new windows take them (DL-312).
+wc = t["windowColour"]
+_roles = ("ground", "pane", "chatGround", "toolOutputFill", "swatch")
+for _id in wc["order"]:
+    for _m in ("light", "dark"):
+        if set(wc["colours"][_id][_m]) != set(_roles):
+            raise SystemExit(f"windowColour.{_id}.{_m} must have exactly {_roles}")
+w("/// Window colours (DL-313, board 4a′): each overrides `ground`, `pane`, `chatGround` and `toolOutputFill` in its window")
+w("/// only; `swatch` is the toolbar's swatch. `all` is in the order new windows take them (DL-312). Classic turns them off.")
+w("public enum DuoWindowColour {")
+w("    public struct Values: Sendable, Equatable {")
+w("        public let ground: UInt32; public let pane: UInt32; public let chatGround: UInt32; public let toolOutputFill: UInt32; public let swatch: UInt32")
+w("    }")
+w("    public struct Colour: Sendable, Equatable, Identifiable {")
+w("        public let id: String; public let name: String; public let hue: Int; public let deep: Bool")
+w("        public let light: Values; public let dark: Values")
+w("    }")
+def _vals(v):
+    return "Values(" + ", ".join(f"{r}: {hex6(v[r])}" for r in _roles) + ")"
+w("    public static let all: [Colour] = [")
+for _id in wc["order"]:
+    c = wc["colours"][_id]
+    w(f'        Colour(id: "{_id}", name: "{c["name"]}", hue: {int(c["hue"])}, deep: {"true" if c["step"] == "deep" else "false"}, light: {_vals(c["light"])}, dark: {_vals(c["dark"])}),')
+w("    ]")
+w("}")
+w("")
+
 dst.parent.mkdir(parents=True, exist_ok=True)
 dst.write_text("\n".join(lines))
 print(f"wrote {dst}")

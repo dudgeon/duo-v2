@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>How a new window opens</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1720px; height: 640px; box-sizing: border-box; padding: 40px 48px; display: flex; flex-direction: column; gap: 24px; background: #F3F4F6; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 13px; line-height: 20px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; color: #5B636D">DECISION 1</span>
+<span style="font-size: 22px; line-height: 28px; font-weight: 600">How a new window opens, and what it shows</span>
+<span style="color: #5B636D">⌥⌘N is New Window (Geoff, 2026-10-07). ⌘N stays New Markdown File and ⇧⌘N New Folder (DL-34).</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px">
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<span style="display: flex; gap: 8px; align-items: center"><span style="font-weight: 600">A · A fresh window, or a project pinned in one</span><span style="padding: 0 7px; border: 1px solid #8B939C; border-radius: 9px; font-size: 11px; line-height: 16px; background: #FFFFFF">recommended</span></span>
+<div style="height: 330px; position: relative; border: 1px solid #C9CDD3; border-radius: 6px; background: #FFFFFF">
+<div style="position: absolute; left: 16px; top: 14px; display: flex; gap: 14px"><span style="padding: 0 6px; border-radius: 4px; background: #E9ECEF; font-weight: 600">File</span><span>Edit</span><span>View</span><span>Project</span></div>
+<div style="position: absolute; left: 16px; top: 40px; width: 250px; display: flex; flex-direction: column; padding: 5px; border: 1px solid #C9CDD3; border-radius: 8px; background: #FFFFFF; box-shadow: 0 12px 32px rgba(31,35,40,0.22)">
+<span style="display: flex; padding: 2px 10px; border-radius: 4px; background: #E9ECEF; font-weight: 600">New Window<span style="margin-left: auto; font-weight: 400; color: #5B636D">⌥⌘N</span></span>
+<span style="height: 1px; margin: 4px 8px; background: #C9CDD3"></span>
+<span style="display: flex; padding: 2px 10px">New Claude Session<span style="margin-left: auto; color: #5B636D">⌘T</span></span>
+<span style="display: flex; padding: 2px 10px">New Markdown File<span style="margin-left: auto; color: #5B636D">⌘N</span></span>
+<span style="display: flex; padding: 2px 10px">New Folder<span style="margin-left: auto; color: #5B636D">⇧⌘N</span></span>
+</div>
+<div style="position: absolute; left: 200px; top: 178px; width: 270px; display: flex; flex-direction: column; padding: 5px; border: 1px solid #C9CDD3; border-radius: 8px; background: #FFFFFF; box-shadow: 0 12px 32px rgba(31,35,40,0.22)">
+<span style="padding: 0 10px; font-size: 11px; font-weight: 600; color: #5B636D">Project</span>
+<span style="display: flex; padding: 2px 10px; border-radius: 4px; background: #E9ECEF; font-weight: 600">Open in New Window</span>
+<span style="height: 1px; margin: 4px 8px; background: #C9CDD3"></span>
+<span style="display: flex; padding: 2px 10px">Open Project File</span>
+<span style="display: flex; padding: 2px 10px">Reveal in Finder</span>
+</div>
+</div>
+<span style="color: #5B636D; white-space: normal">New Window opens at All projects, not pinned. Project › Open in New Window (and on a tile's or sidebar row's menu) opens that project in a new window, pinned to it. duo2 window new [--project p].</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<span style="font-weight: 600">B · Also drag a tile out of the window</span>
+<div style="height: 330px; position: relative; border: 1px solid #C9CDD3; border-radius: 6px; background: #FFFFFF; overflow: hidden">
+<div style="position: absolute; left: 16px; top: 24px; width: 300px; height: 230px; border: 1px solid #8B939C; border-radius: 8px; background: #F3F4F6; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-content: start; padding: 30px 10px 10px; box-sizing: border-box">
+<div style="padding: 6px 8px; border: 1px solid #C9CDD3; border-radius: 6px; background: #FFFFFF; font-weight: 600">checkout-redesign</div>
+<div style="padding: 6px 8px; border: 1px dashed #8B939C; border-radius: 6px; color: #5B636D">refunds</div>
+<div style="padding: 6px 8px; border: 1px solid #C9CDD3; border-radius: 6px; background: #FFFFFF; font-weight: 600">vendor-review</div>
+<div style="padding: 6px 8px; border: 1px solid #C9CDD3; border-radius: 6px; background: #FFFFFF; font-weight: 600">pricing</div>
+</div>
+<div style="position: absolute; left: 300px; top: 120px; width: 170px; display: flex; flex-direction: column; gap: 3px; padding: 8px 10px; border: 1.5px solid #1F2328; border-radius: 6px; background: #FFFFFF; box-shadow: 0 12px 32px rgba(31,35,40,0.22)"><span style="font-weight: 600">refunds</span><span style="color: #C2410C; font-size: 12px">1 needs you</span></div>
+<span style="position: absolute; left: 300px; top: 196px; width: 190px; font-size: 12px; color: #5B636D; white-space: normal">Release outside the window to open refunds in a new window</span>
+</div>
+<span style="color: #5B636D; white-space: normal">As Safari and iTerm2 tear off tabs. Quick once known, but hidden, so it rides on A. A console or right-pane tab could be dragged out the same way later.</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<span style="font-weight: 600">C · New Window copies this window</span>
+<div style="position: relative; width: 494px; height: 330px">
+<div style="position: absolute; left: 0; top: 0; width: 416px; height: 260px"><div style="transform: scale(0.8); transform-origin: top left; width: 520px; height: 325px"><dc-import name="Win" altitude="project" key="no" hint-size="520px,325px"></dc-import></div></div>
+<div style="position: absolute; left: 78px; top: 60px; width: 416px; height: 260px"><div style="transform: scale(0.8); transform-origin: top left; width: 520px; height: 325px"><dc-import name="Win" altitude="project" console="chat" doc-state="readonly" hint-size="520px,325px"></dc-import></div></div>
+</div>
+<span style="color: #5B636D; white-space: normal">As Safari and Finder do: the new window opens on the same project and tabs. You start with everything shown twice, so the terminal and editor go to stand-ins straight away.</span>
+</div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1720,"height":640}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

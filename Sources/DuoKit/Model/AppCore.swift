@@ -57,11 +57,32 @@ public final class AppCore {
         }
     }
 
-    /// `duo2` requests: always the primary window in slice 0 (Q-430 decides the rest in slice 1).
+    /// `duo2` requests (Q-430): `--window <n|project>`, else the window showing the caller's session, else
+    /// the primary window; never the key window (`AppCore+Windows.swift`, `target(for:)`).
     public func handle(_ req: ControlRequest, done: @escaping @MainActor (ControlResponse) -> Void) {
-        guard let m = primary else { return done(ControlResponse(ok: false, output: "Duo has no window")) }
-        m.handle(req, done: done)
+        let t = target(for: req)
+        if let e = t.error { return done(ControlResponse(ok: false, output: e)) }
+        guard let m = t.model else { return done(ControlResponse(ok: false, output: "Duo has no window")) }
+        m.handle(t.request, done: done)
     }
+
+    // MARK: - The window set (multi-window slice 1, AppCore+Windows.swift)
+
+    /// Made by the app: a window for a new model (`MainWindow`); brings one forward; closes or hides one.
+    /// Nil in the checks, which drive the models alone.
+    @ObservationIgnored public var windowMaker: ((AppModel) -> Void)?
+    @ObservationIgnored public var windowFocuser: ((AppModel) -> Void)?
+    @ObservationIgnored public var windowCloser: ((AppModel) -> Void)?
+    @ObservationIgnored public var windowHider: ((AppModel) -> Void)?
+    /// The windows brought forward, by number, oldest first (the checks read it).
+    @ObservationIgnored public internal(set) var focusLog: [Int] = []
+    /// The windows `openWindow` made, held until they close (the first window is the app's own).
+    @ObservationIgnored var opened: [AppModel] = []
+    /// Home's window (Q-431), by number; nil is the primary.
+    public internal(set) var homeOwnerNumber: Int?
+    var colourNewWindowsSetting = DuoState.load().colourNewWindows
+    /// Classic is on (DL-252): window colours are off (DL-312). Kept in step with `DuoScheme.classicActive`.
+    public internal(set) var classicOn = DuoScheme.classicActive
 
     // MARK: - Counts for the checks (C-146): how many times each app-wide pass ran
 
@@ -71,6 +92,9 @@ public final class AppCore {
     public init(fixture: Fixture) {
         self.fixture = fixture
         Self.current = self
+        NotificationCenter.default.addObserver(forName: DuoScheme.didChange, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.classicOn = DuoScheme.classicActive }
+        }
         // A terminal's process ended by itself: once for the app, not once per window.
         terminals.onEnded = { [weak self] t in
             guard let self else { return }
@@ -114,6 +138,8 @@ public final class AppCore {
 
     /// Voice input (DL-260): one microphone for the app, made and wired by the first window that asks.
     @ObservationIgnored var voiceInput: VoiceInput?
+    /// The window that started the running dictation (C-150): the host's callbacks reach its composer or editor.
+    @ObservationIgnored weak var voiceWindow: AppModel?
 
     /// Split tabs by project (DL-275): a project's split follows it to whichever window shows it.
     public let splitTabs = SplitTabs()

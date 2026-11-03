@@ -237,11 +237,27 @@ public enum FixtureHarness {
             if parts.count > 1, let target = model.voiceFocusTarget {
                 model.voice.start(target, source: .file(URL(fileURLWithPath: parts[1])))
             }
-        case "window-shot":   // window-shot:<png>: the whole window drawn to <png> now, mid-run (a dictation in progress)
-            if parts.count > 1, let w = FixtureHarness.window() ?? NSApp.windows.first {
-                do { try WindowCapture.window(w, to: URL(fileURLWithPath: parts[1])) }
-                catch { FileHandle.standardError.write(Data("window-shot failed: \(error.localizedDescription)\n".utf8)) }
+        case "window-shot":   // window-shot:[<n>:]<png>: window n (default 1), whole, drawn to <png> now, mid-run
+            let sub = parts.count > 1 ? parts[1].split(separator: ":", maxSplits: 1).map(String.init) : []
+            let (n, path) = sub.count == 2 && Int(sub[0]) != nil ? (Int(sub[0])!, sub[1]) : (1, parts.count > 1 ? parts[1] : "")
+            if !path.isEmpty, let w = FixtureHarness.window(n) ?? (n == 1 ? NSApp.windows.first : nil) {
+                WindowCapture.withWebSnapshots(in: w) {
+                    do { try WindowCapture.window(w, to: URL(fileURLWithPath: path)) }
+                    catch { FileHandle.standardError.write(Data("window-shot failed: \(error.localizedDescription)\n".utf8)) }
+                }
             }
+        // Multi-window slice 1 (DL-311): more windows in a scripted run, as File › New Window and Open in New Window.
+        case "window-new":    // window-new[:<project>]: a new window, at All projects or on the project
+            model.core.openWindow(project: parts.count > 1 ? parts[1] : nil)
+        case "window-colour", "window-open":   // window-colour:<n>:<colour id|none> (the swatch); window-open:<n>:<project> (DL-308)
+            let sub = parts.count > 1 ? parts[1].split(separator: ":", maxSplits: 1).map(String.init) : []
+            if sub.count == 2, let m = model.core.model(named: sub[0]) {
+                if parts[0] == "window-colour" { m.setWindowColour(sub[1] == "none" ? nil : sub[1]) } else { m.open(project: sub[1]) }
+            }
+        case "window-home":   // window-home:<n>: Show Here in window n (Home's pane, Q-431)
+            if parts.count > 1, let m = model.core.model(named: parts[1]) { model.core.showHome(in: m) }
+        case "window-popover": // window-popover:<n>: the swatch's popover open in window n
+            if parts.count > 1, let m = model.core.model(named: parts[1]) { m.colourPopoverOpen = true }
         case "voice-log":     // voice-log: the dictation's state and target, and the composer's text, to stderr
             let field = model.visibleSessionId.flatMap { (model.chats.existing($0) ?? model.fixtureChats[$0])?.composerView }
             FileHandle.standardError.write(Data("voice-log: state=\(model.voice.state) target=\(model.voice.target.map { "\($0)" } ?? "-") level=\(String(format: "%.2f", model.voice.level)) field=\((field?.plainText ?? "-").debugDescription) dictation=\(field?.dictation.map { "\($0.start)+\($0.length)" } ?? "none")\n".utf8))
@@ -1291,6 +1307,19 @@ public enum FixtureHarness {
         let models = AppCore.current?.models ?? []
         if models.indices.contains(n - 1), let w = models[n - 1].window { return w }
         return n == 1 ? NSApp.windows.first { $0.title == "Duo" } : nil
+    }
+
+    /// A second or later window in a scripted run (multi-window slice 1): drawn as window 1 is (sRGB, the design
+    /// size), 22 pt down and right; the actions and the capture stay window 1's.
+    public static func configureMore(_ window: NSWindow, options: LaunchOptions) {
+        window.isRestorable = false
+        window.tabbingMode = .disallowed
+        guard options.state != nil || options.capturing else { return }
+        window.colorSpace = .sRGB
+        let chrome = window.frame.height - window.contentLayoutRect.height
+        let size = options.windowSize.map { CGSize(width: $0.width, height: $0.height - designContentTop) } ?? contentSize
+        let top = window.frame.maxY
+        window.setFrame(CGRect(x: window.frame.minX, y: top - size.height - chrome, width: size.width, height: size.height + chrome), display: true)
     }
 
     public static func configure(_ window: NSWindow, model: AppModel, options: LaunchOptions) {

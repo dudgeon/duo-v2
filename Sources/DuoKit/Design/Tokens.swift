@@ -544,6 +544,7 @@ public enum DuoSymbolSize {
     public static let barIcon: CGFloat = 12.0
     public static let toolbarIcon: CGFloat = 14.0
     public static let badgeNumber: CGFloat = 10.0
+    public static let swatchChevron: CGFloat = 7.0
 }
 
 /// State strengths (style-audit fix list 7): the one place an opacity is a convention.
@@ -691,4 +692,30 @@ public enum DuoWebTokens {
     ]
     public static let documentPaddingY: CGFloat = 24.0
     public static let documentPaddingX: CGFloat = 28.0
+}
+
+/// Window colours (DL-313, board 4a′): each overrides `ground`, `pane`, `chatGround` and `toolOutputFill` in its window
+/// only; `swatch` is the toolbar's swatch. `all` is in the order new windows take them (DL-312). Classic turns them off.
+public enum DuoWindowColour {
+    public struct Values: Sendable, Equatable {
+        public let ground: UInt32; public let pane: UInt32; public let chatGround: UInt32; public let toolOutputFill: UInt32; public let swatch: UInt32
+    }
+    public struct Colour: Sendable, Equatable, Identifiable {
+        public let id: String; public let name: String; public let hue: Int; public let deep: Bool
+        public let light: Values; public let dark: Values
+    }
+    public static let all: [Colour] = [
+        Colour(id: "blue", name: "Blue", hue: 250, deep: false, light: Values(ground: 0xB2D5FA, pane: 0xECF4FD, chatGround: 0xE1EFFD, toolOutputFill: 0xF1F8FE, swatch: 0xB2D5FA), dark: Values(ground: 0x2266A4, pane: 0x161F28, chatGround: 0x0C1218, toolOutputFill: 0x121A22, swatch: 0x2266A4)),
+        Colour(id: "ochre", name: "Ochre", hue: 75, deep: false, light: Values(ground: 0xF8C885, pane: 0xFBF2E6, chatGround: 0xF7EBDA, toolOutputFill: 0xFCF6EE, swatch: 0xF8C885), dark: Values(ground: 0x835A17, pane: 0x241D12, chatGround: 0x16110A, toolOutputFill: 0x1F180F, swatch: 0x835A17)),
+        Colour(id: "purple", name: "Purple", hue: 315, deep: false, light: Values(ground: 0xE8BFFB, pane: 0xF8F0FC, chatGround: 0xF4E8F9, toolOutputFill: 0xFAF4FC, swatch: 0xE8BFFB), dark: Values(ground: 0x7D4B92, pane: 0x221B25, chatGround: 0x140F17, toolOutputFill: 0x1D1720, swatch: 0x7D4B92)),
+        Colour(id: "green", name: "Green", hue: 135, deep: false, light: Values(ground: 0xB5E09E, pane: 0xEEF6EA, chatGround: 0xE6F1E0, toolOutputFill: 0xF3F9F1, swatch: 0xB5E09E), dark: Values(ground: 0x437224, pane: 0x1A2016, chatGround: 0x0F130C, toolOutputFill: 0x151C12, swatch: 0x437224)),
+        Colour(id: "coral", name: "Coral", hue: 20, deep: false, light: Values(ground: 0xFBC0BF, pane: 0xFDF0EF, chatGround: 0xFDE7E6, toolOutputFill: 0xFEF4F4, swatch: 0xFBC0BF), dark: Values(ground: 0x9C4246, pane: 0x281A1A, chatGround: 0x180F0F, toolOutputFill: 0x221616, swatch: 0x9C4246)),
+        Colour(id: "teal", name: "Teal", hue: 185, deep: false, light: Values(ground: 0x7EE7D9, pane: 0xE7F8F5, chatGround: 0xDBF3EF, toolOutputFill: 0xEEFAF8, swatch: 0x7EE7D9), dark: Values(ground: 0x197269, pane: 0x12221F, chatGround: 0x091412, toolOutputFill: 0x0E1D1B, swatch: 0x197269)),
+        Colour(id: "deep-blue", name: "Deep blue", hue: 250, deep: true, light: Values(ground: 0x5BAAF7, pane: 0xECF4FD, chatGround: 0xE1EFFD, toolOutputFill: 0xF1F8FE, swatch: 0x5BAAF7), dark: Values(ground: 0x0A3F6C, pane: 0x161F28, chatGround: 0x0C1218, toolOutputFill: 0x121A22, swatch: 0x0A3F6C)),
+        Colour(id: "deep-ochre", name: "Deep ochre", hue: 75, deep: true, light: Values(ground: 0xD6962C, pane: 0xFBF2E6, chatGround: 0xF7EBDA, toolOutputFill: 0xFCF6EE, swatch: 0xD6962C), dark: Values(ground: 0x523709, pane: 0x241D12, chatGround: 0x16110A, toolOutputFill: 0x1F180F, swatch: 0x523709)),
+        Colour(id: "deep-purple", name: "Deep purple", hue: 315, deep: true, light: Values(ground: 0xC588E0, pane: 0xF8F0FC, chatGround: 0xF4E8F9, toolOutputFill: 0xFAF4FC, swatch: 0xC588E0), dark: Values(ground: 0x542467, pane: 0x221B25, chatGround: 0x140F17, toolOutputFill: 0x1D1720, swatch: 0x542467)),
+        Colour(id: "deep-green", name: "Deep green", hue: 135, deep: true, light: Values(ground: 0x7DB85A, pane: 0xEEF6EA, chatGround: 0xE6F1E0, toolOutputFill: 0xF3F9F1, swatch: 0x7DB85A), dark: Values(ground: 0x25470A, pane: 0x1A2016, chatGround: 0x0F130C, toolOutputFill: 0x151C12, swatch: 0x25470A)),
+        Colour(id: "deep-coral", name: "Deep coral", hue: 20, deep: true, light: Values(ground: 0xEF7E80, pane: 0xFDF0EF, chatGround: 0xFDE7E6, toolOutputFill: 0xFEF4F4, swatch: 0xEF7E80), dark: Values(ground: 0x6F1821, pane: 0x281A1A, chatGround: 0x180F0F, toolOutputFill: 0x221616, swatch: 0x6F1821)),
+        Colour(id: "deep-teal", name: "Deep teal", hue: 185, deep: true, light: Values(ground: 0x31BCAE, pane: 0xE7F8F5, chatGround: 0xDBF3EF, toolOutputFill: 0xEEFAF8, swatch: 0x31BCAE), dark: Values(ground: 0x0E4741, pane: 0x12221F, chatGround: 0x091412, toolOutputFill: 0x0E1D1B, swatch: 0x0E4741)),
+    ]
 }

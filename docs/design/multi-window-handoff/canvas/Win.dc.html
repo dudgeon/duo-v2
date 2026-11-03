@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mini Duo window</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 520px; height: 325px; box-sizing: border-box; display: flex; flex-direction: column; border: 1px solid #8B939C; border-radius: 8px; overflow: hidden; background: {{pane}}; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 10px; line-height: 14px; white-space: nowrap">
+<sc-if value="{{edge}}" hint-placeholder-val="{{ false }}"><div style="height: 3px; flex: none; background: {{edgeColor}}"></div></sc-if>
+<div style="display: flex; align-items: center; gap: 6px; height: 24px; flex: none; padding: 0 8px; border-bottom: 1px solid #C9CDD3; background: {{ground}}">
+<span style="display: flex; gap: 4px; margin-right: 4px"><span style="width: 7px; height: 7px; border-radius: 50%; background: {{l1}}"></span><span style="width: 7px; height: 7px; border-radius: 50%; background: {{l2}}"></span><span style="width: 7px; height: 7px; border-radius: 50%; background: {{l3}}"></span></span>
+<sc-if value="{{showAllCrumb}}" hint-placeholder-val="{{ true }}"><span style="color: {{allColor}}; font-weight: {{allWeight}}">All projects</span></sc-if>
+<sc-if value="{{isProject}}" hint-placeholder-val="{{ true }}"><span style="display: flex; align-items: center; gap: 4px"><sc-if value="{{showAllCrumb}}" hint-placeholder-val="{{ true }}"><svg width="5" height="7" viewBox="0 0 8 10" aria-hidden="true"><path d="M2 1.5 6 5 2 8.5" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if><span style="font-weight: 600">{{project}}</span></span></sc-if>
+<sc-if value="{{showPin}}" hint-placeholder-val="{{ false }}"><span style="display: flex; align-items: center; gap: 3px; padding: 0 4px; border-radius: 4px; background: {{pinBg}}; color: {{pinColor}}; font-size: 9px"><svg width="8" height="9" viewBox="0 0 12 14" aria-hidden="true"><path d="M4 1.5h4M5 1.5v4L2.5 8h7L7 5.5v-4M6 8v5" fill="{{pinFill}}" stroke="{{pinColor}}" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path></svg>{{pinLabel}}</span></sc-if>
+<sc-if value="{{swatch}}" hint-placeholder-val="{{ false }}"><span style="width: 9px; height: 9px; border-radius: 50%; border: 1px solid #8B939C; background: {{edgeColor}}"></span></sc-if>
+<sc-if value="{{hasChip}}" hint-placeholder-val="{{ true }}"><span style="display: flex; align-items: center; gap: 4px; margin-left: 4px; padding: 0 5px; border: 1.5px solid #C2410C; border-radius: 5px; background: {{chipBg}}; font-size: 9px; font-weight: 600; color: #C2410C"><svg width="6" height="6" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="#C2410C"></circle></svg>{{chip}}</span></sc-if>
+<span style="display: flex; align-items: center; gap: 4px; width: 120px; height: 15px; box-sizing: border-box; margin-left: auto; padding: 0 5px; border: 1px solid #C9CDD3; border-radius: 4px; background: #FFFFFF; color: #5B636D; font-size: 8px">Search all projects<span style="margin-left: auto">⇧⌘A</span></span>
+</div>
+<sc-if value="{{isProject}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex: 1; min-height: 0">
+<div style="width: 112px; flex: none; display: flex; flex-direction: column; gap: 2px; padding: 8px 6px; box-sizing: border-box; border-right: 1px solid #C9CDD3; background: {{pane}}">
+<span style="font-weight: 600; padding: 0 4px">{{project}}</span>
+<span style="padding: 4px 4px 0; font-size: 7px; font-weight: 600; letter-spacing: 0.06em; color: #C2410C">NEEDS YOU · 1</span>
+<span style="display: flex; align-items: center; gap: 4px; height: 16px; padding: 0 4px; border-radius: 4px; background: #E9ECEF"><svg width="6" height="6" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="#C2410C"></circle></svg>{{s1}}</span>
+<span style="padding: 4px 4px 0; font-size: 7px; font-weight: 600; letter-spacing: 0.06em; color: #5B636D">WORKING · 1</span>
+<span style="display: flex; align-items: center; gap: 4px; height: 16px; padding: 0 4px; border-radius: 4px; background: #E8F0FA"><svg width="6" height="6" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg>{{s2}}</span>
+<span style="padding: 4px 4px 0; font-size: 7px; font-weight: 600; letter-spacing: 0.06em; color: #5B636D">IDLE · 1</span>
+<span style="display: flex; align-items: center; gap: 4px; height: 16px; padding: 0 4px"><svg width="6" height="6" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5h6" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg>{{s3}}</span>
+<span style="margin-top: auto; border-top: 2px solid #C9CDD3; padding: 4px 4px 0; font-size: 7px; font-weight: 600; letter-spacing: 0.06em; color: #5B636D">FILES</span>
+<span style="height: 5px; width: 70px; margin: 3px 4px; border-radius: 2px; background: #D5D9DE"></span>
+<span style="height: 5px; width: 54px; margin: 3px 4px; border-radius: 2px; background: #D5D9DE"></span>
+</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; background: {{midBg}}; color: {{midText}}">
+<div style="display: flex; align-items: center; gap: 8px; height: 18px; flex: none; padding: 0 8px; border-bottom: 1px solid #2B2F36; background: #15171B; color: #E6E8EB; font-family: 'SF Mono', ui-monospace, monospace; font-size: 8px">
+<span style="font-weight: 500">{{s1}}</span><span style="color: #9AA1AB">{{s2}}</span><span style="color: #9AA1AB">+</span>
+</div>
+<sc-if value="{{live}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 10px">
+<span style="height: 5px; width: 160px; border-radius: 2px; background: #2F333A"></span>
+<span style="height: 5px; width: 120px; border-radius: 2px; background: #2F333A"></span>
+<span style="height: 5px; width: 140px; border-radius: 2px; background: #2F333A"></span>
+<span style="height: 5px; width: 90px; border-radius: 2px; background: #2F333A"></span>
+</div>
+</sc-if>
+<sc-if value="{{standin}}" hint-placeholder-val="{{ false }}">
+<div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 10px; white-space: normal; text-align: center">
+<span>{{standinText}}</span>
+<span style="padding: 2px 7px; border: 1px solid #9AA1AB; border-radius: 4px; font-size: 9px">{{standinButton}}</span>
+</div>
+</sc-if>
+<sc-if value="{{chat}}" hint-placeholder-val="{{ false }}">
+<div style="flex: 1; display: flex; flex-direction: column; gap: 6px; padding: 8px; white-space: normal">
+<span style="display: flex; align-items: center; gap: 6px; padding: 3px 6px; border: 1px solid #C9CDD3; border-radius: 4px; background: #FFFFFF; color: #5B636D; font-size: 8px">{{chatBar}}<span style="margin-left: auto; padding: 0 5px; border: 1px solid #8B939C; border-radius: 4px; color: #1F2328">Show Terminal Here</span></span>
+<span style="align-self: flex-end; max-width: 150px; padding: 4px 6px; border-radius: 6px; background: #DCE6F7">Tighten the refund window rule</span>
+<span style="height: 5px; width: 170px; border-radius: 2px; background: #D5D9DE"></span>
+<span style="height: 5px; width: 140px; border-radius: 2px; background: #D5D9DE"></span>
+<span style="margin-top: auto; height: 18px; border: 1px solid #C9CDD3; border-radius: 6px; background: #FFFFFF"></span>
+</div>
+</sc-if>
+</div>
+<div style="width: 150px; flex: none; display: flex; flex-direction: column; border-left: 1px solid #C9CDD3; background: {{pane}}">
+<div style="display: flex; align-items: center; gap: 8px; height: 18px; flex: none; padding: 0 8px; border-bottom: 1px solid #C9CDD3; font-size: 8px"><span style="font-weight: 600">{{doc}}</span><span style="color: #5B636D">Browser</span></div>
+<sc-if value="{{docReadOnly}}" hint-placeholder-val="{{ false }}"><span style="display: flex; align-items: center; gap: 4px; padding: 3px 6px; border-bottom: 1px solid #C9CDD3; background: #F3F4F6; color: #5B636D; font-size: 8px; white-space: normal">{{docBar}}<span style="margin-left: auto; padding: 0 5px; border: 1px solid #8B939C; border-radius: 4px; color: #1F2328; white-space: nowrap">Edit Here</span></span></sc-if>
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 10px">
+<span style="font-weight: 600">{{doc}}</span>
+<span style="height: 5px; width: 120px; border-radius: 2px; background: #D5D9DE"></span>
+<span style="height: 5px; width: 100px; border-radius: 2px; background: #D5D9DE"></span>
+<span style="height: 5px; width: 112px; border-radius: 2px; background: #D5D9DE"></span>
+<span style="height: 5px; width: 70px; border-radius: 2px; background: #D5D9DE"></span>
+</div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{isAll}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex: 1; min-height: 0">
+<div style="width: 122px; flex: none; display: flex; flex-direction: column; background: {{homeBg}}; color: {{homeText}}">
+<div style="display: flex; align-items: center; height: 18px; padding: 0 8px; border-bottom: 1px solid #2B2F36; background: #15171B; color: #E6E8EB; font-family: 'SF Mono', ui-monospace, monospace; font-size: 8px; font-weight: 500">Home</div>
+<sc-if value="{{homeLive}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 10px">
+<span style="height: 5px; width: 90px; border-radius: 2px; background: #2F333A"></span>
+<span style="height: 5px; width: 70px; border-radius: 2px; background: #2F333A"></span>
+<span style="height: 5px; width: 84px; border-radius: 2px; background: #2F333A"></span>
+</div>
+</sc-if>
+<sc-if value="{{homeStandin}}" hint-placeholder-val="{{ false }}">
+<div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 8px; white-space: normal; text-align: center">
+<span>{{homeStandinText}}</span>
+<span style="padding: 2px 7px; border: 1px solid #9AA1AB; border-radius: 4px; font-size: 9px">Show Here</span>
+</div>
+</sc-if>
+<sc-if value="{{homeChat}}" hint-placeholder-val="{{ false }}">
+<div style="flex: 1; display: flex; flex-direction: column; gap: 5px; padding: 6px; white-space: normal">
+<span style="padding: 2px 4px; border: 1px solid #C9CDD3; border-radius: 4px; background: #FFFFFF; color: #5B636D; font-size: 7px">Terminal in another window</span>
+<span style="align-self: flex-end; max-width: 90px; padding: 3px 5px; border-radius: 6px; background: #DCE6F7">What needs me?</span>
+<span style="height: 5px; width: 96px; border-radius: 2px; background: #D5D9DE"></span>
+<span style="height: 5px; width: 80px; border-radius: 2px; background: #D5D9DE"></span>
+<span style="margin-top: auto; height: 16px; border: 1px solid #C9CDD3; border-radius: 6px; background: #FFFFFF"></span>
+</div>
+</sc-if>
+</div>
+<div style="flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; align-content: start; padding: 10px; background: {{ground}}">
+<sc-for list="{{tiles}}" as="t" hint-placeholder-count="4">
+<div style="display: flex; flex-direction: column; gap: 3px; padding: 6px 7px; border: 1px solid #C9CDD3; border-radius: 5px; background: #FFFFFF">
+<span style="display: flex; align-items: center; gap: 4px; font-weight: 600"><span style="overflow: hidden; text-overflow: ellipsis">{{t.name}}</span><sc-if value="{{t.inWindow}}" hint-placeholder-val="{{ false }}"><span style="width: 7px; height: 7px; margin-left: auto; border-radius: 50%; border: 1px solid #8B939C; background: {{t.dot}}"></span></sc-if></span>
+<span style="display: flex; align-items: center; gap: 4px; color: {{t.color}}"><sc-if value="{{t.needs}}" hint-placeholder-val="{{ false }}"><svg width="6" height="6" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="#C2410C"></circle></svg></sc-if>{{t.line}}</span>
+<span style="height: 4px; width: 70%; border-radius: 2px; background: #D5D9DE"></span>
+</div>
+</sc-for>
+</div>
+<div style="width: 122px; flex: none; display: flex; flex-direction: column; gap: 4px; padding: 8px 6px; box-sizing: border-box; border-left: 1px solid #C9CDD3; background: {{pane}}">
+<span style="font-size: 7px; font-weight: 600; letter-spacing: 0.06em; color: #C2410C">NEEDS YOU · 2</span>
+<span style="display: flex; flex-direction: column; gap: 2px; padding: 5px; border: 1px solid #C9CDD3; border-radius: 5px; background: #FFFFFF"><span style="font-weight: 600">PRD v2</span><span style="color: #5B636D">checkout-redesign</span></span>
+<span style="display: flex; flex-direction: column; gap: 2px; padding: 5px; border: 1px solid #C9CDD3; border-radius: 5px; background: #FFFFFF"><span style="font-weight: 600">Refund rules</span><span style="color: #5B636D">refunds</span></span>
+</div>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"altitude":{"editor":"enum","options":["project","all"],"default":"project"},"project":{"editor":"text","default":"checkout-redesign"},"chip":{"editor":"text","default":""},"key":{"editor":"enum","options":["yes","no"],"default":"yes"},"crumb":{"editor":"enum","options":["full","project"],"default":"full"},"pin":{"editor":"enum","options":["none","off","on"],"default":"none"},"tint":{"editor":"enum","options":["none","sky","sage","lilac","sand"],"default":"none"},"tintStyle":{"editor":"enum","options":["window","toolbar","edge"],"default":"window"},"console":{"editor":"enum","options":["live","standin","chat"],"default":"live"},"docState":{"editor":"enum","options":["live","readonly"],"default":"live"},"home":{"editor":"enum","options":["live","standin","chat"],"default":"live"},"standinText":{"editor":null},"standinButton":{"editor":null},"chatBar":{"editor":null},"docBar":{"editor":null},"homeStandinText":{"editor":null},"inWindow":{"editor":null},"s1":{"editor":null},"s2":{"editor":null},"s3":{"editor":null},"doc":{"editor":null},"$preview":{"width":520,"height":325}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const p = this.props;
+    const tints = {
+      none: { ground: '#F3F4F6', pane: '#FFFFFF', edge: '#FFFFFF' },
+      sky: { ground: '#DDE8F6', pane: '#F2F7FC', edge: '#7FA6D9' },
+      sage: { ground: '#DDEEE2', pane: '#F2F8F4', edge: '#7DB38E' },
+      lilac: { ground: '#E8E1F3', pane: '#F7F4FB', edge: '#A88FD0' },
+      sand: { ground: '#F1EBDC', pane: '#FAF7F0', edge: '#C9AE6E' }
+    };
+    const tintName = p.tint ?? 'none';
+    const t = tints[tintName] ?? tints.none;
+    const style = p.tintStyle ?? 'window';
+    const tinted = tintName !== 'none';
+    const ground = tinted && style !== 'edge' ? t.ground : '#F3F4F6';
+    const pane = tinted && style === 'window' ? t.pane : '#FFFFFF';
+    const isAll = (p.altitude ?? 'project') === 'all';
+    const key = (p.key ?? 'yes') !== 'no';
+    const crumbFull = (p.crumb ?? 'full') === 'full';
+    const pin = p.pin ?? 'none';
+    const pinned = pin === 'on';
+    const inWindow = (p.inWindow ?? '').split(',').filter(Boolean);
+    const base = [
+      { name: 'checkout-redesign', line: '1 needs you', needs: true },
+      { name: 'refunds', line: '1 needs you', needs: true },
+      { name: 'vendor-review', line: '2 working', needs: false },
+      { name: 'pricing', line: '3 idle', needs: false }
+    ];
+    const tiles = base.map((x) => ({ ...x, inWindow: inWindow.includes(x.name), dot: '#DDEEE2', color: x.needs ? '#C2410C' : '#5B636D' }));
+    const cons = p.console ?? 'live';
+    const home = p.home ?? 'live';
+    return {
+      isAll, isProject: !isAll,
+      ground, pane,
+      edge: tinted && style === 'edge', edgeColor: t.edge, swatch: tinted && style === 'edge',
+      showAllCrumb: isAll || (crumbFull && !pinned),
+      allColor: isAll ? '#1F2328' : '#5B636D', allWeight: isAll ? 600 : 400,
+      project: p.project ?? 'checkout-redesign',
+      showPin: pin !== 'none', pinLabel: pinned ? 'Pinned' : 'Pin',
+      pinColor: pinned ? '#1F2328' : '#5B636D', pinFill: pinned ? '#1F2328' : 'none',
+      pinBg: pinned ? '#FFFFFF' : 'transparent',
+      chipBg: tinted && style !== 'edge' ? '#FFFFFF' : 'transparent',
+      chip: p.chip ?? '', hasChip: !!(p.chip ?? ''),
+      l1: key ? '#FF5F57' : '#C9CDD3', l2: key ? '#FEBC2E' : '#C9CDD3', l3: key ? '#28C840' : '#C9CDD3',
+      live: cons === 'live', standin: cons === 'standin', chat: cons === 'chat',
+      midBg: cons === 'chat' ? '#F3F4F6' : '#15171B', midText: cons === 'chat' ? '#1F2328' : '#E6E8EB',
+      standinText: p.standinText ?? 'PRD v2 is showing in another window',
+      standinButton: p.standinButton ?? 'Show Here',
+      chatBar: p.chatBar ?? 'Terminal in window 1',
+      docReadOnly: (p.docState ?? 'live') === 'readonly',
+      docBar: p.docBar ?? 'Editing in window 1',
+      homeLive: home === 'live', homeStandin: home === 'standin', homeChat: home === 'chat',
+      homeBg: home === 'chat' ? '#F3F4F6' : '#15171B', homeText: home === 'chat' ? '#1F2328' : '#E6E8EB',
+      homeStandinText: p.homeStandinText ?? 'Home is showing in another window',
+      s1: p.s1 ?? 'PRD v2', s2: p.s2 ?? 'Pricing research', s3: p.s3 ?? 'Exec deck',
+      doc: p.doc ?? 'prd.md',
+      tiles
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -35,6 +35,10 @@ struct ProjectMenuItems: View {
         let live = model.terminalsMode == .live
         let p = live ? model.menuProject : nil
         let organisable = p.map { $0.isHome != true } ?? false
+        // DL-311, board 1 A: the project in a window of its own (or its window forward, DL-308).
+        Button("Open in New Window") { if let q = model.menuProject { model.core.openWindow(project: q.name) } }   // action: window new
+            .disabled(model.menuProject == nil)
+        Divider()
         Button("Open Project File") { if let p { model.openProjectFile(p.name) } }
             .disabled(p == nil || p!.isFolderOnly)
         Button("Reveal in Finder") { if let p { FileActions.reveal(URL(fileURLWithPath: p.path)) } }

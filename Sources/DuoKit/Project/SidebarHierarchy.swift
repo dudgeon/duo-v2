@@ -121,7 +121,7 @@ struct SectionHeaderPlus: View {
                 if tasks { plus.explainerTrigger(.tasks, key: "tasks.fold-plus", origin: "tasks.fold-head") } else { plus }
             }
             .padding(EdgeInsets(top: 12, leading: DuoSpace.panePadding, bottom: 4, trailing: DuoSpace.panePadding))
-            .background(DuoColor.pane)
+            .background(WindowTint.pane)
             .contentShape(Rectangle())
             .onHover { inside in
                 if inside { model.hoveredTaskRow = hoverKey } else if model.hoveredTaskRow == hoverKey { model.hoveredTaskRow = nil }
@@ -174,7 +174,7 @@ struct TasksTail: View {
             }
             NewTaskRow(project: project)
         }
-        .background(DuoColor.pane)
+        .background(WindowTint.pane)
         .contextMenu { TaskTemplateItems(project: project) }
     }
 }
@@ -196,7 +196,7 @@ struct TimeGroupRow: View {
         }
         .padding(.horizontal, 8 + DuoSpace.selectionInset)
         .frame(height: DuoMetric.rowGroup)
-        .background(DuoColor.pane)
+        .background(WindowTint.pane)
         .contentShape(Rectangle())
         .onActivate { withDuoAnimation(.fold) { model.toggleTimeGroup(project: project, section.id) } }  // action: view group
         .accessibilityLabel(folded ? "Show \(section.rows.count) \(section.title.lowercased()) sessions" : "Hide \(section.title.lowercased()) sessions")

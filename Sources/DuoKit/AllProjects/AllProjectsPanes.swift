@@ -14,10 +14,10 @@ struct HomePane: View {
     var body: some View {
         let home = model.fixture.home
         let tabs = home.map { model.tabSessions(inProject: $0.name) } ?? []
-        let light = model.homeShowsChat
+        let light = model.homeShowsChat && model.ownsHome   // Home's stand-in is dark (board 10 B)
         let text = light ? DuoColor.text : DuoColor.consoleText
         let text2 = light ? DuoColor.text2 : DuoColor.consoleText2
-        let ground = light ? DuoColor.ground : DuoColor.console
+        let ground = light ? AnyShapeStyle(WindowTint.strip) : AnyShapeStyle(DuoColor.console)
         VStack(spacing: 0) {
             HStack(spacing: light ? 10 : DuoSpace.gapRowItems) {
                 Text("★ \(home?.name ?? "Home")")
@@ -42,6 +42,10 @@ struct HomePane: View {
 
             // No Home yet: no session row, the message sits under the heading (S2-3).
             let noHome = model.fixtureConsole == .noHome || (model.terminalsMode == .live && home == nil)
+            if !model.ownsHome {
+                // Home is live in another window (Q-431, board 10 B): say where, with Show Here (Q-447 stand-in).
+                HomeElsewhere()
+            } else {
             if !noHome {
             ConsoleTabStrip(project: home?.name, pane: .left)
             HomeRule(light: light)
@@ -71,8 +75,9 @@ struct HomePane: View {
             } else {
                 Color.clear
             }
+            }
         }
-        .background(light ? DuoColor.ground : DuoColor.console)
+        .background(light ? AnyShapeStyle(WindowTint.strip) : AnyShapeStyle(DuoColor.console))
     }
 }
 
@@ -163,7 +168,7 @@ struct ProjectMapPane: View {
             IdleFooter()
         }
         .foregroundStyle(DuoColor.text)
-        .background(DuoColor.pane)
+        .background(WindowTint.pane)
         // The idle list (DB-1): above the footer's left end, 16 in, arrow down at it.
         .overlay(alignment: .bottomLeading) {
             if model.idleOpen {
@@ -864,7 +869,7 @@ struct ActionColumnPane: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .foregroundStyle(DuoColor.text)
-        .background(DuoColor.pane)
+        .background(WindowTint.pane)
     }
 }
 
@@ -1157,6 +1162,9 @@ struct ProjectOrganizeMenu: ViewModifier {
             let payload = AppModel.dragPayload(project: project.name)
             content
                 .contextMenu {
+                    // DL-311, board 1 A: the project in a window of its own (or its window forward, DL-308).
+                    Button("Open in New Window") { model.core.openWindow(project: project.name) }   // action: window new
+                    Divider()
                     SendMenu { _ in model.projectPayload(project.name) }
                     Divider()
                     if project.isMissing {

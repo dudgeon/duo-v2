@@ -24,7 +24,7 @@ struct TaskBoardPane: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            .background(DuoColor.pane)
+            .background(WindowTint.pane)
         } else {
             Color.clear
         }
