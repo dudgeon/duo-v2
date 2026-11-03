@@ -34,14 +34,15 @@ public struct RootView: View {
         // Keyed on the altitude alone: a jump between projects fades the project up (projectShown)
         // and doesn't cross-fade one project's names into another's (DL-130).
         .duoAnimation(.altitude, value: model.altitude.isAllProjects)
-        .background(WindowTint.pane)
-        // A window colour (DL-313) paints the toolbar at real chroma: a band of `ground` under the toolbar,
-        // whose own background steps aside while the window has a colour.
+        // The pane under everything; a window colour (DL-313) also paints the toolbar at real chroma: a band of
+        // `ground` as tall as the toolbar (the safe area's top), whose own background steps aside meanwhile.
         .background {
-            if model.windowColour != nil {
-                VStack(spacing: 0) {
-                    Rectangle().fill(WindowTint.ground).frame(height: DuoMetric.toolbarHeight)
-                    Spacer(minLength: 0)
+            GeometryReader { g in
+                ZStack(alignment: .top) {
+                    Rectangle().fill(WindowTint.pane)
+                    if model.windowColour != nil {
+                        Rectangle().fill(WindowTint.ground).frame(height: g.safeAreaInsets.top)
+                    }
                 }
                 .ignoresSafeArea()
             }

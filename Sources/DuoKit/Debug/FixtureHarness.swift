@@ -237,23 +237,25 @@ public enum FixtureHarness {
             if parts.count > 1, let target = model.voiceFocusTarget {
                 model.voice.start(target, source: .file(URL(fileURLWithPath: parts[1])))
             }
-        case "window-shot":   // window-shot:<png>[:<n>]: window n (default 1), whole, drawn to <png> now, mid-run
-            let n = parts.count > 2 ? Int(parts[2]) ?? 1 : 1
-            if parts.count > 1, let w = FixtureHarness.window(n) ?? (n == 1 ? NSApp.windows.first : nil) {
+        case "window-shot":   // window-shot:[<n>:]<png>: window n (default 1), whole, drawn to <png> now, mid-run
+            let sub = parts.count > 1 ? parts[1].split(separator: ":", maxSplits: 1).map(String.init) : []
+            let (n, path) = sub.count == 2 && Int(sub[0]) != nil ? (Int(sub[0])!, sub[1]) : (1, parts.count > 1 ? parts[1] : "")
+            if !path.isEmpty, let w = FixtureHarness.window(n) ?? (n == 1 ? NSApp.windows.first : nil) {
                 WindowCapture.withWebSnapshots(in: w) {
-                    do { try WindowCapture.window(w, to: URL(fileURLWithPath: parts[1])) }
+                    do { try WindowCapture.window(w, to: URL(fileURLWithPath: path)) }
                     catch { FileHandle.standardError.write(Data("window-shot failed: \(error.localizedDescription)\n".utf8)) }
                 }
             }
         // Multi-window slice 1 (DL-311): more windows in a scripted run, as File › New Window and Open in New Window.
         case "window-new":    // window-new[:<project>]: a new window, at All projects or on the project
             model.core.openWindow(project: parts.count > 1 ? parts[1] : nil)
-        case "window-colour": // window-colour:<n>:<colour id|none>: window n's colour (the swatch, Window › Window Colour)
-            if parts.count > 2, let m = model.core.model(named: parts[1]) { m.setWindowColour(parts[2] == "none" ? nil : parts[2]) }
+        case "window-colour", "window-open":   // window-colour:<n>:<colour id|none> (the swatch); window-open:<n>:<project> (DL-308)
+            let sub = parts.count > 1 ? parts[1].split(separator: ":", maxSplits: 1).map(String.init) : []
+            if sub.count == 2, let m = model.core.model(named: sub[0]) {
+                if parts[0] == "window-colour" { m.setWindowColour(sub[1] == "none" ? nil : sub[1]) } else { m.open(project: sub[1]) }
+            }
         case "window-home":   // window-home:<n>: Show Here in window n (Home's pane, Q-431)
             if parts.count > 1, let m = model.core.model(named: parts[1]) { model.core.showHome(in: m) }
-        case "window-open":   // window-open:<n>:<project>: window n opens a project (DL-308 brings its window forward)
-            if parts.count > 2, let m = model.core.model(named: parts[1]) { m.open(project: parts[2]) }
         case "window-popover": // window-popover:<n>: the swatch's popover open in window n
             if parts.count > 1, let m = model.core.model(named: parts[1]) { m.colourPopoverOpen = true }
         case "voice-log":     // voice-log: the dictation's state and target, and the composer's text, to stderr
