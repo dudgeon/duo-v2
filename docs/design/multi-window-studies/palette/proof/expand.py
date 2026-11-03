@@ -22,7 +22,7 @@ def win_vals(mode, colour, project):
         v.update(ground=c['ground'], pane=c['pane'], chatGround=c['chatGround'], toolOutput=c['toolOutputFill'], swatch=c['swatch'])
     else:
         v['swatch'] = b['pane']
-    v.update(showSwatch=True, page=b['pane'], field=b['pane'], chipBg=b['pane'] if c and mode == 'light' else 'transparent', edgeLine=b['controlEdge'], project=project)
+    v.update(showSwatch=True, page=b['pane'], field=b['pane'], chipBg=b['pane'] if c else 'transparent', crumb=b['text'] if c else b['text2'], edgeLine=b['controlEdge'], project=project)
     return v
 WIN = body(proj + '/WinColour12.dc.html')
 def expand_win(s):

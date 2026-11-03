@@ -9,7 +9,7 @@ Geoff's direction (DL-141, 2026-10-07): independent windows, each optionally pin
   - Boards 1 to 10 are decisions, each with 2–3 options and one marked recommended.
   - `Win.dc.html` is the mini window the boards share.
   - `canvas/` is a copy of the canvas's files as of this commit.
-  - Board **4a′ · Twelve window colours** (`ColourTwelve.dc.html`, component `WinColour12.dc.html`) supersedes 4a's four colours (Q-441, F-547). Its values come from `palette/window_palette.py`; re-run that script to check contrast after any change.
+  - Board **4a′ · Twelve window colours** (`ColourTwelve.dc.html`, component `WinColour12.dc.html`) supersedes 4a's four colours (Q-441, F-547). It draws direction C of board **4a″ · Telling windows apart** (`ColourApart.dc.html`), which Geoff chose. Its values come from `palette/window_palette.py` (`palette.json`); re-run that script to check contrast after any change. Rendered proofs: `palette/board-4a-prime.png`, `palette/board-4a-double-prime.png`.
 - **Spec:** https://claude.ai/artifact/GaK5hPxTAxphXEZJSoXaYA (`spec.html`). It covers what changes, the tradeoffs, the size in slices, and twelve decisions, D1 to D12.
   - Geoff picks an option on each decision and presses Send to Claude.
   - Picks are kept in the page's store, in the `picks` and `submissions` collections, which a session reads with `ArtifactData`.

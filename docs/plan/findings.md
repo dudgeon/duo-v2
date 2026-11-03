@@ -5374,3 +5374,8 @@ A publish whose `files` included `audio/*.m4a` was refused whole: "extension .m4
   - 4a″ C lets in coral and ochre (only h 22–64, around needs-you, stays out): closest 8.3 light, 7.4 dark, about 70% of pairs ≥ 15.
   - The needs-you chip needs a solid fill on a coloured toolbar in dark too (the dark pane), or it disappears on the coral and ochre ones.
   - The rendered board is `palette/board-4a-double-prime.png`.
+- **Direction C, built out (Geoff, 2026-11-02: "c is good; the order should be all light, then all dark").** Board 4a′ was redrawn from the round-2 `window_palette.py`.
+  - The toolbar holds the colour. The pane, chat and tool output take a pale tint of the same hue, so text2 still passes there (5.14:1 or more), and toolbar text is `text` (4.66:1 or more).
+  - The swatch is the toolbar colour itself, so the swatch control needs its controlEdge ring to show on the toolbar.
+  - The closest toolbars are Coral and Ochre in light (8.3) and Deep green and Deep teal in dark (7.3).
+  - The order runs the six light steps, then the six deep ones, with the hues jumping across the wheel (Blue, Ochre, Purple, Green, Coral, Teal).
