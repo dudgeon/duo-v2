@@ -460,6 +460,7 @@ public final class GuardedTerminalView: LocalProcessTerminalView {
     /// text arrives after it. `pasteboard` is a private one in DuoChecks.
     public var pasteboard = NSPasteboard.general
     private var copyCleaner: CopyCleaningDelegate?
+    private var copyGeneration = 0
 
     /// Puts Duo between SwiftTerm and this view for OSC 52 (`clipboardCopy` isn't open to override).
     public func installCopyCleaning() {
@@ -477,13 +478,17 @@ public final class GuardedTerminalView: LocalProcessTerminalView {
 
     /// OSC 52 from the program.
     func programCopied(_ text: String) {
+        copyGeneration &+= 1   // a newer copy retires every repair still waiting on an older one (F-568)
+        let generation = copyGeneration
         let clean = cleanedCopy(text)
         put(clean)
         guard clean != text else { return }
         // `pbcopy` may land after the OSC 52: put the clean text back whenever the raw text shows up in the next 1.5 s.
         for ms in [60, 150, 300, 600, 1000, 1500] {
             DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(ms)) { [weak self] in
-                guard let self, self.pasteboard.string(forType: .string) == text else { return }
+                // At fire time, not just when armed: still this copy, still a Claude terminal, raw text back (F-568).
+                guard let self, self.copyGeneration == generation, self.runsClaude,
+                      self.pasteboard.string(forType: .string) == text else { return }
                 self.put(clean)
             }
         }
@@ -496,6 +501,7 @@ public final class GuardedTerminalView: LocalProcessTerminalView {
 
     /// Edit ▸ Copy on SwiftTerm's own selection (⇧-drag, Select All): cleaned the same way when it is the prompt's.
     public override func copy(_ sender: Any) {
+        copyGeneration &+= 1
         guard runsClaude, let s = getSelection(), !s.isEmpty else { return super.copy(sender) }
         put(cleanedCopy(s))
     }

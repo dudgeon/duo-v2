@@ -5461,3 +5461,8 @@ Built on `build/multi-window-slice1` from main `b93abb27` (merged up to `ca5946a
 ## F-554 · `--then` is one comma-separated list, and an action is split at its first colon only (2026-11-03)
 
 `LaunchOptions` keeps only the last `--then`, so several `--then` flags silently ran one action; `FixtureHarness.perform` splits `name:rest` once, so an action with two arguments reads `rest` itself. `window-shot:[<n>:]<png>`, `window-colour:<n>:<id>` and `window-open:<n>:<project>` do. `scripts/check-windows.sh` joins its actions with commas.
+
+## F-568 · A copy repair armed by an earlier copy could rewrite a later shell copy (2026-11-03)
+
+- **Race.** `programCopied` armed six timers (60 to 1500 ms) that put the clean text back if the raw text reappeared. They checked only the pasteboard, not which copy they served nor `runsClaude`. In the full DuoChecks run the "pbcopy lands after" case's 600/1000/1500 ms timers fired during the next cases, so "a shell's copy is never changed" failed whenever the run was slow (once on the slice 1 merge; twice on 4b85d2e7, whose shell waits stretch the run). Alone it passed because the timers fired after `w.close()`.
+- **Fix.** `copyGeneration` counts copies (OSC 52 and Edit ▸ Copy); each timer checks at fire time that it is still the latest copy, that the view still `runsClaude`, and that the raw text is back.
