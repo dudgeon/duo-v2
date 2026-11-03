@@ -54,6 +54,7 @@ func repoFixture() throws -> Fixture {
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "duo-files" { return try duoFilesMoveChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "pane" { return try paneFocusChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "editors" { return try editorSetChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "editorwrap" { return try editorWrapChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "pair" { return try splitDocsChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "formatbar" { return try formatBarChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "deckeditor" { return try deckEditorChecks() }
@@ -805,6 +806,7 @@ func repoFixture() throws -> Fixture {
     dockBadgeChecks()
     try paneFocusChecks()
     try editorSetChecks()
+    try editorWrapChecks()
     try splitDocsChecks()
     try formatBarChecks()
     try deckEditorChecks()
