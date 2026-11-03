@@ -46,7 +46,7 @@ extension AppModel {
             let lines = list.map { s in "\(s.project) / \(s.name)" + (s.wait.map { " · \($0)" } ?? "") + (s.question.map { "\n  \($0)" } ?? "") }
             done(.ok(lines.isEmpty ? "Nothing needs you." : lines.joined(separator: "\n"), list.map { sessionJSON($0) }))
         case .undo:
-            guard let m = NSApp.windows.first(where: { $0.title == "Duo" })?.undoManager, m.canUndo else { return done(.fail("nothing to undo")) }
+            guard let m = window?.undoManager, m.canUndo else { return done(.fail("nothing to undo")) }
             let name = m.undoActionName
             m.undo()
             done(.ok("Undid \(name.isEmpty ? "the last change" : name)."))
@@ -440,7 +440,7 @@ extension AppModel {
             func add() { done(.ok(AllowedSites.add(host) ? "\(host) is allowed: its pages open in Duo." : "\(host) was already allowed.")) }
             // A session can't widen the list unasked (DL-178): the user answers on a Duo sheet.
             if Env.autoconfirm || AllowedSites.load().contains(host) { return add() }
-            SheetCenter.shared.ask(DuoQuestion(
+            SheetCenter.shared.ask(from: self, DuoQuestion(
                 title: "Allow \(host) in Duo’s browser?",
                 paragraphs: ["A Claude session asked to let pages from `\(host)` and its subdomains open in Duo’s browser tabs. They stay signed in there, and their pages can be sent to Claude."],
                 note: "The list is a plain file you can edit: \(Self.short(AllowedSites.file.path)).",

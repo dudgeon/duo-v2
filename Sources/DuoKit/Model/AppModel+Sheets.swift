@@ -197,5 +197,5 @@ extension AppModel {
         m.finish(m.into)
     }
 
-    public var sheetIsUp: Bool { moveIntoHomeForm != nil || newProjectForm != nil || newDeckForm != nil || convertDeckForm != nil || pushForm != nil || gitHubProjectForm != nil || SheetCenter.shared.current != nil }
+    public var sheetIsUp: Bool { moveIntoHomeForm != nil || newProjectForm != nil || newDeckForm != nil || convertDeckForm != nil || pushForm != nil || gitHubProjectForm != nil || SheetCenter.shared.current(for: self) != nil }
 }

@@ -44,7 +44,7 @@ extension AppModel {
     public func askTrustAtStart(_ chat: ChatSession, folder: String, path: String, source: String = "you", done: ((String) -> Void)? = nil) -> Bool {
         let real = ClaudeTrust.realPath(folder)
         guard ChatScreenReader.samePath(path, real) else { return false }
-        SheetCenter.shared.ask(Self.trustStartQuestion(folder: real) { trust in
+        SheetCenter.shared.ask(from: self, Self.trustStartQuestion(folder: real) { trust in
             Task { @MainActor in
                 let r = await chat.answerTrust(trust, path: real)
                 if r.ok {

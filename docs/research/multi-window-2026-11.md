@@ -90,7 +90,7 @@ Why option 1: the code already treats `AppModel` as the window (its doc comment,
 
 Each slice ends with DuoChecks, the check-ui states unchanged or compared with their boards, and a capture kept for Geoff. The timing checks (`check-chat-perf`, idle CPU) run through `scripts/timing-lock.sh`.
 
-### Slice 0: one core, one window (nothing visible changes)
+### Slice 0: one core, one window (nothing visible changes) — built 2026-11-02, F-548 (C-150 carries what slice 1 must take off the primary window)
 
 - **Build:**
   - `AppCore` with the app-wide and per-project state, and forwarders on `AppModel`.

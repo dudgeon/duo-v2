@@ -63,9 +63,11 @@ extension AppModel {
         shellTabs[project]?.removeAll { $0 == key }
         shellTitles[key] = nil
         terminals.rekey(key, to: sessionId)
-        if consoleTab == key { consoleTab = sessionId }
-        if homeTab == key { homeTab = sessionId }
-        NSAccessibility.post(element: NSApp.mainWindow as Any, notification: .announcementRequested,
+        for m in core.models {   // every window showing it
+            if m.consoleTab == key { m.consoleTab = sessionId }
+            if m.homeTab == key { m.homeTab = sessionId }
+        }
+        NSAccessibility.post(element: (window ?? NSApp.mainWindow) as Any, notification: .announcementRequested,
                              userInfo: [.announcement: "Now a Claude session", .priority: NSAccessibilityPriorityLevel.medium.rawValue])
         refreshLive()
     }
@@ -83,8 +85,10 @@ extension AppModel {
         chats.forget(key)
         for p in shellTabs.keys { shellTabs[p]?.removeAll { $0 == key } }
         shellTitles[key] = nil
-        if consoleTab == key { consoleTab = next }
-        if homeTab == key { homeTab = next }
+        for m in core.models {   // every window showing it
+            if m.consoleTab == key { m.consoleTab = next }
+            if m.homeTab == key { m.homeTab = next }
+        }
     }
 }
 

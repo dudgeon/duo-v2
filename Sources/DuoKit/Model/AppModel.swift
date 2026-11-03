@@ -1,3 +1,4 @@
+import AppKit
 import DuoControl
 import DuoSearch
 import Foundation
@@ -21,11 +22,19 @@ public enum TerminalsMode: Sendable, Equatable {
     case live
 }
 
-/// Window-level UI state. One instance per window; views read it from the environment.
+/// Window-level UI state. One instance per window; views read it from the environment. What the
+/// windows share is the core's (`AppCore`), forwarded below.
 @MainActor
 @Observable
 public final class AppModel {
-    public var fixture: Fixture
+    /// What every window shares (F-537): projects, sessions, terminals, the live loop, each project's memory.
+    @ObservationIgnored public let core: AppCore
+    /// The window this model draws, set when `MainWindow` makes it (never found by title: there may be two).
+    @ObservationIgnored public weak var window: NSWindow? {
+        didSet { windowID = window.map(ObjectIdentifier.init) }
+    }
+    /// The window's identity, for a question's target and the key window (`AppCore.keyWindowID`).
+    public private(set) var windowID: ObjectIdentifier?
     public var altitude: Altitude = .allProjects {
         // The idle list belongs to All projects: leaving closes it, so its keys go with it (F-178).
         didSet { if altitude != .allProjects, idleOpen { idleOpen = false; IdleKeys.remove() } }
@@ -57,21 +66,11 @@ public final class AppModel {
     public var sidebarHold: (project: String, order: [String: [String]])?
     /// Tasks just marked complete, still listed (checked, struck through) for `rowHold` (DL-130).
     public var completingTasks: Set<String> = []
-    /// Linked GitHub issues' live state, by the issue's URL (DL-226); read through gh, cached.
-    public var issueStates: [String: IssueState] = [:]
     /// Mark Complete's "Close #n too" notice (github-issues-handoff board 6), for 5 s.
     public var issueOffer: IssueOffer?
-    @ObservationIgnored var issueFetched: [String: Date] = [:]
-    /// Folders whose old-named files were looked at this launch (DL-259).
-    @ObservationIgnored var movesChecked: Set<String> = []
-    @ObservationIgnored var issueFetching: Set<String> = []
-    @ObservationIgnored var issueRepos: [String: RemoteRepo?] = [:]
     /// The project's layout fading up after a jump from another project (DL-130): the panes are
     /// the same views (terminals live in them), so the new content shows at once and fades up.
     public var projectShown: Double = 1
-    /// Counts changes Duo shows before the snapshot does (Q-78). A snapshot started before the
-    /// latest one is stale: it would put the old state back for a beat, so it's dropped.
-    @ObservationIgnored var localChange = 0
     /// Which section each row of the session list was in when last shown, to lift the rows that
     /// change section above the ones they pass (DL-130).
     @ObservationIgnored var sidebarShown: [String: String] = [:]
@@ -79,8 +78,6 @@ public final class AppModel {
     public var fixtureDirector: DirectorSlotInfo?
     /// The project pane's width, for the slot's second line (under 280 it drops "Director", DL-218).
     public var sidebarWidth: CGFloat = 300
-    /// `.duo/director.json` as last read, by project, with its modification time: the sidebar asks on every draw.
-    @ObservationIgnored var directorRegistryCache: [String: (modified: Date, reg: DirectorRegistry)] = [:]
     /// The task row under the pointer ("<project>/<note path>"), which shows its + (DL-112).
     public var hoveredTaskRow: String?
     /// Projects showing their task board in place of the session list and console (DL-148, C):
@@ -118,7 +115,7 @@ public final class AppModel {
     /// The search modal (DL-76, DL-80).
     public let search = SearchUI()
     /// Split view (DL-275 to DL-278): the split tabs, what they took to make room, their previews.
-    public let splits = SplitState()
+    public let splits: SplitState
     /// The Explainer popover (DL-172): which is open, where, and the hover clocks.
     public let explainer = ExplainerState()
     /// A session opened read-only from search, shown as a right-pane tab (search-open-session).
@@ -127,8 +124,6 @@ public final class AppModel {
     public var searchLanding: SearchLanding?
     /// Fixture mode: the console message a target shows (DB-3).
     public var fixtureConsole: ConsoleEmpty?
-    /// Bumped when a terminal's process ends by itself, so the console shows its bar (DB-3).
-    public var endedRevision = 0
     /// The idle list (DB-1): open, and which row is selected.
     public var idleOpen = false
     public var idleSelection = 0
@@ -138,14 +133,10 @@ public final class AppModel {
     public var fixtureActive: Set<String>?
     /// Fixture mode: archived projects by name (ENH-6).
     public var fixtureArchived: Set<String>?
-    /// Archived projects' folders (ENH-6), and whether the rollup is open.
-    public var archivedProjectPaths: [String] = DuoState.load().archivedProjects
     public var archivedOpen = false
     public var fixtureIdleBuckets: [(label: String, rows: [IdleRow])]?
     /// Fixture mode: a console tab whose session has ended, and the bar's text (console-ended).
     public var fixtureEnded: (key: String, message: String)?
-    /// Sessions whose `/fork` Claude Code refused for an untrusted folder, by tab key (DL-229). In memory only.
-    public var trustNotices: [String: TrustNotice] = [:]
     /// Fixture mode: chats the chat-mode targets show, by console tab (ChatTargets).
     public var fixtureChats: [String: ChatSession] = [:]
     /// The intro video's demo (VideoTargets): terminals showing a recorded screen, by tab; no process behind them.
@@ -159,18 +150,9 @@ public final class AppModel {
     public var videoClosedFolders: Set<String> = []
     /// The intro video's demo: the right pane's opening width, wide enough for its tabs.
     public var videoRightWidth: CGFloat?
-    /// Plain shells open in each project's console, by key, in the order opened (DB-4).
-    public var shellTabs: [String: [String]] = [:]
-    /// What each shell is running, for its tab's title.
-    public var shellTitles: [String: String] = [:]
     public var selectedFile: String?            // path relative to the project
     /// Bumped by every reveal in the tree, so the tree scrolls to the selection even when it was already selected (BUG-053).
     public var treeRevealTick = 0
-    /// Open document tabs by project (DL-60): switching to Project no longer closes them.
-    public var openDocumentsByProject: [String: [String]] = [:]
-    /// The console's tab order by project, where the user moved a tab (ENH-042, DL-220): tab keys,
-    /// applied over sessions-then-shells by `TabOrder.apply`. Empty until a tab is moved.
-    public var consoleTabOrder: [String: [String]] = [:]
     /// A tab being dragged along its strip (ENH-042): the strips draw it lifted under the pointer.
     public var tabDrag: TabDrag?
     /// Each tab's frame on its strip, for where a drag lands; written as the strips lay out.
@@ -179,27 +161,13 @@ public final class AppModel {
     public let tabStrips: [DuoPane: TabStripState] = [.left: TabStripState(), .middle: TabStripState(), .right: TabStripState()]
     /// Where the pointer is on a strip while a tab is dragged along it, in the strip's scrolling part (edge scroll).
     var tabDragPointer: (pane: DuoPane, x: CGFloat)?
-    /// The file tree (DL-105): hidden files on or off, and the folders open in each project's tree.
-    public var showHiddenFiles = DuoState.load().showHiddenFiles
-    /// View › Hide Formatting Bar (DL-266): the Markdown bar over the editor, remembered.
-    public var formatBarHidden = DuoState.load().formatBarHidden
     /// The formatting bar's control under the pointer, and the one whose menu is open (the bar stays while a menu is).
     var formatBarHover: String?
     var formatBarMenuOpen = false
     /// Where each of the bar's menu buttons is, in the window's content view (to pop its menu under it).
     @ObservationIgnored var formatBarFrames: [String: CGRect] = [:]
-    /// Documents shown in Source mode (DL-167), by standardized path; remembered.
-    public var sourceDocuments = Set(DuoState.load().sourceDocuments)
     /// The main window is full screen (View › Enter / Exit Full Screen, DL-108).
     public var fullScreen = false
-    public var expandedFolders: [String: Set<String>] = [:]
-    /// The folder the tree shows when it has gone up from the project's (DL-106, Q-162), by project; none = the project's own.
-    public var browseRoots: [String: URL] = [:]
-    /// Folders opened while browsing up, as paths from that browse root.
-    public var browseExpanded: [String: Set<String>] = [:]
-    /// The console and right-pane tab each project showed when the user left it (DL-107).
-    public var lastConsoleTab: [String: String] = [:]
-    public var lastRightTab: [String: String] = [:]
     /// The file or folder being named inline in the tree (DL-62).
     public var renamingPath: String?
 
@@ -214,12 +182,15 @@ public final class AppModel {
     public var activePaneProject: DuoPane = .middle
     public var activePaneAllProjects: DuoPane = .left
 
-    public var terminalsMode: TerminalsMode = .off
-    @ObservationIgnored public let terminals = TerminalStore()
-    /// Chat mode (DL-118 to DL-120): each Claude session's chat over its terminal.
-    @ObservationIgnored public lazy var chats = ChatStore()
     /// Voice input (DL-260): one dictation at a time, into a chat composer or a terminal's prompt.
-    @ObservationIgnored public lazy var voice: VoiceInput = { let v = VoiceInput(); wireVoice(v); return v }()
+    /// One for the app (the core's), wired by the first window that asks.
+    public var voice: VoiceInput {
+        if let v = core.voiceInput { return v }
+        let v = VoiceInput()
+        core.voiceInput = v
+        wireVoice(v)
+        return v
+    }
     /// The document editors, one per side of a split (C-135, DL-278): `editor` is the active one.
     @ObservationIgnored public lazy var editors: EditorSet = makeEditorSet()
     /// Local HTML pages in the right pane (created on first use).
@@ -233,17 +204,9 @@ public final class AppModel {
     @ObservationIgnored public var docxViewerIfLoaded: DocxViewer?
     /// The Markup menu is open (W4); the viewer's bar shows Markup pressed while it is.
     public var docxMenuOpen = false
-    /// @claude comments in flight, by "<file>#<thread>" (DL-236 10A); who last edited a document through Duo, by file.
-    @ObservationIgnored var reviewDeliveries: [String: ReviewDelivery] = DuoState.load().reviewDeliveries
-    @ObservationIgnored var reviewLastEditor: [String: String] = [:]
-    @ObservationIgnored var reviewSending: Set<String> = []
     @ObservationIgnored var reviewPillMenu: AnyObject?
     /// The Markdown review bar's open menu: "markup" or "all" (DL-237).
     public var reviewMenu: String?
-    /// Browser tabs by id (`web:…`), kept alive while their tab is open (Phase K, ENH-8).
-    @ObservationIgnored public var webTabs: [String: WebTab] = [:]
-    /// Downloads browser tabs saved since launch, oldest first (`duo2 browser downloads`, DL-124).
-    @ObservationIgnored public var downloads: [DownloadRecord] = []
     /// Bumped when the picker starts, freezes or ends, so the picker bar redraws.
     public var pickerRevision = 0
     /// Which web view has the keyboard (menus re-validate on change).
@@ -266,14 +229,6 @@ public final class AppModel {
     /// Set once, when the editor first shows a document. Observed, so commands that depend on the
     /// (unobserved) editor re-evaluate then: Save stayed disabled until something else invalidated.
     public var editorOpened = false
-    /// Word documents being converted to Markdown (DL-123), by the .docx's tab: how far, and what
-    /// it's doing. Set only once a conversion has taken half a second, so a quick one shows nothing.
-    public var converting: [String: (fraction: Double, stage: String)] = [:]
-    @ObservationIgnored var conversionTasks: [String: Task<Void, Never>] = [:]
-    /// Why a .docx couldn't be converted, by its tab, until it's converted or closed (F, F2).
-    public var conversionFailures: [String: Docx.Failure] = [:]
-    /// The notice on a Markdown copy just made (D, E), by its tab, until OK.
-    public var conversions: [String: DocxConversion] = [:]
 
     /// A tab for a file outside the project (DL-106): `file:` and its absolute path.
     public static let outsideFilePrefix = "file:"
@@ -380,16 +335,7 @@ public final class AppModel {
     public var listShowsArchived = true
     /// Target states only: the clock the list's Today and This week are cut by.
     @ObservationIgnored public var listClock: Date?
-    /// The time views cut relative labels by (`4m`, age buckets, activity order, `fetched … ago`). It moves once a
-    /// minute, so an idle refresh that changes nothing needn't republish `fixture` to keep them right (C-79).
-    public private(set) var minute = Date()
 
-    /// Home's folder (DL-85); nil until one is chosen. Live mode runs either way (DL-82).
-    public var liveRoot: URL?
-    /// The folders in Home that aren't projects (`homeFolders(root:)`), read with each refresh: All
-    /// projects offers them when Home has no projects yet (DL-212).
-    public var homeFolderList: [URL] = []
-    @ObservationIgnored public var isLive = false
     /// Needs-you cards showing their whole question (DL-100: past 6 lines they fold).
     public var expandedQuestions: Set<String> = []
     /// The sheet on the window, if any (DL-100): Move into Home… or New project.
@@ -400,16 +346,10 @@ public final class AppModel {
     /// The project's files and folders for a task's references field (DL-150), rescanned at most once a minute.
     @ObservationIgnored var referenceFiles: (project: String, at: Date, files: [String])?
     @ObservationIgnored var scanningReferences = false
-    /// Sessions already notified for their current wait (S3-6).
-    @ObservationIgnored var notified = Set<String>()
-    /// Sparkle's "Check for Updates", when the app started it (release builds).
-    @ObservationIgnored public var sparkleCheck: (() -> Void)?
     public var newProjectForm: NewProjectForm?
     /// New Deck… and Convert to Duo Deck… (Duo Decks P3-4).
     public var newDeckForm: NewDeckForm?
     public var convertDeckForm: ConvertDeckForm?
-    /// Each project's repository, when its folder is in one (DL-149, DL-157), by project name.
-    public var repos: [String: RepoView] = [:]
     /// The Push sheet (board 6), when it's up.
     public var pushForm: PushForm?
     /// New project from GitHub (board 1), when it's up.
@@ -418,61 +358,10 @@ public final class AppModel {
     public var repoNotice: RepoNotice?
     /// The repo line's details popover (board 4).
     public var repoDetailsShown = false
-    @ObservationIgnored var repoChecked: [String: Date] = [:]
-    @ObservationIgnored var repoRefreshing: Set<String> = []
-    /// Restore on relaunch (LR-58): off for scripted and capture runs.
-    @ObservationIgnored public var restoreEnabled = false
-    /// DL-156: see `tabSessions`.
-    public var parkedTabs: Set<String> = []
-    /// `/fork`s whose attach tab was closed: the fork runs on in Claude's background (DL-227), its row stays,
-    /// and its tab is gone until the row is opened again.
-    public var detachedForks: Set<String> = []
-    /// SessionStart sources the hook reported, by new session id (`duo2 hook context`): `fork` tells `/branch` from `/clear`.
-    @ObservationIgnored var startSources: [String: String] = [:]
-    /// `/fork` jobs Duo has already seen (the first scan sets the baseline: only a fork made after Duo is looking opens a tab).
-    @ObservationIgnored var forksSeen: Set<String>?
-    /// Sessions set to Keep Running (DL-192), by session id: never parked, resumed at launch.
-    public var keepRunningIDs: Set<String> = []
-    /// What the park check reads, replaceable in checks: a process's children (argv each), a session's hook events.
-    @ObservationIgnored public var parkChildren: (Int32) -> [[String]] = { ProcessTable.children(of: $0) }
-    @ObservationIgnored public var parkEvents: (String) -> [HookEvents.Event] = { HookEvents.read($0) }
-    @ObservationIgnored public var parkPressure: ParkPressure?
-    @ObservationIgnored var pressureSource: DispatchSourceMemoryPressure?
-    @ObservationIgnored var restoreApplied = false
-    @ObservationIgnored var lastRestoreSave = Date.distantPast
-    @ObservationIgnored var lastRestoreData: Data?
-    @ObservationIgnored public var liveFolders: [String: URL] = [:]
-    /// Live sessions whose process Duo doesn't own (Terminal, the Desktop app, another Duo).
-    public var liveElsewhere: Set<String> = []
-    /// The checks' stand-in for a terminal in a guarded submit (@claude review comments); nil in the app.
-    public var submitHooks: SubmitIO?
-    @ObservationIgnored private var refreshTimer: Timer?
-    @ObservationIgnored private var minuteTimer: Timer?
-    @ObservationIgnored private var refreshing = false
-    @ObservationIgnored private var lastArchive = Date.distantPast
-    /// False for scripted captures: nothing may block on a prompt.
-    @ObservationIgnored public var interactivePrompts = true
-    /// Duo's "seen" marks (handoff §10): looking at a session clears ready-for-review.
-    @ObservationIgnored public var seen: [String: Double] = [:]
-    @ObservationIgnored public var rememberedHome: String?
-    /// Projects outside the workspace root (DL-63), from Duo's state.
-    @ObservationIgnored public var extraProjects: [URL] = []
-    /// Whether `~/Documents` exists, read off the main thread with each refresh (DL-262); nil until read.
-    /// The New session row's default when there's no Home. Captures and checks set it.
-    public var documentsExists: Bool?
     /// The New session row's pointer state and whether the List has scrolled (DL-262); state lives here, not in views.
     public var newSessionRowHover = false
     public var newSessionRowPressed = false
     public var listScrolled = false
-    /// Folders chosen for the New session row, newest first (DL-262), from Duo's state.
-    @ObservationIgnored public var startFolders: [String] = []
-    /// Which of those folders are still there, read off the main thread with each refresh.
-    public var startFoldersPresent: Set<String> = []
-    /// Task titles as last seen, by "project/path": a title that changes moves its note to the
-    /// new name's slug once it settles (DL-115, C-24).
-    @ObservationIgnored var taskTitlesSeen: [String: String]?
-    /// Whether each task was done when last seen, by "project/path": one that becomes done folds its sessions, one reopened unfolds them (DL-187).
-    @ObservationIgnored public var taskStatusSeen: [String: Bool]?
     /// Undo steps being gathered into one (a task with its sessions archives, moves or comes back in one step).
     @ObservationIgnored var undoBatch: [(String, @MainActor (AppModel) -> Void)]?
     /// Checks only: undo steps go here instead of the window's undo manager.
@@ -500,7 +389,7 @@ public final class AppModel {
         liveRoot = root
         // Home's prompt dismissed earlier: the pane starts collapsed until a Home exists (DL-100).
         if root == nil, DuoState.load().homePromptDismissed { leftCollapsedAllProjects = true }
-        guard !isLive else { return refreshLive() }
+        guard !isLive else { return refreshLive() }   // the core's loop runs once, whichever window starts it (C-146)
         isLive = true
         terminalsMode = .live
         let state = DuoState.load()
@@ -512,33 +401,30 @@ public final class AppModel {
         startMemoryPressureWatch()
         fixture = LiveSnapshot.empty()  // never show the design fixture while the first scan runs
         refreshLive()
-        minuteTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.minute = Date() }
-        }.loose()
-        refreshTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.refreshLive(); self?.scanTrustNotices() }
-        }.loose()
+        core.startLoop()
     }
 
     /// Rebuilds the snapshot off the main thread, one refresh at a time: disk reads can block
     /// (a privacy prompt for ~/Documents, a slow network volume) and must never freeze the UI (F-28).
+    /// One refresh for the app, whichever window asks: it runs through the primary window's model,
+    /// so the scan and the app-wide passes after it happen once (C-146).
     public func refreshLive() {
-        guard isLive, !refreshing else { return }
+        if let p = core.primary, p !== self { return p.refreshLive() }
+        guard isLive, !core.refreshing else { return }
         let root = liveRoot
-        refreshing = true
-        if let id = visibleSessionId, fixture.sessions.contains(where: { $0.sessionId == id && $0.state == .readyForReview }) {
-            seen[id] = Date().timeIntervalSince1970
-            DuoState.update { $0.seen[id] = seen[id] }
-        }
+        core.refreshing = true
+        core.count("scan")
+        for m in core.models { m.markVisibleSeen() }
         var ctx = LiveSnapshot.Context(root: root, rememberedHome: rememberedHome, events: DuoPaths.events, seen: seen)
         ctx.extraProjects = extraProjects
         ctx.showHidden = showHiddenFiles
         ctx.expanded = Dictionary(expandedFolders.compactMap { k, v in liveFolders[k].map { ($0.path, v) } }, uniquingKeysWith: { a, b in a.union(b) })
         let generation = localChange
         let startList = startFolders
+        let build = core.snapshotSource
         Task.detached(priority: .utility) { [weak self] in
             let beacons = Beacon.readAll()
-            let (snapshot, folders, moves) = LiveSnapshot.build(ctx, beacons: beacons)
+            let (snapshot, folders, moves) = build(ctx, beacons)
             // Follow `/cd`: move the index entry to the project the session now lives in (F-32).
             for m in moves {
                 var from = SessionIndex.load(project: m.from), to = SessionIndex.load(project: m.to)
@@ -561,6 +447,13 @@ public final class AppModel {
         }
     }
 
+    /// Looking at a session clears ready-for-review (handoff §10): this window's visible session.
+    func markVisibleSeen() {
+        guard let id = visibleSessionId, fixture.sessions.contains(where: { $0.sessionId == id && $0.state == .readyForReview }) else { return }
+        seen[id] = Date().timeIntervalSince1970
+        DuoState.update { $0.seen[id] = seen[id] }
+    }
+
     private func setStartFoldersPresent(_ v: Set<String>) {
         if startFoldersPresent != v { startFoldersPresent = v }
     }
@@ -574,7 +467,8 @@ public final class AppModel {
     }
 
     private func apply(_ snapshot: Fixture, folders: [String: URL], beacons: [Beacon], generation: Int) {
-        refreshing = false
+        core.refreshing = false
+        core.count("apply")
         // Read before a change Duo has already shown (Q-78): drop it and read again now.
         guard generation == localChange else {
             FileHandle.standardError.write(Data("live: dropped a snapshot read before a change Duo had shown (Q-78)\n".utf8))
@@ -613,18 +507,22 @@ public final class AppModel {
         if !merged.sameApartFromClock(fixture) { fixture = merged }
         followTaskTitles()
         followTaskStatus()
-        // The map's order settles on the first scan, then on each arrival at All projects (DL-104).
-        if mapSettled.isEmpty || altitude != .allProjects { settleMapOrder() }
-        pushNoteContext()
+        let windows = core.models
+        for m in windows { m.didRefreshMap() }
+        // The app-wide passes: once per refresh, however many windows (C-146).
         Notifier.shared.model = self
+        core.count("notify")
         notifyNeedsYou()
+        core.count("prune")
         pruneDirectorRegistries()   // workers whose task is done; messages an older Duo queued (DL-257)
+        core.count("deliver")
         deliverReviewComments()     // @claude comments waiting for their session, and their replies (DL-236 10A)
         archiveListedSessions()  // after the snapshot is applied: it archives what's listed now
+        core.count("gitignore")
         GitIgnoreOffer.consider(folders, interactive: interactivePrompts && !SupportFolder.isIsolated)   // C-28: no first-run questions in an isolated instance
+        core.count("move")
         moveDuoFiles(folders)   // PROJECT.md → _PROJECT.md, once, quietly (DL-259, Q-330)
-        refreshRepo()   // the open project's repository state (DL-149, DL-157)
-        if let p = currentProject?.name { refreshIssues(project: p) }   // linked issues' live state (DL-226)
+        for m in windows { m.didRefreshProject() }
         // What was open when Duo last quit comes back once the sessions are known (LR-58).
         if !restoreApplied, !fixture.sessions.isEmpty || !folders.isEmpty { applyRestore() }
         defer { saveRestoreState() }
@@ -633,17 +531,32 @@ public final class AppModel {
         if let home = fixture.home {
             let homeSessions = fixture.sessions(inProject: home.name)
             if homeSessions.isEmpty { newSession(in: home.name) }
-            if homeTab == nil || !fixture.sessions(inProject: home.name).contains(where: { $0.tabKey == homeTab }) {
-                homeTab = fixture.sessions(inProject: home.name).first?.tabKey
+            for m in windows where m.homeTab == nil || !fixture.sessions(inProject: home.name).contains(where: { $0.tabKey == m.homeTab }) {
+                m.homeTab = fixture.sessions(inProject: home.name).first?.tabKey
             }
         }
+    }
+
+    /// A window's part of a refresh, before the app's passes: its map order and its editor's note context.
+    func didRefreshMap() {
+        core.count("window-refresh")
+        // The map's order settles on the first scan, then on each arrival at All projects (DL-104).
+        if mapSettled.isEmpty || altitude != .allProjects { settleMapOrder() }
+        pushNoteContext()
+    }
+
+    /// A window's part of a refresh, after the app's passes: the project it shows.
+    func didRefreshProject() {
+        refreshRepo()   // the open project's repository state (DL-149, DL-157)
+        if let p = currentProject?.name { refreshIssues(project: p) }   // linked issues' live state (DL-226)
     }
 
     /// Keeps Duo's copy of every listed session's transcript (DL-44), at most once a minute, off
     /// the main thread.
     private func archiveListedSessions() {
-        guard Date().timeIntervalSince(lastArchive) > 60 else { return }
-        lastArchive = Date()
+        guard Date().timeIntervalSince(core.lastArchive) > 60 else { return }
+        core.lastArchive = Date()
+        core.count("archive")
         let listed: [(String, String)] = fixture.sessions.compactMap { s in
             guard let id = s.sessionId, let folder = liveFolders[s.project] else { return nil }
             return (id, folder.path)
@@ -701,8 +614,10 @@ public final class AppModel {
                 index.sessions.append(.init(sessionId: b.sessionId, provenance: "continued-from:\(t.key)"))
                 try? index.save(project: folder)
             }
-            if consoleTab == t.key { consoleTab = b.sessionId }
-            if homeTab == t.key { homeTab = b.sessionId }
+            for m in core.models {
+                if m.consoleTab == t.key { m.consoleTab = b.sessionId }
+                if m.homeTab == t.key { m.homeTab = b.sessionId }
+            }
             chats.rekey(t.key, to: b.sessionId)
             terminals.rekey(t.key, to: b.sessionId)
         }
@@ -774,9 +689,17 @@ public final class AppModel {
         return id
     }
 
-    public init(fixture: Fixture) {
-        self.fixture = fixture
-        terminals.onEnded = { [weak self] t in self?.endedRevision += 1; self?.shellEnded(t) }
+    /// A window's model on the app's core (multi-window slice 0). The first model made on a core is
+    /// its primary window.
+    public init(core: AppCore) {
+        self.core = core
+        self.splits = SplitState(shared: core.splitTabs)
+        core.attach(self)
+    }
+
+    /// A model with its own core: a one-window app (the checks, the harness, the app in slice 0).
+    public convenience init(fixture: Fixture) {
+        self.init(core: AppCore(fixture: fixture))
     }
 
     public var leftCollapsed: Bool {
@@ -920,6 +843,78 @@ public final class AppModel {
         let here = currentProject?.name
         return fixture.needsYou.filter { $0.project != here }
     }
+
+    // MARK: - Forwarded to the app's core (multi-window slice 0, F-537): app-wide and per-project state
+    // lives in `AppCore`, so every window reads and writes the same value. `_modify` mutates in place.
+    public var fixture: Fixture { get { core.fixture } set { core.fixture = newValue } _modify { yield &core.fixture } }
+    public var issueStates: [String: IssueState] { get { core.issueStates } set { core.issueStates = newValue } _modify { yield &core.issueStates } }
+    var issueFetched: [String: Date] { get { core.issueFetched } set { core.issueFetched = newValue } _modify { yield &core.issueFetched } }
+    var movesChecked: Set<String> { get { core.movesChecked } set { core.movesChecked = newValue } _modify { yield &core.movesChecked } }
+    var issueFetching: Set<String> { get { core.issueFetching } set { core.issueFetching = newValue } _modify { yield &core.issueFetching } }
+    var issueRepos: [String: RemoteRepo?] { get { core.issueRepos } set { core.issueRepos = newValue } _modify { yield &core.issueRepos } }
+    var localChange: Int { get { core.localChange } set { core.localChange = newValue } _modify { yield &core.localChange } }
+    var directorRegistryCache: [String: (modified: Date, reg: DirectorRegistry)] { get { core.directorRegistryCache } set { core.directorRegistryCache = newValue } _modify { yield &core.directorRegistryCache } }
+    public var endedRevision: Int { get { core.endedRevision } set { core.endedRevision = newValue } _modify { yield &core.endedRevision } }
+    public var archivedProjectPaths: [String] { get { core.archivedProjectPaths } set { core.archivedProjectPaths = newValue } _modify { yield &core.archivedProjectPaths } }
+    public var trustNotices: [String: TrustNotice] { get { core.trustNotices } set { core.trustNotices = newValue } _modify { yield &core.trustNotices } }
+    public var shellTabs: [String: [String]] { get { core.shellTabs } set { core.shellTabs = newValue } _modify { yield &core.shellTabs } }
+    public var shellTitles: [String: String] { get { core.shellTitles } set { core.shellTitles = newValue } _modify { yield &core.shellTitles } }
+    public var openDocumentsByProject: [String: [String]] { get { core.openDocumentsByProject } set { core.openDocumentsByProject = newValue } _modify { yield &core.openDocumentsByProject } }
+    public var consoleTabOrder: [String: [String]] { get { core.consoleTabOrder } set { core.consoleTabOrder = newValue } _modify { yield &core.consoleTabOrder } }
+    public var showHiddenFiles: Bool { get { core.showHiddenFiles } set { core.showHiddenFiles = newValue } _modify { yield &core.showHiddenFiles } }
+    public var formatBarHidden: Bool { get { core.formatBarHidden } set { core.formatBarHidden = newValue } _modify { yield &core.formatBarHidden } }
+    public var sourceDocuments: Set<String> { get { core.sourceDocuments } set { core.sourceDocuments = newValue } _modify { yield &core.sourceDocuments } }
+    public var expandedFolders: [String: Set<String>] { get { core.expandedFolders } set { core.expandedFolders = newValue } _modify { yield &core.expandedFolders } }
+    public var browseRoots: [String: URL] { get { core.browseRoots } set { core.browseRoots = newValue } _modify { yield &core.browseRoots } }
+    public var browseExpanded: [String: Set<String>] { get { core.browseExpanded } set { core.browseExpanded = newValue } _modify { yield &core.browseExpanded } }
+    public var lastConsoleTab: [String: String] { get { core.lastConsoleTab } set { core.lastConsoleTab = newValue } _modify { yield &core.lastConsoleTab } }
+    public var lastRightTab: [String: String] { get { core.lastRightTab } set { core.lastRightTab = newValue } _modify { yield &core.lastRightTab } }
+    public var terminalsMode: TerminalsMode { get { core.terminalsMode } set { core.terminalsMode = newValue } _modify { yield &core.terminalsMode } }
+    public var terminals: TerminalStore { core.terminals }
+    public var chats: ChatStore { get { core.chats } set { core.chats = newValue } _modify { yield &core.chats } }
+    var reviewDeliveries: [String: ReviewDelivery] { get { core.reviewDeliveries } set { core.reviewDeliveries = newValue } _modify { yield &core.reviewDeliveries } }
+    var reviewLastEditor: [String: String] { get { core.reviewLastEditor } set { core.reviewLastEditor = newValue } _modify { yield &core.reviewLastEditor } }
+    var reviewSending: Set<String> { get { core.reviewSending } set { core.reviewSending = newValue } _modify { yield &core.reviewSending } }
+    public var webTabs: [String: WebTab] { get { core.webTabs } set { core.webTabs = newValue } _modify { yield &core.webTabs } }
+    public var downloads: [DownloadRecord] { get { core.downloads } set { core.downloads = newValue } _modify { yield &core.downloads } }
+    public var converting: [String: (fraction: Double, stage: String)] { get { core.converting } set { core.converting = newValue } _modify { yield &core.converting } }
+    var conversionTasks: [String: Task<Void, Never>] { get { core.conversionTasks } set { core.conversionTasks = newValue } _modify { yield &core.conversionTasks } }
+    public var conversionFailures: [String: Docx.Failure] { get { core.conversionFailures } set { core.conversionFailures = newValue } _modify { yield &core.conversionFailures } }
+    public var conversions: [String: DocxConversion] { get { core.conversions } set { core.conversions = newValue } _modify { yield &core.conversions } }
+    public var minute: Date { core.minute }
+    public var liveRoot: URL? { get { core.liveRoot } set { core.liveRoot = newValue } _modify { yield &core.liveRoot } }
+    public var homeFolderList: [URL] { get { core.homeFolderList } set { core.homeFolderList = newValue } _modify { yield &core.homeFolderList } }
+    public var isLive: Bool { get { core.isLive } set { core.isLive = newValue } _modify { yield &core.isLive } }
+    var notified: Set<String> { get { core.notified } set { core.notified = newValue } _modify { yield &core.notified } }
+    public var sparkleCheck: (() -> Void)? { get { core.sparkleCheck } set { core.sparkleCheck = newValue } _modify { yield &core.sparkleCheck } }
+    public var repos: [String: RepoView] { get { core.repos } set { core.repos = newValue } _modify { yield &core.repos } }
+    var repoChecked: [String: Date] { get { core.repoChecked } set { core.repoChecked = newValue } _modify { yield &core.repoChecked } }
+    var repoRefreshing: Set<String> { get { core.repoRefreshing } set { core.repoRefreshing = newValue } _modify { yield &core.repoRefreshing } }
+    public var restoreEnabled: Bool { get { core.restoreEnabled } set { core.restoreEnabled = newValue } _modify { yield &core.restoreEnabled } }
+    public var parkedTabs: Set<String> { get { core.parkedTabs } set { core.parkedTabs = newValue } _modify { yield &core.parkedTabs } }
+    public var detachedForks: Set<String> { get { core.detachedForks } set { core.detachedForks = newValue } _modify { yield &core.detachedForks } }
+    var startSources: [String: String] { get { core.startSources } set { core.startSources = newValue } _modify { yield &core.startSources } }
+    var forksSeen: Set<String>? { get { core.forksSeen } set { core.forksSeen = newValue } _modify { yield &core.forksSeen } }
+    public var keepRunningIDs: Set<String> { get { core.keepRunningIDs } set { core.keepRunningIDs = newValue } _modify { yield &core.keepRunningIDs } }
+    public var parkChildren: (Int32) -> [[String]] { get { core.parkChildren } set { core.parkChildren = newValue } _modify { yield &core.parkChildren } }
+    public var parkEvents: (String) -> [HookEvents.Event] { get { core.parkEvents } set { core.parkEvents = newValue } _modify { yield &core.parkEvents } }
+    public var parkPressure: ParkPressure? { get { core.parkPressure } set { core.parkPressure = newValue } _modify { yield &core.parkPressure } }
+    var pressureSource: DispatchSourceMemoryPressure? { get { core.pressureSource } set { core.pressureSource = newValue } _modify { yield &core.pressureSource } }
+    var restoreApplied: Bool { get { core.restoreApplied } set { core.restoreApplied = newValue } _modify { yield &core.restoreApplied } }
+    var lastRestoreSave: Date { get { core.lastRestoreSave } set { core.lastRestoreSave = newValue } _modify { yield &core.lastRestoreSave } }
+    var lastRestoreData: Data? { get { core.lastRestoreData } set { core.lastRestoreData = newValue } _modify { yield &core.lastRestoreData } }
+    public var liveFolders: [String: URL] { get { core.liveFolders } set { core.liveFolders = newValue } _modify { yield &core.liveFolders } }
+    public var liveElsewhere: Set<String> { get { core.liveElsewhere } set { core.liveElsewhere = newValue } _modify { yield &core.liveElsewhere } }
+    public var submitHooks: SubmitIO? { get { core.submitHooks } set { core.submitHooks = newValue } _modify { yield &core.submitHooks } }
+    public var interactivePrompts: Bool { get { core.interactivePrompts } set { core.interactivePrompts = newValue } _modify { yield &core.interactivePrompts } }
+    public var seen: [String: Double] { get { core.seen } set { core.seen = newValue } _modify { yield &core.seen } }
+    public var rememberedHome: String? { get { core.rememberedHome } set { core.rememberedHome = newValue } _modify { yield &core.rememberedHome } }
+    public var extraProjects: [URL] { get { core.extraProjects } set { core.extraProjects = newValue } _modify { yield &core.extraProjects } }
+    public var documentsExists: Bool? { get { core.documentsExists } set { core.documentsExists = newValue } _modify { yield &core.documentsExists } }
+    public var startFolders: [String] { get { core.startFolders } set { core.startFolders = newValue } _modify { yield &core.startFolders } }
+    public var startFoldersPresent: Set<String> { get { core.startFoldersPresent } set { core.startFoldersPresent = newValue } _modify { yield &core.startFoldersPresent } }
+    var taskTitlesSeen: [String: String]? { get { core.taskTitlesSeen } set { core.taskTitlesSeen = newValue } _modify { yield &core.taskTitlesSeen } }
+    public var taskStatusSeen: [String: Bool]? { get { core.taskStatusSeen } set { core.taskStatusSeen = newValue } _modify { yield &core.taskStatusSeen } }
 }
 
 extension AppModel {

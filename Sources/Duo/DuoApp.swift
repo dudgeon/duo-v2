@@ -33,7 +33,9 @@ struct DuoApp: App {
             FileHandle.standardError.write(Data("Duo: \(error.localizedDescription)\n".utf8))
             exit(66)
         }
-        let model = AppModel(fixture: fixture)
+        // What every window shares (multi-window slice 0, F-537), and the main window's model on it.
+        let core = AppCore(fixture: fixture)
+        let model = AppModel(core: core)
         DeckPreviewRegistration.install(model: model)   // Duo Decks: a `type: deck` note previews as slides in split view
         // Stalls of the main thread, logged on this Mac for `duo2 hangs` (DL-139). DUO_HANG_LOG=0 turns it off.
         if ProcessInfo.processInfo.environment["DUO_HANG_LOG"] != "0" { HangMonitor.shared.start { model.hangScreen() } }
@@ -46,7 +48,7 @@ struct DuoApp: App {
         if FileManager.default.isExecutableFile(atPath: helpers.appending(path: "duo2").path) {
             ChildEnvironment.cliDirectory = helpers.path
         }
-        let server = ControlServer { model.handle($0, done: $1) }
+        let server = ControlServer { core.handle($0, done: $1) }   // the core picks the window (the primary, Q-430)
         // Scripted and capture runs never take the socket from the user's open Duo (C-18).
         try? server.start(privateIfTaken: options.capturing) { ChildEnvironment.control = $0 }
         options.state?.apply(to: model)
@@ -239,6 +241,11 @@ final class MainWindow {
         w.center()
         w.setFrameAutosaveName("main")
         window = w
+        model.window = w   // the model's own window: lookups go by identity, never by title (multi-window slice 0)
+        // Menus act on the key window's model (AppCore.keyModel).
+        NotificationCenter.default.addObserver(forName: NSWindow.didBecomeKeyNotification, object: w, queue: .main) { [model] _ in
+            MainActor.assumeIsolated { if model.core.keyWindowID != model.windowID { model.core.keyWindowID = model.windowID } }
+        }
         // View › Enter Full Screen (DL-108) says which way it goes.
         for (name, on) in [(NSWindow.didEnterFullScreenNotification, true), (NSWindow.didExitFullScreenNotification, false)] {
             NotificationCenter.default.addObserver(forName: name, object: w, queue: .main) { [model] _ in

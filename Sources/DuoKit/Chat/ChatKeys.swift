@@ -19,16 +19,18 @@ extension AppModel {
     func installChatKeys() {
         guard !ChatKeyMonitor.installed else { return }
         ChatKeyMonitor.installed = true
-        NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] e in
+        // One monitor for the app: a key goes to the chat in the window it was typed in (multi-window slice 0).
+        NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak core = self.core] e in
             let chars = e.charactersIgnoringModifiers ?? "", escape = e.keyCode == 53
             let mods = e.modifierFlags.intersection([.command, .control, .option, .shift])
             let number = e.windowNumber
             let used = MainActor.assumeIsolated { () -> Bool in
+                let m = core?.model(forWindowNumber: number)
                 // ⌥⌘↑ / ⌥⌘↓: your previous and next message, only while the chat has the keyboard (Q-54, DL-242).
-                if let by = ChatKeyMonitor.step(chars, mods) { return self?.chatStep(by, window: number) == true }
+                if let by = ChatKeyMonitor.step(chars, mods) { return m?.chatStep(by, window: number) == true }
                 // ⌘V with a chat showing and nothing holding the keyboard: the composer takes it.
-                if mods == .command, chars == "v" { return self?.chatPaste(window: number) == true }
-                return mods.subtracting(.shift).isEmpty && self?.chatKey(chars, escape: escape, window: number) == true
+                if mods == .command, chars == "v" { return m?.chatPaste(window: number) == true }
+                return mods.subtracting(.shift).isEmpty && m?.chatKey(chars, escape: escape, window: number) == true
             }
             return used ? nil : e
         }

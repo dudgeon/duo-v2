@@ -238,7 +238,7 @@ public enum FixtureHarness {
                 model.voice.start(target, source: .file(URL(fileURLWithPath: parts[1])))
             }
         case "window-shot":   // window-shot:<png>: the whole window drawn to <png> now, mid-run (a dictation in progress)
-            if parts.count > 1, let w = NSApp.windows.first(where: { $0.title == "Duo" }) ?? NSApp.windows.first {
+            if parts.count > 1, let w = FixtureHarness.window() ?? NSApp.windows.first {
                 do { try WindowCapture.window(w, to: URL(fileURLWithPath: parts[1])) }
                 catch { FileHandle.standardError.write(Data("window-shot failed: \(error.localizedDescription)\n".utf8)) }
             }
@@ -340,7 +340,7 @@ public enum FixtureHarness {
                 if kv.count == 2 { model.dropFiles(kv[1].split(separator: "|").map { URL(fileURLWithPath: String($0)) }, onto: kv[0] == "root" ? nil : kv[0]) }
             }
         case "window-width":   // window-width:<pt>: Duo's window that wide, its height kept (F-456's narrowing run)
-            if parts.count > 1, let w = Double(parts[1]), let win = NSApp.windows.first(where: { $0.title == "Duo" }) {
+            if parts.count > 1, let w = Double(parts[1]), let win = FixtureHarness.window() {
                 var f = win.frame
                 f.size.width = w
                 win.setFrame(f, display: true)
@@ -360,7 +360,7 @@ public enum FixtureHarness {
                 FileHandle.standardError.write(Data("answer: \(q.title) [\(q.choices.map(\.label).joined(separator: " | "))]\n".utf8))
                 if let c = q.choices.first(where: { $0.label == (parts.count > 1 ? parts[1] : "") }) { SheetCenter.shared.answer(c) }
             } else { FileHandle.standardError.write(Data("answer: no question\n".utf8)) }
-        case "undo": NSApp.windows.first(where: { $0.title == "Duo" })?.undoManager?.undo()
+        case "undo": FixtureHarness.window()?.undoManager?.undo()
         case "tabs":
             FileHandle.standardError.write(Data("tabs: \(model.openDocuments) right=\(model.rightTab ?? "-") renaming=\(model.renamingPath ?? "-") editor=\(model.editorIfLoaded?.url?.lastPathComponent ?? "-")\ntree: \(model.currentProject.flatMap { model.fixture.projectFiles[$0.name] } ?? [])\n".utf8))
         case "resume":
@@ -453,7 +453,7 @@ public enum FixtureHarness {
         case "split-close": if let t = model.showingSplit { model.closeSplitView(t.source) }
         case "sidebar-peek": model.setSidebarPeek(parts.count > 1 ? parts[1] == "on" : !model.splits.peek)
         case "split-report":
-            let win = NSApp.windows.first { $0.title == "Duo" }
+            let win = FixtureHarness.window()
             // The smallest the user can resize it to: what the window's delegate allows for a zero size.
             let size = win.map { w -> String in
                 let m = w.delegate?.windowWillResize?(w, to: .zero) ?? w.contentMinSize
@@ -651,7 +651,7 @@ public enum FixtureHarness {
             if parts.count > 1, let c = codes[parts[1]] { model.visibleTerminal?.view.send(txt: c) }
         case "event":  // event:esc|return|cmd-v: a real key event through the app's queue (local monitors, key window, field editor); cmd-v reads the real clipboard
             let codes: [String: (UInt16, String)] = ["esc": (53, "\u{1b}"), "return": (36, "\r"), "cmd-v": (9, "v"), "ctrl-tab": (48, "\t"), "ctrl-shift-tab": (48, "\t")]
-            if parts.count > 1, let (code, chars) = codes[parts[1]], let w = NSApp.windows.first(where: { $0.title == "Duo" }) {
+            if parts.count > 1, let (code, chars) = codes[parts[1]], let w = FixtureHarness.window() {
                 if !TestBackground.isOn { NSApp.activate(ignoringOtherApps: true) }; w.makeKey()   // a background launch never activates (F-227)
                 for type in [NSEvent.EventType.keyDown, .keyUp] {
                     guard let e = NSEvent.keyEvent(with: type, location: .zero, modifierFlags: parts[1] == "cmd-v" ? .command : parts[1] == "ctrl-tab" ? .control : parts[1] == "ctrl-shift-tab" ? [.control, .shift] : [], timestamp: ProcessInfo.processInfo.systemUptime,
@@ -716,7 +716,7 @@ public enum FixtureHarness {
                 model.hoveredTaskRow = TaskRowHover.key(project: p, path: parts[1])
             }
         case "keys":   // keys:<text>: real key events to whatever has the keyboard (no focusing first)
-            if parts.count > 1, let w = NSApp.windows.first(where: { $0.title == "Duo" }) {
+            if parts.count > 1, let w = FixtureHarness.window() {
                 if !TestBackground.isOn { NSApp.activate(ignoringOtherApps: true) }; w.makeKey()   // a background launch never activates (F-227)
                 for ch in parts[1] {
                     for type in [NSEvent.EventType.keyDown, .keyUp] {
@@ -728,7 +728,7 @@ public enum FixtureHarness {
                 }
             }
         case "focus":   // what has the keyboard, and the editor's selection
-            let w = NSApp.windows.first(where: { $0.title == "Duo" })
+            let w = FixtureHarness.window()
             let e = model.editor
             e.run("const s = duo.selection(); return s ? s.text : ''") { v in
                 FileHandle.standardError.write(Data("focus: responder=\(w?.firstResponder.map { String(describing: type(of: $0)) } ?? "nil") editor=\(e.hasFocus) selected=\(String(describing: v ?? "nil").debugDescription)\n".utf8))
@@ -741,7 +741,7 @@ public enum FixtureHarness {
                 FileHandle.standardError.write(Data("editor-js: \(String(describing: v ?? "nil"))\n".utf8))
             }
         case "sheet":   // sheet:<button title>: press that button on the sheet attached to Duo's window
-            if let w = NSApp.windows.first(where: { $0.title == "Duo" }), let sheet = w.attachedSheet {
+            if let w = FixtureHarness.window(), let sheet = w.attachedSheet {
                 func buttons(_ v: NSView) -> [NSButton] { (v as? NSButton).map { [$0] } ?? v.subviews.flatMap(buttons) }
                 let all = sheet.contentView.map(buttons) ?? []
                 FileHandle.standardError.write(Data("sheet: [\(all.map(\.title).joined(separator: " | "))]\n".utf8))
@@ -756,7 +756,7 @@ public enum FixtureHarness {
         case "shell": model.newShell()
         case "archived": model.archivedOpen.toggle()
         case "click":   // click:<x> <y>: a real mouse click at that point of the window, from its top left
-            if parts.count > 1, let w = NSApp.windows.first(where: { $0.title == "Duo" }) {
+            if parts.count > 1, let w = FixtureHarness.window() {
                 let xy = parts[1].split(separator: " ").compactMap { Double($0) }
                 if xy.count == 2, let content = w.contentView {
                     let p = NSPoint(x: xy[0], y: content.bounds.height - xy[1])
@@ -798,7 +798,7 @@ public enum FixtureHarness {
             lines.append("  footer: ↩ \(st.returnLabel) · similar=\(st.similarTo?.title ?? "-") · at=\(model.altitude.isAllProjects ? "all" : model.currentProject?.name ?? "?") rightTab=\(model.rightTab ?? "-") console=\(model.consoleTab ?? "-")")
             FileHandle.standardError.write(Data((lines.joined(separator: "\n") + "\n").utf8))
         case "ui-state":
-            let w = NSApp.windows.first(where: { $0.title == "Duo" })
+            let w = FixtureHarness.window()
             let fr = w?.firstResponder.map { String(describing: type(of: $0)) } ?? "-"
             FileHandle.standardError.write(Data("ui-state: renaming=\(model.renamingPath ?? "-") picking=\(model.visiblePage?.picking ?? false) picked=\(model.visiblePage?.picked?.selector ?? "-") send=\((try? model.sendTarget.get()).map { "ok \($0.key.prefix(12))" } ?? { if case .failure(let e) = model.sendTarget { return e.reason }; return "-" }()) key=\(w?.isKeyWindow ?? false) firstResponder=\(fr)\n".utf8))
         case "menus":   // the menu bar as text, to compare with the walk's mockups (DL-108): window captures don't draw it
@@ -929,7 +929,7 @@ public enum FixtureHarness {
             if let w = model.editor.webView.window { NSApp.setActivationPolicy(.regular); NSRunningApplication.current.activate(options: [.activateAllWindows]); if !TestBackground.isOn { NSApp.activate(ignoringOtherApps: true) }; w.makeKeyAndOrderFront(nil); w.makeFirstResponder(model.editor.webView) }
             model.editor.run("document.querySelector('.duo-fm-reffield input').focus(); return 1") { _ in }
         case "real-key":   // real-key:cmd-v=<text> (the text on the private pasteboard, then ⌘V) or key:return: a real keyDown through NSApp.sendEvent, so the local key monitor sees it as a typed key
-            if parts.count > 1, let w = model.editor.webView.window ?? NSApp.windows.first(where: { $0.title == "Duo" }) {
+            if parts.count > 1, let w = model.editor.webView.window ?? FixtureHarness.window() {
                 let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init)
                 let (chars, code, mods): (String, UInt16, NSEvent.ModifierFlags) = kv[0] == "return" ? ("\r", 36, []) : ("v", 9, .command)
                 if kv[0] == "cmd-v" {
@@ -963,7 +963,7 @@ public enum FixtureHarness {
                 FileHandle.standardError.write(Data("proof-report: composer=\((chat?.ui.composer ?? "").debugDescription) composerView=\((Self.composerView(for: key)?.plainText ?? "").debugDescription) firstResponder=\(w?.firstResponder.map { String(describing: type(of: $0)) } ?? "nil") note=\(v as? String ?? "?")\n".utf8))
             }
         case "chat-hover":   // chat-hover:<x>x<y>: the pointer at that point of the content (top-left origin), as the link monitor reads it (DL-132 g)
-            if parts.count > 1, let w = NSApp.windows.first(where: { $0.title == "Duo" }), let c = w.contentView,
+            if parts.count > 1, let w = FixtureHarness.window(), let c = w.contentView,
                let k = model.visibleSessionId, let chat = model.chat(for: k) {
                 let xy = parts[1].split(separator: "x").compactMap { Double($0) }
                 if xy.count == 2 {
@@ -995,7 +995,7 @@ public enum FixtureHarness {
             }
             FileHandle.standardError.write(Data("focus-check: \(bad.isEmpty ? "ok" : "FAIL: \(bad.joined(separator: "; "))")\n".utf8))
         case "focus-away":   // the window's keyboard to nothing, as a control that takes it would: focus-check must fail
-            NSApp.windows.first(where: { $0.title == "Duo" })?.makeFirstResponder(nil)
+            FixtureHarness.window()?.makeFirstResponder(nil)
         case "composers":   // every composer in the windows: its session, whether it's on screen, and which has the keyboard
             func all(_ v: NSView) -> [ComposerTextView] { ((v as? ComposerTextView).map { [$0] } ?? []) + v.subviews.flatMap(all) }
             for w in NSApp.windows {
@@ -1076,7 +1076,7 @@ public enum FixtureHarness {
                 if asked == nil, [.question, .questionReview].contains(c.screen.kind) { asked = now }
                 if asked != nil, drawn == nil, !composer, c.showsChat { drawn = now }   // chat on screen, its composer gone: the card
                 FileHandle.standardError.write(Data("chat-watch: t=\(ms(now)) screen=\(c.screen.kind.rawValue) pending=\(c.pendingRequest?.tool ?? "-") card=\(c.cardUp) composerDrawn=\(composer) showing=\(c.showsChat ? "chat" : "terminal")\n".utf8))
-                if let png, let a = asked, !captured, now.timeIntervalSince(a) >= 1, let w = NSApp.windows.first(where: { $0.title == "Duo" }) {
+                if let png, let a = asked, !captured, now.timeIntervalSince(a) >= 1, let w = FixtureHarness.window() {
                     captured = true
                     try? WindowCapture.content(of: w, to: URL(fileURLWithPath: png))
                     FileHandle.standardError.write(Data("chat-watch: captured \(png) at t=\(ms(now)) composerDrawn=\(composer)\n".utf8))
@@ -1231,13 +1231,13 @@ public enum FixtureHarness {
             if let name = f.first { model.landedNote = f.count > 1 ? f[1] : "2 sessions moved in"; model.landed = name }
         case "video": if parts.count > 1 { VideoTargets.act(parts[1], on: model) }   // video:<verb>=<arg>: the intro video's scene 7 (VideoTargets+S7)
         case "anchors":   // anchors:<path.json>: every named element's frame in window points (H2)
-            if parts.count > 1, let window = NSApp.windows.first(where: { $0.title == "Duo" }) {
+            if parts.count > 1, let window = FixtureHarness.window() {
                 do { try Anchors.write(window: window, to: URL(fileURLWithPath: parts[1])) }
                 catch { FileHandle.standardError.write(Data("anchors: failed: \(error.localizedDescription)\n".utf8)) }
             }
         case "film", "filmw":   // film:<png prefix>:<ms>|<ms>|…: frames at those offsets from now, <prefix>-<ms>.png (Q-77); filmw: with the toolbar
             let f = parts.count > 1 ? parts[1].split(separator: ":", maxSplits: 1).map(String.init) : []
-            guard f.count == 2, let window = NSApp.windows.first(where: { $0.title == "Duo" }) else { break }
+            guard f.count == 2, let window = FixtureHarness.window() else { break }
             let started = CACurrentMediaTime()
             for ms in f[1].split(separator: "|").compactMap({ Int($0) }) {
                 DispatchQueue.main.asyncAfter(deadline: .now() + Double(ms) / 1000) {
@@ -1267,7 +1267,7 @@ public enum FixtureHarness {
         case "tab":   // tab:next|previous: the active pane's tabs (⌃Tab, ⌃⇧Tab)
             if parts.count > 1, ["next", "previous"].contains(parts[1]) { model.cycleTab(forward: parts[1] == "next") }
         case "pane-state":   // one line on stderr: the active pane, the tabs, and what has the keyboard
-            let r = NSApp.windows.first(where: { $0.title == "Duo" })?.firstResponder
+            let r = FixtureHarness.window()?.firstResponder
             FileHandle.standardError.write(Data("pane=\(model.activePane.rawValue) console=\(model.consoleTab ?? "-") right=\(model.rightTab ?? "-") home=\(model.homeTab ?? "-") responder=\(r.map { String(describing: type(of: $0)) } ?? "nil")\n".utf8))
         case let a where a.hasPrefix("wait"): break
         case let a where a.hasPrefix("perf-"): ChatPerf.perform(parts, on: model)   // chat mode's performance runs (F-157)
@@ -1283,6 +1283,14 @@ public enum FixtureHarness {
                 try? await Task.sleep(for: .milliseconds(500))
             }
         }
+    }
+
+    /// Window `n` (1 is the primary), by its model: never by title, though window 1 keeps "Duo" as its
+    /// title so captures and scripts are unchanged (multi-window slice 0).
+    @MainActor public static func window(_ n: Int = 1) -> NSWindow? {
+        let models = AppCore.current?.models ?? []
+        if models.indices.contains(n - 1), let w = models[n - 1].window { return w }
+        return n == 1 ? NSApp.windows.first { $0.title == "Duo" } : nil
     }
 
     public static func configure(_ window: NSWindow, model: AppModel, options: LaunchOptions) {

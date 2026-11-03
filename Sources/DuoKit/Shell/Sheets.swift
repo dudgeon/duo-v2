@@ -23,9 +23,9 @@ struct SheetOverlay: View {
                     else if let c = model.convertDeckForm { ConvertDeckSheet(form: c) }
                     else if let p = model.pushForm { PushSheet(form: p) }
                     else if let g = model.gitHubProjectForm { GitHubProjectSheet(form: g) }
-                    else if let q = SheetCenter.shared.current { QuestionSheet(q: q).id(q.id).transition(.opacity).accessibilityIdentifier("video.sheet") }
+                    else if let q = SheetCenter.shared.current(for: model) { QuestionSheet(q: q).id(q.id).transition(.opacity).accessibilityIdentifier("video.sheet") }
                 }
-                .duoAnimation(.sheetSwap, value: SheetCenter.shared.current?.id)
+                .duoAnimation(.sheetSwap, value: SheetCenter.shared.current(for: model)?.id)
                 // The targets hang the sheet 38 from the window's top, over the toolbar's hairline.
                 .offset(y: DuoMetric.sheetTop - FixtureHarness.designContentTop)
                 .transition(.move(edge: .top))
