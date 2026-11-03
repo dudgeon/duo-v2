@@ -5412,3 +5412,18 @@ While proving slice 0 (F-548), `scripts/check-scale.sh` ran on main `2c9a2bdb`'s
 - **Earlier runs** recorded 1.4% to 4.4% (F-297: 1.4%; F-308: 4.4%).
 
 The cause isn't known. The per-second samples on both builds have several 14% to 21% seconds after the settle, which points to load on the Mac (other sessions' Claude processes run outside the lock) or a change on main since. Not investigated here. Re-run check-scale on a quiet Mac, then bisect main if it still fails.
+- **Geoff turned 4a′ down (2026-11-02): "these are all far too similar".** Measured, he's right.
+  - On 4a′ the closest pair of toolbars is 1.9 apart (OKLab ΔE ×100), and no pair is 15 apart, which is the dataviz method's line for easy to tell apart.
+  - The cause is chroma: 0.03 reads as grey (the dataviz method's floor for identity is 0.10).
+  - The chroma is that low because text2 at 4.5:1 pins a light toolbar at L 0.90 or above.
+- **Twelve colours can't all be 15 apart under any design.** A search over every in-gamut colour (`palette/proof/search.py`) finds the best twelve reach a worst pair of about 6 with orange and red excluded, and about 8 with every hue allowed. Dark mode is the tighter case.
+- **What does work: a real-colour toolbar and two depths per hue.** The toolbar takes chroma up to 0.14 in a light and a deep step, and toolbar text moves from text2 to text (≥ 5.9:1 light, ≥ 4.66:1 dark).
+  - 4a″ B keeps the no-orange rule: closest pair 5.4, 77% of pairs ≥ 15.
+  - 4a″ C lets in coral and ochre (only h 22–64, around needs-you, stays out): closest 8.3 light, 7.4 dark, about 70% of pairs ≥ 15.
+  - The needs-you chip needs a solid fill on a coloured toolbar in dark too (the dark pane), or it disappears on the coral and ochre ones.
+  - The rendered board is `palette/board-4a-double-prime.png`.
+- **Direction C, built out (Geoff, 2026-11-02: "c is good; the order should be all light, then all dark").** Board 4a′ was redrawn from the round-2 `window_palette.py`.
+  - The toolbar holds the colour. The pane, chat and tool output take a pale tint of the same hue, so text2 still passes there (5.14:1 or more), and toolbar text is `text` (4.66:1 or more).
+  - The swatch is the toolbar colour itself, so the swatch control needs its controlEdge ring to show on the toolbar.
+  - The closest toolbars are Coral and Ochre in light (8.3) and Deep green and Deep teal in dark (7.3).
+  - The order runs the six light steps, then the six deep ones, with the hues jumping across the wheel (Blue, Ochre, Purple, Green, Coral, Teal).

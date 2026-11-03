@@ -1,40 +1,38 @@
 #!/usr/bin/env python3
-"""Derive Duo's window base colours (Q-441, F-547) and check their contrast.
+"""Derive Duo's window base colours (Q-441, F-547, board 4a′ round 2) and check their contrast.
 
-Every colour is one OKLCH recipe at a different hue:
-  hue_i  = H0 + i * STEP   (i = 0..N-1, an arc that skips orange and red)
-  tier   = i % 2           (neighbouring hues alternate a lighter, softer tier A
-                            and a deeper, richer tier B, so neighbours differ
-                            in lightness and chroma, not only hue)
-  role   = (L, C) from ROLES[mode][role][tier]
-Run:  python3 window_palette.py            -> table
+Six hues round the wheel (needs-you's orange left out), each in a light and a
+deep step, so 12 colours. The toolbar (ground) takes the colour at real chroma:
+  ground  = (L, min(cap, 92% of the sRGB limit at L, h)) from ROLES[mode]["ground"][step]
+The reading surfaces (pane, chatGround, toolOutputFill) take a pale tint of the hue.
+Text on a coloured toolbar is `text`; text2 sits only on the pale tints.
+Run:  python3 window_palette.py            -> table, distances, contrast
       python3 window_palette.py --json     -> palette.json (tokens-ready)
-To add colours later, see ADDING in the README next to this file.
 """
 import json, math, sys
 
-H0, STEP, N = 92.0, 22.5, 12          # hues 92 .. 339.5
-NAMES = ["Sand", "Pear", "Moss", "Sage", "Mint", "Teal",
-         "Sky", "Cornflower", "Iris", "Lilac", "Orchid", "Mauve"]
-# Order new windows get them in: step 5 of 12 (coprime, visits all twelve,
-# each new colour 112.5 deg from the last), starting at Sky as 4a did.
-ORDER_STEP, ORDER_START = 5, 6
-
-# (L, C) per role, per tier [A, B]
+# Round 2 (Geoff, 2026-11-02, 4a″ C): colours chosen to tell windows apart, not to match.
+# Six hues spread round the wheel, leaving out only the needs-you orange (h 22-64),
+# each in a light step and a deep step. The toolbar (ground) carries the colour at
+# real chroma; the reading surfaces take a pale tint of the same hue.
+HUES  = [(20, "Coral"), (75, "Ochre"), (135, "Green"), (185, "Teal"), (250, "Blue"), (315, "Purple")]
+STEPS = ["light", "deep"]
+# Order new windows get them in (Geoff): all light, then all deep, hues in this order.
+HUE_ORDER = [4, 1, 5, 2, 0, 3]          # Blue, Ochre, Purple, Green, Coral, Teal
+GAMUT = 0.92                           # chroma = min(cap, 92% of the sRGB limit at L, h)
+# (L, C cap) per role, per step [light, deep]
 ROLES = {
  "light": {
-  "ground":         [(0.925, 0.026), (0.905, 0.036)],
-  "pane":           [(0.975, 0.010), (0.968, 0.014)],
-  "chatGround":     [(0.925, 0.026), (0.905, 0.036)],   # = ground, as in the base light scheme
-  "toolOutputFill": [(0.955, 0.016), (0.942, 0.022)],
-  "swatch":         [(0.740, 0.085), (0.640, 0.100)],
+  "ground":         [(0.86, 0.10), (0.72, 0.14)],
+  "pane":           [(0.965, 0.018), (0.965, 0.018)],
+  "chatGround":     [(0.945, 0.026), (0.945, 0.026)],
+  "toolOutputFill": [(0.975, 0.012), (0.975, 0.012)],
  },
  "dark": {
-  "ground":         [(0.215, 0.022), (0.235, 0.030)],
-  "pane":           [(0.240, 0.020), (0.260, 0.026)],
-  "chatGround":     [(0.180, 0.016), (0.195, 0.022)],
-  "toolOutputFill": [(0.215, 0.022), (0.235, 0.030)],   # = ground, as in the base dark scheme
-  "swatch":         [(0.700, 0.085), (0.600, 0.100)],
+  "ground":         [(0.50, 0.12), (0.36, 0.12)],
+  "pane":           [(0.235, 0.022), (0.235, 0.022)],
+  "chatGround":     [(0.180, 0.016), (0.180, 0.016)],
+  "toolOutputFill": [(0.215, 0.020), (0.215, 0.020)],
  },
 }
 TEXT = {"light": {"text": "#1F2328", "text2": "#5B636D", "needsYou": "#C2410C"},
@@ -74,44 +72,62 @@ def hex_to_oklch(hx):
     B = 0.0259040371*l + 0.7827717662*m - 0.8086757660*s
     return L, math.hypot(A, B), math.degrees(math.atan2(B, A)) % 360
 
+def maxc(L, h):
+    c = 0.0
+    while hexc(L, c + 0.002, h)[1]: c += 0.002
+    return c
+
 def palette():
     out = []
-    for i in range(N):
-        h = H0 + i*STEP; t = i % 2
-        c = {"id": NAMES[i].lower(), "name": NAMES[i], "hue": h, "tier": "AB"[t]}
-        for mode, roles in ROLES.items():
-            c[mode] = {}
-            for role, tiers in roles.items():
-                hx, ok = hexc(*tiers[t], h)
-                assert ok, (NAMES[i], mode, role, "out of sRGB gamut")
-                c[mode][role] = hx
-            surf = [c[mode][r] for r in ("ground", "pane", "chatGround", "toolOutputFill")]
-            c[mode]["minText"] = round(min(cr(TEXT[mode]["text"], s) for s in surf), 2)
-            c[mode]["minText2"] = round(min(cr(TEXT[mode]["text2"], s) for s in surf), 2)
-            c[mode]["needsOnPane"] = round(cr(TEXT[mode]["needsYou"], c[mode]["pane"]), 2)
-            c[mode]["needsOnGround"] = round(cr(TEXT[mode]["needsYou"], c[mode]["ground"]), 2)
-        out.append(c)
-    order = [(ORDER_START + k*ORDER_STEP) % N for k in range(N)]
-    return out, [out[i]["id"] for i in order]
+    for hi, (h, name) in enumerate(HUES):
+        for si, step in enumerate(STEPS):
+            nm = name if step == "light" else "Deep " + name.lower()
+            c = {"id": nm.lower().replace(" ", "-"), "name": nm, "hue": h, "step": step}
+            for mode, roles in ROLES.items():
+                c[mode] = {}
+                for role, steps in roles.items():
+                    L, cap = steps[si]
+                    hx, ok = hexc(L, min(cap, maxc(L, h) * GAMUT), h)
+                    c[mode][role] = hx
+                c[mode]["swatch"] = c[mode]["ground"]
+                d, t = c[mode], TEXT[mode]
+                # Toolbar text is `text` on a coloured toolbar; text2 sits only on the reading surfaces.
+                d["textOnGround"] = round(cr(t["text"], d["ground"]), 2)
+                read = [d[r] for r in ("pane", "chatGround", "toolOutputFill")]
+                d["minText"] = round(min(cr(t["text"], s) for s in read + [d["ground"]]), 2)
+                d["minText2"] = round(min(cr(t["text2"], s) for s in read), 2)
+                d["needsOnPane"] = round(cr(t["needsYou"], d["pane"]), 2)
+            out.append(c)
+    order = [out[hi * 2 + si]["id"] for si in range(2) for hi in HUE_ORDER]
+    return out, order
+
+def distances(pal, mode):
+    import itertools
+    def lab(hx):
+        L, C, h = hex_to_oklch(hx); return (L, C*math.cos(math.radians(h)), C*math.sin(math.radians(h)))
+    ds = sorted((math.dist(lab(a[mode]["ground"]), lab(b[mode]["ground"]))*100, a["name"], b["name"])
+                for a, b in itertools.combinations(pal, 2))
+    return ds
 
 if __name__ == "__main__":
     pal, order = palette()
-    nh = hex_to_oklch(TEXT["light"]["needsYou"])[2]
-    nhd = hex_to_oklch(TEXT["dark"]["needsYou"])[2]
     if "--json" in sys.argv:
-        print(json.dumps({"recipe": {"H0": H0, "STEP": STEP, "N": N, "roles": ROLES,
-                          "orderStep": ORDER_STEP, "orderStart": ORDER_START},
-                          "needsYouHue": [round(nh, 1), round(nhd, 1)],
-                          "order": order, "colours": pal}, indent=1))
+        dist = {m: {"closest": round(distances(pal, m)[0][0], 1),
+                    "pair": distances(pal, m)[0][1:],
+                    "apart15": round(100*sum(d[0] >= 15 for d in distances(pal, m))/len(distances(pal, m)))} for m in ("light", "dark")}
+        print(json.dumps({"recipe": {"hues": HUES, "steps": STEPS, "roles": ROLES, "gamut": GAMUT},
+                          "order": order, "distance": dist, "colours": pal}, indent=1, ensure_ascii=False))
         sys.exit()
-    print("needs-you hue light %.1f dark %.1f; arc %.1f..%.1f" % (nh, nhd, H0, H0+(N-1)*STEP))
     bad = []
     for c in pal:
         for m in ("light", "dark"):
             d = c[m]
-            print("%-11s %s %5.1f %-5s gr %s pa %s cg %s to %s sw %s | text %.2f text2 %.2f needs pane %.2f ground %.2f" % (
-                c["name"], c["tier"], c["hue"], m, d["ground"], d["pane"], d["chatGround"], d["toolOutputFill"], d["swatch"],
-                d["minText"], d["minText2"], d["needsOnPane"], d["needsOnGround"]))
+            print("%-12s %-5s %-5s gr %s pa %s cg %s to %s | text on toolbar %.2f, text %.2f, text2 %.2f, needs on pane %.2f" % (
+                c["name"], c["step"], m, d["ground"], d["pane"], d["chatGround"], d["toolOutputFill"],
+                d["textOnGround"], d["minText"], d["minText2"], d["needsOnPane"]))
             if d["minText"] < 4.5 or d["minText2"] < 4.5: bad.append((c["name"], m))
+    for m in ("light", "dark"):
+        ds = distances(pal, m)
+        print(m, "closest toolbars %.1f %s; pairs >= 15: %d%%" % (ds[0][0], ds[0][1:], 100*sum(d[0] >= 15 for d in ds)/len(ds)))
     print("order:", " > ".join(order))
     print("FAIL" if bad else "all text and text2 >= 4.5:1", bad)
