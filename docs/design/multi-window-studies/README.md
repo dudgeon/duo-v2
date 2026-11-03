@@ -33,3 +33,16 @@ Once Geoff decides:
 - export the chosen boards to `screens/`, rendered to static markup, with a `manifest.json`, as in the other handoffs;
 - add the tints as `windowTint*` tokens in `build-handoff/tokens.json`;
 - record the choices in DL-141's follow-up.
+
+## Slice 1's stand-ins, drawn (2026-11-02; Q-444 to Q-447)
+
+Multi-window slice 1 found four things no board drew. Each is a board on the canvas, with the stand-in as built and one or two alternatives, the recommendation first:
+
+| Q | Board | Recommended |
+|---|---|---|
+| Q-444 | 4b′ · Choosing from twelve (`ColourChoose.dc.html`) | A: hue columns named once, Light and Deep rows; the menu in 4a′'s hue order (the stand-in is B) |
+| Q-445 | 4b″ · The swatch at All projects (`ColourAllProjects.dc.html`) | A: after the last crumb, as built |
+| Q-446 | 4c′ · Window Colour under Classic (`ColourClassicMenu.dc.html`) | A: the submenu opens with the line, the colours dimmed with the window's own ticked, and Appearance Settings… (the stand-in is B) |
+| Q-447 | 10′ · Naming the window Home is in (`HomeNamed.dc.html`) | A: "Home is showing in the Blue window", on a chip of that colour, with Go There beside Show Here (the stand-in is B) |
+
+`standins/gen_boards.py` writes the four boards from `palette/palette.json`; `standins/*.png` are their renders (headless Chromium via `expand2.py` and `shot.mjs`, as for 4a′).
