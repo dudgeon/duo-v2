@@ -169,6 +169,15 @@ import Foundation
     let old = try JSONDecoder().decode(RestoreState.self, from: Data(#"{"version":1,"leftCollapsedAllProjects":false,"leftCollapsedProject":false,"projects":[]}"#.utf8))
     check(old.splitRoom == nil, "a restore file from before split view still reads")
 
+    // DL-315: All projects starts with its left sidebar collapsed, a project with it expanded; a saved toggle still wins
+    let fresh = AppModel(fixture: f)
+    check(fresh.leftCollapsedAllProjects && !fresh.leftCollapsedProject, "a new model: All projects' sidebar collapsed, a project's expanded")
+    check(fresh.currentRestoreState().leftCollapsedAllProjects && !fresh.currentRestoreState().leftCollapsedProject, "and a fresh save records those defaults")
+    fresh.leftCollapsedAllProjects = false; fresh.leftCollapsedProject = true
+    let toggled = fresh.currentRestoreState()
+    check(!toggled.leftCollapsedAllProjects && toggled.leftCollapsedProject, "a person's own toggles are what the restore file saves")
+    check(old.leftCollapsedAllProjects == false && old.leftCollapsedProject == false, "a saved file's values are read as saved, not replaced by the new defaults")
+
     // Restore validates: a split whose source is no longer a document is dropped; a wild ratio is clamped
     let m2 = AppModel(fixture: f)
     TargetState.project.apply(to: m2)

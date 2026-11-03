@@ -5427,3 +5427,10 @@ The cause isn't known. The per-second samples on both builds have several 14% to
   - The swatch is the toolbar colour itself, so the swatch control needs its controlEdge ring to show on the toolbar.
   - The closest toolbars are Coral and Ochre in light (8.3) and Deep green and Deep teal in dark (7.3).
   - The order runs the six light steps, then the six deep ones, with the hues jumping across the wheel (Blue, Ochre, Purple, Green, Coral, Teal).
+
+## F-558 · Saved restore state decides the sidebars, so a default change reaches no existing install (2026-11-03; DL-315)
+
+- **`RestoreState` stores both left-sidebar flags as plain Bools** (`leftCollapsedAllProjects`, `leftCollapsedProject`), and `applyRestore` assigns them from the file whenever one exists for that Home. So changing the `AppModel` defaults (DL-315) changes only a first launch, a new Home or a deleted restore file.
+- **An install that has run before keeps its saved values** until the person toggles. Geoff's Duo has a restore file, so on his next launch All projects keeps whatever it last saved (open, unless he collapsed it).
+- **The fixture states set the sidebar open for All projects** (`TargetState.allProjects`), because the approved target screens draw it open and the new default would otherwise move `overview` away from its target.
+- **A one-time migration is proposed, not built:** add an optional `sidebarDefaults: Int?` to `RestoreState`; when `applyRestore` reads a file without it, set `leftCollapsedAllProjects = true` once, and every save writes `sidebarDefaults = 1`, so later toggles persist.
