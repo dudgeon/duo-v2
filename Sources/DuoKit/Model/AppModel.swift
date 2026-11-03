@@ -388,8 +388,6 @@ public final class AppModel {
     /// Home, refreshing every 2 s from disk and beacons.
     public func startLive(root: URL?) {
         liveRoot = root
-        // Home's prompt dismissed earlier: the pane starts collapsed until a Home exists (DL-100).
-        if root == nil, DuoState.load().homePromptDismissed { leftCollapsedAllProjects = true }
         guard !isLive else { return refreshLive() }   // the core's loop runs once, whichever window starts it (C-146)
         isLive = true
         terminalsMode = .live

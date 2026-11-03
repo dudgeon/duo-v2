@@ -5431,6 +5431,7 @@ The cause isn't known. The per-second samples on both builds have several 14% to
 ## F-558 · Saved restore state decides the sidebars, so a default change reaches no existing install (2026-11-03; DL-315)
 
 - **`RestoreState` stores both left-sidebar flags as plain Bools** (`leftCollapsedAllProjects`, `leftCollapsedProject`), and `applyRestore` assigns them from the file whenever one exists for that Home. So changing the `AppModel` defaults (DL-315) changes only a first launch, a new Home or a deleted restore file.
-- **An install that has run before keeps its saved values** until the person toggles. Geoff's Duo has a restore file, so on his next launch All projects keeps whatever it last saved (open, unless he collapsed it).
+- **An install that has run before keeps its saved values** until the person toggles. Without the migration, Geoff's Duo (which has a restore file) would keep whatever it last saved.
 - **The fixture states set the sidebar open for All projects** (`TargetState.allProjects`), because the approved target screens draw it open and the new default would otherwise move `overview` away from its target.
-- **A one-time migration is proposed, not built:** add an optional `sidebarDefaults: Int?` to `RestoreState`; when `applyRestore` reads a file without it, set `leftCollapsedAllProjects = true` once, and every save writes `sidebarDefaults = 1`, so later toggles persist.
+- **A one-time migration is built (the director asked for it):** `RestoreState` has an optional `sidebarDefaults: Int?`; `applyRestore` reads a file without it as All projects collapsed (once), and every save writes `sidebarDefaults = 1`, so later toggles persist. A project's sidebar is read as saved either way. With the default now true, `startLive`'s `homePromptDismissed` special case was redundant and is removed.
+- **What Geoff sees on his next launch:** All projects collapsed (his file has no key); open it and it stays open.

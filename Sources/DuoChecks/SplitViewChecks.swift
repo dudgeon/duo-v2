@@ -176,7 +176,12 @@ import Foundation
     fresh.leftCollapsedAllProjects = false; fresh.leftCollapsedProject = true
     let toggled = fresh.currentRestoreState()
     check(!toggled.leftCollapsedAllProjects && toggled.leftCollapsedProject, "a person's own toggles are what the restore file saves")
-    check(old.leftCollapsedAllProjects == false && old.leftCollapsedProject == false, "a saved file's values are read as saved, not replaced by the new defaults")
+    check(old.sidebarDefaults == nil && old.leftCollapsedAllProjectsOnRestore && !old.leftCollapsedProject, "an old file with no key: All projects collapses once on restore, a project's sidebar is read as saved")
+    var keyed = old; keyed.sidebarDefaults = 1
+    check(!keyed.leftCollapsedAllProjectsOnRestore, "a file with key 1 is read as saved")
+    check(toggled.sidebarDefaults == 1, "every save writes the key")
+    let reloaded = try JSONDecoder().decode(RestoreState.self, from: try JSONEncoder().encode(toggled))
+    check(!reloaded.leftCollapsedAllProjectsOnRestore && reloaded.leftCollapsedProject, "a toggle after the migration survives a save and reload")
 
     // Restore validates: a split whose source is no longer a document is dropped; a wild ratio is clamped
     let m2 = AppModel(fixture: f)
