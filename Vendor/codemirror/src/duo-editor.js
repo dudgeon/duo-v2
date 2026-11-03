@@ -1805,7 +1805,9 @@ const duoTheme = EditorView.theme({
   "&": { height: "100%", backgroundColor: "var(--duo-pane)", color: "var(--duo-text)", fontSize: DOC_SIZE },
   "&.cm-focused": { outline: "none" },
   ".cm-scroller": { fontFamily: "var(--duo-font-document)", lineHeight: DOC_LINE },
-  ".cm-content": { padding: "var(--duo-document-padding-y) var(--duo-document-padding-x)", caretColor: "var(--duo-text)" },
+  // DL-316: the document is never wider than the pane. min-width 0 lets the flex item shrink below its widest block's
+  // content; tables, properties and code wrap their own text (F-569).
+  ".cm-content": { padding: "var(--duo-document-padding-y) var(--duo-document-padding-x)", caretColor: "var(--duo-text)", minWidth: "0", maxWidth: "100%", boxSizing: "border-box" },
   ".cm-line": { padding: "0" },
   // How documents are drawn (S3-5, DL-101): H1 18/24, H2 14/20, the rest 13/20, all semibold.
   ".duo-h": { fontSize: DOC_SIZE, fontWeight: "var(--duo-document-heading-weight)" },
@@ -1826,12 +1828,12 @@ const duoTheme = EditorView.theme({
   ".cm-line.duo-codeblock-fence": { height: "8px", lineHeight: "8px", fontSize: "0", overflow: "visible" },
   ".cm-line.duo-codeblock-fence.duo-codeblock-fence-raw": { fontSize: "11px" },
   // No margin: the blank lines around it give the 10 between blocks, as the target draws it (C-22).
-  ".duo-table": { overflowX: "auto" },
+  ".duo-table": { overflowX: "auto", maxWidth: "100%" },
   ".duo-table-src": { boxSizing: "border-box" },
   ".duo-table table": { borderCollapse: "collapse", width: "100%", fontSize: DOC_SIZE, lineHeight: DOC_LINE },
   ".cm-line.duo-blank": { height: "10px", lineHeight: "10px" },
   ".duo-hr": { display: "inline-block", width: "100%", height: "1px", verticalAlign: "middle", backgroundColor: "var(--duo-rule)" },
-  ".duo-table th, .duo-table td": { padding: `${S(4)} ${S(8)}`, border: "1px solid var(--duo-rule)", whiteSpace: "nowrap" },
+  ".duo-table th, .duo-table td": { padding: `${S(4)} ${S(8)}`, border: "1px solid var(--duo-rule)", whiteSpace: "normal", overflowWrap: "anywhere", verticalAlign: "top", minWidth: "6em" },
   ".duo-table th": { backgroundColor: "var(--duo-ground)", fontWeight: "var(--duo-document-heading-weight)" },
   ".duo-figure": { display: "flow-root", padding: "4px 0" },
   ".duo-img": { maxWidth: "100%", borderRadius: "6px", border: "1px solid var(--duo-rule)" },
