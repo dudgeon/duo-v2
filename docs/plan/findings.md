@@ -5427,3 +5427,13 @@ The cause isn't known. The per-second samples on both builds have several 14% to
   - The swatch is the toolbar colour itself, so the swatch control needs its controlEdge ring to show on the toolbar.
   - The closest toolbars are Coral and Ochre in light (8.3) and Deep green and Deep teal in dark (7.3).
   - The order runs the six light steps, then the six deep ones, with the hues jumping across the wheel (Blue, Ochre, Purple, Green, Coral, Teal).
+
+## F-558 · Saved restore state decides the sidebars, so a default change reaches no existing install (2026-11-03; DL-315)
+
+- **`RestoreState` stores both left-sidebar flags as plain Bools,** and `applyRestore` assigns them from the file whenever one exists for that Home. Changing the `AppModel` defaults alone changes only a first launch, a new Home or a deleted restore file.
+- **Nothing saved says whether the person ever touched All projects' sidebar.** I looked at the restore file, `state.json` (`DuoState`) and the history: only `leftCollapsedAllProjects` is stored. A saved `true` means they closed it (or Not Now on Home's prompt did, `dismissHomePrompt`, which also leaves it closed under the new rule). A saved `false` is ambiguous, because the old default was open.
+- **The rule (Geoff, DL-315):** a person who has opened or closed the pane keeps it as they left it; one who never did gets it closed. So `RestoreState` has an optional `leftTouchedAllProjects`, and `AppModel.leftTouchedAllProjects` is set by any user toggle (the toolbar button, ⌃⌘S, the View menu and `duo2 view sidebar` all go through the `leftCollapsed` setter) at the All projects altitude.
+- **Old files have no flag,** so a saved `true` counts as touched and a saved `false` as untouched. **A user who deliberately opened it before this build gets it closed once** (there is no way to tell them from someone who never touched it); after they open it, it stays.
+- **What Geoff sees on his next launch:** his file has no flag, so All projects starts closed either way (closed, or open and so read as untouched); once he opens it, it stays open.
+- **The fixture states set the sidebar open for All projects** (`TargetState.allProjects`), because the approved targets draw it open.
+- **`startLive`'s `homePromptDismissed` special case is removed:** the default is closed now, so it did nothing.

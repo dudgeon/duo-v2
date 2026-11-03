@@ -33,6 +33,7 @@ public enum TargetState: String, CaseIterable, Sendable {
     @MainActor
     private func allProjects(_ model: AppModel, selected: String) {
         model.altitude = .allProjects
+        model.leftCollapsedAllProjects = false   // the targets draw the sidebar open; the app's own default is collapsed (DL-315)
         // The build-handoff targets draw the map: the Board (DL-142), whatever a new user would see.
         model.homeView = .board
         model.homeTab = "Morning triage"
