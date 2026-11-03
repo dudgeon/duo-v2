@@ -282,15 +282,22 @@ tokens = {
     "layout": {"note": "Fixed sizes, in points (shown as px).", "tokens": layout},
     "searchSizes": {"note": "The search modal (search-handoff).", "tokens": search},
     "surfaceSizes": {"note": "Surfaces designed in later handoffs: the idle list, console messages, the properties block.", "tokens": surfaces},
+    "windowColour": {"note": t["windowColour"]["$note"], "tokens": [
+        {"name": "window" + "".join(p.capitalize() for p in cid.split("-")),
+         "value": {"light": t["windowColour"]["colours"][cid]["light"]["ground"], "dark": t["windowColour"]["colours"][cid]["dark"]["ground"]},
+         "usage": (f"Window colour {t['windowColour']['colours'][cid]['name']} (#{i + 1} for new windows): the toolbar. "
+                   + "; ".join(f"{m}: pane {t['windowColour']['colours'][cid][m]['pane']}, chat {t['windowColour']['colours'][cid][m]['chatGround']}, "
+                               f"tool output {t['windowColour']['colours'][cid][m]['toolOutputFill']}" for m in ("light", "dark")))}
+        for i, cid in enumerate(t["windowColour"]["order"])]},
 }
-names = [x["name"] for fam in ["color", "spacing", "radius", "shadow", "border", "layout", "searchSizes", "surfaceSizes"] for x in tokens[fam]["tokens"]]
+names = [x["name"] for fam in ["color", "spacing", "radius", "shadow", "border", "layout", "searchSizes", "surfaceSizes", "windowColour"] for x in tokens[fam]["tokens"]]
 dupes = {n for n in names if names.count(n) > 1}
 if dupes:
     raise SystemExit(f"duplicate token names: {sorted(dupes)}")
 for fam in ["spacing", "radius", "shadow", "border", "layout", "searchSizes", "surfaceSizes"]:
     if len(tokens[fam]["tokens"]) > 60:
         raise SystemExit(f"{fam} has {len(tokens[fam]['tokens'])} tokens; the type reads 60 at most")
-missing = [x["name"] for fam in ["color", "spacing", "radius", "shadow", "border", "layout", "searchSizes", "surfaceSizes"] for x in tokens[fam]["tokens"] if not x["usage"]]
+missing = [x["name"] for fam in ["color", "spacing", "radius", "shadow", "border", "layout", "searchSizes", "surfaceSizes", "windowColour"] for x in tokens[fam]["tokens"] if not x["usage"]]
 if missing:
     raise SystemExit(f"tokens with no usage note: {missing}")
 
