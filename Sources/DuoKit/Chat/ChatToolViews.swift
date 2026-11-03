@@ -343,7 +343,7 @@ struct ChatToolStepView: View {
             Text(preview.joined(separator: "\n")).duoText(.chatDiff).foregroundStyle(DuoColor.text2)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(EdgeInsets(top: 6, leading: 10, bottom: 6, trailing: 10))
-                .background(RoundedRectangle(cornerRadius: DuoMetric.radiusChatStepBody).fill(DuoColor.toolOutputFill))
+                .background(RoundedRectangle(cornerRadius: DuoMetric.radiusChatStepBody).fill(WindowTint.toolOutputFill))
                 .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusChatStepBody).strokeBorder(DuoColor.selected, lineWidth: DuoMetric.borderHairline))
         }
     }
@@ -421,7 +421,7 @@ struct ChatOutputView: View {
         .textSelection(.enabled)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(EdgeInsets(top: 6 + 1, leading: 10 + 1, bottom: 6 + 1, trailing: 10 + 1))
-        .background(RoundedRectangle(cornerRadius: DuoMetric.radiusChatStepBody).fill(DuoColor.toolOutputFill))
+        .background(RoundedRectangle(cornerRadius: DuoMetric.radiusChatStepBody).fill(WindowTint.toolOutputFill))
         .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusChatStepBody).strokeBorder(DuoColor.selected, lineWidth: DuoMetric.borderHairline))
     }
 }

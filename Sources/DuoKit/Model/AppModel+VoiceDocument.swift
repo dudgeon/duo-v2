@@ -25,6 +25,7 @@ extension AppModel {
             voice.finishWhenDone { state in done(.ok("Stopped. \(self.voice.transcript.settledText.isEmpty ? "Nothing was heard." : "Said: \(self.voice.transcript.settledText)")", ["state": String(describing: state)])) }
         case .voiceStart:
             guard e.canDictate else { return done(.fail("\(name) is read-only")) }
+            core.voiceWindow = self
             voice.start(target)
             switch voice.state {
             case .unavailable, .denied, .restricted, .failed: done(.fail(VoiceCopy.line(voice.state)))
@@ -36,6 +37,7 @@ extension AppModel {
             let file = URL(fileURLWithPath: (path as NSString).expandingTildeInPath)
             guard FileManager.default.fileExists(atPath: file.path) else { return done(.fail("no audio file at \(file.path) (give an absolute path)")) }
             guard !voice.state.isActive else { return done(.fail("voice input is already on; stop it first")) }
+            core.voiceWindow = self
             voice.start(target, source: .file(file)) { state in
                 switch state {
                 case .idle where self.voice.notice != nil: done(.fail("\(self.voice.notice?.text ?? "") (\(name))"))

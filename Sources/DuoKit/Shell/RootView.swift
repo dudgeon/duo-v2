@@ -34,9 +34,25 @@ public struct RootView: View {
         // Keyed on the altitude alone: a jump between projects fades the project up (projectShown)
         // and doesn't cross-fade one project's names into another's (DL-130).
         .duoAnimation(.altitude, value: model.altitude.isAllProjects)
-        .background(DuoColor.pane)
+        .background(WindowTint.pane)
+        // A window colour (DL-313) paints the toolbar at real chroma: a band of `ground` under the toolbar,
+        // whose own background steps aside while the window has a colour.
+        .background {
+            if model.windowColour != nil {
+                VStack(spacing: 0) {
+                    Rectangle().fill(WindowTint.ground).frame(height: DuoMetric.toolbarHeight)
+                    Spacer(minLength: 0)
+                }
+                .ignoresSafeArea()
+            }
+        }
         .toolbar { DuoToolbar() }
         .toolbar(removing: .title)
+        .toolbarBackgroundVisibility(model.windowColour != nil ? .hidden : .automatic, for: .windowToolbar)
+        // The window's title is its project's (DL-311): the Window menu lists windows by it.
+        .onChange(of: model.windowTitle, initial: true) { _, t in if model.window?.title != t { model.window?.title = t } }
+        // Each window's colour, for every surface that takes it (WindowTint); nil under Classic.
+        .environment(\.windowColour, model.windowColour)
     }
 }
 
@@ -54,13 +70,13 @@ struct AllProjectsLayout: View {
                       minWidth: DuoMetric.paneMinActionColumn, collapsible: true, collapsed: model.rightCollapsedAllProjects),
             ],
             dividerColors: [DuoNSColor.consoleRule, DuoNSColor.rule],
-            paneBackgrounds: [DuoNSColor.console, DuoNSColor.pane, DuoNSColor.pane],
+            paneBackgrounds: [DuoNSColor.console, model.tint(.pane), model.tint(.pane)],
             model: model,
             // Home in chat is light, its divider too (DL-142 (7), `home-chat` board 10): watched by
             // the split, never read here (F-208).
             liveColors: { m in
-                let light = m.homeShowsChat
-                return ([light ? DuoNSColor.rule : DuoNSColor.consoleRule, DuoNSColor.rule], [light ? DuoNSColor.ground : DuoNSColor.console, DuoNSColor.pane, DuoNSColor.pane])
+                let light = m.homeShowsChat && m.ownsHome   // Home's stand-in stays dark (board 10 B)
+                return ([light ? DuoNSColor.rule : DuoNSColor.consoleRule, DuoNSColor.rule], [light ? m.tint(.strip) : DuoNSColor.console, m.tint(.pane), m.tint(.pane)])
             },
             onActivePane: { [weak model] i in model?.panePicked(DuoPane.allCases[i], allProjects: true) }
         )
@@ -93,8 +109,10 @@ struct ProjectLayout: View {
                       minWidth: DuoMetric.paneMinRight, collapsible: true, collapsed: model.rightCollapsedProject),
             ],
             dividerColors: [DuoNSColor.rule, DuoNSColor.rule],
-            paneBackgrounds: [DuoNSColor.pane, DuoNSColor.console, DuoNSColor.pane],
+            paneBackgrounds: [model.tint(.pane), DuoNSColor.console, model.tint(.pane)],
             model: model,
+            // The window's colour for the sidebar and right pane; watched by the split (F-208).
+            liveColors: { m in ([DuoNSColor.rule, DuoNSColor.rule], [m.tint(.pane), DuoNSColor.console, m.tint(.pane)]) },
             // The task board (DL-148, C): over the session list and console; watched by the split.
             cover: (AnyView(TaskBoardPane().paneFocusRule(.middle)), { $0.boardShown }),
             onActivePane: { [weak model] i in

@@ -19,6 +19,7 @@ extension AppModel {
     /// The mic, ⇧⌘D's menu item and `duo2 voice start|stop`: starts a dictation, or finishes the running one.
     public func toggleVoice(_ target: VoiceTarget? = nil) {
         guard let target = target ?? voiceFocusTarget else { return }
+        core.voiceWindow = self   // the window dictating (C-150): the host below reaches its composer and editor
         voice.toggle(target)
     }
 
@@ -57,24 +58,25 @@ extension AppModel {
 
     func wireVoice(_ v: VoiceInput) {
         VoiceInput.current = v
+        // One microphone for the app; each callback goes to the window that started the dictation (C-150).
         v.host = VoiceInput.Host(
             update: { [weak self] target, transcript, final in
-                guard let self, let chat = self.chats.existing(target.key) ?? self.fixtureChats[target.key] else { return }
+                guard let h = self?.voiceHost, let chat = h.chats.existing(target.key) ?? h.fixtureChats[target.key] else { return }
                 if let field = chat.composerView { field.dictate(transcript, final: final) }
                 else if final, !transcript.settledText.isEmpty { chat.ui.composer += (chat.ui.composer.isEmpty ? "" : " ") + transcript.settledText }
             },
-            paste: { [weak self] target, phrase, first in self?.voicePaste(target, phrase, first: first) ?? .blocked("Duo isn't ready") },
+            paste: { [weak self] target, phrase, first in self?.voiceHost.voicePaste(target, phrase, first: first) ?? .blocked("Duo isn't ready") },
             ended: { [weak self] target, kept in
-                if case .document = target { self?.dictationEditor(target)?.dictationEnd(); return }
-                guard let self, let chat = self.chats.existing(target.key) ?? self.fixtureChats[target.key] else { return }
+                if case .document = target { self?.voiceHost.dictationEditor(target)?.dictationEnd(); return }
+                guard let h = self?.voiceHost, let chat = h.chats.existing(target.key) ?? h.fixtureChats[target.key] else { return }
                 chat.composerView?.endDictation(keep: kept)
             })
         v.host?.document = { [weak self] target, step in
-            guard let self, let e = self.dictationEditor(target) else { return false }
+            guard let h = self?.voiceHost, let e = h.dictationEditor(target) else { return false }
             switch step {
             case .begin:
                 guard e.canDictate else { return false }
-                e.onDictationBreak = { [weak self] in self?.voice.finishWhenDone { _ in } }
+                e.onDictationBreak = { [weak h] in h?.voice.finishWhenDone { _ in } }
                 e.dictationBegin()
             case .phrase(let text): e.dictationPhrase(text)
             case .tail(let text): e.dictationTail(text)
@@ -87,6 +89,9 @@ extension AppModel {
 
     /// ⇧⌘D: key down starts or finishes, key up ends a hold. A local monitor, since a menu's key equivalent
     /// has no key-up.
+    /// The window dictating (C-150), else this one.
+    var voiceHost: AppModel { core.voiceWindow ?? self }
+
     func installVoiceKeys() {
         guard VoiceKeys.monitors.isEmpty else { return }
         let chord: NSEvent.ModifierFlags = [.command, .shift]
@@ -95,10 +100,14 @@ extension AppModel {
             let (isRepeat, flags) = (e.isARepeat, e.modifierFlags)
             _ = flags
             let took = MainActor.assumeIsolated { () -> Bool in
-                guard let self, let target = self.voiceFocusTarget else { return false }
+                // The key window's model (C-150): ⇧⌘D dictates into the window in front, not the first one.
+                guard let first = self else { return false }
+                let m = first.core.keyModel ?? first
+                guard let target = m.voiceFocusTarget else { return false }
                 if !isRepeat {
-                    self.voice.keyDown(target)
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.31) { MainActor.assumeIsolated { self.voice.noteHolding() } }
+                    m.core.voiceWindow = m
+                    m.voice.keyDown(target)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.31) { MainActor.assumeIsolated { m.voice.noteHolding() } }
                 }
                 return true
             }
@@ -207,6 +216,7 @@ extension AppModel {
             guard voice.state.isActive else { return done(.ok("Voice input wasn't on.")) }
             voice.finishWhenDone { state in done(.ok("Stopped. \(self.voice.transcript.settledText.isEmpty ? "Nothing was heard." : "Said: \(self.voice.transcript.settledText)")", ["state": String(describing: state)])) }
         case .voiceStart:
+            core.voiceWindow = self
             voice.start(target)
             switch voice.state {
             case .unavailable, .denied, .restricted, .failed: done(.fail(VoiceCopy.line(voice.state)))
@@ -217,6 +227,7 @@ extension AppModel {
             let url = URL(fileURLWithPath: (path as NSString).expandingTildeInPath)
             guard FileManager.default.fileExists(atPath: url.path) else { return done(.fail("no audio file at \(url.path) (give an absolute path)")) }
             guard !voice.state.isActive else { return done(.fail("voice input is already on; stop it first")) }
+            core.voiceWindow = self
             voice.start(target, source: .file(url)) { state in
                 switch state {
                 case .idle where self.voice.notice != nil: done(.fail("\(self.voice.notice?.text ?? "") (\(name))"))

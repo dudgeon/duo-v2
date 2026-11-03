@@ -146,7 +146,7 @@ struct ChatPermissionBody: View {
                 Text(step.object).duoText(.chatDiff).foregroundStyle(DuoColor.text2)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(EdgeInsets(top: 4, leading: 10, bottom: 4, trailing: 10))
-                    .background(DuoColor.toolOutputFill)
+                    .background(WindowTint.toolOutputFill)
                 ChatDiffView(lines: chat.requestDiff ?? step.diff ?? [], framed: false)
             }
             .clipShape(RoundedRectangle(cornerRadius: DuoMetric.radiusChatStepBody))

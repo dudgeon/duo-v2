@@ -160,7 +160,7 @@ struct ChatPane: View {
         }
         .animation((chat.cardUp ? DuoMotionToken.cardIn : .cardOut).animation, value: chat.cardUp)
         .animation((chat.pickerUp ? DuoMotionToken.cardIn : .cardOut).animation, value: chat.pickerUp)
-        .background(DuoColor.chatGround)
+        .background(WindowTint.chatGround)
         .tint(DuoColor.text)
         .onAppear { model.installChatKeys() }
         .environment(\.openURL, OpenURLAction { url in

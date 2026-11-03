@@ -35,6 +35,11 @@ public final class AppModel {
     }
     /// The window's identity, for a question's target and the key window (`AppCore.keyWindowID`).
     public private(set) var windowID: ObjectIdentifier?
+    /// The window's number (multi-window slice 1): 1 for the first, then the lowest free one. Stable while
+    /// the window is open; Home's stand-in and `duo2 window` name windows by it.
+    public internal(set) var windowNumber = 1
+    /// The window's base colour (DL-312, DL-313), a `DuoWindowColour` id; nil is None.
+    public var windowColourID: String?
     public var altitude: Altitude = .allProjects {
         // The idle list belongs to All projects: leaving closes it, so its keys go with it (F-178).
         didSet { if altitude != .allProjects, idleOpen { idleOpen = false; IdleKeys.remove() } }
@@ -172,6 +177,8 @@ public final class AppModel {
     public var renamingPath: String?
 
     public var peekOpen = false
+    /// The toolbar swatch's popover (DL-312, board 4b) is open.
+    public var colourPopoverOpen = false
     /// The selected card in the peek, by Session.id.
     public var peekSelection: String?
     /// The session last opened inside a project; selected again on zooming out (flow-zoom-4).
@@ -726,7 +733,16 @@ public final class AppModel {
 
     /// Zooms into a project. With no session given, the console opens on the session that needs
     /// you (or the most recent live one) and the right pane on the document it is editing [P].
-    public func open(project name: String, session sessionName: String? = nil, document: String? = nil) {
+    /// A project lives in one window (DL-308): when another window shows it, that window opens it (with the
+    /// session or document asked for) and comes forward, and this one stays as it was. Returns the model that
+    /// shows the project, for what the caller does next.
+    @discardableResult
+    public func open(project name: String, session sessionName: String? = nil, document: String? = nil) -> AppModel {
+        if let other = core.model(showing: name), other !== self {
+            other.open(project: name, session: sessionName, document: document)
+            core.bringForward(other)
+            return other
+        }
         rememberTabs()
         defer { if splitTabs.isEmpty { giveBackRoom() } }   // another project's split doesn't hold the room here (DL-276)
         let live = fixture.liveSessions(inProject: name)
@@ -767,6 +783,7 @@ public final class AppModel {
             rightTab = "Project"
             selectedFile = nil
         }
+        return self
     }
 
     /// Notes the tabs the current project shows, before leaving it (DL-107).

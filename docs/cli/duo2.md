@@ -40,6 +40,17 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 view hidden on\|off\|toggle` | Show or hide dotfiles in the project's file tree (View › Show Hidden Files). | Show Hidden Files |
 | `duo2 view folder <folder> open\|close` | Open or close a folder in the project's file tree. | folder row |
 
+## Windows
+
+| Command | What it does | In the app |
+|---|---|---|
+| `duo2 window list` | Duo's windows: each one's number, title (its project, or Duo at All projects), colour, and which is primary, key and Home's. Every verb that acts on what's on screen takes --window <n\|project>; with none it acts on the window showing your session, else the primary window (Q-430). | — |
+| `duo2 window new [<project>]` | Open a new window (File › New Window ⌥⌘N) at All projects, or on a project (Project › Open in New Window). A project already in a window brings that window forward instead: a project lives in one window (DL-308). A new window takes the next colour no open window has, while that's on (DL-312). | New Window, Open in New Window |
+| `duo2 window focus <n\|project>` | Bring a window forward (the Window menu, ⌘`). | — |
+| `duo2 window close [<n\|project>]` | Close a window (File › Close Window ⇧⌘W); with none named, the one --window or your session picks. Its projects keep their tabs and sessions. The last window hides; Duo keeps running. | Close Window |
+| `duo2 window colour [<colour>\|none] [--auto on\|off]` | A window's colour (Window › Window Colour, the swatch after the project's name; DL-312, DL-313): blue, ochre, purple, green, coral, teal, deep-blue, deep-ochre, deep-purple, deep-green, deep-coral, deep-teal, or none. --auto turns 'Colour new windows automatically' on or off. With nothing, the window's colour and the setting. Classic turns window colours off; each comes back after. | Window Colour, Colour new windows automatically, window swatch |
+| `duo2 window home` | Show Home's terminal in this window (Show Here, Q-431): Home is live in one window and the others say where it is. | Show Here |
+
 ## Split view
 
 | Command | What it does | In the app |
@@ -344,7 +355,6 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | Ask Claude to Combine | drafts the conflict's instruction into the project's Claude session, unsent (DL-149 board 11) |
 | Ask Claude to Remove It | drafts an instruction about the refused secret into the project's Claude session, unsent (DL-149 board 10) |
 | Cancel | a step inside another action's dialog or picker |
-| Close Window | window management |
 | Enter Full Screen | window management |
 | Exit Full Screen | window management |
 | Explain Tasks | Help › Explain Tasks shows an explanation to a person at the screen (DL-172); `duo2 task new` is the action it explains |

@@ -26,14 +26,14 @@ struct ConsoleTabStrip: View {
     /// The thin strip's 28 include the rule under it (`bar-thin`).
     var height: CGFloat { light ? DuoMetric.chatStripHeight - DuoMetric.borderHairline : isHome ? DuoMetric.homeSessionTabsHeight : DuoMetric.tabStripHeight }
     var gap: CGFloat { isHome || light ? 16 : 18 }
-    var ground: Color { light ? DuoColor.ground : DuoColor.console }
+    var groundStyle: AnyShapeStyle { light ? AnyShapeStyle(WindowTint.strip) : AnyShapeStyle(DuoColor.console) }
     var dim: Color { light ? DuoColor.text2 : DuoColor.consoleText2 }
 
     var body: some View {
         let tabs = allTabs
         ScrollingTabStrip(
             pane: pane, space: Self.space, keys: tabs.map(\.id), selected: selection,
-            ground: ground, rule: light ? DuoColor.rule : DuoColor.consoleRule, dim: dim, font: light ? .control : .mono,
+            ground: light ? DuoColor.ground : DuoColor.console, groundRole: light ? .strip : nil, rule: light ? DuoColor.rule : DuoColor.consoleRule, dim: dim, font: light ? .control : .mono,
             needsYou: Set(tabs.filter { $0.state == .needsYou }.map(\.id)), dot: light ? DuoColor.needsYou : DuoColor.needsYouOnConsole,
             rows: { tabs.map { TabMenuRow(key: $0.id, title: $0.title, state: $0.state, isShell: $0.state == nil, selected: $0.id == selection, isFork: $0.forkOf != nil) } },
             choose: { open($0) },  // action: session open
@@ -59,7 +59,7 @@ struct ConsoleTabStrip: View {
         .padding(.horizontal, DuoSpace.panePadding)
         .frame(height: height)
         .id(project)   // another project's tabs replace these at once
-        .background(light ? DuoColor.ground : .clear)
+        .background(light ? AnyShapeStyle(WindowTint.strip) : AnyShapeStyle(Color.clear))
     }
 
     /// `+` and the split pill [robot | shell] (new-session-handoff placement 4): one click each, no menu.
@@ -82,7 +82,7 @@ struct ConsoleTabStrip: View {
             }
         }
         // Opaque on the strip, so it covers a tab fading out as it slides (DL-130).
-        .background(ground)
+        .background(groundStyle)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("New session or shell")
     }
@@ -160,7 +160,7 @@ struct ConsoleTabStrip: View {
         .overlay(alignment: .bottom) { if light && active { DuoColor.text.frame(height: 2) } }
         // Dragged along the strip, its place moves (DL-220, console-drag). A live session's tab is a drag source already.
         .modifier(TabDraggable(key: t.id, pane: pane, space: Self.space, enabled: !model.isSessionDragSource(t.id), shown: { shown }))
-        .background(ground)
+        .background(groundStyle)
         .transition(.tab)
     }
 

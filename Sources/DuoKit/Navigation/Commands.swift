@@ -304,7 +304,11 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .whatsNew: NSWorkspace.shared.open(DuoLinks.releaseNotes)
         case .reportIssue: NSWorkspace.shared.open(DuoLinks.newIssue)
         case .explainTasks: model.explainTasks()
-        case .closeWindow: NSApp.keyWindow?.performClose(nil)
+        case .closeWindow:
+            // A Duo window closes through the core (DL-311): a second one goes, the last only hides. Settings and
+            // other windows close as AppKit closes them.
+            if let w = NSApp.keyWindow, model.core.model(for: w) == nil { w.performClose(nil) }
+            else { model.core.closeWindow(model) }   // action: window close
         case .sendSelection: model.sendSelection()
         case .newClaudeSession: model.newSession()
         case .revertChange: model.editor.revertAtCaret()
@@ -354,6 +358,10 @@ public struct DuoCommands: Commands {
         }
         // File (DL-108, m2): new things, then opening, then saving and closing, then Home.
         CommandGroup(replacing: .newItem) {
+            // Multi-window (DL-141, DL-311, board 1 A): at All projects, in a window of its own.
+            Button("New Window") { model.core.openWindow() }   // action: window new
+                .keyboardShortcut("n", modifiers: [.command, .option])
+            Divider()
             item(.newClaudeSession)
             item(.newShell)
             item(.newBrowserTab)
@@ -498,6 +506,11 @@ public struct DuoCommands: Commands {
             Divider()
             item(.previousTab)
             item(.nextTab)
+        }
+        // The window's colour (DL-312, board 4b), above macOS's list of windows (board 9 C, DL-311).
+        CommandGroup(before: .windowList) {
+            WindowColourMenu(model: model)
+            Divider()
         }
         // Help (DL-108, m4); the system adds its search field.
         CommandGroup(replacing: .help) {

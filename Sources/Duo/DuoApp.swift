@@ -101,18 +101,23 @@ struct DuoApp: App {
         // The main window is made in AppKit, once, at launch (F-29): SwiftUI's Window scene
         // sometimes finished launching with no window, and reopening didn't bring one back.
         let mainWindow = MainWindow(model: model, options: options)
-        AppDelegate.reopen = { mainWindow.show() }
-        AppDelegate.dockMenu = { model.dockMenu() }
+        // More windows (multi-window slice 1, DL-311): the core asks for one per new model, and brings one forward.
+        MainWindow.wire(core: core, options: options)
+        AppDelegate.reopen = { (core.keyModel.flatMap { MainWindow.of($0) } ?? mainWindow).show() }
+        AppDelegate.dockMenu = { (core.keyModel ?? model).dockMenu() }
         AppDelegate.openURL = { url in
-            // Session links from notes or other apps (DL-87).
-            if url.scheme == "duo2", url.host == "session" { mainWindow.show(); model.openLink(url.absoluteString); return }
+            // Session links from notes or other apps (DL-87), in the key window (its project's, if one shows it).
+            if url.scheme == "duo2", url.host == "session" {
+                let m = core.keyModel ?? model
+                MainWindow.of(m)?.show(); m.openLink(url.absoluteString); return
+            }
             guard url.scheme == "duo2", url.host == "walk-setup",
                   let id = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "id" })?.value else { return }
             mainWindow.show()
             model.walkSetup(id) { r in FileHandle.standardError.write(Data("walk-setup \(id): \(r.text)\n".utf8)) }
         }
         AppDelegate.flush = { done in
-            let all = model.loadedEditors
+            let all = core.models.flatMap { $0.loadedEditors }   // every window's editors (DL-311)
             guard !all.isEmpty else { return done() }
             let once = Once()
             var pending = all.count
@@ -130,7 +135,8 @@ struct DuoApp: App {
                 NSEvent.addLocalMonitorForEvents(matching: .keyDown) { e in
                     guard e.keyCode == 53 else { return e }
                     let picking = MainActor.assumeIsolated { () -> Bool in
-                        guard let v = model.htmlViewerIfLoaded, v.picking else { return false }
+                        // The event's window's picker (DL-311), not the first window's.
+                        guard let v = (core.model(for: e.window) ?? model).htmlViewerIfLoaded, v.picking else { return false }
                         v.stopPicking()
                         return true
                     }
@@ -198,22 +204,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
-/// The one Duo window: SwiftUI content in an AppKit window, toolbar bridged from `.toolbar`.
+/// A Duo window: SwiftUI content in an AppKit window, toolbar bridged from `.toolbar`. One per `AppModel`
+/// (multi-window slice 1, DL-311): the first at launch, more from New Window and Open in New Window.
 @MainActor
 final class MainWindow {
     private let model: AppModel
     private let options: LaunchOptions
     private var window: NSWindow?
-    /// Keeps the window at or above 1280 × 800 while the user resizes it (F-527).
+    /// Keeps the window at or above 1280 × 800 while the user resizes it (F-527), and tells the core when
+    /// a second window closes.
     private let minimum = MinimumWindowSize()
+    /// Every open window (the core holds models weakly; this keeps them and their windows).
+    private static var open: [MainWindow] = []
 
     init(model: AppModel, options: LaunchOptions) {
         self.model = model
         self.options = options
+        Self.open.append(self)
+    }
+
+    static func of(_ m: AppModel) -> MainWindow? { open.first { $0.model === m } }
+
+    /// The core's hooks: make a window for a new model, bring one forward, close or hide one.
+    static func wire(core: AppCore, options: LaunchOptions) {
+        core.windowMaker = { m in MainWindow(model: m, options: options).show() }
+        core.windowFocuser = { m in of(m)?.show() }
+        core.windowCloser = { m in of(m)?.window?.close() }
+        core.windowHider = { m in of(m)?.window?.orderOut(nil) }
     }
 
     func show() {
-        if let window { DuoFocus.hide(window); window.makeKeyAndOrderFront(nil); return }
+        if let window {
+            DuoFocus.hide(window); window.makeKeyAndOrderFront(nil)
+            if !SupportFolder.isIsolated { NSApp.activate() }
+            return
+        }
         let content = Group {
             if options.gallery { AnyView(GalleryView()) } else { AnyView(RootView()) }
         }
@@ -230,7 +255,7 @@ final class MainWindow {
         w.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]  // as SwiftUI's windows
         w.toolbarStyle = .unifiedCompact
         w.titleVisibility = .hidden
-        w.title = "Duo"
+        w.title = model.windowTitle   // the project's name, or Duo at All projects (DL-311); RootView keeps it current
         w.isReleasedWhenClosed = false
         w.setContentSize(DuoMetric.designWindow)  // full-size content: the whole window, as SwiftUI's defaultSize
         // The minimum window (1280 × 800): `sizingOptions = []` above means the hosting controller never
@@ -238,8 +263,22 @@ final class MainWindow {
         // on every side, the console over the toolbar (Geoff, 2026-11-01, F-527).
         w.contentMinSize = DuoMetric.minimumWindow
         w.delegate = minimum   // the hosting controller resets contentMinSize; the delegate holds the line
+        // A second window closing: the core forgets it; its projects keep their tabs and sessions (DL-311).
+        minimum.closed = { [model] in
+            guard model.core.models.count > 1 else { return }   // the last window only hides
+            model.core.detach(model)
+            MainWindow.open.removeAll { $0.model === model }
+        }
         w.center()
-        w.setFrameAutosaveName("main")
+        if model.windowNumber == 1 {
+            w.setFrameAutosaveName("main")
+        } else {
+            // Below and right of the key window by 22 pt, as macOS cascades, under its own frame name.
+            if let key = model.core.models.first(where: { $0 !== model && $0.windowID == model.core.keyWindowID })?.window ?? model.core.primary?.window {
+                w.setFrameTopLeftPoint(NSPoint(x: key.frame.minX + 22, y: key.frame.maxY - 22))
+            }
+            w.setFrameAutosaveName("window-\(model.windowNumber)")
+        }
         window = w
         model.window = w   // the model's own window: lookups go by identity, never by title (multi-window slice 0)
         // Menus act on the key window's model (AppCore.keyModel).
@@ -264,6 +303,8 @@ final class MainWindow {
 /// With full-size content the window's frame is its content.
 @MainActor
 final class MinimumWindowSize: NSObject, NSWindowDelegate {
+    var closed: (@MainActor () -> Void)?
+    func windowWillClose(_ notification: Notification) { closed?() }
     func windowWillResize(_ sender: NSWindow, to frameSize: NSSize) -> NSSize {
         NSSize(width: max(frameSize.width, DuoMetric.minimumWindow.width), height: max(frameSize.height, DuoMetric.minimumWindow.height))
     }

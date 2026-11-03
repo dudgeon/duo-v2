@@ -46,7 +46,7 @@ struct RightPaneToggle: View {
         } label: {
             Image(systemName: "sidebar.right")
                 .font(.system(size: DuoSymbolSize.toolbarIcon))
-                .foregroundStyle(DuoColor.text2)
+                .foregroundStyle(model.toolbarText2)
         }
         .buttonStyle(.plain)
         .help(model.rightCollapsed ? "Show Right Pane ⌥⌘0" : "Hide Right Pane ⌥⌘0")
@@ -63,7 +63,7 @@ struct SidebarToggle: View {
         } label: {
             Image(systemName: "sidebar.left")
                 .font(.system(size: DuoSymbolSize.toolbarIcon))
-                .foregroundStyle(DuoColor.text2)
+                .foregroundStyle(model.toolbarText2)
         }
         .buttonStyle(.plain)
         .help(model.leftCollapsed ? "Show sidebar" : "Hide sidebar")
@@ -79,6 +79,7 @@ struct AllProjectsTitle: View {
         let c = model.fixture.counts
         HStack(spacing: DuoSpace.gapToolbarOverview) {
             Text("All projects").duoText(.bodyEmphasis).foregroundStyle(DuoColor.text)
+            WindowSwatch().padding(.leading, -10)   // after "All projects" (Q-445 stand-in), 6 from it
             // Nothing needs you: not drawn (handoff §8). The accent only ever means "needs you".
             if c.needsYou > 0 { Count(state: .needsYou, text: "\(c.needsYou) need you").accessibilityIdentifier("video.needs-you-chip") }
             Count(state: .readyForReview, text: "\(c.readyForReview) to review")
@@ -89,6 +90,7 @@ struct AllProjectsTitle: View {
     }
 
     struct Count: View {
+        @Environment(AppModel.self) private var model
         let state: SessionState
         let text: String
 
@@ -97,7 +99,7 @@ struct AllProjectsTitle: View {
                 StateGlyph(state)
                 Text(text)
                     .duoText(.body, weight: state == .needsYou ? .semibold : nil)
-                    .foregroundStyle(state == .needsYou ? DuoColor.needsYou : state == .idle ? DuoColor.text2 : DuoColor.text)
+                    .foregroundStyle(state == .needsYou ? DuoColor.needsYou : state == .idle ? model.toolbarText2 : DuoColor.text)
             }
             .accessibilityElement(children: .combine)
         }
@@ -116,23 +118,24 @@ struct ProjectBreadcrumb: View {
                 Text("All projects")
                     .duoText(.body)
                     .underline(color: DuoColor.controlEdge)
-                    .foregroundStyle(DuoColor.text2)
+                    .foregroundStyle(model.toolbarText2)
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("video.crumb.all")   // anchors: the video cursor's target
             Image(systemName: "chevron.right")
                 .font(.system(size: DuoSymbolSize.chevron, weight: .semibold))
-                .foregroundStyle(DuoColor.text2)
+                .foregroundStyle(model.toolbarText2)
                 .accessibilityHidden(true)
             // The folder the project sits in, when it has one (DL-92): All projects › payments › checkout.
             if let topic = model.currentProject?.topic, !topic.isEmpty, model.currentProject?.isHome != true {
-                Text(topic).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1)
+                Text(topic).duoText(.body).foregroundStyle(model.toolbarText2).lineLimit(1)
                 Image(systemName: "chevron.right")
                     .font(.system(size: DuoSymbolSize.chevron, weight: .semibold))
-                    .foregroundStyle(DuoColor.text2)
+                    .foregroundStyle(model.toolbarText2)
                     .accessibilityHidden(true)
             }
             Text(model.currentProject?.name ?? "").duoText(.bodyEmphasis).foregroundStyle(DuoColor.text)
+            WindowSwatch().padding(.leading, -2)   // the swatch after the project's name (DL-312, board 4b), 6 from it
             // Sessions | Tasks (DL-148, board 4), live projects only.
             BoardSwitch().padding(.leading, 2)
             NeedsYouChip()
@@ -168,7 +171,8 @@ struct NeedsYouChip: View {
                 .padding(.horizontal, 8)
                 .background(
                     RoundedRectangle(cornerRadius: DuoMetric.radiusControl)
-                        .fill(open ? DuoColor.needsYou : Color.clear)
+                        // On a coloured toolbar the chip keeps a solid plain fill (DL-313).
+                        .fill(open ? DuoColor.needsYou : model.windowColour != nil ? DuoColor.pane : Color.clear)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: DuoMetric.radiusControl)
