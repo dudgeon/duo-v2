@@ -5364,3 +5364,13 @@ A publish whose `files` included `audio/*.m4a` was refused whole: "extension .m4
 - **The order new windows get colours in** is five steps round the hue order each time (5 is coprime with 12, so all twelve come up). That puts each new colour 112.5° from the last and flips its tier. Sky is first, as on 4a.
 - **Names reused from 4a** (Sky, Sage, Lilac, Sand) now have new values; 4a's own files are kept unchanged for comparison.
 - **Rendered proof** (`palette/board-4a-prime.png`, from `palette/proof/`). `gen_board.py` writes the board and component from `palette.json`. `expand.py` turns them into static HTML. `shot.mjs` renders that in Playwright's headless Chromium at 1720 wide. Read region by region, everything draws as intended. Light chatGround equals ground, as in the base scheme, so the chat column is the most tinted part of a light window. The fixed blue `chatYou` bubble then sits on that tint: it reads fine on all twelve, but it is the one place a window colour meets another hue.
+- **Geoff turned 4a′ down (2026-11-02): "these are all far too similar".** Measured, he's right.
+  - On 4a′ the closest pair of toolbars is 1.9 apart (OKLab ΔE ×100), and no pair is 15 apart, which is the dataviz method's line for easy to tell apart.
+  - The cause is chroma: 0.03 reads as grey (the dataviz method's floor for identity is 0.10).
+  - The chroma is that low because text2 at 4.5:1 pins a light toolbar at L 0.90 or above.
+- **Twelve colours can't all be 15 apart under any design.** A search over every in-gamut colour (`palette/proof/search.py`) finds the best twelve reach a worst pair of about 6 with orange and red excluded, and about 8 with every hue allowed. Dark mode is the tighter case.
+- **What does work: a real-colour toolbar and two depths per hue.** The toolbar takes chroma up to 0.14 in a light and a deep step, and toolbar text moves from text2 to text (≥ 5.9:1 light, ≥ 4.66:1 dark).
+  - 4a″ B keeps the no-orange rule: closest pair 5.4, 77% of pairs ≥ 15.
+  - 4a″ C lets in coral and ochre (only h 22–64, around needs-you, stays out): closest 8.3 light, 7.4 dark, about 70% of pairs ≥ 15.
+  - The needs-you chip needs a solid fill on a coloured toolbar in dark too (the dark pane), or it disappears on the coral and ochre ones.
+  - The rendered board is `palette/board-4a-double-prime.png`.
