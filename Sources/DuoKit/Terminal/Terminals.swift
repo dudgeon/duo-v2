@@ -11,11 +11,25 @@ import SwiftUI
 public enum ClaudeLocator {
     /// The last answer: the console asks on every draw, and the PATH lookup starts a login shell.
     nonisolated(unsafe) private static var cached: String??
+    /// Guards `cached` and the lookup: launch resolves off the main thread (F-564), a draw may ask meanwhile.
+    private static let lock = NSLock()
+
+    /// How long the login shell may take to say where `claude` is (F-564). A `.zprofile` or `.zshrc` that waits
+    /// (on a terminal, a prompt, a keychain, a slow version manager) hung Duo's launch for good: it ran on the main
+    /// thread with no limit. Past this the shell is ended and Duo carries on as if no `claude` were found.
+    nonisolated(unsafe) public static var shellTimeout: TimeInterval = 3
+    /// The places tried before the shell, and the shell. Settable by DuoChecks; the app keeps these.
+    nonisolated(unsafe) public static var candidates: () -> [String] = {
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        return ["\(home)/.local/bin/claude", "\(home)/.claude/local/claude", "/opt/homebrew/bin/claude", "/usr/local/bin/claude"]
+    }
+    nonisolated(unsafe) public static var shell = "/bin/zsh"
 
     /// Look again next time (DB-3's Look Again).
-    public static func forget() { cached = nil; ClaudeVersion.forget(); RemoteControl.forget() }
+    public static func forget() { lock.lock(); cached = nil; lock.unlock(); ClaudeVersion.forget(); RemoteControl.forget() }
 
     public static func resolve() -> String? {
+        lock.lock(); defer { lock.unlock() }
         if let c = cached { return c }
         // One the user chose in Settings wins while it runs (LR-19, S3-1).
         let found = chosenRunnable ?? lookUp()
@@ -33,25 +47,49 @@ public enum ClaudeLocator {
     public static func found() -> String? { lookUp() }
 
     private static func lookUp() -> String? {
-        let home = FileManager.default.homeDirectoryForCurrentUser.path
-        let candidates = [
-            "\(home)/.local/bin/claude", "\(home)/.claude/local/claude",
-            "/opt/homebrew/bin/claude", "/usr/local/bin/claude",
-        ]
-        if let hit = candidates.first(where: { FileManager.default.isExecutableFile(atPath: $0) }) { return hit }
-        // Fall back to the login shell's PATH (nvm, asdf, custom installs).
+        if let hit = candidates().first(where: { FileManager.default.isExecutableFile(atPath: $0) }) { return hit }
+        // Fall back to the login shell's PATH (nvm, asdf, custom installs), within `shellTimeout` (F-564).
+        let path = loginShellLookUp(timeout: shellTimeout) ?? ""
+        return FileManager.default.isExecutableFile(atPath: path) ? path : nil
+    }
+
+    /// `command -v claude` in the user's login shell, or nil if it fails or doesn't answer in `timeout`. Never
+    /// waits longer: no terminal on stdin, and the output is read as it comes, so a child the shell left
+    /// holding the pipe can't block either.
+    public static func loginShellLookUp(timeout: TimeInterval) -> String? {
         let p = Process()
-        p.executableURL = URL(fileURLWithPath: "/bin/zsh")
+        p.executableURL = URL(fileURLWithPath: shell)
         p.arguments = ["-lc", "command -v claude"]
         let out = Pipe()
         p.standardOutput = out
         p.standardError = FileHandle.nullDevice
-        guard (try? p.run()) != nil else { return nil }
-        p.waitUntilExit()
-        let path = String(data: out.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)?
-            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        return FileManager.default.isExecutableFile(atPath: path) ? path : nil
+        p.standardInput = FileHandle.nullDevice
+        let done = DispatchSemaphore(value: 0), eof = DispatchSemaphore(value: 0)
+        let buffer = LockedData()
+        out.fileHandleForReading.readabilityHandler = { h in
+            let d = h.availableData
+            if d.isEmpty { h.readabilityHandler = nil; eof.signal() } else { buffer.append(d) }
+        }
+        p.terminationHandler = { _ in done.signal() }
+        guard (try? p.run()) != nil else { out.fileHandleForReading.readabilityHandler = nil; return nil }
+        if done.wait(timeout: .now() + timeout) == .timedOut {
+            p.terminate()
+            out.fileHandleForReading.readabilityHandler = nil
+            FileHandle.standardError.write(Data("claude: the login shell (\(shell) -lc) didn't answer in \(Int(timeout)) s; Duo carries on without it (F-564)\n".utf8))
+            return nil
+        }
+        // The shell has ended: the rest of its output, unless a child it left still holds the pipe open.
+        if eof.wait(timeout: .now() + 0.5) == .timedOut { out.fileHandleForReading.readabilityHandler = nil }
+        return String(data: buffer.data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
     }
+}
+
+/// Bytes appended from a pipe's handler thread.
+final class LockedData: @unchecked Sendable {
+    private let lock = NSLock()
+    private var bytes = Data()
+    func append(_ d: Data) { lock.lock(); bytes.append(d); lock.unlock() }
+    var data: Data { lock.lock(); defer { lock.unlock() }; return bytes }
 }
 
 /// What a terminal runs.

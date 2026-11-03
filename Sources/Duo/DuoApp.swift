@@ -81,7 +81,13 @@ struct DuoApp: App {
         if !options.capturing, model.terminalsMode == .live { SparkleUpdater.start(model: model) }
         // The CLI's version decides chat mode's hooks when a session starts (F-111): asked now, off the
         // main thread, so the first session finds it cached (C-34).
-        if model.terminalsMode == .live, let claude = ClaudeLocator.resolve() { ClaudeVersion.warm(claude); RemoteControl.warm(claude); DuoSignal.warm(claude) }
+        // Off the main thread (F-564): finding `claude` can start the user's login shell, and a shell that waits
+        // kept Duo bouncing in the Dock. A draw that asks meanwhile waits on the same lookup, at most its timeout.
+        if model.terminalsMode == .live {
+            DispatchQueue.global(qos: .userInitiated).async {
+                if let claude = ClaudeLocator.resolve() { ClaudeVersion.warm(claude); RemoteControl.warm(claude); DuoSignal.warm(claude) }
+            }
+        }
         if !options.capturing, model.terminalsMode == .live {
             DispatchQueue.main.asyncAfter(deadline: .now() + 8) { MainActor.assumeIsolated { model.checkForUpdates(userInitiated: false) } }
         }
