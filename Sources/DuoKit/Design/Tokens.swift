@@ -544,6 +544,7 @@ public enum DuoSymbolSize {
     public static let barIcon: CGFloat = 12.0
     public static let toolbarIcon: CGFloat = 14.0
     public static let badgeNumber: CGFloat = 10.0
+    public static let swatchChevron: CGFloat = 7.0
 }
 
 /// State strengths (style-audit fix list 7): the one place an opacity is a convention.

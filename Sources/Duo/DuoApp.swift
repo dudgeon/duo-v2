@@ -291,7 +291,8 @@ final class MainWindow {
                 MainActor.assumeIsolated { model.fullScreen = on }
             }
         }
-        FixtureHarness.configure(w, model: model, options: options)
+        if model.windowNumber == 1 { FixtureHarness.configure(w, model: model, options: options) }
+        else { FixtureHarness.configureMore(w, options: options) }   // the actions and capture stay window 1's
         DuoFocus.hide(w)   // a background test launch draws its window without showing it (F-227)
         w.makeKeyAndOrderFront(nil)
         if !SupportFolder.isIsolated { NSApp.activate() }   // an isolated instance never takes focus (C-28)

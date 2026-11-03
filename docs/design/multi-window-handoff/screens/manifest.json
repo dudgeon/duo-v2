@@ -50,6 +50,38 @@
    "size": "520x325",
    "decision": "DL-313",
    "shows": "The mini window in Blue, light: where a colour goes."
+  },
+  {
+   "file": "screens/png/board-4b-prime.png",
+   "kind": "board-png",
+   "size": "1720 wide",
+   "decision": "DL-314",
+   "shows": "Board 4b′ A (DL-314): the swatch's popover with twelve colours in hue columns, and Window › Window Colour.",
+   "from": "../multi-window-studies/standins/board-4b-prime.png"
+  },
+  {
+   "file": "screens/png/board-4b-double-prime.png",
+   "kind": "board-png",
+   "size": "1720 wide",
+   "decision": "DL-314",
+   "shows": "Board 4b″ A (DL-314): the swatch ends the breadcrumb, also at All projects.",
+   "from": "../multi-window-studies/standins/board-4b-double-prime.png"
+  },
+  {
+   "file": "screens/png/board-4c-prime.png",
+   "kind": "board-png",
+   "size": "1720 wide",
+   "decision": "DL-314",
+   "shows": "Board 4c′ A (DL-314): Window › Window Colour under Classic opens with the line, colours dimmed, Appearance Settings….",
+   "from": "../multi-window-studies/standins/board-4c-prime.png"
+  },
+  {
+   "file": "screens/png/board-10-prime.png",
+   "kind": "board-png",
+   "size": "1720 wide",
+   "decision": "DL-314",
+   "shows": "Board 10′ A (DL-314): Home's window named by its colour on a chip, Show Here and Go There.",
+   "from": "../multi-window-studies/standins/board-10-prime.png"
   }
  ]
 }

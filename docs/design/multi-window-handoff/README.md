@@ -12,10 +12,10 @@ Each is a picture written in HTML, rendered by `canvas/make.sh` from the boards 
 |---|---|---|
 | `board-1-new-window.html` | 1 · How a new window opens | **Option A only.** File › New Window ⌥⌘N, at the top of the File menu, opens a window at All projects. Project › Open in New Window (and the same item on a map tile's and a sidebar project row's right-click menu, as the caption says) opens that project in a new window. No pin (slice 3): the caption's "pinned to it" is dropped by DL-311. |
 | `board-4a-prime-colours.html` | 4a′ · Twelve window colours, direction C | **The palette** (DL-313): six hues × a light and a deep step, light and dark appearance. Which surfaces take the colour, and the order new windows take them in. Values: `../build-handoff/tokens.json` `windowColour` (from `../multi-window-studies/palette/palette.json`). |
-| `board-4b-new-colour.html` | 4b · A new window's colour, and changing it | **Option A.** The first window stays None; each new window takes the first colour in DL-313's order that no open window has. The swatch after the project's name, its popover (colours and "Colour new windows automatically"), and Window › Window Colour ▸ with a check on the window's own. The board's four colour names (Sky, Sage, Lilac, Sand) are superseded by 4a′'s twelve: see Q-444. |
-| `board-4c-classic.html` | 4c · Window colours and Classic | **Option A.** Classic turns window colours off: every window draws Classic, the swatch leaves the toolbar, Window › Window Colour is dimmed with the line, and Settings › General › Appearance shows the line under the popup. Each window gets its colour back when Classic is turned off. |
+| `board-4b-new-colour.html` | 4b · A new window's colour, and changing it | **Option A.** The first window stays None; each new window takes the first colour in DL-313's order that no open window has. The swatch after the project's name, its popover (colours and "Colour new windows automatically"), and Window › Window Colour ▸ with a check on the window's own. The board's four colour names (Sky, Sage, Lilac, Sand) are superseded by 4a′'s twelve; the popover and menu for twelve are board 4b′ A, and the swatch's place at All projects 4b″ A (DL-314, below). |
+| `board-4c-classic.html` | 4c · Window colours and Classic | **Option A.** Classic turns window colours off: every window draws Classic, the swatch leaves the toolbar, Window › Window Colour opens with the line (board 4c′ A, DL-314, below), and Settings › General › Appearance shows the line under the popup. Each window gets its colour back when Classic is turned off. |
 | `board-9-window-menu.html` | 9 · The Window menu | **Option C for slice 1** (DL-311: "the system Window menu and ⌘\`"): the system's items, with each Duo window listed by its title. A's swatches and needs-you marks are slice 2. Window Colour ▸ (board 4b) is added above the window list. |
-| `board-10-home.html` | 10 · What happens to Home | **Option B** (DL-311, Q-431): every window has All projects. Home's pane is live in one window; the others draw the dark pane with "Home is showing in window 1" and a Show Here button, which moves Home's terminal to this window. A stand-in until Q-98 D10 adds chat there (Q-447). |
+| `board-10-home.html` | 10 · What happens to Home | **Option B** (DL-311, Q-431): every window has All projects. Home's pane is live in one window; the others draw the dark pane naming Home's window, with Show Here (moves Home's terminal to this window) and Go There: board 10′ A (DL-314, below). Until Q-98 D10 adds chat there. |
 | `mini-window-coloured.html` | The mini window, twelve colours (component) | Where a colour goes, Blue in light: the toolbar ground, the sidebar, the tab strips and right pane, chat's ground and tool output. |
 
 ## What a window colour changes [G] DL-313
@@ -32,7 +32,7 @@ A window colour overrides four surfaces, in that window only, and nothing else:
 - **Never changes:** the console (terminals), text, rules, the selected row, cards, fields and buttons, the document's page (editor, HTML, decks), menus and popovers, and the needs-you orange.
 - **On a coloured toolbar, `text2` draws as `text`:** the breadcrumb, the swatch's chevron, the toolbar's own labels. The search field keeps its own white field and its `text2` placeholder.
 - **The needs-you chip keeps a solid `pane` fill (the plain one, white or Ink) on a coloured toolbar,** in light and dark.
-- **The swatch** is an 8 pt circle with a 1 pt `controlEdge` ring, filled with the colour's `swatch` (None: plain `pane`), then a 5 × 4 chevron in the crumb colour, 2 apart, 1 × 3 padding, radius 4; after the project's name in the toolbar.
+- **The swatch** (4b″ at full size) is an 11 pt circle with a 1 pt `controlEdge` ring, filled with the colour's `swatch` (None: plain `pane`), then a chevron (`symbol.swatchChevron`, 7 pt) in the crumb colour, 3 apart, 2 × 4 padding; outlined in `controlEdge`, radius 4, while its popover is open (4b′). It ends the breadcrumb (4b″ A). Hidden under Classic.
 
 ## The order and the rule [G] DL-312, DL-313
 
@@ -45,11 +45,13 @@ Blue, Ochre, Purple, Green, Coral, Teal, then Deep blue, Deep ochre, Deep purple
 - Close Window (⇧⌘W) closes a second window. Its projects' tabs and sessions stay. The last window hides as today; Duo doesn't quit.
 - Every action has a verb (DL-71): `duo2 window list | new [<project>] | focus <n|project> | close [<n|project>] | colour <name|none|auto on|off>`. The on-screen verbs take `--window <n|project>`. With no `--window`, a verb acts on the window that shows the caller's session, else the primary window (the oldest open), never the key window (Q-430).
 
-## Stand-ins (not drawn; each has a Q row)
+## The four stand-ins, decided (DL-314)
 
-| What | Stand-in as built | Q |
-|---|---|---|
-| The swatch's popover and Window › Window Colour with twelve colours (4b draws five) | The popover keeps 4b's look: "Window Colour", then None alone, then the six light steps in a row and the six deep steps under them, both in 4a′'s hue order (Coral, Ochre, Green, Teal, Blue, Purple), each a 22 pt swatch with its name under it in 11 pt `text2`, the window's own ringed in `text`; then 4b's checkbox. The menu lists None, a rule, the six light, a rule, the six deep, each with a 12 pt swatch image, ticked on the window's own. | Q-444 |
-| The swatch at All projects, where the toolbar has no project name | After "All projects", as after a project's name. | Q-445 |
-| Window › Window Colour while Classic is on ("dimmed, with the same line") | The submenu item is disabled and its tooltip is 4c's line: "Window colours are off while Classic is on." | Q-446 |
-| Home's stand-in names "window 1" | "Home is showing in window ‹n›", n being that window's place in the order windows were opened (the primary is 1); Show Here as drawn. Until Q-98 D10. | Q-447 |
+Slice 1 first built four stand-ins (Q-444 to Q-447). Geoff chose option A on each, on boards drawn for them: `screens/png/board-4b-prime.png`, `board-4b-double-prime.png`, `board-4c-prime.png`, `board-10-prime.png` (rendered from `../multi-window-studies/standins/`; canvas boards 4b′, 4b″, 4c′, 10′). These are the targets:
+
+| Board | Decided (DL-314) |
+|---|---|
+| 4b′ A · the swatch's popover | "Window Colour"; None on its own row, the window's colour named at the right; one column per hue (Coral, Ochre, Green, Teal, Blue, Purple), named once on top, with Light and Deep rows; the window's own ringed in `text`; then "Colour new windows automatically". The swatch is outlined while its popover is open. Window › Window Colour: None, the six light, the six deep, each with a 12 pt swatch image, ticked on the window's own. |
+| 4b″ A · the swatch at All projects | The swatch always ends the breadcrumb: after "All projects" at All projects, after the project's name inside one. |
+| 4c′ A · Window Colour under Classic | Stays enabled. The submenu opens with 4c's line ("Window colours are off while Classic is on. Each window gets its colour back when you choose another appearance."), then every colour dimmed with the window's own ticked, then Appearance Settings… (`duo2 settings appearance`). |
+| 10′ A · naming Home's window | "Home is showing in the ‹Blue› window", the name on a chip of that window's toolbar colour; Show Here and Go There (`duo2 window home`, `duo2 window focus`). A window with no colour, or under Classic, is named by where it is: "Home is showing in another window, at refunds" (or "at All projects"). ENH-322: Geoff wants the Home pane itself revisited later; not in slice 1. |
