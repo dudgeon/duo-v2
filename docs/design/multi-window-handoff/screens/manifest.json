@@ -1,0 +1,55 @@
+{
+ "$note": "Multi-window slice 1 (DL-311). Exported from the canvas by canvas/make.sh.",
+ "source": "https://claude.ai/artifact/46yWPpDZn16Qtfrfhbuaw1",
+ "screens": [
+  {
+   "file": "screens/board-1-new-window.html",
+   "kind": "board",
+   "size": "1720x640",
+   "decision": "DL-141, DL-311",
+   "shows": "Option A: File › New Window ⌥⌘N and Project › Open in New Window."
+  },
+  {
+   "file": "screens/board-4a-prime-colours.html",
+   "kind": "board",
+   "size": "1720x2060",
+   "decision": "DL-313",
+   "shows": "The twelve window colours, direction C: light and deep step per hue, light and dark appearance, the order."
+  },
+  {
+   "file": "screens/board-4b-new-colour.html",
+   "kind": "board",
+   "size": "1720x720",
+   "decision": "DL-312",
+   "shows": "Option A: each new window takes the next free colour; the swatch, its popover and Window › Window Colour."
+  },
+  {
+   "file": "screens/board-4c-classic.html",
+   "kind": "board",
+   "size": "1720x720",
+   "decision": "DL-312",
+   "shows": "Option A: Classic turns window colours off."
+  },
+  {
+   "file": "screens/board-9-window-menu.html",
+   "kind": "board",
+   "size": "1720x640",
+   "decision": "DL-311",
+   "shows": "Option C (the system Window menu) for slice 1; A is slice 2."
+  },
+  {
+   "file": "screens/board-10-home.html",
+   "kind": "board",
+   "size": "1720x640",
+   "decision": "DL-311, Q-431",
+   "shows": "Option B: Home live in one window, Show Here in the others."
+  },
+  {
+   "file": "screens/mini-window-coloured.html",
+   "kind": "board",
+   "size": "520x325",
+   "decision": "DL-313",
+   "shows": "The mini window in Blue, light: where a colour goes."
+  }
+ ]
+}
