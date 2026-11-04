@@ -11,7 +11,7 @@ extension EnvironmentValues {
 }
 
 /// A document in the right pane, or on one side of a split (DL-278): its notices, template bar,
-/// review bar and the editor of `ref`. The bars act on this side's editor, and a click on one makes
+/// formatting bar (review included, DL-317) and the editor of `ref`. The bars act on this side's editor, and a click on one makes
 /// this side the active one first.
 struct DocumentStack: View {
     @Environment(AppModel.self) private var model
@@ -25,7 +25,6 @@ struct DocumentStack: View {
             DocumentStateBar()
             // A template (DL-146): what it's for, Preview and Reset over it.
             if templates, let info = model.templateInfo(forFile: file) { TemplateBar(info: info) }
-            MarkdownReviewSlot(file: file)   // DL-237: marks, comments or Suggest Edits on
             // The formatting bar (DL-266) is laid over the editor's top 24, so the text never moves.
             DocumentEditorView(editors: model.editors, ref: ref, file: file)
                 .overlay(alignment: .top) { MarkdownFormatBarSlot(file: file) }

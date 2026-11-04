@@ -634,7 +634,7 @@ public enum FixtureHarness {
             if let id = parts.count > 1 ? parts[1] : nil, let url = model.editor.url, let s = model.fixture.sessions.first(where: { $0.project == model.currentProject?.name && $0.sessionId != nil }) {
                 model.sendReviewComment(url, thread: id, to: s) { r in FileHandle.standardError.write(Data("review-send: \(r.text)\n".utf8)) }
             } else { FileHandle.standardError.write(Data("review-send: no session\n".utf8)) }
-        case "review-menu": model.reviewMenu = parts.count > 1 ? parts[1] : nil   // review-menu:markup|all: the review bar's menu, open for a capture
+        case "review-menu": model.reviewMenu = parts.count > 1 ? (parts[1] == "markup" ? "markup" : "mode") : nil   // review-menu:markup|mode (all): the formatting bar's mode menu (DL-317), open for a capture; markup also opens Markup
         case "verb":   // verb:<duo2 words>[ --as name]: a duo2 verb through the control handler, as `duo2` sends it (from a Claude session); its reply to stderr
             let words = (parts.count > 1 ? parts[1] : "").split(separator: " ", omittingEmptySubsequences: true).map(String.init)
             guard let command = words.first else { break }

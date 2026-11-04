@@ -5569,3 +5569,16 @@ Q-430 says a `duo2` call acts on the window showing the caller's session. The re
 - `DUO_CHECKS=windows` now also checks that an unknown caller session acts on the primary.
 - To test from outside a Duo terminal, unset `CLAUDE_CODE_SESSION_ID` as well.
 
+## F-571 · Review in the formatting bar, as built: the mode menu is a drawn menu, and the bar's Fit rules come from `FormatBarLogic` (2026-11-04; DL-317)
+
+- The 44 review bar (`MarkdownReviewBar`, `MarkdownReviewSlot`) is gone; `Project/MarkdownModeMenu.swift` holds the mode menu and `MarkdownFormatBar` the Comment glyph (`plus.bubble`, ⌥⌘M → `reviewAddComment`, which takes the word at the caret with no selection) and the Editing ⌄ / Suggesting ⌄ button before the mic.
+- The mode menu is drawn in SwiftUI under its button (`model.reviewMenu` = "mode", or "markup" with Markup's four choices open), not an `NSMenu`: a capture can't show a system menu, and the board draws it with the `selected` row. Every item calls the function the old bar's did (`toggleSuggestEdits`, `reviewStep`, `reviewResolveAll`, `setMarkdownMarkup`); no duo2 verb changed. `review-menu:markup|mode` in the harness opens it for a capture (`all` is kept as `mode`).
+- `FormatBarLogic.shows(… reviewPending:)` keeps the bar while the document has marks, comments or Suggest Edits on. `controls(inTable:width:tableInMore:)` and `tableInMore(width:hasKeyboard:reviewPending:)` hold the README's Fit rules: Insert Table folds into ⋯ under 420 and, at 460, when the bar is there only for review. In a table the mode menu is the pen and ⌄.
+- The mode menu closes on Esc and on a click outside it and its button (a local event monitor while it is open, since the keyboard is in the page); the button toggles it. `FormatBarLogic.dismisses` and `AppModel.dismissReviewMenu` hold the rule, and DuoChecks reads both (Q-458 closed).
+- **A table at 420 overflowed** once Comment and the mode menu joined the bar (the screens draw 460 and 360 only): Align and Delete now fold into ⋯ under 450, not 420 (`foldsTableMenus`). A stand-in for the director to confirm.
+- **Not this branch:** `check-review-editor.sh` fails "@ menu: Tab inserts @claude" (the log lacks `field="Please @claude " menu=closed`) on main at 09dd53cf as well (57 of 58), so the margin composer's Tab, not the bar, needs a look.
+- Captures: `scripts/check-format-bar-review.sh` (Light, Dark, Classic at 460, 420, 360; clean, marks, suggest, table, listening, menu, menu-markup) and `scripts/compare-format-bar-review.py` (mine above, `review-in-bar@2x.png` below). No editor source changed, so `cm6.js` is not rebuilt and the browser-width check has nothing new to measure.
+
+## F-572 · The Style label (and any word in the bar) could be squeezed to nothing (2026-11-04; DL-317)
+
+The bar's `HStack` gave a word less than its width when the row was tight, and Style showed only its chevron in a capture. `wordLabel`'s text and the mode word are now `fixedSize()`, so a tight bar overflows its spacers first.
