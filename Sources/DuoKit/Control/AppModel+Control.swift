@@ -68,7 +68,8 @@ extension AppModel {
                 guard let rel = relativePath(f, project: p.name, cwd: req.cwd) else { return done(.fail("'\(f)' isn't in \(p.name)")) }
                 m.openDocument(rel)
             }
-            done(.ok("Opened \(p.name)."))
+            // A project lives in one window (DL-308): say so when its window came forward instead (F-582).
+            done(.ok(m === self ? "Opened \(p.name)." : "\(p.name) is in window \(m.windowNumber); brought it forward."))
         case .peek:
             let want = inv[0].map { $0 == "open" } ?? !peekOpen
             if want != peekOpen { togglePeek() }

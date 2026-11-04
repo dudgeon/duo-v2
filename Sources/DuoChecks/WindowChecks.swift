@@ -98,6 +98,24 @@ import Foundation
     check(core.closeWindow(three) && core.models.count == 1, "Close Window closes a second window")
     check(!core.closeWindow(one) && core.models.count == 1, "the last window only hides; Duo keeps running")
     check(core.freeWindowNumber() == 2, "a closed window's number is free again")
+    check(one.hiddenByClose, "the last window, closed, is marked hidden")
+    core.bringForward(one)   // the Dock brings it back
+    check(!one.hiddenByClose, "brought back, it isn't hidden")
+    // Q-460: New Window after the last window hid gives one window, the hidden one back
+    do {
+        let c = AppCore(fixture: f); c.setColourNewWindows(true, save: false)
+        let a = AppModel(core: c)
+        let b = c.openWindow()   // window 2
+        c.closeWindow(a)         // window 1 closes; b is the last
+        check(c.models.count == 1 && !c.closeWindow(b) && b.hiddenByClose, "closing the last window hides it")
+        b.open(project: q)
+        let again = c.openWindow()
+        check(again === b && c.models.count == 1 && !b.hiddenByClose && b.windowNumber == 1 && b.altitude == .allProjects,
+              "New Window then brings the hidden window back as window 1 at All projects, not a second one (Q-460)")
+        c.closeWindow(b)
+        check(c.openWindow(project: q) === b && b.altitude == .project(q) && c.models.count == 1, "Open in New Window after it hid: the same window, on the project")
+        check(c.openWindow() !== b && c.models.count == 2, "with a window showing, New Window opens a second")
+    }
 
     // MARK: duo2's window (Q-430)
     let w2 = core.openWindow(project: q)   // window 2 on q
@@ -134,6 +152,15 @@ import Foundation
     check(out?.ok == true && core.models.count == 2 && !core.models.contains { $0 === w3 }, "duo2 window close 3")
     core.handle(req("status", [])) { out = $0 }
     check(out?.output.contains("window 1 of 2") == true, "status lists the windows")
+    // F-582: open <project> for a project another window shows says that window came forward
+    core.handle(req("open", [q, "--window", "1"])) { out = $0 }
+    check(out?.ok == true && out?.output == "\(q) is in window 2; brought it forward." && one.altitude == .project(p),
+          "duo2 open <project> --window 1, the project in window 2: says window 2 came forward (F-582)")
+    core.handle(req("open", [p])) { out = $0 }
+    check(out?.output == "Opened \(p).", "duo2 open of a project the window itself shows still says Opened")
+    // F-581: a session the core doesn't know (another Claude session's id) falls back to the primary
+    check(core.target(for: req("status", [], session: "00000000-0000-0000-0000-000000000000")).model === one,
+          "an unknown caller session acts on the primary (F-581: duo2 sends CLAUDE_CODE_SESSION_ID first)")
 
     // MARK: C-150: the app-wide passes see every window
     if let s = sessionInQ {
