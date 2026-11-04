@@ -1,4 +1,5 @@
 #!/bin/zsh
+export DUO_ISOLATED=1   # every duo2 here reaches only the test instance; refuses, never the user's Duo (F-529)
 # Tier 1 of the duo-director test harness: for each profile, run `duo2 director status` from a stand-in
 # Claude session and compare what it reports with the profile's expectations. No model, no network,
 # no running Duo. See scripts/director-harness/README.md.

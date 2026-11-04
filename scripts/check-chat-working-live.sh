@@ -8,6 +8,7 @@
 #   scripts/check-chat-working-live.sh <out> <workspace>   APP=<Duo.app>  CLAUDE=<claude>  WIDTH=<pt>
 # The workspace must be one Claude Code already trusts (its trust question would stop the turn).
 set -u
+export DUO_ISOLATED=1   # every duo2 here reaches only the test instance; refuses, never the user's Duo (F-529)
 root=${0:A:h:h}
 out=${1:A} ws=${2:A}
 app=${APP:-$root/build/Duo.app}
@@ -28,7 +29,7 @@ png=$out/end-$tag.png err=$out/stderr-$tag.txt
 rm -f $png
 env -u DUO_SUPPORT_DIR -u DUO_SOCKET -u DUO_TOKEN -u DUO_SIGNAL -u CLAUDE_CONFIG_DIR -u ANTHROPIC_BASE_URL -u CLAUDECODE \
   -u CLAUDE_CODE_CHILD_SESSION -u CLAUDE_CODE_SESSION_ID -u CLAUDE_CODE_ENTRYPOINT -u CLAUDE_CODE_MESSAGING_SOCKET -u CLAUDE_CODE_MESSAGING_TOKEN \
-  DUO_SUPPORT_DIR=$sup DUO_AUTOCONFIRM=1 DISABLE_AUTOUPDATER=1 ANTHROPIC_MODEL=${DUO_MODEL:-claude-haiku-5-5} \
+  DUO_ISOLATED=1 DUO_SUPPORT_DIR=$sup CLAUDE_CONFIG_DIR=${DUO_CLAUDE_CONFIG_DIR:-$HOME/.claude} DUO_AUTOCONFIRM=1 DISABLE_AUTOUPDATER=1 ANTHROPIC_MODEL=${DUO_MODEL:-claude-haiku-5-5} \
   $app/Contents/MacOS/Duo --workspace $ws --capture-window $png --then "$then" 2>$err &
 pid=$!
 for i in {1..150}; do [[ -f $png ]] && break; sleep 1; done

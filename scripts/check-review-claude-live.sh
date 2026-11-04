@@ -7,6 +7,7 @@
 # is filed in ~/.claude/projects as any claude run is.
 #   scripts/check-review-claude-live.sh [out-dir]
 set -u
+export DUO_ISOLATED=1   # every duo2 here reaches only the test instance; refuses, never the user's Duo (F-529)
 cd "${0:A:h:h}"
 out=${1:-build/review-claude-live}; mkdir -p $out; out=${out:A}
 root=$out/ws-root                       # under build/: trusted by its parents
@@ -20,7 +21,8 @@ A=$root/work/garden/offline.md
 print -rn -- $'# Offline mode\n\nThe sync engine retries every {~~30~>10~~}{>>@geoff 2026-10-27 #s1<<} seconds.\n\nThe first launch needs a network. {==First launch==}{>>@geoff 2026-10-28 #c1: @claude in one short line, why does the first launch need a network?<<}\n' > $A
 cp $A $out/before.md
 rm -f $out/run.log
-env -u DUO_SUPPORT_DIR DUO_EXTRA_ENV="DUO_SUPPORT_DIR=$sup" DUO_TIMEOUT=${DUO_TIMEOUT:-300} \
+# A real-login proof: it names the account's Claude folder explicitly (Q-425); Duo's own state stays isolated.
+env -u DUO_SUPPORT_DIR DUO_CLAUDE_CONFIG_DIR=${DUO_CLAUDE_CONFIG_DIR:-$HOME/.claude} DUO_EXTRA_ENV="DUO_SUPPORT_DIR=$sup" DUO_TIMEOUT=${DUO_TIMEOUT:-300} \
   scripts/run-live.sh $root $out/final.png \
   "open:garden,open-file:$A,wait:3,verb:session new --project garden,wait:35,open-file:$A,wait:3,review-send:c1,wait:2,verb:comment status c1,wait:6,verb:comment status c1,wait:10,verb:comment status c1,wait:20,verb:comment status c1,wait:20,verb:comment status c1,wait:20,verb:doc read,wait:8" $out/run.log
 sleep 3

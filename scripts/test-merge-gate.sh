@@ -3,6 +3,7 @@
 # failure, and the hygiene line, without building anything. Uses its own check tree and log, never the director's.
 #   GPU_LOCK=<lock dir> scripts/test-merge-gate.sh
 set -uo pipefail
+export DUO_ISOLATED=1   # every duo2 here reaches only the test instance; refuses, never the user's Duo (F-529)
 : "${GPU_LOCK:?set GPU_LOCK to the lock folder of this machine}"
 here="$(cd "$(dirname "$0")/.." && pwd)"
 tmp="$(mktemp -d "${TMPDIR:-/tmp}/mg-test.XXXXXX")"

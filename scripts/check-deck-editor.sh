@@ -6,6 +6,7 @@
 #   scripts/check-deck-editor.sh [out-dir]    → <out>/<state>-<appearance>.png
 # States: chip (the caret in slide 3, so its anchor mark shows), picker (New Slide with "k" typed), change (a chip clicked).
 set -u
+export DUO_ISOLATED=1   # every duo2 here reaches only the test instance; refuses, never the user's Duo (F-529)
 cd "${0:A:h}/.."
 out=${1:-build/deck-editor}; mkdir -p "$out"; out=${out:A}
 root=${DUO_DECK_ROOT:-/private/tmp/p3c}

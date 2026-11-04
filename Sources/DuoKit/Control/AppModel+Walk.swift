@@ -7,8 +7,11 @@ import Foundation
 /// fixtures by hand. The steps come only from `~/DuoAcceptance/walk-setups.json`, written by
 /// `scripts/acceptance/build-page.py`; a link can name a test, never supply steps.
 extension AppModel {
+    /// An isolated instance reads its own copy (`<support>/Duo/walk-setups.json`): the real file's
+    /// steps name the user's fixture workspace and repo (F-588).
     public static var walkSetupsFile: URL {
-        FileManager.default.homeDirectoryForCurrentUser.appending(path: "DuoAcceptance/walk-setups.json")
+        if SupportFolder.isIsolated { return SupportFolder.duo.appending(path: "walk-setups.json") }
+        return FileManager.default.homeDirectoryForCurrentUser.appending(path: "DuoAcceptance/walk-setups.json")
     }
 
     struct WalkSetups: Decodable {

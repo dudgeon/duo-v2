@@ -5,6 +5,7 @@
 # docs/design/split-view-handoff/screens/ (docs/design/build-handoff/tools/compare.sh).
 #   scripts/check-split.sh [out-dir]
 set -u
+export DUO_ISOLATED=1   # every duo2 here reaches only the test instance; refuses, never the user's Duo (F-529)
 cd "${0:A:h}/.."
 out=${1:-build/split}; mkdir -p "$out"; out=${out:A}
 root=${DUO_SPLIT_ROOT:-/private/tmp/pcf-split-1}
@@ -23,7 +24,7 @@ fresh() {
 run() {
   local png=$out/$1.png err=$out/$1.log
   rm -f $png
-  env -u DUO_SUPPORT_DIR DUO_SUPPORT_DIR=$root/sup-$1 CLAUDE_CONFIG_DIR=$root/cc-$1 ANTHROPIC_MODEL=claude-haiku-5-5 DUO_APPEARANCE=${APPEARANCE:-light} \
+  env -u DUO_SUPPORT_DIR -u DUO_SOCKET -u DUO_TOKEN DUO_ISOLATED=1 DUO_SUPPORT_DIR=$root/sup-$1 CLAUDE_CONFIG_DIR=$root/cc-$1 ANTHROPIC_MODEL=claude-haiku-5-5 DUO_APPEARANCE=${APPEARANCE:-light} \
     $app/Contents/MacOS/Duo --workspace $ws --window $2 --capture-window $png --then "$3" 2>$err &
   local pid=$!
   for i in {1..${DUO_TIMEOUT:-60}}; do [[ -f $png ]] && break; sleep 1; done
@@ -91,7 +92,7 @@ expect "minimum: the window can't be made smaller than 1280 x 800" $out/giveback
 relaunch() {   # relaunch <name> <size> <actions>: like run, on the same support folder, restoring
   local png=$out/$1.png err=$out/$1.log
   rm -f $png
-  env -u DUO_SUPPORT_DIR DUO_SUPPORT_DIR=$root/sup-rl CLAUDE_CONFIG_DIR=$root/cc-rl ANTHROPIC_MODEL=claude-haiku-5-5 DUO_APPEARANCE=${APPEARANCE:-light} DUO_RESTORE=1 \
+  env -u DUO_SUPPORT_DIR -u DUO_SOCKET -u DUO_TOKEN DUO_ISOLATED=1 DUO_SUPPORT_DIR=$root/sup-rl CLAUDE_CONFIG_DIR=$root/cc-rl ANTHROPIC_MODEL=claude-haiku-5-5 DUO_APPEARANCE=${APPEARANCE:-light} DUO_RESTORE=1 \
     $app/Contents/MacOS/Duo --workspace $ws --window $2 --capture-window $png --then "$3" 2>$err &
   local pid=$!
   for i in {1..${DUO_TIMEOUT:-60}}; do [[ -f $png ]] && break; sleep 1; done

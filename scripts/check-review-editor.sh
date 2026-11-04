@@ -7,6 +7,7 @@
 # Suggest Edits on (the frontmatter line, a person's typing and Claude's `doc replace` as signed marks);
 # Accept All; a capture of the marks drawn (track-a, margin-suggest).
 set -u
+export DUO_ISOLATED=1   # every duo2 here reaches only the test instance; refuses, never the user's Duo (F-529)
 cd "${0:A:h}/.."
 out=${1:-build/review-editor}; mkdir -p "$out"; out=${out:A}
 root=${DUO_HOST_ROOT:-/private/tmp/pcf-review-1}

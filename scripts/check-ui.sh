@@ -8,6 +8,7 @@
 #
 # Writes build/ui/<state>.png (the app) and build/ui/<state>-compare.png (TARGET | BUILD | DIFFERENCE).
 set -euo pipefail
+export DUO_ISOLATED=1   # every duo2 here reaches only the test instance; refuses, never the user's Duo (F-529)
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
 [ -n "${NO_BUILD:-}" ] || scripts/bundle.sh >/dev/null
@@ -35,13 +36,16 @@ capture() {
   local s="$1" i
   # Launched through LaunchServices: once the bundle has been opened with `open`, executing its
   # binary directly can leave the app without a window (findings F-19).
-  open -g -W -n ${fg[@]+"${fg[@]}"} --stdout /dev/null --stderr "$out/$s.log" "$root/build/Duo.app" --args --state "$s" --capture "$out/$s.png" ${extra[@]+"${extra[@]}"} &
+  # Isolated (F-529): each state its own short support folder and DUO_ISOLATED=1, never the user's Duo.
+  local sup; sup="$(mktemp -d /tmp/duo-ui.XXXXXX)"
+  open -g -W -n ${fg[@]+"${fg[@]}"} --env DUO_ISOLATED=1 --env "DUO_SUPPORT_DIR=$sup" --stdout /dev/null --stderr "$out/$s.log" "$root/build/Duo.app" --args --state "$s" --capture "$out/$s.png" ${extra[@]+"${extra[@]}"} &
   local pid=$!
   for ((i = 0; i < 120; i++)); do kill -0 "$pid" 2>/dev/null || break; sleep 0.25; done
   if kill -0 "$pid" 2>/dev/null; then
     kill "$pid"; echo "$s: no capture after 30 s (see build/ui/$s.log)" >&2; return 1
   fi
   wait "$pid" || { echo "$s: capture failed (see build/ui/$s.log)" >&2; return 1; }
+  chmod -R u+w "$sup" 2>/dev/null; rm -rf "$sup"
 }
 
 for s in "${states[@]}"; do

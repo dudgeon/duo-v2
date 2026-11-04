@@ -8,6 +8,7 @@
 #   scripts/check-chat-narrow-live.sh <out>     APP=<Duo.app> (default build/Duo.app)  CLAUDE=<path> (default: on PATH)
 # Isolated (CLAUDE.md): its own support folder and Claude config under /tmp, quit by SIGTERM to its pid.
 set -u
+export DUO_ISOLATED=1   # every duo2 here reaches only the test instance; refuses, never the user's Duo (F-529)
 typeset -a c r
 root=${0:A:h:h}
 out=${1:A}

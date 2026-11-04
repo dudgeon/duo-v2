@@ -7,6 +7,7 @@
 # crowd the machine:  scripts/measure-web-lifetimes.sh <repo-or-worktree> <label>
 #   GPU_LOCK=… <main>/scripts/gpu-lock.sh <name> scripts/measure-web-lifetimes.sh <tree> before
 set -u
+export DUO_ISOLATED=1   # every duo2 here reaches only the test instance; refuses, never the user's Duo (F-529)
 tree=${1:A}; label=${2:-run}
 app=$tree/build/Duo.app
 duo2=$app/Contents/Helpers/duo2

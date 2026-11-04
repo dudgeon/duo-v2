@@ -17,6 +17,7 @@
 # merge-gate.tsv: time, sha, gate, ok|FAIL|FLAKY|SKIP, seconds), which the weekly tidy-up reads (ENH-284).
 # MERGE_GATE_ONLY=<gate,gate> runs just those gates (scripts/test-merge-gate.sh uses it).
 set -uo pipefail
+export DUO_ISOLATED=1   # every duo2 here reaches only the test instance; refuses, never the user's Duo (F-529)
 ref="${1:?usage: GPU_LOCK=<lock dir> scripts/merge-gate.sh <sha|branch>}"
 : "${GPU_LOCK:?set GPU_LOCK to the lock folder of this machine (machine-local; the director gives it in each brief)}"
 here="$(cd "$(dirname "$0")/.." && pwd)"

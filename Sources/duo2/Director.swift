@@ -500,7 +500,7 @@ func runDirectorWatch(_ rest: [String]) -> Int32 {
         var args = ["--json", "--caps", directorCaps()]
         if let p = inv.flags["project"] { args += ["--project", p] }
         var status: [String: Any]?
-        if let (endpoint, source) = ControlEndpoint.discover(),
+        if let (endpoint, source) = discoverEndpoint(),
            let r = try? ControlClient.send(ControlRequest(token: endpoint.token, command: "director status", args: args,
                                                           session: env["CLAUDE_CODE_SESSION_ID"] ?? env["DUO_SESSION_ID"],
                                                           cwd: FileManager.default.currentDirectoryPath), via: endpoint, source: source, timeout: 15),

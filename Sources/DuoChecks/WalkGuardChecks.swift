@@ -14,6 +14,7 @@ let walkGuardExempt: [String: String] = [
     "DuoKit/Deck/DeckSheets.swift": "the project folder's top-level folders (New Deck's Folder menu) and the packs' folders",
     "DuoKit/Chat/ChatSignal.swift": "the mod's own copy, in Duo's support folder",
     "DuoKit/Claude/ClaudeStorage.swift": "Claude's config folder (~/.claude/projects)",
+    "DuoControl/Isolation.swift": "one listing of a Duo support folder, for its endpoint files (F-529)",
     "DuoKit/Editor/HTMLViewer.swift": "one listing of the open page's own folder",
     "DuoKit/Live/ForkSource.swift": "Claude's jobs folder (~/.claude/jobs, the forks' state.json)",
     "DuoKit/Live/Beacons.swift": "Claude's sessions folder",
