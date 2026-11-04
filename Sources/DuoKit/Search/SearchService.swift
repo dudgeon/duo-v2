@@ -31,8 +31,15 @@ public final class SearchService {
     final class Engine: @unchecked Sendable {
         let embedder = EmbedderSource { try Embedder(use: .indexing) }
         let index: SearchIndex
-        init() throws { index = try SearchIndex(readOnly: false) }
+        init() throws {
+            index = try SearchIndex(readOnly: false)
+            embedder.maxUses = SearchService.maxModelUses
+        }
     }
+    /// Core ML's GPU memory for the loaded indexing model grows with use and comes back only when the model goes
+    /// (F-593: 3.5 GB after an hour of busy indexing). It goes after this many uses within a pass, and at the end of
+    /// every pass that embedded anything, instead of only after `idleRelease` of quiet, which busy indexing never reached.
+    nonisolated static let maxModelUses = 32
     nonisolated static let idleRelease: TimeInterval = 180
     /// A file already in the index is re-indexed once it has been quiet this long (seconds).
     nonisolated static let quietPeriod: TimeInterval = 180
@@ -97,7 +104,7 @@ public final class SearchService {
             let total = out.values.reduce(IndexStats()) { a, b in
                 var a = a; a.changed += b.changed; a.embedded += b.embedded; a.chunks += b.chunks; a.deferred += b.deferred; return a
             }
-            let released = engine.embedder.releaseIfIdle(after: idleRelease)
+            let released = engine.embedder.releaseIfIdle(after: total.embedded > 0 ? 0 : idleRelease)
             QueryEmbedder.releaseIfIdle(after: idleRelease)
             engine.index.shrinkMemory()
             FileHandle.standardError.write(Data("search: pass \(total.changed) files changed, \(total.chunks) chunks (\(total.embedded) embedded), \(total.deferred) waiting, model \(released ? "released" : engine.embedder.isLoaded ? "loaded" : "idle"), \(Int(Date().timeIntervalSince(began) * 1000)) ms\n".utf8))

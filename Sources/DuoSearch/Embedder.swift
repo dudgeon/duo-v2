@@ -33,11 +33,14 @@ public final class Embedder: @unchecked Sendable {
     public let tokenizer: WordPiece
     private let model: MLModel
     public static let maxTokens = 512
-    /// Indexing pads every batch to one of a few shapes (C-161, F-586). On the GPU, Core ML keeps buffers for each input
+    /// Indexing pads every batch to one of a few shapes (C-161, F-586, F-593). On the GPU, Core ML keeps buffers for each input
     /// shape it has seen for as long as the model is loaded. A batch padded to its own longest text made a new shape for
-    /// almost every batch, and a model kept busy by indexing held 51 GB after three days. Rows pad to `batchRows`,
-    /// lengths round up to the next of `lengthBuckets`; padded positions are masked, so the vectors are the same.
+    /// almost every batch, and a model kept busy by indexing held 51 GB after three days. Rows round up to the next of
+    /// `rowBuckets`, lengths to the next of `lengthBuckets` (24 shapes at most); padded positions are masked, so the
+    /// vectors are the same. Rows aren't padded to a full 32: a pass's many one- and two-chunk calls would each run the
+    /// largest shape and hold its buffers (F-593).
     public static let batchRows = 32
+    public static let rowBuckets = [1, 2, 4, 8, 16, 32]
     public static let lengthBuckets = [64, 128, 256, 512]
     public var fixedShapes: Bool
 
@@ -83,7 +86,7 @@ public final class Embedder: @unchecked Sendable {
     /// The (rows, length) a batch is run at: its own with `fixedShapes` off, else one of the few fixed shapes.
     static func shape(rows: Int, longest: Int, fixed: Bool) -> (rows: Int, length: Int) {
         guard fixed else { return (rows, max(longest, 1)) }
-        return (max(rows, batchRows), lengthBuckets.first { $0 >= longest } ?? max(longest, 1))
+        return (rowBuckets.first { $0 >= rows } ?? rows, lengthBuckets.first { $0 >= longest } ?? max(longest, 1))
     }
 
     private func embed(_ texts: [[Int32]]) throws -> [[Float]] {
@@ -120,6 +123,10 @@ public final class EmbedderSource: @unchecked Sendable {
     private var used = Date.distantPast
     /// How many times the model was loaded (for DuoChecks).
     public private(set) var loads = 0
+    /// Uses (`get()` calls, one per batch of up to 32 chunks) before the model is let go and loaded afresh (F-593): Core ML's
+    /// GPU memory for a loaded model grows with use, and only releasing the model returns it. nil: never.
+    public var maxUses: Int?
+    private var uses = 0
 
     public init(load: @escaping () throws -> Embedder) { make = load }
     /// A fixed embedder, never released.
@@ -130,9 +137,10 @@ public final class EmbedderSource: @unchecked Sendable {
     public func get() throws -> Embedder {
         lock.lock(); defer { lock.unlock() }
         used = Date()
-        if let current { return current }
+        if let max = maxUses, uses >= max { current = nil }
+        if let current { uses += 1; return current }
         let e = try make()
-        current = e; loads += 1
+        current = e; loads += 1; uses = 1
         return e
     }
 
