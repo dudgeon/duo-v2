@@ -92,7 +92,7 @@ struct MarkdownFormatBar: View {
                 else { controls(e, width: g.size.width) }
                 Spacer(minLength: 0)
                 modeMenu(e)
-                Spacer().frame(width: 6)
+                Spacer().frame(width: 3)
                 mic(state: state, mine: mine)
             }
             .padding(.leading, FormatBarLogic.leading).padding(.trailing, FormatBarLogic.trailing)
@@ -158,7 +158,7 @@ struct MarkdownFormatBar: View {
 
     private func wordLabel(_ title: String, chevron: Bool, on: Bool) -> some View {
         HStack(spacing: 1) {
-            Text(title).duoText(.control).foregroundStyle(DuoColor.text)
+            Text(title).duoText(.control).foregroundStyle(DuoColor.text).fixedSize()
             if chevron { Image(systemName: "chevron.down").font(.system(size: DuoSymbolSize.chevronSmall, weight: .semibold)).foregroundStyle(DuoColor.text2) }
         }
         .padding(.horizontal, 6)
@@ -272,7 +272,7 @@ struct MarkdownFormatBar: View {
                     HStack(spacing: 1) { ForEach(0..<5, id: \.self) { _ in DuoColor.text.frame(width: 1.4, height: 1) } }.padding(.top, -1)
                 }
             }
-            if !e.inTable { Text(title).duoText(.control).foregroundStyle(DuoColor.text) }
+            if !e.inTable { Text(title).duoText(.control).foregroundStyle(DuoColor.text).fixedSize() }
             Image(systemName: "chevron.down").font(.system(size: DuoSymbolSize.chevronSmall, weight: .semibold)).foregroundStyle(DuoColor.text2)
         }
         .padding(.horizontal, 6)
