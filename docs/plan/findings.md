@@ -5462,6 +5462,45 @@ Built on `build/multi-window-slice1` from main `b93abb27` (merged up to `ca5946a
 
 `LaunchOptions` keeps only the last `--then`, so several `--then` flags silently ran one action; `FixtureHarness.perform` splits `name:rest` once, so an action with two arguments reads `rest` itself. `window-shot:[<n>:]<png>`, `window-colour:<n>:<id>` and `window-open:<n>:<project>` do. `scripts/check-windows.sh` joins its actions with commas.
 
+## F-578 · 0.2.23's launch hang isn't a code regression: 0.2.22 hangs the same way under the same trigger (2026-11-03)
+
+The repro of F-573 (claude hidden from its four places, and a `.zprofile` that waits) hangs the notarized 0.2.22 release binary exactly as it hangs 0.2.23's. The main thread sits in `DuoApp.init → ClaudeLocator.resolve → lookUp → waitUntilExit`, and nothing is logged.
+- The probe and its call in `DuoApp.init` are in every release since 0.2.0: 55ad7069, 2026-10-06; the shell probe itself dates from dfdeed87.
+- The two bundles differ only in version and code. Info.plist keys, entitlements, Hardened Runtime flags, team, Sparkle 2.10.0 and the appcast's shape are all the same.
+- No 0.2.23 change touches the probe's environment or the user's shell files.
+- The conditions only an update creates launch normally, both on main and on 0.2.23's code: a leftover instance on the same support folder, a dead instance's `endpoint.json` and socket, `state.json` and restore migrations.
+- No Claude Code changelog entry from 2.1.310 to 2.1.318 moves its install.
+
+So the trigger most likely changed on the user's Mac: their login shell stopped answering when Finder starts it, or `claude` left the four places. That is C-159. The whole review is in `docs/plan/incidents/2026-11-03-launch-hang-0-2-23.md`.
+
+## F-579 · Why no check caught it: no launch we test ever asked the login shell (2026-11-03)
+
+- **The release launch check** runs `--state overview --capture`. That is fixture mode, and `DuoApp.init` resolves `claude` only when `terminalsMode == .live`.
+- **check-ui, check-chat and check-background** use fixture states too.
+- **check-scale** passes its stand-in with `--claude`, so the chosen path wins before any lookup.
+- **Live runs here** find `claude` at `~/.local/bin` and `/opt/homebrew/bin`, before the shell, and they're started from a terminal anyway.
+- **The hang monitor** couldn't see a nested run loop (F-573), so the field gave no stacks either.
+
+Lesson: a launch that depends on the user's environment has to be tested in environments this Mac doesn't have, launched the way Finder launches (F-580).
+
+## F-580 · The release launch matrix: the signed app, launched as Finder does, in conditions this Mac doesn't have (2026-11-03)
+
+`scripts/check-launch-matrix.sh <app> [case…]`, run by `scripts/release.sh` on the signed app before notarizing.
+- **How it launches.** Each case goes through LaunchServices (`open -g -n`, launchd's environment, stdin /dev/null), isolated (its own short support folder and Claude config) and in the background.
+- **Pass rule.** A case passes when the app writes `Duo: finished launching in N s` (at `didFinishLaunching`, isolated instances only) within 20 s.
+- **Cases:**
+  - `plain`
+  - `no-claude`: `DUO_CLAUDE_CANDIDATES=` empties the four places, honoured only by an isolated instance
+  - `shell-hangs`: a `.zprofile` that waits 40 s
+  - `shell-child`: one that leaves a child on the pipe
+  - `shell-read`: one that reads the terminal
+  - `no-path`
+  - `stale-endpoint`
+  - `second`: a second instance on the same folder
+- **Not vacuous.** `shell-hangs` must also show the "login shell didn't answer" line, so the case can't pass by never asking the shell.
+- **Results.** On main all eight pass, each launch finishing in 0.1 to 0.2 s. On v0.2.23 with only the two test hooks added (the candidates variable and the finished line), the matrix fails `shell-hangs` (sampled in `DuoApp.init` at `DuoApp.swift:82` → `lookUp` → `waitUntilExit`) and `shell-child` (`lookUp` → `readDataOfLength`), and passes the other six, so the update-only cases launch on 0.2.23's code too.
+- Every instance is quit with SIGTERM; one still stuck in its shell ends when the shell does.
+
 ## F-573 · The 0.2.23 launch hang reproduced: the login-shell probe, which the hang monitor couldn't see (2026-11-03)
 
 A second review of the 0.2.23 launch hang (`launch-hang-review`), with fresh eyes before 0.2.24.
