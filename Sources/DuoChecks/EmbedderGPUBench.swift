@@ -24,8 +24,10 @@ import DuoSearch
     func run(fixed: Bool) -> (mb: Double, line: String) {
         var e = try? Embedder(use: .indexing)
         e?.fixedShapes = fixed
-        for i in 1...20 {
-            let words = 8 + i * 23   // 31 … 468 words: a different padded length each batch
+        let batches = Int(ProcessInfo.processInfo.environment["EMBED_BATCHES"] ?? "") ?? 20   // more batches: does the ceiling hold? (test pass 0.2.25)
+        for i in 1...batches {
+            if fixed && batches > 20 && i % 25 == 0 { print("    fixed batch \(i): \(gpu())") }
+            let words = 8 + ((i - 1) % 20 + 1) * 23   // 31 … 468 words: a different padded length each batch
             let texts = (0..<(5 + i % 27)).map { "Passage \($0): " + Array(repeating: "fox", count: words).joined(separator: " ") }
             autoreleasepool { _ = try? e?.embedDocuments(texts) }
         }
