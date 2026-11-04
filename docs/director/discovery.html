@@ -118,6 +118,11 @@ textarea:focus, select:focus, input:focus, .btn:focus-visible, a:focus-visible, 
   <header>
     <h1>Duo Problem Discovery</h1>
     <div class="runline" id="runline"><span>Loading the last run…</span></div>
+    <div class="row" id="ctl">
+      <button class="btn small" id="refresh" type="button">Refresh now</button>
+      <a id="agent" target="_blank" rel="noopener" hidden>Open the discovery agent's session</a>
+      <span class="status" id="refresh-st"></span>
+    </div>
     <p class="headline" id="headline">GitHub issues on dudgeon/duo-v2, grouped into problems and matched to the workers already on them. A run each day fills this page.</p>
     <div class="tally" id="tally"></div>
   </header>
@@ -167,6 +172,7 @@ const KINDS = {
   backlog:  { verb: "Add to the backlog",       hint: "Becomes an ENH record; no work starts", what: "The director writes an ENH record linking these issues. No work starts, and nothing is posted to GitHub unless you also reply." },
   research: { verb: "Start research",           hint: "A new task note and worker, on your question", what: "The director writes a task note with your question and starts a research worker on it. The issue goes in as quoted, untrusted text." },
   instruct: { verb: "Tell the discovery agent", hint: "Your own instructions for its runs; the director is copied", what: "Saved as your instruction on this problem. The next discovery run follows it (for example: merge this with another problem, treat it as a bug, watch for a reply) and says what it did here; an instruction meant to last stays in force for later runs. The director is copied on it and steps in if it needs more than a run can do." },
+  refresh:  { verb: "Refresh now",             hint: "Asks the director to run discovery now", what: "The director starts a discovery run now; the page updates when it finishes." },
   snooze:   { verb: "Nothing to do for now",    hint: "Moves it to Quiet until the issue changes", what: "The next run keeps this in Quiet until someone comments or a new issue joins it. Nothing goes to the director." },
 };
 
@@ -183,7 +189,7 @@ function renderMeta() {
   const hrs = (Date.now() - new Date(m.ranAt)) / 3.6e6;
   rl.append(el("span", hrs > 30 ? "stale" : "", "Last run " + when(m.ranAt) + (hrs > 30 ? " (overdue)" : "")));
   if (m.issuesOpen != null) rl.append(el("span", "", m.issuesOpen + " open issues"));
-  if (m.runLink) { const a = el("a", "", "the run's session"); a.href = m.runLink; a.target = "_blank"; a.rel = "noopener"; rl.append(a); }
+  const ag = $("#agent"); if (m.runLink) { ag.href = m.runLink; ag.hidden = false; } else ag.hidden = true;
   if (m.sample) rl.append(el("span", "sample", "Sample data from today's issues"));
   if (m.headline) $("#headline").textContent = m.headline;
   const t = $("#tally"); t.replaceChildren();
@@ -427,12 +433,26 @@ async function notifyDirector(a) {
   const lines = a.cancelId ? ["Problem discovery · Geoff cancelled action " + a.cancelId + "."] : [
     "Problem discovery · Geoff queued an action (read actions/ in this page's db for the full row).",
     "Action: " + (KINDS[a.kind] || {}).verb + (a.issues ? " · issues " + a.issues.map(n => "#" + n).join(", ") : "") + (a.target ? " · to " + a.target : "") + (a.close ? " · and close" : ""),
-    "Cluster: " + (a.clusterTitle || a.cluster),
   ];
+  if (!a.cancelId && a.cluster) lines.push("Cluster: " + (a.clusterTitle || a.cluster));
   // Geoff's own words (never issue text) travel for an instruction, so the director is copied on exactly what he asked.
   if (!a.cancelId && a.kind === "instruct" && a.note) lines.push("Geoff's instructions to the discovery agent (cc the director): " + a.note);
   try { const anchor = await comments.anchorFor(document.getElementById("c-" + a.cluster) || document.body); await comments.sendToClaude({ anchor, text: lines.join("\n") }); } catch (e) {}
 }
+
+// ---- Refresh now: asks the director to start a run (the page can't start one itself) ----
+$("#refresh").onclick = async () => {
+  const b = $("#refresh"), st = $("#refresh-st");
+  const open = list(store.actions).some(a => a.kind === "refresh" && (a.status || "queued") === "queued");
+  if (open) { st.className = "status"; st.textContent = "A refresh is already asked for."; return; }
+  b.disabled = true; st.className = "status"; st.textContent = "Asking…";
+  const a = { kind: "refresh", status: "queued", at: new Date().toISOString() };
+  const ok = await saveAction(a);
+  if (!ok) { b.disabled = false; st.className = "status err"; st.textContent = "Couldn't save. Check you're signed in, then try again."; return; }
+  await notifyDirector(a);
+  st.className = "status ok"; st.textContent = canSend === "available" ? "Asked. The director is starting a run." : "Asked. The director starts it on its next pass.";
+  setTimeout(() => { b.disabled = false; }, 30000);
+};
 
 // ---- Connect ----
 (async () => {
