@@ -5663,3 +5663,20 @@ Comparing 0.2.24 against the candidate on an isolated fixture, the 124-verb swee
 ## F-592 · A background launch never loads the editor, so the document flows can't be tested without a window (release test 0.2.25, 2026-11-04; C-160, Q-461)
 
 `user-type:`, `disk-write:` and `resolve:` run only in a launch that captures (`--capture-window --then`); there, with the window not on screen, the document tab opens but the editor text is empty (`bar-text text=""`), so the typing isn't found, nothing is on disk to conflict with, and the conflict bar never appears. `duo2 doc status` also answers "not open in Duo" for a document the window shows. Same on 0.2.24. The chat/terminal flow (`duo2 session chat`) works in the background on both and gives identical output. A visible run (`DUO_TEST_FOREGROUND=1`, Geoff's OK) changed nothing: the front app was `loginwindow`, the screen is locked, so no window is on screen and the editor still didn't load. C-160's two document flows need an unlocked Mac, or Q-461.
+
+## F-593 · A loaded indexing model grows with every prediction; the model now goes after each pass and every 32 uses (idle-cpu, 2026-11-04; C-161, F-586)
+
+test-0-2-25's 60-minute soak of the F-586 candidate (main 47ef3a5d; 25 sessions, each rewritten every ~200 s) still climbed: 632 MB at 5 min to 3,491 MB at 55 min. The 0.2.24 control was at 668 MB at 19 min. Its log said "model loaded" on every pass: the model stayed loaded, it wasn't reloading.
+- **Per call, not per shape.** With one model kept loaded, GPU memory grows with every prediction: about 8.5 MB a call in an app-faithful soak (a detached task; passes of 25 files of 1–3 chunks; `await` between files; 2 s between passes). It went 3 MB → 32 GB in 8 min. test-0-2-25's 300-batch bench measured ~16 MB a call at fixed shapes (4.8 GB) and 14 GB at natural shapes. Not the cause:
+  - an autoreleasepool around each prediction (3 → 11 GB in 3 min with it);
+  - running every prediction on one serial queue (the same 11 GB);
+  - reloading: every release returns to 0.7 MB, and three load/unload cycles leave nothing.
+  F-586's earlier 20-batch runs were too short to show it.
+- **F-586 made each call bigger.** Padding every call to 32 rows ran even one- or two-chunk calls at the largest shape. That's why the candidate was above 0.2.24 at 19 min.
+- **Fix:**
+  - rows round up to 1/2/4/8/16/32 (`Embedder.rowBuckets`), lengths to 64/128/256/512: 24 shapes at most, and small calls stay small;
+  - `EmbedderSource.maxUses`: the model goes and loads afresh after `SearchService.maxModelUses` (32) uses;
+  - `SearchService.pass` releases it at the end of every pass that embedded anything, instead of only after 180 s quiet (C-79), which busy indexing never reached.
+  Growth is then bounded by 32 calls. A load costs **347 ms** (154 loads in the 8 min soak, which ran a pass every ~3 s). In the app a pass starts at most every minute when nothing changed, so that's under 1% of indexing time when busy, and about 0.35 s per minute while files keep changing. Queries don't change: they use the CPU-only `QueryEmbedder`, never reloaded by indexing, so a search mid-pass doesn't wait for a load.
+- **Soak with the app's policy:** 3–29 MB for 8 minutes, against 32 GB with the model kept loaded.
+- **Check:** `DUO_CHECKS=embedder-gpu` now has the app-faithful soak (`EMBED_SOAK_MIN`, default 6). It fails unless GPU memory plateaus under 600 MB (second half no more than 50 MB above the first). `EMBED_EXPECT_GROWTH=1` adds the kept-loaded control, and `EMBED_BATCHES=300` runs test-0-2-25's batch bench through the app's source. Results: the soak 3–29 MB over 8 min (155 loads, 348 ms each) against 32 GB kept loaded; the 300-batch bench 90–708 MB with no trend (peaks are 32 uses of 32 × 512 batches) against 14 GB held. Full DuoChecks 5636 passed, 0 failed (isolation's 4 subprocess cases need a fresh `.build/debug/duo2`).
