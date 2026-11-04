@@ -133,6 +133,7 @@ struct DuoApp: App {
         }
         NotificationCenter.default.addObserver(forName: NSApplication.didFinishLaunchingNotification, object: nil, queue: .main) { _ in
             MainActor.assumeIsolated {
+                HangMonitor.shared.launchFinished()   // a launch that never gets here is logged (F-573)
                 mainWindow.show()
                 model.installPaneKeys()   // ⌃Tab and ⌃⇧Tab, even in terminals (DL-165)
                 // While the element picker is open, Escape closes it wherever the keyboard is
