@@ -20,6 +20,12 @@ public enum ClaudeLocator {
     nonisolated(unsafe) public static var shellTimeout: TimeInterval = 3
     /// The places tried before the shell, and the shell. Settable by DuoChecks; the app keeps these.
     nonisolated(unsafe) public static var candidates: () -> [String] = {
+        // The release launch matrix (F-580) launches a signed copy with `claude` missing from these places, through
+        // LaunchServices, so the login shell runs: `DUO_CLAUDE_CANDIDATES` (colon-separated; empty for none) stands in
+        // for them, in an isolated instance only, so the user's Duo always looks in the real places.
+        if SupportFolder.isIsolated, let given = ProcessInfo.processInfo.environment["DUO_CLAUDE_CANDIDATES"] {
+            return given.split(separator: ":").map(String.init)
+        }
         let home = FileManager.default.homeDirectoryForCurrentUser.path
         return ["\(home)/.local/bin/claude", "\(home)/.claude/local/claude", "/opt/homebrew/bin/claude", "/usr/local/bin/claude"]
     }

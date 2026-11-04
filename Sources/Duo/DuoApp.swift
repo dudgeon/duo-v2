@@ -14,6 +14,7 @@ struct DuoApp: App {
     init() {
         // Before anything reads Duo's folder: a scripted run without DUO_SUPPORT_DIR gets a
         // temporary one, never the user's (C-21, F-89).
+        let launchStarted = ProcessInfo.processInfo.systemUptime   // for the launch matrix's line (F-580)
         let launchEnvironment = ProcessInfo.processInfo.environment
         SupportFolder.prepareForLaunch()
         // A test launch a script started runs in the background: never in the user's way (F-227).
@@ -134,6 +135,10 @@ struct DuoApp: App {
         NotificationCenter.default.addObserver(forName: NSApplication.didFinishLaunchingNotification, object: nil, queue: .main) { _ in
             MainActor.assumeIsolated {
                 HangMonitor.shared.launchFinished()   // a launch that never gets here is logged (F-573)
+                // The launch matrix (scripts/check-launch-matrix.sh, F-580) waits for this line from an isolated instance.
+                if SupportFolder.isIsolated {
+                    FileHandle.standardError.write(Data("Duo: finished launching in \(String(format: "%.1f", ProcessInfo.processInfo.systemUptime - launchStarted)) s (F-580)\n".utf8))
+                }
                 mainWindow.show()
                 model.installPaneKeys()   // ⌃Tab and ⌃⇧Tab, even in terminals (DL-165)
                 // While the element picker is open, Escape closes it wherever the keyboard is
