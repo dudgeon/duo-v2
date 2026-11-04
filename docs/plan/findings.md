@@ -5680,3 +5680,40 @@ test-0-2-25's 60-minute soak of the F-586 candidate (main 47ef3a5d; 25 sessions,
   Growth is then bounded by 32 calls. A load costs **347 ms** (154 loads in the 8 min soak, which ran a pass every ~3 s). In the app a pass starts at most every minute when nothing changed, so that's under 1% of indexing time when busy, and about 0.35 s per minute while files keep changing. Queries don't change: they use the CPU-only `QueryEmbedder`, never reloaded by indexing, so a search mid-pass doesn't wait for a load.
 - **Soak with the app's policy:** 3–29 MB for 8 minutes, against 32 GB with the model kept loaded.
 - **Check:** `DUO_CHECKS=embedder-gpu` now has the app-faithful soak (`EMBED_SOAK_MIN`, default 6). It fails unless GPU memory plateaus under 600 MB (second half no more than 50 MB above the first). `EMBED_EXPECT_GROWTH=1` adds the kept-loaded control, and `EMBED_BATCHES=300` runs test-0-2-25's batch bench through the app's source. Results: the soak 3–29 MB over 8 min (155 loads, 348 ms each) against 32 GB kept loaded; the 300-batch bench 90–708 MB with no trend (peaks are 32 uses of 32 × 512 batches) against 14 GB held. Full DuoChecks 5636 passed, 0 failed (isolation's 4 subprocess cases need a fresh `.build/debug/duo2`).
+
+## F-595 · The refresh reads each transcript's size and date from one listing, and takes its title from the transcript history names: 2.0 s → 0.21 s at 6,000 sessions (idle-cpu, 2026-11-04; F-584)
+
+After F-584, a refresh of 40 projects × 150 sessions read through the real `ClaudeStorage.history()` still took 2,010 ms on main. Nearly all of it was per-session file calls, every 2 s:
+- `ThreadCache.head`/`declaredParents` stat each transcript twice;
+- `SessionTitles.title` stats it again;
+- `makeSession` reads its mtime again;
+- `title()` searched for the transcript by path, which on a miss lists every bucket. F-584's `known` transcript was skipped whenever the config folder's spelling differed (/var vs /private/var), so that fallback ran for many sessions.
+
+**Fix:**
+- `history()` already lists each bucket in bulk; it now asks that listing for the size as well and keeps both as `ClaudeStorage.Stamp`s for the refresh;
+- `stamp(_:)`/`stampOrStat(_:)` answer the title, thread-head and mtime readers, falling back to a stat for anything the listing didn't include (Duo's archive copies, other folders);
+- `known` is "stamped by this refresh's listing", not a path-prefix test.
+
+**Check:** `DUO_CHECKS=refresh-cost` now goes through the real listing of its own `CLAUDE_CONFIG_DIR`, with realistic transcript heads: **2,010 ms → 210 ms**; attribution, order and titles unchanged.
+
+## F-596 · "sql: disk I/O error" at 246k transcripts: `vacuumContent`'s temp b-tree; SQLite errors now carry the extended code (idle-cpu, 2026-11-04)
+
+test-0-2-25 saw `search: sql: disk I/O error` once, in the app's own indexing pass (not `duo2`), on a 246,000-transcript fixture launched from a Claude Code Bash tool (possibly under Seatbelt). The message came from `SQLiteDB.exec` (it has no "in <sql>" suffix). In a pass, `exec` runs `vacuumContent`: `DELETE FROM content WHERE id NOT IN (SELECT DISTINCT content FROM chunks)`. At that size the DISTINCT builds a temporary b-tree that spills to a temp file, and a writer that can't write one (sandbox, TMPDIR, disk) gets `SQLITE_IOERR`.
+
+**Fix:**
+- `DELETE … WHERE NOT EXISTS (SELECT 1 FROM chunks WHERE chunks.content = content.id)`, a probe through the existing `chunks_content` index with no temp table;
+- `PRAGMA temp_store=MEMORY` on the writer;
+- every SQLite error now ends with ` (code <extended>, errno <n>)` (IOERR_READ 266, SHORT_READ 522, IOERR_ACCESS 3338 …), so a recurrence says which.
+
+**Not yet proven** on the 246k fixture: that run waits for the GPU lock (it saturates a core for a long time).
+
+## F-597 · Keep-alive rewrote every listed transcript older than 15 days every minute, so the archive re-copied and search re-indexed them nonstop; it now moves each about once every two days (idle-cpu, 2026-11-04; DL-47)
+
+On the 6,150-session fixture, idle CPU stayed around a core on every build (0.2.24 109.7%). Every round the log read "archive: copied 5110 of 6150 listed transcripts", and back-to-back search passes read "5110 files changed, 0 embedded" (~92 s each).
+- **Cause:** `SessionArchive.keepAlive` (DL-47) set any listed transcript older than half the cleanup period (15 days by default) to exactly "now − 15 days". A minute later the boundary had moved a minute, so the same files were older than it again and were rewritten again: every listed session over 15 days old had its date rewritten every minute, forever. Each rewrite changed size-and-date in the archive manifest (a copy) and in the search index (a re-read and re-store, with embeddings reused). The 5,110 were the fixture's back-dated sessions. Geoff's Duo (0.2.24) sat at ~96% idle CPU with real history, which fits the same loop, and it rewrote his real transcripts' dates in `~/.claude` all day.
+- **Fix:** only items older than half the period **plus a margin** move: `min(2 days, half / 4)`, so 2 days at 30 and 21 h at 7. They are still set to exactly half the period ago (DL-47's rule unchanged), so each moves about once per margin.
+- **Checks** (main.swift, archive):
+  - a second run a minute later, or a day later, moves nothing; three days later it moves again;
+  - hourly for 40 days, a listed session never gets older than half the period + margin: 408 h at 30 days against cleanup at 720 h, 105 of 168 h at 7 days, 60 of 96 h at 4 days. It moves 12, 39 and 70 times, not once an hour.
+  - Full DuoChecks 5644 passed, 0 failed.
+- **To measure** (waits for the lock): the 6,150-session idle CPU and pass times against 0.2.24, and that after the first round the archive copies 0 and search passes report 0 changed files.

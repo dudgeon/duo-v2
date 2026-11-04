@@ -1145,6 +1145,34 @@ func repoFixture() throws -> Fixture {
     let freshMod = try FileManager.default.attributesOfItem(atPath: freshT.path)[.modificationDate] as! Date
     check(refreshed == 4 && abs(oldMod.timeIntervalSince(keepNow.addingTimeInterval(-15 * 86_400))) < 2 && keepNow.timeIntervalSince(freshMod) < 60,
           "keep-alive moves a quiet session to half the period ago (with its sidecars), leaves fresh ones alone")
+    // F-597: a minute later (and a day later) nothing moves again: the same files were rewritten every minute before.
+    check(SessionArchive.keepAlive([oldT, freshT], periodDays: 30, now: keepNow.addingTimeInterval(60)) == 0
+          && SessionArchive.keepAlive([oldT, freshT], periodDays: 30, now: keepNow.addingTimeInterval(86_400)) == 0,
+          "keep-alive leaves a session it just moved alone a minute and a day later (F-597)")
+    check(SessionArchive.keepAlive([oldT], periodDays: 30, now: keepNow.addingTimeInterval(3 * 86_400)) >= 1,
+          "and moves it again once it is two more days past half the period")
+    // F-597: run hourly for 40 days on a session that goes quiet now: it never gets older than half the period plus the
+    // margin (plus the hour between runs), so Claude Code's cleanup (older than the period) never reaches it, and it moves
+    // about once per margin, not every run. Periods of 30, 7 and 4 days (margin 2 days, 21 h, 12 h).
+    for period in [30, 7, 4] {
+        let f = bucketDir.appending(path: "s-window-\(period).jsonl")
+        try "{}".write(to: f, atomically: true, encoding: .utf8)
+        let start = Date()
+        try FileManager.default.setAttributes([.modificationDate: start], ofItemAtPath: f.path)
+        let half = Double(period) * 86_400 / 2, margin = min(2 * 86_400, half / 4)
+        var oldest = 0.0, moves = 0
+        for hour in stride(from: 0.0, through: 40 * 24, by: 1) {
+            let now = start.addingTimeInterval(hour * 3600)
+            moves += SessionArchive.keepAlive([f], periodDays: period, now: now)
+            let mod = try FileManager.default.attributesOfItem(atPath: f.path)[.modificationDate] as! Date
+            oldest = max(oldest, now.timeIntervalSince(mod))
+        }
+        let expected = (40 * 86_400 - half) / margin
+        check(oldest <= half + margin + 3600 && oldest < Double(period) * 86_400,
+              "keep-alive, \(period)-day period: a listed session is never older than half the period + margin (oldest \(Int(oldest / 3600)) h; cleanup at \(period * 24) h)")
+        check(Double(moves) <= expected + 2 && moves >= 1, "and moves about once per margin over 40 days (\(moves) moves, not one an hour)")
+        try? FileManager.default.removeItem(at: f)
+    }
     check(SessionArchive.carryOnPrompt("s-old")?.contains(SessionArchive.copyURL("s-old").path) == true, "carry-on prompt points at the archived transcript")
     check(FileManager.default.fileExists(atPath: SessionArchive.sidecarURL("s-old").appending(path: "tool-results/r1.txt").path),
           "the sidecar folder is archived too (DL-48)")

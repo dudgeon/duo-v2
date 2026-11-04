@@ -94,14 +94,35 @@ public enum ClaudeStorage {
 
     /// Every top-level transcript on this Mac with the folder it belongs to (after any /cd),
     /// cached by modification time so the 2 s refresh rereads only what changed.
+    /// A transcript's size and change time as the last `history()` listed them (F-595): one bulk listing per bucket
+    /// answers what each refresh used to ask with a stat per session per reader (title, thread head, mtime).
+    public struct Stamp: Equatable, Sendable { public var size: UInt64; public var mtime: Date }
+    private final class Stamps: @unchecked Sendable { let lock = NSLock(); var entries: [String: Stamp] = [:] }
+    private static let stamps = Stamps()
+    /// The listed stamp, or nil for a file the last listing didn't include (Duo's archive copies, other folders).
+    public static func stamp(_ url: URL) -> Stamp? {
+        stamps.lock.lock(); defer { stamps.lock.unlock() }
+        return stamps.entries[url.path]
+    }
+    /// The listed stamp, else a stat.
+    public static func stampOrStat(_ url: URL) -> Stamp {
+        if let s = stamp(url) { return s }
+        let a = try? FileManager.default.attributesOfItem(atPath: url.path)
+        return Stamp(size: (a?[.size] as? NSNumber)?.uint64Value ?? 0, mtime: a?[.modificationDate] as? Date ?? .distantPast)
+    }
+
     public static func history() -> [(id: String, transcript: URL, cwd: String)] {
         let fm = FileManager.default
         guard let dirs = try? fm.contentsOfDirectory(at: projects, includingPropertiesForKeys: nil) else { return [] }
         var out: [(String, URL, String)] = []
+        var listed: [String: Stamp] = [:]
+        defer { stamps.lock.lock(); stamps.entries = listed; stamps.lock.unlock() }
         for d in dirs {
-            let files = (try? fm.contentsOfDirectory(at: d, includingPropertiesForKeys: [.contentModificationDateKey])) ?? []
+            let files = (try? fm.contentsOfDirectory(at: d, includingPropertiesForKeys: [.contentModificationDateKey, .fileSizeKey])) ?? []
             for f in files where f.pathExtension == "jsonl" {
-                let mtime = (try? f.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
+                let values = try? f.resourceValues(forKeys: [.contentModificationDateKey, .fileSizeKey])
+                let mtime = values?.contentModificationDate ?? .distantPast
+                listed[f.path] = Stamp(size: UInt64(values?.fileSize ?? 0), mtime: mtime)
                 cwdCache.lock.lock()
                 let hit = cwdCache.entries[f.path]
                 cwdCache.lock.unlock()

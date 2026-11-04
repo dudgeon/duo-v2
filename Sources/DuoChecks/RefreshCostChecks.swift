@@ -24,23 +24,27 @@ import DuoKit
     for p in 0..<projects { try put("topic\(p % 5)/proj\(p)/PROJECT.md") }
     try put("topic0/proj0/inner/PROJECT.md")   // a project inside a project: the deepest wins
     var hist: [(id: String, transcript: URL, cwd: String)] = []
+    func session(_ id: String, cwd: String) throws {
+        let bucket = ClaudeStorage.projects.appending(path: ClaudeStorage.encode(URL(fileURLWithPath: cwd).realPath))
+        try FileManager.default.createDirectory(at: bucket, withIntermediateDirectories: true)
+        let t = bucket.appending(path: "\(id).jsonl")   // Claude's own layout: <bucket>/<session id>.jsonl
+        // A real head: the first user record names the cwd (how `history()` files it) and the thread's root uuid.
+        try ("{\"type\":\"user\",\"cwd\":\"\(cwd)\",\"uuid\":\"u-\(id)\",\"timestamp\":\"2026-11-04T10:00:00Z\",\"message\":{\"role\":\"user\",\"content\":\"hello\"}}\n"
+             + "{\"type\":\"summary\",\"summary\":\"Title \(id)\"}\n").write(to: t, atomically: false, encoding: .utf8)
+        hist.append((id: id, transcript: t, cwd: cwd))
+    }
     for p in 0..<projects {
         for i in 0..<perProject {
-            let cwd = home.appending(path: "topic\(p % 5)/proj\(p)" + (i % 3 == 0 ? "/src/deep" : "")).path
-            let id = "s-\(p)-\(i)"
-            let bucket = ClaudeStorage.projects.appending(path: ClaudeStorage.encode(URL(fileURLWithPath: cwd).realPath))
-            try FileManager.default.createDirectory(at: bucket, withIntermediateDirectories: true)
-            let t = bucket.appending(path: "\(id).jsonl")   // Claude's own layout: <bucket>/<session id>.jsonl
-            try "{\"type\":\"summary\",\"summary\":\"Title \(id)\"}\n".write(to: t, atomically: false, encoding: .utf8)
-            hist.append((id: id, transcript: t, cwd: cwd))
+            try session("s-\(p)-\(i)", cwd: home.appending(path: "topic\(p % 5)/proj\(p)" + (i % 3 == 0 ? "/src/deep" : "")).path)
         }
     }
-    hist.append((id: "s-inner", transcript: base.appending(path: "t/99999-inner.jsonl"), cwd: home.appending(path: "topic0/proj0/inner/x").path))
+    let innerCwd = home.appending(path: "topic0/proj0/inner/x")
+    try FileManager.default.createDirectory(at: innerCwd, withIntermediateDirectories: true)
+    try session("s-inner", cwd: innerCwd.path)
     var c = LiveSnapshot.Context(root: home)
-    c.includeHistory = false
-    c.historyOverride = hist.shuffled()
+    c.includeHistory = true   // the real listing (`ClaudeStorage.history()`) of this check's own Claude folder
     _ = LiveSnapshot.build(c, beacons: [])   // warm: realPath and the file system
-    let runs = 3
+    let runs = Int(ProcessInfo.processInfo.environment["REFRESH_RUNS"] ?? "") ?? 3   // more for a profile
     let t0 = Date()
     var snap = LiveSnapshot.build(c, beacons: []).0
     for _ in 1..<runs { snap = LiveSnapshot.build(c, beacons: []).0 }
