@@ -120,8 +120,18 @@ public enum LiveSnapshot {
         let homePath = home.map { resolve($0.folder.path) }
         // The deepest project a folder is in. Home holds only what runs in its own folder (DL-85):
         // a folder inside Home without a project file is listed as a folder.
+        // Asked once per history entry per project before (O(projects² × history) every refresh, which kept a heavy
+        // user's Duo at ~60% of a core: F-584): each path is answered once, by index into `byPath`.
+        let prefixes = byPath.map { $0.path + "/" }
+        var owners: [String: Int?] = [:]
         func owner(ofPath p: String) -> ProjectDiscovery.Found? {
-            byPath.filter { p == $0.path || ($0.path != homePath && p.hasPrefix($0.path + "/")) }.max { $0.path.count < $1.path.count }?.found
+            if let hit = owners[p] { return hit.map { byPath[$0].found } }
+            var best: Int?
+            for (i, e) in byPath.enumerated() where p == e.path || (e.path != homePath && p.hasPrefix(prefixes[i])) {
+                if best.map({ e.path.count > byPath[$0].path.count }) ?? true { best = i }
+            }
+            owners[p] = .some(best)
+            return best.map { byPath[$0].found }
         }
         let byEncoded = Dictionary(byPath.map { (ClaudeStorage.encode($0.path), $0.found) }, uniquingKeysWith: { a, _ in a })
         var actual: [String: ProjectDiscovery.Found] = [:]   // session id → project
@@ -143,16 +153,20 @@ public enum LiveSnapshot {
         var filedIn: [String: String] = [:]   // id → resolved folder path
         for (id, f) in actual { filedIn[id] = resolve(f.folder.path) }
 
+        let claudeProjects = ClaudeStorage.projects.path + "/"
+        let historyById = Dictionary(history.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         func makeSession(_ id: String, project name: String, folder: URL, entry: SessionIndex.Entry?) -> Fixture.Session {
             let beacon = beacons.first { $0.sessionId == id }
             let hooks = ctx.events.flatMap { HookEvents.summary(for: id, in: $0) }
             let live = beacon.map { Attention.live(beacon: $0, hooks: hooks, seenAt: ctx.seen[id]) }
-            let mtime = history.first { $0.id == id }.flatMap { try? $0.transcript.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate }
+            // Claude's own copy, not Duo's archive (a purged session keeps its archived title, DL-44).
+            let known = historyById[id].map(\.transcript).flatMap { $0.path.hasPrefix(claudeProjects) && FileManager.default.fileExists(atPath: $0.path) ? $0 : nil }
+            let mtime = historyById[id].flatMap { try? $0.transcript.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate }
             // Last activity: the transcript's change time when it's newer than the filing (a session
             // filed 44 minutes ago and used 2 minutes ago is 2m old).
             let since = live?.since ?? [entry?.createdAt, mtime].compactMap { $0 }.max().map { $0.timeIntervalSince1970 * 1000 }
             return Fixture.Session(
-                name: title(id: id, folder: folder, beacon: beacon, started: entry?.createdAt),
+                name: title(id: id, folder: folder, beacon: beacon, started: entry?.createdAt, known: known),
                 project: name,
                 state: live?.state ?? .idle,
                 wait: live?.state == .readyForReview ? nil : Attention.waitText(since: since, now: ctx.now),
@@ -171,6 +185,12 @@ public enum LiveSnapshot {
         // Where each session ran, last (after any /cd): a project that moved still has sessions
         // filed under its old path, which won't resume until they follow it (DB-8).
         let cwdOf = Dictionary(history.map { ($0.id, resolve($0.cwd)) }, uniquingKeysWith: { a, _ in a })
+        // Every past session, newest first, by the folder of the project it ran in: sorted and attributed once, not
+        // once per project (F-584).
+        var historyByOwner: [URL: [String]] = [:]
+        for h in history.map({ (h: $0, key: $0.transcript.path) }).sorted(by: { $0.key > $1.key }).map(\.h) {
+            if let o = owner(ofPath: resolve(h.cwd)) { historyByOwner[o.folder, default: []].append(h.id) }
+        }
         var projectList = projects.map(\.project)
         for f in projects {
             let name = f.project.name
@@ -180,20 +200,22 @@ public enum LiveSnapshot {
             // Sessions filed in the index, plus live sessions running in the folder (started
             // outside Duo: attributed by cwd, CONS FR-7.2.5).
             var ids = index.sessions.filter { $0.archived != true && actual[$0.sessionId]?.folder ?? f.folder == f.folder }.map(\.sessionId)
-            for m in moves where m.to == f.folder && !ids.contains(m.sessionId) { ids.append(m.sessionId) }
+            var listed = Set(ids)   // `ids` keeps the order; this answers "already in?" (F-584)
+            for m in moves where m.to == f.folder && listed.insert(m.sessionId).inserted { ids.append(m.sessionId) }
             func inside(_ cwd: String) -> Bool { owner(ofPath: resolve(cwd))?.folder == f.folder }
             func filedElsewhere(_ id: String) -> Bool { filedIn[id].map { $0 != folderPath } ?? false }
             for b in beacons where inside(b.cwd) && !filedElsewhere(b.sessionId) {
-                if !ids.contains(b.sessionId) { ids.append(b.sessionId) }
+                if listed.insert(b.sessionId).inserted { ids.append(b.sessionId) }
             }
             // Every past session in the folder (DL-59), newest first, not only those Duo filed.
-            for h in history.sorted(by: { $0.transcript.path > $1.transcript.path }) where inside(h.cwd) && !filedElsewhere(h.id) {
-                if !ids.contains(h.id) { ids.append(h.id) }
+            for id in historyByOwner[f.folder] ?? [] where !filedElsewhere(id) {
+                if listed.insert(id).inserted { ids.append(id) }
             }
+            let entries = Dictionary(index.sessions.map { ($0.sessionId, $0) }, uniquingKeysWith: { a, _ in a })
             var stale: [String: Int] = [:]
             for id in ids where !claimed.contains(id) {
                 claimed.insert(id)
-                sessions.append(makeSession(id, project: name, folder: f.folder, entry: index.sessions.first { $0.sessionId == id }))
+                sessions.append(makeSession(id, project: name, folder: f.folder, entry: entries[id]))
                 if let cwd = cwdOf[id], cwd != folderPath, !cwd.hasPrefix(folderPath + "/"), !FileManager.default.fileExists(atPath: cwd) {
                     stale[cwd, default: 0] += 1
                 }
@@ -362,9 +384,11 @@ public enum LiveSnapshot {
             : "Session \(started.formatted(.dateTime.month(.abbreviated).day().hour().minute()))"
     }
 
-    static func title(id: String, folder: URL, beacon: Beacon?, started: Date? = nil) -> String {
+    /// `known`: the transcript Claude's history already named, when it's in Claude's own folder; asked for again by
+    /// path otherwise (a resolve, a stat and, on a miss, a listing of every bucket, per session per refresh: F-584).
+    static func title(id: String, folder: URL, beacon: Beacon?, started: Date? = nil, known: URL? = nil) -> String {
         if let b = beacon, b.nameSource == "user", let n = b.name, !n.isEmpty { return n }
-        guard let t = ClaudeStorage.transcript(sessionId: id, cwd: beacon?.cwd ?? folder.path) else {
+        guard let t = known ?? ClaudeStorage.transcript(sessionId: id, cwd: beacon?.cwd ?? folder.path) else {
             // Purged by Claude's cleanup but kept by Duo (DL-44): still has its title.
             let m = SessionArchive.manifest()
             return m.sessions[id]?.title ?? untitled(started ?? Date())
