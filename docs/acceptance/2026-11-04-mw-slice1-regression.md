@@ -94,6 +94,28 @@ All four pass. **The "12.9% on main" earlier today is not a real regression:** t
 - Not run: conflict and outside-edit flows, session fork, chat versus terminal session views, ⇧⌘A search window, the peek and needs-you with real questions, notification clicks (C-150), voice entry points, ⌘W and ⌘Q, bring-forward from the Window menu or a click, window drag and resize, a visible run (needs Geoff's OK).
 - The release-build `DuoChecks windows` and `scripts/check-windows.sh` were not re-run; they are the slice's own.
 
+## Visible run, C-160's gaps (2026-11-04, 06:33–06:47 EST)
+
+Geoff OK'd a 15-minute visible run (through the director). Main's release build and 0.2.22 ran with windows shown (`DUO_TEST_FOREGROUND=1`), each on its own support folder and scratch Claude config. The projects were `zqv-alpha`, `zqv-beta` and `zqv-gamma`, names that exist nowhere else (F-583). A stand-in `claude` was preset in `state.json`, so no real claude started and no turns ran. Every `duo2` call was guarded; all instances quit by SIGTERM. Tools: `tools/vis.sh`, `tools/mkvis.py`.
+
+| Flow | 0.2.22 | main | Verdict |
+|---|---|---|---|
+| ⇧⌘A search for `zqv` | Opens with results: Home, 3 projects, 6 sessions, files | Same results | Pass. The capture differs only by DL-315's collapsed sidebar and how far indexing had got |
+| Window-menu bring-forward (`window focus <n\|project>`, what the menu item and ⌘\` do) | — | Each focus makes that window key; `window list` shows it | Pass |
+| DL-308 from `window new <project already open>` | — | "zqv-beta is in window 2; brought it forward", no second window | Pass |
+| Fork in window 2 (`session fork … --window 2`) | — | New session in `zqv-beta` with the same history, running; windows unchanged | Pass |
+| Outside edit to a document open in window 3 | — | `doc read --window 3` returns the disk text with the appended line | Pass |
+| Close window 2 with the fork running | — | The fork is still running afterwards; `ping` and `sessions` answer | Pass |
+| ⌘W (`cmd-w` with the editor holding the keyboard) | No `bar-focus` action, so not comparable | Closes the active document tab (other.md goes, notes.md shows) | Pass on main |
+| ⌘Q (SIGTERM) and relaunch with 3 windows | — | Quits cleanly; relaunch opens one window on zqv-alpha | Expected: slice 2 not built (C-153) |
+| Notification click across windows (C-150) | — | No live hook: an isolated instance posts no real notifications. Covered by `DUO_CHECKS=windows`, which calls `openFromNotification` with the project in another window (WindowChecks.swift:145) | See the checks result below |
+| Conflict (unsaved edit, then a disk write) and save-on-quit | **Not exercised** | **Not exercised** | The harness's `user-type:`/`disk-write:` act on the editor, which in workspace mode still held `_PROJECT.md`, not the document tab, on both apps. A harness limit, not a Duo difference; still a gap |
+| Chat vs terminal on a running session | **Not exercised** | **Not exercised** | My script picked the session id from the wrong output file, so `session chat on/off` got no id. Still a gap |
+
+`DUO_CHECKS=windows` on this branch: **51 passed, 0 failed**. That includes "a notification or Dock click goes to its project's window, else the key window" and "a notification clicked from the primary's Notifier opens window 2", so C-150's click routing passes. But the one check for routing by the caller's session (`WindowChecks.swift:113`, F-581) is conditional and **did not run**, so nothing covers F-581 yet.
+
+Result: **no regression found in the flows that ran.** Conflict, save-on-quit and the chat toggle remain untested (C-160 narrowed to those).
+
 ## Records
 
 Filed in `docs/plan/` with this branch: F-581, F-582, F-583, C-160, Q-460 (the reserved numbers). Repros are in the findings.
