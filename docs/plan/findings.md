@@ -5488,11 +5488,28 @@ Found while regression-testing multi-window slice 1 ([report](../acceptance/2026
 - **Reads leak.** An instance started with its own `DUO_SUPPORT_DIR`, `CLAUDE_CONFIG_DIR` and a scratch `HOME` still answers `duo2 doctor` with Geoff's real session archive (`~/Library/Application Support/Duo/archive`, 399 sessions, 4 GB) and `duo2 search-status` with his 87 real projects. It reads them through the account's home, not `$HOME`. The same in 0.2.22, so not a regression, but an isolated run is not fully isolated for reads, and `duo2 search-rebuild` there would reach the real index.
 - **Writes leak when the socket is missing.** A `duo2` run with `DUO_SOCKET` and `DUO_TOKEN` empty reaches the running Duo (CLAUDE.md). On 2026-11-03 about 22:27 a test script did this for about 60 s (a parallel run had wiped its `endpoint.json`): settings, a comment on a fixture document, a task note and a session were changed on the real Duo. Repaired except Geoff's dismissed explanations. The incident and its command list are in the report.
 - Fix direction: the F-529 guard, plus `duo2` refusing when `DUO_SOCKET` names a path that does not exist, and an isolated instance (`DUO_ISOLATED=1`) ignoring the account's real archive and projects.
+- **It reached the fixtures too (2026-11-04, F-581's live check).**
+  - The isolated instance ran on a scratch workspace with a `refunds` project, but it resolved `refunds` to the acceptance fixture `~/DuoAcceptance/workspace/payments/refunds`, a project it read from the account. It started its Claude session there.
+  - That wrote `refunds/.duo/sessions.json` (the one test session) into the fixture, and a 50-line transcript into the real `~/.claude/projects/-Users-geoff-DuoAcceptance-workspace-payments-refunds/`.
+  - Both were moved to `/tmp/mwf/leaked/`. `refunds` matches `~/DuoAcceptance-backup-2026-11-01-decks` again (`diff -rq`).
+  - Until F-529 lands, a live test should name projects that exist nowhere else.
 
 ## F-582 · `duo2 open <project> --window N` says "Opened" when the project lives in another window (2026-11-04; DL-308)
 
 Repro: windows 1 `checkout`, 2 `refunds`, 3 `onboarding`; `duo2 open refunds --window 3` prints `Opened refunds.` Window 3 stays on `onboarding` and window 2 comes forward, which is what DL-308 says should happen (a project lives in one window); only the message is wrong. Compare `duo2 window new refunds`, which says "refunds is in window 2; brought it forward." Severity: low. Evidence: `raw/mw/015-open-in-w3-refunds.out`, `016-list-after-open.out`.
+- **Fixed** on fix/mw-slice1-defects: when the project's window isn't the one asked, `duo2 open` says "refunds is in window 2; brought it forward." It still says "Opened refunds." when the window itself opens it. `DUO_CHECKS=windows` checks both.
 
-## F-581 · `duo2` with `DUO_SESSION_ID` of a session shown in window 2 acted on window 1 (2026-11-04; Q-430) — unverified
+## F-581 · `duo2` with `DUO_SESSION_ID` of a session shown in window 2 acted on window 1 (2026-11-04; Q-430) — checked live: not a bug in Duo
 
-Q-430 says a `duo2` call acts on the window showing the caller's session. Repro on a release build of `main`: three windows (`checkout`, `refunds`, `onboarding`), `duo2 session new --project refunds --window 2`, then with `DUO_SESSION_ID=<that session's id> duo2 status --json` the reply says `"window": 1, "project": "checkout"`, and `go all` with the same variable moved window 1 to All projects. The same happened with a planted (not running) refunds session id. `DuoChecks windows` passes the same lookup in-process (`WindowChecks.swift:113`), so the gap is either how the live request carries the session, or that the call came from outside a Duo terminal. Not proven either way: it needs the call made from a real session running in window 2. Severity: medium until checked, because a session in another window would drive the primary window. Evidence: `raw/mw/from-session-*.out`, `raw/mw/sid.txt`, `raw/mw/from-planted-status.out`.
+Q-430 says a `duo2` call acts on the window showing the caller's session. The regression run set `DUO_SESSION_ID` to a session in window 2 and got window 1. On a release build of `main`: three windows (`checkout`, `refunds`, `onboarding`), `duo2 session new --project refunds --window 2`, then `DUO_SESSION_ID=<that id> duo2 status --json` replied `"window": 1, "project": "checkout"`, and `go all` with the same variable moved window 1. A planted (not running) refunds id did the same. (Evidence on `test/mw-slice1-regression-clean`: `raw/mw/from-session-*.out`, `sid.txt`, `from-planted-status.out`.)
+
+- **Why.** `duo2` sends `CLAUDE_CODE_SESSION_ID ?? DUO_SESSION_ID` as the caller (`Sources/duo2/main.swift`). The run called `duo2` from its own Claude session, so its own `CLAUDE_CODE_SESSION_ID`, a session that instance didn't know, went first. An unknown session falls back to the primary, as Q-430 says.
+- **Live check** (fix/mw-slice1-defects, 2026-11-04):
+  - An isolated instance (support folder `/tmp/mwf/s`) opened `refunds` in window 2 and started a real Claude session there.
+  - In that session's prompt, Claude Code's `!` shell mode ran `duo2 status --json` and `duo2 window list` with the session's own environment, with no model turn. The command was guarded to run only while `DUO_SOCKET` was under `/tmp/mwf/`.
+  - It printed `CC=08ca2e86-… DUO=08ca2e86-… SOCK=/tmp/mwf/s/Duo/duo.sock`, then `"window" : 2`, `"view" : "project"` on refunds, and the list `1 Duo None (primary, Home)`, `2 refunds Blue (key)`.
+  - Inside a Duo session the two ids are the same, and the call lands in window 2.
+- **Kept as is.** After `/clear` or `/fork` in a Duo terminal, `CLAUDE_CODE_SESSION_ID` is the new session's id, which Duo follows, so it should keep going first.
+- `DUO_CHECKS=windows` now also checks that an unknown caller session acts on the primary.
+- To test from outside a Duo terminal, unset `CLAUDE_CODE_SESSION_ID` as well.
+

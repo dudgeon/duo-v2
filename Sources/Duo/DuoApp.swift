@@ -241,6 +241,7 @@ final class MainWindow {
 
     func show() {
         if let window {
+            model.hiddenByClose = false
             DuoFocus.hide(window); window.makeKeyAndOrderFront(nil)
             if !SupportFolder.isIsolated { NSApp.activate() }
             return
@@ -271,7 +272,7 @@ final class MainWindow {
         w.delegate = minimum   // the hosting controller resets contentMinSize; the delegate holds the line
         // A second window closing: the core forgets it; its projects keep their tabs and sessions (DL-311).
         minimum.closed = { [model] in
-            guard model.core.models.count > 1 else { return }   // the last window only hides
+            guard model.core.models.count > 1 else { model.hiddenByClose = true; return }   // the last window only hides (Q-460)
             model.core.detach(model)
             MainWindow.open.removeAll { $0.model === model }
         }

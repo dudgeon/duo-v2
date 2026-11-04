@@ -64,6 +64,7 @@ extension AppModel {
         if core.primary === self { marks.append("primary") }
         if core.keyModel === self, core.keyWindowID != nil { marks.append("key") }
         if ownsHome { marks.append("Home") }
+        if hiddenByClose { marks.append("hidden") }
         let colour = windowColourID.flatMap { id in DuoWindowColour.all.first { $0.id == id }?.name } ?? "None"
         return "\(windowNumber)  \(windowTitle)  \(colour)" + (marks.isEmpty ? "" : "  (" + marks.joined(separator: ", ") + ")")
     }

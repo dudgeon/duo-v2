@@ -78,6 +78,8 @@ public final class AppCore {
     @ObservationIgnored public internal(set) var focusLog: [Int] = []
     /// The windows `openWindow` made, held until they close (the first window is the app's own).
     @ObservationIgnored var opened: [AppModel] = []
+    /// Windows the user closed while they were the last (they only hid), by model (Q-460).
+    @ObservationIgnored var hiddenWindows: Set<ObjectIdentifier> = []
     /// Home's window (Q-431), by number; nil is the primary.
     public internal(set) var homeOwnerNumber: Int?
     var colourNewWindowsSetting = DuoState.load().colourNewWindows

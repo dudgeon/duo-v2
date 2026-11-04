@@ -41,6 +41,16 @@ extension AppCore {
     @discardableResult
     public func openWindow(project: String? = nil) -> AppModel {
         if let project, let m = model(showing: project) { bringForward(m); return m }
+        // The last window closed, so it only hid (F-538): New Window brings it back as the new window, at All
+        // projects or on the project, numbered 1 again, instead of opening a second beside it (Q-460).
+        if let hidden = models.first(where: \.hiddenByClose), models.allSatisfy(\.hiddenByClose) {
+            hidden.hiddenByClose = false
+            hidden.windowNumber = 1
+            if let project { hidden.open(project: project) } else if !hidden.altitude.isAllProjects { hidden.zoomOut() }
+            count("openWindow")
+            bringForward(hidden)
+            return hidden
+        }
         let m = AppModel(core: self, number: freeWindowNumber())
         opened.append(m)   // the core owns a window it opened until the window closes
         if colourNewWindows { m.windowColourID = Self.nextColour(taken: models.filter { $0 !== m }.map(\.windowColourID)).id }
@@ -54,6 +64,7 @@ extension AppCore {
     /// Brings a window forward (DL-308): the app shows it, makes it key and records which.
     public func bringForward(_ m: AppModel) {
         focusLog.append(m.windowNumber)
+        m.hiddenByClose = false
         keyWindowID = m.windowID ?? keyWindowID
         windowFocuser?(m)
     }
@@ -63,7 +74,7 @@ extension AppCore {
     /// Returns false for the last window.
     @discardableResult
     public func closeWindow(_ m: AppModel) -> Bool {
-        guard models.count > 1 else { windowHider?(m); return false }
+        guard models.count > 1 else { m.hiddenByClose = true; windowHider?(m); return false }
         m.rememberTabs()
         windowCloser?(m)
         detach(m)
@@ -172,6 +183,12 @@ extension AppModel {
 
     /// The window's title (DL-311): its project's name, or "Duo" at All projects. macOS lists windows by it.
     public var windowTitle: String { currentProject?.name ?? "Duo" }
+
+    /// The last window, closed: it only hid (Duo keeps running, F-538). New Window or a Dock click brings it back (Q-460).
+    public var hiddenByClose: Bool {
+        get { core.hiddenWindows.contains(ObjectIdentifier(self)) }
+        set { if newValue { core.hiddenWindows.insert(ObjectIdentifier(self)) } else { core.hiddenWindows.remove(ObjectIdentifier(self)) } }
+    }
 
     /// The window's colour as drawn: nil (None) when it has none, and while Classic is on (DL-312, board 4c A).
     public var windowColour: DuoWindowColour.Colour? {
