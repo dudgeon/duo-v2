@@ -6,6 +6,26 @@ import SwiftUI
 
 // Plain assertions, run with `swift run DuoChecks`. Exit status is the number of failures.
 
+// First, before anything reads Duo's folder: the run's own temporary support folder, whatever the
+// environment (a given isolated one is kept). Fail closed: no folder, no run (F-588).
+let checksSupportDir: String = {
+    if let given = Isolation.checksSupport(ProcessInfo.processInfo.environment) { return given }
+    var template = Array("/tmp/duochk-XXXXXX".utf8CString)
+    guard template.withUnsafeMutableBufferPointer({ mkdtemp($0.baseAddress!) }) != nil else {
+        FileHandle.standardError.write(Data("DuoChecks: couldn't make a temporary support folder (errno \(errno)); not running against the real one.\n".utf8))
+        exit(73)
+    }
+    let path = String(decoding: template.prefix { $0 != 0 }.map { UInt8(bitPattern: $0) }, as: UTF8.self)
+    setenv(SupportFolder.variable, path, 1)
+    return path
+}()
+guard SupportFolder.isIsolated, Isolation.inside(SupportFolder.duo.path, checksSupportDir) else {
+    FileHandle.standardError.write(Data("DuoChecks: the support folder isn't the run's own (\(SupportFolder.duo.path)); stopping.\n".utf8))
+    exit(73)
+}
+/// A line only this run writes, through Duo's own log: it must land in the run's folder, never the real one.
+let checksCanary = "duochecks canary \(getpid()) \(UUID().uuidString)"
+
 nonisolated(unsafe) var failures = 0
 nonisolated(unsafe) var passes = 0
 

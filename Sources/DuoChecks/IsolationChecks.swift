@@ -184,7 +184,18 @@ func isolationChecks() throws {
     }
     check(bare.isEmpty, "every script that launches Duo or runs duo2 sets DUO_ISOLATED=1\(bare.isEmpty ? "" : ": " + bare.joined(separator: ", "))")
 
-    // 9. The real duo2, as a subprocess: refusals exit 64 and say why; the named instance answers.
+    // 9. DuoChecks itself runs on a support folder of its own (F-588).
+    check(Isolation.checksSupport([:], real: real) == nil && Isolation.checksSupport(["DUO_SUPPORT_DIR": real.path], real: real) == nil
+          && Isolation.checksSupport(["DUO_SUPPORT_DIR": real.path + "/Duo"], real: real) == nil, "DuoChecks never takes the real support folder (unset, or named)")
+    check(Isolation.checksSupport(["DUO_SUPPORT_DIR": inst.path], real: real) == inst.path, "…and keeps a given isolated one")
+    check(Isolation.inside(SupportFolder.duo.path, checksSupportDir) && SupportFolder.isIsolated, "this run's support folder is its own (\(checksSupportDir))")
+    DuoLog.write(checksCanary)
+    let realLog = SupportFolder.real.appending(path: "Duo/logs/duo.log")
+    let mine = (try? String(contentsOf: SupportFolder.duo.appending(path: "logs/duo.log"), encoding: .utf8)) ?? ""
+    let theirs = (try? String(contentsOf: realLog, encoding: .utf8)) ?? ""
+    check(mine.contains(checksCanary) && !theirs.contains("duochecks canary \(getpid()) "), "canary: Duo's log line from this run is in its folder, not the real duo.log")
+
+    // 10. The real duo2, as a subprocess: refusals exit 64 and say why; the named instance answers.
     let duo2 = repoRoot().appending(path: ".build/debug/duo2")
     guard fm.isExecutableFile(atPath: duo2.path) else { print("  – duo2 not built (.build/debug/duo2): subprocess cases skipped"); return }
     func run(_ vars: [String: String], _ args: [String]) -> (Int32, String) {

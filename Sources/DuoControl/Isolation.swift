@@ -179,6 +179,17 @@ public enum Isolation {
         throw Refusal("a test context (\(variable)=1) with no \(SupportFolder.variable) or \(ControlEndpoint.socketVariable): duo2 won't read the user's own index, archive or settings.")
     }
 
+    // MARK: DuoChecks
+
+    /// The support folder a DuoChecks run uses: the given `DUO_SUPPORT_DIR` if it is isolated (not
+    /// the real one), else nil: the run makes a temporary one of its own (director, 2026-11-04: its
+    /// trust and drop lines had reached the real `logs/duo.log`). Never the real folder.
+    public static func checksSupport(_ env: [String: String], real: URL = SupportFolder.real) -> String? {
+        guard let d = env[SupportFolder.variable], !blank(d), SupportFolder.isIsolated(given: d, real: real),
+              !inside(d, real.appending(path: "Duo").path) else { return nil }
+        return d
+    }
+
     // MARK: Confining an isolated process
 
     /// What to change in an isolated process's environment so it reads only its own folders:
