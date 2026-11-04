@@ -121,8 +121,13 @@ textarea:focus, select:focus, input:focus, .btn:focus-visible, a:focus-visible, 
     <div class="row" id="ctl">
       <button class="btn small" id="refresh" type="button">Refresh now</button>
       <a id="agent" target="_blank" rel="noopener" hidden>Open the discovery agent's session</a>
+      <button class="btn ghost small" id="agent-copy" type="button" hidden>Copy its address</button>
       <span class="status" id="agent-none">The discovery agent's session link appears after its next run.</span>
       <span class="status" id="refresh-st"></span>
+    </div>
+    <div class="row" id="agent-addr-row" hidden>
+      <span class="status">Or paste this into your browser:</span>
+      <code id="agent-addr" style="user-select:all;-webkit-user-select:all;overflow-wrap:anywhere;font:.82rem var(--mono)"></code>
     </div>
     <p class="headline" id="headline">GitHub issues on dudgeon/duo-v2, grouped into problems and matched to the workers already on them. A run each day fills this page.</p>
     <div class="tally" id="tally"></div>
@@ -190,7 +195,9 @@ function renderMeta() {
   const hrs = (Date.now() - new Date(m.ranAt)) / 3.6e6;
   rl.append(el("span", hrs > 30 ? "stale" : "", "Last run " + when(m.ranAt) + (hrs > 30 ? " (overdue)" : "")));
   if (m.issuesOpen != null) rl.append(el("span", "", m.issuesOpen + " open issues"));
-  const ag = $("#agent"); if (m.runLink) { ag.href = m.runLink; ag.hidden = false; $("#agent-none").hidden = true; } else { ag.hidden = true; $("#agent-none").hidden = false; }
+  const ag = $("#agent"), has = !!m.runLink;
+  if (has) { ag.href = m.runLink; $("#agent-addr").textContent = m.runLink; }
+  ag.hidden = !has; $("#agent-copy").hidden = !has; $("#agent-addr-row").hidden = !has; $("#agent-none").hidden = has;
   if (m.sample) rl.append(el("span", "sample", "Sample data from today's issues"));
   if (m.headline) $("#headline").textContent = m.headline;
   const t = $("#tally"); t.replaceChildren();
@@ -440,6 +447,22 @@ async function notifyDirector(a) {
   if (!a.cancelId && a.kind === "instruct" && a.note) lines.push("Geoff's instructions to the discovery agent (cc the director): " + a.note);
   try { const anchor = await comments.anchorFor(document.getElementById("c-" + a.cluster) || document.body); await comments.sendToClaude({ anchor, text: lines.join("\n") }); } catch (e) {}
 }
+
+// ---- The agent's link: open it in a new tab ourselves; if the frame blocks that, the address is shown and copyable ----
+$("#agent").addEventListener("click", e => {
+  const href = $("#agent").href; if (!href) return;
+  e.preventDefault();
+  let w = null; try { w = window.open(href, "_blank", "noopener"); } catch (err) {}
+  if (!w) { try { window.top.location.href = href; } catch (err) { $("#refresh-st").className = "status err"; $("#refresh-st").textContent = "This view blocked the link. Use Copy its address, or paste the address below."; } }
+});
+$("#agent-copy").addEventListener("click", async () => {
+  const href = $("#agent").href, b = $("#agent-copy");
+  let ok = false;
+  try { await navigator.clipboard.writeText(href); ok = true; } catch (e) {
+    try { const t = document.createElement("textarea"); t.value = href; document.body.append(t); t.select(); ok = document.execCommand("copy"); t.remove(); } catch (e2) {}
+  }
+  b.textContent = ok ? "Copied" : "Select the address below"; setTimeout(() => b.textContent = "Copy its address", 2500);
+});
 
 // ---- Refresh now: asks the director to start a run (the page can't start one itself) ----
 $("#refresh").onclick = async () => {
