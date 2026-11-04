@@ -47,6 +47,8 @@ func repoFixture() throws -> Fixture {
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "terminal-keys" { return try terminalKeyChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "return-chords" { return try returnChordChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "prompt-keys" { return try promptKeyChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "refresh-cost" { return try refreshCostChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "embedder-gpu" { return try embedderGPUBench() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "ambiguous-name" { return try ambiguousNameChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "reveal-tree" { return try revealTreeChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "park" { return try parkChecks() }
