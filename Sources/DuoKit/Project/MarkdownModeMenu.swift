@@ -56,7 +56,31 @@ struct MarkdownModeMenu: View {
                 .padding(.horizontal, DuoMetric.docxMenuRowPaddingX).padding(.vertical, 2)
         }
         .modifier(ReviewMenuFrame())
+        .onGeometryChange(for: CGRect.self, of: { $0.frame(in: .global) }) { model.formatBarFrames["modeMenu"] = $0 }
+        .onAppear { ModeMenuMonitor.install(model) }
+        .onDisappear { ModeMenuMonitor.remove() }
     }
+}
+
+/// Esc and a click outside close the menu while it is open (F-571): a local event monitor, since the keyboard is in the page.
+@MainActor private enum ModeMenuMonitor {
+    private static var token: Any?
+    static func install(_ model: AppModel) {
+        remove()
+        token = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .leftMouseDown, .rightMouseDown]) { event in
+            if event.type == .keyDown {
+                return event.keyCode == 53 && model.dismissReviewMenu(escape: true) ? nil : event
+            }
+            var point: CGPoint?
+            if let content = event.window?.contentView {
+                let p = content.convert(event.locationInWindow, from: nil)
+                point = CGPoint(x: p.x, y: content.isFlipped ? p.y : content.bounds.height - p.y)
+            }
+            model.dismissReviewMenu(escape: false, click: point)
+            return event
+        }
+    }
+    static func remove() { if let token { NSEvent.removeMonitor(token) }; token = nil }
 }
 
 private struct ReviewMenuFrame: ViewModifier {

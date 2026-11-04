@@ -173,7 +173,7 @@ public final class AppModel {
     var formatBarHover: String?
     var formatBarMenuOpen = false
     /// Where each of the bar's menu buttons is, in the window's content view (to pop its menu under it).
-    @ObservationIgnored var formatBarFrames: [String: CGRect] = [:]
+    @ObservationIgnored public var formatBarFrames: [String: CGRect] = [:]
     /// The main window is full screen (View › Enter / Exit Full Screen, DL-108).
     public var fullScreen = false
     /// The file or folder being named inline in the tree (DL-62).

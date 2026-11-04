@@ -22,13 +22,14 @@ import Foundation
     check(shows(keys: false, review: true), "the bar shows without the keyboard while the document has suggestions, comments or is Suggesting (DL-317)")
     check(!shows(keys: false, review: false) && !shows(keys: false, md: false, review: true) && !shows(keys: false, ro: true, review: true) && !shows(keys: false, source: true, review: true) && !shows(keys: false, preview: true, review: true), "…and not with nothing to review, nor on another kind of file, read-only, Source or a template's preview")
 
-    // The table swap: Style's place goes to + Row, + Column, Align and Delete; they fold into ⋯ under 420.
+    // The table swap: Style's place goes to + Row, + Column, Align and Delete; they fold into ⋯ under 450 (DL-317).
     check(L.controls(inTable: false, width: 460) == ["style", "bold", "italic", "link", "table", "more", "comment"], "out of a table: Style, B, I, Link, Table, ⋯, then Comment (DL-317)")
     check(L.controls(inTable: false, width: 360, tableInMore: true) == ["style", "bold", "italic", "link", "more", "comment"], "at 360, or reviewing without the keyboard, Insert Table goes into ⋯ (DL-317 §Fit)")
     check(L.tableInMore(width: 360, hasKeyboard: true, reviewPending: false) && L.tableInMore(width: 460, hasKeyboard: false, reviewPending: true) && !L.tableInMore(width: 460, hasKeyboard: true, reviewPending: true) && !L.tableInMore(width: 460, hasKeyboard: true, reviewPending: false), "Insert Table folds at 360, and at 460 only when the bar is there for review alone")
     check(L.modeTitle(suggesting: false) == "Editing" && L.modeTitle(suggesting: true) == "Suggesting", "the mode menu names the mode: Editing or Suggesting")
     check(L.controls(inTable: true, width: 460) == ["bold", "italic", "link", "row", "column", "align", "delete", "comment"], "in a table at 460: B, I, Link, + Row, + Column, Align, Delete, Comment (no Style, as the board draws it)")
     check(L.controls(inTable: true, width: 360) == ["bold", "italic", "link", "row", "column", "more", "comment"], "in a table at 360: Align and Delete fold into ⋯; Comment stays")
+    check(L.controls(inTable: true, width: 420) == ["bold", "italic", "link", "row", "column", "more", "comment"] && L.controls(inTable: true, width: 450).contains("align"), "in a table at 420 Align and Delete are in ⋯ (they overflowed with Comment and the mode menu); from 450 they show")
     check(!L.controls(inTable: false, width: 360).contains("mic") && !L.controls(inTable: true, width: 360).contains("mic"), "the mic is not a control that folds: it is always the trailing end")
     check(L.styles.map(\.command) == ["body", "heading1", "heading2", "heading3", "quote", "bullet", "numbered", "task", "codeblock"], "Style offers Body, Heading 1–3, Quote, Bulleted List, Numbered List, Task, Code Block")
     check(L.styleTitle("heading2") == "Heading 2" && L.styleTitle("numbered") == "Numbered List" && L.styleTitle("zzz") == "Body", "Style names the paragraph at the caret")
@@ -111,6 +112,18 @@ import Foundation
     e.reviewAddComment()
     check(wait(5) { composing() }, "Comment with only a caret takes the word at the caret and opens the composer")
     cancelCompose()
+    // The mode menu closes on Esc and on a click outside it, as a Mac menu does (F-571); its own button toggles it instead.
+    let menuBox = CGRect(x: 100, y: 30, width: 200, height: 250), buttonBox = CGRect(x: 300, y: 2, width: 90, height: 20)
+    check(L.dismisses(escape: true, click: nil, menu: menuBox, button: buttonBox), "Esc closes the mode menu")
+    check(L.dismisses(escape: false, click: CGPoint(x: 20, y: 400), menu: menuBox, button: buttonBox), "a click outside the menu closes it")
+    check(!L.dismisses(escape: false, click: CGPoint(x: 150, y: 100), menu: menuBox, button: buttonBox) && !L.dismisses(escape: false, click: CGPoint(x: 320, y: 10), menu: menuBox, button: buttonBox) && !L.dismisses(escape: false, click: nil, menu: menuBox, button: buttonBox), "…a click inside it, or on its button (which toggles it), does not")
+    m.formatBarFrames["modeMenu"] = menuBox; m.formatBarFrames["mode"] = buttonBox
+    m.reviewMenu = "mode"
+    check(!m.dismissReviewMenu(escape: false, click: CGPoint(x: 150, y: 100)) && m.reviewMenu == "mode", "the open menu stays for a click inside it")
+    check(m.dismissReviewMenu(escape: false, click: CGPoint(x: 20, y: 400)) && m.reviewMenu == nil, "…closes for a click outside it")
+    m.reviewMenu = "markup"
+    check(m.dismissReviewMenu(escape: true) && m.reviewMenu == nil, "…and for Esc, with Markup's choices open too")
+    check(!m.dismissReviewMenu(escape: true), "Esc with the menu shut does nothing (it is left for the editor)")
     check(DuoAction.byID[.commentAdd] != nil && DuoAction.byID[.docReview] != nil && DuoAction.byID[.docMarkup] != nil && DuoAction.byID[.suggestionAccept] != nil && DuoAction.byID[.suggestionReject] != nil, "comment add, doc review, doc markup and suggestion accept and reject are all still duo2 verbs")
 
     // View › Hide Formatting Bar and its verb.

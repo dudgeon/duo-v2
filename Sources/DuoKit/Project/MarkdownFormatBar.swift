@@ -27,8 +27,8 @@ public enum FormatBarLogic {
         return "Body"
     }
 
-    /// Under 420 the table's Align and Delete fold into ⋯.
-    public static func foldsTableMenus(width: CGFloat) -> Bool { width < 420 }
+    /// Under 450 the table's Align and Delete fold into ⋯ (DL-317: Comment and the mode menu share the bar now, so the board's 420 moves up; at 420 they overflowed).
+    public static func foldsTableMenus(width: CGFloat) -> Bool { width < 450 }
 
     /// The controls left to right (DL-266, DL-317): Style, B, I, Link, Table and ⋯, then Comment behind a separator; in a table,
     /// + Row, + Column, Align and Delete take Style's place after B, I and Link (Align and Delete fold into ⋯ under 420), then
@@ -43,6 +43,14 @@ public enum FormatBarLogic {
     /// Insert Table moves into ⋯ at 360 (under 420), and at 460 when the bar shows only because review is pending (DL-317 §Fit).
     public static func tableInMore(width: CGFloat, hasKeyboard: Bool, reviewPending: Bool) -> Bool {
         width < 420 || (reviewPending && !hasKeyboard)
+    }
+
+    /// The mode menu closes on Esc and on a click outside it and outside its own button (whose click toggles it), as a Mac menu
+    /// does (DL-317; Q-458 closed, F-571). `click` is in the same coordinates as the frames.
+    public static func dismisses(escape: Bool, click: CGPoint?, menu: CGRect, button: CGRect) -> Bool {
+        if escape { return true }
+        guard let click else { return false }
+        return !menu.contains(click) && !button.contains(click)
     }
 
     /// The mode menu's label (DL-317).
@@ -284,6 +292,7 @@ struct MarkdownFormatBar: View {
         .help("\(title): Editing or Suggesting ⇧⌘E, and the review commands")
         .accessibilityLabel("Mode: \(title)")
         .accessibilityIdentifier("review.mode")
+        .onGeometryChange(for: CGRect.self, of: { $0.frame(in: .global) }) { model.formatBarFrames["mode"] = $0 }
         .accessibilityAddTraits(suggesting ? .isSelected : [])
     }
 

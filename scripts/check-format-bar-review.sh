@@ -16,12 +16,11 @@ printf -- '---\ngoal: "Plan"\n---\n\n# garden\n' > $ws/work/garden/PROJECT.md
 marks=$'---\ntitle: Offline mode\n---\n\n# Offline mode\n\nThe sync engine retries every {~~30~>10~~}{>>@geoff 2026-10-27 #s1<<} seconds{++, and gives up after an hour++}{>>@sam 2026-10-27 #s2: is this true?<<}.\n\nWe store nothing in the cloud except {==crash reports==}{>>@sam 2026-10-27 #c1: Is this true for crash reports?<<}.\n'
 clean=$'# Offline mode\n\nThe sync engine retries every 30 seconds.\n\nWe store nothing in the cloud except crash reports.\n'
 table=$'# Thresholds\n\nLimits per path, as finance confirmed on Oct 3.\n\n| Path | Limit | Approvers |\n| ----- | ----- | --------: |\n| Card | $500 | 2 |\n| Async | $250 | 1 |\n'
-print -rn -- "$marks" > $ws/work/garden/marks.md
-print -rn -- "$clean" > $ws/work/garden/clean.md
-print -rn -- "$table" > $ws/work/garden/table.md
 # run <state> <appearance> <width> <file> <actions>
 run() {
   local n="$1-$2-$3"
+  # each run starts from the same files: Suggest Edits writes a line into the file it is turned on for
+  print -rn -- "$marks" > $ws/work/garden/marks.md; print -rn -- "$clean" > $ws/work/garden/clean.md; print -rn -- "$table" > $ws/work/garden/table.md
   chmod -R u+w $root/cc-$n $root/sup-$n 2>/dev/null; rm -rf $root/cc-$n $root/sup-$n; mkdir -p $root/cc-$n $root/sup-$n
   env -u DUO_SUPPORT_DIR DUO_APPEARANCE=$2 DUO_EXTRA_ENV="DUO_SUPPORT_DIR=$root/sup-$n CLAUDE_CONFIG_DIR=$root/cc-$n DUO_APPEARANCE=$2" DUO_TIMEOUT=${DUO_TIMEOUT:-60} \
     scripts/run-live.sh $ws "$out/$n.png" "open:garden,open-file:$ws/work/garden/$4,wait:2,right-width:$3,$5" "$out/$n.log" >/dev/null
