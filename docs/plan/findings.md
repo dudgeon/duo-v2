@@ -5680,3 +5680,33 @@ test-0-2-25's 60-minute soak of the F-586 candidate (main 47ef3a5d; 25 sessions,
   Growth is then bounded by 32 calls. A load costs **347 ms** (154 loads in the 8 min soak, which ran a pass every ~3 s). In the app a pass starts at most every minute when nothing changed, so that's under 1% of indexing time when busy, and about 0.35 s per minute while files keep changing. Queries don't change: they use the CPU-only `QueryEmbedder`, never reloaded by indexing, so a search mid-pass doesn't wait for a load.
 - **Soak with the app's policy:** 3–29 MB for 8 minutes, against 32 GB with the model kept loaded.
 - **Check:** `DUO_CHECKS=embedder-gpu` now has the app-faithful soak (`EMBED_SOAK_MIN`, default 6). It fails unless GPU memory plateaus under 600 MB (second half no more than 50 MB above the first). `EMBED_EXPECT_GROWTH=1` adds the kept-loaded control, and `EMBED_BATCHES=300` runs test-0-2-25's batch bench through the app's source. Results: the soak 3–29 MB over 8 min (155 loads, 348 ms each) against 32 GB kept loaded; the 300-batch bench 90–708 MB with no trend (peaks are 32 uses of 32 × 512 batches) against 14 GB held. Full DuoChecks 5636 passed, 0 failed (isolation's 4 subprocess cases need a fresh `.build/debug/duo2`).
+
+## F-594 · Core ML's growth comes from shape switching; indexing runs a model per fixed shape with a 512 MB growth budget, and loads once per bulk pass (idle-cpu, 2026-11-04; C-161, F-593)
+
+F-593's fix bounded the leak but made bulk passes slow. `maxUses = 32` counted `get()` calls, including the tokenizer lookups, so a 6,150-session pass reloaded the model hundreds of times: 148 s instead of 93, idle CPU 119.6% instead of 0.2.24's 101.3% (test-0-2-25).
+- **The cause, measured** (`DUO_CHECKS=embedder-gpu`, one model held):
+  - the same input repeated 150 times never grows, at any shape;
+  - reusing the input arrays changes nothing;
+  - two shapes alternating with identical content grew 6 → 503 MB over 300 calls;
+  - one shape (32 × 512) with varied content stayed at 200 MB through 300 calls.
+  So a loaded Core ML model on the GPU keeps memory each time its input shape changes between predictions. F-586's four length buckets, and test-0-2-25's 300-batch bench, switched on almost every call.
+- **One shape for everything is too slow.** A 32 × 512 call takes 81 ms, against 3.2 ms at 1 × 64, 4.5 at 2 × 128 and 10.6 at 8 × 256.
+- **Fix:**
+  - `Embedder.shapes` = 2 × 128, 2 × 512, 8 × 512, 32 × 512; each batch takes the cheapest that fits, on a model of its own (loaded on first use, at most four), so no model ever switches shape;
+  - the models share one GPU, so some growth remains (about 17× less than the control). `EmbedderSource.memoryBudget` (`SearchService.modelMemoryBudget`, 512 MB) lets the embedder go once the process footprint (`task_info` phys_footprint, read on the indexing task) has grown that much since it loaded;
+  - F-593's per-pass release and `maxUses` are gone; the idle release (C-79, 180 s) is back.
+- **Results:**
+  - an app-faithful soak at a pass every ~3 s (far busier than the app): 4–468 MB over 8 min with 7 loads (382 ms each), against 11 GB in 5 min for one model switching shapes;
+  - a bulk pass of 3,000 small varied calls: 1 load, 350 MB peak, 30 s;
+  - the 300-batch bench: 303 MB, against 14 GB held;
+  - vectors unchanged (cosine 1.000);
+  - 8 concurrent embeds on one embedder give exactly the serial vectors (the embedder's lock covers each batch, and the shape models are made under it).
+- **6,150-session fixture** (test-0-2-25's generator; isolated, background, 600 s each, one exclusive hold):
+
+  | | first pass (6,423 chunks embedded) | later passes | mean CPU after 60 s | footprint |
+  |---|---|---|---|---|
+  | 0.2.24 | 145 s | 91.2–91.5 s | 109.7% | ~490–540 MB |
+  | this build | 149 s | 91.9 s | 105.4% | ~640–700 MB (the four shape models) |
+
+  Both builds spend those passes re-checking 5,110 unchanged files: that's the remaining idle CPU (the incremental-refresh follow-up), not search.
+- **Check:** `DUO_CHECKS=embedder-gpu` (`EMBED_MODEL_DIR` = the bundle's `Resources/search`, exclusive lock) fails if the soak through the app's source goes over 800 MB or loads more than once a minute, if the bulk pass loads more than once or goes over 600 MB, if the batch bench goes over 800 MB, if a vector moves, or if concurrent embeds differ. `EMBED_EXPECT_GROWTH=1` adds the control, and `EMBED_TINY`, `EMBED_ALT` and `EMBED_SPEED` are the measurements above.
