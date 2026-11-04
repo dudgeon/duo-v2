@@ -121,6 +121,7 @@ textarea:focus, select:focus, input:focus, .btn:focus-visible, a:focus-visible, 
     <div class="row" id="ctl">
       <button class="btn small" id="refresh" type="button">Refresh now</button>
       <a id="agent" target="_blank" rel="noopener" hidden>Open the discovery agent's session</a>
+      <span class="status" id="agent-none">The discovery agent's session link appears after its next run.</span>
       <span class="status" id="refresh-st"></span>
     </div>
     <p class="headline" id="headline">GitHub issues on dudgeon/duo-v2, grouped into problems and matched to the workers already on them. A run each day fills this page.</p>
@@ -189,7 +190,7 @@ function renderMeta() {
   const hrs = (Date.now() - new Date(m.ranAt)) / 3.6e6;
   rl.append(el("span", hrs > 30 ? "stale" : "", "Last run " + when(m.ranAt) + (hrs > 30 ? " (overdue)" : "")));
   if (m.issuesOpen != null) rl.append(el("span", "", m.issuesOpen + " open issues"));
-  const ag = $("#agent"); if (m.runLink) { ag.href = m.runLink; ag.hidden = false; } else ag.hidden = true;
+  const ag = $("#agent"); if (m.runLink) { ag.href = m.runLink; ag.hidden = false; $("#agent-none").hidden = true; } else { ag.hidden = true; $("#agent-none").hidden = false; }
   if (m.sample) rl.append(el("span", "sample", "Sample data from today's issues"));
   if (m.headline) $("#headline").textContent = m.headline;
   const t = $("#tally"); t.replaceChildren();
