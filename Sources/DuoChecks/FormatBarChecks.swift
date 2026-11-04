@@ -10,19 +10,25 @@ import Foundation
     typealias L = FormatBarLogic
 
     // When it shows: a Markdown document has the keyboard; it stays while a menu is open or a dictation runs.
-    func shows(keys: Bool = true, md: Bool = true, hidden: Bool = false, source: Bool = false, ro: Bool = false, preview: Bool = false, menu: Bool = false, dict: Bool = false) -> Bool {
-        L.shows(editorHasKeyboard: keys, isMarkdown: md, hidden: hidden, source: source, readOnly: ro, templatePreview: preview, menuOpen: menu, dictating: dict)
+    func shows(keys: Bool = true, md: Bool = true, hidden: Bool = false, source: Bool = false, ro: Bool = false, preview: Bool = false, menu: Bool = false, dict: Bool = false, review: Bool = false) -> Bool {
+        L.shows(editorHasKeyboard: keys, isMarkdown: md, hidden: hidden, source: source, readOnly: ro, templatePreview: preview, menuOpen: menu, dictating: dict, reviewPending: review)
     }
     check(shows(), "the bar shows while a Markdown document has the keyboard")
     check(!shows(keys: false), "…and not when the keyboard is elsewhere (the console, the sidebar, another tab)")
     check(shows(keys: false, menu: true) && shows(keys: false, dict: true), "…but stays while one of its menus is open and while a dictation runs")
     check(!shows(md: false) && !shows(ro: true) && !shows(preview: true) && !shows(source: true), "…never on another kind of file, a read-only file, a template's preview or in Source mode")
-    check(!shows(hidden: true) && !shows(hidden: true, menu: true, dict: true), "View › Hide Formatting Bar turns it off")
+    check(!shows(hidden: true) && !shows(hidden: true, menu: true, dict: true, review: true), "View › Hide Formatting Bar turns it off")
+    // DL-317: pending review keeps the bar without the keyboard, but only on a Markdown document it can show on.
+    check(shows(keys: false, review: true), "the bar shows without the keyboard while the document has suggestions, comments or is Suggesting (DL-317)")
+    check(!shows(keys: false, review: false) && !shows(keys: false, md: false, review: true) && !shows(keys: false, ro: true, review: true) && !shows(keys: false, source: true, review: true) && !shows(keys: false, preview: true, review: true), "…and not with nothing to review, nor on another kind of file, read-only, Source or a template's preview")
 
     // The table swap: Style's place goes to + Row, + Column, Align and Delete; they fold into ⋯ under 420.
-    check(L.controls(inTable: false, width: 460) == ["style", "bold", "italic", "link", "table", "more"], "out of a table: Style, B, I, Link, Table, ⋯")
-    check(L.controls(inTable: true, width: 460) == ["bold", "italic", "link", "row", "column", "align", "delete"], "in a table at 460: B, I, Link, + Row, + Column, Align, Delete (no Style, as the board draws it)")
-    check(L.controls(inTable: true, width: 360) == ["bold", "italic", "link", "row", "column", "more"], "in a table at 360: Align and Delete fold into ⋯")
+    check(L.controls(inTable: false, width: 460) == ["style", "bold", "italic", "link", "table", "more", "comment"], "out of a table: Style, B, I, Link, Table, ⋯, then Comment (DL-317)")
+    check(L.controls(inTable: false, width: 360, tableInMore: true) == ["style", "bold", "italic", "link", "more", "comment"], "at 360, or reviewing without the keyboard, Insert Table goes into ⋯ (DL-317 §Fit)")
+    check(L.tableInMore(width: 360, hasKeyboard: true, reviewPending: false) && L.tableInMore(width: 460, hasKeyboard: false, reviewPending: true) && !L.tableInMore(width: 460, hasKeyboard: true, reviewPending: true) && !L.tableInMore(width: 460, hasKeyboard: true, reviewPending: false), "Insert Table folds at 360, and at 460 only when the bar is there for review alone")
+    check(L.modeTitle(suggesting: false) == "Editing" && L.modeTitle(suggesting: true) == "Suggesting", "the mode menu names the mode: Editing or Suggesting")
+    check(L.controls(inTable: true, width: 460) == ["bold", "italic", "link", "row", "column", "align", "delete", "comment"], "in a table at 460: B, I, Link, + Row, + Column, Align, Delete, Comment (no Style, as the board draws it)")
+    check(L.controls(inTable: true, width: 360) == ["bold", "italic", "link", "row", "column", "more", "comment"], "in a table at 360: Align and Delete fold into ⋯; Comment stays")
     check(!L.controls(inTable: false, width: 360).contains("mic") && !L.controls(inTable: true, width: 360).contains("mic"), "the mic is not a control that folds: it is always the trailing end")
     check(L.styles.map(\.command) == ["body", "heading1", "heading2", "heading3", "quote", "bullet", "numbered", "task", "codeblock"], "Style offers Body, Heading 1–3, Quote, Bulleted List, Numbered List, Task, Code Block")
     check(L.styleTitle("heading2") == "Heading 2" && L.styleTitle("numbered") == "Numbered List" && L.styleTitle("zzz") == "Body", "Style names the paragraph at the caret")
@@ -91,6 +97,21 @@ import Foundation
     check(duo2("doc", "format", "codeblock").ok && text(e).contains("```\nplain **bold** text\n```"), "doc format codeblock fences the line")
     check(duo2("doc", "format", "codeblock").ok && !text(e).contains("```") , "…and again takes the fence off")
     check(!duo2("doc", "format", "nonsense").ok, "an unknown format word is refused")
+
+    // DL-317: Comment, with and without a selection (the bar's button calls reviewAddComment, as ⌥⌘M does).
+    func composing() -> Bool { (js(e, "return document.querySelector('.duo-mg-composer') ? 1 : 0") as? Int) == 1 }
+    func cancelCompose() { _ = js(e, "const f = document.querySelector('.duo-mg-composer textarea'); if (f) f.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); return 1"); settle() }
+    _ = caret(at: "plain")
+    _ = js(e, "const t = duo.text(); const a = t.indexOf('plain'); duo.select(a, a + 5); return 1"); settle()
+    e.reviewAddComment()
+    check(wait(5) { composing() }, "Comment with a selection opens the margin composer")
+    cancelCompose()
+    check(wait(5) { !composing() }, "…and Esc closes it")
+    _ = caret(at: "plain")
+    e.reviewAddComment()
+    check(wait(5) { composing() }, "Comment with only a caret takes the word at the caret and opens the composer")
+    cancelCompose()
+    check(DuoAction.byID[.commentAdd] != nil && DuoAction.byID[.docReview] != nil && DuoAction.byID[.docMarkup] != nil && DuoAction.byID[.suggestionAccept] != nil && DuoAction.byID[.suggestionReject] != nil, "comment add, doc review, doc markup and suggestion accept and reject are all still duo2 verbs")
 
     // View › Hide Formatting Bar and its verb.
     check(duo2("view", "format-bar", "hide").ok && m.formatBarHidden && DuoState.load().formatBarHidden, "view format-bar hide turns it off, remembered")
