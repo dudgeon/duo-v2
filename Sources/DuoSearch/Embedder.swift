@@ -33,6 +33,13 @@ public final class Embedder: @unchecked Sendable {
     public let tokenizer: WordPiece
     private let model: MLModel
     public static let maxTokens = 512
+    /// Indexing pads every batch to one of a few shapes (C-161, F-586). On the GPU, Core ML keeps buffers for each input
+    /// shape it has seen for as long as the model is loaded. A batch padded to its own longest text made a new shape for
+    /// almost every batch, and a model kept busy by indexing held 51 GB after three days. Rows pad to `batchRows`,
+    /// lengths round up to the next of `lengthBuckets`; padded positions are masked, so the vectors are the same.
+    public static let batchRows = 32
+    public static let lengthBuckets = [64, 128, 256, 512]
+    public var fixedShapes: Bool
 
     /// Queries run on the CPU: no accelerator caches, nothing written, exact numerics inside
     /// Claude's sandbox (F-35). Indexing runs on the GPU. Never `.all` (MPS cache writes, F-35).
@@ -41,6 +48,7 @@ public final class Embedder: @unchecked Sendable {
         let config = MLModelConfiguration()
         config.computeUnits = use == .query ? .cpuOnly : .cpuAndGPU
         model = try MLModel(contentsOf: url, configuration: config)
+        fixedShapes = use == .indexing
     }
 
     /// Compiles the shipped `.mlpackage` into Duo's folder (app only: it writes to the temp
@@ -65,15 +73,24 @@ public final class Embedder: @unchecked Sendable {
         // Similar lengths together, so each batch pads little (as the POC does).
         let order = ids.indices.sorted { ids[$0].count > ids[$1].count }
         var out = [[Float]](repeating: [], count: texts.count)
-        for start in stride(from: 0, to: order.count, by: 32) {
-            let slice = Array(order[start..<min(start + 32, order.count)])
+        for start in stride(from: 0, to: order.count, by: Self.batchRows) {
+            let slice = Array(order[start..<min(start + Self.batchRows, order.count)])
             for (i, v) in zip(slice, try embed(slice.map { ids[$0] })) { out[i] = v }
         }
         return out
     }
 
-    private func embed(_ batch: [[Int32]]) throws -> [[Float]] {
-        let n = batch.count, len = batch.map(\.count).max() ?? 1
+    /// The (rows, length) a batch is run at: its own with `fixedShapes` off, else one of the few fixed shapes.
+    static func shape(rows: Int, longest: Int, fixed: Bool) -> (rows: Int, length: Int) {
+        guard fixed else { return (rows, max(longest, 1)) }
+        return (max(rows, batchRows), lengthBuckets.first { $0 >= longest } ?? max(longest, 1))
+    }
+
+    private func embed(_ texts: [[Int32]]) throws -> [[Float]] {
+        guard let first = texts.first else { return [] }
+        let (n, len) = Self.shape(rows: texts.count, longest: texts.map(\.count).max() ?? 1, fixed: fixedShapes)
+        // Extra rows repeat the first text (a row with no unmasked token isn't a valid input); their vectors are dropped.
+        let batch = texts + Array(repeating: first, count: n - texts.count)
         let shape = [NSNumber(value: n), NSNumber(value: len)]
         let ids = try MLMultiArray(shape: shape, dataType: .int32)
         let mask = try MLMultiArray(shape: shape, dataType: .int32)
@@ -89,7 +106,7 @@ public final class Embedder: @unchecked Sendable {
         guard let e = out.featureValue(for: "embedding")?.multiArrayValue else { throw SearchError("model gave no embedding") }
         let d = identity.dimensions
         // The output may be fp32 with strides; read through the shaped API for safety.
-        return (0..<n).map { i in (0..<d).map { j in e[[NSNumber(value: i), NSNumber(value: j)]].floatValue } }
+        return (0..<texts.count).map { i in (0..<d).map { j in e[[NSNumber(value: i), NSNumber(value: j)]].floatValue } }
     }
 }
 
