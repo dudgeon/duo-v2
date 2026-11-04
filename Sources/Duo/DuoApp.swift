@@ -17,6 +17,9 @@ struct DuoApp: App {
         let launchStarted = ProcessInfo.processInfo.systemUptime   // for the launch matrix's line (F-580)
         let launchEnvironment = ProcessInfo.processInfo.environment
         SupportFolder.prepareForLaunch()
+        // An isolated instance reads only its own folders and the given Claude config, and
+        // everything it starts inherits DUO_ISOLATED=1 (F-583, F-587).
+        Isolation.confineLaunch()
         // A test launch a script started runs in the background: never in the user's way (F-227).
         TestBackground.isOn = TestBackground.decide(arguments: CommandLine.arguments, environment: launchEnvironment,
                                                     isolated: SupportFolder.isIsolated)

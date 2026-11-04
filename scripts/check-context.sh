@@ -7,6 +7,7 @@
 # folder, its own CLAUDE_CONFIG_DIR, and duo2 pointed at it with both DUO_SOCKET and DUO_TOKEN.
 #   scripts/check-context.sh        exit 0 when every step reads as it should
 set -u
+export DUO_ISOLATED=1   # every duo2 here reaches only the test instance; refuses, never the user's Duo (F-529)
 cd "${0:A:h:h}"
 S=$(cd "$(mktemp -d /tmp/ctx.XXXX)" && pwd -P)   # short: the socket's path must stay under 104
 WS=$S/ws CFG=$S/cfg SUP=$S/sup OUT=$S/out

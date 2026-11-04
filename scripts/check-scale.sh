@@ -19,6 +19,7 @@
 # background run understates layout cost (F-208's trap). The visible gate, DUO_TEST_FOREGROUND=1,
 # shows the window and may take focus: a release gate, run only with Geoff's OK (CLAUDE.md).
 set -u
+export DUO_ISOLATED=1   # every duo2 here reaches only the test instance; refuses, never the user's Duo (F-529)
 root=${0:A:h:h}
 cd $root
 [[ ${NO_BUILD:-} == 1 || -n ${APP:-} ]] || scripts/bundle.sh >/dev/null || exit 1

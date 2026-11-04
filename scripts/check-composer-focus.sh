@@ -9,6 +9,7 @@
 #
 # Isolated: its own DUO_SUPPORT_DIR. Exit status is the number of failures.
 set -uo pipefail
+export DUO_ISOLATED=1   # every duo2 here reaches only the test instance; refuses, never the user's Duo (F-529)
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
 support="${DUO_CHECK_SUPPORT:-/tmp/d-focus}"

@@ -20,7 +20,7 @@ support=$(cd "$(mktemp -d /tmp/d-sbx.XXXXXX)" && pwd -P)   # real path: Seatbelt
 mkdir -p "$support/cc"
 sock="$support/Duo/duo.sock"
 work=$(mktemp -d)
-export DUO_SUPPORT_DIR=$support CLAUDE_CONFIG_DIR=$support/cc
+export DUO_ISOLATED=1 DUO_SUPPORT_DIR=$support CLAUDE_CONFIG_DIR=$support/cc
 unset DUO_SOCKET DUO_TOKEN
 # Run the binary itself, in the background: a scripted launch is an accessory and never activates (F-227).
 "$root/build/Duo.app/Contents/MacOS/Duo" --state overview >"$support/duo.log" 2>&1 &
@@ -66,11 +66,15 @@ out=$(hook "" X=1); code=$?
 out=$(hook "$allow" X=1); code=$?
 [[ $code -eq 0 && -z $out ]] && echo "✔ hook: a file Duo doesn't have open, Claude's write runs" || { echo "✘ hook, file not open: $code: $out"; fail=1; }
 out=$(hook "$allow" DUO_SOCKET="$sock" DUO_TOKEN=stale-token); code=$?
-[[ $code -eq 0 && -z $out ]] && echo "✔ hook: a stale token falls back to endpoint.json and the write runs" || { echo "✘ hook with a stale token: $code: $out"; fail=1; }
+[[ $code -eq 0 && -z $out ]] && echo "✔ hook: a stale token (refused in a test context) and the write runs" || { echo "✘ hook with a stale token: $code: $out"; fail=1; }
+# An isolated instance (DUO_SUPPORT_DIR is a scratch folder) is a test context: duo2 never falls back,
+# it refuses (F-529). The user's own terminals keep C-80's fallback (DuoChecks, isolation).
 out=$(run "$allow" env DUO_SOCKET="$sock" DUO_TOKEN=stale-token "$duo2" ping); code=$?
-[[ $code -eq 0 && $out == Duo* ]] && echo "✔ a stale environment token falls back to endpoint.json" || { echo "✘ stale environment token: $code: $out"; fail=1; }
-out=$(run "$allow" env DUO_SOCKET="$support/gone.sock" DUO_TOKEN=stale-token "$duo2" ping); code=$?
-[[ $code -eq 0 && $out == Duo* ]] && echo "✔ a dead environment socket falls back to endpoint.json" || { echo "✘ dead environment socket: $code: $out"; fail=1; }
+[[ $code -eq 64 && $out == *refused* ]] && echo "✔ a stale environment token in a test context is refused, not retried" || { echo "✘ stale environment token: $code: $out"; fail=1; }
+out=$(run "$allow" env DUO_SOCKET="$support/Duo/gone.sock" DUO_TOKEN=stale-token "$duo2" ping); code=$?
+[[ $code -eq 64 && $out == *refused* ]] && echo "✔ a dead environment socket in a test context is refused" || { echo "✘ dead environment socket: $code: $out"; fail=1; }
+out=$(run "$allow" env DUO_SOCKET= DUO_TOKEN= "$duo2" ping); code=$?
+[[ $code -eq 64 && $out == *refused* ]] && echo "✔ empty DUO_SOCKET/DUO_TOKEN are refused (F-583)" || { echo "✘ empty socket and token: $code: $out"; fail=1; }
 
 # Quit by SIGTERM (Duo quits as with ⌘Q), never AppleScript: it can raise an Automation prompt (F-54).
 kill -TERM "$duo_pid" 2>/dev/null

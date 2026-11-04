@@ -9,6 +9,7 @@
 #
 # Each case writes <case>-w1.png (window 1, whole, with its toolbar) and <case>-w2.png (window 2).
 set -euo pipefail
+export DUO_ISOLATED=1   # every duo2 here reaches only the test instance; refuses, never the user's Duo (F-529)
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
 [ -n "${NO_BUILD:-}" ] || scripts/bundle.sh >/dev/null
@@ -24,7 +25,7 @@ run() {   # <case> <appearance> <then-actions...>
   local IFS=,   # --then takes one comma-separated list (no commas inside an action)
   local then=(--then "$*")
   unset IFS
-  open -g -W -n --env DUO_APPEARANCE="$look" --env DUO_SUPPORT_DIR="$support" --stdout /dev/null --stderr "$out/$c.log" \
+  open -g -W -n --env DUO_APPEARANCE="$look" --env DUO_ISOLATED=1 --env DUO_SUPPORT_DIR="$support" --stdout /dev/null --stderr "$out/$c.log" \
     "$root/build/Duo.app" --args --state overview "${then[@]}" --capture-window "$out/$c-w1.png" &
   local pid=$! i
   for ((i = 0; i < 160; i++)); do kill -0 "$pid" 2>/dev/null || break; sleep 0.25; done

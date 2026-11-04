@@ -11,6 +11,7 @@
 #   ANSWER=1        the last run also answers through the card (Postgres) and checks Claude got it
 # Isolated (CLAUDE.md): its own support folder and Claude config under /tmp, quit by SIGTERM to its pid.
 set -u
+export DUO_ISOLATED=1   # every duo2 here reaches only the test instance; refuses, never the user's Duo (F-529)
 root=${0:A:h:h}
 out=${1:A} runs=${2:-10}
 app=${APP:-$root/build/Duo.app}

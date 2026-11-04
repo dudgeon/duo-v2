@@ -14,7 +14,7 @@ public enum ChatComposer {
 
     /// The user's keybindings move Ctrl+G (`chat:externalEditor`): then the composer pastes.
     public static var ctrlGIsTheEditor: Bool {
-        let file = FileManager.default.homeDirectoryForCurrentUser.appending(path: ".claude/keybindings.json")
+        let file = ClaudeStorage.root.appending(path: "keybindings.json")  // CLAUDE_CONFIG_DIR first (F-588)
         guard let data = try? Data(contentsOf: file), let text = String(data: data, encoding: .utf8), text.contains("chat:externalEditor") else { return true }
         // Bound to something: only ctrl+g (or its default ctrl+x ctrl+e) keeps it ours.
         return text.range(of: #""ctrl\+g"\s*:\s*"chat:externalEditor""#, options: .regularExpression) != nil

@@ -25,6 +25,17 @@ if let i = rest.firstIndex(of: "--stdin") {
 }
 let args = [action.verb] + rest   // what the local verbs below read (args[0] is the verb)
 
+// A test context (DUO_ISOLATED=1, or a test instance's DUO_SUPPORT_DIR/DUO_SOCKET; F-529): local
+// verbs read only that instance's folders and Claude config, and nothing reaches the user's Duo.
+// Help and the $EDITOR hand-over need no instance; hooks never fail Claude's tool (they reach nothing).
+let strict = Isolation.isStrict(env)
+if strict, action.id != .help, action.id != .compose {
+    do { try Isolation.confineProcess(env) } catch {
+        if action.id == .hook { exit(0) }
+        refuse(error)
+    }
+}
+
 switch action.id {
 case .search, .searchStatus:
     exit(runSearch(action.verb, rest))
@@ -78,7 +89,7 @@ case .hook where rest.first == "context":
     guard let hook = (try? JSONSerialization.jsonObject(with: FileHandle.standardInput.readDataToEndOfFile())) as? [String: Any],
           let name = hook["hook_event_name"] as? String, ["SessionStart", "UserPromptSubmit"].contains(name),
           let sid = (hook["session_id"] as? String) ?? env["CLAUDE_CODE_SESSION_ID"],
-          let (endpoint, source) = ControlEndpoint.discover() else { exit(0) }
+          let (endpoint, source) = discoverEndpoint(quiet: true) else { exit(0) }
     var a = [sid, "--hook", name == "SessionStart" ? "start" : "prompt", "--pid", String(getppid())]
     if let source = hook["source"] as? String { a += ["--source", source] }
     if let origin = env["DUO_SESSION_ID"] { a += ["--origin", origin] }
@@ -97,7 +108,7 @@ case .hook:
     guard rest.first == "pre-edit",
           let hook = (try? JSONSerialization.jsonObject(with: FileHandle.standardInput.readDataToEndOfFile())) as? [String: Any],
           let tool = hook["tool_name"] as? String, let input = hook["tool_input"] as? [String: Any],
-          let path = input["file_path"] as? String, let (endpoint, source) = ControlEndpoint.discover() else { exit(0) }
+          let path = input["file_path"] as? String, let (endpoint, source) = discoverEndpoint(quiet: true) else { exit(0) }
     var edit: [String: Any] = ["file_path": path]
     switch tool {
     case "Edit": for k in ["old_string", "new_string", "replace_all"] { edit[k] = input[k] }
@@ -166,7 +177,7 @@ case .doctor:
     if !legacy.isEmpty { print("Legacy Duo's instructions are still installed (\(legacy.map(\.what).joined(separator: ", "))). See `duo2 legacy`.") }
     // The mod canary (F-297): what Duo found at its last launch.
     print((ModCanary.load(support: ControlEndpoint.file.deletingLastPathComponent())?.lines() ?? [ModCanary.notChecked]).joined(separator: "\n"))
-    guard let (endpoint, source) = ControlEndpoint.discover() else {
+    guard let (endpoint, source) = discoverEndpoint() else {
         print("Duo isn't running, or this terminal can't see it: no \(ControlEndpoint.socketVariable) in the environment and no live \(ControlEndpoint.file.path).")
         exit(1)
     }
@@ -188,7 +199,7 @@ default:
     // The director's verbs carry what this client can do, which only its own side can read.
     if action.family == .director { rest += ["--caps", directorCaps(login: action.id == .directorStatus || action.id == .directorStart)] }
     // Directing works with Duo closed (DL-231): a verb with an offline form runs on Claude's own files.
-    guard let (endpoint, source) = ControlEndpoint.discover() else {
+    guard let (endpoint, source) = discoverEndpoint() else {
         if let code = runOffline(action.id, rest) { exit(code) }
         if action.id == .deckTemplatePick || action.id == .deckTemplatePicked {
             fail("\(action.verb) needs the deck viewer in Duo, and Duo isn't running. `duo2 deck template build` and `specimen` work without it.", code: 69)
@@ -204,6 +215,7 @@ default:
         if r.ok { print(r.output, terminator: r.output.hasSuffix("\n") ? "" : "\n") } else { fail(r.output) }
     } catch {
         // A dead socket (a Duo that quit under a session that still has its address): nothing was sent.
+        if strict { refuse(Isolation.Refusal("the test instance at \(endpoint.socket) stopped answering (\(error)); duo2 won't fall back to the offline verbs or the default Duo.")) }
         if let f = error as? ControlClient.Failure, case .connect = f, let code = runOffline(action.id, rest) { exit(code) }
         fail("\(error). Run `duo2 doctor`.", code: 69)
     }
@@ -295,3 +307,19 @@ func symbolicateHang(_ frames: [String], _ binary: String?) -> [String] {
     return named
 }
 
+
+func refuse(_ error: Error) -> Never {
+    FileHandle.standardError.write(Data("duo2: refused (test context, F-529): \(error)\n".utf8))
+    exit(64)
+}
+
+/// The endpoint duo2 talks to (F-529). Outside a test context: the environment's, else the live
+/// endpoint file's, else nil (Duo isn't running). In one: the named instance, or exit 64 with
+/// the refusal; never the default Duo. Hooks pass `quiet` (a hook must never fail Claude's tool):
+/// a refusal there is nil, so nothing is sent anywhere.
+func discoverEndpoint(quiet: Bool = false) -> (ControlEndpoint, source: String)? {
+    do { return try Isolation.resolve(ProcessInfo.processInfo.environment).map { ($0.endpoint, $0.source) } } catch {
+        if quiet { return nil }
+        refuse(error)
+    }
+}

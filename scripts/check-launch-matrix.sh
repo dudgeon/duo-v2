@@ -16,6 +16,7 @@
 #   scripts/check-launch-matrix.sh <Duo.app> [case…]
 # Exits 1 if any case fails. scripts/release.sh runs it on the signed app before notarizing.
 set -u
+export DUO_ISOLATED=1   # every duo2 here reaches only the test instance; refuses, never the user's Duo (F-529)
 app=${1:?usage: check-launch-matrix.sh <Duo.app> [case…]}; shift
 cases=${*:-plain no-claude shell-hangs shell-child shell-read no-path stale-endpoint second}
 LIMIT=${LIMIT:-20}
@@ -26,7 +27,7 @@ trap 'chmod -R u+w "$work" 2>/dev/null; rm -rf "$work"' EXIT   # mods are writte
 # launch <tag> <support> [env…]: opens the app; prints nothing.
 launch() {
   local tag=$1 sup=$2; shift 2
-  local envs=(--env "DUO_SUPPORT_DIR=$sup" --env "CLAUDE_CONFIG_DIR=$work/config")
+  local envs=(--env DUO_ISOLATED=1 --env "DUO_SUPPORT_DIR=$sup" --env "CLAUDE_CONFIG_DIR=$work/config")
   for e in "$@"; do envs+=(--env "$e"); done
   mkdir -p "$sup" "$work/config"
   open -g -n "${envs[@]}" --stdout /dev/null --stderr "$work/$tag.log" "$app" --args -DuoLaunchProbe "$tag-$$"

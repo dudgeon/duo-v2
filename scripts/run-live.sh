@@ -4,10 +4,21 @@
 #   scripts/run-live.sh <workspace> <capture.png> <then-actions> [stderr-file]
 # Its sessions run on Haiku 5.5 (DL-153, a rule for test tooling); set DUO_MODEL for another model.
 set -u
+export DUO_ISOLATED=1   # every duo2 here reaches only the test instance; refuses, never the user's Duo (F-529)
 ws=$1 png=$2 then=$3 err=${4:-/dev/null}
 rm -f "$png"
 # Claude reads ANTHROPIC_MODEL from the environment it inherits through Duo; Duo itself picks no model.
 envargs=(--env "ANTHROPIC_MODEL=${DUO_MODEL:-claude-haiku-5-5}")
+# Isolated (F-529, F-583): its own short support folder (DUO_RUN_SUPPORT to choose it) and DUO_ISOLATED=1, so the
+# instance reads only its own folders, its duo2 calls reach only it, and Claude's config is the given
+# DUO_CLAUDE_CONFIG_DIR or a stand-in inside the support folder, never ~/.claude unless named (Q-425).
+sup=${DUO_RUN_SUPPORT:-}
+for kv in ${=DUO_EXTRA_ENV:-}; do [[ $kv == DUO_SUPPORT_DIR=* ]] && sup=${kv#DUO_SUPPORT_DIR=}; done
+[[ -n $sup ]] || sup=$(mktemp -d /tmp/duo-rl-XXXXXX)
+mkdir -p $sup
+envargs+=(--env DUO_ISOLATED=1 --env "DUO_SUPPORT_DIR=$sup")
+[[ -n ${DUO_CLAUDE_CONFIG_DIR:-} ]] && envargs+=(--env "CLAUDE_CONFIG_DIR=$DUO_CLAUDE_CONFIG_DIR")
+echo "support: $sup (duo2 for this instance: DUO_ISOLATED=1 DUO_SUPPORT_DIR=$sup duo2 ...)"
 [[ -n ${DUO_NO_EDIT_HOOK:-} ]] && envargs+=(--env "DUO_NO_EDIT_HOOK=1")   # sessions without the edit hook (DL-78)
 # More variables for the app and its sessions, space-separated KEY=value (the mock API for chat mode's checks).
 for kv in ${=DUO_EXTRA_ENV:-}; do envargs+=(--env "$kv"); done
