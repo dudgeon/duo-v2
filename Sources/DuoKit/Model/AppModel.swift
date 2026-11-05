@@ -512,7 +512,9 @@ public final class AppModel {
             merged.sessions[i].reason = nil
             merged.counts.needsYou = max(0, merged.counts.needsYou - 1)
         }
-        if !merged.sameApartFromClock(fixture) { fixture = merged }
+        let changed = !merged.sameApartFromClock(fixture)
+        core.refreshed(changed: changed)   // the loop's pace (DL-318)
+        if changed { fixture = merged }
         followTaskTitles()
         followTaskStatus()
         let windows = core.models
@@ -564,6 +566,8 @@ public final class AppModel {
     private func archiveListedSessions() {
         guard Date().timeIntervalSince(core.lastArchive) > 60 else { return }
         core.lastArchive = Date()
+        let keepAliveDue = Date().timeIntervalSince(core.lastKeepAlive) > 30 * 60
+        if keepAliveDue { core.lastKeepAlive = Date() }
         core.count("archive")
         let listed: [(String, String)] = fixture.sessions.compactMap { s in
             guard let id = s.sessionId, let folder = liveFolders[s.project] else { return nil }
@@ -579,7 +583,8 @@ public final class AppModel {
                 FileHandle.standardError.write(Data("archive: \(error)\n".utf8))
             }
             // DL-47: keep listed sessions out of Claude's cleanup as well as archiving them.
-            if let days = SessionArchive.cleanupPeriodDays() { SessionArchive.keepAlive(found.map(\.transcript), periodDays: days) }
+            // Every half hour is plenty with keep-alive's 2-day margin (F-597); it stats every listed transcript (F-599).
+            if keepAliveDue, let days = SessionArchive.cleanupPeriodDays() { SessionArchive.keepAlive(found.map(\.transcript), periodDays: days) }
         }
     }
 

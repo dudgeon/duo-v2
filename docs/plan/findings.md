@@ -5764,3 +5764,39 @@ After F-597, the isolated 6,150-session app (test-0-2-25's generator) searched n
 - `TerminalMicView`'s 20 Hz poll (~1–3%, F-531).
 
 Under 10% at this size needs the refresh to skip rebuilding when nothing changed (or back off when idle): Q-462.
+
+## F-599 · The idle refresh backs off (DL-318), and the 20 Hz mic tick and the remaining scans stop re-reading what hasn't changed: idle CPU at 6,150 sessions 33% → 8.7% (idle-cpu, 2026-11-05; Q-462)
+
+Geoff chose to back off when idle (DL-318).
+
+**Built:**
+- **`RefreshPacer`** (`Model/RefreshPacer.swift`): after `quietRuns` (3) refreshes in a row whose snapshot is the same apart from the clock (`sameApartFromClock`), the 2 s tick refreshes only every `idle` (8) s.
+- **`AppCore.poke`** brings it back to 2 s with an immediate refresh, on:
+  - a change under Claude's `sessions` (beacons) and `projects` (transcripts), Duo's hook `events`, or Home and the extra projects. One `FolderWatch` (FSEvents) watches folders that exist (Claude's root, Duo's support folder, Home) and keeps only events under those, so Duo's own writes to its logs and search index don't count. A stream started on a missing folder never reports it appearing, which a first check caught;
+  - any key, click or scroll in Duo (a local event monitor);
+  - Duo becoming active.
+  Duo's own actions still call `refreshLive()` directly, unpaced. The "N minutes ago" texts of a large Home change about once a minute, so it runs three 2 s refreshes a minute, then backs off again. `live:` stderr lines log each back-off and each poke (with the path, for a file).
+- **`TerminalMicView.tick`** (20 Hz per visible Claude terminal) skips its screen read while the output count, size, layout, input generation (bumped by the input monitor, so scrolling counts), voice state and notice are unchanged and no dictation runs. It used to build a whole state snapshot plus every row's text 20 times a second. The skip key is cleared only when the view can't be read, not when no input box is on screen; clearing it there made every tick a full read on a screen without a box.
+- **`scanTrustNotices`** reads only terminals with new output or a new size since the last scan, plus any with a bar up (that bar goes when the folder is trusted elsewhere). `LiveChatTerminal` takes its size from `terminalDimensions`, not a full snapshot (F-531's area).
+- **Search** chunks with a tokenizer loaded by itself (`EmbedderSource.tokenizerLoad`), so re-reading one changed transcript with nothing new to embed no longer loads the Core ML model.
+- **Keep-alive** runs every 30 min (its margin is 2 days, F-597); the archive sync takes sizes and dates from the refresh's listing.
+- **`LiveSnapshot.build`**: task notes and index groups find their sessions through maps (`nameInProject`, `nameByID`), and threads group sessions by project once (lines 232, 321, 329 by `atos` against the bundle).
+
+**Checks:** `DUO_CHECKS=backoff` (also in the core checks):
+- the pacer's due times, back-off and poke;
+- 20 s of quiet ticks makes 4 refreshes, not 10;
+- an immediate refresh and a return to 2 s on a file poke, a real key event and activation;
+- while backed off, a beacon written into the watched Claude folder brings the needs-you snapshot and its notification pass in under 0.1 s, through the watcher's poke.
+
+Full DuoChecks 5659 passed, 0 failed.
+
+**Measured** (6,150-session fixture, isolated, background, average over 300 s from the `ps` cputime delta, exclusive ≤ 10 min):
+
+| | idle CPU |
+|---|---|
+| before (F-598) | 33% |
+| back-off only | 17.5% |
+| + tokenizer, keep-alive, sync | 14.9% |
+| + mic tick, build scans | **8.7%** |
+
+The 60 s windows used earlier swing by 5–10 points with the once-a-minute passes. What's left is mostly SwiftUI's `SessionOrganizeMenu.body` for the visible rows and the refresh itself.

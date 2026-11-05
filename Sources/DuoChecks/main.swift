@@ -93,6 +93,7 @@ func repoFixture() throws -> Fixture {
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "deckhidden" { return try deckHiddenChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "tabs" { return try tabOrderChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "core" { return try appCoreChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "backoff" { return try backoffChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "windows" { return try multiWindowChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "newsession" { return try newSessionChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "newsessionrow" { return try newSessionRowChecks() }

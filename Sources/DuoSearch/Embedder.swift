@@ -160,6 +160,22 @@ public final class EmbedderSource: @unchecked Sendable {
     }
 
     public init(load: @escaping () throws -> Embedder) { make = load }
+
+    /// Loads the tokenizer by itself (the vocabulary file), so chunking a file that needs no new vectors doesn't load the
+    /// Core ML model (F-599: an idle pass that re-read one changed transcript loaded the model just to tokenize it).
+    public var tokenizerLoad: (() throws -> WordPiece)?
+    private var tokenizerKept: WordPiece?
+    public func tokenizer() throws -> WordPiece {
+        lock.lock()
+        if let c = current { lock.unlock(); return c.tokenizer }
+        if let t = tokenizerKept { lock.unlock(); return t }
+        let load = tokenizerLoad
+        lock.unlock()
+        guard let load else { return try get().tokenizer }
+        let t = try load()
+        lock.lock(); tokenizerKept = t; lock.unlock()
+        return t
+    }
     /// A fixed embedder, never released.
     public init(_ fixed: Embedder) { current = fixed; make = { fixed } }
 

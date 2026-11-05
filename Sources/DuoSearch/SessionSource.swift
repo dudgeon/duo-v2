@@ -136,7 +136,7 @@ extension SearchIndex {
             }
             let (turns, title, cwd) = SessionSource.read(t.path)
             guard !turns.isEmpty else { continue }
-            let tokenizer = try embedder.get().tokenizer
+            let tokenizer = try embedder.tokenizer()
             let chunks = turns.flatMap { turn -> [Chunk] in
                 let text = Secrets.redact(turn.text)
                 let pieces = Chunker.chunks(path: "turn.txt", text: text, tokenizer: tokenizer)
@@ -154,7 +154,7 @@ extension SearchIndex {
             if let k = known[key], k.modified == mod, k.size == (v?.fileSize ?? 0) { continue }
             let (turns, title, _) = SessionSource.read(a.copy.path)
             guard !turns.isEmpty else { continue }
-            let tokenizer = try embedder.get().tokenizer
+            let tokenizer = try embedder.tokenizer()
             let chunks = turns.flatMap { turn -> [Chunk] in
                 Chunker.chunks(path: "turn.txt", text: Secrets.redact(turn.text), tokenizer: tokenizer)
                     .map { Chunk(text: $0.text, startLine: turn.index, endLine: turn.index) }
@@ -171,7 +171,7 @@ extension SearchIndex {
             guard let raw = FileSource.read(m.path) else { continue }
             // The bucket folder's sessions tell us its cwd.
             let cwd = transcripts.first { $0.path.hasPrefix(m.bucket + "/") }.flatMap { SessionSource.read($0.path).cwd }
-            let chunks = Chunker.chunks(path: m.path, text: Secrets.redact(raw), tokenizer: try embedder.get().tokenizer)
+            let chunks = Chunker.chunks(path: m.path, text: Secrets.redact(raw), tokenizer: try embedder.tokenizer())
             try store(key: key, kind: "memory", project: owner(cwd), title: "Memory: " + (m.path as NSString).lastPathComponent,
                       modified: mod, size: v?.fileSize ?? 0, chunks: chunks, replacing: known[key]?.id, embedder: embedder, stats: &stats)
         }
