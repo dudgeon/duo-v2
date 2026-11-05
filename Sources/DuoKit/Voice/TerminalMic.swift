@@ -101,6 +101,7 @@ final class TerminalMicView: NSView {
         let d = s.view.terminalDimensions
         let seen = "\(s.view.diagnostics.bytesFed)|\(d.cols)x\(d.rows)|\(Self.inputGeneration)|\(state)|\(VoiceMicStyle.current)|\(s.view.frame)|\(sv.bounds.size)|\(hovering)|\(String(describing: voice?.microphoneAvailable))|\(voice?.notice?.text ?? "")"
         if seen == lastSeen && !state.isActive { return }
+        Work.count(.micScreenRead)
         lastSeen = seen
         let snap = s.view.terminalStateSnapshot()
         let rows = s.view.visibleRowsText(0..<snap.dimensions.rows)

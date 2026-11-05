@@ -164,7 +164,7 @@ extension AppModel {
         var refused: [String] = []
         for k in keys {
             if let why = park(k) {
-                let name = (fixture.sessions.first { $0.tabKey == k }?.name).map(ParkCheck.quoted) ?? k
+                let name = (session(tabKey: k)?.name).map(ParkCheck.quoted) ?? k
                 refused.append("\(name) \(why.why)")
             }
         }

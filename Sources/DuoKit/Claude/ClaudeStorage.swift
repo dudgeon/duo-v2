@@ -21,6 +21,7 @@ public enum ClaudeStorage {
         let name = sessionId + ".jsonl"
         let direct = projects.appending(path: encode(URL(fileURLWithPath: cwd).realPath)).appending(path: name)
         if fm.fileExists(atPath: direct.path) { return direct }
+        Work.count(.bucketScan)
         let dirs = (try? fm.contentsOfDirectory(at: projects, includingPropertiesForKeys: nil)) ?? []
         return dirs.map { $0.appending(path: name) }.first { fm.fileExists(atPath: $0.path) }
     }
@@ -115,6 +116,7 @@ public enum ClaudeStorage {
     /// The listed stamp, else a stat.
     public static func stampOrStat(_ url: URL) -> Stamp {
         if let s = stamp(url) { return s }
+        Work.count(.statFallback)
         let a = try? FileManager.default.attributesOfItem(atPath: url.path)
         return Stamp(size: (a?[.size] as? NSNumber)?.uint64Value ?? 0, mtime: a?[.modificationDate] as? Date ?? .distantPast)
     }

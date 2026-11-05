@@ -5800,3 +5800,25 @@ Full DuoChecks 5659 passed, 0 failed.
 | + mic tick, build scans | **8.7%** |
 
 The 60 s windows used earlier swing by 5–10 points with the once-a-minute passes. What's left is mostly SwiftUI's `SessionOrganizeMenu.body` for the visible rows and the refresh itself.
+
+## F-600 · Views looked sessions up by scanning every session; the core's index had a stale-answer bug the new checks caught; deterministic perf regression checks (idle-cpu, 2026-11-05)
+
+After F-599, SwiftUI's `SessionOrganizeMenu.body` was the largest idle cost (482 samples in 20 s at 6,150 sessions). Its body ran `model.fixture.sessions.first(where: { $0.tabKey == sessionKey })` for every visible row on every render. 34 more places in DuoKit did the same scan, including the console tab strip and titles, the idle list, the pane title, forks, park, send and the control verbs.
+- **Fix:** `AppModel.session(tabKey:)` answers from `AppCore`'s index; the exact single-condition scans now call it. Scans with extra conditions (`|| $0.sessionId == key`) and scans over local arrays are unchanged.
+- **Measured** (6,150-session fixture, average over 300 s): idle **8.7% → 6.9%**, and `SessionOrganizeMenu.body` is gone from the profile.
+- **The index was wrong after a fixture change.** F-598 dropped it in a `didSet` on `AppCore.fixture`. On an `@Observable` property that `didSet` never runs, so after a change, a key that wasn't in the last map answered nil. Now the index checks itself on every use: rebuilt when the count changed or a slot no longer holds its key, and a miss falls back to the old scan (rebuilding if that finds the key). The one case left is an in-place edit, at the same count, that gives an earlier session a later one's key; tab keys come from unique session ids.
+- **`DUO_CHECKS=perf`** (`PerfRegressionChecks.swift`, in the full run): deterministic checks with no timings. `Work` (`Debug/Work.swift`) counts the expensive operations: `bucketScan`, `statFallback`, `manifestDecode`, `micScreenRead`. `PerfProbe.micReads` drives a real `TerminalMicView` over a real Claude terminal without a window. The checks cover:
+  - `Env.value`'s getenv semantics (set, empty, unset; the dictionary form);
+  - the listing: ids to transcripts, stamps equal to the file's size and date, ignored after `CLAUDE_CONFIG_DIR` changes;
+  - one snapshot build: 0 bucket scans and 0 stats behind the listing; attribution, titles and a task note's sessions as before;
+  - the archive: no re-copy of unchanged files, a re-copy of a changed one, 0 stats; `purged()` exactly the session the listing lost, with 0 path lookups; the manifest decoded once;
+  - `session(tabKey:)`: the same as `first { tabKey }` for every fixture session; right after a removal, a replacement and an in-place edit;
+  - each session-list row's task equal to `task(of:in:)`;
+  - search's tokenizer without loading the Core ML model;
+  - a lint: no single-condition `fixture.sessions.first { $0.tabKey == … }` left in DuoKit;
+  - the mic tick: one screen read per change (50 idle ticks → 1; new output → 1; input → 1), with and without Claude's input box;
+  - `FolderWatch`: events outside its folders don't count, inside they do.
+
+  **Mutation-tested:** ignoring the stamps, disabling the manifest cache, trusting a stale index, and clearing the mic's key on hide each make the matching checks fail (160 stats; 3 decodes; the two changed-fixture checks; 50 reads).
+- Full DuoChecks 5695 passed, 0 failed.
+- **Still open:** F-596's "disk I/O error" isn't reproduced. A blanket sandbox denial doesn't fit one failure in a long run. A transient condition (a full disk, or a file swapped underneath) does; the extended codes will say which.

@@ -203,20 +203,31 @@ public final class AppCore {
 
     // MARK: - App-wide and per-project state (AppModel forwards each)
 
-    public var fixture: Fixture { didSet { sessionSlots = nil } }
-    /// Each session's index in `fixture.sessions` by tab key, built on first use after the fixture changes (F-598): the
-    /// session list looked each row's session up by a linear scan, 6,150² comparisons a refresh on a heavy Home.
-    @ObservationIgnored private var sessionSlots: [String: Int]?
+    public var fixture: Fixture
+    /// Each session's index in `fixture.sessions` by tab key (F-598, F-600): the session list and the views looked each
+    /// session up by a linear scan, 6,150² comparisons a refresh on a heavy Home. Not told when `fixture` changes (a
+    /// `didSet` on an @Observable property never ran: the perf checks caught a stale answer), so every use checks it:
+    /// rebuilt when the count changed or a slot no longer holds its key, and a miss falls back to the scan the callers
+    /// used to do, rebuilding if that finds the key.
+    @ObservationIgnored private var sessionSlots: [String: Int] = [:]
+    @ObservationIgnored private var slotsCount = -1
     /// The first session with this tab key, as `fixture.sessions.first { $0.tabKey == key }` gives it.
     func session(tabKey key: String) -> Fixture.Session? {
         let ss = fixture.sessions
-        if let i = sessionSlots?[key], i < ss.count, ss[i].tabKey == key { return ss[i] }
-        if sessionSlots == nil || sessionSlots?[key] != nil {   // never built, or a slot that no longer holds its key
+        func rebuild() {
             var slots: [String: Int] = [:]
             for (i, s) in ss.enumerated() where slots[s.tabKey] == nil { slots[s.tabKey] = i }
-            sessionSlots = slots
+            sessionSlots = slots; slotsCount = ss.count
         }
-        return sessionSlots?[key].map { ss[$0] }
+        if slotsCount != ss.count { rebuild() }
+        if let i = sessionSlots[key] {
+            if i < ss.count, ss[i].tabKey == key { return ss[i] }   // (an in-place edit giving an earlier session this key, at the same count, would still answer the later one: tab keys come from unique session ids)
+            rebuild()
+            return sessionSlots[key].map { ss[$0] }
+        }
+        guard let i = ss.firstIndex(where: { $0.tabKey == key }) else { return nil }   // a true miss costs the old scan
+        rebuild()
+        return ss[i]
     }
     /// Linked GitHub issues' live state, by the issue's URL (DL-226); read through gh, cached.
     public var issueStates: [String: IssueState] = [:]

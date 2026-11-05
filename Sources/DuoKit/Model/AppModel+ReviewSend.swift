@@ -135,7 +135,7 @@ extension AppModel {
     public func deliverReviewComments() {
         guard !reviewDeliveries.isEmpty else { return }
         for (key, d) in reviewDeliveries {
-            guard let s = fixture.sessions.first(where: { $0.tabKey == d.session }) else { continue }
+            guard let s = session(tabKey: d.session) else { continue }
             let parts = key.components(separatedBy: "#")
             guard parts.count == 2 else { continue }
             let url = URL(fileURLWithPath: parts[0]), thread = parts[1]
@@ -168,7 +168,7 @@ extension AppModel {
         let prefix = url.resolvingSymlinksInPath().standardizedFileURL.path + "#"
         var map: [String: Any] = [:]
         for (k, d) in reviewDeliveries where k.hasPrefix(prefix) {
-            let s = fixture.sessions.first { $0.tabKey == d.session }
+            let s = session(tabKey: d.session)
             map[String(k.dropFirst(prefix.count))] = ["state": d.state.rawValue, "name": d.sessionName, "status": s.map(reviewSessionStatus) ?? "not running",
                                                      "at": Self.clock(d.at), "why": d.why as Any, "session": d.session]
         }

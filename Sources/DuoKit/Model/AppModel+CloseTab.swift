@@ -18,7 +18,7 @@ extension AppModel {
             guard pgid > 0, pgid != proc.shellPid else { return nil }   // at its prompt
             return .shellRunning(command: ForegroundCommand.title(ptyFD: proc.childfd, shellPid: proc.shellPid) ?? consoleTitle(key))
         }
-        guard let s = fixture.sessions.first(where: { $0.tabKey == key }), s.state == .working else { return nil }
+        guard let s = session(tabKey: key), s.state == .working else { return nil }
         return .claudeWorking(name: s.name, project: s.project)
     }
 

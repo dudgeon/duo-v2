@@ -243,6 +243,6 @@ struct ConsoleEndedBar: View {
 extension AppModel {
     /// A console tab's title: the session's name, or a shell's command (DB-4).
     public func consoleTitle(_ key: String) -> String {
-        fixture.sessions.first { $0.tabKey == key }?.name ?? shellTitles[key] ?? "zsh"
+        session(tabKey: key)?.name ?? shellTitles[key] ?? "zsh"
     }
 }

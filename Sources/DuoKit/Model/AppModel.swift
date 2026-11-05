@@ -617,7 +617,7 @@ public final class AppModel {
     private func followSessionChanges(_ beacons: [Beacon]) {
         for t in terminals.all {
             guard let pid = t.view.process?.shellPid, let b = beacons.first(where: { $0.pid == pid || AppOwning.descends($0.pid, from: pid) }),
-                  b.sessionId != t.key, let old = fixture.sessions.first(where: { $0.tabKey == t.key }),
+                  b.sessionId != t.key, let old = session(tabKey: t.key),
                   let folder = liveFolders[old.project] else { continue }
             if isBranch(newId: b.sessionId, from: t.key, folder: folder) {
                 splitBranch(from: old, to: b.sessionId, folder: folder)

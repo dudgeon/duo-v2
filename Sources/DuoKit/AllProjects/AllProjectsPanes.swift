@@ -1025,7 +1025,7 @@ struct SessionOrganizeMenu: ViewModifier {
 
     func body(content base: Content) -> some View {
         let content = base.modifier(MenuTargetFill(sessionKey: sessionKey, radius: radius, onConsole: onConsole))
-        if model.terminalsMode == .live, let s = model.fixture.sessions.first(where: { $0.tabKey == sessionKey }) ?? model.fixture.archivedSessions?.first(where: { $0.tabKey == sessionKey }),
+        if model.terminalsMode == .live, let s = model.session(tabKey: sessionKey) ?? model.fixture.archivedSessions?.first(where: { $0.tabKey == sessionKey }),
            let id = s.sessionId {
             let payload = AppModel.dragPayload(session: id)
             content

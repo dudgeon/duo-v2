@@ -60,6 +60,7 @@ public enum SessionArchive {
         manifestCache.lock.lock()
         if manifestCache.key == key, let m = manifestCache.value { manifestCache.lock.unlock(); return m }
         manifestCache.lock.unlock()
+        Work.count(.manifestDecode)
         let m = (try? Data(contentsOf: manifestURL)).flatMap { try? JSONDecoder().decode(Manifest.self, from: $0) } ?? Manifest()
         manifestCache.lock.lock(); manifestCache.key = key; manifestCache.value = m; manifestCache.lock.unlock()
         return m
