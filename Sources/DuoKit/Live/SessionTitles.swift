@@ -15,9 +15,8 @@ public enum SessionTitles {
     private static let cache = Cache()
 
     public static func title(transcript url: URL) -> String? {
-        let attrs = try? FileManager.default.attributesOfItem(atPath: url.path)
-        let size = (attrs?[.size] as? NSNumber)?.uint64Value ?? 0
-        let mtime = attrs?[.modificationDate] as? Date ?? .distantPast
+        let stamp = ClaudeStorage.stampOrStat(url)   // the refresh's listing, else a stat (F-595)
+        let size = stamp.size, mtime = stamp.mtime
         cache.lock.lock()
         if let hit = cache.entries[url.path], hit.size == size, hit.mtime == mtime { cache.lock.unlock(); return hit.title }
         cache.lock.unlock()

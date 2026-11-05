@@ -142,14 +142,20 @@ public enum SessionArchive {
     /// period gets its modification time set to *half the period ago*, not now, so it stays out
     /// of the sweep without jumping to the top of recency lists. Its sidecar folder (tool outputs,
     /// subagents) is treated the same. Returns how many items were refreshed.
+    ///
+    /// Only items older than half the period plus `hysteresis` are moved (F-597). Moving everything older than half the
+    /// period moved the same files again a minute later (the boundary had moved on a minute), so every listed session
+    /// over 15 days old was rewritten every minute, copied to the archive again and indexed again: a 6,150-session
+    /// Home spent its whole idle time in search passes. Now each one moves about once every two days.
     @discardableResult
     public static func keepAlive(_ transcripts: [URL], periodDays: Int, now: Date = Date()) -> Int {
         let half = Double(periodDays) * 86_400 / 2
         let stamp = now.addingTimeInterval(-half)
+        let due = stamp.addingTimeInterval(-min(2 * 86_400, half / 4))
         let fm = FileManager.default
         var refreshed = 0
         func refresh(_ url: URL) {
-            guard let mod = (try? fm.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date, mod < stamp else { return }
+            guard let mod = (try? fm.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date, mod < due else { return }
             if (try? fm.setAttributes([.modificationDate: stamp], ofItemAtPath: url.path)) != nil { refreshed += 1 }
         }
         for t in transcripts {

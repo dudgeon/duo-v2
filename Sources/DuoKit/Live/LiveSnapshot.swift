@@ -153,15 +153,16 @@ public enum LiveSnapshot {
         var filedIn: [String: String] = [:]   // id → resolved folder path
         for (id, f) in actual { filedIn[id] = resolve(f.folder.path) }
 
-        let claudeProjects = ClaudeStorage.projects.path + "/"
         let historyById = Dictionary(history.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         func makeSession(_ id: String, project name: String, folder: URL, entry: SessionIndex.Entry?) -> Fixture.Session {
             let beacon = beacons.first { $0.sessionId == id }
             let hooks = ctx.events.flatMap { HookEvents.summary(for: id, in: $0) }
             let live = beacon.map { Attention.live(beacon: $0, hooks: hooks, seenAt: ctx.seen[id]) }
             // Claude's own copy, not Duo's archive (a purged session keeps its archived title, DL-44).
-            let known = historyById[id].map(\.transcript).flatMap { $0.path.hasPrefix(claudeProjects) && FileManager.default.fileExists(atPath: $0.path) ? $0 : nil }
-            let mtime = historyById[id].flatMap { try? $0.transcript.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate }
+            // Listed by this refresh's `history()` (only Claude's own transcripts are stamped), so it exists; a path-prefix
+            // test missed when the config folder is spelled /var and /private/var (F-595).
+            let known = historyById[id].map(\.transcript).flatMap { ClaudeStorage.stamp($0) != nil ? $0 : nil }
+            let mtime = historyById[id].map { ClaudeStorage.stampOrStat($0.transcript).mtime }.flatMap { $0 == .distantPast ? nil : $0 }
             // Last activity: the transcript's change time when it's newer than the filing (a session
             // filed 44 minutes ago and used 2 minutes ago is 2m old).
             let since = live?.since ?? [entry?.createdAt, mtime].compactMap { $0 }.max().map { $0.timeIntervalSince1970 * 1000 }

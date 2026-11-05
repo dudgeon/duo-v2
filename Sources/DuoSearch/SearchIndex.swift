@@ -23,7 +23,7 @@ public final class SearchIndex: @unchecked Sendable {
         if !readOnly {
             chmod(url.path, 0o600)
             try db.exec("""
-            PRAGMA journal_mode=DELETE; PRAGMA foreign_keys=ON;
+            PRAGMA journal_mode=DELETE; PRAGMA foreign_keys=ON; PRAGMA temp_store=MEMORY;
             CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT);
             CREATE TABLE IF NOT EXISTS content(id INTEGER PRIMARY KEY, hash TEXT UNIQUE NOT NULL, vector BLOB NOT NULL);
             CREATE TABLE IF NOT EXISTS items(id INTEGER PRIMARY KEY, kind TEXT NOT NULL, project TEXT NOT NULL,
@@ -166,7 +166,10 @@ extension SearchIndex {
 
     /// Drops vectors no chunk uses any more.
     public func vacuumContent() throws {
-        try db.exec("DELETE FROM content WHERE id NOT IN (SELECT DISTINCT content FROM chunks)")
+        // An index probe per row (chunks_content), not `NOT IN (SELECT DISTINCT …)`: that builds a temporary b-tree of every
+        // chunk, which at 246k transcripts spilled to a temp file, and a writer that can't write one gets "disk I/O
+        // error" (F-596).
+        try db.exec("DELETE FROM content WHERE NOT EXISTS (SELECT 1 FROM chunks WHERE chunks.content = content.id)")
     }
 
     func updateCoverage(_ project: String, known: Int) throws {
