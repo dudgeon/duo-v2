@@ -5764,3 +5764,61 @@ After F-597, the isolated 6,150-session app (test-0-2-25's generator) searched n
 - `TerminalMicView`'s 20 Hz poll (~1–3%, F-531).
 
 Under 10% at this size needs the refresh to skip rebuilding when nothing changed (or back off when idle): Q-462.
+
+## F-599 · The idle refresh backs off (DL-318), and the 20 Hz mic tick and the remaining scans stop re-reading what hasn't changed: idle CPU at 6,150 sessions 33% → 8.7% (idle-cpu, 2026-11-05; Q-462)
+
+Geoff chose to back off when idle (DL-318).
+
+**Built:**
+- **`RefreshPacer`** (`Model/RefreshPacer.swift`): after `quietRuns` (3) refreshes in a row whose snapshot is the same apart from the clock (`sameApartFromClock`), the 2 s tick refreshes only every `idle` (8) s.
+- **`AppCore.poke`** brings it back to 2 s with an immediate refresh, on:
+  - a change under Claude's `sessions` (beacons) and `projects` (transcripts), Duo's hook `events`, or Home and the extra projects. One `FolderWatch` (FSEvents) watches folders that exist (Claude's root, Duo's support folder, Home) and keeps only events under those, so Duo's own writes to its logs and search index don't count. A stream started on a missing folder never reports it appearing, which a first check caught;
+  - any key, click or scroll in Duo (a local event monitor);
+  - Duo becoming active.
+  Duo's own actions still call `refreshLive()` directly, unpaced. The "N minutes ago" texts of a large Home change about once a minute, so it runs three 2 s refreshes a minute, then backs off again. `live:` stderr lines log each back-off and each poke (with the path, for a file).
+- **`TerminalMicView.tick`** (20 Hz per visible Claude terminal) skips its screen read while the output count, size, layout, input generation (bumped by the input monitor, so scrolling counts), voice state and notice are unchanged and no dictation runs. It used to build a whole state snapshot plus every row's text 20 times a second. The skip key is cleared only when the view can't be read, not when no input box is on screen; clearing it there made every tick a full read on a screen without a box.
+- **`scanTrustNotices`** reads only terminals with new output or a new size since the last scan, plus any with a bar up (that bar goes when the folder is trusted elsewhere). `LiveChatTerminal` takes its size from `terminalDimensions`, not a full snapshot (F-531's area).
+- **Search** chunks with a tokenizer loaded by itself (`EmbedderSource.tokenizerLoad`), so re-reading one changed transcript with nothing new to embed no longer loads the Core ML model.
+- **Keep-alive** runs every 30 min (its margin is 2 days, F-597); the archive sync takes sizes and dates from the refresh's listing.
+- **`LiveSnapshot.build`**: task notes and index groups find their sessions through maps (`nameInProject`, `nameByID`), and threads group sessions by project once (lines 232, 321, 329 by `atos` against the bundle).
+
+**Checks:** `DUO_CHECKS=backoff` (also in the core checks):
+- the pacer's due times, back-off and poke;
+- 20 s of quiet ticks makes 4 refreshes, not 10;
+- an immediate refresh and a return to 2 s on a file poke, a real key event and activation;
+- while backed off, a beacon written into the watched Claude folder brings the needs-you snapshot and its notification pass in under 0.1 s, through the watcher's poke.
+
+Full DuoChecks 5659 passed, 0 failed.
+
+**Measured** (6,150-session fixture, isolated, background, average over 300 s from the `ps` cputime delta, exclusive ≤ 10 min):
+
+| | idle CPU |
+|---|---|
+| before (F-598) | 33% |
+| back-off only | 17.5% |
+| + tokenizer, keep-alive, sync | 14.9% |
+| + mic tick, build scans | **8.7%** |
+
+The 60 s windows used earlier swing by 5–10 points with the once-a-minute passes. What's left is mostly SwiftUI's `SessionOrganizeMenu.body` for the visible rows and the refresh itself.
+
+## F-600 · Views looked sessions up by scanning every session; the core's index had a stale-answer bug the new checks caught; deterministic perf regression checks (idle-cpu, 2026-11-05)
+
+After F-599, SwiftUI's `SessionOrganizeMenu.body` was the largest idle cost (482 samples in 20 s at 6,150 sessions). Its body ran `model.fixture.sessions.first(where: { $0.tabKey == sessionKey })` for every visible row on every render. 34 more places in DuoKit did the same scan, including the console tab strip and titles, the idle list, the pane title, forks, park, send and the control verbs.
+- **Fix:** `AppModel.session(tabKey:)` answers from `AppCore`'s index; the exact single-condition scans now call it. Scans with extra conditions (`|| $0.sessionId == key`) and scans over local arrays are unchanged.
+- **Measured** (6,150-session fixture, average over 300 s): idle **8.7% → 6.9%**, and `SessionOrganizeMenu.body` is gone from the profile.
+- **The index was wrong after a fixture change.** F-598 dropped it in a `didSet` on `AppCore.fixture`. On an `@Observable` property that `didSet` never runs, so after a change, a key that wasn't in the last map answered nil. Now the index checks itself on every use: rebuilt when the count changed or a slot no longer holds its key, and a miss falls back to the old scan (rebuilding if that finds the key). The one case left is an in-place edit, at the same count, that gives an earlier session a later one's key; tab keys come from unique session ids.
+- **`DUO_CHECKS=perf`** (`PerfRegressionChecks.swift`, in the full run): deterministic checks with no timings. `Work` (`Debug/Work.swift`) counts the expensive operations: `bucketScan`, `statFallback`, `manifestDecode`, `micScreenRead`. `PerfProbe.micReads` drives a real `TerminalMicView` over a real Claude terminal without a window. The checks cover:
+  - `Env.value`'s getenv semantics (set, empty, unset; the dictionary form);
+  - the listing: ids to transcripts, stamps equal to the file's size and date, ignored after `CLAUDE_CONFIG_DIR` changes;
+  - one snapshot build: 0 bucket scans and 0 stats behind the listing; attribution, titles and a task note's sessions as before;
+  - the archive: no re-copy of unchanged files, a re-copy of a changed one, 0 stats; `purged()` exactly the session the listing lost, with 0 path lookups; the manifest decoded once;
+  - `session(tabKey:)`: the same as `first { tabKey }` for every fixture session; right after a removal, a replacement and an in-place edit;
+  - each session-list row's task equal to `task(of:in:)`;
+  - search's tokenizer without loading the Core ML model;
+  - a lint: no single-condition `fixture.sessions.first { $0.tabKey == … }` left in DuoKit;
+  - the mic tick: one screen read per change (50 idle ticks → 1; new output → 1; input → 1), with and without Claude's input box;
+  - `FolderWatch`: events outside its folders don't count, inside they do.
+
+  **Mutation-tested:** ignoring the stamps, disabling the manifest cache, trusting a stale index, and clearing the mic's key on hide each make the matching checks fail (160 stats; 3 decodes; the two changed-fixture checks; 50 reads).
+- Full DuoChecks 5695 passed, 0 failed.
+- **Still open:** F-596's "disk I/O error" isn't reproduced. A blanket sandbox denial doesn't fit one failure in a long run. A transient condition (a full disk, or a file swapped underneath) does; the extended codes will say which.

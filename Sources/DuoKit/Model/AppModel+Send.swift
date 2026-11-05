@@ -18,7 +18,7 @@ extension AppModel {
     public var sendTargets: [SendTarget] {
         let visible = visibleSessionId
         return terminals.all.filter { $0.isLiveClaude && $0.notReadyReason == nil }.map { t in
-            let s = fixture.sessions.first { $0.tabKey == t.key }
+            let s = session(tabKey: t.key)
             return SendTarget(key: t.key, title: s?.name ?? "Session", project: s?.project ?? "")
         }.sorted { a, b in
             if (a.key == visible) != (b.key == visible) { return a.key == visible }
@@ -31,7 +31,7 @@ extension AppModel {
     public var sendTarget: Result<SendTarget, SendUnavailable> {
         // An intro video state: its chat can take a send, though no process runs behind a fixture.
         if videoDemoFolder != nil, let key = visibleSessionId, fixtureChats[key] != nil {
-            let s = fixture.sessions.first { $0.tabKey == key }
+            let s = session(tabKey: key)
             return .success(SendTarget(key: key, title: s?.name ?? "Session", project: s?.project ?? ""))
         }
         guard let key = visibleSessionId else { return .failure(.init(reason: "No session is showing")) }
@@ -39,7 +39,7 @@ extension AppModel {
         guard t.isClaude else { return .failure(.init(reason: "The tab showing is a shell, not Claude")) }
         guard t.isLiveClaude else { return .failure(.init(reason: "The session showing has ended")) }
         if let why = t.notReadyReason { return .failure(.init(reason: why)) }
-        let s = fixture.sessions.first { $0.tabKey == key }
+        let s = session(tabKey: key)
         return .success(SendTarget(key: key, title: s?.name ?? "Session", project: s?.project ?? ""))
     }
 
@@ -74,7 +74,7 @@ extension AppModel {
 
     /// Shows a session's terminal: switching project, or to Home, if it lives elsewhere.
     func reveal(sessionKey key: String) {
-        guard visibleSessionId != key, let s = fixture.sessions.first(where: { $0.tabKey == key }) else { return }
+        guard visibleSessionId != key, let s = session(tabKey: key) else { return }
         if s.project == fixture.home?.name, altitude.isAllProjects {
             homeTab = key
         } else {
@@ -125,7 +125,7 @@ extension AppModel {
     }
 
     public func sessionPayload(_ sessionKey: String) -> String? {
-        guard let s = fixture.sessions.first(where: { $0.tabKey == sessionKey }), let id = s.sessionId else { return nil }
+        guard let s = session(tabKey: sessionKey), let id = s.sessionId else { return nil }
         let folder = liveFolders[s.project]
         let transcript = folder.flatMap { ClaudeStorage.transcript(sessionId: id, cwd: $0.path) }?.path
         let entry = folder.map { SessionIndex.load(project: $0) }?.sessions.first { $0.sessionId == id }

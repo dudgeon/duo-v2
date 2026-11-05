@@ -63,7 +63,9 @@ import Foundation
     }
     check((c["archive"] ?? 0) <= 1, "the archive pass ran at most once (\(c["archive"] ?? 0))")
     check(c["window-refresh"] == 2, "each window's own part ran once per window (\(c["window-refresh"] ?? 0))")
-    // The loop's tick, from the core: the same, once
+    // The loop's tick, from the core: the same, once (2 s later on the core's clock: DL-318 paces the tick)
+    let later = Date().addingTimeInterval(3)
+    core.clock = { later }
     core.tick()
     waitApplied(2)
     let d = core.passCounts
@@ -71,6 +73,8 @@ import Foundation
     check(d["trust"] == 1, "the trust screens are read once per tick")
     check((d["archive"] ?? 0) <= 1, "the archive pass keeps its once a minute across windows")
     core.isLive = false
+
+    try backoffChecks()
 
     // A model made alone still has its own core: the checks and the harness are unchanged
     let alone = AppModel(fixture: f)

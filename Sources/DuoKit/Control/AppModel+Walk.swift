@@ -64,7 +64,7 @@ extension AppModel {
             // once its prompt is ready.
             guard let project = words.dropFirst().first, fixture.projects.contains(where: { $0.name == project }) else { return next("✘ no project for \(step)") }
             open(project: project)
-            if let t = terminals.all.first(where: { t in t.isLiveClaude && fixture.sessions.first { $0.tabKey == t.key }?.project == project }) {
+            if let t = terminals.all.first(where: { t in t.isLiveClaude && session(tabKey: t.key)?.project == project }) {
                 openConsoleTab(t.key)
                 return next("· showing a running session in \(project)")
             }

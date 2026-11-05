@@ -182,7 +182,7 @@ extension AppModel {
     public func currentTabTitle(in pane: DuoPane) -> String? {
         guard let key = currentTabKey(in: pane) else { return nil }
         if pane == .right, !altitude.isAllProjects { return rightTabItems().first { $0.id == key }?.title ?? key }
-        if let s = fixture.sessions.first(where: { $0.tabKey == key }) { return s.name }
+        if let s = session(tabKey: key) { return s.name }
         return consoleTitle(key)
     }
 

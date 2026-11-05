@@ -112,6 +112,7 @@ public enum LiveSnapshot {
         var files: [String: [String]] = [:]
         var folders: [String: URL] = [:]
         var claimed = Set<String>()
+        var nameByID: [String: String] = [:], nameInProject: [String: String] = [:]   // first session with an id (in a project)
         var allTasks: [Fixture.TaskSummary] = []
 
         // Where each filed session actually is (F-32): a live session's cwd, else the project
@@ -216,7 +217,10 @@ public enum LiveSnapshot {
             var stale: [String: Int] = [:]
             for id in ids where !claimed.contains(id) {
                 claimed.insert(id)
-                sessions.append(makeSession(id, project: name, folder: f.folder, entry: entries[id]))
+                let made = makeSession(id, project: name, folder: f.folder, entry: entries[id])
+                sessions.append(made)
+                if nameByID[id] == nil { nameByID[id] = made.name }
+                if nameInProject["\(name)\u{1}\(id)"] == nil { nameInProject["\(name)\u{1}\(id)"] = made.name }
                 if let cwd = cwdOf[id], cwd != folderPath, !cwd.hasPrefix(folderPath + "/"), !FileManager.default.fileExists(atPath: cwd) {
                     stale[cwd, default: 0] += 1
                 }
@@ -229,12 +233,12 @@ public enum LiveSnapshot {
             for t in TaskNotes.load(project: f.folder) {
                 allTasks.append(.init(project: name, note: t))
                 guard !t.archived else { continue }   // filed away: its sessions list as themselves (DL-115)
-                let names = t.sessionIds.compactMap { id in sessions.first { $0.sessionId == id && $0.project == name }?.name }
+                let names = t.sessionIds.compactMap { id in nameInProject["\(name)\u{1}\(id)"] }   // indexed, not a scan per id (F-599)
                 guard !names.isEmpty else { continue }
                 groups.append(Fixture.Group(name: t.title, project: name, sessions: names, threads: names.map { [$0] }, task: t.path))
             }
             for g in index.groups {
-                let names = g.sessions.compactMap { id in sessions.first { $0.sessionId == id }?.name }
+                let names = g.sessions.compactMap { id in nameByID[id] }
                 groups.append(Fixture.Group(name: g.name, project: name, sessions: names, threads: names.map { [$0] }))
             }
             files[name] = treeFiles(f.folder, showHidden: ctx.showHidden, expanded: ctx.expanded[f.folder.path] ?? [])
@@ -317,8 +321,9 @@ public enum LiveSnapshot {
         }
         // Threads (DL-24): a fork folds under the session it came from; a group lists its threads.
         if ctx.includeHistory || ctx.historyOverride != nil {
-            for project in Set(sessions.map(\.project)) {
-                let members = sessions.filter { $0.project == project }.compactMap { s in s.sessionId.flatMap { id in transcripts[id].map { (id: id, transcript: $0) } } }
+            let inProject = Dictionary(grouping: sessions.indices, by: { sessions[$0].project })   // once, not a filter per project (F-599)
+            for (project, slots) in inProject {
+                let members = slots.map { sessions[$0] }.compactMap { s in s.sessionId.flatMap { id in transcripts[id].map { (id: id, transcript: $0) } } }
                 guard members.count > 1 else { continue }
                 for (child, parent) in ThreadCache.shared.parents(members) {
                     guard let ci = sessions.firstIndex(where: { $0.sessionId == child }),
@@ -326,9 +331,10 @@ public enum LiveSnapshot {
                     if sessions[ci].forkOf == nil { sessions[ci].forkOf = pname; sessions[ci].forkParent = sessions[ci].forkParent ?? parent }
                 }
             }
+            let byProject = Dictionary(grouping: sessions, by: \.project)
             groups = groups.map { g in
                 var g = g
-                g.threads = Self.threads(g.sessions, in: sessions.filter { $0.project == g.project })
+                g.threads = Self.threads(g.sessions, in: byProject[g.project] ?? [])
                 return g
             }
         }

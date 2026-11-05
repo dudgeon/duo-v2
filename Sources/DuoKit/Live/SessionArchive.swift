@@ -60,6 +60,7 @@ public enum SessionArchive {
         manifestCache.lock.lock()
         if manifestCache.key == key, let m = manifestCache.value { manifestCache.lock.unlock(); return m }
         manifestCache.lock.unlock()
+        Work.count(.manifestDecode)
         let m = (try? Data(contentsOf: manifestURL)).flatMap { try? JSONDecoder().decode(Manifest.self, from: $0) } ?? Manifest()
         manifestCache.lock.lock(); manifestCache.key = key; manifestCache.value = m; manifestCache.lock.unlock()
         return m
@@ -75,8 +76,10 @@ public enum SessionArchive {
         var m = manifest()
         var copied = 0
         for (id, url) in sessions {
-            guard let v = try? url.resourceValues(forKeys: [.fileSizeKey, .contentModificationDateKey]),
-                  let size = v.fileSize, let mod = v.contentModificationDate?.timeIntervalSince1970 else { continue }
+            // The refresh's listing has the size and date (F-599); a stat only for a file it didn't list.
+            let stamp = ClaudeStorage.stampOrStat(url)
+            guard stamp.mtime != .distantPast else { continue }
+            let size = Int(stamp.size), mod = stamp.mtime.timeIntervalSince1970
             // Sidecars (tool outputs, subagent transcripts) beside the transcript (DL-48).
             let sidecar = url.deletingPathExtension()
             let print = fingerprint(sidecar)

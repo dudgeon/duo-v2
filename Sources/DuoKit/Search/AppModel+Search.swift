@@ -18,7 +18,7 @@ extension AppModel {
         }
         s.reset()
         s.openedIn = altitude.isAllProjects ? nil : currentProject?.name
-        s.sendTargetName = (try? sendTarget.get()).flatMap { t in fixture.sessions.first { $0.tabKey == t.key }?.name }
+        s.sendTargetName = (try? sendTarget.get()).flatMap { t in session(tabKey: t.key)?.name }
         s.recents = SearchRecents.load().map { ($0.query, SearchRecents.age($0.at)) }
         s.coverage = liveSearchCoverage()
         s.isOpen = true
@@ -367,7 +367,7 @@ extension AppModel {
     }
 
     public func findSimilar(session key: String) {
-        guard let s = fixture.sessions.first(where: { $0.tabKey == key }), let id = s.sessionId,
+        guard let s = session(tabKey: key), let id = s.sessionId,
               let folder = liveFolders[s.project], let t = ClaudeStorage.transcript(sessionId: id, cwd: folder.path) else { return }
         var item = SearchItem(id: "similar:\(id)", kind: .session, project: s.project, title: s.name)
         item.path = t.path; item.sessionId = id

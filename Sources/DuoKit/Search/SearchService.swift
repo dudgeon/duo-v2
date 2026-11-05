@@ -34,6 +34,7 @@ public final class SearchService {
         init() throws {
             index = try SearchIndex(readOnly: false)
             embedder.memoryBudget = SearchService.modelMemoryBudget
+            embedder.tokenizerLoad = { try WordPiece(vocabFile: SearchPaths.vocab) }   // chunking without the model (F-599)
         }
     }
     /// The indexing model goes once the footprint has grown this much since it loaded (F-594). A model per fixed shape

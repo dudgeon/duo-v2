@@ -42,11 +42,18 @@ extension AppModel {
         guard terminalsMode == .live else { return }
         let file = ClaudeTrust.configFile()
         for t in terminals.all where t.ended == nil && !t.exited && t.command != .shell {
+            // Only a screen that changed since the last read (DL-318, F-531): new output, or a new size. A bar that's up is
+            // read every time: it goes by itself when the folder is trusted some other way.
+            let d = t.view.terminalDimensions
+            let seen = "\(t.view.diagnostics.bytesFed) \(d.cols)x\(d.rows)"
+            if core.trustSeen[t.key] == seen && trustNotices[t.key] == nil { continue }
+            core.trustSeen[t.key] = seen
             let term = LiveChatTerminal(t.view)
             let read = TrustLine.read(lines: term.screenLines(), cols: term.columns)
             applyTrustRead(key: t.key, read: read, sessionFolder: t.cwd) { ClaudeTrust.entries(file: file) }
         }
         for k in trustNotices.keys where terminals.existing(k) == nil { trustNotices[k] = nil }
+        for k in core.trustSeen.keys where terminals.existing(k) == nil { core.trustSeen[k] = nil }
     }
 
     /// One screen read for one session (also the entry for the checks and fixtures).

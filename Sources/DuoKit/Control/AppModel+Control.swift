@@ -362,7 +362,7 @@ extension AppModel {
             if s.project == fixture.home?.name, altitude.isAllProjects { homeTab = s.tabKey } else { open(project: s.project).openConsoleTab(s.tabKey) }
             done(.ok("Showing \(s.name)."))
         case .sessionClose:
-            guard let k = inv[0] ?? visibleSessionId, let s = findSession(k, in: nil) ?? fixture.sessions.first(where: { $0.tabKey == k }) else { return done(.fail("no session to close")) }
+            guard let k = inv[0] ?? visibleSessionId, let s = findSession(k, in: nil) ?? session(tabKey: k) else { return done(.fail("no session to close")) }
             if parkedTabs.contains(s.tabKey), terminals.existing(s.tabKey) == nil {
                 closeSession(s.tabKey)
                 return done(.ok("Closed \(s.name)'s tab; it hadn't resumed since launch. It stays listed and resumable."))
@@ -399,7 +399,7 @@ extension AppModel {
                 if !missing.isEmpty { msg += " " + Self.noSessions(missing) }
                 return done(parked > 0 ? .ok(msg, ["parked": found.map { $0.sessionId ?? $0.tabKey }]) : .fail(msg))
             }
-            guard let k = inv[0], let s = findSession(k, in: nil) ?? fixture.sessions.first(where: { $0.tabKey == k }) else {
+            guard let k = inv[0], let s = findSession(k, in: nil) ?? session(tabKey: k) else {
                 return done(.fail(inv[0].map { "no session '\($0)'" } ?? "usage: \(id.action.usage)"))
             }
             if let why = park(s.tabKey) {
@@ -408,7 +408,7 @@ extension AppModel {
             }
             done(.ok("Parked \(s.name). Its tab stays; it picks up where it left off when shown (duo2 session open \(s.sessionId ?? s.tabKey)).", ["parked": s.sessionId ?? s.tabKey]))
         case .sessionKeepRunning:
-            guard let k = inv[0], let s = findSession(k, in: nil) ?? fixture.sessions.first(where: { $0.tabKey == k }), !isShell(s.tabKey) else {
+            guard let k = inv[0], let s = findSession(k, in: nil) ?? session(tabKey: k), !isShell(s.tabKey) else {
                 return done(.fail(inv[0].map { "no session '\($0)'" } ?? "usage: \(id.action.usage)"))
             }
             switch inv[1]?.lowercased() {
@@ -1201,7 +1201,7 @@ extension AppModel {
         let toNew = inv.has("new")
         var key: String?
         if let to = inv.flags["to"] {
-            guard let s = findSession(to, in: nil) ?? fixture.sessions.first(where: { $0.tabKey == to }) else { return done(.fail("no session '\(to)'")) }
+            guard let s = findSession(to, in: nil) ?? session(tabKey: to) else { return done(.fail("no session '\(to)'")) }
             key = s.tabKey
         } else if !toNew {
             switch sendTarget {
@@ -1217,12 +1217,12 @@ extension AppModel {
             if toNew { self.sendToNewSession(text); return done(.ok("Starting a new session; the context goes into its prompt when it's ready.")) }
             // A tab parked since launch (DL-156) resumes now; Claude takes a moment to be ready.
             if let key, self.wakeParked(key) {
-                return done(.fail("\(self.fixture.sessions.first { $0.tabKey == key }?.name ?? key) hadn't resumed since launch; it's resuming now. Send again once it's at its prompt."))
+                return done(.fail("\(self.session(tabKey: key)?.name ?? key) hadn't resumed since launch; it's resuming now. Send again once it's at its prompt."))
             }
             guard let key, self.send(text, to: key) else {
                 return done(.fail(key.flatMap { self.terminals.existing($0)?.notReadyReason } ?? "that session isn't running in Duo"))
             }
-            done(.ok("In the prompt of \(self.fixture.sessions.first { $0.tabKey == key }?.name ?? key), not sent: the user adds the request."))
+            done(.ok("In the prompt of \(self.session(tabKey: key)?.name ?? key), not sent: the user adds the request."))
         }
         switch id {
         case .sendFile:
@@ -1329,7 +1329,7 @@ extension AppModel {
     func sessionsNamed(_ words: [String]) -> (found: [Fixture.Session], missing: [String]) {
         var found: [Fixture.Session] = [], missing: [String] = []
         for w in words {
-            if let s = findSession(w, in: nil) ?? fixture.sessions.first(where: { $0.tabKey == w }) {
+            if let s = findSession(w, in: nil) ?? session(tabKey: w) {
                 if !found.contains(where: { $0.tabKey == s.tabKey }) { found.append(s) }
             } else { missing.append(w) }
         }
@@ -1476,12 +1476,12 @@ extension AppModel {
         switch altitude {
         case .allProjects:
             j["view"] = "all-projects"
-            let home = homeTab.flatMap { k in fixture.sessions.first { $0.tabKey == k } }
+            let home = homeTab.flatMap { k in session(tabKey: k) }
             lines.append("All projects" + (home.map { ", Home on \($0.name)" } ?? ""))
             if let h = home { j["session"] = sessionJSON(h) }
         case .project(let p):
             j["view"] = "project"; j["project"] = p
-            let s = consoleTab.flatMap { k in fixture.sessions.first { $0.tabKey == k } }
+            let s = consoleTab.flatMap { k in session(tabKey: k) }
             lines.append("Project \(p)" + (s.map { ", console on \($0.name)" } ?? ""))
             if let s { j["session"] = sessionJSON(s) }
             let tab = rightTab ?? "Project"
@@ -1508,14 +1508,14 @@ extension AppModel {
     @discardableResult
     public func wakeParked(_ key: String) -> Bool {
         guard parkedTabs.contains(key), terminals.existing(key) == nil,
-              let s = fixture.sessions.first(where: { $0.tabKey == key }) else { return false }
+              let s = session(tabKey: key) else { return false }
         return terminal(project: s.project, session: key) != nil
     }
 
     public func closeSession(_ key: String) {
         let parked = parkedTabs.remove(key) != nil
         guard terminals.existing(key) != nil || parked else { return }
-        let s = fixture.sessions.first { $0.tabKey == key }
+        let s = session(tabKey: key)
         let next = s.flatMap { TabOrder.neighbour(closing: key, in: consoleTabKeys(inProject: $0.project)) }
         if terminals.existing(key) != nil { terminals.close(key) }
         if s?.fork == ForkSource.Kind.fork.rawValue, s?.liveProcess == true { detachedForks.insert(key) }   // detach: the fork runs on (DL-227)

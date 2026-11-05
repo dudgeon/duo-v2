@@ -82,7 +82,7 @@ extension AppModel {
         var byProject: [String: [String]] = [:]
         let parkedNow = parkedTabs.filter { terminals.existing($0) == nil }
         for key in terminals.all.filter({ $0.isLiveClaude && !$0.exited }).map(\.key) + parkedNow.sorted() {
-            guard let session = fixture.sessions.first(where: { $0.tabKey == key }), let id = session.sessionId,
+            guard let session = session(tabKey: key), let id = session.sessionId,
                   session.project != fixture.home?.name else { continue }
             byProject[session.project, default: []].append(id)
         }

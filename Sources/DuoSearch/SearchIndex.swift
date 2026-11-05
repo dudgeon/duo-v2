@@ -114,7 +114,7 @@ extension SearchIndex {
             }
             guard let raw = FileSource.read(f.path) else { continue }
             let text = Secrets.redact(raw)
-            let chunks = Chunker.chunks(path: f.path, text: text, tokenizer: try embedder.get().tokenizer)
+            let chunks = Chunker.chunks(path: f.path, text: text, tokenizer: try embedder.tokenizer())
             let hashes = chunks.map { Self.hash($0.text) }
             var ids: [String: Int] = [:]
             let look = try db.prepare("SELECT id FROM content WHERE hash = ?")

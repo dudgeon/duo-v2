@@ -113,15 +113,69 @@ public final class AppCore {
         minuteTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.minute = Date() }
         }.loose()
-        refreshTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: RefreshPacer.base, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.tick() }
         }.loose()
+        watchForChanges()
+    }
+
+    /// What brings a backed-off refresh straight back (DL-318): Claude's beacons and transcripts, Duo's hook events, and
+    /// Home's folders changing on disk; any key, click or scroll in Duo; Duo becoming active.
+    public func watchForChanges() {
+        let root = liveRoot.map { [$0.path] } ?? []
+        let extra = extraProjects.map(\.path)
+        folderWatch?.stop()
+        let only = [ClaudeStorage.sessions.path, ClaudeStorage.projects.path, DuoPaths.events.path] + root + extra
+        let roots = [ClaudeStorage.root.path, DuoPaths.events.deletingLastPathComponent().path] + root + extra
+        folderWatch = FolderWatch(roots: roots, only: only) { [weak self] path in self?.poke("files", detail: path) }
+        if inputMonitor == nil {
+            inputMonitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .leftMouseDown, .rightMouseDown, .otherMouseDown, .scrollWheel]) { [weak self] e in
+                MainActor.assumeIsolated { TerminalMicView.inputGeneration &+= 1; self?.poke("input") }
+                return e
+            }
+        }
+        if activeObserver == nil {
+            activeObserver = NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.poke("active") }
+            }
+        }
+    }
+
+    /// The tick's pacing (DL-318) and its clock (the checks move it).
+    @ObservationIgnored public var pacer = RefreshPacer()
+    @ObservationIgnored public var clock: () -> Date = { Date() }
+    @ObservationIgnored var folderWatch: FolderWatch?
+    /// Each terminal's output count and size when its screen was last read for trust notices (DL-318).
+    @ObservationIgnored var trustSeen: [String: String] = [:]
+    @ObservationIgnored var inputMonitor: Any?
+    @ObservationIgnored var activeObserver: NSObjectProtocol?
+
+    /// Something changed that the next refresh should show: back to the 2 s pace, and if it had backed off, refresh now.
+    public func poke(_ why: String, detail: String = "") {
+        guard pacer.poke() else { return }
+        count("poke-" + why)
+        FileHandle.standardError.write(Data("live: back to 2 s (\(why)\(detail.isEmpty ? "" : ": " + detail))\n".utf8))
+        pacer.started(clock())
+        primary?.refreshLive()
+    }
+
+    /// A refresh applied (from `AppModel.apply`): whether it changed anything sets the pace.
+    func refreshed(changed: Bool) {
+        let was = pacer.backedOff
+        pacer.finished(changed: changed)
+        if pacer.backedOff != was {
+            count(pacer.backedOff ? "backoff" : "back")
+            if pacer.backedOff { FileHandle.standardError.write(Data("live: nothing changed in \(RefreshPacer.quietRuns) refreshes; every \(Int(RefreshPacer.idle)) s\n".utf8)) }
+        }
     }
 
     /// Stops the loop (the checks).
     public func stopLoop() {
         refreshTimer?.invalidate(); refreshTimer = nil
         minuteTimer?.invalidate(); minuteTimer = nil
+        folderWatch?.stop(); folderWatch = nil
+        if let m = inputMonitor { NSEvent.removeMonitor(m); inputMonitor = nil }
+        if let o = activeObserver { NotificationCenter.default.removeObserver(o); activeObserver = nil }
     }
 
     /// What a refresh reads (off the main thread): Claude's logs, the beacons and Home's folders.
@@ -133,7 +187,8 @@ public final class AppCore {
     /// One tick of the loop: the refresh, then the trust screens (DL-229).
     public func tick() {
         guard let p = primary else { return }
-        p.refreshLive()
+        let now = clock()
+        if pacer.due(now) { pacer.started(now); p.refreshLive() }   // DL-318: every 2 s, or 8 s once idle
         count("trust")
         p.scanTrustNotices()
     }
@@ -148,20 +203,31 @@ public final class AppCore {
 
     // MARK: - App-wide and per-project state (AppModel forwards each)
 
-    public var fixture: Fixture { didSet { sessionSlots = nil } }
-    /// Each session's index in `fixture.sessions` by tab key, built on first use after the fixture changes (F-598): the
-    /// session list looked each row's session up by a linear scan, 6,150² comparisons a refresh on a heavy Home.
-    @ObservationIgnored private var sessionSlots: [String: Int]?
+    public var fixture: Fixture
+    /// Each session's index in `fixture.sessions` by tab key (F-598, F-600): the session list and the views looked each
+    /// session up by a linear scan, 6,150² comparisons a refresh on a heavy Home. Not told when `fixture` changes (a
+    /// `didSet` on an @Observable property never ran: the perf checks caught a stale answer), so every use checks it:
+    /// rebuilt when the count changed or a slot no longer holds its key, and a miss falls back to the scan the callers
+    /// used to do, rebuilding if that finds the key.
+    @ObservationIgnored private var sessionSlots: [String: Int] = [:]
+    @ObservationIgnored private var slotsCount = -1
     /// The first session with this tab key, as `fixture.sessions.first { $0.tabKey == key }` gives it.
     func session(tabKey key: String) -> Fixture.Session? {
         let ss = fixture.sessions
-        if let i = sessionSlots?[key], i < ss.count, ss[i].tabKey == key { return ss[i] }
-        if sessionSlots == nil || sessionSlots?[key] != nil {   // never built, or a slot that no longer holds its key
+        func rebuild() {
             var slots: [String: Int] = [:]
             for (i, s) in ss.enumerated() where slots[s.tabKey] == nil { slots[s.tabKey] = i }
-            sessionSlots = slots
+            sessionSlots = slots; slotsCount = ss.count
         }
-        return sessionSlots?[key].map { ss[$0] }
+        if slotsCount != ss.count { rebuild() }
+        if let i = sessionSlots[key] {
+            if i < ss.count, ss[i].tabKey == key { return ss[i] }   // (an in-place edit giving an earlier session this key, at the same count, would still answer the later one: tab keys come from unique session ids)
+            rebuild()
+            return sessionSlots[key].map { ss[$0] }
+        }
+        guard let i = ss.firstIndex(where: { $0.tabKey == key }) else { return nil }   // a true miss costs the old scan
+        rebuild()
+        return ss[i]
     }
     /// Linked GitHub issues' live state, by the issue's URL (DL-226); read through gh, cached.
     public var issueStates: [String: IssueState] = [:]
@@ -228,7 +294,7 @@ public final class AppCore {
     /// minute, so an idle refresh that changes nothing needn't republish `fixture` to keep them right (C-79).
     public internal(set) var minute = Date()
     /// Home's folder (DL-85); nil until one is chosen. Live mode runs either way (DL-82).
-    public var liveRoot: URL?
+    public var liveRoot: URL? { didSet { if liveRoot != oldValue, refreshTimer != nil { watchForChanges() } } }   // Home moved: watch the new one
     /// The folders in Home that aren't projects (`homeFolders(root:)`), read with each refresh: All
     /// projects offers them when Home has no projects yet (DL-212).
     public var homeFolderList: [URL] = []
@@ -271,6 +337,7 @@ public final class AppCore {
     @ObservationIgnored var minuteTimer: Timer?
     @ObservationIgnored var refreshing = false
     @ObservationIgnored var lastArchive = Date.distantPast
+    @ObservationIgnored var lastKeepAlive = Date.distantPast   // keep-alive every half hour (F-599)
     /// False for scripted captures: nothing may block on a prompt.
     @ObservationIgnored public var interactivePrompts = true
     /// Duo's "seen" marks (handoff §10): looking at a session clears ready-for-review.
