@@ -5725,16 +5725,14 @@ After F-584, a refresh of 40 projects × 150 sessions read through the real `Cla
 
 **Check:** `DUO_CHECKS=refresh-cost` now goes through the real listing of its own `CLAUDE_CONFIG_DIR`, with realistic transcript heads: **2,010 ms → 210 ms**; attribution, order and titles unchanged.
 
-## F-596 · "sql: disk I/O error" at 246k transcripts: `vacuumContent`'s temp b-tree; SQLite errors now carry the extended code (idle-cpu, 2026-11-04)
+## F-596 · "sql: disk I/O error" at 246k transcripts: cause not found; `vacuumContent` was ruled out; SQLite errors now carry the extended code (idle-cpu, 2026-11-04)
 
-test-0-2-25 saw `search: sql: disk I/O error` once, in the app's own indexing pass (not `duo2`), on a 246,000-transcript fixture launched from a Claude Code Bash tool (possibly under Seatbelt). The message came from `SQLiteDB.exec` (it has no "in <sql>" suffix). In a pass, `exec` runs `vacuumContent`: `DELETE FROM content WHERE id NOT IN (SELECT DISTINCT content FROM chunks)`. At that size the DISTINCT builds a temporary b-tree that spills to a temp file, and a writer that can't write one (sandbox, TMPDIR, disk) gets `SQLITE_IOERR`.
-
-**Fix:**
-- `DELETE … WHERE NOT EXISTS (SELECT 1 FROM chunks WHERE chunks.content = content.id)`, a probe through the existing `chunks_content` index with no temp table;
-- `PRAGMA temp_store=MEMORY` on the writer;
-- every SQLite error now ends with ` (code <extended>, errno <n>)` (IOERR_READ 266, SHORT_READ 522, IOERR_ACCESS 3338 …), so a recurrence says which.
-
-**Not yet proven** on the 246k fixture: that run waits for the GPU lock (it saturates a core for a long time).
+test-0-2-25 saw `search: sql: disk I/O error` once, in the app's own indexing pass (not `duo2`), on a 246,000-transcript fixture launched from a Claude Code Bash tool (possibly under Seatbelt). The message came from `SQLiteDB.exec`, which has no "in <sql>" suffix.
+- **Suspected, then ruled out:** `vacuumContent`'s `DELETE … WHERE id NOT IN (SELECT DISTINCT content FROM chunks)` spilling a temp b-tree. `DUO_CHECKS=vacuum` (`VacuumChecks.swift`) builds an index of 246,000 (and, with `VACUUM_ROWS`, 1,500,000) content rows and chunks, orphans a tenth, and runs each query with no room for a large temp structure (temp in memory, a 256 KB cache, a 6 MB hard heap limit). The old query's plan is `LIST SUBQUERY … CREATE BLOOM FILTER`, and it completes: 56 ms at 246k, 358 ms at 1.5M. So it isn't shown to be the cause. test-0-2-25's 100-minute run never reached it either: the vacuum only runs after a pass that removed chunks.
+- **Kept:**
+  - `vacuumContent` now uses `NOT EXISTS (SELECT 1 FROM chunks WHERE chunks.content = content.id)`: a probe through `chunks_content`, no temp structure, same result and speed (55 ms / 350 ms); the check asserts its plan and that exactly the orphans go;
+  - `PRAGMA temp_store=MEMORY` on the writer;
+  - every SQLite error now ends with ` (code <extended>, errno <n>)` (IOERR_READ 266, SHORT_READ 522, IOERR_ACCESS 3338 …), so a recurrence names its cause. Until it recurs there's no reproduction.
 
 ## F-597 · Keep-alive rewrote every listed transcript older than 15 days every minute, so the archive re-copied and search re-indexed them nonstop; it now moves each about once every two days (idle-cpu, 2026-11-04; DL-47)
 
@@ -5746,3 +5744,23 @@ On the 6,150-session fixture, idle CPU stayed around a core on every build (0.2.
   - hourly for 40 days, a listed session never gets older than half the period + margin: 408 h at 30 days against cleanup at 720 h, 105 of 168 h at 7 days, 60 of 96 h at 4 days. It moves 12, 39 and 70 times, not once an hour.
   - Full DuoChecks 5644 passed, 0 failed.
 - **To measure** (waits for the lock): the 6,150-session idle CPU and pass times against 0.2.24, and that after the first round the archive copies 0 and search passes report 0 changed files.
+
+## F-598 · Idle CPU at 6,150 sessions after F-597: 100% → 33%; three more per-refresh costs gone, the 2 s rebuild itself is what's left (idle-cpu, 2026-11-05)
+
+After F-597, the isolated 6,150-session app (test-0-2-25's generator) searched nothing (passes of 0 changed files, 84–566 ms) but still averaged ~50% CPU. A 20 s `sample` of the idle app showed:
+- **`SessionArchive.purged()` on every refresh:** it decoded the 6,150-entry archive manifest and looked up each transcript by path (a resolve and a stat, and on a miss a listing of every bucket). It now asks the refresh's listing (`ClaudeStorage.listed(sessionId:)`, `hasListing`, tied to the Claude folder it listed, so a changed `CLAUDE_CONFIG_DIR` doesn't answer for another). The manifest decode is cached by the file's size and date. `archiveListedSessions` takes its transcripts from the listing too.
+- **`Env.value`'s default argument** was `ProcessInfo.processInfo.environment`, a copy of the whole environment into a dictionary on every call, and `ClaudeStorage.root` calls it thousands of times a refresh. With no dictionary given it now reads the one variable with `getenv` (which sees `setenv` the same way); all 19 callers use that.
+- **The session list** looked up each row's session with `fixture.sessions.first { $0.tabKey == key }` (`AppModel.sessionKind`: 6,150² comparisons a refresh, on the main thread) and each row's task by scanning every task and group (`SessionList.task(of:in:)`). Now there's `AppCore.session(tabKey:)`, an index rebuilt after `fixture` changes and checked on every use, and one task/group index per `SessionList.build`. Same first-match answers.
+
+**Results:**
+- one `LiveSnapshot.build` of the real fixture: 226 ms (`REFRESH_ROOT=<ws> DUO_CHECKS=refresh-cost`);
+- the idle app averages **33%** CPU over 60 s (`ps -o time` delta): bursts of ~85% for about 5 s, then 2–6%;
+- full DuoChecks 5644 passed, 0 failed.
+
+**What's left** (sample, idle):
+- the 2 s refresh closure (~21% of a core), mostly `LiveSnapshot.build` rebuilding 6,150 sessions every 2 s, which is about 11% by itself;
+- applying the snapshot on the main thread;
+- keep-alive's once-a-minute stat of every listed transcript (~1%);
+- `TerminalMicView`'s 20 Hz poll (~1–3%, F-531).
+
+Under 10% at this size needs the refresh to skip rebuilding when nothing changed (or back off when idle): Q-462.

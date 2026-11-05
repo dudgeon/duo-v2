@@ -53,9 +53,19 @@ public enum SessionArchive {
         chmod(manifestURL.path, 0o600)
     }
 
+    /// The manifest, decoded again only when the file's size or date changed (F-598: it was decoded on every refresh).
     public static func manifest() -> Manifest {
-        (try? Data(contentsOf: manifestURL)).flatMap { try? JSONDecoder().decode(Manifest.self, from: $0) } ?? Manifest()
+        let a = try? FileManager.default.attributesOfItem(atPath: manifestURL.path)
+        let key = "\(manifestURL.path)|\((a?[.size] as? NSNumber)?.intValue ?? -1)|\((a?[.modificationDate] as? Date)?.timeIntervalSince1970 ?? 0)"
+        manifestCache.lock.lock()
+        if manifestCache.key == key, let m = manifestCache.value { manifestCache.lock.unlock(); return m }
+        manifestCache.lock.unlock()
+        let m = (try? Data(contentsOf: manifestURL)).flatMap { try? JSONDecoder().decode(Manifest.self, from: $0) } ?? Manifest()
+        manifestCache.lock.lock(); manifestCache.key = key; manifestCache.value = m; manifestCache.lock.unlock()
+        return m
     }
+    private final class ManifestCache: @unchecked Sendable { let lock = NSLock(); var key = ""; var value: Manifest? }
+    private static let manifestCache = ManifestCache()
 
     /// Copies each listed session's transcript if it's new or changed. Returns how many were copied.
     @discardableResult
@@ -116,8 +126,11 @@ public enum SessionArchive {
 
     /// Archived sessions whose transcript Claude no longer has: search indexes these copies (DL-49).
     public static func purged() -> [(id: String, copy: URL, cwd: String)] {
-        manifest().sessions.values.compactMap { e in
-            guard ClaudeStorage.transcript(sessionId: e.sessionId, cwd: e.cwd) == nil,
+        // Claude still has it if the refresh's listing does (F-598); asked by path only before any listing.
+        let listing = ClaudeStorage.hasListing
+        return manifest().sessions.values.compactMap { e in
+            let present = listing ? ClaudeStorage.listed(sessionId: e.sessionId) != nil : ClaudeStorage.transcript(sessionId: e.sessionId, cwd: e.cwd) != nil
+            guard !present,
                   FileManager.default.fileExists(atPath: copyURL(e.sessionId).path) else { return nil }
             return (e.sessionId, copyURL(e.sessionId), e.cwd)
         }

@@ -7,6 +7,18 @@ import DuoKit
 /// core, idle). `DUO_CHECKS=refresh-cost`: fails if one build of 40 projects × 6,000 sessions takes over 2.5 s (what is left is about five stats per session), or if
 /// a session lands anywhere but the deepest project its folder is in, newest first.
 @MainActor func refreshCostChecks() throws {
+    // REFRESH_ROOT=<workspace> (with its CLAUDE_CONFIG_DIR and DUO_SUPPORT_DIR): time builds of a real fixture, for a profile.
+    if let root = ProcessInfo.processInfo.environment["REFRESH_ROOT"] {
+        var c = LiveSnapshot.Context(root: URL(fileURLWithPath: root))
+        c.includeHistory = true
+        _ = LiveSnapshot.build(c, beacons: [])
+        let n = Int(ProcessInfo.processInfo.environment["REFRESH_RUNS"] ?? "") ?? 10
+        let t0 = Date()
+        var count = 0
+        for _ in 0..<n { count = LiveSnapshot.build(c, beacons: []).0.sessions.count }
+        print("  \(root): \(count) sessions, one refresh build \(Int(Date().timeIntervalSince(t0) * 1000 / Double(n))) ms")
+        return
+    }
     let base = URL(fileURLWithPath: NSTemporaryDirectory()).appending(path: "duo-refresh-cost-\(UUID().uuidString.prefix(8))").resolvingSymlinksInPath()
     defer { try? FileManager.default.removeItem(at: base) }
     // Claude's folder is this check's own (never ~/.claude), with a real transcript per session as on a real Mac.

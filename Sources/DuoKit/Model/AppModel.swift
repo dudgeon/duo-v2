@@ -570,7 +570,8 @@ public final class AppModel {
             return (id, folder.path)
         }
         Task.detached(priority: .utility) {
-            let found = listed.compactMap { id, cwd in ClaudeStorage.transcript(sessionId: id, cwd: cwd).map { (id: id, transcript: $0) } }
+            // The refresh's listing names each transcript; a path lookup (a listing of every bucket on a miss) only without one (F-598).
+            let found = listed.compactMap { id, cwd in (ClaudeStorage.listed(sessionId: id) ?? (ClaudeStorage.hasListing ? nil : ClaudeStorage.transcript(sessionId: id, cwd: cwd))).map { (id: id, transcript: $0) } }
             do {
                 let n = try SessionArchive.sync(found)
                 if n > 0 { FileHandle.standardError.write(Data("archive: copied \(n) of \(found.count) listed transcripts\n".utf8)) }

@@ -97,13 +97,21 @@ public enum ClaudeStorage {
     /// A transcript's size and change time as the last `history()` listed them (F-595): one bulk listing per bucket
     /// answers what each refresh used to ask with a stat per session per reader (title, thread head, mtime).
     public struct Stamp: Equatable, Sendable { public var size: UInt64; public var mtime: Date }
-    private final class Stamps: @unchecked Sendable { let lock = NSLock(); var entries: [String: Stamp] = [:] }
+    private final class Stamps: @unchecked Sendable { let lock = NSLock(); var entries: [String: Stamp] = [:]; var byID: [String: URL]?; var root = "" }
     private static let stamps = Stamps()
     /// The listed stamp, or nil for a file the last listing didn't include (Duo's archive copies, other folders).
     public static func stamp(_ url: URL) -> Stamp? {
         stamps.lock.lock(); defer { stamps.lock.unlock() }
         return stamps.entries[url.path]
     }
+    /// The transcript the last `history()` listed for a session id, if any; nil before any listing (`hasListing`).
+    public static func listed(sessionId: String) -> URL? {
+        stamps.lock.lock(); defer { stamps.lock.unlock() }
+        return stamps.root == projects.path ? stamps.byID?[sessionId] : nil
+    }
+    /// A listing of this Claude folder exists (a listing of another one, after CLAUDE_CONFIG_DIR changed, doesn't count).
+    public static var hasListing: Bool { stamps.lock.lock(); defer { stamps.lock.unlock() }; return stamps.byID != nil && stamps.root == projects.path }
+
     /// The listed stamp, else a stat.
     public static func stampOrStat(_ url: URL) -> Stamp {
         if let s = stamp(url) { return s }
@@ -116,13 +124,16 @@ public enum ClaudeStorage {
         guard let dirs = try? fm.contentsOfDirectory(at: projects, includingPropertiesForKeys: nil) else { return [] }
         var out: [(String, URL, String)] = []
         var listed: [String: Stamp] = [:]
-        defer { stamps.lock.lock(); stamps.entries = listed; stamps.lock.unlock() }
+        var byID: [String: URL] = [:]
+        let root = projects.path
+        defer { stamps.lock.lock(); stamps.entries = listed; stamps.byID = byID; stamps.root = root; stamps.lock.unlock() }
         for d in dirs {
             let files = (try? fm.contentsOfDirectory(at: d, includingPropertiesForKeys: [.contentModificationDateKey, .fileSizeKey])) ?? []
             for f in files where f.pathExtension == "jsonl" {
                 let values = try? f.resourceValues(forKeys: [.contentModificationDateKey, .fileSizeKey])
                 let mtime = values?.contentModificationDate ?? .distantPast
                 listed[f.path] = Stamp(size: UInt64(values?.fileSize ?? 0), mtime: mtime)
+                byID[f.deletingPathExtension().lastPathComponent] = f
                 cwdCache.lock.lock()
                 let hit = cwdCache.entries[f.path]
                 cwdCache.lock.unlock()

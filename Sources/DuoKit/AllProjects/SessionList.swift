@@ -39,8 +39,19 @@ public struct SessionList: Sendable, Equatable {
     /// The sessions, cut as a project's list is (DL-91): open in Duo first, most urgent first
     /// (DL-93); the rest by last use, newest first, into Today, This week and Earlier.
     public static func build(_ f: Fixture, isOpen: (String) -> Bool, now: Date = Date(), calendar: Calendar = .current) -> SessionList {
+        // Each row's task, from one pass over the tasks and groups (F-598), as `task(of:in:)` answers it row by row.
+        var taskOfID: [String: String] = [:], groupOfName: [String: String] = [:]
+        for t in f.tasks ?? [] where t.archived != true {
+            for id in t.sessionIds where taskOfID["\(t.project)\u{1}\(id)"] == nil { taskOfID["\(t.project)\u{1}\(id)"] = t.title }
+        }
+        for g in f.groups where g.task != nil {
+            for n in g.sessions where groupOfName["\(g.project)\u{1}\(n)"] == nil { groupOfName["\(g.project)\u{1}\(n)"] = g.name }
+        }
+        func taskName(_ s: Fixture.Session) -> String? {
+            s.sessionId.flatMap { taskOfID["\(s.project)\u{1}\($0)"] } ?? groupOfName["\(s.project)\u{1}\(s.name)"]
+        }
         func row(_ s: Fixture.Session, open: Bool) -> Row {
-            Row(session: s, project: projectLabel(s.project, in: f), task: task(of: s, in: f), open: open)
+            Row(session: s, project: projectLabel(s.project, in: f), task: taskName(s), open: open)
         }
         var out = SessionList()
         out.needsYou = f.needsYou.map { row($0, open: isOpen($0.tabKey)) }

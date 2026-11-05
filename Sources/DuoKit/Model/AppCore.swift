@@ -148,7 +148,21 @@ public final class AppCore {
 
     // MARK: - App-wide and per-project state (AppModel forwards each)
 
-    public var fixture: Fixture
+    public var fixture: Fixture { didSet { sessionSlots = nil } }
+    /// Each session's index in `fixture.sessions` by tab key, built on first use after the fixture changes (F-598): the
+    /// session list looked each row's session up by a linear scan, 6,150² comparisons a refresh on a heavy Home.
+    @ObservationIgnored private var sessionSlots: [String: Int]?
+    /// The first session with this tab key, as `fixture.sessions.first { $0.tabKey == key }` gives it.
+    func session(tabKey key: String) -> Fixture.Session? {
+        let ss = fixture.sessions
+        if let i = sessionSlots?[key], i < ss.count, ss[i].tabKey == key { return ss[i] }
+        if sessionSlots == nil || sessionSlots?[key] != nil {   // never built, or a slot that no longer holds its key
+            var slots: [String: Int] = [:]
+            for (i, s) in ss.enumerated() where slots[s.tabKey] == nil { slots[s.tabKey] = i }
+            sessionSlots = slots
+        }
+        return sessionSlots?[key].map { ss[$0] }
+    }
     /// Linked GitHub issues' live state, by the issue's URL (DL-226); read through gh, cached.
     public var issueStates: [String: IssueState] = [:]
     @ObservationIgnored var issueFetched: [String: Date] = [:]
