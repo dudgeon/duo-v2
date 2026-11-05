@@ -61,6 +61,13 @@ import Foundation
         check(ok && !core.pacer.backedOff, "\(label) while backed off: a refresh at once and back to 2 s")
     }
     pokeRefreshes("a poke for a file change") { core.poke("files") }
+    // The watcher and the beacon below use a scratch Claude folder in the run's own, never the real ~/.claude.
+    let givenClaude = getenv("CLAUDE_CONFIG_DIR").map { String(cString: $0) }
+    let scratchClaude = checksSupportDir + "/claude-backoff"
+    try FileManager.default.createDirectory(atPath: scratchClaude + "/sessions", withIntermediateDirectories: true)
+    setenv("CLAUDE_CONFIG_DIR", scratchClaude, 1)
+    defer { if let givenClaude { setenv("CLAUDE_CONFIG_DIR", givenClaude, 1) } else { unsetenv("CLAUDE_CONFIG_DIR") } }
+    check(Isolation.inside(ClaudeStorage.sessions.path, checksSupportDir), "the back-off checks' Claude folder is the run's own")
     core.watchForChanges()   // the real watcher, input monitor and activation observer
     defer { core.stopLoop() }
     pokeRefreshes("a key press in Duo") {
