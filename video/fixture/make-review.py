@@ -81,6 +81,8 @@ t = "---\nsuggest-edits: true\n---\n\n" + t_after
 stages["suggest-on"] = t
 t = sub(t, GOAL2_OLD, "{~~" + GOAL2_OLD + "~>" + GOAL2_NEW + "~~}" + sig("sam", DAY, "s3"))
 stages["typed"] = t
+# 5b. The "review step" in the PRD is a link to the prototype (as in the intro's scene 7), for the workflow footage.
+stages["linked"] = sub(t, "With a review step in the prototype", "With a [review step](../prototype/scan-review.html) in the prototype")
 # 6. Jo's suggestion accepted, Ravi's rejected.
 t = sub(t, "{~~20~>15~~}" + sig("jo", YESTERDAY, "s1", "Lena's prototype did 18 s, so 15 is the stretch."), "15")
 stages["accepted"] = t
@@ -106,7 +108,7 @@ turn = (f"@claude comment in docs/prd-v2.md, line {line_of(asked, '{==' + GLARE)
 json.dump({
     "$note": "make-review.py writes this; VideoTargets+Review.swift reads it. Each state's PRD stage, the anchors' texts, the clock.",
     "day": DAY, "sent": "09:52",
-    "anchors": {"goal3": "under 15", "goal2": GOAL2_OLD, "heard": HEARD, "unsure": UNSURE, "oneTap": ONE_TAP, "glare": GLARE, "glareNew": GLARE_NEW, "speed": SPEED},
+    "anchors": {"goal3": "under 15", "goal2": GOAL2_OLD, "heard": HEARD, "unsure": UNSURE, "oneTap": ONE_TAP, "glare": GLARE, "glareNew": GLARE_NEW, "speed": SPEED, "link": "review step"},
     "comments": {"oneTap": SAM_ONE_TAP, "claude": SAM_CLAUDE,
                  # The words on the field's first row (it wraps there at the margin's width): the typing wipe's halfway state.
                  "oneTapRow1": "Lena, can you mock the", "claudeRow1": "@claude can you make"},

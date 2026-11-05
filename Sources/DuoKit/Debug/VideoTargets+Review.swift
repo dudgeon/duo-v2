@@ -18,7 +18,9 @@ extension VideoTargets {
         // Suggest Edits: on, Sam's change, accept one, reject one.
         "video-rv-suggest-on", "video-rv-typed", "video-rv-hover-s1", "video-rv-accepted", "video-rv-hover-s2", "video-rv-rejected",
         // Markup.
-        "video-rv-menu", "video-rv-simple"]
+        "video-rv-menu", "video-rv-simple",
+        // The workflow footage: the PRD's link to the prototype, then the click (the page opens where Duo opens it).
+        "video-rv-link", "video-rv-proto"]
 
     /// What one state is: the PRD's stage, the chat's recording, the @claude comment's delivery, the session's state.
     nonisolated struct RV {
@@ -34,6 +36,7 @@ extension VideoTargets {
             case "suggest-on": return .init(stage: "suggest-on", chat: "chat-rv-replied", delivery: .replied)
             case "typed", "hover-s1": return .init(stage: "typed", chat: "chat-rv-replied", delivery: .replied)
             case "accepted", "hover-s2": return .init(stage: "accepted", chat: "chat-rv-replied", delivery: .replied)
+            case "link", "proto": return .init(stage: "linked", chat: "chat-rv-replied", delivery: .replied)
             case "rejected", "menu", "simple": return .init(stage: "rejected", chat: "chat-rv-replied", delivery: .replied)
             default: return .init(stage: "open")
             }
@@ -60,6 +63,7 @@ extension VideoTargets {
         let prd = folder.appending(path: mdTab)
         try? fm.removeItem(at: prd)
         try? fm.copyItem(at: dir.appending(path: "review/prd-v2.\(spec.stage).md"), to: prd)
+        if screen == "video-rv-proto" { try? fm.removeItem(at: folder.appending(path: htmlTab)); try? fm.copyItem(at: dir.appending(path: "s7/scan-review.after.html"), to: folder.appending(path: htmlTab)) }
         model.liveFolders[project] = folder
         model.videoDemoFolder = folder
         model.rightTab = mdTab; model.selectedFile = mdTab
@@ -101,6 +105,8 @@ extension VideoTargets {
         case "replied": return settle + ["video:rv-claude-edit", "wait:0.8", "review-active:c4"] + measure
         case "hover-s1": return settle + ["wait:0.6", "video:rv-hover=s1", "wait:0.4", "video:rv-hover=s1", "wait:1.2"] + measure
         case "hover-s2": return settle + ["wait:0.6", "video:rv-hover=s2", "wait:0.4", "video:rv-hover=s2", "wait:1.2"] + measure
+        case "link": return settle + measure
+        case "proto": return settle + ["video:rv-link-click", "wait:3"] + measure
         case "menu": return settle + ["review-menu:markup", "wait:0.5"] + measure
         case "simple": return settle + ["verb:doc markup simple", "wait:0.8"] + measure
         default: return settle + measure
@@ -136,6 +142,12 @@ extension VideoTargets {
             if let g = stages["glareEdit"] as? [String: Any] {
                 js("duo.focus(); return JSON.stringify(duo.agentEdit(e, null))", ["e": [["old_string": g["old_string"] ?? "", "new_string": g["new_string"] ?? "", "replace_all": false]]])
             }
+        case "rv-link-click":   // the click on the link: the editor's own mousedown handler on the .duo-link, which opens the page
+            js("""
+               const el = [...document.querySelectorAll('.duo-link')].find((x) => x.textContent.includes('review step')); if (!el) return 'no link';
+               const r = el.getClientRects()[0], o = {clientX: r.left + r.width / 2, clientY: r.top + r.height / 2, button: 0, bubbles: true};
+               el.dispatchEvent(new MouseEvent('mousedown', o)); return 'clicked'
+               """)
         case "rv-measure": rvMeasure(model, stages: stages)
         default: FileHandle.standardError.write(Data("video: unknown action \(verb)\n".utf8))
         }
