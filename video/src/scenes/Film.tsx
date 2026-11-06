@@ -84,7 +84,7 @@ const SceneView = ({scene, fade}: {scene: Scene; fade: number}) => {
       {scene.kind === 'drawn' && scene.drawn?.scene === 'app' && scene.app && <><AppScene t={t} data={scene.app} /><DictationAudio audio={(scene.app as {audio?: {at: number; clip: string; from?: number}[]}).audio} /></>}
       {scene.kind === 'drawn' && scene.drawn?.scene === 'projects' && scene.projects && <ProjectsScene t={t} ev={scene.drawn.events} data={scene.projects} />}
       {scene.kind === 'drawn' && scene.drawn?.scene === 'conclusion' && scene.conclusion && <ConclusionScene t={t} ev={scene.drawn.events} data={scene.conclusion} />}
-      {scene.kind === 'drawn' && scene.drawn?.scene === 'logo' && <LogoScene t={t} ev={scene.drawn.events} />}
+      {scene.kind === 'drawn' && scene.drawn?.scene === 'logo' && <LogoScene t={t} ev={scene.drawn.events} stamp={(scene as {stamp?: string}).stamp} />}
       {scene.kind === 'drawn' && scene.drawn?.scene === 'many' && <ManyDesksScene t={t} ev={scene.drawn.events} />}
       {scene.kind === 'drawn' && scene.drawn?.scene === 'turn' && scene.turn && <TurnScene t={t} ev={scene.drawn.events} {...scene.turn} />}
       {scene.kind === 'desk' && scene.capture && scene.desk && scene.camera && (
