@@ -19,6 +19,7 @@
   - how to prove it (DuoChecks, `scripts/bundle.sh`, `NO_BUILD=1 scripts/check-ui.sh`, captures against the boards, the relevant check scripts) and which CLAUDE.md rules matter most for the job (never invent a design; build to the screens and prove it; the DL-71 duo2 verb; Xcode-free; generated tokens);
   - which model the job runs on, and which parts go to Sonnet and Haiku subagents;
   - for design work: a Design canvas with the Duo design system, every mark [P], one AskUserQuestion round, and a handoff exported to `docs/design/<x>-handoff/`;
+  - for a film (an update, a release film, new scenes): "write the script on the Doc and build the film; Geoff reviews the film". Never a script review round, and no questions about order, length or wording: the worker decides those (product-video skill, step 10). Geoff, 2026-11-05: "make the video and I will provide feedback only if needed";
   - "Report by SendMessage to director-duo-v2, by that name, and end your turn with the same report as your last message (branch, full shas, records, checks), plus a dated line in your task note's `## Progress`." For big jobs, ask for it in slices, so each merge is small.
 
 **No stranded workers** (Geoff, 2026-10-30: "we CANNOT have stranded workers"). Four workers once finished or waited for hours unseen: the director ran in Bypass, so their reports were held and expired, and its watchers named specific ids. So:
