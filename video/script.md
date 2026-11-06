@@ -1,9 +1,11 @@
 # Duo v2 intro video: script v2
-<!-- Synced from the script Doc at rev 4678 on 2026-10-13 by pipeline/sync.mjs; edit the Doc, not this file. -->
+<!-- Synced from the script Doc at rev 4699 on 2026-11-06 by pipeline/sync.mjs; edit the Doc, not this file. -->
 
 Oct 10, 2026 · @Geoff Dudgeon
 
 A from-scratch rewrite. Each build reads this doc. The rules below are what the build understands; anything else is notes for us.
+
+> **v12 (Nov 5).** Three new scenes for what's shipped since v11: **S12 · Comments and suggestions** and **S13 · Voice input** follow the editor, so the document mic comes after the pane it lives in, and the voice scene ends in a terminal that hands off to S8's Terminal; **S14 · Windows** follows Duo Projects, since it's the other way to move between projects. S9 now opens on S13's last picture. Cut for length and readiness: S7's slide demo (Geoff, Nov 5: not ready yet) and S10's task board beat with its line. Any other change the recapture on today's app shows is noted in its scene.
 
 ## How to write it
 
@@ -164,9 +166,8 @@ Topic: File Viewer/Editor
 - Markdown editing is simple -- most keyboard shortcuts are the same, like command-b to bold, and command-k to add a link. Your changes are visible in real time -- no toggling between raw and rendered markdown.
 - Anything you can see or edit, claude can too. You can select text to show it to your claude agent,
 - and claude can update the document with visible changes.
-- This works in all document types that duo supports, like html or powerpoint.
+- This works in other document types that duo supports, like html.
 - Pick an element in a prototype and ask for a change.
-- Or pick a paragraph on a slide and ask for bullets.
 
 Shot: the camera moves right to the viewer pane, its first time in the video. On line 1 the cursor clicks through the tabs open there, each on its word: the PRD (Markdown) on "markdown", the scan-review prototype (HTML) on "html", the team-review deck on "powerpoint", and the interview synthesis (Word) on "documents". Each tab opens in its real viewer, and the camera stays on the viewer pane while the tabs change.
 
@@ -191,10 +192,9 @@ On lines 3 and 4, still on the PRD, played slower for emphasis (Geoff, Oct 11):
 > - *Fixtures (made by demo-fixtures, Oct 11):* the chat turn (the composer with the sent selection as Duo formats it, Sam's message, and Claude's reply with its rows); the PRD after Claude's edit, a What we heard paragraph updated from the triage log (Denise's glare, Owen's two wrong books); and the editor showing that edit highlighted.
 > - *Slowed (Geoff, Oct 11):* line 3 is split after "agent," (same words), so the selection, the menu and Sam's typing play out between lines 3 and 4; the later lines move down one. New captures needed: the composer empty, then holding only the selection reference, before Sam types.
 
-On lines 5–7, the same pattern twice more, each ending on the change visible in its own viewer (lines 6 and 7 added Oct 11, so each demo has its own line):
+On lines 5 and 6, the same pattern once more, ending on the change visible in the HTML viewer (lines 6 added Oct 11; the slide demo, line 7, was cut Nov 5 as not ready yet):
 
 1. On "html" and line 6: the cursor clicks the scan-review.html tab, picks the "Fix" button on the prototype's review screen with the element picker, started from the page's right-click menu (Select Element), which outlines it, and sends it to Claude. Sam asks "Make this button say 'Fix this book' and make it bigger", and the prototype reloads with the change. The whole sequence runs about four times slower than in v10, so each step (the tab, the menu, the outline, the send, the request, the reload) can be followed; the narration waits for it.
-2. On line 7: the cursor clicks the team-review-oct15.pptx tab and goes to slide 3, "What the eval found", and picks its paragraph with the deck viewer's Select Shape button. Sam asks "Turn this into three bullets", and the slide redraws with the bullets.
 
 > **Notes for the build** (ignored by it):
 >
@@ -206,6 +206,42 @@ On lines 5–7, the same pattern twice more, each ending on the change visible i
 > - *Getting here from S6:* app navigation. The camera pulls back from the chat, and the topic list comes up for this topic.
 > - *Tabs:* the four files open in S2 (prd-v2.md, scan-review.html, team-review-oct15.pptx, beta-interview-synthesis.docx) are still open in the right pane, so the clicks walk the real tab strip.
 > - *New captures needed:* the right pane on each of the four tabs, in the 1800×1100 window S3–S6 use.
+
+### S12 · Comments and suggestions (about 40 s)
+
+Topic: Comments and suggestions
+
+- Markdown files in Duo also take *comments*, which sit in the margin next to the text they're about, a lot like Google Docs.
+- If I mention @claude in a comment, it goes to the session I'm working in -- the *pill* under the comment shows which one --
+- and Claude makes the change and answers right in the thread.
+- When I switch the formatting bar from Editing to *Suggesting*, my edits show up as suggestions instead, each person's in their own color,
+- so whoever reads it next can accept or reject each one.
+
+Shot: carrying on from S7's last picture, the cursor clicks the PRD's tab (prd-v2.md) in the right pane. On "comments" the outline traces the margin's cards (Ravi's and Lena's) beside their highlighted text. Then Sam adds one: the cursor drag-selects "Fixing a flagged book takes one tap", clicks Comment in the formatting bar (⌥⌘M shows as keycaps), a card opens in the margin, "Lena, can you mock the one-tap fix for Thursday?" types into it, and the cursor clicks Post. On line 2 the cursor selects the glare requirement ("Warn about glare before the photo is taken…"), opens a comment and types "@claude can you make this one testable? Denise's feedback is in research/feedback." As @claude is typed, To and the session pill appear under the field ("Auto-add decision · at prompt"), and on "pill" the outline traces it. The cursor clicks Post, and the card says Sent. On line 3 the camera moves left to the middle pane, where the comment arrives in the Auto-add decision chat as Duo sends it and Claude starts working, while the card says Claude is replying. Then the camera comes back to the editor: the requirement has changed in place, and Claude's reply sits in the thread, signed in Claude's green. On line 4 the cursor opens the mode menu at the right end of the formatting bar, Editing ⌄, which Duo draws in the window, so it's captured as it is, with its real items (Editing, Suggesting ⇧⌘E, Next Change, Previous Change, Accept All, Reject All, Markup ▸, Show Closed Comments), and picks Suggesting: the label now reads Suggesting ⌄, with its dotted line. Sam changes "80% of scans" to "85%", and it shows as his suggestion, the old text struck through and the new underlined in his colour, and on "own color" the camera pulls back enough to show it beside Jo's and Ravi's suggestions, each in their own colour. On line 5 the pointer rests on Jo's suggestion (20 → 15 seconds), its label opens, and the cursor clicks Accept on "accept"; then it does the same on Ravi's added words and clicks Reject on "reject". On the way from line 1 to line 2, Lena's answered thread is closed with Close and Keep, so the margin has room for the next comment.
+
+> **Notes for the build** (ignored by it). *New in v12.*
+>
+> - *Real, today:* review lives in the formatting bar (DL-317): Comment, and the Editing / Suggesting menu at its right end; the 0.2.21 film's separate review bar is retired. @claude goes to the session Duo picks and shows on the comment (DL-236, DL-237); suggestions are drawn in each person's colour, with Claude's in green.
+> - *Captures:* the 0.2.21 film's review states (video-rv-*), recaptured on today's bar, plus one new one: the mode menu open. The mode menu is Duo's own, drawn in the window, so it's a capture, not a drawing.
+> - *Getting here from S7:* app navigation (the PRD tab's click), and the topic list comes up for this topic.
+
+### S13 · Voice input (about 35 s)
+
+Topic: Voice input
+
+- Duo also lets you talk instead of type, using the transcription that's built into macOS.
+- In a document, I click the *mic* at the end of the formatting bar and just start talking --
+- macOS waits to hear a whole phrase before it writes anything, so the words take a second to show up.
+- In chat it's the same mic, and nothing sends until I press Return,
+- and in the terminal I just hold down *Shift, Command and D* to talk.
+
+Shot: still on the PRD from S12. The cursor clicks at the end of the What we heard paragraph, and the camera pushes in on the right end of the formatting bar. On "mic" the outline traces it and the cursor clicks it: the bar's controls give way to the meter, "Listening" and its keys. This part is a recording of the real app running a real dictation in your voice: we hear "Owen said the second scan was fine once he moved out of the glare.", the meter moves for about six seconds with nothing written (the real run's delay), then the phrase lands at the caret as macOS wrote it ("Owen said the 2nd scan was fine…"), as Sam's suggestion, since Suggesting is still on from S12. On line 4 the camera moves to the middle pane's Auto-add decision chat; the cursor clicks the composer's mic, it shows its level bars, and "Please update the PRD with the latest changes to the UI design." lands a phrase at a time, at the real delay. On "press Return" the Return key shows as a keycap and the message goes into the chat. On line 5 the cursor clicks the Tighten PRD goals tab: Claude Code's terminal, with the small mic beside its input box. Shift, Command and D show held as keycaps, the mic turns into three level bars that move as you say "Can you add the new design to the release notes too?", and the words land in Claude's prompt as they settle. The keys let go and the mic comes back. Nothing is sent, and the scene ends on this terminal.
+
+> **Notes for the build** (ignored by it). *New in v12.*
+>
+> - *Real latency:* every dictation is timed from a real run of macOS's recognizer on this Mac, and the wait stays on screen; line 3 says why, so nobody thinks it's broken on their own Mac.
+> - *Captures:* chat and the terminal reuse the 0.2.22 film's recordings (video-vv-*), recaptured. Dictating into the document is new: a recording of the real app dictating into the PRD. If the harness can't feed a file to the document's mic yet, I'll say so before building, not swap in something else.
+> - *Leaving for S8:* S8's fade starts from this terminal, so Duo's terminal gives way to the bare Terminal of S8.
 
 ### S8 · Projects Background
 
@@ -243,7 +279,7 @@ Topic: Duo Projects
 - Here, you can see the sessions that share a project, and the files and folders in that project's directory.
 - You can always leave the project view and return — and find all of the sessions and files from that project right where you left them. This helps make switching between many different projects a little easier.
 
-Shot: the resume picker's pile from the scene before fades out, and Duo's window fades back in on the desktop exactly as we last saw it at the end of S7: shelf-scan open, the Auto-add decision chat in the middle, and the deck in the right pane on its new bulleted slide.
+Shot: the resume picker's pile from the scene before fades out, and Duo's window fades back in on the desktop exactly as we last saw it at the end of S13: shelf-scan open, the Tighten PRD goals terminal in the middle with the dictated words in Claude's prompt, and the PRD in the right pane.
 
 On "finds every Claude code session from your history", the cursor clicks **All projects** at the top left, then **Board** in the Board | List switch. The Board view opens: a map of project tiles grouped in columns by area (APP, COMMUNITY), each tile listing its project's sessions (shelf-scan, beta-feedback, steward-onboarding, neighborhood-map, Home). On "what you were working on and where", the camera glides across the columns, so each project's sessions read as its own stack: the opposite of the pile in `~`.
 
@@ -252,6 +288,24 @@ On "its own card", the camera settles on the shelf-scan column, and a marker run
 > **Notes for the build** (ignored by it):
 >
 > - *Transition:* a motion graphic, the pile out and Duo in (Geoff, Oct 11). Its first picture is S7's last capture (video-s7-pptx-after), so nothing in Duo changes across the gap.
+
+### S14 · Windows (about 30 s)
+
+Topic: Windows
+
+- I usually have a few projects going at once, so I added a way to give each project its own *window*.
+- I can right-click a project and open it in a new window, or press Option, Command, N for a fresh one,
+- and each new window gets its own color, which makes it easy to tell them apart.
+- The *Window menu* lists them all by project, and if I open a project that's already in a window, Duo just brings that window forward.
+
+Shot: carrying on from S9's last picture. The cursor clicks All projects in the breadcrumb and the Board comes back. On "right-click a project" it right-clicks the beta-feedback tile, and the tile's menu opens with its real items, among them Open in New Window, which it picks. The camera pulls back wider than any shot so far, so the desk holds both windows: the new one opens a little down and to the right of the first, on beta-feedback's project view, with its toolbar in Blue and its panes in a pale blue tint, while the first window stays plain. On "Option, Command, N" the keycaps show, and a third window opens at All projects in Ochre; the cursor clicks the neighborhood-map tile in it, and the window becomes neighborhood-map's. On "its own colour" the outline traces each window's toolbar in turn. On "Window menu" the cursor opens Window in the menu bar, with its real items and the three windows listed by title, and picks the first. On "already in a window" the cursor clicks the beta-feedback tile in that first window, and the Blue window comes forward instead of opening it twice. Then the cursor clicks back on the first window and its shelf-scan tile, and the camera pushes in on shelf-scan's project view, as S9 left it, for S10.
+
+> **Notes for the build** (ignored by it). *New in v12.*
+>
+> - *Real, today (0.2.24):* File › New Window ⌥⌘N opens a window at All projects; Open in New Window is on a tile's and a sidebar project's menu. The first window stays plain, and each new one takes the next colour no open window has, Blue, then Ochre (DL-311 to DL-313). A project lives in one window, so opening it elsewhere brings its window forward (DL-308). Windows are titled by project in the Window menu.
+> - *New picture:* several Duo windows on the desk at once, each its own capture, cascaded the way macOS places them; only the front window's traffic lights are in colour, as macOS draws them. The menus are drawn.
+> - *Captures:* new states for each window in its colour, and fixtures for the tile menu.
+> - *Getting here from S9 and on to S10:* app navigation both ways; S10 opens on shelf-scan's project view as before.
 
 ### S10 · Tasks
 
@@ -263,7 +317,6 @@ Topic: Tasks
 - In duo, you can make a task in the project view, then add some details -- these are available to the user and any agents that work with them.
 - Then, duo makes it easy to attribute sessions to that task. You can collapse them or show them.
 - Imagine a project with several work-streams; instead of searching through dozens of sessions, they are tidily organized by the task they support.
-- Because tasks are a defined primitive in duo, we can create view that make it easy to see, manage, and return to tasks within each project, or across all of your projects.
 - Best of all, when you complete a task, you can archive all of the sessions that related to that task so they are out of the way.
 
 Shot: in shelf-scan's project view, with the camera on the left pane.
@@ -281,8 +334,6 @@ On "attribute sessions to that task", Sam right-clicks the new task in the proje
 On "You can collapse them or show them", the cursor clicks the new task's disclosure arrow: its session folds up under it, then unfolds again.
 
 On the work-streams line ("Imagine a project with several work-streams…"), the camera pulls back to shelf-scan's whole session list with every task expanded: four tasks with two or three sessions under each, the complete one shown done: its box checked, its title grey and struck through, and its sessions collapsed under it on their own (an app change, built first), so the sessions read as tidy groups rather than one long list (Geoff, Oct 12).
-
-On "views that make it easy to see, manage, and return to tasks", the cursor opens the project's task board: a kanban with columns by status and shelf-scan's tasks as cards, among them the new glare task, the auto-add decision and the team-review deck. Each card shows its sessions. The cursor clicks a different task's card (Deck for Thursday), its sessions show, and it clicks one of them; that session resumes right where it left off.
 
 On the last line ("Best of all, when you complete a task…"), back in the session list, the cursor right-clicks the complete task (Beta interview synthesis), picks **Archive Task…** from its real menu, and the camera stays on the open menu and the click for at least a second and a half before it moves. Duo's own question then asks whether to archive its sessions too, framed loosely: the whole question and some of the window around it stay in view, never a tight zoom on the sheet; the cursor clicks **Archive Task and Its Sessions**, and the task and its sessions fold into Archived, out of the way.
 
@@ -326,3 +377,4 @@ The narrator is Geoff's own voice, a fine-tuned VoxCPM2 clone (DL-173, Oct 12; t
 | Command K, ⌘K | command K |
 | prd-v2.md | P R D vee two dot M D |
 | cli | C L I |
+| @claude | at Claude |

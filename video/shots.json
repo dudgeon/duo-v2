@@ -1041,8 +1041,7 @@
       "3": 12.8,
       "4": 1.2,
       "5": 1.6,
-      "6": 11.6,
-      "7": 2.2
+      "6": 11.6
     },
     "tail": 1.6,
     "beats": [
@@ -1476,101 +1475,9 @@
         "in": "video-s7-html-after",
         "quote": "Fix this book",
         "hold": 2.2
-      },
-      {
-        "id": "pptx-tab",
-        "at": {
-          "line": 7,
-          "offset": -0.3
-        },
-        "click": "video.tab.pptx",
-        "in": "video-s7-html-after",
-        "state": "video-s7-pptx-slide3",
-        "cam": {
-          "on": "video.pane.right",
-          "y0": 0.02,
-          "y1": 0.5
-        },
-        "dur": 0.7
-      },
-      {
-        "id": "slide-select",
-        "at": {
-          "line": 7,
-          "word": "pick"
-        },
-        "click": "video.slide.select",
-        "in": "video-s7-pptx-slide3"
-      },
-      {
-        "id": "slide-shape",
-        "at": {
-          "line": 7,
-          "word": "paragraph",
-          "offset": 0.3
-        },
-        "click": "video.slide.shape",
-        "in": "video-s7-pptx-pick",
-        "state": "video-s7-pptx-pick"
-      },
-      {
-        "id": "pptx-send",
-        "at": {
-          "line": 7,
-          "word": "ask"
-        },
-        "click": "video.picker.send",
-        "in": "video-s7-pptx-pick",
-        "state": "video-s7-pptx-sent",
-        "stateAfter": 0.2,
-        "cam": {
-          "on": "video.pane.middle",
-          "y0": 0.45,
-          "y1": 1
-        },
-        "dur": 0.7
-      },
-      {
-        "id": "pptx-after",
-        "at": {
-          "line": 7,
-          "word": "bullets",
-          "offset": 0.5
-        },
-        "state": "video-s7-pptx-after",
-        "in": "video-s7-pptx-after",
-        "cam": {
-          "on": "video.pane.right",
-          "y0": 0.02,
-          "y1": 0.5
-        },
-        "dur": 0.7,
-        "stateAfter": 0.4
-      },
-      {
-        "id": "slide-mark",
-        "at": {
-          "line": 7,
-          "word": "bullets",
-          "offset": 1.1
-        },
-        "mark": "video.slide.shape",
-        "in": "video-s7-pptx-after",
-        "quote": "three bullets",
-        "hold": 1.6
-      },
-      {
-        "at": {
-          "line": 7,
-          "word": "bullets",
-          "offset": 2.6
-        },
-        "in": "video-s7-pptx-after",
-        "cam": "wide",
-        "dur": 1.1
       }
     ],
-    "shotSha": "f9283d35ee57",
+    "shotSha": "de4c70128eb4",
     "requires": [
       {
         "what": "Way in from S6 without a cut; the topic list comes up; the camera moves to the viewer pane",
@@ -1610,24 +1517,13 @@
         ]
       },
       {
-        "what": "Lines 4–5: HTML element picker on the Fix button, sent to Claude, prototype shows the change",
+        "what": "Lines 5–6: HTML element picker on the Fix button, sent to Claude, prototype shows the change",
         "by": [
           "#html-tab",
           "#html-menu",
           "#html-pick",
           "#html-send",
           "#html-after"
-        ]
-      },
-      {
-        "what": "Line 6: a slide paragraph picked, sent, slide redrawn in three bullets",
-        "by": [
-          "#pptx-tab",
-          "#slide-select",
-          "#slide-shape",
-          "#pptx-send",
-          "#pptx-after",
-          "#slide-mark"
         ]
       },
       {
@@ -1644,14 +1540,830 @@
       }
     ]
   },
+  "S12": {
+    "kind": "drawn",
+    "scene": "app",
+    "transitionIn": "carry-on",
+    "leadIn": 0.6,
+    "states": [
+      "video-s7-html-after"
+    ],
+    "pauses": {
+      "1": 6.2,
+      "2": 3.2,
+      "4": 1
+    },
+    "tail": 0.8,
+    "beats": [
+      {
+        "id": "prd-tab",
+        "at": {
+          "line": 1,
+          "offset": -0.5
+        },
+        "click": "video.tab.md",
+        "in": "video-s7-html-after",
+        "state": "video-rv-open",
+        "cam": {
+          "rel": "video.pane.right",
+          "dx": 38.6,
+          "dy": 389.7,
+          "w": 642.9,
+          "h": 361.6
+        },
+        "dur": 1.2
+      },
+      {
+        "id": "margin-mark",
+        "at": {
+          "line": 1,
+          "word": "margin"
+        },
+        "in": "video-rv-open",
+        "mark": {
+          "fit": [
+            "video.rv.card.c1",
+            "video.rv.card.c2"
+          ],
+          "pad": 2
+        },
+        "hold": 1.9
+      },
+      {
+        "id": "select-onetap",
+        "at": {
+          "line": 1,
+          "word": "docs",
+          "offset": 0.3
+        },
+        "in": "video-rv-sel-onetap",
+        "drag": {
+          "from": "video.rv.text.oneTap",
+          "fx0": 0,
+          "fx1": 1,
+          "dur": 0.8,
+          "reveal": "video-rv-sel-onetap"
+        },
+        "state": "video-rv-sel-onetap",
+        "stateAfter": 0.8
+      },
+      {
+        "id": "comment-button",
+        "at": {
+          "line": 1,
+          "word": "docs",
+          "offset": 1.5
+        },
+        "click": "Add Comment ⌥⌘M",
+        "key": "⌥⌘M",
+        "in": "video-rv-sel-onetap",
+        "state": "video-rv-compose-onetap-empty",
+        "stateAfter": 0.06
+      },
+      {
+        "id": "type-comment-start",
+        "at": {
+          "line": 1,
+          "word": "docs",
+          "offset": 2.1
+        },
+        "in": "video-rv-compose-onetap-blank",
+        "state": "video-rv-compose-onetap-blank",
+        "stateAfter": 0
+      },
+      {
+        "id": "type-comment",
+        "at": {
+          "line": 1,
+          "word": "docs",
+          "offset": 2.1
+        },
+        "in": "video-rv-compose-onetap-row1",
+        "wipe": {
+          "state": "video-rv-compose-onetap-row1",
+          "on": {
+            "on": "video.rv.composer.field",
+            "y0": 0,
+            "y1": 0.5
+          },
+          "dur": 0.9,
+          "chars": 22
+        },
+        "state": "video-rv-compose-onetap-row1",
+        "stateAfter": 0.9
+      },
+      {
+        "id": "type-comment-row2",
+        "at": {
+          "line": 1,
+          "word": "docs",
+          "offset": 3
+        },
+        "in": "video-rv-compose-onetap",
+        "wipe": {
+          "state": "video-rv-compose-onetap",
+          "on": {
+            "on": "video.rv.composer.field",
+            "y0": 0.5,
+            "y1": 1
+          },
+          "dur": 0.8,
+          "chars": 27
+        },
+        "state": "video-rv-compose-onetap",
+        "stateAfter": 0.8
+      },
+      {
+        "id": "post",
+        "at": {
+          "line": 1,
+          "word": "docs",
+          "offset": 4.1
+        },
+        "click": "video.rv.composer.post",
+        "in": "video-rv-compose-onetap",
+        "state": "video-rv-commented"
+      },
+      {
+        "id": "open-lena",
+        "at": {
+          "line": 1,
+          "word": "docs",
+          "offset": 4.9
+        },
+        "click": "video.rv.card.c1",
+        "fy": 0.3,
+        "in": "video-rv-commented",
+        "state": "video-rv-c1-active"
+      },
+      {
+        "id": "close-keep",
+        "at": {
+          "line": 1,
+          "word": "docs",
+          "offset": 5.7
+        },
+        "click": "video.rv.card.close",
+        "in": "video-rv-c1-active",
+        "state": "video-rv-closed"
+      },
+      {
+        "id": "glare-frame",
+        "at": {
+          "line": 2,
+          "offset": -0.4
+        },
+        "in": "video-rv-closed",
+        "cam": {
+          "rel": "video.pane.right",
+          "dx": 38.6,
+          "dy": 601.7,
+          "w": 642.9,
+          "h": 361.6
+        },
+        "dur": 0.9
+      },
+      {
+        "id": "select-glare",
+        "at": {
+          "line": 2,
+          "word": "mention",
+          "offset": -0.3
+        },
+        "in": "video-rv-sel-glare",
+        "drag": {
+          "from": "video.rv.text.glare",
+          "fx0": 0,
+          "fx1": 1,
+          "dur": 0.7,
+          "reveal": "video-rv-sel-glare"
+        },
+        "state": "video-rv-sel-glare",
+        "stateAfter": 0.7
+      },
+      {
+        "id": "add-glare-comment",
+        "at": {
+          "line": 2,
+          "word": "mention",
+          "offset": 0.7
+        },
+        "key": "⌥⌘M",
+        "in": "video-rv-compose-glare-empty",
+        "state": "video-rv-compose-glare-empty",
+        "stateAfter": 0.06
+      },
+      {
+        "id": "type-claude-start",
+        "at": {
+          "line": 2,
+          "word": "mention",
+          "offset": 1.2
+        },
+        "in": "video-rv-compose-glare-blank",
+        "state": "video-rv-compose-glare-blank",
+        "stateAfter": 0
+      },
+      {
+        "id": "type-claude",
+        "at": {
+          "line": 2,
+          "word": "mention",
+          "offset": 1.2
+        },
+        "in": "video-rv-compose-glare-row1",
+        "wipe": {
+          "state": "video-rv-compose-glare-row1",
+          "on": {
+            "on": "video.rv.composer.field",
+            "y0": 0,
+            "y1": 0.5
+          },
+          "dur": 1.3,
+          "chars": 20
+        },
+        "state": "video-rv-compose-glare-row1",
+        "stateAfter": 1.3
+      },
+      {
+        "id": "type-claude-row2",
+        "at": {
+          "line": 2,
+          "word": "mention",
+          "offset": 2.5
+        },
+        "in": "video-rv-compose-glare",
+        "wipe": {
+          "state": "video-rv-compose-glare",
+          "on": {
+            "on": "video.rv.composer.field",
+            "y0": 0.5,
+            "y1": 1
+          },
+          "dur": 1.3,
+          "chars": 40
+        },
+        "state": "video-rv-compose-glare",
+        "stateAfter": 1.3
+      },
+      {
+        "id": "pill-mark",
+        "at": {
+          "line": 2,
+          "word": "pill"
+        },
+        "in": "video-rv-compose-glare",
+        "mark": "video.rv.composer.pill",
+        "hold": 1.5
+      },
+      {
+        "id": "post-claude",
+        "at": {
+          "line": 2,
+          "word": "pill",
+          "offset": 1.6
+        },
+        "click": "video.rv.composer.post",
+        "in": "video-rv-compose-glare",
+        "state": "video-rv-sent"
+      },
+      {
+        "id": "sent-mark",
+        "at": {
+          "line": 2,
+          "word": "pill",
+          "offset": 2.1
+        },
+        "in": "video-rv-sent",
+        "mark": "video.rv.card.status",
+        "hold": 0.9
+      },
+      {
+        "id": "to-chat",
+        "at": {
+          "line": 2,
+          "word": "pill",
+          "offset": 2.7
+        },
+        "in": "video-rv-sent",
+        "cam": {
+          "rel": "video.pane.middle",
+          "dx": 44.9,
+          "dy": 585.3,
+          "w": 749.1,
+          "h": 421.4
+        },
+        "dur": 1
+      },
+      {
+        "id": "working",
+        "at": {
+          "line": 2,
+          "word": "pill",
+          "offset": 3.7
+        },
+        "in": "video-rv-working",
+        "state": "video-rv-working"
+      },
+      {
+        "id": "back-to-doc",
+        "at": {
+          "line": 3,
+          "offset": -0.2
+        },
+        "in": "video-rv-replied",
+        "cam": {
+          "rel": "video.pane.right",
+          "dx": 38.6,
+          "dy": 621.7,
+          "w": 642.9,
+          "h": 361.6
+        },
+        "dur": 1
+      },
+      {
+        "id": "replied",
+        "at": {
+          "line": 3,
+          "word": "change"
+        },
+        "in": "video-rv-replied",
+        "state": "video-rv-replied",
+        "stateAfter": 0,
+        "fade": 0.5
+      },
+      {
+        "id": "change-mark",
+        "at": {
+          "line": 3,
+          "word": "change",
+          "offset": 0.5
+        },
+        "in": "video-rv-replied",
+        "mark": "video.rv.text.glareNew",
+        "hold": 1.1
+      },
+      {
+        "id": "reply-mark",
+        "at": {
+          "line": 3,
+          "word": "thread"
+        },
+        "in": "video-rv-replied",
+        "mark": "video.rv.card.reply",
+        "hold": 1.6
+      },
+      {
+        "id": "bar-frame",
+        "at": {
+          "line": 4,
+          "offset": -0.5
+        },
+        "in": "video-rv-replied",
+        "cam": {
+          "rel": "video.pane.right",
+          "dx": 38.6,
+          "dy": 21.7,
+          "w": 642.9,
+          "h": 361.6
+        },
+        "dur": 1
+      },
+      {
+        "id": "mode-open",
+        "at": {
+          "line": 4,
+          "word": "editing"
+        },
+        "click": "review.mode",
+        "in": "video-rv-replied",
+        "state": "video-rv-mode-menu",
+        "stateAfter": 0.05
+      },
+      {
+        "id": "mode-pick",
+        "at": {
+          "line": 4,
+          "word": "suggesting"
+        },
+        "click": "Suggesting",
+        "in": "video-rv-mode-menu",
+        "state": "video-rv-suggest-on",
+        "stateAfter": 0.08
+      },
+      {
+        "id": "mode-mark",
+        "at": {
+          "line": 4,
+          "word": "suggesting",
+          "offset": 0.4
+        },
+        "in": "video-rv-suggest-on",
+        "mark": "review.mode",
+        "hold": 1.2
+      },
+      {
+        "id": "goals-frame",
+        "at": {
+          "line": 4,
+          "word": "edits"
+        },
+        "in": "video-rv-suggest-on",
+        "cam": {
+          "rel": "video.pane.right",
+          "dx": 38.6,
+          "dy": 411.7,
+          "w": 642.9,
+          "h": 361.6
+        },
+        "dur": 0.8
+      },
+      {
+        "id": "type-goal",
+        "at": {
+          "line": 4,
+          "word": "suggestions",
+          "offset": -0.3
+        },
+        "in": "video-rv-typed",
+        "wipe": {
+          "state": "video-rv-typed",
+          "on": "video.rv.mark.s3",
+          "dur": 0.9
+        },
+        "state": "video-rv-typed",
+        "stateAfter": 0.9
+      },
+      {
+        "id": "colours",
+        "at": {
+          "line": 4,
+          "word": "color",
+          "offset": -0.6
+        },
+        "in": "video-rv-typed",
+        "cam": {
+          "fit": [
+            "video.rv.mark.s1",
+            "video.rv.mark.s2",
+            "video.rv.mark.s3"
+          ],
+          "pad": 60
+        },
+        "dur": 0.9,
+        "mark": {
+          "fit": [
+            "video.rv.mark.s1",
+            "video.rv.mark.s2",
+            "video.rv.mark.s3"
+          ],
+          "pad": 6
+        },
+        "hold": 1.8
+      },
+      {
+        "id": "open-s1",
+        "at": {
+          "line": 5,
+          "word": "accept",
+          "offset": -0.9
+        },
+        "click": "video.rv.mark.s1",
+        "in": "video-rv-typed",
+        "state": "video-rv-hover-s1"
+      },
+      {
+        "id": "accept",
+        "at": {
+          "line": 5,
+          "word": "accept",
+          "offset": 0.2
+        },
+        "click": "video.rv.tip.accept",
+        "in": "video-rv-hover-s1",
+        "state": "video-rv-accepted"
+      },
+      {
+        "id": "open-s2",
+        "at": {
+          "line": 5,
+          "word": "reject",
+          "offset": -0.7
+        },
+        "click": "video.rv.mark.s2",
+        "fx": 0.3,
+        "in": "video-rv-accepted",
+        "state": "video-rv-hover-s2"
+      },
+      {
+        "id": "reject",
+        "at": {
+          "line": 5,
+          "word": "reject",
+          "offset": 0.4
+        },
+        "click": "video.rv.tip.reject",
+        "in": "video-rv-hover-s2",
+        "state": "video-rv-rejected"
+      }
+    ],
+    "requires": [
+      {
+        "what": "Carrying on from S7, the cursor clicks the PRD tab",
+        "by": [
+          "transition",
+          "#prd-tab"
+        ]
+      },
+      {
+        "what": "On \"comments\" the outline traces the margin's cards (Ravi's and Lena's)",
+        "by": [
+          "#margin-mark"
+        ]
+      },
+      {
+        "what": "Sam selects \"Fixing a flagged book takes one tap\", clicks Comment (⌥⌘M keycaps), types \"Lena, can you mock the one-tap fix for Thursday?\", Post",
+        "by": [
+          "#select-onetap",
+          "#comment-button",
+          "#type-comment",
+          "#type-comment-row2",
+          "#post"
+        ]
+      },
+      {
+        "what": "Lena's answered thread closed with Close and Keep on the way to line 2",
+        "by": [
+          "#open-lena",
+          "#close-keep"
+        ]
+      },
+      {
+        "what": "The glare requirement selected; \"@claude can you make this one testable? …\" typed; To and the session pill appear; the outline traces the pill on \"pill\"; Post; Sent",
+        "by": [
+          "#select-glare",
+          "#add-glare-comment",
+          "#type-claude",
+          "#type-claude-row2",
+          "#pill-mark",
+          "#post-claude",
+          "#sent-mark"
+        ]
+      },
+      {
+        "what": "Line 3: the comment arrives in the Auto-add decision chat, Claude works (card: Claude is replying), then the requirement changes in place and Claude's reply sits in the thread in Claude's green",
+        "by": [
+          "#to-chat",
+          "#working",
+          "#back-to-doc",
+          "#replied",
+          "#change-mark",
+          "#reply-mark"
+        ]
+      },
+      {
+        "what": "Line 4: the mode menu at the bar's right end (Editing ⌄, Duo's own, captured) with its real items; Suggesting picked; the label reads Suggesting ⌄",
+        "by": [
+          "#bar-frame",
+          "#mode-open",
+          "#mode-pick",
+          "#mode-mark",
+          "state:video-rv-mode-menu"
+        ]
+      },
+      {
+        "what": "Sam changes 80% to 85%, shown as his suggestion; on \"own color\" the camera shows it beside Jo's and Ravi's, each in their colour",
+        "by": [
+          "#goals-frame",
+          "#type-goal",
+          "#colours"
+        ]
+      },
+      {
+        "what": "Line 5: Jo's suggestion accepted, Ravi's rejected, from their labels",
+        "by": [
+          "#open-s1",
+          "#accept",
+          "#open-s2",
+          "#reject"
+        ]
+      }
+    ],
+    "shotSha": "be30ddd3a786"
+  },
+  "S13": {
+    "kind": "drawn",
+    "scene": "app",
+    "transitionIn": "carry-on",
+    "leadIn": 0.6,
+    "states": [
+      "video-rv-rejected"
+    ],
+    "pauses": {
+      "2": 1.2,
+      "3": 2.6,
+      "4": 3.4,
+      "5": 6
+    },
+    "tail": 0.6,
+    "beats": [
+      {
+        "id": "caret",
+        "at": {
+          "line": 1,
+          "offset": 0.2
+        },
+        "click": "video.rv.text.heardEnd",
+        "fx": 1,
+        "in": "video-rv-rejected",
+        "state": "video-rv-doc-rest",
+        "stateAfter": 0.05,
+        "cam": {
+          "rel": "video.pane.right",
+          "dx": 38.6,
+          "dy": 21.7,
+          "w": 642.9,
+          "h": 361.6
+        },
+        "dur": 1
+      },
+      {
+        "id": "doc-mic-mark",
+        "at": {
+          "line": 2,
+          "word": "mic"
+        },
+        "in": "video-rv-doc-rest",
+        "mark": "voice.mic.document",
+        "hold": 1.3
+      },
+      {
+        "id": "doc-mic",
+        "at": {
+          "line": 2,
+          "word": "talking",
+          "offset": 0.1
+        },
+        "click": "voice.mic.document",
+        "in": "video-rv-doc-rest",
+        "rec": "video-rv-doc-rec",
+        "recFrom": 0.6,
+        "recFor": 5.8,
+        "audio": "document"
+      },
+      {
+        "id": "doc-words",
+        "at": {
+          "line": 3,
+          "word": "show"
+        },
+        "in": "video-rv-doc-rec",
+        "cam": {
+          "fit": [
+            "voice.mic.document",
+            "video.rv.text.heardEnd"
+          ],
+          "pad": 40
+        },
+        "dur": 1.2
+      },
+      {
+        "id": "chat-frame",
+        "at": {
+          "line": 4,
+          "offset": -0.5
+        },
+        "click": "video.tab.middle.3",
+        "in": "video-rv-doc-rec",
+        "state": "video-vv-chat-rest",
+        "cam": {
+          "rel": "video.pane.middle",
+          "dx": 44.9,
+          "dy": 648.3,
+          "w": 749.1,
+          "h": 421.4
+        },
+        "dur": 1.1
+      },
+      {
+        "id": "chat-mic",
+        "at": {
+          "line": 4,
+          "word": "mic"
+        },
+        "click": "voice.mic",
+        "in": "video-vv-chat-rest",
+        "rec": "video-vv-chat-rec",
+        "recFrom": 0.4,
+        "recFor": 6.2,
+        "audio": "chat"
+      },
+      {
+        "id": "return",
+        "at": {
+          "line": 4,
+          "word": "return",
+          "offset": 6
+        },
+        "key": "↩",
+        "in": "video-vv-chat-sent",
+        "state": "video-vv-chat-sent",
+        "stateAfter": 0.08
+      },
+      {
+        "id": "term-tab",
+        "at": {
+          "line": 5,
+          "offset": -0.3
+        },
+        "click": "video.tab.middle.0",
+        "in": "video-vv-chat-sent",
+        "state": "video-vv-term-live",
+        "cam": {
+          "rel": "video.pane.middle",
+          "dx": 44.9,
+          "dy": 235.3,
+          "w": 749.1,
+          "h": 421.4
+        },
+        "dur": 1
+      },
+      {
+        "id": "termmic-mark",
+        "at": {
+          "line": 5,
+          "word": "terminal"
+        },
+        "in": "video-vv-term-live",
+        "mark": "video.vv.termmic",
+        "hold": 1.2
+      },
+      {
+        "id": "hold",
+        "at": {
+          "line": 5,
+          "word": "talk",
+          "offset": 0.3
+        },
+        "key": "⇧⌘D",
+        "keyHold": 4.6,
+        "in": "video-vv-term-live",
+        "rec": "video-vv-term-rec",
+        "recFrom": 0.4,
+        "recFor": 5.8,
+        "audio": "terminal"
+      }
+    ],
+    "requires": [
+      {
+        "what": "The caret at the end of What we heard; the camera on the bar's right end",
+        "by": [
+          "#caret"
+        ]
+      },
+      {
+        "what": "On \"mic\" the outline traces the document mic; the cursor clicks it; the meter, Listening and its keys replace the controls",
+        "by": [
+          "#doc-mic-mark",
+          "#doc-mic",
+          "state:video-rv-doc-rec"
+        ]
+      },
+      {
+        "what": "A real dictation in your voice (\"Owen said the second scan was fine once he moved out of the glare.\"), the meter moving with nothing written, then the phrase landing at the caret at the real delay",
+        "by": [
+          "#doc-mic",
+          "#doc-words",
+          "state:video-rv-doc-rec"
+        ]
+      },
+      {
+        "what": "Line 4: the chat composer's mic clicked, its level bars, the words landing a phrase at a time at the real delay; Return as a keycap sends it",
+        "by": [
+          "#chat-frame",
+          "#chat-mic",
+          "#return"
+        ]
+      },
+      {
+        "what": "Line 5: the Tighten PRD goals terminal, its mic; ⇧⌘D held as keycaps; three level bars; the words land in Claude's prompt; nothing sent; the scene ends on this terminal",
+        "by": [
+          "#term-tab",
+          "#termmic-mark",
+          "#hold"
+        ]
+      }
+    ],
+    "shotSha": "34f47d945834"
+  },
   "S8": {
     "kind": "drawn",
     "scene": "projects",
     "transitionIn": "duo-fades",
     "leadIn": 0.6,
     "states": [
-      "video-s7-pptx-after",
-      "video-s7-pptx-after"
+      "video-vv-term-rec",
+      "video-vv-term-rec"
     ],
     "screens": {
       "banner": "terms/s8-banner.txt",
@@ -1751,97 +2463,13 @@
     ],
     "shotSha": "57b104c09904"
   },
-  "S11": {
-    "kind": "drawn",
-    "scene": "conclusion",
-    "transitionIn": "duo-steps-away",
-    "leadIn": 0.8,
-    "tail": 3.5,
-    "states": [
-      "video-s10-deck-resumed"
-    ],
-    "inProgress": [
-      "Duo Projects",
-      "Tasks"
-    ],
-    "os": "Version 27.0",
-    "events": {
-      "dev": {
-        "line": 1,
-        "word": "development"
-      },
-      "next": {
-        "line": 1,
-        "word": "date"
-      },
-      "list": {
-        "line": 2,
-        "offset": -0.2
-      },
-      "circle": {
-        "line": 2,
-        "word": "projects"
-      },
-      "cards": {
-        "line": 2,
-        "word": "feedback"
-      },
-      "help": {
-        "line": 3,
-        "word": "github",
-        "offset": -1.1
-      },
-      "form": {
-        "line": 3,
-        "word": "github",
-        "offset": -0.2
-      },
-      "card": {
-        "line": 3,
-        "word": "experience",
-        "offset": 0.6
-      }
-    },
-    "requires": [
-      {
-        "what": "The release line from GitHub releases, an open next dot and the built-from stamp",
-        "by": [
-          "event:dev",
-          "event:next",
-          "src:src/scenes/Conclusion.tsx"
-        ]
-      },
-      {
-        "what": "The topic list, all ticked, Duo Projects and Tasks circled; blank feedback cards",
-        "by": [
-          "event:list",
-          "event:circle",
-          "event:cards"
-        ]
-      },
-      {
-        "what": "Help › Report an Issue… opens GitHub's new-issue form filled in as Duo fills it",
-        "by": [
-          "event:help",
-          "event:form"
-        ]
-      },
-      {
-        "what": "The video ends on S0's opening card, held about 3 s after the last line",
-        "by": [
-          "event:card"
-        ]
-      }
-    ],
-    "shotSha": "0248f39ee645"
-  },
   "S9": {
     "kind": "drawn",
     "scene": "app",
     "transitionIn": "pile-to-duo",
     "leadIn": 2,
     "states": [
-      "video-s7-pptx-after"
+      "video-vv-term-rec"
     ],
     "pauses": {
       "6": 2.5
@@ -1854,7 +2482,7 @@
           "word": "finds"
         },
         "click": "video.crumb.all",
-        "in": "video-s7-pptx-after",
+        "in": "video-vv-term-rec",
         "state": "video-s9-list"
       },
       {
@@ -1997,7 +2625,7 @@
     ],
     "requires": [
       {
-        "what": "The pile fades out and Duo fades back in on S7's last picture",
+        "what": "The pile fades out and Duo fades back in on S13's last picture",
         "by": [
           "transition"
         ]
@@ -2042,7 +2670,313 @@
         ]
       }
     ],
-    "shotSha": "7d451319a68f"
+    "shotSha": "36575b9f6a62"
+  },
+  "S14": {
+    "kind": "drawn",
+    "scene": "app",
+    "transitionIn": "carry-on",
+    "leadIn": 0.6,
+    "states": [
+      "video-s9-files-open"
+    ],
+    "pauses": {
+      "1": 0.6,
+      "2": 2.8,
+      "3": 1.4,
+      "4": 4.2
+    },
+    "tail": 0.8,
+    "beats": [
+      {
+        "id": "to-board",
+        "at": {
+          "line": 1,
+          "word": "window",
+          "offset": -0.4
+        },
+        "click": "video.crumb.all",
+        "in": "video-s9-files-open",
+        "state": "video-s9-board",
+        "cam": "wide",
+        "dur": 0.9
+      },
+      {
+        "id": "tile-menu",
+        "at": {
+          "line": 2,
+          "word": "right"
+        },
+        "menu": {
+          "on": "video.board.col.beta-feedback",
+          "items": [
+            "Open in New Window",
+            "-",
+            "Send to Claude",
+            "Send To ▸",
+            "-",
+            "Move into Home…",
+            "Merge Into ▸"
+          ],
+          "pick": "Open in New Window",
+          "pickAfter": 0.7,
+          "hold": 1
+        },
+        "fy": 0.04,
+        "in": "video-s9-board"
+      },
+      {
+        "id": "w2-open",
+        "at": {
+          "line": 2,
+          "word": "window",
+          "offset": 0.1
+        },
+        "window": {
+          "id": "w2",
+          "state": "video-mw-beta",
+          "x": 150,
+          "y": 120
+        }
+      },
+      {
+        "id": "new-window",
+        "at": {
+          "line": 2,
+          "word": "n",
+          "offset": 0.1
+        },
+        "key": "⌥⌘N",
+        "window": {
+          "id": "w3",
+          "state": "video-mw-new",
+          "x": 300,
+          "y": 190
+        }
+      },
+      {
+        "id": "map-tile",
+        "at": {
+          "line": 2,
+          "word": "one",
+          "offset": 0.6
+        },
+        "win": "w3",
+        "click": "video.board.col.neighborhood-map",
+        "fy": 0.05,
+        "state": "video-mw-map",
+        "stateAfter": 0.1
+      },
+      {
+        "id": "w1-toolbar",
+        "at": {
+          "line": 3,
+          "word": "color",
+          "offset": -0.4
+        },
+        "mark": {
+          "on": "video.pane.left",
+          "y0": 0,
+          "y1": 0.001
+        },
+        "hold": 0.9
+      },
+      {
+        "id": "colours-mark",
+        "at": {
+          "line": 3,
+          "word": "color",
+          "offset": 0.1
+        },
+        "win": "w2",
+        "in": "video-mw-beta",
+        "mark": {
+          "rel": "video.pane.left",
+          "x": 0,
+          "y": 0,
+          "w": 1440,
+          "h": 40
+        },
+        "hold": 1
+      },
+      {
+        "id": "colours-mark-3",
+        "at": {
+          "line": 3,
+          "word": "apart",
+          "offset": -0.4
+        },
+        "win": "w3",
+        "in": "video-mw-map",
+        "mark": {
+          "rel": "video.pane.left",
+          "x": 0,
+          "y": 0,
+          "w": 1440,
+          "h": 40
+        },
+        "hold": 1.2
+      },
+      {
+        "id": "window-menu",
+        "at": {
+          "line": 4,
+          "word": "window"
+        },
+        "menu": {
+          "on": {
+            "x": 92,
+            "y": -36,
+            "w": 60,
+            "h": 18
+          },
+          "items": [
+            "Minimize",
+            "Zoom",
+            "-",
+            "Show Previous Tab",
+            "Show Next Tab",
+            "-",
+            "Window Colour ▸",
+            "-",
+            "Bring All to Front",
+            "-",
+            "Duo",
+            "beta-feedback",
+            "neighborhood-map"
+          ],
+          "pick": "Duo",
+          "pickAfter": 1.3,
+          "hold": 1.6
+        },
+        "fy": 1.2
+      },
+      {
+        "id": "w1-front",
+        "at": {
+          "line": 4,
+          "word": "window",
+          "offset": 1.4
+        },
+        "front": "main"
+      },
+      {
+        "id": "beta-again",
+        "at": {
+          "line": 4,
+          "word": "already",
+          "offset": 0.2
+        },
+        "click": "video.board.col.beta-feedback",
+        "fy": 0.05,
+        "in": "video-s9-board"
+      },
+      {
+        "id": "w2-front",
+        "at": {
+          "line": 4,
+          "word": "already",
+          "offset": 0.35
+        },
+        "front": "w2"
+      },
+      {
+        "id": "w1-back",
+        "at": {
+          "line": 4,
+          "word": "forward",
+          "offset": 1
+        },
+        "click": {
+          "x": 1700,
+          "y": 1060,
+          "w": 20,
+          "h": 20
+        },
+        "in": "video-s9-board"
+      },
+      {
+        "id": "w1-front-2",
+        "at": {
+          "line": 4,
+          "word": "forward",
+          "offset": 1.05
+        },
+        "front": "main"
+      },
+      {
+        "id": "shelf",
+        "at": {
+          "line": 4,
+          "word": "forward",
+          "offset": 2
+        },
+        "click": "video.board.card.Auto-add decision",
+        "in": "video-s9-board",
+        "state": "video-s9-files-open",
+        "cam": "wide",
+        "dur": 0.9
+      }
+    ],
+    "requires": [
+      {
+        "what": "Carrying on from S9: All projects in the breadcrumb, the Board",
+        "by": [
+          "transition",
+          "#to-board"
+        ]
+      },
+      {
+        "what": "The beta-feedback tile's menu (drawn, real items) and Open in New Window",
+        "by": [
+          "#tile-menu"
+        ]
+      },
+      {
+        "what": "The camera wide on the desk; window 2 opens down and right of the first, on beta-feedback, Blue toolbar and pale blue panes; the first stays plain",
+        "by": [
+          "#w2-open"
+        ]
+      },
+      {
+        "what": "⌥⌘N keycaps; a third window at All projects in Ochre; its neighborhood-map tile clicked, the window becomes neighborhood-map's",
+        "by": [
+          "#new-window",
+          "#map-tile"
+        ]
+      },
+      {
+        "what": "On \"its own color\" the outline traces each window's toolbar in turn",
+        "by": [
+          "#w1-toolbar",
+          "#colours-mark",
+          "#colours-mark-3"
+        ]
+      },
+      {
+        "what": "The Window menu (drawn, real items, the three windows by title); the first picked and it comes forward",
+        "by": [
+          "#window-menu",
+          "#w1-front"
+        ]
+      },
+      {
+        "what": "In the first window the beta-feedback tile clicked: the Blue window comes forward instead of opening it twice",
+        "by": [
+          "#beta-again",
+          "#w2-front"
+        ]
+      },
+      {
+        "what": "Back to the first window and its shelf-scan project view, as S9 left it, for S10",
+        "by": [
+          "#w1-back",
+          "#w1-front-2",
+          "#shelf"
+        ]
+      }
+    ],
+    "shotSha": "4ae93ff61449"
   },
   "S10": {
     "kind": "drawn",
@@ -2056,8 +2990,7 @@
       "4": 1.6,
       "5": 2.4,
       "6": 1.4,
-      "7": 3.4,
-      "8": 3
+      "7": 3
     },
     "beats": [
       {
@@ -2332,50 +3265,9 @@
         "dur": 1
       },
       {
-        "id": "board-open",
-        "at": {
-          "line": 7,
-          "word": "view"
-        },
-        "click": "video.taskboard.open",
-        "in": "video-s10-newsession-sent",
-        "state": "video-s10-board",
-        "cam": {
-          "rel": "video.pane.left",
-          "dx": 0,
-          "dy": 0,
-          "w": 1140,
-          "h": 641
-        },
-        "dur": 0.9
-      },
-      {
-        "id": "board-deck",
-        "at": {
-          "line": 7,
-          "word": "manage"
-        },
-        "click": "video.taskboard.card.deck-for-thursday",
-        "in": "video-s10-board",
-        "state": "video-s10-board-deck"
-      },
-      {
-        "id": "deck-resume",
-        "at": {
-          "line": 7,
-          "word": "return",
-          "offset": 1.4
-        },
-        "click": "video.taskboard.session.Deck for Thursday",
-        "in": "video-s10-board-deck",
-        "state": "video-s10-deck-resumed",
-        "cam": "wide",
-        "dur": 0.9
-      },
-      {
         "id": "task-menu-target",
         "at": {
-          "line": 8,
+          "line": 7,
           "offset": -1.6
         },
         "in": "video-s10-task-menu-target",
@@ -2392,7 +3284,7 @@
       {
         "id": "archive-task-menu",
         "at": {
-          "line": 8,
+          "line": 7,
           "offset": -0.6
         },
         "menu": {
@@ -2423,7 +3315,7 @@
       {
         "id": "archive-ask-shown",
         "at": {
-          "line": 8,
+          "line": 7,
           "offset": 1.9
         },
         "in": "video-s10-archive-ask",
@@ -2432,7 +3324,7 @@
       {
         "id": "archive-ask",
         "at": {
-          "line": 8,
+          "line": 7,
           "offset": 3.6
         },
         "in": "video-s10-archive-ask",
@@ -2447,7 +3339,7 @@
       {
         "id": "archive-confirm",
         "at": {
-          "line": 8,
+          "line": 7,
           "offset": 4.6
         },
         "click": "Archive Task and Its Sessions",
@@ -2458,7 +3350,7 @@
       {
         "id": "archived-mark",
         "at": {
-          "line": 8,
+          "line": 7,
           "offset": 5.7
         },
         "in": "video-s10-archived",
@@ -2515,14 +3407,6 @@
         ]
       },
       {
-        "what": "The task board; Deck for Thursday picked; its session resumes",
-        "by": [
-          "#board-open",
-          "#board-deck",
-          "#deck-resume"
-        ]
-      },
-      {
         "what": "Line 2: \"tasks come and go\" settles on the complete task",
         "by": [
           "#tasks-come-go"
@@ -2554,6 +3438,90 @@
         ]
       }
     ],
-    "shotSha": "a44b67c0b00e"
+    "shotSha": "27b54d1bb3eb"
+  },
+  "S11": {
+    "kind": "drawn",
+    "scene": "conclusion",
+    "transitionIn": "duo-steps-away",
+    "leadIn": 0.8,
+    "tail": 3.5,
+    "states": [
+      "video-s10-deck-resumed"
+    ],
+    "inProgress": [
+      "Duo Projects",
+      "Tasks"
+    ],
+    "os": "Version 27.0",
+    "events": {
+      "dev": {
+        "line": 1,
+        "word": "development"
+      },
+      "next": {
+        "line": 1,
+        "word": "date"
+      },
+      "list": {
+        "line": 2,
+        "offset": -0.2
+      },
+      "circle": {
+        "line": 2,
+        "word": "projects"
+      },
+      "cards": {
+        "line": 2,
+        "word": "feedback"
+      },
+      "help": {
+        "line": 3,
+        "word": "github",
+        "offset": -1.1
+      },
+      "form": {
+        "line": 3,
+        "word": "github",
+        "offset": -0.2
+      },
+      "card": {
+        "line": 3,
+        "word": "experience",
+        "offset": 0.6
+      }
+    },
+    "requires": [
+      {
+        "what": "The release line from GitHub releases, an open next dot and the built-from stamp",
+        "by": [
+          "event:dev",
+          "event:next",
+          "src:src/scenes/Conclusion.tsx"
+        ]
+      },
+      {
+        "what": "The topic list, all ticked, Duo Projects and Tasks circled; blank feedback cards",
+        "by": [
+          "event:list",
+          "event:circle",
+          "event:cards"
+        ]
+      },
+      {
+        "what": "Help › Report an Issue… opens GitHub's new-issue form filled in as Duo fills it",
+        "by": [
+          "event:help",
+          "event:form"
+        ]
+      },
+      {
+        "what": "The video ends on S0's opening card, held about 3 s after the last line",
+        "by": [
+          "event:card"
+        ]
+      }
+    ],
+    "shotSha": "0248f39ee645"
   }
 }

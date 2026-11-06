@@ -5,7 +5,7 @@
 //   node fixture/make-dictation.mjs        (from video/; under the GPU lock)
 // Writes fixture/dictation/<id>.wav and dictation.json. Voiced audio may be committed (DL-246); the voice's weights
 // and its training audio never are.
-import {mkdirSync, writeFileSync} from 'node:fs';
+import {mkdirSync, readFileSync, writeFileSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
 import {dirname, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -17,14 +17,20 @@ const TAKES = {
   // Something ordinary (Geoff, Nov 1: "the demo transcription is strange; please just use something benign").
   chat: ['Please update the PRD with the latest changes to the UI design.'],
   terminal: ['Can you add the new design to the release notes too?'],
+  // The intro's S13 (v12): dictated into the PRD's What we heard, from the formatting bar's mic.
+  document: ['Owen said the second scan was fine once he moved out of the glare.'],
 };
+// node fixture/make-dictation.mjs [take…]: only those takes (the others' files and their dictation.json entries stay as they are).
+const only = process.argv.slice(2);
+for (const k of Object.keys(TAKES)) if (only.length && !only.includes(k)) delete TAKES[k];
 const PAUSE = 0.7, LEAD = 0.4, TAIL = 1.2;   // seconds: between phrases, before the first, after the last
 const paths = filmPaths(here, 'release-0-2-22');
 const lines = Object.entries(TAKES).flatMap(([k, ps]) => ps.map((t, i) => ({id: `dictation-${k}-${i}`, text: t, said: t})));
 const voiced = voiceLines(lines, {here, style: filmStyle(here, paths), cache: join(here, '.cache'), pub: paths.pub, log: console.log});
 const out = join(here, 'fixture/dictation');
 mkdirSync(out, {recursive: true});
-const meta = {};
+let meta = {};
+try { meta = JSON.parse(readFileSync(join(out, 'dictation.json'), 'utf8')); } catch {}
 for (const [k, ps] of Object.entries(TAKES)) {
   const files = ps.map((_, i) => join(paths.pub, voiced.find((v) => v.id === `dictation-${k}-${i}`).src));
   // silence, phrase, pause, phrase, silence: one mono 48 kHz file

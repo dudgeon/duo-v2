@@ -24,6 +24,7 @@ export type AppKey = {at: number; label: string; hold?: number};
 export type AppOverlay = {at: number; until: number; src: string; scale: number; region: Rect; x: number; y: number; title?: string};
 // A wipe: `state` drawn over the picture inside `rect`, left to right over dur (typing that renders as it's typed).
 export type AppWipe = {at: number; dur: number; state: string; rect: Rect; chars?: number};
+export type AppWindow = {id: string; at: number; x: number; y: number; w: number; h: number; steps: {at: number; state: string}[]};
 export type AppMenu = {at: number; until: number; x: number; y: number; items: string[]; hi?: {at: number; item: string}};
 export type AppData = {
   window: {w: number; h: number}; scale: number; src: Record<string, string>;
@@ -35,6 +36,9 @@ export type AppData = {
   keys?: AppKey[]; wipes?: AppWipe[]; overlays?: AppOverlay[];
   // The real app recorded while it worked: a video of a region of the window, in window points, from at to until.
   recs?: {at: number; until: number; from?: number; src: string; region: Rect}[];
+  // Scene 14 (multi-window): more Duo windows, each its own captures, its top left in the main window's points; `front`
+  // says which window came to the front when ('main' or an id), so the stack and the active traffic lights follow it.
+  windows?: AppWindow[]; front?: {at: number; id: string}[];
   running?: boolean; startCam?: Rect | null;
 };
 
@@ -53,6 +57,13 @@ const Crop = ({src, scale, region, rect}: {src: string; scale: number; region: R
     </div>
   );
 };
+
+/** The traffic lights in their active colours, over a capture's grey ones (a background capture is never the key window):
+ *  14 pt across, centred 19, 42 and 65 pt from the left and 20 pt from the top (shot-grammar.md, measured from the capture). */
+const Lights = ({k}: {k: number}) => (
+  <>{[19, 42, 65].map((cx, j) => <div key={j} style={{position: 'absolute', left: (cx - 7) * k, top: (20 - 7) * k, width: 14 * k, height: 14 * k, borderRadius: 7 * k,
+    background: ['#FF5F57', '#FEBC2E', '#28C840'][j], boxShadow: 'inset 0 0 0 0.5px rgba(0,0,0,0.18)'}} />)}</>
+);
 
 /** A macOS context menu, drawn where the click was: macOS draws menus in their own window, which a window capture can't include. Its items are the app's real ones. */
 const ContextMenu = ({x, y, items, hi, u}: {x: number; y: number; items: string[]; hi?: string; u: number}) => (
@@ -152,12 +163,12 @@ export const AppScene = ({t, data, dockIcon}: {t: number; data: AppData; dockIco
     cursor = <div style={{opacity: op}}>{beam ? <IBeam x={cx} y={cy} /> : <Cursor x={cx} y={cy} press={press} />}</div>;
   }
 
-  return (
-    <AbsoluteFill style={{overflow: 'hidden', background: '#000'}}>
-      <div style={{position: 'absolute', left: 0, top: 0, width: W, height: H, transformOrigin: '0 0', transform: `scale(${cs}) translate(${-cam.x}px, ${-cam.y}px)`}}>
-        <Wallpaper w={W} h={H} />
-        <MenuBar app="Duo" />
-        <Dock running={data.running ?? true} icon={dockIcon} />
+  // The window stack (scene 14): each window ranks by the last time it came to the front; a window opens in front.
+  const frontAt = (id: string) => (data.front ?? []).reduce((a, f) => (f.id === id && f.at <= t ? Math.max(a, f.at) : a), id === 'main' ? -1 : 1e9);
+  const open = (data.windows ?? []).filter((w) => t >= w.at);
+  const order = ['main', ...open.map((w) => w.id)].sort((a, b) => frontAt(a) - frontAt(b));
+  const frontId = order[order.length - 1];
+  const mainWin = (
         <div style={{position: 'absolute', left: win.x, top: win.y, width: win.w, height: win.h, borderRadius: 12, overflow: 'hidden',
           boxShadow: '0 30px 80px rgba(0,0,0,0.42), 0 0 0 0.5px rgba(0,0,0,0.4)'}}>
           {inEntry ? (
@@ -204,7 +215,32 @@ export const AppScene = ({t, data, dockIcon}: {t: number; data: AppData; dockIco
             const region = {x: x0, y: r.y, w, h: r.h};
             return <Crop key={`rv${i}`} src={data.src[d.reveal.state]} scale={data.scale} region={region} rect={{x: x0 * K, y: r.y * K, w: w * K, h: r.h * K}} />;
           })}
+          {data.windows && frontId === 'main' && <Lights k={K} />}
         </div>
+  );
+  const others = Object.fromEntries(open.map((w) => {
+    let st = w.steps[0].state;
+    for (const s of w.steps) if (t >= s.at) st = s.state;
+    const r = toFrame({x: w.x, y: w.y, w: w.w, h: w.h});
+    // macOS brings a new window up quickly from a little smaller, fading in.
+    const u = ramp(t, w.at, w.at + 0.22);
+    return [w.id, (
+      <div key={w.id} style={{position: 'absolute', left: r.x, top: r.y, width: r.w, height: r.h, borderRadius: 12, overflow: 'hidden', opacity: u,
+        transform: `scale(${0.96 + 0.04 * u})`, transformOrigin: '50% 40%', boxShadow: '0 30px 80px rgba(0,0,0,0.42), 0 0 0 0.5px rgba(0,0,0,0.4)'}}>
+        <Crop src={data.src[st]} scale={data.scale} region={{x: 0, y: 0, w: w.w, h: w.h}} rect={{x: 0, y: 0, w: r.w, h: r.h}} />
+        {frontId === w.id && <Lights k={K} />}
+      </div>
+    )];
+  }));
+  const layers = order.map((id) => (id === 'main' ? <React.Fragment key="main">{mainWin}</React.Fragment> : others[id]));
+
+  return (
+    <AbsoluteFill style={{overflow: 'hidden', background: '#000'}}>
+      <div style={{position: 'absolute', left: 0, top: 0, width: W, height: H, transformOrigin: '0 0', transform: `scale(${cs}) translate(${-cam.x}px, ${-cam.y}px)`}}>
+        <Wallpaper w={W} h={H} />
+        <MenuBar app="Duo" />
+        <Dock running={data.running ?? true} icon={dockIcon} />
+        {layers}
         {(data.overlays ?? []).map((o, i) => {
           if (t < o.at || t >= o.until) return null;
           // macOS draws a window coming forward at once; the title bar is drawn (the capture is the view, not the window).

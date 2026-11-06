@@ -9,6 +9,7 @@ import {TurnScene} from './Turn';
 import {LogoScene} from './Logo';
 import {MorphScene, type MorphData} from './Morph';
 import {AppScene, type AppData} from './App';
+import {DictationAudio} from '../lib/Dictation';
 import {ProjectsScene, type ProjectsData} from './ProjectsBg';
 import {ConclusionScene, type ConclusionData} from './Conclusion';
 import type {Ground} from '../lib/Desk';
@@ -80,7 +81,7 @@ const SceneView = ({scene, fade}: {scene: Scene; fade: number}) => {
       {Registered && scene.drawn && <Registered t={t} ev={scene.drawn.events} scene={scene} />}{/* @film-hook */}
       {scene.kind === 'drawn' && scene.drawn?.scene === 'desk' && <DeskScene t={t} ev={scene.drawn.events} />}
       {scene.kind === 'drawn' && scene.drawn?.scene === 'morph' && scene.morph && <MorphScene t={t} ev={scene.drawn.events} data={scene.morph} />}
-      {scene.kind === 'drawn' && scene.drawn?.scene === 'app' && scene.app && <AppScene t={t} data={scene.app} />}
+      {scene.kind === 'drawn' && scene.drawn?.scene === 'app' && scene.app && <><AppScene t={t} data={scene.app} /><DictationAudio audio={(scene.app as {audio?: {at: number; clip: string; from?: number}[]}).audio} /></>}
       {scene.kind === 'drawn' && scene.drawn?.scene === 'projects' && scene.projects && <ProjectsScene t={t} ev={scene.drawn.events} data={scene.projects} />}
       {scene.kind === 'drawn' && scene.drawn?.scene === 'conclusion' && scene.conclusion && <ConclusionScene t={t} ev={scene.drawn.events} data={scene.conclusion} />}
       {scene.kind === 'drawn' && scene.drawn?.scene === 'logo' && <LogoScene t={t} ev={scene.drawn.events} />}
