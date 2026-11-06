@@ -115,6 +115,8 @@ function planApp({scene, shot, lines, tr, prev, prevShot, captures, events, styl
     if (a.after !== undefined) return last + a.after;
     const line = lines[a.line - 1];
     if (!line) throw new BuildError(`shots: ${scene.id} names line ${a.line}, but the scene has ${lines.length}`);
+    // end: from the line's last word, not its start (a dictation that mustn't play over the narrator, S13).
+    if (a.end) return line.start + line.duration + (a.offset ?? 0);
     return line.start + (a.word ? wordTime(line, a.word, a.nth) : 0) + (a.offset ?? 0);
   };
   const first = cap(shot.states[0]);
