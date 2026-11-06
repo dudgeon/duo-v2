@@ -164,7 +164,7 @@ export const AppScene = ({t, data, dockIcon}: {t: number; data: AppData; dockIco
   }
 
   // The window stack (scene 14): each window ranks by the last time it came to the front; a window opens in front.
-  const frontAt = (id: string) => (data.front ?? []).reduce((a, f) => (f.id === id && f.at <= t ? Math.max(a, f.at) : a), id === 'main' ? -1 : 1e9);
+  const frontAt = (id: string) => (data.front ?? []).reduce((a, f) => (f.id === id && f.at <= t ? Math.max(a, f.at) : a), -1);   // a window opens with its own front entry
   const open = (data.windows ?? []).filter((w) => t >= w.at);
   const order = ['main', ...open.map((w) => w.id)].sort((a, b) => frontAt(a) - frontAt(b));
   const frontId = order[order.length - 1];

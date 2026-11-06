@@ -8,7 +8,8 @@
 import {readFileSync, writeFileSync} from 'node:fs';
 const f = new URL('../shots.json', import.meta.url).pathname;
 const s = JSON.parse(readFileSync(f, 'utf8'));
-const R = (dy) => ({rel: 'video.pane.right', dx: 38.6, dy, w: 642.9, h: 361.6});   // the right pane at 16:9, from the 0.2.21 film
+// The right pane (660 pt) at 16:9: the 1.12 fit lands on its edges, so no desk shows past the window (dy as the 0.2.21 film's).
+const R = (dy) => ({rel: 'video.pane.right', dx: 35.4, dy: +(dy + 15).toFixed(1), w: 589.3, h: 331.5});
 // The bar's right end: its controls share the document's identifier, so they're placed from the mode button's first part (its
 // pen, label "Mode: …"): the whole button, and the mic 3 pt after it (as they are while Suggesting).
 const MODE = {rel: 'Mode:', dx: 0, dy: -4.5, w: 87.5, h: 16}, DOCMIC = {rel: 'Mode:', dx: 97.5, dy: -6.5, w: 20, h: 20};
@@ -70,10 +71,14 @@ s.S12 = {kind: 'drawn', scene: 'app', transitionIn: 'carry-on', leadIn: 0.6, sta
 const M = (top, left = 300, fw = 839) => { const fh = fw * 9 / 16, w = fw / 1.12, h = fh / 1.12; return {rel: 'video.pane.middle', dx: +(left + (fw - w) / 2 - 300).toFixed(1), dy: +(top + (fh - h) / 2 - 40).toFixed(1), w: +w.toFixed(1), h: +h.toFixed(1)}; };
 s.S13 = {kind: 'drawn', scene: 'app', transitionIn: 'carry-on', leadIn: 0.6, states: ['video-rv-rejected'], pauses: {2: 1.2, 3: 2.6, 4: 3.4, 5: 6.0}, tail: 0.6,
   beats: [
-    {id: 'caret', at: {line: 1, offset: 0.2}, click: 'video.rv.text.heardEnd', fx: 1, in: 'video-rv-rejected', state: 'video-rv-doc-rest', stateAfter: 0.05, cam: R(21.7), dur: 1.0},
+    // The caret goes at the end of What we heard (where the words will land), the camera rises to the bar for the mic, and
+    // comes back down to the paragraph before the words land (the recorded bar keeps listening while it's off frame).
+    {id: 'heard-frame', at: {line: 1, offset: 0.1}, in: 'video-rv-rejected', cam: R(409), dur: 1.0},
+    {id: 'caret', at: {line: 1, word: 'transcription'}, click: 'video.rv.text.heardEnd', fx: 1, in: 'video-rv-rejected', state: 'video-rv-doc-rest', stateAfter: 0.05},
+    {id: 'bar-frame', at: {line: 2, offset: -0.5}, in: 'video-rv-doc-rest', cam: R(21.7), dur: 0.9},
     {id: 'doc-mic-mark', at: {line: 2, word: 'mic'}, in: 'video-rv-doc-rest', mark: DOCMIC, hold: 1.3},
     {id: 'doc-mic', at: {line: 2, word: 'talking', offset: 0.1}, click: DOCMIC, in: 'video-rv-doc-rest', rec: 'video-rv-doc-rec', recFrom: 0.6, recFor: 5.8, audio: 'document'},
-    {id: 'doc-words', at: {line: 3, word: 'show'}, in: 'video-rv-doc-rec', cam: {fit: ['Mode:', 'video.rv.text.heardEnd'], pad: 40}, dur: 1.2},
+    {id: 'doc-words', at: {line: 3, word: 'phrase'}, in: 'video-rv-doc-rest', cam: R(409), dur: 1.1},
     {id: 'chat-frame', at: {line: 4, offset: -0.5}, click: 'video.tab.middle.3', in: 'video-rv-doc-rec', state: 'video-vv-chat-rest', cam: M(663), dur: 1.1},
     {id: 'chat-mic', at: {line: 4, word: 'mic'}, click: 'voice.mic', in: 'video-vv-chat-rest', rec: 'video-vv-chat-rec', recFrom: 0.4, recFor: 6.2, audio: 'chat'},
     {id: 'return', at: {line: 4, word: 'return', offset: 6.0}, key: '↩', in: 'video-vv-chat-sent', state: 'video-vv-chat-sent', stateAfter: 0.08},
@@ -81,7 +86,7 @@ s.S13 = {kind: 'drawn', scene: 'app', transitionIn: 'carry-on', leadIn: 0.6, sta
     {id: 'termmic-mark', at: {line: 5, word: 'terminal'}, in: 'video-vv-term-live', mark: 'video.vv.termmic', hold: 1.2},
     {id: 'hold', at: {line: 5, word: 'talk', offset: 0.3}, key: '⇧⌘D', keyHold: 4.6, in: 'video-vv-term-live', rec: 'video-vv-term-rec', recFrom: 0.4, recFor: 5.8, audio: 'terminal'}],
   requires: [
-    {what: 'The caret at the end of What we heard; the camera on the bar\'s right end', by: ['#caret']},
+    {what: 'The caret at the end of What we heard; the camera on the bar\'s right end', by: ['#heard-frame', '#caret', '#bar-frame']},
     {what: 'On "mic" the outline traces the document mic; the cursor clicks it; the meter, Listening and its keys replace the controls', by: ['#doc-mic-mark', '#doc-mic', 'state:video-rv-doc-rec']},
     {what: 'A real dictation in your voice ("Owen said the second scan was fine once he moved out of the glare."), the meter moving with nothing written, then the phrase landing at the caret at the real delay', by: ['#doc-mic', '#doc-words', 'state:video-rv-doc-rec']},
     {what: 'Line 4: the chat composer\'s mic clicked, its level bars, the words landing a phrase at a time at the real delay; Return as a keycap sends it', by: ['#chat-frame', '#chat-mic', '#return']},

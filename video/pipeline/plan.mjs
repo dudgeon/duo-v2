@@ -92,7 +92,10 @@ function anchorRect(cap, key, state, sceneId) {
   if (typeof key === 'object') return key;
   const els = cap.anchors?.anchors ?? [];
   const k = key.toLowerCase();
-  const hit = els.find((e) => (e.identifier ?? '').toLowerCase() === k) ?? els.find((e) => (e.label ?? '').toLowerCase() === k)
+  // SwiftUI hands a container's identifier to what's inside it, so several elements can share one: the container is the one
+  // that encloses the rest, the largest (F-603; S3's video.s3.list first matched its Board button).
+  const byId = els.filter((e) => (e.identifier ?? '').toLowerCase() === k).sort((a, b) => b.frame.width * b.frame.height - a.frame.width * a.frame.height);
+  const hit = byId[0] ?? els.find((e) => (e.label ?? '').toLowerCase() === k)
     ?? els.find((e) => (e.label ?? '').toLowerCase().startsWith(k));
   if (!hit) throw new BuildError(`anchor: ${sceneId} needs "${key}" in ${state}, but it isn't among its ${els.length} anchors. Renamed or removed?`);
   return {x: hit.frame.x, y: hit.frame.y, w: hit.frame.width, h: hit.frame.height};

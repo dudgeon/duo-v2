@@ -1566,10 +1566,10 @@
         "state": "video-rv-open",
         "cam": {
           "rel": "video.pane.right",
-          "dx": 38.6,
-          "dy": 389.7,
-          "w": 642.9,
-          "h": 361.6
+          "dx": 35.4,
+          "dy": 404.7,
+          "w": 589.3,
+          "h": 331.5
         },
         "dur": 1.2
       },
@@ -1716,10 +1716,10 @@
         "in": "video-rv-closed",
         "cam": {
           "rel": "video.pane.right",
-          "dx": 38.6,
-          "dy": 601.7,
-          "w": 642.9,
-          "h": 361.6
+          "dx": 35.4,
+          "dy": 616.7,
+          "w": 589.3,
+          "h": 331.5
         },
         "dur": 0.9
       },
@@ -1874,10 +1874,10 @@
         "in": "video-rv-replied",
         "cam": {
           "rel": "video.pane.right",
-          "dx": 38.6,
-          "dy": 621.7,
-          "w": 642.9,
-          "h": 361.6
+          "dx": 35.4,
+          "dy": 636.7,
+          "w": 589.3,
+          "h": 331.5
         },
         "dur": 1
       },
@@ -1922,10 +1922,10 @@
         "in": "video-rv-replied",
         "cam": {
           "rel": "video.pane.right",
-          "dx": 38.6,
-          "dy": 21.7,
-          "w": 642.9,
-          "h": 361.6
+          "dx": 35.4,
+          "dy": 36.7,
+          "w": 589.3,
+          "h": 331.5
         },
         "dur": 1
       },
@@ -1977,10 +1977,10 @@
         "in": "video-rv-suggest-on",
         "cam": {
           "rel": "video.pane.right",
-          "dx": 38.6,
-          "dy": 411.7,
-          "w": 642.9,
-          "h": 361.6
+          "dx": 35.4,
+          "dy": 426.7,
+          "w": 589.3,
+          "h": 331.5
         },
         "dur": 0.8
       },
@@ -2174,24 +2174,48 @@
     "tail": 0.6,
     "beats": [
       {
+        "id": "heard-frame",
+        "at": {
+          "line": 1,
+          "offset": 0.1
+        },
+        "in": "video-rv-rejected",
+        "cam": {
+          "rel": "video.pane.right",
+          "dx": 35.4,
+          "dy": 424,
+          "w": 589.3,
+          "h": 331.5
+        },
+        "dur": 1
+      },
+      {
         "id": "caret",
         "at": {
           "line": 1,
-          "offset": 0.2
+          "word": "transcription"
         },
         "click": "video.rv.text.heardEnd",
         "fx": 1,
         "in": "video-rv-rejected",
         "state": "video-rv-doc-rest",
-        "stateAfter": 0.05,
+        "stateAfter": 0.05
+      },
+      {
+        "id": "bar-frame",
+        "at": {
+          "line": 2,
+          "offset": -0.5
+        },
+        "in": "video-rv-doc-rest",
         "cam": {
           "rel": "video.pane.right",
-          "dx": 38.6,
-          "dy": 21.7,
-          "w": 642.9,
-          "h": 361.6
+          "dx": 35.4,
+          "dy": 36.7,
+          "w": 589.3,
+          "h": 331.5
         },
-        "dur": 1
+        "dur": 0.9
       },
       {
         "id": "doc-mic-mark",
@@ -2233,17 +2257,17 @@
         "id": "doc-words",
         "at": {
           "line": 3,
-          "word": "show"
+          "word": "phrase"
         },
-        "in": "video-rv-doc-rec",
+        "in": "video-rv-doc-rest",
         "cam": {
-          "fit": [
-            "Mode:",
-            "video.rv.text.heardEnd"
-          ],
-          "pad": 40
+          "rel": "video.pane.right",
+          "dx": 35.4,
+          "dy": 424,
+          "w": 589.3,
+          "h": 331.5
         },
-        "dur": 1.2
+        "dur": 1.1
       },
       {
         "id": "chat-frame",
@@ -2336,7 +2360,9 @@
       {
         "what": "The caret at the end of What we heard; the camera on the bar's right end",
         "by": [
-          "#caret"
+          "#heard-frame",
+          "#caret",
+          "#bar-frame"
         ]
       },
       {
@@ -2509,7 +2535,7 @@
           "line": 2,
           "word": "organizes"
         },
-        "click": "video.allprojects.board",
+        "click": "Show Board",
         "in": "video-s9-list",
         "state": "video-s9-board"
       },
