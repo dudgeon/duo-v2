@@ -39,9 +39,11 @@ export function pictureTransform(u: number): React.CSSProperties {
     borderRadius: 18 * u / s, overflow: 'hidden', boxShadow: `0 ${24 * u}px ${70 * u}px rgba(31,35,40,${0.3 * u})`};
 }
 
-const ROW = 92, CUR_ROW = 120;
+const ROW_MAX = 92, CUR_ROW = 120, MARGIN = 40;
 export const TopicRail = ({topics, u, bar, current}: {topics: string[]; u: number; bar: number; current: number}) => {
   if (u <= 0) return null;
+  // Rows are 92 high while the list fits the frame (eleven topics did); a longer list packs them closer, and its type with them.
+  const ROW = Math.min(ROW_MAX, (H - 2 * MARGIN - CUR_ROW) / Math.max(1, topics.length - 1)), k = ROW / ROW_MAX;
   const heights = topics.map((_, i) => (i === current ? CUR_ROW : ROW));
   const total = heights.reduce((a, b) => a + b, 0);
   const tops: number[] = [];
@@ -59,7 +61,7 @@ export const TopicRail = ({topics, u, bar, current}: {topics: string[]; u: numbe
               <div style={{fontFamily: mono, fontSize: 19, letterSpacing: 1, color: cur ? ACCENT : past ? P.ink2 : P.ink3}}>
                 {String(i + 1).padStart(2, '0')}{past ? '  ✓' : ''}
               </div>
-              <div style={{fontFamily: ui, fontSize: cur ? 40 : 29, fontWeight: cur ? 650 : 500, letterSpacing: cur ? -1 : -0.3, lineHeight: 1.08,
+              <div style={{fontFamily: ui, fontSize: cur ? 40 : 29 * Math.max(0.78, k), fontWeight: cur ? 650 : 500, letterSpacing: cur ? -1 : -0.3, lineHeight: 1.08,
                 color: cur ? P.ink : past ? P.ink2 : P.ink3}}>{t}</div>
             </div>
           );

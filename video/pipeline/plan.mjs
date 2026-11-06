@@ -176,7 +176,8 @@ function planApp({scene, shot, lines, tr, prev, prevShot, captures, events, styl
     // Every rect a beat reads is noted (pipeline/anchors.mjs): the anchors it follows, or, for a rect in window
     // points, the anchors inside it, so the next build can name the beats whose picture moved under them.
     const note = (role, key, r) => { used?.push({scene: scene.id, beat: bi, role, state: inSt, ...(key ? {anchor: key} : {absolute: true, inside: inside(c0, r)}), rect: r}); return r; };
-    const rect = (k, role = 'click') => typeof k === 'object' ? note(role, null, k) : note(role, k, anchorRect(c0, k, inSt, scene.id));
+    // A click (or drag, menu) can be framed as a cam is ({rel}, {on}, {fit}), so it follows the app too.
+    const rect = (k, role = 'click') => typeof k === 'object' ? (k.rel || k.on || k.fit ? camRect(k, role) : note(role, null, k)) : note(role, k, anchorRect(c0, k, inSt, scene.id));
     // cam (and mark, wipe.on) is one of:
     //   'wide'; an anchor; {on: anchor, x0, x1, y0, y1}, a part of an anchor (fractions), for panes taller than the frame;
     //   {rel: anchor, dx, dy, w, h}, a rect placed from the anchor's top-left (x or y instead of dx or dy pins that edge

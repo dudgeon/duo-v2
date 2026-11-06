@@ -9,6 +9,9 @@ import {readFileSync, writeFileSync} from 'node:fs';
 const f = new URL('../shots.json', import.meta.url).pathname;
 const s = JSON.parse(readFileSync(f, 'utf8'));
 const R = (dy) => ({rel: 'video.pane.right', dx: 38.6, dy, w: 642.9, h: 361.6});   // the right pane at 16:9, from the 0.2.21 film
+// The bar's right end: its controls share the document's identifier, so they're placed from the mode button's first part (its
+// pen, label "Mode: …"): the whole button, and the mic 3 pt after it (as they are while Suggesting).
+const MODE = {rel: 'Mode:', dx: 0, dy: -4.5, w: 87.5, h: 16}, DOCMIC = {rel: 'Mode:', dx: 97.5, dy: -6.5, w: 20, h: 20};
 const midChat = {rel: 'video.pane.middle', dx: 44.9, dy: 585.3, w: 749.1, h: 421.4};
 
 s.S12 = {kind: 'drawn', scene: 'app', transitionIn: 'carry-on', leadIn: 0.6, states: ['video-s7-html-after'], pauses: {1: 6.2, 2: 3.2, 4: 1.0}, tail: 0.8,
@@ -41,9 +44,9 @@ s.S12 = {kind: 'drawn', scene: 'app', transitionIn: 'carry-on', leadIn: 0.6, sta
     {id: 'reply-mark', at: {line: 3, word: 'thread'}, in: 'video-rv-replied', mark: 'video.rv.card.reply', hold: 1.6},
     // Line 4: the mode menu at the bar's right end (Duo's own, captured), Suggesting picked; Sam's edit beside Jo's and Ravi's.
     {id: 'bar-frame', at: {line: 4, offset: -0.5}, in: 'video-rv-replied', cam: R(21.7), dur: 1},
-    {id: 'mode-open', at: {line: 4, word: 'editing'}, click: 'review.mode', in: 'video-rv-replied', state: 'video-rv-mode-menu', stateAfter: 0.05},
+    {id: 'mode-open', at: {line: 4, word: 'editing'}, click: 'Mode:', in: 'video-rv-replied', state: 'video-rv-mode-menu', stateAfter: 0.05},
     {id: 'mode-pick', at: {line: 4, word: 'suggesting'}, click: 'Suggesting', in: 'video-rv-mode-menu', state: 'video-rv-suggest-on', stateAfter: 0.08},
-    {id: 'mode-mark', at: {line: 4, word: 'suggesting', offset: 0.4}, in: 'video-rv-suggest-on', mark: 'review.mode', hold: 1.2},
+    {id: 'mode-mark', at: {line: 4, word: 'suggesting', offset: 0.4}, in: 'video-rv-suggest-on', mark: MODE, hold: 1.2},
     {id: 'goals-frame', at: {line: 4, word: 'edits'}, in: 'video-rv-suggest-on', cam: R(411.7), dur: 0.8},
     {id: 'type-goal', at: {line: 4, word: 'suggestions', offset: -0.3}, in: 'video-rv-typed', wipe: {state: 'video-rv-typed', on: 'video.rv.mark.s3', dur: 0.9}, state: 'video-rv-typed', stateAfter: 0.9},
     {id: 'colours', at: {line: 4, word: 'color', offset: -0.6}, in: 'video-rv-typed', cam: {fit: ['video.rv.mark.s1', 'video.rv.mark.s2', 'video.rv.mark.s3'], pad: 60}, dur: 0.9,
@@ -68,9 +71,9 @@ const M = (top, left = 300, fw = 839) => { const fh = fw * 9 / 16, w = fw / 1.12
 s.S13 = {kind: 'drawn', scene: 'app', transitionIn: 'carry-on', leadIn: 0.6, states: ['video-rv-rejected'], pauses: {2: 1.2, 3: 2.6, 4: 3.4, 5: 6.0}, tail: 0.6,
   beats: [
     {id: 'caret', at: {line: 1, offset: 0.2}, click: 'video.rv.text.heardEnd', fx: 1, in: 'video-rv-rejected', state: 'video-rv-doc-rest', stateAfter: 0.05, cam: R(21.7), dur: 1.0},
-    {id: 'doc-mic-mark', at: {line: 2, word: 'mic'}, in: 'video-rv-doc-rest', mark: 'voice.mic.document', hold: 1.3},
-    {id: 'doc-mic', at: {line: 2, word: 'talking', offset: 0.1}, click: 'voice.mic.document', in: 'video-rv-doc-rest', rec: 'video-rv-doc-rec', recFrom: 0.6, recFor: 5.8, audio: 'document'},
-    {id: 'doc-words', at: {line: 3, word: 'show'}, in: 'video-rv-doc-rec', cam: {fit: ['voice.mic.document', 'video.rv.text.heardEnd'], pad: 40}, dur: 1.2},
+    {id: 'doc-mic-mark', at: {line: 2, word: 'mic'}, in: 'video-rv-doc-rest', mark: DOCMIC, hold: 1.3},
+    {id: 'doc-mic', at: {line: 2, word: 'talking', offset: 0.1}, click: DOCMIC, in: 'video-rv-doc-rest', rec: 'video-rv-doc-rec', recFrom: 0.6, recFor: 5.8, audio: 'document'},
+    {id: 'doc-words', at: {line: 3, word: 'show'}, in: 'video-rv-doc-rec', cam: {fit: ['Mode:', 'video.rv.text.heardEnd'], pad: 40}, dur: 1.2},
     {id: 'chat-frame', at: {line: 4, offset: -0.5}, click: 'video.tab.middle.3', in: 'video-rv-doc-rec', state: 'video-vv-chat-rest', cam: M(663), dur: 1.1},
     {id: 'chat-mic', at: {line: 4, word: 'mic'}, click: 'voice.mic', in: 'video-vv-chat-rest', rec: 'video-vv-chat-rec', recFrom: 0.4, recFor: 6.2, audio: 'chat'},
     {id: 'return', at: {line: 4, word: 'return', offset: 6.0}, key: '↩', in: 'video-vv-chat-sent', state: 'video-vv-chat-sent', stateAfter: 0.08},

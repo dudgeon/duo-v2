@@ -1,5 +1,5 @@
 # Duo v2 intro video: script v2
-<!-- Synced from the script Doc at rev 4699 on 2026-11-06 by pipeline/sync.mjs; edit the Doc, not this file. -->
+<!-- Synced from the script Doc at rev 4701 on 2026-11-06 by pipeline/sync.mjs; edit the Doc, not this file. -->
 
 Oct 10, 2026 · @Geoff Dudgeon
 
@@ -209,9 +209,9 @@ On lines 5 and 6, the same pattern once more, ending on the change visible in th
 
 ### S12 · Comments and suggestions (about 40 s)
 
-Topic: Comments and suggestions
+Topic: Comments
 
-- Markdown files in Duo also take *comments*, which sit in the margin next to the text they're about, a lot like Google Docs.
+- Markdown files in Duo also take *comments*, which sit in the margin next to the text, a lot like Google Docs.
 - If I mention @claude in a comment, it goes to the session I'm working in -- the *pill* under the comment shows which one --
 - and Claude makes the change and answers right in the thread.
 - When I switch the formatting bar from Editing to *Suggesting*, my edits show up as suggestions instead, each person's in their own color,
