@@ -15,7 +15,7 @@ const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
 const ramp = (t: number, a: number, b: number) => (b <= a ? (t >= a ? 1 : 0) : smootherstep(interpolate(t, [a, b], [0, 1], clamp)));
 
 /** The opening: the icon builds at the centre, then glides left as "Duo" and its line arrive on the voice. */
-export const LogoScene = ({t, ev}: {t: number; ev: LogoEvents}) => {
+export const LogoScene = ({t, ev, stamp}: {t: number; ev: LogoEvents; stamp?: string}) => {
   const W = tokens.frame.width, H = tokens.frame.height, S = tokens.frame.safe;
   const titleAt = ev.title ?? 2.4, subAt = ev.sub ?? titleAt + 0.8;
   const glide = ramp(t, titleAt - 0.35, titleAt + 0.45);
@@ -60,6 +60,9 @@ export const LogoScene = ({t, ev}: {t: number; ev: LogoEvents}) => {
           transform: `translateY(${(1 - sub) * 14}px)`, color: `rgba(255,255,255,${0.5 + 0.45 * inked})`, }}>
           A complete workspace for your Claude Code<br />sessions, projects, and files.
         </div>
+        {/* Which Duo, and when (Geoff, Nov 6): small, under the line, arriving and leaving with it. */}
+        {stamp && <div style={{fontFamily: tokens.font.mono, fontSize: 26, fontWeight: 500, letterSpacing: 0.4, marginTop: 30, opacity: sub > 0 ? 1 : 0,
+          clipPath: `inset(0 ${100 * wipeSub}% 0 0)`, transform: `translateY(${(1 - sub) * 14}px)`, color: `rgba(255,255,255,${0.45 + 0.35 * inked})`}}>{stamp}</div>}
       </div>
     </AbsoluteFill>
   );

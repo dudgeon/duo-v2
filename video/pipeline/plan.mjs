@@ -401,6 +401,15 @@ export function plan({scenes, shots, voiced, captures, style, used}) {
         s.projects = {window: {w: first.widthPt, h: first.heightPt}, scale: style.capture.scale, src: first.src, back: back.src,
           screens: Object.fromEntries(Object.entries(shot.screens ?? {}).map(([k, f]) => [k, fx(f)]))};
       }
+      if (shot.scene === 'logo') {
+        // The title card says which Duo the film shows and when it was built (Geoff, Nov 6): the newest release from GitHub,
+        // as S11's "built from" stamp reads it, and the build's date. The film's frame 0 (its poster) shows it too.
+        const gh = spawnSync('gh', ['release', 'list', '--limit', '1', '--exclude-pre-releases', '--json', 'tagName'], {encoding: 'utf8'});
+        let tag = shot.version ?? '';
+        if (gh.status === 0) try { tag = JSON.parse(gh.stdout)[0]?.tagName ?? tag; } catch {}
+        const day = new Date().toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'});
+        if (tag) s.stamp = `As of Duo ${tag.replace(/^v/, '')} · ${day}`;
+      }
       if (shot.scene === 'conclusion') {
         // S11: the release line is Duo's real releases, read from GitHub at build time (shot.releases is the fallback
         // when gh can't reach it), so the video's own "built from" stamp stays true.

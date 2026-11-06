@@ -150,7 +150,7 @@ export const ConclusionScene = ({t, ev, data}: {t: number; ev: ConclusionEvents;
     return (
       <AbsoluteFill>
         <HelpAndForm t={t} ev={ev} d={data} />
-        <AbsoluteFill style={{opacity: u}}><LogoScene t={30} ev={{title: 2.4, sub: 3.2}} /></AbsoluteFill>
+        <AbsoluteFill style={{opacity: u}}><LogoScene t={30} ev={{title: 2.4, sub: 3.2}} stamp={data.releases.length ? `As of Duo ${data.releases[data.releases.length - 1].tag.replace(/^v/, '')} · ${data.built}` : undefined} /></AbsoluteFill>
       </AbsoluteFill>
     );
   }
