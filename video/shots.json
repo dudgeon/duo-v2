@@ -1551,9 +1551,10 @@
     "pauses": {
       "1": 6.2,
       "2": 3.2,
-      "4": 1
+      "4": 1,
+      "5": 0.6
     },
-    "tail": 0.8,
+    "tail": 1,
     "beats": [
       {
         "id": "prd-tab",
@@ -2071,6 +2072,16 @@
         "click": "video.rv.tip.reject",
         "in": "video-rv-hover-s2",
         "state": "video-rv-rejected"
+      },
+      {
+        "id": "caveat-wide",
+        "at": {
+          "line": 6,
+          "offset": -0.2
+        },
+        "in": "video-rv-rejected",
+        "cam": "wide",
+        "dur": 1.2
       }
     ],
     "requires": [
@@ -2153,9 +2164,15 @@
           "#open-s2",
           "#reject"
         ]
+      },
+      {
+        "what": "Line 6: the camera pulls back to the whole window and holds",
+        "by": [
+          "#caveat-wide"
+        ]
       }
     ],
-    "shotSha": "be30ddd3a786"
+    "shotSha": "6578d77b6e9f"
   },
   "S13": {
     "kind": "drawn",
@@ -2166,10 +2183,11 @@
       "video-rv-rejected"
     ],
     "pauses": {
-      "2": 1.2,
-      "3": 2.6,
-      "4": 3.4,
-      "5": 6
+      "2": 6.8,
+      "3": 0.6,
+      "4": 7,
+      "5": 0.6,
+      "6": 6.4
     },
     "tail": 0.6,
     "beats": [
@@ -2237,8 +2255,8 @@
         "id": "doc-mic",
         "at": {
           "line": 2,
-          "word": "talking",
-          "offset": 0.1
+          "end": true,
+          "offset": 0.3
         },
         "click": {
           "rel": "Mode:",
@@ -2256,8 +2274,9 @@
       {
         "id": "doc-words",
         "at": {
-          "line": 3,
-          "word": "phrase"
+          "line": 2,
+          "end": true,
+          "offset": 2.9
         },
         "in": "video-rv-doc-rest",
         "cam": {
@@ -2291,7 +2310,8 @@
         "id": "chat-mic",
         "at": {
           "line": 4,
-          "word": "mic"
+          "end": true,
+          "offset": 0.3
         },
         "click": "voice.mic",
         "in": "video-vv-chat-rest",
@@ -2303,9 +2323,8 @@
       {
         "id": "return",
         "at": {
-          "line": 4,
-          "word": "return",
-          "offset": 6
+          "line": 5,
+          "word": "return"
         },
         "key": "↩",
         "in": "video-vv-chat-sent",
@@ -2315,7 +2334,7 @@
       {
         "id": "term-tab",
         "at": {
-          "line": 5,
+          "line": 6,
           "offset": -0.3
         },
         "click": "video.tab.middle.0",
@@ -2333,7 +2352,7 @@
       {
         "id": "termmic-mark",
         "at": {
-          "line": 5,
+          "line": 6,
           "word": "terminal"
         },
         "in": "video-vv-term-live",
@@ -2343,8 +2362,8 @@
       {
         "id": "hold",
         "at": {
-          "line": 5,
-          "word": "talk",
+          "line": 6,
+          "end": true,
           "offset": 0.3
         },
         "key": "⇧⌘D",
@@ -2374,7 +2393,7 @@
         ]
       },
       {
-        "what": "A real dictation in your voice (\"Owen said the second scan was fine once he moved out of the glare.\"), the meter moving with nothing written, then the phrase landing at the caret at the real delay",
+        "what": "The narration silent while it plays: a real dictation in your voice (\"Owen said the second scan was fine once he moved out of the glare.\"), the meter moving with nothing written, then the phrase landing at the caret at the real delay",
         "by": [
           "#doc-mic",
           "#doc-words",
@@ -2382,7 +2401,7 @@
         ]
       },
       {
-        "what": "Line 4: the chat composer's mic clicked, its level bars, the words landing a phrase at a time at the real delay; Return as a keycap sends it",
+        "what": "Lines 4–5: the chat composer's mic clicked as line 4 ends, its level bars, the words landing at the real delay with the narration silent; on line 5 Return as a keycap sends it",
         "by": [
           "#chat-frame",
           "#chat-mic",
@@ -2390,7 +2409,7 @@
         ]
       },
       {
-        "what": "Line 5: the Tighten PRD goals terminal, its mic; ⇧⌘D held as keycaps; three level bars; the words land in Claude's prompt; nothing sent; the scene ends on this terminal",
+        "what": "Line 6: the Tighten PRD goals terminal, its mic; ⇧⌘D held as keycaps; three level bars; the words land in Claude's prompt; nothing sent; the scene ends on this terminal",
         "by": [
           "#term-tab",
           "#termmic-mark",
@@ -2398,7 +2417,7 @@
         ]
       }
     ],
-    "shotSha": "34f47d945834"
+    "shotSha": "77df08b2e928"
   },
   "S8": {
     "kind": "drawn",

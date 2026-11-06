@@ -15,7 +15,7 @@ const R = (dy) => ({rel: 'video.pane.right', dx: 35.4, dy: +(dy + 15).toFixed(1)
 const MODE = {rel: 'Mode:', dx: 0, dy: -4.5, w: 87.5, h: 16}, DOCMIC = {rel: 'Mode:', dx: 97.5, dy: -6.5, w: 20, h: 20};
 const midChat = {rel: 'video.pane.middle', dx: 44.9, dy: 585.3, w: 749.1, h: 421.4};
 
-s.S12 = {kind: 'drawn', scene: 'app', transitionIn: 'carry-on', leadIn: 0.6, states: ['video-s7-html-after'], pauses: {1: 6.2, 2: 3.2, 4: 1.0}, tail: 0.8,
+s.S12 = {kind: 'drawn', scene: 'app', transitionIn: 'carry-on', leadIn: 0.6, states: ['video-s7-html-after'], pauses: {1: 6.2, 2: 3.2, 4: 1.0, 5: 0.6}, tail: 1.0,
   beats: [
     {id: 'prd-tab', at: {line: 1, offset: -0.5}, click: 'video.tab.md', in: 'video-s7-html-after', state: 'video-rv-open', cam: R(389.7), dur: 1.2},
     {id: 'margin-mark', at: {line: 1, word: 'margin'}, in: 'video-rv-open', mark: {fit: ['video.rv.card.c1', 'video.rv.card.c2'], pad: 2}, hold: 1.9},
@@ -55,7 +55,9 @@ s.S12 = {kind: 'drawn', scene: 'app', transitionIn: 'carry-on', leadIn: 0.6, sta
     {id: 'open-s1', at: {line: 5, word: 'accept', offset: -0.9}, click: 'video.rv.mark.s1', in: 'video-rv-typed', state: 'video-rv-hover-s1'},
     {id: 'accept', at: {line: 5, word: 'accept', offset: 0.2}, click: 'video.rv.tip.accept', in: 'video-rv-hover-s1', state: 'video-rv-accepted'},
     {id: 'open-s2', at: {line: 5, word: 'reject', offset: -0.7}, click: 'video.rv.mark.s2', fx: 0.3, in: 'video-rv-accepted', state: 'video-rv-hover-s2'},
-    {id: 'reject', at: {line: 5, word: 'reject', offset: 0.4}, click: 'video.rv.tip.reject', in: 'video-rv-hover-s2', state: 'video-rv-rejected'}],
+    {id: 'reject', at: {line: 5, word: 'reject', offset: 0.4}, click: 'video.rv.tip.reject', in: 'video-rv-hover-s2', state: 'video-rv-rejected'},
+    // Line 6, the caveat (Geoff, Nov 6): sharing goes through GitHub, so it isn't live like Google Docs. The whole window, held.
+    {id: 'caveat-wide', at: {line: 6, offset: -0.2}, in: 'video-rv-rejected', cam: 'wide', dur: 1.2}],
   requires: [
     {what: 'Carrying on from S7, the cursor clicks the PRD tab', by: ['transition', '#prd-tab']},
     {what: 'On "comments" the outline traces the margin\'s cards (Ravi\'s and Lena\'s)', by: ['#margin-mark']},
@@ -65,32 +67,33 @@ s.S12 = {kind: 'drawn', scene: 'app', transitionIn: 'carry-on', leadIn: 0.6, sta
     {what: 'Line 3: the comment arrives in the Auto-add decision chat, Claude works (card: Claude is replying), then the requirement changes in place and Claude\'s reply sits in the thread in Claude\'s green', by: ['#to-chat', '#working', '#back-to-doc', '#replied', '#change-mark', '#reply-mark']},
     {what: 'Line 4: the mode menu at the bar\'s right end (Editing ⌄, Duo\'s own, captured) with its real items; Suggesting picked; the label reads Suggesting ⌄', by: ['#bar-frame', '#mode-open', '#mode-pick', '#mode-mark', 'state:video-rv-mode-menu']},
     {what: 'Sam changes 80% to 85%, shown as his suggestion; on "own color" the camera shows it beside Jo\'s and Ravi\'s, each in their colour', by: ['#goals-frame', '#type-goal', '#colours']},
-    {what: 'Line 5: Jo\'s suggestion accepted, Ravi\'s rejected, from their labels', by: ['#open-s1', '#accept', '#open-s2', '#reject']}]};
+    {what: 'Line 5: Jo\'s suggestion accepted, Ravi\'s rejected, from their labels', by: ['#open-s1', '#accept', '#open-s2', '#reject']},
+    {what: 'Line 6: the camera pulls back to the whole window and holds', by: ['#caveat-wide']}]};
 
 // S13: the document (the bar's mic, recorded), chat (the 0.2.22 recording), the terminal (⇧⌘D held, the 0.2.22 recording).
 const M = (top, left = 300, fw = 839) => { const fh = fw * 9 / 16, w = fw / 1.12, h = fh / 1.12; return {rel: 'video.pane.middle', dx: +(left + (fw - w) / 2 - 300).toFixed(1), dy: +(top + (fh - h) / 2 - 40).toFixed(1), w: +w.toFixed(1), h: +h.toFixed(1)}; };
-s.S13 = {kind: 'drawn', scene: 'app', transitionIn: 'carry-on', leadIn: 0.6, states: ['video-rv-rejected'], pauses: {2: 1.2, 3: 2.6, 4: 3.4, 5: 6.0}, tail: 0.6,
+s.S13 = {kind: 'drawn', scene: 'app', transitionIn: 'carry-on', leadIn: 0.6, states: ['video-rv-rejected'], pauses: {2: 6.8, 3: 0.6, 4: 7.0, 5: 0.6, 6: 6.4}, tail: 0.6,
+  // The narration never talks over a dictation (Geoff, Nov 6): each mic is clicked as its line ends, and the line after waits
+  // in a pause long enough for the clip to be heard and its words to land (the recording's recFor, plus a beat).
   beats: [
-    // The caret goes at the end of What we heard (where the words will land), the camera rises to the bar for the mic, and
-    // comes back down to the paragraph before the words land (the recorded bar keeps listening while it's off frame).
     {id: 'heard-frame', at: {line: 1, offset: 0.1}, in: 'video-rv-rejected', cam: R(409), dur: 1.0},
     {id: 'caret', at: {line: 1, word: 'transcription'}, click: 'video.rv.text.heardEnd', fx: 1, in: 'video-rv-rejected', state: 'video-rv-doc-rest', stateAfter: 0.05},
     {id: 'bar-frame', at: {line: 2, offset: -0.5}, in: 'video-rv-doc-rest', cam: R(21.7), dur: 0.9},
     {id: 'doc-mic-mark', at: {line: 2, word: 'mic'}, in: 'video-rv-doc-rest', mark: DOCMIC, hold: 1.3},
-    {id: 'doc-mic', at: {line: 2, word: 'talking', offset: 0.1}, click: DOCMIC, in: 'video-rv-doc-rest', rec: 'video-rv-doc-rec', recFrom: 0.6, recFor: 5.8, audio: 'document'},
-    {id: 'doc-words', at: {line: 3, word: 'phrase'}, in: 'video-rv-doc-rest', cam: R(409), dur: 1.1},
+    {id: 'doc-mic', at: {line: 2, end: true, offset: 0.3}, click: DOCMIC, in: 'video-rv-doc-rest', rec: 'video-rv-doc-rec', recFrom: 0.6, recFor: 5.8, audio: 'document'},
+    {id: 'doc-words', at: {line: 2, end: true, offset: 2.9}, in: 'video-rv-doc-rest', cam: R(409), dur: 1.1},
     {id: 'chat-frame', at: {line: 4, offset: -0.5}, click: 'video.tab.middle.3', in: 'video-rv-doc-rec', state: 'video-vv-chat-rest', cam: M(663), dur: 1.1},
-    {id: 'chat-mic', at: {line: 4, word: 'mic'}, click: 'voice.mic', in: 'video-vv-chat-rest', rec: 'video-vv-chat-rec', recFrom: 0.4, recFor: 6.2, audio: 'chat'},
-    {id: 'return', at: {line: 4, word: 'return', offset: 6.0}, key: '↩', in: 'video-vv-chat-sent', state: 'video-vv-chat-sent', stateAfter: 0.08},
-    {id: 'term-tab', at: {line: 5, offset: -0.3}, click: 'video.tab.middle.0', in: 'video-vv-chat-sent', state: 'video-vv-term-live', cam: M(250), dur: 1.0},
-    {id: 'termmic-mark', at: {line: 5, word: 'terminal'}, in: 'video-vv-term-live', mark: 'video.vv.termmic', hold: 1.2},
-    {id: 'hold', at: {line: 5, word: 'talk', offset: 0.3}, key: '⇧⌘D', keyHold: 4.6, in: 'video-vv-term-live', rec: 'video-vv-term-rec', recFrom: 0.4, recFor: 5.8, audio: 'terminal'}],
+    {id: 'chat-mic', at: {line: 4, end: true, offset: 0.3}, click: 'voice.mic', in: 'video-vv-chat-rest', rec: 'video-vv-chat-rec', recFrom: 0.4, recFor: 6.2, audio: 'chat'},
+    {id: 'return', at: {line: 5, word: 'return'}, key: '↩', in: 'video-vv-chat-sent', state: 'video-vv-chat-sent', stateAfter: 0.08},
+    {id: 'term-tab', at: {line: 6, offset: -0.3}, click: 'video.tab.middle.0', in: 'video-vv-chat-sent', state: 'video-vv-term-live', cam: M(250), dur: 1.0},
+    {id: 'termmic-mark', at: {line: 6, word: 'terminal'}, in: 'video-vv-term-live', mark: 'video.vv.termmic', hold: 1.2},
+    {id: 'hold', at: {line: 6, end: true, offset: 0.3}, key: '⇧⌘D', keyHold: 4.6, in: 'video-vv-term-live', rec: 'video-vv-term-rec', recFrom: 0.4, recFor: 5.8, audio: 'terminal'}],
   requires: [
     {what: 'The caret at the end of What we heard; the camera on the bar\'s right end', by: ['#heard-frame', '#caret', '#bar-frame']},
     {what: 'On "mic" the outline traces the document mic; the cursor clicks it; the meter, Listening and its keys replace the controls', by: ['#doc-mic-mark', '#doc-mic', 'state:video-rv-doc-rec']},
-    {what: 'A real dictation in your voice ("Owen said the second scan was fine once he moved out of the glare."), the meter moving with nothing written, then the phrase landing at the caret at the real delay', by: ['#doc-mic', '#doc-words', 'state:video-rv-doc-rec']},
-    {what: 'Line 4: the chat composer\'s mic clicked, its level bars, the words landing a phrase at a time at the real delay; Return as a keycap sends it', by: ['#chat-frame', '#chat-mic', '#return']},
-    {what: 'Line 5: the Tighten PRD goals terminal, its mic; ⇧⌘D held as keycaps; three level bars; the words land in Claude\'s prompt; nothing sent; the scene ends on this terminal', by: ['#term-tab', '#termmic-mark', '#hold']}]};
+    {what: 'The narration silent while it plays: a real dictation in your voice ("Owen said the second scan was fine once he moved out of the glare."), the meter moving with nothing written, then the phrase landing at the caret at the real delay', by: ['#doc-mic', '#doc-words', 'state:video-rv-doc-rec']},
+    {what: 'Lines 4–5: the chat composer\'s mic clicked as line 4 ends, its level bars, the words landing at the real delay with the narration silent; on line 5 Return as a keycap sends it', by: ['#chat-frame', '#chat-mic', '#return']},
+    {what: 'Line 6: the Tighten PRD goals terminal, its mic; ⇧⌘D held as keycaps; three level bars; the words land in Claude\'s prompt; nothing sent; the scene ends on this terminal', by: ['#term-tab', '#termmic-mark', '#hold']}]};
 
 // S14: window 1 to the Board, Open in New Window (Blue), ⌥⌘N (Ochre), then the Window menu and the bring-forward.
 const TILE = ['Open in New Window', '-', 'Send to Claude', 'Send To ▸', '-', 'Move into Home…', 'Merge Into ▸'];
@@ -123,7 +126,7 @@ s.S14 = {kind: 'drawn', scene: 'app', transitionIn: 'carry-on', leadIn: 0.6, sta
     {what: 'In the first window the beta-feedback tile clicked: the Blue window comes forward instead of opening it twice', by: ['#beta-again', '#w2-front']},
     {what: 'Back to the first window and its shelf-scan project view, as S9 left it, for S10', by: ['#w1-back', '#w1-front-2', '#shelf']}]};
 
-s.S12.shotSha = 'be30ddd3a786'; s.S13.shotSha = '34f47d945834'; s.S14.shotSha = '4ae93ff61449';
+s.S12.shotSha = '6578d77b6e9f'; s.S13.shotSha = '77df08b2e928'; s.S14.shotSha = '4ae93ff61449';
 // S8 fades from S13's last picture, and S9 comes back to it.
 s.S8.states = s.S8.states.map(() => 'video-vv-term-rec');
 s.S9.states[0] = 'video-vv-term-rec';
