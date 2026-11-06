@@ -16,9 +16,12 @@ extension VideoTargets {
         // @claude: the comment, the pill, Post, the turn in the chat, Claude's edit and reply.
         "video-rv-sel-glare", "video-rv-compose-glare-empty", "video-rv-compose-glare-blank", "video-rv-compose-glare-row1", "video-rv-compose-glare", "video-rv-sent", "video-rv-working", "video-rv-replied",
         // Suggest Edits: on, Sam's change, accept one, reject one.
-        "video-rv-suggest-on", "video-rv-typed", "video-rv-hover-s1", "video-rv-accepted", "video-rv-hover-s2", "video-rv-rejected",
+        "video-rv-mode-menu", "video-rv-suggest-on", "video-rv-typed", "video-rv-hover-s1", "video-rv-accepted", "video-rv-hover-s2", "video-rv-rejected",
         // Markup.
         "video-rv-menu", "video-rv-simple",
+        // The intro's S13: dictating into the PRD from the formatting bar's mic (a real dictation of fixture/dictation/document.wav,
+        // at its real delay): the caret placed, then the run recorded (the bar's meter) and captured once the words have landed.
+        "video-rv-doc-rest", "video-rv-doc-rec",
         // The workflow footage: the PRD's link to the prototype, then the click (the page opens where Duo opens it).
         "video-rv-link", "video-rv-proto"]
 
@@ -33,15 +36,19 @@ extension VideoTargets {
             case "sent": return .init(stage: "asked", chat: "chat-rv-sent", delivery: .sent)
             case "working": return .init(stage: "asked", chat: "chat-rv-working", delivery: .replying, working: true)
             case "replied": return .init(stage: "replied-before-edit", chat: "chat-rv-replied", delivery: .replied)
+            case "mode-menu": return .init(stage: "replied-before-edit", chat: "chat-rv-replied", delivery: .replied)
             case "suggest-on": return .init(stage: "suggest-on", chat: "chat-rv-replied", delivery: .replied)
             case "typed", "hover-s1": return .init(stage: "typed", chat: "chat-rv-replied", delivery: .replied)
             case "accepted", "hover-s2": return .init(stage: "accepted", chat: "chat-rv-replied", delivery: .replied)
             case "link", "proto": return .init(stage: "linked", chat: "chat-rv-replied", delivery: .replied)
-            case "rejected", "menu", "simple": return .init(stage: "rejected", chat: "chat-rv-replied", delivery: .replied)
+            case "rejected", "menu", "simple", "doc-rest", "doc-rec": return .init(stage: "rejected", chat: "chat-rv-replied", delivery: .replied)
             default: return .init(stage: "open")
             }
         }
     }
+
+    /// Where S13's caret goes before the dictation: the end of What we heard's last line.
+    nonisolated static let docCaret = "median 18 s a shelf."
 
     /// The fixture's folder, for the `video:rv-*` actions that read `review/stages.json`.
     static var rvDir: URL?
@@ -69,6 +76,7 @@ extension VideoTargets {
         model.rightTab = mdTab; model.selectedFile = mdTab
         // Comments and suggestions are signed by Sam, the demo's person, not the Mac's account (DL-236 11).
         EditorController.reviewerOverride = "sam"
+        if screen.hasPrefix("video-rv-doc-") { setenv("DUO_VOICE_FILE_REALTIME", "1", 1) }
         // Auto-add decision, at its prompt (or working on the comment); the chat carries on from where the intro left it.
         if let i = model.fixture.sessions.firstIndex(where: { $0.project == project && $0.name == autoAdd }) {
             model.fixture.sessions[i].state = spec.working ? .working : .idle
@@ -103,12 +111,16 @@ extension VideoTargets {
         case "compose-glare": return settle + ["video:rv-select=glare", "video:rv-compose", "wait:0.4", "video:rv-type=claude"] + measure
         case "sent", "working": return settle + ["review-active:c4"] + measure
         case "replied": return settle + ["video:rv-claude-edit", "wait:0.8", "review-active:c4"] + measure
+        // The intro's S12 (DL-317): the formatting bar's mode menu open over the replied PRD, Editing ticked (Duo draws it in the window).
+        case "mode-menu": return settle + ["video:rv-claude-edit", "wait:0.8", "review-menu:mode", "wait:0.5"] + measure
         case "hover-s1": return settle + ["wait:0.6", "video:rv-hover=s1", "wait:0.4", "video:rv-hover=s1", "wait:1.2"] + measure
         case "hover-s2": return settle + ["wait:0.6", "video:rv-hover=s2", "wait:0.4", "video:rv-hover=s2", "wait:1.2"] + measure
         case "link": return settle + measure
         case "proto": return settle + ["video:rv-link-click", "wait:3"] + measure
         case "menu": return settle + ["review-menu:markup", "wait:0.5"] + measure
         case "simple": return settle + ["verb:doc markup simple", "wait:0.8"] + measure
+        case "doc-rest": return settle + ["video:caret-eol=\(docCaret)", "wait:0.6"] + measure
+        case "doc-rec": return settle + ["video:caret-eol=\(docCaret)", "wait:1", "video:rv-dictate=document|9", "wait:9.6"] + measure
         default: return settle + measure
         }
     }
@@ -148,6 +160,17 @@ extension VideoTargets {
                const r = el.getClientRects()[0], o = {clientX: r.left + r.width / 2, clientY: r.top + r.height / 2, button: 0, bubbles: true};
                el.dispatchEvent(new MouseEvent('mousedown', o)); return 'clicked'
                """)
+        case "rv-dictate":   // rv-dictate=<clip>|<seconds>: the clip dictated into the PRD as the bar's mic would hear it, the bar recorded
+            let a = arg.split(separator: "|").map(String.init)
+            guard let dir = rvDir, let path = e.url?.path, a.count == 2, let secs = Double(a[1]) else { return }
+            let style = model.formatBarFrames["style"] ?? .zero, mode = model.formatBarFrames["mode"] ?? .zero
+            let width = e.webView.window?.frame.width ?? 1800
+            // The bar's strip, from its first control to the window's edge (window points from the top left): the meter and its
+            // hint replace the controls there while it listens. The page under it is a web view, which the recording can't draw.
+            let top = min(style.minY, mode.minY) - 4, x = max(0, style.minX - 14)
+            vvRecord(model, seconds: secs, region: CGRect(x: x, y: top, width: width - x, height: DuoMetric.formatBarHeight + 6))
+            model.voice.start(.document(path), source: .file(dir.appending(path: "dictation/\(a[0]).wav")))
+            vvTrace(model)
         case "rv-measure": rvMeasure(model, stages: stages)
         default: FileHandle.standardError.write(Data("video: unknown action \(verb)\n".utf8))
         }

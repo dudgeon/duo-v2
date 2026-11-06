@@ -11,7 +11,8 @@
   "glare": "Warn about glare before the photo is taken, and suggest opening the door.",
   "glareNew": "Before the photo, warn when glare covers more than a tenth of the frame, and suggest opening the door.",
   "speed": "testers fixed every miss",
-  "link": "review step"
+  "link": "review step",
+  "heardEnd": "median 18 s a shelf."
  },
  "comments": {
   "oneTap": "Lena, can you mock the one-tap fix for Thursday?",

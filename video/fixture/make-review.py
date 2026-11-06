@@ -108,7 +108,7 @@ turn = (f"@claude comment in docs/prd-v2.md, line {line_of(asked, '{==' + GLARE)
 json.dump({
     "$note": "make-review.py writes this; VideoTargets+Review.swift reads it. Each state's PRD stage, the anchors' texts, the clock.",
     "day": DAY, "sent": "09:52",
-    "anchors": {"goal3": "under 15", "goal2": GOAL2_OLD, "heard": HEARD, "unsure": UNSURE, "oneTap": ONE_TAP, "glare": GLARE, "glareNew": GLARE_NEW, "speed": SPEED, "link": "review step"},
+    "anchors": {"goal3": "under 15", "goal2": GOAL2_OLD, "heard": HEARD, "unsure": UNSURE, "oneTap": ONE_TAP, "glare": GLARE, "glareNew": GLARE_NEW, "speed": SPEED, "link": "review step", "heardEnd": "median 18 s a shelf."},
     "comments": {"oneTap": SAM_ONE_TAP, "claude": SAM_CLAUDE,
                  # The words on the field's first row (it wraps there at the margin's width): the typing wipe's halfway state.
                  "oneTapRow1": "Lena, can you mock the", "claudeRow1": "@claude can you make"},

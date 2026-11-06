@@ -5822,3 +5822,15 @@ After F-599, SwiftUI's `SessionOrganizeMenu.body` was the largest idle cost (482
   **Mutation-tested:** ignoring the stamps, disabling the manifest cache, trusting a stale index, and clearing the mic's key on hide each make the matching checks fail (160 stats; 3 decodes; the two changed-fixture checks; 50 reads).
 - Full DuoChecks 5695 passed, 0 failed.
 - **Still open:** F-596's "disk I/O error" isn't reproduced. A blanket sandbox denial doesn't fit one failure in a long run. A transient condition (a full disk, or a file swapped underneath) does; the extended codes will say which.
+
+## F-601 · Video captures drew every mic struck through: this Mac has no microphone, and only the voice states pinned one (intro v12, 2026-11-05)
+
+Recapturing the intro's states on 0.2.27's main for v12 showed the chat composer's mic, and the formatting bar's, in the no-microphone look (DL-265's faint, struck-through mic) in every state outside the 0.2.22 film's `video-vv-*`. The Mac mini the captures run on has no microphone, and `VoiceInput.hasMicrophone` asks the real device unless a state sets it. The voice states set a fixed one (`FixedMicrophone`); the rest didn't, so v11's S5 to S7 would have shown a mic that looks broken. `VideoTargets.apply` now gives every video state a connected, fixed microphone first (`video-vv-nomic` still sets its own), so a capture never depends on the Mac it runs on.
+
+## F-602 · A scripted capture finds its window by the title "Duo": a fixture state that sets `windowNumber` above 1 hangs (intro v12, 2026-11-05)
+
+The intro's S14 windows (`video-mw-*`) first set `model.windowNumber = 2` (and 3) as well as the window's colour. Every launch then drew its window and never captured or quit: `FixtureHarness.window(1)` falls back to the window titled "Duo", and a window numbered 2 or more is titled by its project (DL-311), so the capture never found it, and `capture.mjs` left the instance running. A window's number shows nowhere in a capture, so the states now set only `windowColourID`. Any future state that needs a second window's number has to run as window 2 (`window-run:` in a two-window launch), not relabel window 1.
+
+## F-603 · Shared accessibility identifiers sent v11's S3 camera onto a button: the film's anchors now resolve to the container (intro v12, 2026-11-05)
+
+On today's app, All projects' list (`video.s3.list`) hands its identifier to everything inside it, as SwiftUI does with a container's identifier (`Anchors.swift` already notes it). The planner took the first element with the identifier, which is now the Board button (71 × 10 pt) rather than the list (1120 × 477), so S3's push-in zoomed onto the button. The anchor check reported it as "moved with the app", not stale, because the identifier still existed. `plan.mjs`'s `anchorRect` now takes the largest element among those sharing an identifier, the container that encloses the rest. A "moved" line in the build log whose size changes by an order of magnitude is worth a look, not only a STALE one. The same recapture found All projects' Board switch renamed (`video.allprojects.board` is gone; its label "Show Board" is the anchor now).

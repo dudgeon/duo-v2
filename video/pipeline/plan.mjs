@@ -92,7 +92,10 @@ function anchorRect(cap, key, state, sceneId) {
   if (typeof key === 'object') return key;
   const els = cap.anchors?.anchors ?? [];
   const k = key.toLowerCase();
-  const hit = els.find((e) => (e.identifier ?? '').toLowerCase() === k) ?? els.find((e) => (e.label ?? '').toLowerCase() === k)
+  // SwiftUI hands a container's identifier to what's inside it, so several elements can share one: the container is the one
+  // that encloses the rest, the largest (F-603; S3's video.s3.list first matched its Board button).
+  const byId = els.filter((e) => (e.identifier ?? '').toLowerCase() === k).sort((a, b) => b.frame.width * b.frame.height - a.frame.width * a.frame.height);
+  const hit = byId[0] ?? els.find((e) => (e.label ?? '').toLowerCase() === k)
     ?? els.find((e) => (e.label ?? '').toLowerCase().startsWith(k));
   if (!hit) throw new BuildError(`anchor: ${sceneId} needs "${key}" in ${state}, but it isn't among its ${els.length} anchors. Renamed or removed?`);
   return {x: hit.frame.x, y: hit.frame.y, w: hit.frame.width, h: hit.frame.height};
@@ -159,12 +162,25 @@ function planApp({scene, shot, lines, tr, prev, prevShot, captures, events, styl
   for (const b of shot.beats ?? []) {
     const at = +when(b.at, last).toFixed(3);
     if (b.id) (data.beatAt ??= {})[b.id] = at; // review.json: when each named beat happens
-    const inSt = b.in ? use(b.in) : state;
+    // window: {id, state, x, y}: a second Duo window opens here, in front (scene 14, multi-window), its top left at x, y in the
+    // main window's points; it is its own capture. win: id aims the beat at that window: its `in` and `state` are that window's
+    // captures, and its rects are offset by where the window sits. front: 'main' or an id brings that window to the front.
+    if (b.window) {
+      const c = cap(use(b.window.state));
+      (data.windows ??= []).push({id: b.window.id, at, x: b.window.x, y: b.window.y, w: c.widthPt, h: c.heightPt, steps: [{at, state: b.window.state}]});
+      (data.front ??= []).push({at, id: b.window.id});
+    }
+    const W2 = b.win ? (data.windows ?? []).find((w) => w.id === b.win) : null;
+    if (b.win && !W2) throw new BuildError(`shots: ${scene.id} beat ${b.id ?? shot.beats.indexOf(b)} aims at window ${b.win}, which no earlier beat opens`);
+    const off = (r) => (W2 && r ? {...r, x: r.x + W2.x, y: r.y + W2.y} : r);
+    if (b.front) (data.front ??= []).push({at, id: b.front});
+    const inSt = b.in ? use(b.in) : W2 ? W2.steps[W2.steps.length - 1].state : state;
     const c0 = cap(inSt), bi = shot.beats.indexOf(b);
     // Every rect a beat reads is noted (pipeline/anchors.mjs): the anchors it follows, or, for a rect in window
     // points, the anchors inside it, so the next build can name the beats whose picture moved under them.
     const note = (role, key, r) => { used?.push({scene: scene.id, beat: bi, role, state: inSt, ...(key ? {anchor: key} : {absolute: true, inside: inside(c0, r)}), rect: r}); return r; };
-    const rect = (k, role = 'click') => typeof k === 'object' ? note(role, null, k) : note(role, k, anchorRect(c0, k, inSt, scene.id));
+    // A click (or drag, menu) can be framed as a cam is ({rel}, {on}, {fit}), so it follows the app too.
+    const rect = (k, role = 'click') => typeof k === 'object' ? (k.rel || k.on || k.fit ? camRect(k, role) : note(role, null, k)) : note(role, k, anchorRect(c0, k, inSt, scene.id));
     // cam (and mark, wipe.on) is one of:
     //   'wide'; an anchor; {on: anchor, x0, x1, y0, y1}, a part of an anchor (fractions), for panes taller than the frame;
     //   {rel: anchor, dx, dy, w, h}, a rect placed from the anchor's top-left (x or y instead of dx or dy pins that edge
@@ -186,13 +202,13 @@ function planApp({scene, shot, lines, tr, prev, prevShot, captures, events, styl
       }
       return note(role, null, c);
     };
-    if (b.cam !== undefined) { lastCam = camRect(b.cam); data.cams.push({at, dur: b.dur ?? 0.9, rect: lastCam}); }
-    if (b.click) data.clicks.push({at, ...centre(rect(b.click), b.fx ?? 0.5, b.fy ?? 0.5), right: !!b.right});
+    if (b.cam !== undefined) { lastCam = off(camRect(b.cam)); data.cams.push({at, dur: b.dur ?? 0.9, rect: lastCam}); }
+    if (b.click) data.clicks.push({at, ...centre(off(rect(b.click)), b.fx ?? 0.5, b.fy ?? 0.5), right: !!b.right});
     // drag.reveal: a capture of the selection the drag makes, shown from where the drag began to the cursor as it moves.
     if (b.drag) data.drags.push({at, dur: b.drag.dur ?? 0.7, from: centre(rect(b.drag.from, 'drag'), b.drag.fx0 ?? 0, 0.5), to: centre(rect(b.drag.to ?? b.drag.from, 'drag'), b.drag.fx1 ?? 1, 0.5),
       ...(b.drag.reveal ? {reveal: {state: use(b.drag.reveal), rect: rect(b.drag.from, 'drag')}} : {})});
     if (b.menu) {
-      const r = rect(b.menu.on, 'menu');
+      const r = off(rect(b.menu.on, 'menu'));
       const p = centre(r, b.fx ?? 0.5, b.fy ?? 0.5);
       data.menus.push({at, until: at + (b.menu.hold ?? 0.9), x: p.x, y: p.y, items: b.menu.items, hi: b.menu.pick ? {at: at + (b.menu.pickAfter ?? 0.55), item: b.menu.pick} : undefined});
       if (b.menu.pick) {
@@ -227,8 +243,9 @@ function planApp({scene, shot, lines, tr, prev, prevShot, captures, events, styl
       data.ends.push(at + dur + 0.3);
     }
     if (b.wipe) (data.wipes ??= []).push({at, dur: b.wipe.dur ?? 1.2, state: use(b.wipe.state), rect: camRect(b.wipe.on, 'wipe'), ...(b.wipe.chars ? {chars: b.wipe.chars} : {})});
-    if (b.mark) data.marks.push({at, until: at + (b.hold ?? 2.2), rect: camRect(b.mark, 'mark'), quote: b.quote});
-    if (b.state) { state = use(b.state); data.steps.push({at: +(at + (b.stateAfter ?? 0.1)).toFixed(3), state, ...(b.fade ? {fade: b.fade} : {})}); }
+    if (b.mark) data.marks.push({at, until: at + (b.hold ?? 2.2), rect: off(camRect(b.mark, 'mark')), quote: b.quote});
+    if (b.state && W2) W2.steps.push({at: +(at + (b.stateAfter ?? 0.1)).toFixed(3), state: use(b.state)});
+    else if (b.state) { state = use(b.state); data.steps.push({at: +(at + (b.stateAfter ?? 0.1)).toFixed(3), state, ...(b.fade ? {fade: b.fade} : {})}); }
     data.ends.push(at + (b.hold ?? 0.6));
     last = at;
   }
