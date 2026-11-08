@@ -32,3 +32,5 @@ How Duo's own director works, beyond the shared `duo-director` skill (source `sk
 | Archive a session | Only after sign-off, and only after reading its transcript for his own messages |
 
 Run `duo2 director` from the main checkout, not a work tree.
+
+**The director skill in cloud sessions** (Geoff, 2026-11-07). Cloud sessions (claude.ai/code, and Code sessions started from the phone) read none of the Mac's `~/.claude`; they load skills from Geoff's claude.ai account. So the director keeps a copy there: when `skills/duo-director/SKILL.md` changes, build `director/SKILL.md` from it (the `{{FORMAT}}`/`{{REVISION}}` header replaced by one naming the account copy and the commit), zip the folder, and upload it at claude.ai › Customize › Skills (Add › Upload skill; replace the old one) with Claude in Chrome's file upload. Geoff doesn't do this step. The description may not contain anything that looks like an XML tag (`<project>`), or the upload is refused.
