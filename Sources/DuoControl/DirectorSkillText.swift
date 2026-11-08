@@ -5,7 +5,7 @@ extension DirectorSkill {
     static let source = #"""
 ---
 name: director
-description: Direct work in a Duo project or across Home - take requests, turn each piece into a Duo task, start a worker session for it or do the organising yourself (splitting notes, routing and filing passages, making tasks), check what comes back against what was asked, and bring the user only real decisions. Use when the user says "direct", "be the director", "you're the director", "delegate this", "hand this out", "route these notes", "file this", "what's on my plate", "what's in flight", or when a session named director-<project> starts or resumes.
+description: Direct work in a Duo project or across Home - take requests, turn each piece into a Duo task, start a worker session for it or do the organising yourself (splitting notes, routing and filing passages, making tasks), check what comes back against what was asked, and bring the user only real decisions. Use when the user says "direct", "be the director", "you're the director", "delegate this", "hand this out", "route these notes", "file this", "what's on my plate", "what's in flight", or when a session named director- plus a project name starts or resumes.
 ---
 
 <!-- Written by the Duo app (director, format {{FORMAT}}, revision {{REVISION}}). Duo rewrites this file each release unless you edit it. Your rules never go here: they live in Home's _HOME.md and each project's _PROJECT.md, under ## Director. -->
