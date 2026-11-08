@@ -1,6 +1,6 @@
 # Problem discovery: the daily run
 
-*A Claude desktop scheduled task runs this on weekdays at 7:00, as a fresh session with no memory of earlier runs (DL-238). Everything a run needs is in this file. The director also reads the last section, which covers how it carries out what Geoff queues on the page.*
+*A Claude desktop scheduled task runs this every day at 7:00 (weekdays only until 2026-11-07), as a fresh session with no memory of earlier runs (DL-238). Everything a run needs is in this file. The director also reads the last section, which covers how it carries out what Geoff queues on the page.*
 
 **The page:** https://claude.ai/artifact/CEcxctG5te7Je5opyq7n2i ("Duo Problem Discovery"). Its source is `discovery.html` in this folder. Its data is in the page's database, which you read and write with the `ArtifactData` tool. A run never republishes the page.
 
@@ -134,7 +134,8 @@ End the run with a short summary: how many clusters, what changed, and the page 
 
 A run's page and its `needs/discovery` card store what it found. They don't deliver it: Geoff hears it only when you tell him in chat (Geoff, 2026-11-07, after issue #18 sat unseen from Friday evening: "WHAT IS THE POINT OF BACKGROUND WORKERS IF THEIR DISCOVERIES DON'T REACH ME"). So:
 
-- **After every run, and on every wake:** read the card and run `python3 -I docs/director/issue-watch.py`. Runs happen once a weekday, so the watch is what catches an issue or comment filed in between. Tell Geoff each new item as message text, before any `wrap_up`: one plain line on what it is, its link, whether a worker covers it, and your recommendation. Never a bare `#n`. Then run `issue-watch.py --ack`.
+- **Every run reports to the director** by SendMessage to `director-duo-v2` and ends with the same report as its last message (the task notifies the director on completion), so a finding never rests only on the page or card (2026-11-07).
+- **After every run, and on every wake:** read the card and run `python3 -I docs/director/issue-watch.py`. Runs happen once a day, so the watch is what catches an issue or comment filed in between. Tell Geoff each new item as message text, before any `wrap_up`: one plain line on what it is, its link, whether a worker covers it, and your recommendation. Never a bare `#n`. Then run `issue-watch.py --ack`.
 - **Between runs:** the director's session check (every two hours, 08:00 to 22:00, every day) does the same, and sends a PushNotification when something needs him.
 - **A new bug nobody covers:** recommend a worker in the same message. Starting it, replying on GitHub and closing an issue stay his go.
 - **When something slips past this anyway,** fix this procedure or the watch first, then handle the case.
