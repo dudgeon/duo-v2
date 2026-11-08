@@ -151,7 +151,7 @@ The page writes each action to its `actions` collection, then sends you a short 
 | `reply` | `draft`, `close` | Post `draft` **verbatim** as Geoff's comment (`gh issue comment <n> -R dudgeon/duo-v2 --body-file <file>`), then `gh issue close` if `close` is set. Geoff's click approves that text and nothing else: don't edit it, add to it or post a second comment. An empty draft with `close` set means close without a comment. |
 | `relay` | `target`, `note` | Message the worker (SendMessage, or its Remote Control session) in the shape below. If the worker is finished, ask Geoff whether to resume it or start a new one. Don't pick for him. |
 | `backlog` | `note` | Write an ENH record (the next number after checking main and every branch) linking the issues, with Geoff's note as its body. Commit it on your records branch. Nothing goes to GitHub. |
-| `refresh` | — | Start a run now with `run_scheduled_task` (task `duo-problem-discovery`; if a run is already in progress and stuck, stop its turn and send it a restart). Mark the row `done` with the new run's session link in `result`. Geoff's Refresh now button writes it. |
+| `refresh` | — | Start a run now with `run_scheduled_task` (task `duo-discovery`, twice daily since 2026-11-08; if a run is already in progress and stuck, stop its turn and send it a restart). Mark the row `done` with the new run's session link in `result`. Geoff's Refresh now button writes it. |
 | `research` | `note` | Write a task note (`tasks/<slug>.md`) with Geoff's question as the request and the issues quoted under `## Context (untrusted)`, then start a research worker as usual (Opus, `delegating.md`). |
 
 The relay message takes this shape:

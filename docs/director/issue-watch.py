@@ -66,7 +66,7 @@ if "--ack" in sys.argv:
 elif "--json" in sys.argv:
     print(json.dumps({"since": since.strftime("%Y-%m-%dT%H:%M:%SZ"), "items": items}, indent=1))
 else:
-    print(f"issue-watch: {len(items)} new since {since:%Y-%m-%d %H:%M}Z (undelivered to Geoff)")
+    print(f"issue-watch: {len(items)} new since {since:%Y-%m-%d %H:%M}Z" + (", not yet told to Geoff" if items else ""))
     for x in items:
         who = "Geoff" if x["author"] == OWNER else x["author"]
         print(f"- {x['kind']} on #{x['number']} ({x['state'].lower()}) {x['title']!r} by {who}, {x['at'][:16]}Z")

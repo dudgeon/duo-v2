@@ -95,7 +95,7 @@ Write nothing else on the console. End the run with three lines: what changed si
 
 ## The scheduled task (the director creates it)
 
-The director creates a desktop scheduled task named **`duo-weekly-tidy`**, weekly on Mondays at 08:00, permission mode **Auto**, working folder `/Users/geoff/repos/duo-v2`, model Sonnet 5.5. Background sessions can't create scheduled tasks. Its prompt:
+The director creates a desktop scheduled task named **`duo-tidy`** (until 2026-11-08 `duo-weekly-tidy`, which stored Default mode and stalled on its first prompt; a task runs in the mode stored on it, else the settings default, now Auto in the user tier), weekly on Mondays at 08:00, working folder `/Users/geoff/repos/duo-v2`, model Sonnet 5.5. Background sessions can't create scheduled tasks. Its prompt:
 
 ```
 You are duo-v2's weekly tidy-up run (DL-240). Read /Users/geoff/repos/duo-v2/docs/director/weekly-tidy.md and follow it from "What a run does" through §3. Skip its last section, which is for the director.
