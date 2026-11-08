@@ -7,7 +7,7 @@
 **Build the dream, not the store.** Adopt the cookbook's pattern inside each project, and don't add any shared store across projects.
 
 - **Within a project:** a `_knowledge/` folder of small pages holding what the project currently understands. Only a periodic background pass (the "dream") writes it, and every session reads it. The director is the steward: it starts that pass when a red line says it's due.
-- **Across projects:** every fact has one owning project. Other projects don't copy it. A dream searches before it writes and leaves a one-line pointer instead. Anything that moves between projects lands in the destination's inbox, for that project's steward to take in. Home holds no knowledge, so deleting any cross-project view loses nothing.
+- **Across projects:** a project must make sense to everyone who has it, whatever else they have. So every link between projects is optional and is only ever a web URL to the other repo. A dream searches before it writes and records only what this project relies on, leaving the detail with the project that owns it. Anything that moves between projects lands in the destination's inbox, for that project's steward to take in. Home holds no knowledge, so deleting any cross-project view loses nothing.
 - **First step:** a hand-run pilot with no code, to learn whether a fresh session really answers better. If it doesn't, we stop.
 
 Two measurements changed the design (§3): the cookbook's input, whole transcripts, is about 700 times larger here than a filtered one, and copied text across projects is almost nil today. So the input has to be filtered, and the cross-project machinery should start small.
@@ -98,12 +98,17 @@ sources: [tasks/release-0-2-22.md, session <id>]
 | A domain several projects use | The project that uses it most, or a knowledge base the user already has | New |
 | What the repo records | Nowhere. Cite it | Exists |
 
-**Four rules keep this from becoming a monolith:**
+**A project must be complete for everyone who has it** (Geoff: "I will collaborate with some people on one project and a different set on another"). Someone may have this project and nothing else on their Mac, and may not run Duo at all. So the rule isn't "never repeat a fact". It's that **who can see a project decides what it has to hold**.
 
-1. **Search before writing.** For each new page, the dream runs `duo2 search` (on-device, covers every project and session, works with Duo closed). If another project's page covers the fact, it writes a pointer: one line saying what this project relies on, who owns it, and the sentence it needs.
-2. **Pointers carry the gist.** A project still works if the owner is archived, moved or on another Mac, and OKF already expects broken links to be tolerated. That one sentence is deliberate duplication, and it's what stops the owner becoming load-bearing.
-3. **Privacy beats self-sufficiency, and self-sufficiency beats de-duplication.** A public or shared project never points at a private one, since even the pointer leaks its name. It keeps its own copy of what it needs. This is the main place duplication stays "to the extent practical".
-4. **Nothing crosses a boundary except through an inbox, and on the user's yes.** A note lands in the destination's inbox with its source (DL-210), and that project's steward takes it in. This already matches the skill: a director touches nothing of another director's project (§9).
+**Five rules follow:**
+
+1. **Every link between projects is optional.** A page must read correctly with the link deleted. It states, in its own words, what this project relies on, and only that. The detail stays with the owner. That short statement is deliberate duplication, and it's why no project ever depends on another being present.
+2. **A link is only ever a web URL to the other repo.** Never a relative path out of the project (`../other/`), an absolute path or a `duo2://` link, which would be dead for anyone else. `duo2 knowledge check` refuses those. It doesn't go online: a URL that later stops working isn't an error, because rule 1 means nothing depends on it (OKF expects the same).
+3. **A URL is written only where it works for this project's people.** The target must be tracked on the owner's default branch, because a page kept out of git has no URL. And the repo must be public, or the user says yes to that link: a private repo's name leaks through the link itself, and the other group would just get a 404. If either fails, the page has no link, and rule 1 already covers it.
+4. **Relations between projects are found, not stored.** A dream runs `duo2 search` before writing (on-device, every project and session on this Mac, works with Duo closed), and doesn't copy detail that another project already owns. Sessions can search the same way when they need more. If the other project isn't on that Mac, search finds nothing and nothing breaks.
+5. **Nothing crosses a boundary except through an inbox, and on the user's yes.** A note lands in the destination's inbox with its source (DL-210), and that project's steward takes it in. This already matches the skill: a director touches nothing of another director's project (§9).
+
+**When these rules pull apart:** privacy first, then the project being complete for its own people, then de-duplication. Two projects shared with different people may well each state the same fact. That's the practical limit of de-duplication, and I think it's the right one.
 
 **Home holds no knowledge.** Asked "what do my projects know about X?", the Home director uses search and reads each project's generated index. The test: delete every cross-project view and rebuild the search index, and nothing is lost. `_HOME.md` stays what it is, a short list of the user's rules.
 
@@ -131,6 +136,7 @@ Three kinds of learning, each with one destination:
 - **Injection:** a transcript that read a hostile page could steer what a dream writes. Keeping tools narrow and checking descriptions reduces this. As the cookbook says, it can't be eliminated.
 - **It reverses an earlier call.** `director-product.md` rejected a project memory folder: "Revisit if workers miss knowledge." This needs a DL amending that, and it sits beside DL-152's knowledge bases (designed, not built), which a later round might merge with it.
 - **`_knowledge/` kept out of git lives on one Mac**, unless the user chooses to commit it. A cloud session wouldn't see it. Hooks disabled (some managed Macs) means no index at session start.
+- **Committing it to a shared project shares what your sessions taught it.** Collaborators get pages distilled from your transcripts, so the director asks once per project (Never 2) and says that plainly. A dream sees only the sessions on that Mac, so each person's dreams add their own view, and pages merge as ordinary text. `sources` such as a session id or `tasks/` path mean something only on the author's Mac: they're provenance, and a page must stand without them.
 - **The work-tree path:** workers in a work tree need the main checkout's `_knowledge/`, as they do for task notes. Not yet checked in the hook.
 - **No wake, no dream.** A project with no director running gets nothing, since the red line only fires when a director runs status. Fine for projects being worked on; a dormant one just stops accreting.
 
@@ -138,7 +144,7 @@ Three kinds of learning, each with one destination:
 
 1. **Pilot, by hand, no code.** A worker dreams two projects, this one's last 14 days and one small private project, following §4 on the cheapest model, writing pages kept out of git. Then ten questions a new session ought to answer, written before the dream and asked of fresh Haiku sessions with and without the pages, scored by hand. **Stop here if the answers aren't clearly better.** The questions are the eval set for step 2.
 2. **Within a project:** the page format, `gather` and `check`, the hook, a skill section, R10 and its evals, a DL.
-3. **Write-time de-duplication:** the search step, pointers, inbox delivery.
+3. **Write-time de-duplication:** the search step, the link rules in `knowledge check`, inbox delivery.
 4. **Only if the measurement shows a need:** `overlaps` and a Home pass.
 
 This is separate from `director/learning-loop`, which stays as scoped. Nothing in that branch needs to wait.
@@ -147,11 +153,11 @@ This is separate from `director/learning-loop`, which stays as scoped. Nothing i
 
 Asked by AskUserQuestion, recommendation first.
 
-1. **Where knowledge lives:** `_knowledge/` in the project, kept out of git by default in a repo with a remote (recommended); Claude's memory folder; or `.duo/`.
-2. **How changes apply:** in place with a snapshot and a short report, asking only on disputes and boundary crossings (recommended); review every dream first; or fully automatic.
-3. **Across projects:** one owner plus pointers, Home holds nothing (recommended); a dedicated shared knowledge project; or search only, with no pointers.
-4. **Next step:** the pilot once the learning loop is merged (recommended); the pilot now, alongside it; or log it and wait.
+Asked once, 2026-11-08; the answers are in §10, and this section's design already reflects them.
 
-## 10. Geoff's answers
+## 10. Geoff's answers (2026-11-08, by AskUserQuestion)
 
-*None yet.*
+1. **Where:** "`_knowledge/` in the project", kept out of git by default in a repo with a remote.
+2. **Applying:** "Apply, report, ask on disputes".
+3. **Across projects:** he wrote his own answer in place of the options: "links between projects must be optional; I will collaborate with some people on one project and a different set on another -- if one group doesnt have the other group's project on local, then I don't want external (outside of the project) links to break; perhaps they should point to/reference the ext github repo?" §5 was rewritten for this. His GitHub suggestion is rule 2, with one condition he didn't state (rule 3): a URL works only for a page that's actually on the remote and a repo the reader can open.
+4. **Next:** "Pilot after the learning loop".
