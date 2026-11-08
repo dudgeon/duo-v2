@@ -87,7 +87,7 @@ It lives in the skill, as a new section, so every director runs it. When somethi
 5. **Eval:** a case that fails before the change and passes after.
 6. **Ship and tell the user:** what failed, the hole, what changed, how we'd know. That message is the "preventative approach" Geoff asked for.
 
-**Memory** keeps only the user's preferences and hard facts (how they like digests, an address). A correction about how directors behave isn't a memory.
+**Memory** keeps only the user's preferences and hard facts (how they like digests, an address). A correction about how directors behave isn't a memory. What a project knows is a separate question, studied in [project-knowledge.md](project-knowledge.md); until that's decided, project facts stay where they are today.
 
 **A director in a project with no harness** does steps 1 to 4 the same. Step 4's change goes in `_PROJECT.md` or `_HOME.md` `## Director`, on the user's yes, as the skill already requires. For step 5, the case is written in the task note: the situation, and what a good director does. Then, because that director can't change the product, it offers to send the case to Duo's public repo as an issue, with private details removed, and sends it only on the user's yes for that item (Never 2 and 3; decision 3). That route is what would let every other director benefit.
 
