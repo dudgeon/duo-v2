@@ -95,7 +95,7 @@ Write nothing else on the console. End the run with three lines: what changed si
 
 ## 4. Disk: build output in idle work trees (Q-471)
 
-Added after the Mac mini's data volume reached 98% on 2026-11-07. Duo work trees took 175 GB, 110 GB of it regenerable build output (F-613). **Geoff's answer to Q-471 (2026-11-08): the tidy may delete build output in idle work trees on its own; it only lists stale trees and never removes one.** (DL number pending from the director.)
+Added after the Mac mini's data volume reached 98% on 2026-11-07. Duo work trees took 175 GB, 110 GB of it regenerable build output (F-613). **Geoff's answer to Q-471 (2026-11-08): the tidy may delete build output in idle work trees on its own; it only lists stale trees and never removes one.** (DL-323.)
 
 **Measure on the data volume.** `df -h /` reads the sealed system snapshot and shows 6% used (F-614). Use `df -h /System/Volumes/Data`. Put the used and free GB, and the GB reclaimed, on the card's disk line. When free space is under 15% (about 140 GiB) say so first.
 
