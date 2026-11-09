@@ -61,6 +61,7 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
     /// The navigation that is the page's own file (only those log "loaded"), and the one that blanks the view.
     private var fileNav: WKNavigation?
     private var blankNav: WKNavigation?
+    private var bufferNav: WKNavigation?
     /// WebKit refused the current load: the bar stays until the next load, whatever the file scan says.
     private var webKitFailed = false
     /// WebKit compiles the rule list in the background; if it hasn't answered in a few seconds, nothing would
@@ -90,16 +91,36 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
     }
 
     /// What a look at the file found, made off the main thread.
-    struct Scan: Sendable { var unreadable: String?; var remote = false }
+    struct Scan: Sendable { var unreadable: String?; var remote = false; var redirectProblem: String? }
+
+    /// The address a page's `<meta http-equiv="refresh" content="0; url=…">` sends it to, nil when it has none.
+    nonisolated public static func metaRefreshTarget(_ html: String) -> String? {
+        let text = html.replacingOccurrences(of: #"(?s)<!--.*?-->"#, with: "", options: [.regularExpression])
+        guard let tag = text.range(of: #"<meta\b[^>]*http-equiv\s*=\s*["']?refresh[^>]*>"#, options: [.regularExpression, .caseInsensitive]) else { return nil }
+        let t = String(text[tag])
+        guard let c = t.range(of: #"url\s*=\s*["']?([^"'>]+)"#, options: [.regularExpression, .caseInsensitive]) else { return nil }
+        let raw = String(t[c]).replacingOccurrences(of: #"^url\s*=\s*["']?"#, with: "", options: [.regularExpression, .caseInsensitive])
+        let target = raw.trimmingCharacters(in: .whitespaces)
+        return target.isEmpty ? nil : target
+    }
+
+    /// WebKit drops a refresh to a file that isn't there without a word: say so (F-634). Web targets are the policy's.
+    nonisolated static func redirectProblem(_ html: String, from file: URL) -> String? {
+        guard let target = metaRefreshTarget(html), !target.lowercased().hasPrefix("http"), !target.hasPrefix("//") else { return nil }
+        let path = target.components(separatedBy: CharacterSet(charactersIn: "#?")).first ?? target
+        guard let dest = URL(string: path, relativeTo: file.resolvingSymlinksInPath())?.absoluteURL, dest.isFileURL else { return nil }
+        return FileManager.default.fileExists(atPath: dest.path) ? nil : "the page it redirects to isn’t there (\(path))"
+    }
 
     /// Reads at most 4 MB (a page larger than that is scanned by its start) and says why it can't be read.
     nonisolated static func scan(_ file: URL, text: String? = nil) -> Scan {
-        if let text { return Scan(unreadable: nil, remote: loadsRemoteCode(String(text.prefix(4 << 20)))) }
+        if let text { let t = String(text.prefix(4 << 20)); return Scan(unreadable: nil, remote: loadsRemoteCode(t), redirectProblem: redirectProblem(t, from: file)) }
         if let why = unreadableReason(file) { return Scan(unreadable: why) }
         guard let h = try? FileHandle(forReadingFrom: file) else { return Scan() }
         defer { try? h.close() }
         let data = (try? h.read(upToCount: 4 << 20)) ?? Data()
-        return Scan(unreadable: nil, remote: loadsRemoteCode(String(decoding: data, as: UTF8.self)))
+        let t = String(decoding: data, as: UTF8.self)
+        return Scan(unreadable: nil, remote: loadsRemoteCode(t), redirectProblem: redirectProblem(t, from: file))
     }
 
     /// Why a file can't be read, said plainly; nil when it reads. A cloud-drive file that isn't downloaded
@@ -146,7 +167,10 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
                 if let why = result.unreadable {
                     self.setNotice(.failed(why), file: file)
                     self.blankNav = self.webView.loadHTMLString("", baseURL: nil)
-                } else if !self.webKitFailed { self.setNotice(result.remote ? .blockedRemote : nil, file: file) }
+                } else if !self.webKitFailed {
+                    if let why = result.redirectProblem { self.setNotice(.failed(why), file: file) }
+                    else { self.setNotice(result.remote ? .blockedRemote : nil, file: file) }
+                }
             }
         }
     }
@@ -258,7 +282,7 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
             guard let self, self.rulesReady, self.bufferText == text else { return }
             self.fileNav = nil
             self.webKitFailed = false
-            self.webView.loadHTMLString(text, baseURL: file.deletingLastPathComponent())
+            self.bufferNav = self.webView.loadHTMLString(text, baseURL: file.deletingLastPathComponent())
             self.inspect(file, text: text)
         }
         if rulesReady { load() } else { afterRules = load }
@@ -321,8 +345,16 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
             return decisionHandler(.allow)
         }
         if target.scheme == "about" { return decisionHandler(.allow) }
+        // A main-frame move the page made itself (a meta refresh, a script) to somewhere Duo won't load must say
+        // so, not leave the page it came from or a blank (F-634). A link click to the web opens the browser instead.
+        if action.targetFrame?.isMainFrame ?? true, action.navigationType != .linkActivated || target.isFileURL, let file = url {
+            let why = target.isFileURL ? "the page it goes to is outside this project’s folder" : "it goes to a page on the web, which Duo’s local pages don’t open"
+            DuoLog.write("html: blocked navigation to \(target.absoluteString): \(why)")
+            webKitFailed = true
+            setNotice(.failed(why), file: file)
+        }
         // Anything else leaves Duo: the browser in the right pane comes later (Phase K).
-        if action.navigationType == .linkActivated {
+        if action.navigationType == .linkActivated, !target.isFileURL {
             DuoLog.write("html: link out to \(target.absoluteString)")
             if let out = onLinkOut { out(target) } else { NSWorkspace.shared.open(target) }
         }
@@ -336,6 +368,16 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         var r = root.resolvingSymlinksInPath().standardizedFileURL.path
         if !r.hasSuffix("/") { r += "/" }
         return f.hasPrefix(r) || f + "/" == r
+    }
+
+    /// Any main-frame navigation the viewer didn't start (a meta refresh, a followed link, a script's location
+    /// change) is logged, and the page now showing is looked at: the bar follows what is on screen (F-634).
+    public func webView(_ w: WKWebView, didCommit n: WKNavigation!) {
+        guard n != nil, n !== fileNav, n !== blankNav, n !== bufferNav, let shown = w.url, shown.isFileURL else { return }
+        DuoLog.write("html: navigated \(shown.path)")
+        webKitFailed = false
+        loadStarted = Date()
+        inspect(shown)
     }
 
     /// Only the page's own file logs "loaded": a buffer's render (every pause while typing) and the blank don't.
@@ -353,7 +395,8 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         if e.domain == NSURLErrorDomain, e.code == NSURLErrorCancelled { return }   // a reload mid-load
         if e.domain == "WebKitErrorDomain", e.code == 102 { return }   // "frame load interrupted": a policy cancelled it
         let why = e.localizedDescription
-        DuoLog.write("html: WebKit failed \(url?.path ?? "?"): \(why) [\(e.domain) \(e.code)]")
+        let target = (e.userInfo[NSURLErrorFailingURLErrorKey] as? URL)?.path ?? url?.path ?? "?"
+        DuoLog.write("html: WebKit failed \(target): \(why) [\(e.domain) \(e.code)]")
         webKitFailed = true   // before the early return: Reload on a failed page resets it, and a second refusal must set it again
         if case .failed? = notice.kind { return }   // the file scan already said why, in plainer words
         notice.kind = .failed(why); notice.file = url
