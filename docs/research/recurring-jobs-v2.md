@@ -1,6 +1,6 @@
 # Recurring jobs for Duo v2
 
-*Evaluation and design, 2026-11-08 · task note `tasks/recurring-jobs.md` · branch `feature/recurring-jobs` · records F-615 to F-617, Q-472 to Q-477, C-167, DL-324, DL-325, ENH-328.*
+*Evaluation and design, 2026-11-08 · task note `tasks/recurring-jobs.md` · branch `feature/recurring-jobs` · records F-615 to F-617, Q-472 to Q-476, Q-480, C-167, DL-324, DL-325, ENH-328.*
 
 **Ask (Geoff, 2026-11-08).** "Please have a worker evaluate the cron/recurring job feature from duo classic. I want to rebuild it in v2. I think it could be useful in the 'dreaming' application … Our work policy prohibits mechanically overriding human control -- so the automatic/scheduled/recurring jobs would only start/continue with a single canned prompt, and the human would need to take further action. sessions can start in auto, but this should not be allowed to advance arbitrary commands -- just the scheduled one." And later: "for users that have claude scheduled agents, that may be a stronger offering; but we don't have those at work yet."
 
@@ -209,7 +209,7 @@ Run this project's knowledge dream: follow `duo2 knowledge guide`, then stop.
 - A job fires only if `<support>/jobs/approved.json` holds the SHA-256 of its fired fields (prompt or command, pinned files, schedule, `when`, mode, `tools`, `allow`, model), with who and when.
 - Only a Duo sheet writes that (through `SheetCenter`), the way `duo2 session delete` makes the user confirm in Duo. A session can run `duo2 job approve`, which opens the sheet; it can't approve by itself. `DUO_AUTOCONFIRM=1` answers in scripted runs, so isolated tests work.
 - If the note changes, the job stops firing and shows one needs-you: "Dream changed. Approve?" with a diff.
-- **A prompt that names a file is only as fixed as that file** (found by the learning-loop worker). With `Follow docs/x.md`, any session can edit the procedure and the next fire runs it, with no change to the prompt and no question to anyone. Geoff's decision (Q-477, DL-324): `pins:` lists such files, and a change to one stops the job until approved again. When the prompt names a file that isn't pinned, the sheet says so plainly. Detecting a named file is best effort; a guide shipped inside Duo avoids the problem. A pin can't reach what that file itself reads.
+- **A prompt that names a file is only as fixed as that file** (found by the learning-loop worker). With `Follow docs/x.md`, any session can edit the procedure and the next fire runs it, with no change to the prompt and no question to anyone. Geoff's decision (Q-480, DL-324): `pins:` lists such files, and a change to one stops the job until approved again. When the prompt names a file that isn't pinned, the sheet says so plainly. Detecting a named file is best effort; a guide shipped inside Duo avoids the problem. A pin can't reach what that file itself reads.
 - A committed job is off on every other Mac until that person approves it. A job can't fire on two people's Macs unless both chose that.
 
 **Machine-local files**, all under `<support>/jobs/`: `approved.json`, `state.json` (paused, last due time, misses in a row), `fires.jsonl`. Each log line has: job, project, due time, time acted, result (`fired` or `skipped: missed|still-open|not-due|check-failed|changed|no-claude`, with a one-line reason), trigger (`schedule` or `manual`), runner, session id, mode, model, and the prompt's exact text.
@@ -252,7 +252,7 @@ Run this project's knowledge dream: follow `duo2 knowledge guide`, then stop.
 - **Prompt:** "Run this project's knowledge dream: follow `duo2 knowledge guide`, then stop." The same for every project. "No dates, no arguments. State is on disk", and `log.md`'s newest entry "advances only when the run's check passes, so a skipped or failed run loses nothing."
 - **Reads:** "through `duo2 knowledge gather` only", plus `duo2 search`, read-only. **Writes:** "`_knowledge/` only, a snapshot under `.duo/`, and `status: suggested` Failure tasks in `tasks/`." "It never commits or pushes." It runs "at the project root of the main checkout, never a work tree".
 - **Refused:** "it doesn't try another route. It keeps what's done, says what was refused in its last message, and stops."
-- **Tool limits:** "a dream reads untrusted transcripts, unattended, in Auto, so a successful injection has whatever Auto allows." It asks for an optional field, "included in the hash and shown in the sheet", and for the restricting flag to be checked. "Subagents have to stay available."
+- **Tool limits:** "a dream reads untrusted transcripts, unattended, in Auto, so a successful injection has whatever Auto allows." It asks for an optional field, "included in the hash and shown in the sheet", and for the restricting flag to be checked. It accepts `dontAsk` as "better than what I asked for". "Subagents are a saving, not a requirement": if they don't inherit `dontAsk`, "take `Agent` off the list and the dream runs in one thread with a smaller cap per run."
 - **Result:** "A dream can finish well with zero human action." `_knowledge/log.md`, the session's last message and the fire log carry it, "none of them a message from the dream." `duo2 director status` is the main path: it "reads `duo2 job log --json`, works out each session's state from its id, and shows a red line for a finished run nobody has checked."
 - **Disputes:** "disputes about facts still go to the user. The director relays them and doesn't settle them (DL-322), even though DL-325 lets it answer the session. It also can't approve a permission for a job session (Never 1)."
 - **Concurrency:** "One dream per project is enough. If the last is still running at fire time: skip and log".
@@ -270,13 +270,13 @@ Geoff chose the trigger below (Q-476).
 | The clock isn't the only safeguard | Every due time leaves a log line, so R10 can see a job has gone quiet. The mode is on the command line, so F-605 can't recur | Needs Duo open: R10 covers the rest |
 | One fixed prompt | The body of the note. Its guide ships inside Duo, so it avoids the named-file gap below | None |
 | Tool limits | `tools:` and `allow:` in the note (below) | Checked from `--help` only |
-| Reads and writes, root only | The session runs at the project's root; `allow:` can hold the writes to `_knowledge/`, `.duo/` and `tasks/` | `duo2 knowledge` is the worker's to build |
+| Reads and writes, root only | The session runs at the project's root; `allow:` holds its own writes to `_knowledge/`. The snapshot, the Failure tasks and any full-transcript read go through `duo2 knowledge` | `duo2 knowledge` is the worker's to build |
 | Result with no message | `duo2 job log --json` gives job, result and session id, with Duo closed. `duo2 director status` works out the session's state. A `watch` line is an extra. F-604 still applies: the director has to say it to you | |
 | Disputes and permissions | DL-325 lets a director answer a job's session; DL-322 keeps fact disputes with the user, and the skill's Never 1 keeps permission approvals from the director | The scheduler never answers anyway |
 | Overlap | `skipped: still-open` | |
 | A dream's own output as evidence | `duo2 job log --sessions` lists job sessions; `DUO_JOB` marks them too | |
 | A job only on the user's yes | The approval sheet, including when a director proposes the job | |
-| `_jobs/dream.md` stays private | Whoever creates it adds it to `.gitignore` in a repo with a remote, as with `_knowledge/` | `duo2 job new --private` could do this; a build detail |
+| `_jobs/dream.md` stays private | Whoever creates it adds it to `.git/info/exclude` in a repo with a remote, as with `_knowledge/`. Not `.gitignore`: search skips what that lists (F-607), and `.git/info/exclude` changes no tracked file | `duo2 job new --private` could do this; a build detail |
 
 **The dream's note, as the design stands (thresholds and rules are the worker's to settle after the pilot):**
 
@@ -299,7 +299,7 @@ Run this project's knowledge dream: follow `duo2 knowledge guide`, then stop.
 - **`--allowedTools` alone doesn't restrict.** In Auto it pre-approves, other actions still go to the classifier, and Auto drops broad rules on entry ("`Agent` allow rules", blanket `Bash(*)`).
 - **`--tools` removes built-in tools** from the session. It's coarse: `Bash` is all of Bash.
 - **`dontAsk` with an allow list is the true allowlist.** Docs: it "auto-denies every tool call that would otherwise prompt you", and "the session never waits for input". Reads inside the working folders and read-only Bash still run. It also denies `AskUserQuestion`, so a job in this mode can't ask anything: it reports in its last message.
-- **To test at build, on Haiku with approval:** whether subagents inherit `dontAsk` (the doc doesn't say), whether path rules hold through `Write`, and all of this on 2.1.284. Auto's built-in default needs 2.1.228, so a work Mac at the old 2.1.219 floor may differ. `dontAsk` is why this doesn't have to rely on Auto.
+- **To test at build, on Haiku with approval:** whether subagents inherit `dontAsk` (the doc doesn't say; if not, `Agent` comes off the dream's list), whether path rules hold through `Write`, and all of this on 2.1.284. Auto's built-in default needs 2.1.228, so a work Mac at the old 2.1.219 floor may differ. `dontAsk` is why this doesn't have to rely on Auto.
 
 Geoff said sessions *can* start in Auto; a job picks its mode, and the dream would pick the narrower one. `tools:` and `allow:` are in the approval hash and shown in the sheet.
 
@@ -356,4 +356,4 @@ Asked by AskUserQuestion, recommendation first; answers are in §12. None is ope
 4. **Where a job lives** (DL-324). "`_jobs/` note + approval": the recommendation.
 5. **What he used in legacy.** No preference given, so the design doesn't rely on an assumed habit.
 6. **The dream's trigger, if it survives its pilot** (Q-476). "Daily clock + check": the recommendation, and what the learning-loop worker asked for. The director's red line stays as backstop.
-7. **A prompt that names a file** (Q-477, DL-324). "Pin the files": the recommendation.
+7. **A prompt that names a file** (Q-480, DL-324). "Pin the files": the recommendation.
