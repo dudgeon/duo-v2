@@ -169,6 +169,48 @@ import WebKit
     waitText("tall")
     check(viewer.notice.kind == nil, "and the next load starts clean")
 
+    // F-634: a page that redirects (meta refresh) or is followed to another page: the bar and the log follow the page showing.
+    let sub = real.appending(path: "sub"); try FileManager.default.createDirectory(at: sub, withIntermediateDirectories: true)
+    try cdnPage.write(to: sub.appending(path: "cdn.html"), atomically: true, encoding: .utf8)
+    try "<html><body>plain target</body></html>".write(to: sub.appending(path: "plain.html"), atomically: true, encoding: .utf8)
+    try "<html><body>outside target</body></html>".write(to: outside.appending(path: "o2.html"), atomically: true, encoding: .utf8)
+    func redirectPage(_ name: String, to target: String) throws -> URL {
+        let f = real.appending(path: name)
+        try #"<!DOCTYPE html><html><head><meta charset="UTF-8"><meta http-equiv="refresh" content="0; url=\#(target)"></head><body><p><a href="\#(target)">open</a></p></body></html>"#.write(to: f, atomically: true, encoding: .utf8)
+        return f
+    }
+    check(HTMLViewer.metaRefreshTarget(#"<meta http-equiv="refresh" content="0; url=tasks/x/mockup.html">"#) == "tasks/x/mockup.html", "the refresh target is read from the meta tag")
+    check(HTMLViewer.metaRefreshTarget(#"<META HTTP-EQUIV=Refresh CONTENT='5;URL=a.html'>"#) == "a.html", "in any case and quoting")
+    check(HTMLViewer.metaRefreshTarget(#"<!-- <meta http-equiv="refresh" content="0; url=a.html"> --><p>x</p>"#) == nil, "a commented-out refresh is not one")
+    func resetToPlain() { viewer.open(real.appending(path: "a.html"), root: real, force: true); waitText("hi A"); RunLoop.main.run(until: Date().addingTimeInterval(0.5)) }
+    resetToPlain()
+    viewer.open(try redirectPage("r-cdn.html", to: "sub/cdn.html"), root: real)
+    waitText("cdn page"); wait { viewer.notice.kind == .blockedRemote }
+    check(viewer.notice.kind == .blockedRemote, "a redirect to a CDN-built page shows the bar for the page showing")
+    check(log().contains("html: navigated ") && log().contains("sub/cdn.html"), "the redirect's navigation is logged with the page it reached")
+    resetToPlain()
+    viewer.open(try redirectPage("r-gone.html", to: "sub/gone.html"), root: real)
+    wait { if case .failed? = viewer.notice.kind { return true } else { return false } }
+    check({ if case .failed? = viewer.notice.kind { return true } else { return false } }(), "a redirect to a missing page shows the failure bar")
+    check(log().contains("gone.html"), "and the missing target is named in the log")
+    resetToPlain()
+    viewer.open(try redirectPage("r-plain.html", to: "sub/plain.html"), root: real)
+    waitText("plain target")
+    RunLoop.main.run(until: Date().addingTimeInterval(1))
+    check(viewer.notice.kind == nil && pageText().contains("plain target"), "a redirect to a plain page shows it with no bar")
+    resetToPlain()
+    viewer.open(try redirectPage("r-out.html", to: "../outside/o2.html"), root: real)
+    wait { if case .failed? = viewer.notice.kind { return true } else { return false } }
+    check({ if case .failed(let why)? = viewer.notice.kind { return why.contains("outside") } else { return false } }(), "a redirect outside the project's folder says so, never a blank")
+    // A link followed to a CDN page, and a script's location change, get the bar too.
+    resetToPlain()
+    try #"<html><body><a href="sub/cdn.html">go</a>start</body></html>"#.write(to: real.appending(path: "l.html"), atomically: true, encoding: .utf8)
+    viewer.open(real.appending(path: "l.html"), root: real)
+    waitText("start")
+    _ = eval("location.href = 'sub/cdn.html'")
+    wait { viewer.notice.kind == .blockedRemote }
+    check(viewer.notice.kind == .blockedRemote, "a JS location change to a CDN page shows the bar")
+
     // The rule-list wait can't hang silently: a timer logs and shows the failure (the answer itself can't be faked here).
     let source = try String(contentsOf: repoRoot().appending(path: "Sources/DuoKit/Editor/HTMLViewer.swift"), encoding: .utf8)
     check(source.contains("rulesTimedOut") && source.contains("haven't compiled after") && source.contains("DuoLog.write(\"html: open \\(file.path)\")   // before the rules wait"),
