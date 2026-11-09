@@ -5864,3 +5864,15 @@ The data volume was at 98% (25 GiB free) on 2026-11-07. A scan by director-game-
 - **A shell that `cd`s into a tree is using it.** `lsof -d cwd` listed the tree for the checking shell itself, and the session's working directory moved there. Use `git -C <tree>` and absolute paths. (A `claude` session in a tree has no path on its command line either, so the `lsof -d cwd` test is needed too.)
 - **`df -h /` is the wrong volume.** It reads the sealed system snapshot (13 GiB used, 6%) while the data volume was at 76%. Use `df -h /System/Volumes/Data`.
 Written into `docs/director/weekly-tidy.md` §4.
+
+## F-615 · What legacy Duo's scheduled sessions did, and what the record says of them (recurring-jobs, 2026-11-08)
+
+ENH-223 (v0.11.2) and ENH-237 (v0.13.0): a 30 s tick in the app, firing only with Duo open, typing `claude --session-id <minted> '<prompt>'` or `claude --resume <id> '<prompt>'` into a background tab; presets and custom cron with an English preview; one app-wide `~/.claude/duo/cron-jobs.json`. Its tick fires a due time of any age on wake, though the PRD calls that a miss, and it guards overlap only while starting. "Same session" and catch-up break the one-prompt policy. The record holds bugs (focus steal, catch-up clobbered by restore, unreadable errors) but no complaint about the idea. `~/.claude/duo/` doesn't exist on this Mac, so there's nothing here to import. Table: `docs/research/recurring-jobs-v2.md` §2.
+
+## F-616 · Claude's own schedulers against the one-prompt policy (recurring-jobs, 2026-11-08)
+
+From Claude's docs, read 2026-11-08 (desktop-scheduled-tasks, routines, scheduled-tasks). Desktop tasks need the app open and the Mac awake, run "exactly one catch-up run" within seven days of a miss, set the mode per task (unset means your settings, F-605), and keep the prompt in `~/.claude/scheduled-tasks/<name>/SKILL.md`, where "changes take effect on the next run"; schedule, model and state are elsewhere. They're created by the form or by asking Claude in a Desktop session, so a Duo app has no public way to create one or to tell whether an account has them. Cloud tasks run with the Mac off, on a fresh clone with no local files, in Auto by default, and an owner can turn them off. `/loop` and `CronCreate` re-prompt one session, which the policy forbids; `CLAUDE_CODE_DISABLE_CRON=1` removes them. Comparison: `docs/research/recurring-jobs-v2.md` §4.
+
+## F-617 · What firing a job needs from Duo's session start (recurring-jobs, 2026-11-08)
+
+`TerminalCommand.newClaude` (`Terminals.swift`) mints the id and takes a prompt, the right shape for a job, but appends the prompt with no `--` (`resumeClaude` has it), so a prompt starting with `-` would read as a flag. It has no mode or model yet. `claude --bg` ignores `--session-id` (F-318), so a background start can't keep DL-14; a Duo tab can. `keep-running`'s text implies a hidden tab may wait until shown to start, which a job can't. `--permission-mode auto` was seen in 2.1.316's help; not checked on the work Mac's 2.1.284. Nothing here was run: this is from reading the code and `--help`.

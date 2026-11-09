@@ -8,11 +8,12 @@ This is a design. Nothing here is built, and every visible surface is a stand-in
 
 ## 1. The answer in one screen
 
-- **What to build:** a job is a note in the project with a schedule and one prompt. When it comes due, Duo starts one new session in a background tab with that prompt, and logs it. Duo has no code path that types anything further into that session.
-- **Who runs the clock:** one job record, and each job names one runner. **Duo's own timer is the default**, because it's the only runner that can keep all four rules and it works on the work Mac. **A Claude scheduled task is an option per job** where the account has one. Duo watches that job, but can't create it or hold it to the rules (§4).
+- **What to build:** a job is a note in the project with a schedule and one fixed thing to do: a prompt, or a single shell command. When it comes due, Duo starts one new session (or command) in a background tab, and logs it. The scheduler has no code path that types anything further, or approves anything.
+- **Who runs the clock (DL-324):** one job record, and each job names one runner. **Duo's own timer is the default**, as in legacy Duo, because it's the only runner that can keep all four rules and it works on the work Mac. **A Claude scheduled task is an option per job** where the account has one. Duo watches that job, but can't create it or hold it to the rules (§4).
 - **Why Claude's scheduled agents aren't the primary path:** I looked at this as Geoff asked, and it's only half true. Cloud tasks are stronger in one way: they run with the Mac off. But they get a fresh clone, so they can't read local transcripts or an uncommitted `_knowledge/`, which rules out the dream. Desktop tasks need their app open and the Mac awake, as Duo does, so they gain little. They also run one catch-up after a miss, which breaks rule 3, and a Duo app can't create them.
-- **Three things legacy had go away,** because they break the policy: "same session" jobs, the run-once catch-up, and (recommended) shell-command jobs.
-- **A prompt in a project file could be changed by any agent, so the note alone can't fire.** You approve a job in a Duo sheet, and that approval covers an exact hash of its prompt, schedule, mode and model. If the note changes, the job stops firing and asks you again (§6).
+- **Two things legacy had go away,** because they break the policy: "same session" jobs and the run-once catch-up. Shell jobs stay, fixed and approved (DL-325).
+- **The line is on the scheduler, not on who else may act (DL-325).** Geoff: "the director may control scheduled jobs like any other -- only the scheduler must not approve claude commands."
+- **A prompt in a project file could be changed by any agent, so the note alone can't fire (DL-324).** You approve a job in a Duo sheet, and that approval covers an exact hash of what it runs, its schedule, mode and model. If the note changes, the job stops firing and asks you again (§6).
 - **The real limit:** this controls what the *schedule* does, not what the session does with its one prompt. In Auto, one prompt can still do a lot (§3, C-167).
 
 ## 2. What legacy Duo did (F-615)
@@ -26,7 +27,7 @@ ENH-223 shipped in v0.11.2 (2026-06-22); ENH-237 added shell jobs in v0.13.0 (20
 | Store | One app-wide `~/.claude/duo/cron-jobs.json`, written atomically through a queue, and tolerant of bad entries | `core/cron-store.ts` | **Change** (§6) |
 | Firing | Typed `claude --session-id <minted> '<prompt>'` into a new tab, always interactive | `core/cron-command.ts` | **Keep the idea**; v2 passes arguments directly, with no shell line to quote |
 | "Same session" | The next run did `claude --resume <id> '<prompt>'`, falling back to fresh | `cron-service.ts` `fireJob` | **Drop.** It is a second prompt into an earlier session, which rule 1 forbids |
-| Shell jobs | `duo cron add --run "<cmd>"` ran a raw line in a tab with no Claude (motivated by `qmd update && qmd embed`) | ENH-237; `buildShellCommand` | **Drop, recommended.** See DL-325 |
+| Shell jobs | `duo cron add --run "<cmd>"` ran a raw line in a tab with no Claude (motivated by `qmd update && qmd embed`) | ENH-237; `buildShellCommand` | **Keep, fixed and approved** (DL-325, §6) |
 | Headless gate | Refused `-p`, `--print`, `--bare`, `--output-format` | `assertInteractiveCommand` | **Keep the outcome.** v2 has no such path to gate |
 | Scheduler | A 30 s tick in the app, jobs fire only with Duo open | `cron-service.ts` | **Keep** |
 | Missed runs | Skip by default; opt-in "run once on next launch", collapsing many into one; a fire after sleep treated as a miss in the PRD, though the tick really fires it late | `runCatchUp`; PRD §7 | **Skip always**, and fix the sleep gap (§5) |
@@ -44,7 +45,7 @@ ENH-223 shipped in v0.11.2 (2026-06-22); ENH-237 added shell jobs in v0.13.0 (20
 - a shell job looked the same as a Claude job in the list (still listed as a known issue);
 - spring-forward times were silently skipped, flagged to the owner as behaviour rather than a defect.
 
-The record shows no complaint about the feature's idea. **There is also no sign of use on this Mac:** `~/.claude/duo/` doesn't exist here, so there's no `cron-jobs.json`. The work Mac may differ. Geoff's own view is asked in §11.
+The record shows no complaint about the feature's idea. **There is also no sign of use on this Mac:** `~/.claude/duo/` doesn't exist here, so there's no `cron-jobs.json`. The work Mac may differ. Asked what he used or missed, Geoff stated no preference (§12).
 
 ## 3. The policy, as rules the code keeps
 
@@ -61,7 +62,7 @@ Geoff's rules, from the brief:
 | 1 | The scheduler's only output is `TerminalCommand.newClaude`. It can't reach `resumeClaude`, `duo-submit`, SendMessage or any terminal input. A DuoChecks test scans the job code for those calls. Each fire mints a new id (DL-14) and there's no "same session" option. A failed start isn't retried |
 | 1, "fixed" | The approval hash (§6): an edited prompt can't fire until a person approves it |
 | 1, "readable" | The note is the prompt. `duo2 job show` prints it, and the log keeps the exact text of each fire |
-| 2 | Mode comes from the job, set explicitly with `--permission-mode` rather than inherited (F-605). A question or blocked action shows as needs-you like any session. Nothing answers it |
+| 2 | Mode comes from the job, set explicitly with `--permission-mode` rather than inherited (F-605). **The scheduler never approves a Claude command:** it has no path to a permission prompt, and a job can't be set to `bypassPermissions` (`duo2 job` refuses it, and so does the fire path). A question or blocked action shows as needs-you like any session, and the scheduler doesn't answer it |
 | 3 | A due time more than 10 minutes old when Duo next looks is logged `skipped: missed`, never run. There's no catch-up setting |
 | 4 | One append-only log line for every due time, fired or skipped (§6) |
 
@@ -69,11 +70,12 @@ Geoff's rules, from the brief:
 - A director's message is a *decision made at the time, on a task a person directed*. Someone or something looked at the state and chose to say this.
 - A schedule's second prompt would be *mechanical*: sent because the clock said so, whatever the session had done. Rule 1 forbids it, and the scheduler has no such path.
 
-**A case the brief leaves open: may a director answer a job's session?** A director isn't a human, and Geoff's policy says "the human would need to take further action". If a director could reply "yes, go on" to a dream, a person would never be in the loop. **Recommendation (DL-324):** no, unless a person said so for that case. A director reads a job session and reports it, but `director send` refuses a session started by a job until the message carries a person's instruction, such as a console tap. That's stricter than for a worker, because a worker has a person's request behind it and a job only has a clock.
+**May a director answer a job's session? Yes (DL-325).** I recommended holding directors back, on the reasoning that a director isn't a human. Geoff chose otherwise: "the director may control scheduled jobs like any other -- only the scheduler must not approve claude commands." So a job's session is an ordinary session once it has started. A director may read it, message it and answer it under its usual rules (DL-257), and a person may too. Only the scheduler is bound. The brief's rule 2, "a person takes the next action", is read accordingly: the *scheduler* never takes it.
 
 **What this doesn't stop (C-167).** The schedule stops at one prompt; the session may not.
-- **It could reschedule itself.** `/loop`, `CronCreate`, `ScheduleWakeup` and `/goal` keep a session going by itself. On Duo's runner, jobs start with `CLAUDE_CODE_DISABLE_CRON=1` (documented: it removes the cron tools and `/loop`) and `--disallowedTools ScheduleWakeup`. Whether `/goal` can be held off needs checking at build.
-- **It could start others.** `claude --bg`, `duo2 session new` or `SendMessage` from a job session reach beyond it. Auto's classifier may or may not stop these. This is best effort; `duo2 director start` and `duo2 job run` can refuse a caller whose `DUO_SESSION_ID` is a job's, and I'd add that, but a raw `claude --bg` can't be stopped from Duo.
+- **It could reschedule itself.** `/loop`, `CronCreate`, `ScheduleWakeup` and `/goal` keep a session going by itself, which is a schedule re-prompting by another route. On Duo's runner, jobs start with `CLAUDE_CODE_DISABLE_CRON=1` (documented: it removes the cron tools and `/loop`) and `--disallowedTools ScheduleWakeup`. Whether `/goal` can be held off needs checking at build.
+- **It can start others.** `claude --bg`, `duo2 session new` or `SendMessage` from a job session reach beyond it. That's allowed, like any session: it's the session's act under its mode and your rules, not the schedule's.
+- **A director's replies aren't human review.** After DL-325, a job that asks a question may be answered by a director with no person involved. That's Geoff's call, and it should be checked against the written work policy before this ships at work. A project with no director still waits for a person.
 - **One prompt can be large.** "Follow this procedure" in Auto is many actions. Rule 1 was never a limit on that; the limits are the mode you pick, your allow and ask rules, and reading the prompt when you approve it.
 
 ## 4. Claude's scheduled agents against Duo's own timer (DL-324)
@@ -102,7 +104,7 @@ Geoff's rules, from the brief:
 - **Desktop tasks are already built and have good touches:** connectors configured per task, a skip history, Keep computer awake, saved approvals. But they share Duo's constraint of an open app on an awake Mac. A user running Duo all day gains little, and loses the rules above.
 - **`/loop` and `CronCreate` are not a fit at all.** They re-prompt one session on a clock, which is exactly what the policy forbids. This matters at work: nothing in Duo stops someone using them, but Duo shouldn't offer them as jobs.
 
-**The recommendation: one job record, one runner per job, Duo's timer by default.**
+**Geoff's decision (DL-324): one job record, one runner per job, Duo's timer by default, as in legacy Duo.**
 
 ```
 _jobs/dream.md          the one record: prompt, schedule, mode, model, runner
@@ -160,7 +162,7 @@ So Duo can *offer* it: show the job's text ready to paste, or start a session th
 
 ## 6. Where jobs live, and the record
 
-**Recommended: a note per job in the project at `_jobs/<slug>.md`, plus machine-local approval, state and log in Duo's support folder.**
+**Geoff's decision (DL-324): a note per job in the project at `_jobs/<slug>.md`, plus machine-local approval, state and log in Duo's support folder.**
 
 | Place | For | Against |
 |---|---|---|
@@ -184,6 +186,12 @@ Follow docs/dream.md for this project.
 
 **The body is the prompt, all of it.** What you read is what runs. Frontmatter links, if any, follow DL-17.
 
+**Shell jobs (DL-325)** have `kind: command`, and their body is one line, for example `qmd update && qmd embed`:
+- They run in a background shell tab through Duo's runner only; Claude's schedulers have no equivalent. There's no session id, mode or model, and the log records the exit status.
+- Newlines are refused when it's written and again at fire time, as legacy did, so a job can't hide a second line.
+- Approval works the same way, and the sheet shows the command in full.
+- **A command that names `claude` is refused,** best effort. `claude -p … --dangerously-skip-permissions` in a shell job would be the scheduler approving Claude commands by another route. A script that calls `claude` inside it can't be seen from here, so the sheet says plainly that the command runs with your full permissions (C-167).
+
 **Fields the brief listed that aren't in the note, on purpose:**
 - `last fire`, `next fire`: derived or machine-local, so a repo doesn't churn every run.
 - `enabled`: machine-local (`duo2 job pause` on this Mac), so pausing here doesn't pause a colleague.
@@ -206,7 +214,7 @@ Follow docs/dream.md for this project.
 |---|---|---|
 | `duo2 job list [--project <p>]` | Jobs with schedule in English, next fire, last outcome, approval, runner | jobs list |
 | `duo2 job show <job>` | The prompt, schedule, mode, model, recent fires | job row |
-| `duo2 job new <title> --project <p> (--every … \| --cron …) [--at] [--on] (--prompt <t> \| --prompt-file <f>) [--mode <m>] [--model <m>] [--runner duo\|desktop\|cloud]` | Writes the note. **Off until approved** | job editor |
+| `duo2 job new <title> --project <p> (--every … \| --cron …) [--at] [--on] (--prompt <t> \| --prompt-file <f> \| --run <command>) [--mode <m>] [--model <m>] [--runner duo\|desktop\|cloud]` | Writes the note. **Off until approved** | job editor |
 | `duo2 job edit <job> …` | Changes the note, which needs approval again | job editor |
 | `duo2 job approve <job>` | Opens Duo's sheet with the prompt and schedule; waits for the user | Approve |
 | `duo2 job run <job>` | Fires now with the same prompt, logged `manual`. No `--prompt` | Run Now |
@@ -215,7 +223,7 @@ Follow docs/dream.md for this project.
 | `duo2 job log [<job>] [--project <p>] [--json]` | Every due time, fired or skipped | fire log |
 | `duo2 job preview --every … \| --cron …` | English and next fire | editor's preview |
 
-**Verbs that deliberately don't exist:** `job send`, `job continue`, `job answer`, `--session same`, `--catch-up`, `--run <shell>`. DuoChecks should assert their absence, so a later convenience can't quietly undo the policy. The verbs write through the same code with Duo closed where they can (`list`, `show`, `log`, `new`), like `director status`; `approve` and `run` need Duo.
+**Verbs that deliberately don't exist:** `job send`, `job continue`, `job answer`, `--session same`, `--catch-up`, `--mode bypassPermissions`. DuoChecks should assert their absence, so a later convenience can't quietly undo the policy. The verbs write through the same code with Duo closed where they can (`list`, `show`, `log`, `new`), like `director status`; `approve` and `run` need Duo.
 
 ## 8. The dream as the first job
 
@@ -239,7 +247,7 @@ Follow docs/dream.md for this project.
 | "No scheduler to fail" | A stall from F-605 can't recur: the mode is on the command line, a stall shows as needs-you, and every due time leaves a log line | The study's objection is fair for desktop tasks. A timer in Duo is still a scheduler, and it needs Duo open |
 | Canned prompt | One fixed string per project, for example `Follow docs/dream.md`. The session reads dates and "since last dream" itself, from `gather` | None, if `gather` holds the per-run data |
 | File tools only in Analyze | That's the session's choice of subagents, inside one prompt. The rules allow it | |
-| Report, ask on disputes | The session's last message and a needs-you | **The policy changes one thing:** a dream that asks waits for a person. The director can't answer for it (DL-324) |
+| Report, ask on disputes | The session's last message and a needs-you. The director may take it from there (DL-325), and a dispute still goes to the user as the study says | The scheduler itself never answers |
 | Reaches the director | `duo2 director watch` gains a line per finished job session. Telling only; F-604's rule still applies, so the director has to say it to you | |
 | Works in a project's root | Always the root. The study's open "work-tree path" question doesn't arise for the dream itself | |
 
@@ -253,7 +261,8 @@ They stay on Claude desktop tasks (DL-240). They're already nearly one-canned-pr
 1. Duo's runner has run real jobs for weeks with no missed-while-open or stuck fires.
 2. Geoff's Duo is reliably open and current (F-606 showed three days on an old build).
 3. Each job's connector access works from a Duo terminal session, as it does on Desktop.
-4. Deep review's "starts a worker" is settled against C-167, since a job session starting another session reaches past one prompt.
+
+Deep review's "starts a worker" raises no problem: a job's session may start others like any session (DL-325).
 
 The gain would be real: R3 could read Duo's log rather than Claude's private files.
 
@@ -262,7 +271,7 @@ The gain would be real: R3 could read Duo's log rather than Claude's private fil
 Nothing below is drawn. Each is a stand-in and a question until Geoff approves a canvas.
 
 - **Q-472, the jobs list.** Where do a project's jobs show (sidebar, Home, the project's page), and what does a row say (schedule in English, next fire, last outcome, runner, approval)? Legacy had rows under Home's project cards.
-- **Q-473, the job editor and approval sheet.** Presets and cron with the English preview, the prompt, mode, model, runner. The approval sheet shows the prompt in full, and a diff when it changed. It also has to say what `runner: desktop` doesn't enforce.
+- **Q-473, the job editor and approval sheet.** Presets and cron with the English preview, the prompt or command, mode, model, runner. The approval sheet shows the prompt or command in full, and a diff when it changed. It also has to say what `runner: desktop` doesn't enforce, and that a shell job runs with your full permissions. Legacy created shell jobs only by CLI (its D13); whether v2's editor offers them is part of this question. A shell job must look different from a prompt job in the list, legacy's known issue.
 - **Q-474, the fire log.** Per job or per project, and how a skipped line reads. Does it open the session?
 - **Q-475, job sessions and needs-you.** How a job's session is marked ("scheduled", never inferred, as ENH-231 did), how its needs-you reads, and where many sessions from one job go: a group per job, a fold, or something else. A daily job makes 30 sessions a month in the project's list.
 
@@ -283,15 +292,12 @@ Nothing below is drawn. Each is a stand-in and a question until Geoff approves a
 
 ## 11. Decisions for Geoff
 
-Asked by AskUserQuestion, recommendation first; answers recorded in §12 and as DL-324 and DL-325.
+Asked by AskUserQuestion, recommendation first; answers are in §12. **Still open:** the dream's trigger, a clock with a built-in due check (recommended), only the director's red line, or a plain clock. It's asked once the learning loop has answered.
 
-1. **Which runner?** One record, Duo's timer by default, Claude's scheduled task per job where you have it (recommended); Claude's first wherever the account has it; Duo's only.
-2. **May a director answer a job's session?** Only on a person's say-so (recommended); yes, as with workers.
-3. **Shell jobs?** Drop them (recommended); keep them as a fixed, approved command.
-4. **Where does a job live?** A `_jobs/` note with approval on this Mac (recommended); Duo's support folder only.
-5. **What did you use in legacy?** Asked to check the record's silence.
-6. **The dream's trigger?** A clock with a built-in due check (recommended); only the director's red line; a plain clock. Asked once the learning loop has answered.
+## 12. Geoff's answers (2026-11-08, by AskUserQuestion)
 
-## 12. Geoff's answers
-
-*None yet.*
+1. **Runner** (DL-324). He first asked "how did duo v1 do this?". Told it was a 30 s timer inside the app, with fires typed into a background tab and no launchd or Claude scheduler, he chose "Like v1, Claude optional": the recommendation.
+2. **Directors** (DL-325). Not the recommendation, in his words: "the director may control scheduled jobs like any other -- only the scheduler must not approve claude commands".
+3. **Shell jobs** (DL-325). "Keep, fixed and approved": not the recommendation.
+4. **Where a job lives** (DL-324). "`_jobs/` note + approval": the recommendation.
+5. **What he used in legacy.** No preference given, so the design doesn't rely on an assumed habit.
