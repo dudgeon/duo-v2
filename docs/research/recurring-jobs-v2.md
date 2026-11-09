@@ -1,6 +1,6 @@
 # Recurring jobs for Duo v2
 
-*Evaluation and design, 2026-11-08 · task note `tasks/recurring-jobs.md` · branch `feature/recurring-jobs` · records F-615 to F-617, Q-472 to Q-475, C-167, DL-324, DL-325, ENH-328.*
+*Evaluation and design, 2026-11-08 · task note `tasks/recurring-jobs.md` · branch `feature/recurring-jobs` · records F-615 to F-617, Q-472 to Q-477, C-167, DL-324, DL-325, ENH-328.*
 
 **Ask (Geoff, 2026-11-08).** "Please have a worker evaluate the cron/recurring job feature from duo classic. I want to rebuild it in v2. I think it could be useful in the 'dreaming' application … Our work policy prohibits mechanically overriding human control -- so the automatic/scheduled/recurring jobs would only start/continue with a single canned prompt, and the human would need to take further action. sessions can start in auto, but this should not be allowed to advance arbitrary commands -- just the scheduled one." And later: "for users that have claude scheduled agents, that may be a stronger offering; but we don't have those at work yet."
 
@@ -73,7 +73,7 @@ Geoff's rules, from the brief:
 **May a director answer a job's session? Yes (DL-325).** I recommended holding directors back, on the reasoning that a director isn't a human. Geoff chose otherwise: "the director may control scheduled jobs like any other -- only the scheduler must not approve claude commands." So a job's session is an ordinary session once it has started. A director may read it, message it and answer it under its usual rules (DL-257), and a person may too. Only the scheduler is bound. The brief's rule 2, "a person takes the next action", is read accordingly: the *scheduler* never takes it.
 
 **What this doesn't stop (C-167).** The schedule stops at one prompt; the session may not.
-- **It could reschedule itself.** `/loop`, `CronCreate`, `ScheduleWakeup` and `/goal` keep a session going by itself, which is a schedule re-prompting by another route. On Duo's runner, jobs start with `CLAUDE_CODE_DISABLE_CRON=1` (documented: it removes the cron tools and `/loop`) and `--disallowedTools ScheduleWakeup`. Whether `/goal` can be held off needs checking at build.
+- **It could reschedule itself.** `/loop`, `CronCreate`, `ScheduleWakeup` and `/goal` keep a session going by itself, which is a schedule re-prompting by another route. On Duo's runner, jobs start with `CLAUDE_CODE_DISABLE_CRON=1` (documented: it removes the cron tools and `/loop`) and `--disallowedTools ScheduleWakeup`. Whether `/goal` can be held off needs checking at build. `tools:` and `dontAsk` (§8) can narrow a job further.
 - **It can start others.** `claude --bg`, `duo2 session new` or `SendMessage` from a job session reach beyond it. That's allowed, like any session: it's the session's act under its mode and your rules, not the schedule's.
 - **A director's replies aren't human review.** After DL-325, a job that asks a question may be answered by a director with no person involved. That's Geoff's call, and it should be checked against the written work policy before this ships at work. A project with no director still waits for a person.
 - **One prompt can be large.** "Follow this procedure" in Auto is many actions. Rule 1 was never a limit on that; the limits are the mode you pick, your allow and ask rules, and reading the prompt when you approve it.
@@ -147,11 +147,13 @@ So Duo can *offer* it: show the job's text ready to paste, or start a session th
 - **`DUO_ISOLATED` and scripted runs:** approvals live in the support folder, so an isolated instance has none and fires nothing, even when pointed at a real project. Tests make their own approvals and use an injected clock, on Haiku through the job's `model`.
 - **Two Duos at once (F-606):** a fire is claimed by creating a marker for `<job>/<due time>` exclusively, so a second instance can't double-fire.
 
+**Many jobs at one time:** each job gets a small fixed offset of up to 5 minutes from its id, as Claude's desktop tasks do, so projects sharing a time don't all start together on one person's quota.
+
 **A fire, step by step:**
 1. The job is due. Check approved, enabled, and within 10 minutes.
-2. If the job has a due check (§8), run it. If not due: log `skipped: not-due`.
+2. If the job has a `when:` check (§8), run it. If not due: log `skipped: not-due`.
 3. If the job's last session is still working or needs you: log `skipped: still-open`. This also stops a neglected job piling up sessions.
-4. Mint an id, then start `claude --session-id <id> -n "<job> <date>" --permission-mode <mode> [--model <m>] [--remote-control <name>] -- <prompt>` in a background tab of that project, not focused.
+4. Mint an id, then start `claude --session-id <id> -n "<job> <date>" --permission-mode <mode> [--allowedTools <rules>] [--model <m>] [--remote-control <name>] -- <prompt>` with `DUO_JOB=<id>` in its environment, in a background tab of that project, not focused.
 5. Log the fire. Done. **The scheduler forgets the session from here.**
 
 **Code notes for the build (F-617):**
@@ -178,10 +180,9 @@ id: 01J...
 title: Dream
 schedule: "0 13 * * 1"
 mode: auto
-model: claude-haiku-5-5
 runner: duo
 ---
-Follow docs/dream.md for this project.
+Run this project's knowledge dream: follow `duo2 knowledge guide`, then stop.
 ```
 
 **The body is the prompt, all of it.** What you read is what runs. Frontmatter links, if any, follow DL-17.
@@ -192,6 +193,12 @@ Follow docs/dream.md for this project.
 - Approval works the same way, and the sheet shows the command in full.
 - **A command that names `claude` is refused,** best effort. `claude -p … --dangerously-skip-permissions` in a shell job would be the scheduler approving Claude commands by another route. A script that calls `claude` inside it can't be seen from here, so the sheet says plainly that the command runs with your full permissions (C-167).
 
+**Optional fields:**
+- `when:` a named built-in check (§8), never a command.
+- `tools:` the built-in tools the session has, passed as `--tools`.
+- `allow:` permission rules, passed as `--allowedTools`. With `mode: dontAsk` this is a true allowlist: anything outside it is denied, and the session never waits (§8). Approving the job approves the list, so this is a person's approval made in advance, not the scheduler approving commands (DL-325).
+- `pins:` files the prompt relies on, whose contents join the approval hash (below).
+
 **Fields the brief listed that aren't in the note, on purpose:**
 - `last fire`, `next fire`: derived or machine-local, so a repo doesn't churn every run.
 - `enabled`: machine-local (`duo2 job pause` on this Mac), so pausing here doesn't pause a colleague.
@@ -199,12 +206,19 @@ Follow docs/dream.md for this project.
 - `project`: it's the folder the note is in. The session runs at the project's root, never in a work tree.
 
 **Approval is what makes the note safe.** A prompt in a project file can be changed by any session in Auto, or arrive by `git pull` from a colleague or a stranger's repo. Without approval, cloning a repo could arm a scheduled Auto session on your Mac. So:
-- A job fires only if `<support>/jobs/approved.json` holds the SHA-256 of its fired fields (prompt, schedule, mode, model), with who and when.
+- A job fires only if `<support>/jobs/approved.json` holds the SHA-256 of its fired fields (prompt or command, pinned files, schedule, `when`, mode, `tools`, `allow`, model), with who and when.
 - Only a Duo sheet writes that (through `SheetCenter`), the way `duo2 session delete` makes the user confirm in Duo. A session can run `duo2 job approve`, which opens the sheet; it can't approve by itself. `DUO_AUTOCONFIRM=1` answers in scripted runs, so isolated tests work.
 - If the note changes, the job stops firing and shows one needs-you: "Dream changed. Approve?" with a diff.
+- **A prompt that names a file is only as fixed as that file** (found by the learning-loop worker). With `Follow docs/x.md`, any session can edit the procedure and the next fire runs it, with no change to the prompt and no question to anyone. Geoff's decision (Q-477, DL-324): `pins:` lists such files, and a change to one stops the job until approved again. When the prompt names a file that isn't pinned, the sheet says so plainly. Detecting a named file is best effort; a guide shipped inside Duo avoids the problem. A pin can't reach what that file itself reads.
 - A committed job is off on every other Mac until that person approves it. A job can't fire on two people's Macs unless both chose that.
 
-**Machine-local files**, all under `<support>/jobs/`: `approved.json`, `state.json` (paused, last due time, misses in a row), `fires.jsonl`. Each log line has: job, project, due time, time acted, outcome (`fired` or `skipped: missed|still-open|not-due|changed|no-claude`), trigger (`schedule` or `manual`), runner, session id, mode, model, and the prompt's exact text.
+**Machine-local files**, all under `<support>/jobs/`: `approved.json`, `state.json` (paused, last due time, misses in a row), `fires.jsonl`. Each log line has: job, project, due time, time acted, result (`fired` or `skipped: missed|still-open|not-due|check-failed|changed|no-claude`, with a one-line reason), trigger (`schedule` or `manual`), runner, session id, mode, model, and the prompt's exact text.
+
+```json
+{"job":"01J…","title":"Dream","project":"<root>","due":"2026-11-09T13:00:00-05:00","at":"2026-11-09T13:00:21-05:00","result":"fired","trigger":"schedule","runner":"duo","session":"<uuid>","mode":"dontAsk","model":null,"prompt":"Run this project's knowledge dream: …"}
+```
+
+**Readers use `duo2 job log --json`, which works with Duo closed.** The log says what the scheduler did and never follows the session. A reader who wants to know how a run ended uses its session id, as `duo2 director status` does. Directors' red lines should read the verb rather than the file, so the format can change.
 
 **Importing legacy `cron-jobs.json` (LR-66): not worth it.** This Mac has none. A legacy `same` job can't carry over, nor a shell job nor catch-up. Each import would need a fresh approval anyway, so retyping a job is about the same effort. If the work Mac turns out to have some, `duo2 job import` can list them for a person to recreate. **Recommendation:** drop the cron file from LR-66; the rest of LR-66 is unaffected.
 
@@ -214,13 +228,13 @@ Follow docs/dream.md for this project.
 |---|---|---|
 | `duo2 job list [--project <p>]` | Jobs with schedule in English, next fire, last outcome, approval, runner | jobs list |
 | `duo2 job show <job>` | The prompt, schedule, mode, model, recent fires | job row |
-| `duo2 job new <title> --project <p> (--every … \| --cron …) [--at] [--on] (--prompt <t> \| --prompt-file <f> \| --run <command>) [--mode <m>] [--model <m>] [--runner duo\|desktop\|cloud]` | Writes the note. **Off until approved** | job editor |
+| `duo2 job new <title> --project <p> (--every … \| --cron …) [--at] [--on] (--prompt <t> \| --prompt-file <f> \| --run <command>) [--when <check>] [--mode <m>] [--allow <rule>…] [--model <m>] [--runner duo\|desktop\|cloud]` | Writes the note. **Off until approved** | job editor |
 | `duo2 job edit <job> …` | Changes the note, which needs approval again | job editor |
 | `duo2 job approve <job>` | Opens Duo's sheet with the prompt and schedule; waits for the user | Approve |
 | `duo2 job run <job>` | Fires now with the same prompt, logged `manual`. No `--prompt` | Run Now |
 | `duo2 job pause <job>`, `resume <job>` | On this Mac | Pause, Resume |
 | `duo2 job rm <job>` | Removes note and state; the note goes to the Trash, and `duo2 undo` restores it. Sessions stay | Delete |
-| `duo2 job log [<job>] [--project <p>] [--json]` | Every due time, fired or skipped | fire log |
+| `duo2 job log [<job>] [--project <p>] [--sessions] [--json]` | Every due time, fired or skipped, with the reason and session id. `--sessions` lists only the job sessions' ids, for `gather` to leave out. Works with Duo closed | fire log |
 | `duo2 job preview --every … \| --cron …` | English and next fire | editor's preview |
 
 **Verbs that deliberately don't exist:** `job send`, `job continue`, `job answer`, `--session same`, `--catch-up`, `--mode bypassPermissions`. DuoChecks should assert their absence, so a later convenience can't quietly undo the policy. The verbs write through the same code with Duo closed where they can (`list`, `show`, `log`, `new`), like `director status`; `approve` and `run` need Duo.
@@ -229,29 +243,69 @@ Follow docs/dream.md for this project.
 
 ### Requirements from the learning loop
 
-*Pending the learning-loop worker's reply, sent 2026-11-08. Until then this is read from `docs/research/project-knowledge.md` on `director/learning-loop`, in that study's words:*
+*From director-learning-loop-39b71d, by message, 2026-11-08, condensed but in its words; its study is `docs/research/project-knowledge.md` at 139887f on `director/learning-loop`.*
 
-- **Cadence and trigger:** "The director is the steward: it starts that pass when a red line says it's due." The red line: "8 tasks closed since the last dream, 14 days ago", "3 pages past `stale_after`", or a disputed page with no question asked.
-- **Against a clock:** "Nightly cron | **Change** | A red line on the director's wake instead, so there's no scheduler to fail. Stuck scheduled runs recurred three times in the retro."
-- **Limit it accepts:** "**No wake, no dream.** A project with no director running gets nothing."
-- **Shape:** "The dream is an ordinary task and worker, using the director's existing `start`": gather (no model), analyze (a subagent per closed task, file tools only), organize, check (no model), report.
-- **Writes:** only `_knowledge/`, and `index.md` is generated by `duo2`. "Only a periodic background pass (the 'dream') writes it."
-- **Touchpoint:** "Apply, report, ask on disputes" (Geoff's answer): "a one-line report, and disputes and anything crossing a project go to the user."
-- **Status:** the first step is a hand-run pilot, and "**Stop here if the answers aren't clearly better.**"
+- **Status:** "The dream isn't approved to build. Geoff chose a hand-run pilot after the learning loop merges, and we build only if fresh sessions answer clearly better with the pages (DL-322, ENH-325). None of its verbs exist yet. Treat it as a likely first customer, and don't let recurring jobs' scope depend on it." And: "the dream needs nothing from this feature until its pilot finishes."
+- **Cadence:** "Check daily per project, expect a dream about weekly on a busy project and rarely on a quiet one." Time of day: "check daily at a time the Mac is normally on. A miss then costs a day."
+- **Trigger:** "a clock job plus a built-in due check serves me, and I'd recommend it to Geoff. Keep the director's red line as the backstop, not the only trigger." The red line "still fires when a dream is due and no job is set up, or the job has stopped working, which covers Duo being closed for days."
+- **Due means** (guesses until the pilot): "5 or more tasks closed since the last dream, or 14 days with at least one closed, or an inbox note waiting, or a page past `stale_after`." It reads "`_knowledge/log.md`'s newest entry, task notes' status and dates, the inbox count, and page frontmatter. No model, no network." It wants "named built-in checks", not a shell command, and owns what the check decides.
+- **Prompt:** "Run this project's knowledge dream: follow `duo2 knowledge guide`, then stop." The same for every project. "No dates, no arguments. State is on disk", and `log.md`'s newest entry "advances only when the run's check passes, so a skipped or failed run loses nothing."
+- **Reads:** "through `duo2 knowledge gather` only", plus `duo2 search`, read-only. **Writes:** "`_knowledge/` only, a snapshot under `.duo/`, and `status: suggested` Failure tasks in `tasks/`." "It never commits or pushes." It runs "at the project root of the main checkout, never a work tree".
+- **Refused:** "it doesn't try another route. It keeps what's done, says what was refused in its last message, and stops."
+- **Tool limits:** "a dream reads untrusted transcripts, unattended, in Auto, so a successful injection has whatever Auto allows." It asks for an optional field, "included in the hash and shown in the sheet", and for the restricting flag to be checked. "Subagents have to stay available."
+- **Result:** "A dream can finish well with zero human action." `_knowledge/log.md`, the session's last message and the fire log carry it, "none of them a message from the dream." `duo2 director status` is the main path: it "reads `duo2 job log --json`, works out each session's state from its id, and shows a red line for a finished run nobody has checked."
+- **Disputes:** "disputes about facts still go to the user. The director relays them and doesn't settle them (DL-322), even though DL-325 lets it answer the session. It also can't approve a permission for a job session (Never 1)."
+- **Concurrency:** "One dream per project is enough. If the last is still running at fire time: skip and log".
+- **Asks of the log:** "keep the check's one-line reason on `skipped: not-due`, and add a separate `skipped: check-failed`. A broken check must not read as 'nothing to do'." Session ids in the log meet its need for `gather` to leave dream sessions out.
+- **What the policy costs it, "all acceptable":** it must finish in one turn, so `gather` caps each run at the oldest 20 closed tasks, and a run that dies leaves a marker for the next to restore from. "Nothing in the dream needs a second prompt."
 
 ### How the design meets them
 
+Geoff chose the trigger below (Q-476).
+
 | Need | Design | Gap |
 |---|---|---|
-| Fires when due, not nightly | A clock job with a **due check**: the clock wakes, then a built-in, no-model check decides. Logged either way | Not a pure red line, but it needs no director awake, which removes "no wake, no dream" |
-| "No scheduler to fail" | A stall from F-605 can't recur: the mode is on the command line, a stall shows as needs-you, and every due time leaves a log line | The study's objection is fair for desktop tasks. A timer in Duo is still a scheduler, and it needs Duo open |
-| Canned prompt | One fixed string per project, for example `Follow docs/dream.md`. The session reads dates and "since last dream" itself, from `gather` | None, if `gather` holds the per-run data |
-| File tools only in Analyze | That's the session's choice of subagents, inside one prompt. The rules allow it | |
-| Report, ask on disputes | The session's last message and a needs-you. The director may take it from there (DL-325), and a dispute still goes to the user as the study says | The scheduler itself never answers |
-| Reaches the director | `duo2 director watch` gains a line per finished job session. Telling only; F-604's rule still applies, so the director has to say it to you | |
-| Works in a project's root | Always the root. The study's open "work-tree path" question doesn't arise for the dream itself | |
+| Daily check, fire only when due | `schedule` daily plus `when: knowledge-due`: a named check compiled into Duo, sharing one function in DuoControl with R10's red line | The check waits on `duo2 knowledge due`, which isn't built |
+| Broken check is visible | `skipped: not-due` keeps the check's reason; `skipped: check-failed` is separate and shows in the job's row | |
+| The clock isn't the only safeguard | Every due time leaves a log line, so R10 can see a job has gone quiet. The mode is on the command line, so F-605 can't recur | Needs Duo open: R10 covers the rest |
+| One fixed prompt | The body of the note. Its guide ships inside Duo, so it avoids the named-file gap below | None |
+| Tool limits | `tools:` and `allow:` in the note (below) | Checked from `--help` only |
+| Reads and writes, root only | The session runs at the project's root; `allow:` can hold the writes to `_knowledge/`, `.duo/` and `tasks/` | `duo2 knowledge` is the worker's to build |
+| Result with no message | `duo2 job log --json` gives job, result and session id, with Duo closed. `duo2 director status` works out the session's state. A `watch` line is an extra. F-604 still applies: the director has to say it to you | |
+| Disputes and permissions | DL-325 lets a director answer a job's session; DL-322 keeps fact disputes with the user, and the skill's Never 1 keeps permission approvals from the director | The scheduler never answers anyway |
+| Overlap | `skipped: still-open` | |
+| A dream's own output as evidence | `duo2 job log --sessions` lists job sessions; `DUO_JOB` marks them too | |
+| A job only on the user's yes | The approval sheet, including when a director proposes the job | |
+| `_jobs/dream.md` stays private | Whoever creates it adds it to `.gitignore` in a repo with a remote, as with `_knowledge/` | `duo2 job new --private` could do this; a build detail |
 
-**A due check is not a shell job.** It's a name from a short list compiled into Duo (`due: knowledge`, calling the same logic as a `duo2 knowledge due`), with no way to supply a command. So "no arbitrary commands" holds. A job with no `due:` always fires at its time.
+**The dream's note, as the design stands (thresholds and rules are the worker's to settle after the pilot):**
+
+```markdown
+---
+type: job
+title: Dream
+schedule: "30 12 * * *"
+when: knowledge-due
+mode: dontAsk
+tools: [Read, Glob, Grep, Edit, Write, Bash, Agent]
+allow: ["Edit(_knowledge/**)", "Write(_knowledge/**)", "Bash(duo2 knowledge *)", "Bash(duo2 search *)", "Agent"]
+runner: duo
+---
+Run this project's knowledge dream: follow `duo2 knowledge guide`, then stop.
+```
+
+**Which flag truly restricts** (worker's C-164, checked 2026-11-08; `--help` on 2.1.219, 2.1.284 and 2.1.316, and the permission-modes doc; **no session was run**):
+- All three versions accept `--tools`, `--allowedTools`, `--disallowedTools` and `--permission-mode dontAsk`.
+- **`--allowedTools` alone doesn't restrict.** In Auto it pre-approves, other actions still go to the classifier, and Auto drops broad rules on entry ("`Agent` allow rules", blanket `Bash(*)`).
+- **`--tools` removes built-in tools** from the session. It's coarse: `Bash` is all of Bash.
+- **`dontAsk` with an allow list is the true allowlist.** Docs: it "auto-denies every tool call that would otherwise prompt you", and "the session never waits for input". Reads inside the working folders and read-only Bash still run. It also denies `AskUserQuestion`, so a job in this mode can't ask anything: it reports in its last message.
+- **To test at build, on Haiku with approval:** whether subagents inherit `dontAsk` (the doc doesn't say), whether path rules hold through `Write`, and all of this on 2.1.284. Auto's built-in default needs 2.1.228, so a work Mac at the old 2.1.219 floor may differ. `dontAsk` is why this doesn't have to rely on Auto.
+
+Geoff said sessions *can* start in Auto; a job picks its mode, and the dream would pick the narrower one. `tools:` and `allow:` are in the approval hash and shown in the sheet.
+
+**A named check is not a shell job.** `when:` takes a name from a short list compiled into Duo, with no way to supply a command, and a job with no `when:` always fires at its time. Shell jobs exist separately, as their own kind, by Geoff's choice (DL-325).
+
+**A dream a day means a log line a day.** Most will be `skipped: not-due`. They don't count as misses, and the job's row should say the last *fire* as well as the last check (Q-474).
 
 **Order matters.** The pilot is by hand and comes first, and the dream may not survive it. **Recurring jobs shouldn't wait for the dream, nor be justified only by it.**
 
@@ -292,7 +346,7 @@ Nothing below is drawn. Each is a stand-in and a question until Geoff approves a
 
 ## 11. Decisions for Geoff
 
-Asked by AskUserQuestion, recommendation first; answers are in §12. **Still open:** the dream's trigger, a clock with a built-in due check (recommended), only the director's red line, or a plain clock. It's asked once the learning loop has answered.
+Asked by AskUserQuestion, recommendation first; answers are in §12. None is open.
 
 ## 12. Geoff's answers (2026-11-08, by AskUserQuestion)
 
@@ -301,3 +355,5 @@ Asked by AskUserQuestion, recommendation first; answers are in §12. **Still ope
 3. **Shell jobs** (DL-325). "Keep, fixed and approved": not the recommendation.
 4. **Where a job lives** (DL-324). "`_jobs/` note + approval": the recommendation.
 5. **What he used in legacy.** No preference given, so the design doesn't rely on an assumed habit.
+6. **The dream's trigger, if it survives its pilot** (Q-476). "Daily clock + check": the recommendation, and what the learning-loop worker asked for. The director's red line stays as backstop.
+7. **A prompt that names a file** (Q-477, DL-324). "Pin the files": the recommendation.
