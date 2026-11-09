@@ -23,6 +23,7 @@ func runOffline(_ id: ActionID, _ rest: [String]) -> Int32? {
     case .directorStatus: return directorStatusOffline(rest)
     case .directorStart: return directorStartOffline(rest)
     case .directorSend: return directorSendOffline(rest)
+    case .directorCheck: return directorCheckOffline(rest)
     case .directorRetire: return directorRetireOffline(rest)
     case .sessionShow: return sessionShowOffline(rest)
     default: return nil
@@ -30,6 +31,34 @@ func runOffline(_ id: ActionID, _ rest: [String]) -> Int32? {
 }
 
 func offlineFail(_ why: String) -> Int32 { FileHandle.standardError.write(Data("duo2: \(why)\n".utf8)); return 1 }
+
+/// An offline verb's end: its exit code, after the nudge when it worked.
+func finishOffline(_ id: ActionID, _ rest: [String], _ code: Int32) -> Never {
+    if code == 0 { directorNudge(id, rest, duoReachable: false) }
+    exit(code)
+}
+
+/// After `director start`, `send` or `check` worked, the line that keeps `status` in view: how many red
+/// lines there are (DL-321). Not in `--json` output, and in a test context only for a scratch project
+/// (a scripted run never reads a real project's notes). It reads the project fresh and never fails the verb.
+func directorNudge(_ id: ActionID, _ rest: [String], duoReachable: Bool) {
+    guard id == .directorStart || id == .directorSend || id == .directorCheck else { return }
+    let inv = Invocation(rest)
+    let env = ProcessInfo.processInfo.environment
+    guard !inv.json, let d = try? OfflineDirector(inv, persistLinks: false) else { return }
+    if Isolation.isStrict(env), !isScratchFolder(d.project, env: env) { return }
+    let duo = duoReachable ? DuoHealthReader.reachable(env: env) : DuoHealthReader.unreachable(env: env)
+    if let red = d.redLines(duo: duo), let line = DirectorRedLines.nudge(red.count) { print(line) }
+}
+
+/// A folder under the temporary directories or a test instance's support folder: where scripted runs keep their projects.
+func isScratchFolder(_ url: URL, env: [String: String]) -> Bool {
+    func resolved(_ p: String) -> String { URL(fileURLWithPath: p).standardizedFileURL.resolvingSymlinksInPath().path }
+    var roots = ["/tmp", "/var/folders", NSTemporaryDirectory()].map(resolved)
+    if let s = env["DUO_SUPPORT_DIR"], !s.isEmpty { roots.append(resolved(s)) }
+    let p = resolved(url.path)
+    return roots.contains { p == $0 || p.hasPrefix($0 + "/") }
+}
 
 func isoNow(_ d: Date = Date()) -> String {
     let f = ISO8601DateFormatter(); f.formatOptions = [.withInternetDateTime]; f.timeZone = .current
@@ -54,7 +83,8 @@ struct OfflineDirector {
     var name: String
     var beacons: [DirectorOffline.LiveSession] = []
 
-    init(_ inv: Invocation, login: Bool = false) throws {
+    /// `persistLinks` false reads without writing: for the nudge, which runs beside a Duo that owns these files.
+    init(_ inv: Invocation, login: Bool = false, persistLinks: Bool = true) throws {
         let env = ProcessInfo.processInfo.environment
         let cwd = FileManager.default.currentDirectoryPath
         if let s = inv.flags["caps"], let c = try? JSONDecoder().decode(ClientCaps.self, from: Data(s.utf8)) { caps = c }
@@ -77,22 +107,34 @@ struct OfflineDirector {
         reg = DirectorRegistry.load(project: project)
         role = reg.role(sessionId: me)
         name = (role == .current ? reg.current?.name : nil) ?? (caps.name?.hasPrefix("director-") == true ? caps.name! : Director.name(project: project.lastPathComponent))
-        refresh()
+        refresh(persist: persistLinks)
     }
 
     var projectName: String { project.lastPathComponent }
 
     /// Reads the beacons and links pending background workers whose session has appeared, noting each in its task.
-    mutating func refresh() {
+    mutating func refresh(persist: Bool = true) {
         beacons = DirectorOffline.beacons()
         let linked = DirectorOffline.linkPending(&reg, beacons: beacons)
-        guard !linked.isEmpty else { return }
+        guard persist, !linked.isEmpty else { return }
         try? reg.save(project: project)
         for w in linked { progress(w.task, "Worker \(w.session.prefix(8)) (\(w.name ?? "")) started in the background.") }
     }
 
-    func log(_ event: String, task: String? = nil, worker: String? = nil, rung: String? = nil, _ detail: String? = nil) {
-        DirectorLog.append(DirectorEvent(at: isoNow(), director: name, event: event, task: task, worker: worker, rung: rung, detail: detail), project: project)
+    func log(_ event: String, task: String? = nil, worker: String? = nil, rung: String? = nil, routine: Bool? = nil, _ detail: String? = nil) {
+        DirectorLog.append(DirectorEvent(at: isoNow(), director: name, event: event, task: task, worker: worker, rung: rung, detail: detail, routine: routine), project: project)
+    }
+
+    /// The director this caller's red lines are for: the registry's when there is one, else its own name.
+    var directing: String { reg.current?.name ?? name }
+
+    /// The red lines for this caller, or nil when the report doesn't apply to it (a replaced director, or one
+    /// working in another director's project). `duo` is what R8 knows of Duo: pass `DuoHealthReader.unreachable()`
+    /// when Duo can't be reached, `.reachable()` when it can.
+    func redLines(duo: DirectorFacts.DuoHealth?, all: Bool = false) -> [RedLine]? {
+        guard DirectorFactsReader.applies(role: role, callerName: caps.name) else { return nil }
+        return DirectorFactsReader.report(project: project, director: directing, reg: reg, beacons: beacons, caps: caps,
+                                          skillNote: DirectorFactsReader.skillNote(), duo: duo, all: all)
     }
 
     /// A Progress line in a task's note (Duo isn't there to write it).
@@ -137,6 +179,11 @@ func directorStatusOffline(_ rest: [String]) -> Int32 {
     let d: OfflineDirector
     do { d = try OfflineDirector(inv, login: true) } catch let e as OfflineFailure { return offlineFail(e.why) } catch { return offlineFail("\(error)") }
     let p = d.projectName
+    // Red lines first (DL-319): the duties this director is neglecting right now.
+    if let red = d.redLines(duo: DuoHealthReader.unreachable(), all: inv.has("all")) {
+        for l in DirectorRedLines.block(red) { print(l) }
+        if d.role == .current, !inv.json { d.log("status", "\(red.count) red lines") }
+    }
     print("Duo isn't running. Directing doesn't need it (DL-231); workers are reached by SendMessage, or a background resume.")
     print("Project: \(p) (\(d.project.path)).")
     let installed = (try? String(contentsOf: Installer.directorSkillFile, encoding: .utf8)) ?? (try? String(contentsOf: Installer.directorAliasFile, encoding: .utf8))
@@ -162,7 +209,10 @@ func directorStatusOffline(_ rest: [String]) -> Int32 {
     }
     let tasks = d.tasks()
     print("Workers: \(tasks.filter(\.running).count) running.")
-    for t in tasks {
+    // The list is the running workers, those waiting for the user and those the user is typing in;
+    // --all lists every task. The rest are one line (the red lines name the ones that need a look).
+    let listed = inv.has("all") ? tasks : tasks.filter { $0.running || $0.state == "needs-you" || $0.userTyping }
+    for t in listed {
         var l = "  \(t.path)  \(t.title) (\(t.status ?? "open"))  "
         if let s = t.session {
             l += "\(t.state), \(t.place), session \(s.prefix(8))"
@@ -172,6 +222,7 @@ func directorStatusOffline(_ rest: [String]) -> Int32 {
         else { l += "no worker" }
         print(l)
     }
+    if listed.count < tasks.count { print(DirectorRedLines.otherTasks(tasks.count - listed.count)) }
     for t in tasks where t.session != nil && t.state != "stopped" && t.state != "no worker" {
         if let mine = d.caps.permissionClass, let theirs = t.permissionClass, mine != theirs {
             print("  \(t.path): your messages to its worker and its to you are held (\(theirs.rawValue) against your \(mine.rawValue)): switch this session to Auto, or ask the user to switch the worker.")
@@ -235,7 +286,11 @@ func directorStartOffline(_ rest: [String]) -> Int32 {
     }
 
     let suggest = inv.has("suggest"), noWorker = inv.has("no-worker") && !suggest
-    // Refusals that write nothing come first: a worker needs background sessions and a logged-in CLI.
+    // Refusals that write nothing come first: a bad --next, and a worker needs background sessions and a logged-in CLI.
+    var next: CheckBy.NextLook?
+    if let n = inv.flags["next"] {
+        do { next = try CheckBy.parseNext(n, now: Date()) } catch { return offlineFail("\(error)") }
+    }
     if !suggest && !noWorker {
         if d.caps.background == .no { return offlineFail("Background sessions are off for this client (agent view is disabled), so `duo2 director start` can't start a worker with Duo closed. Ask the user, or open Duo.") }
         if let why = Director.backgroundRefusal(d.caps) { d.log("refused", task: inv[0], why); return offlineFail(why) }
@@ -283,12 +338,23 @@ func directorStartOffline(_ rest: [String]) -> Int32 {
         try? Data(DirectorOffline.setting("status", s, in: text).utf8).write(to: url, options: .atomic)
     }
 
+    /// check_by for a task just started: --next, else two hours on (`--next none` sets none). Says what it set.
+    func setCheckBy() -> String {
+        let by = DirectorCheck.startCheckBy(next: next, now: Date())
+        let url = d.project.appending(path: path)
+        if let text = try? String(contentsOf: url, encoding: .utf8) {
+            let new = by.map { DirectorOffline.setting("check_by", CheckBy.format($0), in: text) } ?? DirectorOffline.removing("check_by", in: text)
+            if new != text { try? Data(new.utf8).write(to: url, options: .atomic) }
+        }
+        return by.map { "check_by is \(CheckBy.display($0)): look by then (`duo2 director check`)." } ?? "No check_by set."
+    }
+
     if noWorker {
         // Organising work the director does itself (DL-208): a task, no worker, no slot.
         if !made { setStatus("in-progress") }
         d.progress(path, "Taken by \(d.name) itself (organising work).")
         d.log("start", task: path, "no worker")
-        print("\(path) is yours to do yourself (no worker), directed by \(d.name). Propose the plan, then act on the user's yes.")
+        print("\(path) is yours to do yourself (no worker), directed by \(d.name). Propose the plan, then act on the user's yes. \(setCheckBy())")
         return 0
     }
     if suggest {
@@ -306,7 +372,49 @@ func directorStartOffline(_ rest: [String]) -> Int32 {
     if status == nil || status == "open" || status == "suggested" { setStatus("in-progress") }
     d.progress(path, "Worker \(worker) to start in the background.")
     d.log("start", task: path, "background, Duo closed, as \(worker)")
-    print("Run this; the worker is linked by its name, \(worker), as soon as it starts (`duo2 director status` or `watch` does it; no link step):\n  \(cmd)")
+    print("Run this; the worker is linked by its name, \(worker), as soon as it starts (`duo2 director status` or `watch` does it; no link step):\n  \(cmd)\n\(setCheckBy())")
+    return 0
+}
+
+/// `duo2 director check` with Duo closed (DL-319): a look recorded as a `Checked:` Progress line, check_by
+/// set to when the director will look next, and a `check` line in the log. The same words and writes as the app's.
+func directorCheckOffline(_ rest: [String]) -> Int32 {
+    let inv = Invocation(rest)
+    var d: OfflineDirector
+    do { d = try OfflineDirector(inv) } catch let e as OfflineFailure { return offlineFail(e.why) } catch { return offlineFail("\(error)") }
+    if let r = d.standDown() { return offlineFail(r) }
+    // Whoever status gives red lines to can clear them: a look records nothing about who directs.
+    guard DirectorFactsReader.applies(role: d.role, callerName: d.caps.name) else { return offlineFail("You're not \(d.projectName)'s director\(d.reg.current.map { " (\($0.name) is)" } ?? ""): `duo2 director start` makes you its director.") }
+    guard let target = inv[0] else { return offlineFail("usage: \(ActionID.directorCheck.action.usage)") }
+    let evidence = inv.positional.dropFirst().joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !evidence.isEmpty else { return offlineFail(DirectorCheck.emptyRefusal) }
+    let now = Date()
+    var next: CheckBy.NextLook?
+    if let n = inv.flags["next"] {
+        do { next = try CheckBy.parseNext(n, now: now) } catch { return offlineFail("\(error)") }
+    }
+    let routine: Bool? = inv.has("routine") ? true : nil
+    if let job = DirectorCheck.jobID(target) {
+        // A scheduled job has no note: the look goes in the log alone.
+        guard !job.isEmpty else { return offlineFail("usage: \(ActionID.directorCheck.action.usage)") }
+        d.log("check", task: "job:\(job)", routine: routine, DirectorCheck.logDetail(evidence))
+        print(DirectorCheck.output("job:\(job)", nextLook: nil) + (next == nil ? "" : " (--next doesn't apply to a job: its schedule is its next look.)"))
+        return 0
+    }
+    guard let hit = d.findTask(target) else { return offlineFail("no task '\(target)' in \(d.projectName)") }
+    let url = d.project.appending(path: hit.path)
+    let text = (try? String(contentsOf: url, encoding: .utf8)) ?? ""
+    let by = Director.frontmatter("directed_by", in: text)
+    guard by == d.name else {
+        d.log("refused", task: hit.path, by.map { "directed by another director (\($0))" } ?? "not a directed task")
+        return offlineFail(by.map { "\(hit.title) is directed by \($0), not you." } ?? "\(hit.title) has no directed_by:, so it's the user's: you can't record a check on it (DL-200).")
+    }
+    let checkBy = DirectorCheck.checkBy(next: next, status: Director.frontmatter("status", in: text), now: now)
+    var new = DirectorOffline.appendProgress(text, DirectorCheck.progressText(evidence: evidence, routine: routine == true), now: now)
+    new = checkBy.map { DirectorOffline.setting("check_by", CheckBy.format($0), in: new) } ?? DirectorOffline.removing("check_by", in: new)
+    do { try Data(new.utf8).write(to: url, options: .atomic) } catch { return offlineFail("couldn't write \(hit.path): \(error.localizedDescription)") }
+    d.log("check", task: hit.path, routine: routine, DirectorCheck.logDetail(evidence))
+    print(DirectorCheck.output(hit.path, nextLook: checkBy))
     return 0
 }
 
@@ -497,7 +605,7 @@ func runDirectorWatch(_ rest: [String]) -> Int32 {
     var told = ""
     setvbuf(stdout, nil, _IOLBF, 0)
     while true {
-        var args = ["--json", "--caps", directorCaps()]
+        var args = ["--json", "--no-red-lines", "--caps", directorCaps()]
         if let p = inv.flags["project"] { args += ["--project", p] }
         var status: [String: Any]?
         if let (endpoint, source) = discoverEndpoint(),

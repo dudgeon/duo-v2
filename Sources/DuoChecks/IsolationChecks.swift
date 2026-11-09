@@ -113,6 +113,16 @@ func isolationChecks() throws {
     check(refused([dv: root + "/nothing"]), "a support folder with no endpoint.json: refused")
     check(refused([iv: "yes", dv: real.path]) && !Isolation.flag([iv: "0"]), "DUO_ISOLATED is on for any value but empty or 0")
 
+    // 3a. A run of the offline verbs themselves (F-619): told Duo is closed, it reaches no Duo at all.
+    let closed = Isolation.duoClosedVariable
+    check(outcome([iv: "1", dv: root + "/nothing", closed: "1"]) == "none",
+          "DUO_TEST_DUO_CLOSED=1 with a scratch support folder: no instance, so the offline verbs run")
+    check(refused([iv: "1", closed: "1"]), "DUO_TEST_DUO_CLOSED=1 naming no folder: still refused")
+    check(refused([iv: "1", dv: real.path, closed: "1"]), "DUO_TEST_DUO_CLOSED=1 with the real support folder: still refused")
+    check(refused([iv: "1", sv: realDuo.path, tv: "real-token", closed: "1"]), "DUO_TEST_DUO_CLOSED=1 with the real Duo's socket: still refused")
+    check(outcome([iv: "1", dv: inst.path, sv: testDuo.path, tv: "inst-token", closed: "1"]) == "inst", "a named socket still wins: that instance, never the real one")
+    check(!Isolation.scratchHome([:]) && Isolation.scratchHome(["HOME": root]), "a HOME that isn't this user's is a scratch home; no HOME isn't")
+
     // 4. An endpoint deleted (or replaced) mid-run.
     check(outcome([dv: inst.path]) == "inst", "mid-run: reachable before")
     try fm.removeItem(at: instFile)

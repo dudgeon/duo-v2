@@ -113,7 +113,8 @@ public enum DirectorOffline {
                              claudeDir: URL = LegacyDuo.claudeDir, now: Date = Date()) -> [Task] {
         let files = (try? FileManager.default.contentsOfDirectory(at: project.appending(path: "tasks"), includingPropertiesForKeys: [.contentModificationDateKey])) ?? []
         let iso = ISO8601DateFormatter()
-        return files.filter { $0.pathExtension.lowercased() == "md" }.sorted { $0.path < $1.path }.compactMap { url in
+        // A note whose file name starts with `_` is a record, not a task (`_record-reservations.md`).
+        return files.filter { $0.pathExtension.lowercased() == "md" && !$0.lastPathComponent.hasPrefix("_") }.sorted { $0.path < $1.path }.compactMap { url in
             guard let text = try? String(contentsOf: url, encoding: .utf8), Director.frontmatter("directed_by", in: text) == director,
                   Director.frontmatter("archived", in: text)?.lowercased() != "true" else { return nil }
             let path = "tasks/" + url.lastPathComponent
@@ -197,6 +198,15 @@ public enum DirectorOffline {
             return (["---", "\(key): \(value)", "---"] + lines).joined(separator: nl)
         }
         if let i = lines[1..<close].firstIndex(where: { $0.hasPrefix(key + ":") }) { lines[i] = "\(key): \(value)" } else { lines.insert("\(key): \(value)", at: close) }
+        return lines.joined(separator: nl)
+    }
+
+    /// The note without one scalar frontmatter key (the same note if it has none), touching nothing else.
+    public static func removing(_ key: String, in text: String) -> String {
+        let nl = text.contains("\r\n") ? "\r\n" : "\n"
+        var lines = text.components(separatedBy: nl)
+        guard lines.first == "---", let close = lines.dropFirst().firstIndex(of: "---"), let i = lines[1..<close].firstIndex(where: { $0.hasPrefix(key + ":") }) else { return text }
+        lines.remove(at: i)
         return lines.joined(separator: nl)
     }
 

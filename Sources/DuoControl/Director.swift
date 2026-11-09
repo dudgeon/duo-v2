@@ -115,7 +115,7 @@ public enum DirectorSkill {
     public static let format = 1
     /// Bump when the skill starts needing a `duo2 director` verb or behaviour an older Duo lacks
     /// (F-341): `status` compares the installed skill's revision with the running Duo's.
-    public static let revision = 4
+    public static let revision = 5
     public static func text(name: String = "director") -> String {
         let t = source.replacingOccurrences(of: "{{FORMAT}}", with: "\(format)").replacingOccurrences(of: "{{REVISION}}", with: "\(revision)")
         return name == "director" ? t : t.replacingOccurrences(of: "name: director\n", with: "name: \(name)\n")
@@ -313,16 +313,20 @@ public struct DirectorRegistry: Codable, Equatable, Sendable {
 public struct DirectorEvent: Codable, Equatable, Sendable {
     public var at: String
     public var director: String?
-    /// `status`, `start`, `refused`, `send`, `delivered`, `retire`, `takeover`, `standdown`.
+    /// `status`, `start`, `refused`, `send`, `handed`, `delivered`, `check`, `retire`, `takeover`, `standdown`.
     public var event: String
+    /// A task path, or `job:<id>` for a check on a scheduled job.
     public var task: String?
     public var worker: String?
     /// For `send` and `delivered`: the ladder rung taken (`SendRung`).
     public var rung: String?
     public var detail: String?
+    /// For `check`: the director said nothing new was found, so the user needn't hear of it (R4).
+    /// Absent on older lines, which still decode.
+    public var routine: Bool?
 
-    public init(at: String, director: String?, event: String, task: String? = nil, worker: String? = nil, rung: String? = nil, detail: String? = nil) {
-        self.at = at; self.director = director; self.event = event; self.task = task; self.worker = worker; self.rung = rung; self.detail = detail
+    public init(at: String, director: String?, event: String, task: String? = nil, worker: String? = nil, rung: String? = nil, detail: String? = nil, routine: Bool? = nil) {
+        self.at = at; self.director = director; self.event = event; self.task = task; self.worker = worker; self.rung = rung; self.detail = detail; self.routine = routine
     }
 }
 
@@ -344,8 +348,21 @@ public enum DirectorLog {
         }
     }
 
-    public static func read(project: URL) -> [DirectorEvent] {
-        guard let text = try? String(contentsOf: file(project: project), encoding: .utf8) else { return [] }
+    /// Every event, oldest first. `lastBytes` reads only the end of a long log (status appends a line each
+    /// run, so it grows): the red lines look back a week, which a few MB cover many times over.
+    public static func read(project: URL, lastBytes: Int? = nil) -> [DirectorEvent] {
+        var text: String
+        if let lastBytes, let h = try? FileHandle(forReadingFrom: file(project: project)) {
+            defer { try? h.close() }
+            let size = (try? h.seekToEnd()) ?? 0
+            let from = size > UInt64(lastBytes) ? size - UInt64(lastBytes) : 0
+            try? h.seek(toOffset: from)
+            text = String(decoding: (try? h.readToEnd()) ?? Data(), as: UTF8.self)
+            if from > 0, let nl = text.firstIndex(of: "\n") { text = String(text[text.index(after: nl)...]) }   // a partial line
+        } else {
+            guard let all = try? String(contentsOf: file(project: project), encoding: .utf8) else { return [] }
+            text = all
+        }
         return text.split(separator: "\n").compactMap { try? JSONDecoder().decode(DirectorEvent.self, from: Data($0.utf8)) }
     }
 

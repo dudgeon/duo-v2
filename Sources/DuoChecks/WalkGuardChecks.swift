@@ -30,6 +30,8 @@ let walkGuardExempt: [String: String] = [
     "DuoControl/Installer.swift": "one listing of a skill folder Duo wrote, to remove the folder only when it's empty",
     "DuoControl/Director.swift": "Claude's sessions folder (the caller's beacon)",
     "DuoControl/DirectorOffline.swift": "Claude's sessions and projects folders (beacons, transcripts), a project's tasks folder and its .duo/director-runs",
+    "DuoControl/DirectorFactsReader.swift": "a project's tasks folder, its .git/worktrees folder and each work tree's own tasks folder (the red lines read the director's notes); Claude's folders come through DirectorOffline",
+    "DuoControl/ScheduledRuns.swift": "the Claude desktop app's session records folder (Application Support/Claude/claude-code-sessions/<account>/<device>: scheduled-tasks.json and its local_*.json runs), read-only",
     "DuoKit/Model/AppModel+Organize.swift": "one listing of a folder being emptied",
     "DuoKit/Shell/SettingsView.swift": "the size of Claude's config folder",
     "DuoSearch/SessionSource.swift": "Claude's config folder",
