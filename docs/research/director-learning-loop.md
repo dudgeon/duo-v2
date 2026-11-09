@@ -117,9 +117,9 @@ It lives in the skill, as a new section, so every director runs it. When somethi
 
 **Costs:**
 
-- **Skill length:** about 30 new lines on 166, less about 15 I can cut from §1 and §5 where status now says the same thing.
+- **Skill length:** 205 lines, up from 166. I estimated about 15 net and it came out at 39: the register table and §11 needed their words, and cutting more risked what the existing evals prove.
 - **Verbs:** one new (`check`).
-- **Evals:** 9 new cases at 3 runs each, 27 runs added to today's 69. Each suite run is capped at $5 (`--max-cost-usd`). I don't have a measured cost per run yet.
+- **Evals:** 9 new cases at 3 runs each. A full suite of 32 cases at 3 runs costs about $4.60 at list price on Haiku: $2.70 on the runs and $1.90 on the judges (F-622).
 
 **Limits, plainly:**
 

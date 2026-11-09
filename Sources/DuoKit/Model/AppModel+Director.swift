@@ -248,7 +248,7 @@ extension AppModel {
         lines.append("Workers: \(active.count) running.")
         // The list is the running workers, those waiting for the user and those the user is typing in;
         // --all lists every task (the JSON always has them all).
-        let listed = inv.has("all") ? tasks : tasks.filter { $0.running || $0.stateWord == "needs-you" || ($0.facts?.userTyping ?? false) }
+        let listed = inv.has("all") ? tasks : tasks.filter { $0.running || $0.stateWord == "needs-you" || ($0.facts?.userTyping ?? false) || $0.note.status == DirectorNotes.suggested }
         for t in listed {
             var l = "  \(t.note.path)  \(t.note.title) (\(t.note.status ?? "open"))  "
             if let w = t.worker, let f = t.facts {

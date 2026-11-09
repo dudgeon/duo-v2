@@ -256,7 +256,7 @@ public struct DirectorRegistry: Codable, Equatable, Sendable {
         let url = Self.file(project: project)
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         let enc = JSONEncoder(); enc.outputFormatting = [.prettyPrinted, .sortedKeys]
-        try enc.encode(self).write(to: url, options: .atomic)
+        try DirectorOffline.write(enc.encode(self), to: url)
     }
 
     public enum Role: Equatable, Sendable {
@@ -344,7 +344,7 @@ public enum DirectorLog {
             _ = try? h.seekToEnd()
             try? h.write(contentsOf: line)
         } else {
-            try? line.write(to: url, options: .atomic)
+            try? DirectorOffline.write(line, to: url)
         }
     }
 
@@ -675,6 +675,8 @@ public struct ClientCaps: Codable, Equatable, Sendable {
     /// `claude auth status` from the caller's environment: `loggedIn` in its JSON. Unknown when
     /// `claude` isn't found, takes longer than `timeout`, or says something else.
     public static func cliLogin(env: [String: String], timeout: TimeInterval = 10) -> Tri {
+        // A scratch home (the skill's evals) has no login of its own, whatever this session runs on: not a fact to report.
+        if Isolation.scratchHome(env) { return .unknown }
         let p = Process()
         p.executableURL = URL(fileURLWithPath: "/usr/bin/env")
         p.arguments = ["claude", "auth", "status"]

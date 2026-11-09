@@ -18,7 +18,7 @@ graders:
   - name: no-worker
     type: "regex"
     target: "trace"
-    pattern: "\"name\": ?\"Bash\",[^{]*\"input\": ?\\{\"command\": ?\"([^\"]*(;|&&|\\|)\\s*)?duo2 director start"
+    pattern: "\"name\": ?\"Bash\",[^{]*\"input\": ?\\{\"command\": ?\"([^\"]*(;|&&|\\|)\\s*)?duo2 director start(?!([^\"\\\\]|\\\\.)*(--suggest|--no-worker))"
     match: "not_contains"
   - name: judge
     type: "llm"

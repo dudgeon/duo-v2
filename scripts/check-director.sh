@@ -425,6 +425,17 @@ PY
   printf '  · status over 100 notes took %.2f s (%s red lines)\n' $took "$(print -r -- $o | grep -c '^  RED ')"
   if (( took > 2 )); then bad "speed: status over 100 notes took $took s, over the 2 s limit"; else ok "speed: status over 100 notes is under 2 s"; fi
 
+  # 16. Claude's shell sandbox denies the system's temporary items folder, where Foundation's .atomic stages a
+  # write, so every director write used to fail there (F-621). The same denial, no model needed.
+  fresh
+  note sandboxed in-progress "$(tmin 4H) Worker started."
+  o=$(cd $proj && sandbox-exec -p '(version 1)(allow default)(deny file-write* (subpath "/private/var/folders"))' \
+    $stub --as-session -n director-x --session-id $sid -- $duo2 director check tasks/sandboxed.md "read it under the sandbox" --next 2d 2>&1); rc=$?
+  if (( rc == 0 )) && grep -q "Checked: read it under the sandbox" $proj/tasks/sandboxed.md && grep -q "^check_by: " $proj/tasks/sandboxed.md; then
+    ok "a write under Claude's shell sandbox works (F-621)"
+  else bad "write under the sandbox: rc=$rc ${o[1,300]}"; fi
+  lacks "and leaves no temporary file behind" "$(ls -A $proj/tasks)" ".tmp"
+
   export PATH=$old_path
   unset DUO_CLAUDE_APP_DIR
   rm -rf $tmp

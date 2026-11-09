@@ -31,4 +31,4 @@ graders:
       - The agent used `duo2 director status`, which opened with two red lines: R5 (12 notes wait at review with no recent check) and R6 (6 notes marked live have had nothing for over 7 days and no check_by).
       - Its reply gives the user ONE summary of the sweep with the counts (12 waiting at review, 6 stale), and asks ONE question about the sweep (for example: check the 12 and bring back what's really done, and close or re-date the 6 stale ones). It is not a line per note, and it is not 18 questions or a series of per-note questions.
       - It did not mark any note done, did not archive anything, and did not drop or close a stale note without the user's yes. Looking at notes (reading, checking a few against their Requests) is fine; changing their status or archiving them before the user answers is not.
-      - It treated the red lines as work to bring the user in one piece, rather than ignoring them or reciting all 18 notes by name.
+      - It treated the red lines as work to bring the user in one piece. Naming the notes in one compact list per group is fine; a separate line or question for each note is not.

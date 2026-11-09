@@ -142,7 +142,7 @@ struct OfflineDirector {
         guard DirectorRegistry.isTaskPath(task) else { return }
         let url = project.appending(path: task)
         guard let text = try? String(contentsOf: url, encoding: .utf8) else { return }
-        try? Data(DirectorOffline.appendProgress(text, line).utf8).write(to: url, options: .atomic)
+        try? DirectorOffline.write(Data(DirectorOffline.appendProgress(text, line).utf8), to: url)
     }
 
     func tasks() -> [DirectorOffline.Task] {
@@ -209,9 +209,10 @@ func directorStatusOffline(_ rest: [String]) -> Int32 {
     }
     let tasks = d.tasks()
     print("Workers: \(tasks.filter(\.running).count) running.")
-    // The list is the running workers, those waiting for the user and those the user is typing in;
-    // --all lists every task. The rest are one line (the red lines name the ones that need a look).
-    let listed = inv.has("all") ? tasks : tasks.filter { $0.running || $0.state == "needs-you" || $0.userTyping }
+    // The list is the running workers, those waiting for the user, those the user is typing in and the
+    // suggestions (the user decides those, and no red line names them); --all lists every task. The rest
+    // are one line (the red lines name the ones that need a look).
+    let listed = inv.has("all") ? tasks : tasks.filter { $0.running || $0.state == "needs-you" || $0.userTyping || $0.status == "suggested" }
     for t in listed {
         var l = "  \(t.path)  \(t.title) (\(t.status ?? "open"))  "
         if let s = t.session {
@@ -329,13 +330,13 @@ func directorStartOffline(_ rest: [String]) -> Int32 {
         guard record() else { return 1 }
         if suggest { text = DirectorOffline.setting("status", "suggested", in: text) }
         if let dw = inv.flags["done-when"] { text = DirectorOffline.setting("done_when", DirectorOffline.quoted(dw), in: text) }
-        try? Data(text.utf8).write(to: url, options: .atomic)
+        try? DirectorOffline.write(Data(text.utf8), to: url)
     }
     func noteStatus() -> String? { (try? String(contentsOf: d.project.appending(path: path), encoding: .utf8)).flatMap { Director.frontmatter("status", in: $0) } }
     func setStatus(_ s: String) {
         let url = d.project.appending(path: path)
         guard let text = try? String(contentsOf: url, encoding: .utf8) else { return }
-        try? Data(DirectorOffline.setting("status", s, in: text).utf8).write(to: url, options: .atomic)
+        try? DirectorOffline.write(Data(DirectorOffline.setting("status", s, in: text).utf8), to: url)
     }
 
     /// check_by for a task just started: --next, else two hours on (`--next none` sets none). Says what it set.
@@ -344,7 +345,7 @@ func directorStartOffline(_ rest: [String]) -> Int32 {
         let url = d.project.appending(path: path)
         if let text = try? String(contentsOf: url, encoding: .utf8) {
             let new = by.map { DirectorOffline.setting("check_by", CheckBy.format($0), in: text) } ?? DirectorOffline.removing("check_by", in: text)
-            if new != text { try? Data(new.utf8).write(to: url, options: .atomic) }
+            if new != text { try? DirectorOffline.write(Data(new.utf8), to: url) }
         }
         return by.map { "check_by is \(CheckBy.display($0)): look by then (`duo2 director check`)." } ?? "No check_by set."
     }
@@ -412,7 +413,7 @@ func directorCheckOffline(_ rest: [String]) -> Int32 {
     let checkBy = DirectorCheck.checkBy(next: next, status: Director.frontmatter("status", in: text), now: now)
     var new = DirectorOffline.appendProgress(text, DirectorCheck.progressText(evidence: evidence, routine: routine == true), now: now)
     new = checkBy.map { DirectorOffline.setting("check_by", CheckBy.format($0), in: new) } ?? DirectorOffline.removing("check_by", in: new)
-    do { try Data(new.utf8).write(to: url, options: .atomic) } catch { return offlineFail("couldn't write \(hit.path): \(error.localizedDescription)") }
+    do { try DirectorOffline.write(Data(new.utf8), to: url) } catch { return offlineFail("couldn't write \(hit.path): \(error.localizedDescription)") }
     d.log("check", task: hit.path, routine: routine, DirectorCheck.logDetail(evidence))
     print(DirectorCheck.output(hit.path, nextLook: checkBy))
     return 0

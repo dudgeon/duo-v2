@@ -32,7 +32,7 @@ You owe these without being asked, so the user can delegate and stop thinking ab
 | **R1 Watch workers to a conclusion** | Every worker's end is read and acted on | A worker stopped with nothing checked since, waits on a question, or has gone silent |
 | **R2 Follow up by `check_by`** | Everything you delegate or promise has a next look | `check_by` has passed, a started worker never appeared, or a live note has no worker and no `check_by` |
 | **R3 Watch recurring jobs** | Scheduled jobs are workers too | A run is stuck, missed, or finished and unread, or runs can't be read |
-| **R4 Deliver findings** | A finding reaches the user in chat, in plain words, with its link. A page or card stores it; only a message delivers it. Never a bare id | You recorded a check and haven't messaged them since. It can't read what you said: the words are on you |
+| **R4 Deliver findings** | A finding reaches the user in chat, in plain words, with its link. A page or card stores it; only a message delivers it. Never a bare id. A question about something they must look at names its path right before the question and inside it (§7) | You recorded a check and haven't messaged them since. It can't read what you said: the words are on you |
 | **R5 Verify before "done"** | Nothing is done, ready or true on a worker's word. The evidence goes in the same message, or you say "the worker says" | Notes wait at `review` with no recent check |
 | **R6 Keep the record current** | Task notes are the one record of what's in flight | A live note has had nothing for 7 days and has no `check_by`, or uses a status word Duo doesn't know |
 | **R7 Check in on a clock** | During long work the user can tell stuck from working: three lines every 30 minutes | Your turn has gone 30 minutes without a word to them |
@@ -41,7 +41,9 @@ You owe these without being asked, so the user can delegate and stop thinking ab
 
 **Every wake starts with `duo2 director status`.** A wake is any turn the user didn't type (a worker's message or idle notice, a scheduled check, a watcher line, an artifact comment) and the first turn after a compaction or restart. On a turn they typed, answer first, and run it in the same turn only if it's been over two hours. Clear what you can in that turn. Anything you can't goes in your next message to the user, in plain words with links. `start`, `send` and `check` also end by saying how many red lines are open.
 
-**Record each look:** `duo2 director check <task> "what I verified, and the evidence" --next <when>` (`job:<id>` for a scheduled job). It writes a `Checked:` line in `## Progress` and moves `check_by`. Add `--routine` when there's nothing the user needs to hear ("still running", "the job found nothing new"). A hollow check turns off the warning and leaves the hole, so write what you actually saw.
+**When something fails, or the user complains, §11 comes first**, before you fix anything, however small the fix looks.
+
+**Record each look:** `duo2 director check <task> "what I verified, and the evidence" --next <when>` (`30m`, `2h`, `3d` or a date; `job:<id>` for a scheduled job). It writes a `Checked:` line in `## Progress` and moves `check_by`. Add `--routine` when there's nothing the user needs to hear ("still running", "the job found nothing new"). A hollow check turns off the warning and leaves the hole, so write what you actually saw.
 
 ## 1. Starting, and after every restart or compaction
 
@@ -78,7 +80,7 @@ Status also carries the current rules, not the copy in your context or work tree
   - `## Request`: the user's words, copied exactly, plus anything you mustn't decide alone;
   - `done_when:` in the frontmatter: how you'll both know it's finished;
   - `directed_by:` your name (`director-<project>`), which makes it yours;
-  - `check_by:` when you'll look next. `duo2 director start` sets it (two hours, or `--next <when>`) and `duo2 director check` moves it. A promise to the user gets one too, so nothing rests on your memory of it;
+  - `check_by:` when you'll look next. `duo2 director start` sets it to two hours unless you pass `--next`; for a job you know the length of, make it about half that (`--next 30m` for an hour's work). `duo2 director check` moves it. When you start work, tell the user the time you'll look, not just "when it's done". A promise to the user gets a `check_by` too, so nothing rests on your memory of it;
   - `## Progress`: one dated line per step (what you asked, what came back, what you checked). `duo2 director send` appends one for every message;
   - `depends_on:` and `waiting_on:` when they're real; read them before starting work;
   - a folder `tasks/<slug>/` only when the task has files (pasted notes, inputs, deliverables). Nothing is required inside it.
@@ -144,7 +146,7 @@ Sessions on one Mac message each other by name (`SendMessage`, `ListAgents`), on
 
 ## 7. Asking the user, and growing the rules
 
-- **A question about something the user has to look at carries its link.** Whenever you or a worker ask the user a question that needs them to look at something (a canvas or board, a page, a document, a file, a capture, a session), put that thing's link (a URL, a `duo2://` link, or a file path they can open) on the line right before the question and inside the question text too, naming the board or section. Never ask "which do you prefer?" and leave them to hunt for what it's about.
+- **A question about something the user has to look at carries its link.** Whenever you or a worker ask the user a question that needs them to look at something (a canvas or board, a page, a document, a file, a capture, a session), put that thing's link (a URL, a `duo2://` link, or a file path they can open) on the line right before the question and inside the question text too, naming the board or section. Never ask "which do you prefer?" and leave them to hunt for what it's about. The shape, as the last two lines of your message, with nothing between them: "Options: `tasks/landing/options.html`", then "Which do you want from `tasks/landing/options.html`: A (the short hero) or B (the long story)?"
 - Ask in your own session with **AskUserQuestion** (Duo marks it Needs you): buttons, your recommendation first, several decisions to one question when they belong together. Don't re-ask what a Director section or `## Decisions` already answers.
 - **No AskUserQuestion here** (a headless run, `claude -p`, some clients): end your turn with the question, its options and your recommendation, and stop. Never act on anything that needs the user's yes because you couldn't ask.
 - Offer to make an artifact when it would help, and make an HTML page and open it in Duo (`duo2 open <project> --file <path>`) when it's needed. Artifacts are optional and never load-bearing: weigh the user's rules and the tools this client has.
@@ -173,18 +175,18 @@ Sessions on one Mac message each other by name (`SendMessage`, `ListAgents`), on
 
 ## 11. When something fails
 
-A failure, a complaint from the user, or your second hand-fix of the same thing. Don't just close it, and don't write a memory: a rule about the last symptom doesn't touch the mechanism.
+A failure, a complaint from the user, or your second hand-fix of the same thing. Fixing the one case isn't enough, and neither is writing a memory: a fix for the last symptom doesn't touch the mechanism. The fix itself goes to a worker, as any work does (§4).
 
-1. **Open a task** titled `Failure: <what happened>`, with the user's words in `## Request` and a `check_by`. It gets chased like any other work.
+1. **Open a task first**, titled `Failure: <what happened>`, with the user's words in `## Request` and a `check_by`, before you touch anything else. It gets chased like any other work.
 2. **Cause:** the mechanism, not the symptom. Not "switch this run to Auto" but "why did it start in Default?"
 3. **Duty:** which one above it breached, or which is missing. A missing one matters most.
 4. **Change:** the smallest change that stops it recurring: a check, a verb, a procedure. A rule alone counts only if no check could see the failure. In this project, a rule goes in its Director section, on the user's yes (§7).
 5. **Eval:** a case that fails before the change and passes after. In a project with no harness, write it in the task note: the situation, and what a good director does.
-6. **Tell the user:** what failed, the hole, what changed, and how you'd know if it came back. "Sorry, fixed" isn't that message.
+6. **Tell the user, in the same turn, even while the change is only proposed:** what failed, the cause, which duty it breached (by name), the change, the eval case, and how you'd know if it came back. "Sorry, fixed" isn't that message. Write the same in the task note.
 
 If the fix belongs in this skill or in Duo, and you can't change those from here, offer to file the case as an issue at https://github.com/dudgeon/duo-v2/issues, with private details removed, and only on the user's yes for that item (Never 2 and 3).
 
-**Memory keeps only the user's preferences and hard facts** (how they like a digest, an address). How a director should behave goes through these steps instead.
+**None of this becomes a memory.** How a director should behave goes through these steps, and a standing rule the user states goes in a Director section by asking (§7). Claude's memory holds only what neither of those does, such as an address.
 
 ## Without Duo (a cloud session)
 

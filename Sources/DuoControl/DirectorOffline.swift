@@ -162,6 +162,26 @@ public enum DirectorOffline {
         return stem
     }
 
+    // MARK: Writing
+
+    /// Replaces `url` with `data` in one step, with a temporary file beside it and a rename. Foundation's
+    /// `.atomic` stages its copy in the system's temporary items folder, which Claude's shell sandbox
+    /// denies, so every director write failed with "You don't have permission" there (F-621).
+    public static func write(_ data: Data, to url: URL) throws {
+        let fm = FileManager.default
+        let temp = url.deletingLastPathComponent().appending(path: ".\(url.lastPathComponent).\(UUID().uuidString.prefix(8)).tmp")
+        try data.write(to: temp, options: .withoutOverwriting)
+        do {
+            if let mode = (try? fm.attributesOfItem(atPath: url.path))?[.posixPermissions] as? NSNumber {
+                try fm.setAttributes([.posixPermissions: mode], ofItemAtPath: temp.path)
+            }
+            guard rename(temp.path, url.path) == 0 else { throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO) }
+        } catch {
+            try? fm.removeItem(at: temp)
+            throw error
+        }
+    }
+
     // MARK: Note edits
 
     /// The note with `- yyyy-MM-dd HH:mm <line>` after the last non-blank line of its `## Progress`
