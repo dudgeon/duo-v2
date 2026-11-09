@@ -19,6 +19,11 @@ a list in `$CLAUDE_CONFIG_DIR/stub-sessions.json` that `agents --json` prints; `
 resumed turns to `stub-turns.jsonl`; interactive mode writes a beacon and blocks on stdin; a beacon has
 `peerFeatures` and `messagingSocketPath` only when `stub.messaging` is true.
 
+`check-director.sh` puts the stub first on `PATH` as `claude` for the whole script. `duo2` asks `claude auth status` from
+`PATH`, so otherwise the result would depend on the caller's PATH and login (F-619). The stub answers with
+`stub.loggedIn` (true unless the profile says false; `logged-out` is that profile) and leaves a mark in the config folder,
+and each section asserts the mark is there, so a run against a real CLI fails.
+
 ## Profile shape
 
     { "name": "pinned-219-strict", "claude": "stub",
@@ -42,8 +47,7 @@ with `scripts/check-director.sh duties`; naming profiles runs only those, and no
 
 It works in one scratch folder under `/tmp/dh-XXXX`, with the loop's isolation (`DUO_ISOLATED=1`, `DUO_TEST_DUO_CLOSED=1`,
 a scratch `DUO_SUPPORT_DIR` and `CLAUDE_CONFIG_DIR`, and the stop if the output lacks "Duo isn't running"), the `current`
-profile (it has messaging), `DUO_CLAUDE_APP_DIR` pointed at a scratch folder standing in for the Claude app's records, and
-a stand-in `claude` first on `PATH` that says it's logged in, so R8's CLI line never depends on the Mac it runs on. Each
+profile (it has messaging), and `DUO_CLAUDE_APP_DIR` pointed at a scratch folder standing in for the Claude app's records. Each
 rule gets a fixture built by hand (task notes, `.duo/director.json` workers, `.duo/director-log.jsonl` events, a transcript
 at `$CLAUDE_CONFIG_DIR/projects/x/<session id>.jsonl`, `claude-code-sessions/a/b/scheduled-tasks.json` and `local_*.json`
 runs) with dates taken from `date`, and an assertion on the printed line:

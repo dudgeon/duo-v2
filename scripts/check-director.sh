@@ -16,6 +16,13 @@ if [[ ! -x $duo2 ]]; then
   print "missing $duo2: run  swift build --product duo2  first"; exit 2
 fi
 
+# The stub is `claude` for this whole script. duo2 asks `claude auth status` from PATH, so otherwise the result
+# would depend on whether the caller's PATH holds a real CLI, which says "logged out" for a scratch config (F-619).
+shim=$(mktemp -d /tmp/dh-XXXX)
+trap 'rm -rf $shim' EXIT
+ln -s $stub $shim/claude
+export PATH=$shim:$PATH
+
 fail=0 pass=0
 ok()  { print "  ✔ $1"; pass=$((pass+1)); }
 bad() { print "  ✘ $1"; fail=$((fail+1)); }
@@ -48,6 +55,15 @@ for name in $names; do
     print "  ✘ isolation: output lacks \"Duo isn't running\" (is a Duo reachable?); stopping"
     print -r -- $out; exit 2
   fi
+
+  # The login probe reached the stub, and status says what the profile says.
+  if [[ -s $cfg/stub-auth-status && $(command -v claude) == $shim/claude ]]; then ok "the login probe reached the stub, not a real CLI"
+  else bad "the login probe didn't reach the stub: claude is $(command -v claude)"; fi
+  logged_in=$(python3 -I $h/profile.py get $prof stub.loggedIn)
+  if [[ $logged_in == false ]]; then
+    if [[ $out == *"RED R8 the CLI: Claude's CLI is logged out"* ]]; then ok "logged out: R8 says so"; else bad "logged out: no R8 line in ${out[1,300]}"; fi
+  elif [[ $out == *"RED R8 the CLI"* ]]; then bad "logged in, but R8 says logged out"
+  else ok "logged in: no R8 line about the CLI"; fi
 
   typeset -A got
   got=()
@@ -101,6 +117,13 @@ sys.exit(0 if len(s)==2 and s[0]["name"]==s[1]["name"]=="w1" and s[0]["id"]!=s[1
   mkdir -p $proj/tasks
   print -r -- $'---\ntitle: T\nstatus: in-progress\ndirected_by: "director-x"\n---\n# T\n' > $proj/tasks/t.md
   print -r -- $'---\ntitle: U\nstatus: open\n---\n# U\n' > $proj/tasks/u.md
+  if [[ $logged_in == false ]]; then
+    # A logged-out CLI: every start of a worker with Duo closed is refused, and says why (F-365).
+    o=$(cd $proj && $stub --as-session -n director-x --session-id 33333333-3333-4333-8333-333333333333 -- $duo2 director start t --background 2>&1); rc=$?
+    if (( rc != 0 )) && [[ $o == *"logged out"* ]]; then ok "Duo closed, logged out: start is refused"; else bad "offline start, logged out: rc=$rc ${o[1,160]}"; fi
+    rm -rf $tmp
+    continue
+  fi
   if [[ $(python3 -I $h/profile.py get $prof expect.background) == no ]]; then
     # No background sessions: every start of a worker with Duo closed is refused, and says why.
     o=$(cd $proj && $stub --as-session -n director-x --session-id 33333333-3333-4333-8333-333333333333 -- $duo2 director start t --background 2>&1); rc=$?
@@ -146,14 +169,10 @@ if (( run_duties )); then
   print "== duties"
   prof=$h/profiles/current.json   # messaging: yes
   tmp=$(mktemp -d /tmp/dh-XXXX)
-  cfg=$tmp/c proj=$tmp/p sup=$tmp/s app=$tmp/app bin=$tmp/bin sid=44444444-4444-4444-8444-444444444444
-  mkdir -p $proj/tasks $sup $app $bin
+  cfg=$tmp/c proj=$tmp/p sup=$tmp/s app=$tmp/app sid=44444444-4444-4444-8444-444444444444
+  mkdir -p $proj/tasks $sup $app
   print "# duties" > $proj/PROJECT.md
   python3 -I $h/profile.py setup $prof $cfg
-
-  # A stand-in `claude` that says it's logged in, so R8's CLI line never depends on this Mac's login.
-  print -r -- $'#!/bin/sh\necho \'{"loggedIn":true}\'' > $bin/claude; chmod +x $bin/claude
-  old_path=$PATH; export PATH=$bin:$PATH
 
   # The same isolation as the loop: scratch config and support folders, no endpoint, the Claude app's records
   # in a scratch folder, and a stop if the output isn't Duo-closed.
@@ -209,6 +228,7 @@ print(int((datetime.datetime.fromisoformat(m.group(1)).astimezone() - datetime.d
   o=$(dd status)
   if [[ $o != *"Duo isn't running"* ]]; then print "  ✘ isolation: output lacks \"Duo isn't running\" (is a Duo reachable?); stopping"; print -r -- $o; exit 2; fi
   if [[ ${o%%$'\n'*} == "Red lines: none." ]]; then ok "an empty project prints Red lines: none. first"; else bad "empty project: ${o[1,300]}"; fi
+  if [[ -s $cfg/stub-auth-status ]]; then ok "the login probe reached the stub, not a real CLI"; else bad "the login probe didn't reach the stub: claude is $(command -v claude)"; fi
 
   # 2. R1: a worker that stopped with nothing checked since.
   fresh
@@ -436,7 +456,6 @@ PY
   else bad "write under the sandbox: rc=$rc ${o[1,300]}"; fi
   lacks "and leaves no temporary file behind" "$(ls -A $proj/tasks)" ".tmp"
 
-  export PATH=$old_path
   unset DUO_CLAUDE_APP_DIR
   rm -rf $tmp
 fi
