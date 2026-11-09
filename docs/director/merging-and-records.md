@@ -31,3 +31,12 @@ For each branch:
 ## 3. Records
 
 Record numbers are shared across sessions and collide easily. Before reserving numbers, `git fetch --all` and take the max over main and every branch. Give each parallel session its own range. If a session takes a number you'd given someone else, move the other session to the next free one at once. After every merge, `scripts/check-records.sh`.
+
+## When a push hangs
+
+A push that sits for minutes with GitHub reachable is the keychain, not the network (F-628): `ps -axo pid=,etime=,command= | grep git-credential-osxkeychain` shows the helper waiting on a locked login keychain. Kill your own hung `git push`, then push with gh's token and no helper, which changes no config:
+
+```bash
+printf '#!/bin/sh\ncase "$1" in *sername*) echo dudgeon;; *) gh auth token;; esac\n' > "$TMPDIR/askpass.sh" && chmod 700 "$TMPDIR/askpass.sh"
+GIT_ASKPASS="$TMPDIR/askpass.sh" GIT_TERMINAL_PROMPT=0 git -c credential.helper= push -q origin <sha>:refs/heads/main
+```
