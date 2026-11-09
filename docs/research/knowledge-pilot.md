@@ -4,6 +4,8 @@
 
 ## The result: stop
 
+**Geoff's decision, 2026-11-09 (DL-328): "Stop, delete pages (Recommended)".** Nothing gets built. `_knowledge/` and its exclude line are gone from both projects, and `git status` there shows nothing of them.
+
 **Fresh sessions didn't answer clearly better with the pages, so the recommendation is to stop, as the study said we would.** Right answers, out of 10 per project, with the same answer scored by hand against a model answer:
 
 | Project | Without pages | With pages | Gap |
@@ -191,7 +193,7 @@ Token figures come from the runs' JSON results, not transcript files, because th
 
 **Stop.** Don't build `duo2 knowledge`, the hook or duty R10. The gap the study required isn't there: 2 fewer right answers across both projects, and 3 fewer in the project with the most history, which is the one the feature was meant to serve.
 
-**Clean up on Geoff's yes:** delete `_knowledge/` from both project folders and its line from each `.git/info/exclude`. Left in place, the pages keep appearing in grep and search, and they're already going stale.
+**Cleanup, done on Geoff's yes:** `_knowledge/` deleted from both project folders and its line from each `.git/info/exclude`. Left in place, the pages would have kept appearing in grep and search while going stale. The dreams' output and every run's results stay outside the repo in `~/.duo-knowledge-pilot/`, as evidence for this report.
 
 **What would reopen it, with this eval set kept:** evidence that fresh sessions miss knowledge that exists only in transcripts, which these questions barely test. A retry needs the fixes in §5 first: keep `queued_command` messages, give the dream the project file, keep in-flight facts out of pages (a page shouldn't hold what `tasks/` and git answer live), resolve a dispute by reading before raising it, and keep real session ids as sources. The small gain in the couch-spacers project hints that a project with few records may benefit more than one with many, but one point in ten on one project isn't a finding. Its gain could also come more cheaply from moving those lessons into the project file a session already loads.
 
