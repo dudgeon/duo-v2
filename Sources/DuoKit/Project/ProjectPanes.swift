@@ -886,9 +886,12 @@ struct RightPane: View {
                let root = AppModel.isOutsideFile(path) ? file.deletingLastPathComponent() : model.projectFolder {
                 // Local HTML, read-only and live (v1; DL-67): its own web view, with the element picker.
                 ZStack(alignment: .bottom) {
-                    HTMLViewerView(viewer: model.htmlViewer, file: file, root: root)
-                        .accessibilityIdentifier("video.right.document")   // on the page alone: the picker bar's buttons keep their own names
-                        .onDisappear { model.htmlViewer.sleep() }
+                    VStack(spacing: 0) {
+                        HTMLNoticeBar(notice: model.htmlViewer.notice, action: { model.htmlViewer.noticeAction() })
+                        HTMLViewerView(viewer: model.htmlViewer, file: file, root: root)
+                            .accessibilityIdentifier("video.right.document")   // on the page alone: the picker bar's buttons keep their own names
+                            .onDisappear { model.htmlViewer.sleep() }
+                    }
                     PickerBar()
                 }
             } else if let path = model.rightTab, AppModel.isDeck(path), let file = model.liveFile(path) {

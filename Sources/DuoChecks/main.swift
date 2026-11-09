@@ -830,6 +830,7 @@ func repoFixture() throws -> Fixture {
     try noteEditChecks()
     try editorChordChecks()
     try docSafetyChecks()
+    try htmlViewerBlankChecks()
     try reviewChecks()
     taskPaneKeyChecks()
     dockBadgeChecks()

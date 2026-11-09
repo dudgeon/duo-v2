@@ -5,6 +5,24 @@ import WebKit
 /// Local HTML in the right pane (v1 "local HTML viewing", DL-67): read-only, reloaded when the
 /// file or its neighbours change, links to other sites open in the browser (local-only by
 /// default, DL-3). The page can send its selection, or a picked element, to Claude (DL-67–DL-70).
+/// What the pane says about the page under it (F-629, Q-483): the viewer never leaves a page blank in silence.
+@MainActor @Observable
+public final class HTMLPageNotice {
+    public enum Kind: Equatable { case blockedRemote, failed(String) }
+    public var kind: Kind?
+    var file: URL?
+    public init() {}
+
+    public var message: String? {
+        switch kind {
+        case .blockedRemote?: "This page loads scripts from the web, which Duo’s local pages don’t fetch (DL-175)."
+        case .failed(let why)?: "Couldn’t open this page: \(why)."
+        case nil: nil
+        }
+    }
+    public var buttonTitle: String { if case .failed? = kind { "Reload" } else { "Open in Safari" } }
+}
+
 @MainActor
 public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
     public let webView: DuoWebView
@@ -36,6 +54,57 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         }.joined(separator: ",") + "]"
     }()
     private var dormant = false
+    /// The bar over the page: a failed load, or remote scripts the rules blocked.
+    public let notice = HTMLPageNotice()
+    private var loadStarted: Date?
+
+    /// True when the page's text pulls a script, style sheet or import from the web: DL-175 blocks those,
+    /// so a page built by them shows only its background.
+    nonisolated public static func loadsRemoteCode(_ html: String) -> Bool {
+        let patterns = [#"<script\b[^>]*\bsrc\s*=\s*["']?\s*(https?:)?//"#,
+                        #"<link\b[^>]*\bhref\s*=\s*["']?\s*(https?:)?//"#,
+                        #"@import\s+(url\(\s*)?["']?\s*(https?:)?//"#]
+        return patterns.contains { html.range(of: $0, options: [.regularExpression, .caseInsensitive]) != nil }
+    }
+
+    /// Why a file can't be read, said plainly; nil when it reads. A cloud-drive file that isn't downloaded
+    /// fails here (or is a dataless stub).
+    nonisolated public static func unreadableReason(_ file: URL) -> String? {
+        guard FileManager.default.fileExists(atPath: file.path) else { return "the file isn’t there" }
+        if let v = try? file.resourceValues(forKeys: [.ubiquitousItemDownloadingStatusKey]),
+           let st = v.ubiquitousItemDownloadingStatus, st != .current, st != .downloaded {
+            return "it is in the cloud and isn’t downloaded to this Mac yet"
+        }
+        do { let h = try FileHandle(forReadingFrom: file); defer { try? h.close() }; _ = try h.read(upToCount: 1) }
+        catch { let e = error as NSError; return e.code == NSFileReadNoPermissionError ? "it can’t be read: this Mac hasn’t given Duo permission to read it" : "it can’t be read (\(e.localizedDescription))" }
+        return nil
+    }
+
+    /// Looks at the page before WebKit loads it: logs the open, sets the notice; false when it can't be read.
+    private func prepare(_ file: URL, text: String? = nil) -> Bool {
+        notice.file = file
+        notice.kind = nil
+        loadStarted = Date()
+        DuoLog.write("html: open \(file.path)")
+        if text == nil, let why = Self.unreadableReason(file) {
+            DuoLog.write("html: failed \(file.path): \(why)")
+            notice.kind = .failed(why)
+            return false
+        }
+        let body = text ?? ((try? String(contentsOf: file, encoding: .utf8)) ?? "")
+        if Self.loadsRemoteCode(body) {
+            DuoLog.write("html: \(file.path) loads remote scripts or styles, which DL-175 blocks")
+            notice.kind = .blockedRemote
+        }
+        return true
+    }
+
+    /// The bar's button: Reload after a failure, otherwise the file in Safari.
+    public func noticeAction() {
+        guard let file = notice.file else { return }
+        if case .failed? = notice.kind { open(file, root: root ?? file.deletingLastPathComponent(), force: true) }
+        else { NSWorkspace.shared.open(file) }
+    }
 
     public override init() {
         let config = WKWebViewConfiguration()
@@ -59,8 +128,8 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
     }
 
     /// Shows a file; `root` is the folder the page may read (its project).
-    public func open(_ file: URL, root: URL) {
-        guard file.standardizedFileURL != url?.standardizedFileURL || bufferText != nil else { return }
+    public func open(_ file: URL, root: URL, force: Bool = false) {
+        guard force || file.standardizedFileURL != url?.standardizedFileURL || bufferText != nil else { return }
         bufferText = nil
         url = file
         self.root = root
@@ -69,11 +138,21 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         stamp = Self.newest(around: file)
         let load = { [weak self] in
             guard let self, self.rulesReady, self.url == file else { return }
-            self.webView.loadFileURL(file, allowingReadAccessTo: root)
+            guard self.prepare(file) else { return }
+            self.loadResolved(file, root: root)
         }
         if rulesReady { load() } else { afterRules = load }
         startWatching()
         onChange?()
+    }
+
+    /// WebKit judges the sandbox by real paths: a file reached through a symlink (a linked project root, or a
+    /// link to a file elsewhere) is refused as "outside the sandbox" unless both are resolved, and a link that
+    /// leaves the root reads from its own folder.
+    private func loadResolved(_ file: URL, root: URL) {
+        let real = file.resolvingSymlinksInPath()
+        let readRoot = Self.inside(real, root) ? root.resolvingSymlinksInPath() : real.deletingLastPathComponent()
+        webView.loadFileURL(real, allowingReadAccessTo: readRoot)
     }
 
     public func reload() { webView.reload() }
@@ -87,6 +166,7 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         bufferText = text
         let load = { [weak self] in
             guard let self, self.rulesReady, self.bufferText == text else { return }
+            _ = self.prepare(file, text: text)
             self.webView.loadHTMLString(text, baseURL: file.deletingLastPathComponent())
         }
         if rulesReady { load() } else { afterRules = load }
@@ -145,7 +225,7 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
 
     public func webView(_ w: WKWebView, decidePolicyFor action: WKNavigationAction, decisionHandler: @escaping @MainActor (WKNavigationActionPolicy) -> Void) {
         guard let target = action.request.url else { return decisionHandler(.cancel) }
-        if target.isFileURL, let root, target.standardizedFileURL.path.hasPrefix(root.standardizedFileURL.path) {
+        if target.isFileURL, (root.map { Self.inside(target, $0) } ?? false) || (url.map { target.resolvingSymlinksInPath() == $0.resolvingSymlinksInPath() } ?? false) {
             return decisionHandler(.allow)
         }
         if target.scheme == "about" { return decisionHandler(.allow) }
@@ -157,11 +237,37 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         decisionHandler(.cancel)
     }
 
+    /// A file inside the root, whichever way each is spelled: symlinks (a linked project root, /tmp and
+    /// /private/tmp) are resolved on both sides before comparing, and the root ends at a folder edge.
+    nonisolated public static func inside(_ file: URL, _ root: URL) -> Bool {
+        let f = file.resolvingSymlinksInPath().standardizedFileURL.path
+        var r = root.resolvingSymlinksInPath().standardizedFileURL.path
+        if !r.hasSuffix("/") { r += "/" }
+        return f.hasPrefix(r) || f + "/" == r
+    }
+
+    public func webView(_ w: WKWebView, didFinish n: WKNavigation!) {
+        let ms = loadStarted.map { Int(Date().timeIntervalSince($0) * 1000) } ?? 0
+        DuoLog.write("html: loaded \(url?.path ?? "?") in \(ms) ms")
+    }
+
+    public func webView(_ w: WKWebView, didFailProvisionalNavigation n: WKNavigation!, withError error: Error) { failed(error) }
+    public func webView(_ w: WKWebView, didFail n: WKNavigation!, withError error: Error) { failed(error) }
+
+    public func failed(_ error: Error) {
+        let e = error as NSError
+        if e.domain == NSURLErrorDomain, e.code == NSURLErrorCancelled { return }   // a reload mid-load
+        if e.domain == "WebKitErrorDomain", e.code == 102 { return }   // "frame load interrupted": a policy cancelled it
+        let why = e.localizedDescription
+        DuoLog.write("html: failed \(url?.path ?? "?"): \(why) [\(e.domain) \(e.code)]")
+        notice.kind = .failed(why)
+    }
+
     /// The page's process died (C-81): load it again rather than leave it blank.
     public func webViewWebContentProcessDidTerminate(_ w: WKWebView) {
         DuoLog.write("html: web content process terminated")
         picked = nil; picking = false
-        if rulesReady, let url, let root { w.loadFileURL(url, allowingReadAccessTo: root) }
+        if rulesReady, let url, let root { loadResolved(url, root: root) }
         onChange?()
     }
 
@@ -261,5 +367,31 @@ struct HTMLViewerView: NSViewRepresentable {
         host.show(viewer.webView)
         viewer.wake()
         viewer.open(file, root: root)
+    }
+}
+
+/// The one-line bar over a page that is blank or half-drawn for a reason (F-629; a stand-in in the
+/// trust bar's chat look, Q-483).
+struct HTMLNoticeBar: View {
+    let notice: HTMLPageNotice
+    let action: () -> Void
+
+    var body: some View {
+        if let message = notice.message {
+            VStack(spacing: 0) {
+                HStack(alignment: .center, spacing: DuoSpace.gapButtonToButton) {
+                    Text(message).duoText(.body).fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 8)
+                    Button(action: action) { Text(notice.buttonTitle) }.buttonStyle(.duo).fixedSize()
+                }
+                .padding(.vertical, DuoMetric.noticePaddingY)
+                .padding(.horizontal, DuoMetric.noticePaddingX)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(DuoColor.ground)
+                DuoColor.rule.frame(height: DuoMetric.borderHairline)
+            }
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel(message)
+        }
     }
 }
