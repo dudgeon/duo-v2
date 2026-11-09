@@ -5929,3 +5929,19 @@ While building the red lines, a subagent ran `duo2 director status` with only `H
 - **Graders tuned to a bug:** s01 and s07 passed on main partly because `duo2 director start` couldn't write there, so the model wrote notes by hand. Fixing the write exposed them. The start graders in s02, s07 and s09 also stopped at the first escaped quote in a command, so a quoted `--title` hid a later `--suggest`. All are fixed.
 - **Rot that predates this work (C-168):** main scores 0.874 against the 0.94 recorded in F-316, and s02, s04, s15 and s20 are 0/3 on main.
 - **The environment still limits what a case can prove:** `claude --bg` is denied in a case, so no worker ever really starts, and a judge sees a trimmed trace. Graders give votes, not reasons.
+## F-623 · What a dream really costs: over an hour and 26 M tokens for 14 busy days, ten cents for a small project (knowledge-pilot, 2026-11-08; ENH-325)
+
+Measured on Haiku 5.5, `docs/research/knowledge-pilot.md` §4. The couch-spacers project (6 sessions, 83 KB filtered): 4 min 50 s, 0.21 M cache writes, 0.91 M cache reads, 0.11 M output, $0.10 by the CLI's list figure. duo-v2's last 14 days (114 sessions across the main and work-tree transcript folders, 2.25 GB raw, 3.7 MB filtered): the first run was killed at a 55-minute limit with analysis done and no pages (3.70 M writes, 11.61 M reads; a killed run reports no output total or cost), and a second, Organize-only run took 10 min 15 s (0.29 M, 10.72 M, 0.14 M, $1.18). The study's "$270" for raw input is far too high, and its per-run cap (§4a) is required: a first dream on a busy project doesn't finish in a turn. An answer costs about the same with or without pages (35 to 63 k tokens, mostly cached).
+
+## F-624 · `.git/info/exclude` does what the study read from the code: out of git, in search, in the file tree (knowledge-pilot, 2026-11-08)
+
+With `_knowledge/` in `.git/info/exclude`: `git status` shows nothing (`git check-ignore -v` names the exclude line, shared by a repo's work trees), `duo2 search` returned page text in both projects within minutes, and an isolated capture of the current build lists `_knowledge/` in the Files pane with "up to date with GitHub" above it. Two side facts. `--workspace <folder>` treats the folder's children as projects, so a repo given directly opens no project: pass its parent and `open:<name>`. And the main checkout's `build/Duo.app` is 0.0.1 from Oct 12, older than the isolation guard (F-529), so nothing should launch it in a scripted run.
+
+## F-625 · What the dream got wrong: mid-turn messages are invisible to the filter, and it over-disputes (knowledge-pilot, 2026-11-08)
+
+Fresh sessions answered no better with the pages: 10 right without against 7 with on duo-v2, 7 against 8 on the couch-spacers project (`docs/research/knowledge-pilot.md` §3). What caused the errors (§5):
+- **A message typed during a turn isn't a `user` entry.** It's an `attachment` of type `queued_command`, with `origin.kind: human`. The study's filter (user and assistant text) drops it: 58 of Geoff's messages in 20 sessions in duo-v2's window. Anything reading transcripts for what the user said needs this, including `discovery-gather.py`-style tools and any corrections pass; nothing was checked beyond the pilot's own filter.
+- `gather` without the project file can't apply the trust order, so a recorded decision read as a dispute.
+- 8 of 25 duo-v2 pages were `disputed`, several resolvable in one read. `sources` held batch ids rather than session ids, and `checked` said "by reading its sources" when the run worked from digests.
+- In-flight facts go stale within hours, and a session that finds a page may stop there rather than open the primary source (D8, D9).
+- No session in either condition ran `duo2 search`, despite the global instruction to prefer it: 40 answers used grep, reads, git and gh. The pilot doesn't compare search with pages.
