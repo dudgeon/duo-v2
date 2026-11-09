@@ -411,6 +411,7 @@ Releases named in **Status** are from the GitHub release notes (`gh release list
 - **How it works:**
   - A local HTML file opens read-only in the right pane and reloads within a second when it or a file next to it changes (DL-67, `docs/features/send-to-claude.md`).
   - Local pages load nothing remote; notes may still show `https:` images (DL-175).
+  - A bar over the page says when it can't be shown: "Couldn't open this page: <reason>" with Reload (a file that can't be read, or whose page rules haven't loaded), or a page that uses scripts or styles from the web, which local pages don't fetch, with Open in Browser. The bar shows in split view's preview too, and each open, failure and finish is written to `duo.log` as `html: …` lines (F-629, F-630; the look is a stand-in, Q-483).
   - Browser tabs are local-only by default. Files and localhost open in Duo; other sites open in your usual browser unless added to the allow list, a file you can edit (DL-3).
   - ⌥⌘T opens a browser tab; ⌘L opens the address field while a browser tab is showing (DL-99).
   - Browser tabs support uploads, downloads to ~/Downloads with Finder's naming, printing, popups that keep their opener, real clicks, and zoom (⌘+ ⌘- ⌘0) remembered per site (DL-124).

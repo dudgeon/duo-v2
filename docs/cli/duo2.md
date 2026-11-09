@@ -263,7 +263,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 browser print [--pdf <path>] [--tab <id>]` | Print the page: the print panel on the window for the user (⌘P, or the page's own print), or --pdf saves it as a PDF without one (DL-124). | Print… |
 | `duo2 browser upload <selector> <file…> [--tab <id>]` | Choose files for a file input: the files answer its file chooser, then it's clicked as a person would (DL-124). The user's own click opens the open panel. | — |
 | `duo2 browser downloads [--open [<n>] \| --cancel]` | Downloads from browser tabs since Duo started, numbered, to ~/Downloads with Finder's names for clashes (DL-124). --open opens one (the newest by default) with its app, as the tab's notice's Open does. --cancel stops the one running and takes its partial file away, as the notice's Cancel does (DL-132). | Open |
-| `duo2 html reload` | Reload the HTML page showing (it also reloads when its files change). | Reload Page |
+| `duo2 html reload` | Reload the HTML page showing (it also reloads when its files change). It looks at the page again: the bar for a failed open or a page that uses scripts or styles from the web clears or appears, and a page that failed to open loads if it can now be read. | Reload Page, Reload |
 | `duo2 html pick [selector]` | Start the element picker for the user, or select the element a CSS selector names. | Select Element, Pick Another |
 | `duo2 html stop` | Close the element picker. | Cancel picking |
 | `duo2 html element [selector]` | Describe an element (the picked one by default): selector, text, attributes, styles, box, HTML. | — |
@@ -371,6 +371,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | Not Now | the user's answer to the install question; `duo2 install` and `duo2 uninstall` change it later |
 | OK | dismisses a notice |
 | Open Settings… | not built: Settings waits on its design (DB-10) |
+| Open in Browser (HTML page bar) | the bar over a local HTML page that uses scripts or styles from the web (F-629): hands the file to the person's own browser, which Claude has no use for; `duo2 browser open` opens a tab in Duo, and `duo2 html reload` is the bar's Reload |
 | Paste or drop a picture in the editor | a gesture, not a menu item: the picture is saved beside the document and linked (LR-39); `duo2 doc insert` adds the same `![](name)` text, and `duo2 file move` puts a picture beside a note |
 | Project | a menu, not an action |
 | Report an Issue… | opens GitHub's new-issue form, filled in, for the user to edit and submit |

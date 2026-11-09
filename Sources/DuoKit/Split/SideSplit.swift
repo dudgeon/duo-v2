@@ -199,7 +199,10 @@ struct SplitPreviewSide: View {
             switch kind {
             case .html:
                 ZStack(alignment: .bottom) {
-                    WebPreviewView(web: model.htmlViewer.webView)
+                    VStack(spacing: 0) {
+                        HTMLNoticeBar(notice: model.htmlViewer.notice, action: { model.htmlViewer.noticeAction() })
+                        WebPreviewView(web: model.htmlViewer.webView)
+                    }
                     PickerBar()
                 }
             case .document:
