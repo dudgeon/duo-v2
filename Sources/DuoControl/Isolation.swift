@@ -21,6 +21,8 @@ public enum Isolation {
     /// With `DUO_ISOLATED=1` and a scratch `DUO_SUPPORT_DIR`: this run tests Duo being closed, so the
     /// offline verbs run. It never reaches any Duo. `check-director.sh` needs it (F-619).
     public static let duoClosedVariable = "DUO_TEST_DUO_CLOSED"
+    /// In a test context, ask `claude auth status` anyway: only for a harness whose `claude` is a stand-in.
+    public static let loginProbeVariable = "DUO_TEST_LOGIN_PROBE"
     /// The stand-in for `~/.claude` inside an isolated instance's Duo folder.
     public static let standInConfig = "claude-config"
     static let rootOverrides = ["DUO_ARCHIVE_ROOT", "DUO_SEARCH_ROOT"]

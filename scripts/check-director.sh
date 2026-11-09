@@ -22,6 +22,8 @@ shim=$(mktemp -d /tmp/dh-XXXX)
 trap 'rm -rf $shim' EXIT
 ln -s $stub $shim/claude
 export PATH=$shim:$PATH
+# A test context reports the login as unknown (F-620). This script opts in, because its `claude` is the stub.
+export DUO_TEST_LOGIN_PROBE=1
 
 fail=0 pass=0
 ok()  { print "  ✔ $1"; pass=$((pass+1)); }
@@ -455,6 +457,14 @@ PY
     ok "a write under Claude's shell sandbox works (F-621)"
   else bad "write under the sandbox: rc=$rc ${o[1,300]}"; fi
   lacks "and leaves no temporary file behind" "$(ls -A $proj/tasks)" ".tmp"
+
+  # 17. An isolated run that hasn't opted in: its stand-in config says nothing about this Mac's login, so status
+  # never says "logged out", even with a claude that would (F-620), and it doesn't ask.
+  fresh
+  rm -f $cfg/stub-auth-status
+  o=$(unset DUO_TEST_LOGIN_PROBE; export STUB_PROFILE=$h/profiles/logged-out.json; dd status)
+  lacks "isolated, not opted in: status never says the CLI is logged out" "$o" "logged out"
+  if [[ ! -e $cfg/stub-auth-status ]]; then ok "and it doesn't ask claude at all"; else bad "isolated, not opted in: the login probe still ran"; fi
 
   unset DUO_CLAUDE_APP_DIR
   rm -rf $tmp

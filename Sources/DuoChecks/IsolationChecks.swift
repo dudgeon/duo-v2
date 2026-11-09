@@ -123,6 +123,18 @@ func isolationChecks() throws {
     check(outcome([iv: "1", dv: inst.path, sv: testDuo.path, tv: "inst-token", closed: "1"]) == "inst", "a named socket still wins: that instance, never the real one")
     check(!Isolation.scratchHome([:]) && Isolation.scratchHome(["HOME": root]), "a HOME that isn't this user's is a scratch home; no HOME isn't")
 
+    // 3b. A stand-in environment says nothing about this Mac's login (F-620): unknown, never "logged out".
+    let fakeBin = root + "/fake-claude-bin"
+    try FileManager.default.createDirectory(atPath: fakeBin, withIntermediateDirectories: true)
+    try "#!/bin/sh\necho '{\"loggedIn\":false}'\n".write(toFile: fakeBin + "/claude", atomically: false, encoding: .utf8)
+    try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: fakeBin + "/claude")
+    let probePath = fakeBin + ":/usr/bin:/bin"
+    check(ClientCaps.cliLogin(env: ["PATH": probePath]) == .no, "outside a test context, a logged-out CLI says so")
+    check(ClientCaps.cliLogin(env: ["PATH": probePath, iv: "1", dv: inst.path]) == .unknown, "an isolated run: unknown, never logged out")
+    check(ClientCaps.cliLogin(env: ["PATH": probePath, dv: inst.path]) == .unknown, "DUO_SUPPORT_DIR alone is a test context too: unknown")
+    check(ClientCaps.cliLogin(env: ["PATH": probePath, "HOME": root]) == .unknown, "a scratch home: unknown")
+    check(ClientCaps.cliLogin(env: ["PATH": probePath, iv: "1", dv: inst.path, Isolation.loginProbeVariable: "1"]) == .no, "a harness that opts in (its claude is a stand-in) gets the answer")
+
     // 4. An endpoint deleted (or replaced) mid-run.
     check(outcome([dv: inst.path]) == "inst", "mid-run: reachable before")
     try fm.removeItem(at: instFile)

@@ -675,8 +675,10 @@ public struct ClientCaps: Codable, Equatable, Sendable {
     /// `claude auth status` from the caller's environment: `loggedIn` in its JSON. Unknown when
     /// `claude` isn't found, takes longer than `timeout`, or says something else.
     public static func cliLogin(env: [String: String], timeout: TimeInterval = 10) -> Tri {
-        // A scratch home (the skill's evals) has no login of its own, whatever this session runs on: not a fact to report.
-        if Isolation.scratchHome(env) { return .unknown }
+        // A stand-in environment says nothing about this Mac's login, so it's unknown, never "logged out": a scratch
+        // home (the skill's evals), or a test context, whose Claude config `confineProcess` has pointed at a stand-in
+        // folder (F-620). A harness whose `claude` is itself a stand-in opts in with DUO_TEST_LOGIN_PROBE=1.
+        if Isolation.scratchHome(env) || (Isolation.isStrict(env) && env[Isolation.loginProbeVariable] != "1") { return .unknown }
         let p = Process()
         p.executableURL = URL(fileURLWithPath: "/usr/bin/env")
         p.arguments = ["claude", "auth", "status"]
