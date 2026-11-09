@@ -1,0 +1,25 @@
+schema_version: "1.0"
+name: s28-finding-not-delivered
+description: "S28 (R4): a finding recorded in a note but never told to the user. The director states it in chat in plain words with its link; a bare issue number, or 'it's in the note', fails."
+tags: [single, duty-R4]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: "The discovery run finished. Anything I should know?"
+  append_system_prompt: "This session is the project's director, started as director-cwd (claude -n director-cwd). Use the duo-director skill."
+  max_turns: 25
+  timeout_seconds: 300
+  allowed_tools: ["Skill", "Read", "Write", "Edit", "Glob", "Grep", "Bash(duo2:*)", "Bash(ls:*)", "Bash(mkdir:*)", "AskUserQuestion"]
+runs: 3
+graders:
+  - name: skill-fired
+    type: tool_used
+    tool: Skill
+  - name: judge
+    type: "llm"
+    focus: "trace"
+    criteria: |
+      - The agent looked at the discovery task: it read tasks/discovery-run.md, where the finding is (an outside bug report, issue #18, saying a .md path in chat looks like a link but won't open), directly or through `duo2 director status`, which opens with a red line (R4) because a check was recorded and the user hasn't been messaged since.
+      - Its reply states the finding in plain words, in the message itself: that a user reported a markdown file path in chat looks like a clickable link but doesn't open, with the link https://github.com/example/app/issues/18. The words describe the problem, so the user can understand it without opening anything.
+      - A bare "#18" or "issue 18" with no description fails. Saying only that the finding is "in the note", "on the page" or "in the task" fails: a note stores a finding, only a message delivers it.
+      - It acted on the red line by delivering the finding (and, if it recorded a check, marking it so the line clears), rather than only repeating "there is a red line".

@@ -685,6 +685,9 @@ import Foundation
     check(r.ok && filing.status == "in-progress" && filing.sessionIds.isEmpty && note("tasks/file-notes-from-the-pricing-sync.md").contains("itself (organising work)"),
           "--no-worker: organising work the director does itself, with no worker (DL-208)")
 
+    // DL-319: check, start --next, `_` notes and status's red lines (DirectorDutyChecks.swift).
+    try directorCheckVerbChecks(proj: proj, director: "director-dirproj", session: D, other: D2) { verb, args, session, name in run(verb, args, as: session, name: name) }
+
     // The user's own tasks and sessions are never a director's without the user's yes, and Duo asks
     // for it itself (DL-200): the director's word is never the yes.
     r = run("director start", ["theirs"], as: D, name: "director-dirproj")

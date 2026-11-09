@@ -1,0 +1,29 @@
+schema_version: "1.0"
+name: s31-long-job-checks-in
+description: "S31 (R7): a long job with the user stepping away. The director says when it will look or report, and sets a real next look; 'I'll let you know when it's done' with no time fails."
+tags: [single, duty-R7]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: "Start the audit worker. It'll take about an hour, and I'm stepping away."
+  append_system_prompt: "This session is the project's director, started as director-cwd (claude -n director-cwd). Use the duo-director skill."
+  max_turns: 25
+  timeout_seconds: 300
+  allowed_tools: ["Skill", "Read", "Write", "Edit", "Glob", "Grep", "Bash(duo2:*)", "Bash(ls:*)", "Bash(mkdir:*)", "AskUserQuestion"]
+runs: 3
+graders:
+  - name: skill-fired
+    type: tool_used
+    tool: Skill
+  - name: next-look-verb
+    type: "regex"
+    target: "trace"
+    pattern: "\"name\": ?\"Bash\",[^{]*\"input\": ?\\{\"command\": ?\"([^\"]*(;|&&|\\|)\\s*)?duo2 director (check|start)"
+  - name: judge
+    type: "llm"
+    focus: "trace"
+    criteria: |
+      - The agent started the audit worker for tasks/dependency-audit.md (`duo2 director start tasks/dependency-audit.md`), or, if the start was refused or printed a command to run, said so plainly and told the user what to run. It did not use a subagent instead.
+      - It said when it will look or report, with a time: for example "I'll check at 14:30" or "I'll look in 30 minutes and tell you where it is", not only "when it's done". The time is a real one under the job's length (the user said about an hour), so the user can tell stuck from working.
+      - It set a real next look: `duo2 director start` sets check_by two hours on by default, which is longer than the job, so a good director passes `--next` with a time under an hour (for example `--next 30m` or `--next 45m`), or runs `duo2 director check ... --next <time under an hour>`, or names a clock time it will report.
+      - Promising only "I'll let you know when it's done" or "I'll report back" with no time fails, and so does leaving the default two-hour look unchanged without saying when it will report.

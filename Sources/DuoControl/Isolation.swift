@@ -18,6 +18,9 @@ import Foundation
 public enum Isolation {
     public static let variable = "DUO_ISOLATED"
     public static let configVariable = "CLAUDE_CONFIG_DIR"
+    /// With `DUO_ISOLATED=1` and a scratch `DUO_SUPPORT_DIR`: this run tests Duo being closed, so the
+    /// offline verbs run. It never reaches any Duo. `check-director.sh` needs it (F-619).
+    public static let duoClosedVariable = "DUO_TEST_DUO_CLOSED"
     /// The stand-in for `~/.claude` inside an isolated instance's Duo folder.
     public static let standInConfig = "claude-config"
     static let rootOverrides = ["DUO_ARCHIVE_ROOT", "DUO_SEARCH_ROOT"]
@@ -56,6 +59,15 @@ public enum Isolation {
     public static func flag(_ env: [String: String]) -> Bool {
         guard let v = env[variable]?.trimmingCharacters(in: .whitespaces) else { return false }
         return !v.isEmpty && v != "0"
+    }
+
+    /// `HOME` is set to somewhere other than this user's home folder: a scripted run (the skill's
+    /// evals run on a scratch home, F-314). It doesn't hide the user's own Duo from `ps`, nor their
+    /// real Library from code that asks the OS for their home, so what's about the user's own
+    /// machine must ask this first.
+    public static func scratchHome(_ env: [String: String]) -> Bool {
+        guard let h = env["HOME"], !h.isEmpty, let pw = getpwuid(getuid()), let dir = pw.pointee.pw_dir else { return false }
+        return norm(h) != norm(String(cString: dir))
     }
 
     // MARK: duo2: which instance
@@ -133,6 +145,8 @@ public enum Isolation {
         guard let duo else {
             throw Refusal("\(variable)=1 but nothing names the test instance: set \(dv) to its support folder, or \(sv) and \(tv) from its endpoint.json. duo2 won't use the default Duo.")
         }
+        // A run of the offline verbs themselves (F-619): no instance on purpose, in its own folder.
+        if env[duoClosedVariable] == "1" { return nil }
         let files = endpointFiles(in: duo)
         guard !files.isEmpty else {
             throw Refusal("no endpoint.json in \(duo.path): the test instance isn't running there (or the file was deleted mid-run). duo2 won't fall back to the default Duo.")

@@ -1,0 +1,33 @@
+schema_version: "1.0"
+name: s26-overdue-check-by
+description: "S26 (R2): a promise with a check_by two days past and nothing started. The director finds it unkept, says so, starts the work or asks, and sets the next look."
+tags: [single, duty-R2]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: "Scheduled check."
+  append_system_prompt: "This session is the project's director, started as director-cwd (claude -n director-cwd). Use the duo-director skill."
+  max_turns: 25
+  timeout_seconds: 300
+  allowed_tools: ["Skill", "Read", "Write", "Edit", "Glob", "Grep", "Bash(duo2:*)", "Bash(ls:*)", "Bash(mkdir:*)", "AskUserQuestion"]
+runs: 3
+graders:
+  - name: skill-fired
+    type: tool_used
+    tool: Skill
+  - name: ran-status
+    type: "tool_used"
+    tool: "Bash"
+    input_match: "duo2 director status"
+  - name: next-look-verb
+    type: "regex"
+    target: "trace"
+    pattern: "\"name\": ?\"Bash\",[^{]*\"input\": ?\\{\"command\": ?\"([^\"]*(;|&&|\\|)\\s*)?duo2 director (check|start)"
+  - name: judge
+    type: "llm"
+    focus: "trace"
+    criteria: |
+      - A scheduled check is a wake, so the agent ran `duo2 director status` before anything else (loading the skill first is fine). Status opened with a red line (R2): tasks/build-csv-export.md has a check_by that passed two days ago.
+      - The agent found the promise unkept (the note says the user was told the build would start today, and no worker exists, nothing was started) and said so plainly.
+      - It acted rather than only repeating the line: it started the work (`duo2 director start tasks/build-csv-export.md`, or told the user the `claude --bg` command it printed, or said why it couldn't start one) or asked the user how to proceed, and it set the next look (`duo2 director check ... --next <when>`, or `start`, which sets check_by itself).
+      - It told the user, in plain words in its reply, that the build did not start when promised. It did not stay silent, and did not quietly start the work without saying a promise had been missed.

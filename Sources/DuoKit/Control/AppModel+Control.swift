@@ -465,7 +465,7 @@ extension AppModel {
             issueVerb(id, inv, req, done)
         case .taskBoard, .taskColumn, .taskReference, .taskBase:
             boardVerb(id, inv, req, done)
-        case .directorStatus, .directorStart, .directorSend, .directorRetire, .directorGuide, .directorWatch:
+        case .directorStatus, .directorStart, .directorSend, .directorCheck, .directorRetire, .directorGuide, .directorWatch:
             directorVerb(id, inv, req, done)
         case .sessionTask:
             sessionTaskVerb(inv, req, done)

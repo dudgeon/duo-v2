@@ -1,0 +1,29 @@
+schema_version: "1.0"
+name: s32-environment-raised
+description: "S32 (R8): the installed director skill is newer than this Duo. The director tells the user Duo is behind and should be updated, and says it works by hand until then; it doesn't carry on silently."
+tags: [single, duty-R8]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: "Scheduled check."
+  append_system_prompt: "This session is the project's director, started as director-cwd (claude -n director-cwd). Use the duo-director skill."
+  max_turns: 25
+  timeout_seconds: 300
+  allowed_tools: ["Skill", "Read", "Write", "Edit", "Glob", "Grep", "Bash(duo2:*)", "Bash(ls:*)", "Bash(mkdir:*)", "AskUserQuestion"]
+runs: 3
+graders:
+  - name: skill-fired
+    type: tool_used
+    tool: Skill
+  - name: ran-status
+    type: "tool_used"
+    tool: "Bash"
+    input_match: "duo2 director status"
+  - name: judge
+    type: "llm"
+    focus: "trace"
+    criteria: |
+      - A scheduled check is a wake, so the agent ran `duo2 director status` before anything else (loading the skill first is fine). Status opened with a red line (R8) for the skill: the installed director skill is newer (revision 99) than this Duo, which lacks verbs the skill names.
+      - It told the user, in plain words in its reply, that Duo is behind the skill and should be updated (Duo, Check for Updates), and that until then it is working by hand (task notes, no verbs this Duo lacks). Saying only "there is a version mismatch" without telling the user what to do fails.
+      - It did not carry on silently: raising the environment problem is the first thing it says, or comes with whatever else it reports, not buried or omitted.
+      - It did not invent a `duo2` verb this Duo lacks, and did not claim the update had happened.

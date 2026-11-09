@@ -74,6 +74,7 @@ func repoFixture() throws -> Fixture {
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "reveal-tree" { return try revealTreeChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "park" { return try parkChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "director" { return try directorChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "director-duties" { return try directorDutyChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "control" { return try controlPlaneChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "isolation" { return try isolationChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "git" { return try gitChecks() }
@@ -3118,7 +3119,7 @@ func repoFixture() throws -> Fixture {
     }
 }
 
-do { try MainActor.assumeIsolated { try run(); if ProcessInfo.processInfo.environment["DUO_CHECKS"] == nil { try remoteControlChecks(); try projectInterviewChecks(); try parkChecks(); try directorChecks(); try installerLockChecks(); try launchShellChecks(); try launchHangChecks(); try terminalKeyChecks(); try returnChordChecks(); try promptKeyChecks(); try voiceChecks(); try ambiguousNameChecks(); try revealTreeChecks(); try controlPlaneChecks(); try isolationChecks(); try chatChecks() } } } catch { print("✘ setup: \(error)"); failures += 1 }
+do { try MainActor.assumeIsolated { try run(); if ProcessInfo.processInfo.environment["DUO_CHECKS"] == nil { try remoteControlChecks(); try projectInterviewChecks(); try parkChecks(); try directorChecks(); try directorDutyChecks(); try installerLockChecks(); try launchShellChecks(); try launchHangChecks(); try terminalKeyChecks(); try returnChordChecks(); try promptKeyChecks(); try voiceChecks(); try ambiguousNameChecks(); try revealTreeChecks(); try controlPlaneChecks(); try isolationChecks(); try chatChecks() } } } catch { print("✘ setup: \(error)"); failures += 1 }
 print("\(passes) passed, \(failures) failed")
 exit(Int32(failures))
 

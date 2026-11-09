@@ -37,7 +37,7 @@ Status can see behaviour. It can't judge the content of a message, so R4 and R5 
 | **R1 Watch workers to a conclusion** | Every worker's end is read and acted on | A worker stopped or idle with a last message newer than the note's last `Checked:` line. A worker on Needs you, with its question. A worker working with no transcript write for 2 h | new: stopped worker with no Progress line |
 | **R2 Follow up by `check_by`** | Everything delegated or promised has a next look | `check_by` has passed. A background start that never appeared after 30 min. A live note with no worker and no `--no-worker` | new: overdue `check_by` |
 | **R3 Watch recurring jobs** | Scheduled jobs are workers too | A run with no finished turn and no activity for 30 min (with its mode). A due time missed by over an hour. A finished run not yet checked | new: stuck scheduled run |
-| **R4 Deliver findings** | Findings reach the user in chat, in plain words, with links | A report or run finished after your last message to the user (read from your own transcript). **Weak:** it shows you said something, not that you said this | new: finding not delivered; new: the links rule |
+| **R4 Deliver findings** | Findings reach the user in chat, in plain words, with links | You recorded a check after your last message to the user (read from your own transcript). A look with nothing to tell is marked `--routine` and doesn't count. **Weak:** it shows you said something, not that you said this | new: finding not delivered; new: the links rule |
 | **R5 Verify before "done"** | Nothing is called done, ready or true on a worker's word | A note at `review` or `done` with no `Checked:` line after the worker's last report | s04 (tests-pass claim) extended; s03 already covers a missing deliverable |
 | **R6 Keep the record current** | Task notes are the one record | Unfinished, no `check_by`, nothing for 7 days, grouped into one line with a count and the first five (`--all` lists them). A status word Duo doesn't use | new: stale notes get resolved, not listed |
 | **R7 Check in on a clock** | During long work, the user can tell stuck from working | Your own turn has run over 30 min with no text to the user | new: long job checks in |
@@ -69,12 +69,14 @@ Both are written by one new verb (decision 1):
 
 ```
 duo2 director check <task> "what I verified, and the evidence" [--next 2h]
-duo2 director check job:<id> "what the run found, or nothing new"
+duo2 director check job:<id> "what the run found" [--routine]
 ```
 
-Job checks go in the log, because a job has no note. A finished run that found nothing therefore clears without pinging the user, which keeps the twice-daily discovery run from becoming noise.
+Job checks go in the log, because a job has no note. `--routine` says the look found nothing the user needs to hear, so R4 ignores it. That keeps the twice-daily discovery run, and a two-hourly "still building", from becoming noise. The default counts as a finding, so skipping the message takes a deliberate word.
 
 **Cost.** Budget: the red-line pass adds under 200 ms on 100 notes, because it reads notes and only the tail of each live worker's transcript. I haven't measured it yet; the build will. The existing `claude auth status` call can already take up to 10 s, and I'd cache it for a few minutes.
+
+**As built.** On a scratch copy of this repo's 93 notes, status took about 150 to 200 ms on a debug build and printed 6 red lines. Sweeps are collapsed, so a first run reads as one sweep and one question: notes at `review` (20) are one R5 line, stale notes (32) one R6 line, and live notes with no worker and no `check_by` one R2 line. Notes named `_*` are skipped.
 
 ## 5. The failure protocol
 
@@ -115,9 +117,9 @@ It lives in the skill, as a new section, so every director runs it. When somethi
 
 **Costs:**
 
-- **Skill length:** about 30 new lines on 166, less about 15 I can cut from §1 and §5 where status now says the same thing.
+- **Skill length:** 205 lines, up from 166. I estimated about 15 net and it came out at 39: the register table and §11 needed their words, and cutting more risked what the existing evals prove.
 - **Verbs:** one new (`check`).
-- **Evals:** 9 new cases at 3 runs each, 27 runs added to today's 69. Each suite run is capped at $5 (`--max-cost-usd`). I don't have a measured cost per run yet.
+- **Evals:** 9 new cases at 3 runs each. A full suite of 32 cases at 3 runs costs about $4.60 at list price on Haiku: $2.70 on the runs and $1.90 on the judges (F-622).
 
 **Limits, plainly:**
 

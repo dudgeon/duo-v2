@@ -200,7 +200,7 @@ default:
     if action.family == .director { rest += ["--caps", directorCaps(login: action.id == .directorStatus || action.id == .directorStart)] }
     // Directing works with Duo closed (DL-231): a verb with an offline form runs on Claude's own files.
     guard let (endpoint, source) = discoverEndpoint() else {
-        if let code = runOffline(action.id, rest) { exit(code) }
+        if let code = runOffline(action.id, rest) { finishOffline(action.id, rest, code) }
         if action.id == .deckTemplatePick || action.id == .deckTemplatePicked {
             fail("\(action.verb) needs the deck viewer in Duo, and Duo isn't running. `duo2 deck template build` and `specimen` work without it.", code: 69)
         }
@@ -212,11 +212,11 @@ default:
                                  cwd: FileManager.default.currentDirectoryPath)
     do {
         let r = try ControlClient.send(request, via: endpoint, source: source, timeout: action.timeout)
-        if r.ok { print(r.output, terminator: r.output.hasSuffix("\n") ? "" : "\n") } else { fail(r.output) }
+        if r.ok { print(r.output, terminator: r.output.hasSuffix("\n") ? "" : "\n"); directorNudge(action.id, rest, duoReachable: true) } else { fail(r.output) }
     } catch {
         // A dead socket (a Duo that quit under a session that still has its address): nothing was sent.
         if strict { refuse(Isolation.Refusal("the test instance at \(endpoint.socket) stopped answering (\(error)); duo2 won't fall back to the offline verbs or the default Duo.")) }
-        if let f = error as? ControlClient.Failure, case .connect = f, let code = runOffline(action.id, rest) { exit(code) }
+        if let f = error as? ControlClient.Failure, case .connect = f, let code = runOffline(action.id, rest) { finishOffline(action.id, rest, code) }
         fail("\(error). Run `duo2 doctor`.", code: 69)
     }
 }

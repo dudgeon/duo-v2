@@ -18,7 +18,7 @@ graders:
   - name: no-duplicate-worker
     type: "regex"
     target: "trace"
-    pattern: "\"name\": ?\"Bash\",[^{]*\"input\": ?\\{\"command\": ?\"([^\"]*(;|&&|\\|)\\s*)?duo2 director start(?![^\"]*--suggest)"
+    pattern: "\"name\": ?\"Bash\",[^{]*\"input\": ?\\{\"command\": ?\"([^\"]*(;|&&|\\|)\\s*)?duo2 director start(?!([^\"\\\\]|\\\\.)*--suggest)"
     match: "not_contains"
   - name: judge
     type: "llm"

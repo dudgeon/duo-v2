@@ -148,6 +148,14 @@ def main():
             try: os.remove(path)
             except OSError: pass
 
+    # `claude auth status`, which duo2 asks for status and start. It leaves a mark, so the harness can
+    # tell this stub answered and not a real CLI further down PATH (F-619).
+    if argv[:2] == ["auth", "status"]:
+        with open(os.path.join(config_dir(), "stub-auth-status"), "a") as f:
+            f.write("asked\n")
+        print(json.dumps({"loggedIn": stub.get("loggedIn", True)}))
+        return 0
+
     if argv and argv[0] in ("agents", "stop", "rm"):
         verb = argv[0]
         sessions = load_sessions()
