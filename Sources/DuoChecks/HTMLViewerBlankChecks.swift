@@ -121,6 +121,49 @@ import WebKit
     check(viewer.notice.kind == .blockedRemote && count("buffer.html") == before, "twelve buffer renders add no log lines (it logs a change of state, not each render)")
     viewer.endBuffer()
 
+    // Review 3: a script tag inside a comment that spans lines is still a comment.
+    check(!HTMLViewer.loadsRemoteCode("<p>x</p>\n<!--\n  <script src=\"https://cdn.example/x.js\"></script>\n  <link rel=stylesheet href=\"https://cdn.example/a.css\">\n-->\n<p>y</p>"), "a multi-line comment holding remote tags is not flagged")
+
+    // Review 1: the live reload keeps the person's place and the page they followed a link to.
+    try "<html><body style='margin:0'><div style='height:5000px'>tall</div></body></html>".write(to: real.appending(path: "tall.html"), atomically: true, encoding: .utf8)
+    try #"<html><body><a href="about.html">go</a>index page</body></html>"#.write(to: real.appending(path: "index.html"), atomically: true, encoding: .utf8)
+    try "<html><body>about page</body></html>".write(to: real.appending(path: "about.html"), atomically: true, encoding: .utf8)
+    func eval(_ js: String) -> Any? {
+        var out: Any?; var done = false
+        viewer.webView.evaluateJavaScript(js) { v, _ in out = v; done = true }
+        wait { done }
+        return out
+    }
+    viewer.open(real.appending(path: "tall.html"), root: real)
+    waitText("tall")
+    _ = eval("window.scrollTo(0, 800)")
+    wait { (eval("window.scrollY") as? Double ?? 0) > 700 }
+    viewer.webView.reload()   // the baseline: WebKit's own reload, which the viewer used before this branch
+    RunLoop.main.run(until: Date().addingTimeInterval(1.5))
+    let baselineKeeps = (eval("window.scrollY") as? Double ?? 0) > 700
+    _ = eval("window.scrollTo(0, 800)")
+    wait { (eval("window.scrollY") as? Double ?? 0) > 700 }
+    viewer.reload()
+    RunLoop.main.run(until: Date().addingTimeInterval(1.5))
+    let keeps = (eval("window.scrollY") as? Double ?? 0) > 700
+    check(keeps || !baselineKeeps, "a reload while the page is showing keeps the scroll position, when WebKit's own reload does here (it does: \(baselineKeeps))")
+    viewer.open(real.appending(path: "index.html"), root: real)
+    waitText("index page")
+    _ = eval("location.href = 'about.html'")
+    waitText("about page")
+    viewer.reload()
+    RunLoop.main.run(until: Date().addingTimeInterval(1.5))
+    check(pageText().contains("about page"), "after following a link to another page of the project, a reload stays on it")
+
+    // Review 2: a WebKit failure on a readable file survives the scan that answers after it.
+    viewer.open(real.appending(path: "a.html"), root: real)
+    viewer.failed(NSError(domain: NSURLErrorDomain, code: NSURLErrorCannotOpenFile, userInfo: [NSLocalizedDescriptionKey: "refused"]))
+    RunLoop.main.run(until: Date().addingTimeInterval(1.5))
+    check(viewer.notice.kind == .failed("refused"), "WebKit refusing a readable file keeps its bar when the scan answers (it must not blank the pane in silence)")
+    viewer.open(real.appending(path: "tall.html"), root: real)
+    waitText("tall")
+    check(viewer.notice.kind == nil, "and the next load starts clean")
+
     // The rule-list wait can't hang silently: a timer logs and shows the failure (the answer itself can't be faked here).
     let source = try String(contentsOf: repoRoot().appending(path: "Sources/DuoKit/Editor/HTMLViewer.swift"), encoding: .utf8)
     check(source.contains("rulesTimedOut") && source.contains("haven't compiled after") && source.contains("DuoLog.write(\"html: open \\(file.path)\")   // before the rules wait"),

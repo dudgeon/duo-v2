@@ -61,6 +61,8 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
     /// The navigation that is the page's own file (only those log "loaded"), and the one that blanks the view.
     private var fileNav: WKNavigation?
     private var blankNav: WKNavigation?
+    /// WebKit refused the current load: the bar stays until the next load, whatever the file scan says.
+    private var webKitFailed = false
     /// WebKit compiles the rule list in the background; if it hasn't answered in a few seconds, nothing would
     /// load and nothing would say so. Pages still wait for the rules (loading without them would widen DL-175).
     private var rulesTimedOut = false
@@ -70,7 +72,7 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
     /// blank or unstyled: a script, a style sheet (or preloaded one), an @import, or a module import from
     /// http(s). Comments are ignored; canonical and icon links, and plain links, don't count.
     nonisolated public static func loadsRemoteCode(_ html: String) -> Bool {
-        let text = html.replacingOccurrences(of: #"<!--.*?-->"#, with: "", options: [.regularExpression])
+        let text = html.replacingOccurrences(of: #"(?s)<!--.*?-->"#, with: "", options: [.regularExpression])
         func has(_ pattern: String) -> Bool { text.range(of: pattern, options: [.regularExpression, .caseInsensitive]) != nil }
         if has(#"<script\b[^>]*\bsrc\s*=\s*["']?\s*(https?:)?//"#) { return true }
         if has(#"@import\s+(url\(\s*)?["']?\s*(https?:)?//"#) { return true }
@@ -144,7 +146,7 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
                 if let why = result.unreadable {
                     self.setNotice(.failed(why), file: file)
                     self.blankNav = self.webView.loadHTMLString("", baseURL: nil)
-                } else { self.setNotice(result.remote ? .blockedRemote : nil, file: file) }
+                } else if !self.webKitFailed { self.setNotice(result.remote ? .blockedRemote : nil, file: file) }
             }
         }
     }
@@ -153,6 +155,7 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
     private func loadFile(_ file: URL, root: URL, logOpen: Bool) {
         if logOpen { DuoLog.write("html: open \(file.path)") }
         loadStarted = Date()
+        webKitFailed = false
         fileNav = webView.loadFileURL(file.resolvingSymlinksInPath(), allowingReadAccessTo: Self.readRoot(file, root))
         inspect(file)
     }
@@ -230,6 +233,17 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         guard let url, let root else { webView.reload(); return }
         if let text = bufferText { renderBuffer(text, file: url, root: root); return }
         guard rulesReady else { return }
+        // A page that is showing is reloaded in place, which keeps the scroll position and a page the person
+        // followed a link to; only a blank (a failure, or nothing loaded) loads the tab's file from the start.
+        var failedNow = false
+        if case .failed? = notice.kind { failedNow = true }
+        if let shown = webView.url, shown.isFileURL, !failedNow, !webKitFailed, shown.absoluteString != "about:blank" {
+            webKitFailed = false
+            loadStarted = Date()
+            fileNav = webView.reload()
+            inspect(shown)
+            return
+        }
         loadFile(url, root: root, logOpen: false)
     }
 
@@ -243,6 +257,7 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         let load = { [weak self] in
             guard let self, self.rulesReady, self.bufferText == text else { return }
             self.fileNav = nil
+            self.webKitFailed = false
             self.webView.loadHTMLString(text, baseURL: file.deletingLastPathComponent())
             self.inspect(file, text: text)
         }
@@ -340,6 +355,7 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         let why = e.localizedDescription
         DuoLog.write("html: WebKit failed \(url?.path ?? "?"): \(why) [\(e.domain) \(e.code)]")
         if case .failed? = notice.kind { return }   // the file scan already said why, in plainer words
+        webKitFailed = true
         notice.kind = .failed(why); notice.file = url
     }
 
