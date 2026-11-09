@@ -354,8 +354,8 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         if e.domain == "WebKitErrorDomain", e.code == 102 { return }   // "frame load interrupted": a policy cancelled it
         let why = e.localizedDescription
         DuoLog.write("html: WebKit failed \(url?.path ?? "?"): \(why) [\(e.domain) \(e.code)]")
+        webKitFailed = true   // before the early return: Reload on a failed page resets it, and a second refusal must set it again
         if case .failed? = notice.kind { return }   // the file scan already said why, in plainer words
-        webKitFailed = true
         notice.kind = .failed(why); notice.file = url
     }
 

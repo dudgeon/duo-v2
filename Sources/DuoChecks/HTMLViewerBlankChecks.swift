@@ -160,6 +160,11 @@ import WebKit
     viewer.failed(NSError(domain: NSURLErrorDomain, code: NSURLErrorCannotOpenFile, userInfo: [NSLocalizedDescriptionKey: "refused"]))
     RunLoop.main.run(until: Date().addingTimeInterval(1.5))
     check(viewer.notice.kind == .failed("refused"), "WebKit refusing a readable file keeps its bar when the scan answers (it must not blank the pane in silence)")
+    // Pressing Reload on that bar, and WebKit refusing again, keeps the bar through the scan too.
+    viewer.noticeAction()
+    viewer.failed(NSError(domain: NSURLErrorDomain, code: NSURLErrorCannotOpenFile, userInfo: [NSLocalizedDescriptionKey: "refused again"]))
+    RunLoop.main.run(until: Date().addingTimeInterval(1.5))
+    check({ if case .failed? = viewer.notice.kind { return true } else { return false } }(), "WebKit fails, Reload, WebKit fails again, the scan answers: the bar is still up")
     viewer.open(real.appending(path: "tall.html"), root: real)
     waitText("tall")
     check(viewer.notice.kind == nil, "and the next load starts clean")
