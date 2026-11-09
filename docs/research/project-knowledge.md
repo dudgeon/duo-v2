@@ -84,12 +84,13 @@ sources: [tasks/release-0-2-22.md, session <id>]
 
 ### 4a. What running on one canned prompt requires
 
-- **The prompt is one fixed string, the same for every project:** the session's folder decides the project, and `duo2 knowledge guide` prints the instructions, as `duo2 director guide` does. No dates or arguments in it.
+- **The prompt is one fixed string, the same for every project:** the session's folder decides the project, and `duo2 knowledge guide` prints the instructions, as `duo2 director guide` does. No dates or arguments in it. It names a `duo2` verb rather than a file in the project on purpose: a job's approval covers the prompt's text, so a procedure file it pointed to could change, with any session's edit, and nobody would be asked to approve again. The guide ships inside Duo.
 - **State lives on disk.** `log.md`'s newest entry marks how far the last dream got, and it advances only when `knowledge check` passes. A skipped or failed run therefore loses nothing: the next one takes the same window.
 - **Each run is bounded.** `gather` takes the oldest 20 closed tasks at most, and the rest wait for the next run, so a first dream on a big project still finishes in a turn.
 - **A run that died is cleaned up first.** The next run finds the unfinished marker and restores the snapshot before it starts.
 - **A dream never reads a dream.** `gather` leaves out the dream sessions themselves, or it would treat its own output as evidence (§4's drift warning).
-- **Narrow tools, because nobody is watching a session that reads untrusted text:** file tools inside `_knowledge/`, `duo2 knowledge`, `duo2 search`, and subagents. No other shell and no network.
+- **Narrow tools, because nobody is watching a session that reads untrusted text:** file tools inside `_knowledge/`, `duo2 knowledge`, `duo2 search`, and subagents. No other shell and no network. The recurring-jobs design has no per-job tool limit yet, so this is an open request (C-164).
+- **The time of day has to suit the runner.** Duo's timer fires only with Duo open and the Mac awake, and a miss is skipped. So the job checks daily at a time the Mac is normally on, not overnight, and a miss costs a day.
 - **It never asks while a director exists.** Disputes go in its report and the director raises them. With no director, it ends on the question, which Duo shows as Needs you.
 
 **How sessions read it.** `ProjectContext`'s hook already tells every session its project's goal and next step at start, resume, clear and compact. It adds the generated index, capped at 4 KB. Pointer-only would be safer, but a code comment in `Director.swift` records Haiku skipping a separate read in half the dogfood runs. The cost is that page descriptions reach every session, so they're the injection surface. `knowledge check` should reject a description that reads like an instruction.
