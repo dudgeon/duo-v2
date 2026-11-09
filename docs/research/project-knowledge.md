@@ -24,7 +24,7 @@ Two measurements changed the design (§3): the cookbook's input, whole transcrip
 | Snapshot before each run | **Take** | Makes it cheap to apply changes without review |
 | One agent per transcript, reading it whole | **Change** | 410.7 MB in 14 days here. Filter first (§3) |
 | Managed Agents, Files API, memory stores, USD budget | **Drop** | Duo's users have CLI login only, no API keys. A dream is an ordinary worker on their login |
-| Nightly cron | **Change** | A red line on the director's wake instead, so there's no scheduler to fail. Stuck scheduled runs recurred three times in the retro |
+| Nightly cron | **Change** | A clock alone fires a dream with nothing to do. A no-model check decides whether one is due, and a director's red line catches it when a job isn't set up or has stopped working (§4). Stuck scheduled runs recurred three times in the retro, so the clock is never the only safeguard |
 | Nightly writes with no human touchpoint | **Change** | The second-brains study found the wikis that hold up keep one. Here: a one-line report, and disputes and anything crossing a project go to the user |
 | Index in the system prompt, 4,096-character cap | **Take the cap** | Duo's SessionStart hook is the path (§4) |
 
@@ -74,13 +74,23 @@ sources: [tasks/release-0-2-22.md, session <id>]
 - **Trust order for facts:** a decision the user recorded, then a check against the live system, then the user's words in a session, then a worker's report (written as "the worker says"), then inference. Second-brains' drift warning applies: a dream must not treat its own earlier pages as evidence.
 - **`index.md` is generated from frontmatter by `duo2`, never written by Claude.** The second-brains study names merge conflicts on the index as a known failure of LLM wikis, and one implementation it cites avoids them by generating the index. `log.md` is newest first, per OKF.
 
-**The dream** is an ordinary task and worker, using the director's existing `start`:
+**The dream** runs one of two ways with the same instructions: a worker the director starts when a red line says it's due, or a Duo recurring job (`docs/research/recurring-jobs-v2.md`, in design). Geoff's policy for those jobs is that the schedule types one canned prompt into a fresh session and nothing more, and whatever that session leaves undone waits for a person. So a dream has to finish in one turn, holding all its state on disk (§4a). Its steps:
 
 1. **Gather** (`duo2 knowledge gather`, no model): tasks closed since the last dream, their Requests and `Checked:` lines, the filtered session text, this project's Claude memory, and any inbox notes.
 2. **Analyze:** one subagent per closed task, adding to or correcting pages. Its tools are file tools only, with no shell or network.
 3. **Organize:** one subagent merges duplicates, retires pages, marks conflicts, and flags pages past `stale_after`.
 4. **Check** (`duo2 knowledge check`, no model): frontmatter, links, page size, the index cap, and a secrets scan (search's `Secrets.swift` already recognises credential patterns, best effort, so I'd reuse it). It rebuilds the index. A failed check restores the snapshot.
 5. **Report:** what changed, in a few lines, with links. Disputed pages become one question to the user.
+
+### 4a. What running on one canned prompt requires
+
+- **The prompt is one fixed string, the same for every project:** the session's folder decides the project, and `duo2 knowledge guide` prints the instructions, as `duo2 director guide` does. No dates or arguments in it.
+- **State lives on disk.** `log.md`'s newest entry marks how far the last dream got, and it advances only when `knowledge check` passes. A skipped or failed run therefore loses nothing: the next one takes the same window.
+- **Each run is bounded.** `gather` takes the oldest 20 closed tasks at most, and the rest wait for the next run, so a first dream on a big project still finishes in a turn.
+- **A run that died is cleaned up first.** The next run finds the unfinished marker and restores the snapshot before it starts.
+- **A dream never reads a dream.** `gather` leaves out the dream sessions themselves, or it would treat its own output as evidence (§4's drift warning).
+- **Narrow tools, because nobody is watching a session that reads untrusted text:** file tools inside `_knowledge/`, `duo2 knowledge`, `duo2 search`, and subagents. No other shell and no network.
+- **It never asks while a director exists.** Disputes go in its report and the director raises them. With no director, it ends on the question, which Duo shows as Needs you.
 
 **How sessions read it.** `ProjectContext`'s hook already tells every session its project's goal and next step at start, resume, clear and compact. It adds the generated index, capped at 4 KB. Pointer-only would be safer, but a code comment in `Director.swift` records Haiku skipping a separate read in half the dogfood runs. The cost is that page descriptions reach every session, so they're the injection surface. `knowledge check` should reject a description that reads like an instruction.
 
@@ -138,7 +148,7 @@ Three kinds of learning, each with one destination:
 - **`_knowledge/` kept out of git lives on one Mac**, unless the user chooses to commit it. A cloud session wouldn't see it. Hooks disabled (some managed Macs) means no index at session start.
 - **Committing it to a shared project shares what your sessions taught it.** Collaborators get pages distilled from your transcripts, so the director asks once per project (Never 2) and says that plainly. A dream sees only the sessions on that Mac, so each person's dreams add their own view, and pages merge as ordinary text. `sources` such as a session id or `tasks/` path mean something only on the author's Mac: they're provenance, and a page must stand without them.
 - **The work-tree path:** workers in a work tree need the main checkout's `_knowledge/`, as they do for task notes. Not yet checked in the hook.
-- **No wake, no dream.** A project with no director running gets nothing, since the red line only fires when a director runs status. Fine for projects being worked on; a dormant one just stops accreting.
+- **No wake and no job, no dream.** A project with no recurring job and no director running gets nothing. Fine for a project being worked on; a dormant one just stops accreting, and has nothing new to accrete.
 
 ## 8. Build order
 

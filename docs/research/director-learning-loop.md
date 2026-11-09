@@ -129,13 +129,20 @@ It lives in the skill, as a new section, so every director runs it. When somethi
 
 ## 8. Decisions for Geoff
 
-Asked by AskUserQuestion, recommendation first; the answers are recorded in §9.
+Asked by AskUserQuestion, recommendation first; the answers are in §9.
 
-1. **The record:** `check_by` plus `Checked:` lines and a `check` verb (recommended), both retro fields, or `check_by` alone.
-2. **Scheduled runs:** read the desktop app's private files and say so loudly when unreadable (recommended), or leave R3 to directors that have the session tools.
-3. **Learning across directors:** offer an upstream issue on the user's yes for each one (recommended), or keep failures in the project.
-4. **Getting status run:** skill, evals and the piggyback line now, with a hook as a later enhancement if the log shows it's being skipped (recommended); add an optional hook now; or skill and evals only.
+1. **The record:** `check_by` plus `Checked:` lines and a `check` verb, both retro fields, or `check_by` alone.
+2. **Scheduled runs:** read the desktop app's private files and say so loudly when unreadable, or leave R3 to directors that have the session tools.
+3. **Learning across directors:** offer an upstream issue on the user's yes for each one, or keep failures in the project.
+4. **Getting status run:** skill, evals and the piggyback line now, with a hook later if the log shows status being skipped; add an optional hook now; or skill and evals only.
 
-## 9. Geoff's answers
+## 9. Geoff's answers (2026-11-08, by AskUserQuestion)
 
-*None yet.*
+He chose the recommendation on all four:
+
+1. **The record:** `check_by` plus evidence (DL-319).
+2. **Scheduled runs:** read them, fail loudly (DL-321).
+3. **Learning across directors:** offer an upstream issue (DL-320).
+4. **Getting status run:** piggyback now, hook later (DL-321, ENH-326).
+
+**Added the same day:** Duo's own recurring jobs are being designed (`docs/research/recurring-jobs-v2.md`, on `feature/recurring-jobs`). Once built, their fire log is a second source for R3, alongside the desktop app's records. R3 is written so that a job's source can be added without changing the duty.
