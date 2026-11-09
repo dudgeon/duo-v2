@@ -5887,3 +5887,18 @@ From Claude's docs, read 2026-11-08 (desktop-scheduled-tasks, routines, schedule
 ## F-617 · What firing a job needs from Duo's session start (recurring-jobs, 2026-11-08)
 
 `TerminalCommand.newClaude` (`Terminals.swift`) mints the id and takes a prompt, the right shape for a job, but appends the prompt with no `--` (`resumeClaude` has it), so a prompt starting with `-` would read as a flag. It has no mode or model yet. `claude --bg` ignores `--session-id` (F-318), so a background start can't keep DL-14; a Duo tab can. `keep-running`'s text implies a hidden tab may wait until shown to start, which a job can't. `--permission-mode auto` was seen in 2.1.316's help; not checked on the work Mac's 2.1.284. `--tools`, `--allowedTools`, `--disallowedTools` and `--permission-mode dontAsk` are in `--help` on 2.1.219, 2.1.284 and 2.1.316 (scratch installs, no login). By the permission-modes doc, only `dontAsk` with allow rules is a true allowlist; `--allowedTools` in Auto only pre-approves. Nothing here was run: this is from reading the code, `--help` and the docs, and no session was started.
+
+## F-626 · Duo's implicit state machines, mapped: a session has no single state; DL-167 step 5 half happened (implicit-state-machines, 2026-11-08)
+
+A read-only review of the whole code base (`docs/research/implicit-state-machines.md`, page in `docs/research/implicit-state-machines/index.html`). Nothing was run.
+- **24 machines.** Six are serious: session life, a terminal tab's process, the chat surface, the prompt channel, the editor document, the split room.
+- **A session has no single state.** `SessionState` is only the attention enum. Running, parked, detached, elsewhere, ending and ended live in separate stores, read by at least nine deciders (`tabSessions`, `busy`, `hasOpenTerminal`, `ParkCheck.why`, `workerFacts`, …). About 36 logged incidents, the most of any surface.
+- **DL-167 step 5:** `phase` and `generation` exist and held (F-264). There's no single place that moves `phase` (14 assignments), `dirty` and about ten others stay outside it, and DuoChecks has no transition case: the proof is `scripts/check-editor-host.sh`.
+- **`sending` is a bare Bool with 23 write sites.** Twelve operations set and clear it; `peekPrompt` saves and restores it because it can't nest, and the others don't.
+- **Counts, non-Debug, by grep:** 465 Bools in DuoKit, 89 timers, 15 hand-rolled generation or revision counters.
+- **Done well, to copy:** `VoiceMachine.next`, `Migrator`, `ParkCheck.why`, `SessionSelection`, `RevisionGate`, `RepoStatus`, Suggest Edits derived from the file, `gpu-lock.sh`.
+
+## F-627 · Twenty bugs the state-machine review read in the code, none run (implicit-state-machines, 2026-11-08)
+
+Listed a to t with lines in `docs/research/implicit-state-machines.md`, "Bugs this review turned up". Each needs a failing check before its fix. The ones a user would notice most: Earlier turns makes newer turns vanish (filed 2026-10-12 as bug 6 of the codebase review, still in the code); ⌘W on a tab restored at launch ends the process but leaves the tab, because only `closeSession` clears `parkedTabs`; `/clear` drops Keep Running and a hand-placed tab position, since neither is rekeyed; a document tab whose file isn't visible at launch is forgotten when the next save overwrites the restore file; `migrate undo` on a delete leaves the journal `.reverting` and blocks every later migration; `refreshing` has no timeout, so a hung read would stop the session lists for good; `send` has no `guard !sending`; `SheetCenter.answer` removes the queue's first without checking it's the question answered.
+
