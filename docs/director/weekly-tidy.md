@@ -89,7 +89,7 @@ Then:
 
 - update `tidy/ledger`: add the new items, set `last` on the ones reported, and drop keys whose condition has cleared. Pin the write;
 - add `done/tidy-<YYYY-MM-DD>` with `{title: "Weekly tidy-up ran: <headline>", at}`;
-- bump `meta/console.updated`.
+- leave `meta/console` alone: the headline and `updated` are the director's, and the scheduled prompt allows the run only the card, the ledger, its done row and its jobs row (the two disagreed until 2026-11-09).
 
 Write nothing else on the console. End the run with three lines: what changed since last week, what needs Geoff most, and the console link.
 
@@ -102,13 +102,13 @@ Added after the Mac mini's data volume reached 98% on 2026-11-07. Duo work trees
 **Delete** `.build`, `build`, `node_modules` and `.venv` inside a work tree under `/Users/geoff/repos/duo-v2/.claude/worktrees/` only when **all** hold, checked for that tree right before its deletion, not from an earlier list:
 
 1. **Idle over 7 days:** the newest commit and the newest file mtime outside the four build folders are both older than 7 days.
-2. **No process uses it.** Take one `ps -axo pid=,command=` snapshot into a variable and test the tree's path against it with the shell's own string match, **not** `ps | grep`: a `grep` or `ugrep` shim lists its own command line and matches itself (F-614). Also take `lsof -d cwd -Fn` and test for `n<tree>`: a `claude` session whose cwd is the tree has no path on its command line. Where `<tree>/build` exists, `lsof +D <tree>/build` must be empty: a Duo.app may be running from it (`landing-dev` had one for six days).
+2. **No process uses it.** Take one `ps -axo pid=,command=` snapshot into a variable and test the tree's path against it with the shell's own string match, **not** `ps | grep`: a `grep` or `ugrep` shim lists its own command line and matches itself (F-614). The checking command itself must name no tree either: a shell line that mentions `<tree>` is in the snapshot and matches it (seen again 2026-11-09: two trees were falsely skipped until the check was re-run from a line naming none). Also take `lsof -d cwd -Fn` and test for `n<tree>`: a `claude` session whose cwd is the tree has no path on its command line. Where `<tree>/build` exists, `lsof +D <tree>/build` must be empty: a Duo.app may be running from it (`landing-dev` had one for six days).
 3. **The tree is not on this skip list:** the director's trees (`director-*`, `work-in-flight-review-*`), `landing-dev`, and the tree of any session in `claude agents --json --all` whose `state` is not `done` or `stopped`.
 4. **Do not `cd` into a tree to check it.** A shell whose cwd is the tree is itself "using" it (F-614). Use `git -C <tree>` and absolute paths.
 
 Never touch source or git state, the main checkout, `Spikes/`, or any cache outside the work trees. A session resuming in a cleaned tree pays one rebuild.
 
-**List, never remove:** stale trees. A tree is a candidate when it has no uncommitted changes (`git status --porcelain`), no commit missing from a remote (`git log origin/main..HEAD` empty, or its upstream has them), no nested work tree under its own `.claude/worktrees/`, nothing running, and no open task note naming its name or branch (`grep -F` across `tasks/*.md` in the main checkout and in every work tree; a note whose `status` is not `done` or `dropped` blocks it). Put the candidates, with their GB, on the card as "remove after sign-off". The director removes them with `git worktree remove` then `git worktree prune`, and never deletes a branch.
+**List, never remove:** stale trees. A tree is a candidate when it has no uncommitted changes (`git status --porcelain`), no commit missing from a remote (`git log origin/main..HEAD` empty, or its upstream has them), no nested work tree under its own `.claude/worktrees/`, nothing running, and no open task note naming its name or branch (`grep -F` across `tasks/*.md` in the main checkout and in every work tree; a note whose `status` is not `done` or `dropped` blocks it; `tasks/_record-reservations.md` is the director's ledger, not a task note, and never blocks a tree). Put the candidates, with their GB, on the card as "remove after sign-off". The director removes them with `git worktree remove` then `git worktree prune`, and never deletes a branch.
 
 **Not the tidy's to touch:** the Core ML cache under `~/Library/Caches/com.dudgeon.duo*` and `DuoChecks` (ENH-327 is the real fix), the voice and video model folders, and `~/.claude/jobs`. List them if they grow past 50 GB and let the director ask.
 
