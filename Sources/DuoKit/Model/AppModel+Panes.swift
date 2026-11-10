@@ -95,12 +95,30 @@ extension AppModel {
     /// The main window; none in DuoChecks, which has no application.
     var paneWindow: NSWindow? { window }
 
+    /// The keyboard in Home's session at All projects: its chat's composer, or its terminal. `focusHomeRequest` was
+    /// the whole of this until F-640, and nothing ever read it, so a Home terminal never took the keyboard this way.
+    func focusHome() {
+        focusHomeRequest += 1
+        guard let key = homeTab else { return }
+        if let c = chat(for: key), c.showsChat { c.focusComposer += 1 } else { focusTerminal(key) }
+    }
+
+    /// A Home session asked for by name at All projects (its Needs you card, a session link, F-640): its tab, Home's
+    /// column opened if it is closed (it starts closed, DL-315, and the card points at it), and the keyboard in it.
+    /// Opening it here isn't the person's own toggle, so it doesn't count as one (`leftTouchedAllProjects`).
+    public func showHomeSession(_ tab: String) {
+        homeTab = tab
+        if leftCollapsedAllProjects { leftCollapsedAllProjects = false }
+        activePaneAllProjects = .left
+        focusHome()
+    }
+
     /// Moves the keyboard into `pane`: a terminal, the chat's composer, the editor or a page; the
     /// panes with no keyboard navigation yet just let go of the old responder.
     func focusPane(_ pane: DuoPane) {
         if altitude.isAllProjects {
             guard pane == .left else { paneWindow?.makeFirstResponder(nil); return }
-            if let key = homeTab, let c = chat(for: key), c.showsChat { c.focusComposer += 1 } else { focusHomeRequest += 1 }
+            focusHome()
             return
         }
         switch pane {

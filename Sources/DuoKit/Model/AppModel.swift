@@ -814,7 +814,7 @@ public final class AppModel {
     public func goHome() {
         zoomOut()
         if let s = fixture.needsYou.first(where: { $0.project == fixture.home?.name }) { homeTab = s.tabKey }
-        focusHomeRequest += 1
+        focusHome()
     }
 
     /// `⌘↩` in the peek: jump into the selected card's project, on that session.

@@ -58,8 +58,8 @@ struct HomePane: View {
                 // Home's chat draws only at All projects: this pane stays in the window under a project, and
                 // its composer, out of sight, took the keyboard from the project's (C-47, F-183).
                 if let chat = model.chat(for: t.key) {
-                    if model.altitude.isAllProjects || !chat.showsChat { ConsoleChatBody(chat: chat, terminal: t) } else { Color.clear }
-                } else { TerminalSlot(session: t) }
+                    if model.altitude.isAllProjects || !chat.showsChat { ConsoleChatBody(chat: chat, terminal: t, home: true) } else { Color.clear }
+                } else { TerminalSlot(session: t, shown: model.altitude.isAllProjects, place: "home") }
                 if t.ended != nil { ConsoleEndedBar(session: t, name: model.consoleTitle(t.key)) }
                 else if model.chat(for: t.key)?.showsChat != true { TrustBar(key: t.key) }
                 Color.clear.frame(height: 0).task(id: t.key) { model.attachChat(t) }
@@ -966,7 +966,7 @@ struct HomePointerCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .bordered(DuoSpace.pointerCardPadding, color: DuoColor.controlEdge, dashed: true)
         .contentShape(Rectangle())
-        .onActivate { model.homeTab = session.tabKey; model.focusHomeRequest += 1 }  // action: session open
+        .onActivate { model.showHomeSession(session.tabKey) }  // action: session open
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(session.name), needs you, waiting in the Home terminal")
     }

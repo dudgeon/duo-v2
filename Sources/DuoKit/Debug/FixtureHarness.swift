@@ -368,7 +368,7 @@ public enum FixtureHarness {
             if let t = model.visibleTerminal {
                 let d = t.view.terminalStateSnapshot().dimensions
                 let longest = t.view.visibleRowsText(0..<d.rows).map(\.count).max() ?? 0
-                FileHandle.standardError.write(Data("term-info: \(t.key.prefix(8)) cols=\(d.cols) rows=\(d.rows) onScreen=\(t.view.window != nil) longestRow=\(longest) hiddenResizes=\(t.hiddenResizes)\n".utf8))
+                FileHandle.standardError.write(Data("term-info: \(t.key.prefix(8)) cols=\(d.cols) rows=\(d.rows) onScreen=\(t.view.window != nil) longestRow=\(longest) hiddenResizes=\(t.hiddenResizes) \(t.view.holderInfo)\n".utf8))
             } else { FileHandle.standardError.write(Data("term-info: no terminal\n".utf8)) }
         case "drop-terminal":   // drop-terminal:<path>|<path>: files dropped on the visible terminal
             if parts.count > 1 { model.visibleTerminal?.view.insertPaths(parts[1].split(separator: "|").map { URL(fileURLWithPath: String($0)) }) }
@@ -1025,6 +1025,8 @@ public enum FixtureHarness {
             }
         case "chat-clear":   // the composer emptied, as select-all and delete would
             if let c = model.visibleSessionId.flatMap(model.chat(for:)) { c.ui.composer = "" }
+        case "chat-fallback":   // the visible chat falls back to the terminal with the bar, as a screen it can't show does (F-640's run)
+            if let c = model.visibleSessionId.flatMap(model.chat(for:)) { c.persistsFallbackLog = false; c.fallBack(.unknownScreen, rule: "harness") }
         case "chat":   // chat:on|off
             if let k = model.visibleSessionId { model.setChatMode(parts.count > 1 && parts[1] == "off" ? .terminal : .chat, for: k) }
         case "chat-send":   // chat-send:<text>: the composer's Return

@@ -68,7 +68,7 @@ extension AppModel {
         guard let s = fixture.sessions.first(where: { $0.sessionId == id }) else {
             return info("No session with the id \(id.prefix(8))… is listed. It may have been deleted, or it ran on another Mac.")
         }
-        if s.project == fixture.home?.name, altitude.isAllProjects { homeTab = s.tabKey; focusHomeRequest += 1; return }
+        if s.project == fixture.home?.name, altitude.isAllProjects { showHomeSession(s.tabKey); return }
         // Within the project already (a link in one of its notes): keep the note on screen.
         if currentProject?.name != s.project { open(project: s.project) }
         openConsoleTab(s.tabKey)

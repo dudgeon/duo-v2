@@ -789,7 +789,7 @@ struct ConsolePane: View {
                 if let chat = model.chats.existing(t.key) {
                     ConsoleChatBody(chat: chat, terminal: t)
                 } else {
-                    TerminalSlot(session: t)
+                    TerminalSlot(session: t, shown: !model.altitude.isAllProjects)
                 }
                 if t.ended != nil { ConsoleEndedBar(session: t, name: model.consoleTitle(t.key)) }
                 else if model.chats.existing(t.key)?.showsChat != true { TrustBar(key: t.key) }   // chat's own bar sits over its composer

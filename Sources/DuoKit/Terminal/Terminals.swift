@@ -394,6 +394,16 @@ public final class GuardedTerminalView: LocalProcessTerminalView {
     /// Forces a repaint from the current buffer. SwiftTerm's renderer draws from a snapshot, so
     /// `needsDisplay` alone repaints the old frame; a selection change invalidates the snapshot
     /// without resizing the PTY (findings F-20). Used when a terminal is attached to a slot.
+    /// For the harness's `term-info`: where the view sits, so a run can tell a terminal drawn in the pane on
+    /// screen from one another slot holds (F-640).
+    var holderInfo: String {
+        var chain: [String] = [], v: NSView? = superview
+        while let s = v, chain.count < 40 { chain.append(String(describing: type(of: s)).prefix(24) + "@" + String(UInt(bitPattern: ObjectIdentifier(s).hashValue) % 100000)); v = s.superview }
+        let inWin = window.map { convert(bounds, to: nil).intersection($0.contentView?.frame ?? .zero) } ?? .zero
+        let place = (superview as? TerminalSlot.SlotView)?.place ?? "none"
+        return "place=\(place) frame=\(Int(frame.width))x\(Int(frame.height)) hidden=\(isHiddenOrHasHiddenAncestor) inWindow=\(Int(inWin.minX)),\(Int(inWin.minY)),\(Int(inWin.width))x\(Int(inWin.height)) chain=\(chain.joined(separator: ">"))"
+    }
+
     func repaint() {
         selectAll()
         selectNone()
@@ -674,11 +684,17 @@ public final class TerminalStore {
 struct TerminalSlot: NSViewRepresentable {
     @Environment(AppModel.self) private var model
     let session: TerminalSession
+    /// Whether this slot's pane is the one on screen. Both layouts stay in the window (RootView), so Home's column is
+    /// still there, out of sight, under a project: its slot must not take Home's terminal from the console (F-640).
+    var shown = true
+    /// Named in the harness's `term-info`.
+    var place = "console"
 
     func makeNSView(context: Context) -> SlotView { SlotView() }
 
     func updateNSView(_ slot: SlotView, context: Context) {
-        slot.show(session.view)
+        slot.place = place
+        slot.show(session.view, shown: shown)
         // Voice input's mic on Claude's input box (DL-261): a sibling above the terminal, never inside it.
         let key = session.key
         slot.mic.session = session
@@ -688,6 +704,8 @@ struct TerminalSlot: NSViewRepresentable {
 
     final class SlotView: NSView {
         private weak var current: NSView?
+        private(set) var shown = true
+        var place = "console"
         let mic = TerminalMicView(frame: NSRect(origin: .zero, size: TerminalMicView.size))
 
         override var isFlipped: Bool { true }
@@ -706,8 +724,10 @@ struct TerminalSlot: NSViewRepresentable {
             needsLayout = true
         }
 
-        func show(_ view: NSView) {
-            guard view !== current else { return }
+        func show(_ view: NSView, shown: Bool = true, old: Bool = oldRule) {
+            self.shown = shown
+            guard Self.takes(holds: view.superview === self, had: view === current, shown: shown,
+                             holder: (view.superview as? SlotView).map { (shown: $0.shown, elsewhere: $0.window != nil && $0.window !== window) }, old: old) else { return }
             // Only a view this slot still holds (C-43): one another slot (another window's) took stays where it is.
             if let current, current.superview === self { current.removeFromSuperview() }
             view.removeFromSuperview()
@@ -721,6 +741,24 @@ struct TerminalSlot: NSViewRepresentable {
                 (view as? GuardedTerminalView)?.repaint()
             }
         }
+
+        /// Whether a slot takes the terminal's view when SwiftUI updates it (F-640). One view, several slots: Home's
+        /// column and the console both show Home's session, and each window has its own console (C-43).
+        /// - A slot out of sight never takes the view. Whichever slot SwiftUI updates last must not win: both are
+        ///   made in one pass when chat falls back, and a slot just made isn't in the window yet.
+        /// - A slot on screen that had the view and lost it to a slot on screen in another window (`elsewhere`) leaves
+        ///   it there (C-43). Lost to this window's other pane, it takes it back: only one of the two is on screen,
+        ///   and a console slot about to be removed gets no last update to say it is out of sight.
+        /// - Otherwise (a slot on screen, new to the view) it takes it, as before.
+        /// `DUO_SLOT_RULE=old` is the rule before F-640 (a slot new to the view always takes it, and never takes it
+        /// back), kept so `scripts/check-chat-fallback-slot-live.sh` can show the failure.
+        nonisolated static func takes(holds: Bool, had: Bool, shown: Bool, holder: (shown: Bool, elsewhere: Bool)?, old: Bool = oldRule) -> Bool {
+            if old { return !had }
+            if holds || !shown { return false }
+            if had, let holder, holder.shown, holder.elsewhere { return false }
+            return true
+        }
+        nonisolated static let oldRule = ProcessInfo.processInfo.environment["DUO_SLOT_RULE"] == "old"
 
         override func layout() {
             super.layout()
@@ -739,6 +777,50 @@ struct TerminalSlot: NSViewRepresentable {
                 current.frame.size.width = max(0, current.frame.width - 4 * s.cellSize.width)
             }
         }
+    }
+}
+
+/// The slots' rule replayed on real slot views, for DuoChecks (F-640): which slot holds a terminal's view after each
+/// move, with SwiftUI's updates in either order. `old` is the rule before F-640.
+@MainActor
+public enum TerminalSlotProof {
+    /// Home's session on Home's own page: chat falls back (the console's slot and Home's column's are made in one
+    /// pass), then All projects (the console's slot is removed with no last update), then Home's page again.
+    /// The holder after each: "console", "home", or "none" (in no slot, or in one out of the window).
+    public static func homePage(homeFirst: Bool, old: Bool) -> [String] {
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 400, height: 300), styleMask: [.titled], backing: .buffered, defer: true)
+        window.isReleasedWhenClosed = false
+        let view = NSView()
+        let home = TerminalSlot.SlotView(); home.place = "home"
+        window.contentView?.addSubview(home)
+        var out: [String] = []
+        func holder() -> String { (view.superview as? TerminalSlot.SlotView).flatMap { $0.window != nil ? $0.place : nil } ?? "none" }
+        func enterPage() -> TerminalSlot.SlotView {
+            let console = TerminalSlot.SlotView()   // updated before it is in the window, as SwiftUI does
+            if homeFirst { home.show(view, shown: false, old: old); console.show(view, shown: true, old: old) }
+            else { console.show(view, shown: true, old: old); home.show(view, shown: false, old: old) }
+            window.contentView?.addSubview(console)
+            return console
+        }
+        let first = enterPage(); out.append(holder())
+        if homeFirst { home.show(view, shown: true, old: old); first.removeFromSuperview() }
+        else { first.removeFromSuperview(); home.show(view, shown: true, old: old) }
+        out.append(holder())
+        _ = enterPage(); out.append(holder())
+        return out
+    }
+
+    /// Two windows' consoles on one session (C-43): the second takes the view, and the first, updated again, leaves it there.
+    public static func twoWindows(old: Bool) -> Bool {
+        let make = { () -> (NSWindow, TerminalSlot.SlotView) in
+            let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 400, height: 300), styleMask: [.titled], backing: .buffered, defer: true)
+            w.isReleasedWhenClosed = false
+            let s = TerminalSlot.SlotView(); w.contentView?.addSubview(s)
+            return (w, s)
+        }
+        let (a, b) = (make(), make()), view = NSView()
+        a.1.show(view, old: old); b.1.show(view, old: old); a.1.show(view, old: old)
+        return view.superview === b.1
     }
 }
 
