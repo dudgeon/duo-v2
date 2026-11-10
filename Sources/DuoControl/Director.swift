@@ -479,8 +479,12 @@ public enum DirectorTranscript {
         if from > 0, !lines.isEmpty { lines.removeFirst() }   // a partial line
         var lastUser: Date?
         for line in lines {
-            guard line.contains("\"user\""), let e = (try? JSONSerialization.jsonObject(with: Data(line.utf8))) as? [String: Any],
-                  e["type"] as? String == "user", let kind = turnKind(e, tag: tag) else { continue }
+            guard line.contains("\"user\"") || line.contains("\"queued_command\""), let e = (try? JSONSerialization.jsonObject(with: Data(line.utf8))) as? [String: Any] else { continue }
+            if MidTurnPrompt.text(e) != nil {   // typed while a turn ran (C-173, F-638)
+                lastUser = (e["timestamp"] as? String).flatMap(parseDate) ?? Date.distantPast
+                continue
+            }
+            guard e["type"] as? String == "user", let kind = turnKind(e, tag: tag) else { continue }
             switch kind {
             case .director: lastUser = nil
             case .user: lastUser = (e["timestamp"] as? String).flatMap(parseDate) ?? Date.distantPast

@@ -1,3 +1,4 @@
+import DuoControl
 import Foundation
 
 /// Feeds a live session's chat: the transcript for history (the last 50 turns, Q-56c, with
@@ -82,7 +83,7 @@ final class ChatFeed {
         var n = 0
         for i in records.indices.reversed() {
             let r = records[i]
-            if r["type"] as? String == "user", (r["message"] as? ChatJSON)?["content"] is String, r["isMeta"] as? Bool != true {
+            if (r["type"] as? String == "user" && (r["message"] as? ChatJSON)?["content"] is String && r["isMeta"] as? Bool != true) || MidTurnPrompt.text(r) != nil {
                 n += 1
                 if n == turns { return i }
             }
@@ -93,7 +94,7 @@ final class ChatFeed {
     /// Earlier turns: 50 more, replayed off the main thread like the first 50.
     func loadEarlier() {
         guard historyStart > 0, !loading else { return }
-        let shown = history[historyStart...].filter { $0["type"] as? String == "user" && ($0["message"] as? ChatJSON)?["content"] is String }.count
+        let shown = history[historyStart...].filter { ($0["type"] as? String == "user" && ($0["message"] as? ChatJSON)?["content"] is String) || MidTurnPrompt.text($0) != nil }.count
         let held = Records(all: history), cwd = cwd, declined = chat?.lastDeclined
         loading = true
         Task.detached(priority: .userInitiated) { [weak self] in

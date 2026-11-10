@@ -70,6 +70,11 @@ public enum SessionSource {
                 guard r["isMeta"] as? Bool != true, r["isSidechain"] as? Bool != true, let text = promptText(r) else { continue }
                 close()
                 prompt = text
+            case "attachment":
+                // A message typed while a turn ran (C-173, F-638).
+                guard r["isSidechain"] as? Bool != true, let text = MidTurnPrompt.text(r) else { continue }
+                close()
+                prompt = text
             case "assistant":
                 guard r["isSidechain"] as? Bool != true, prompt != nil else { continue }
                 let parts = (r["message"] as? [String: Any])?["content"] as? [[String: Any]] ?? []

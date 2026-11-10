@@ -326,7 +326,7 @@ public enum DirectorFactsReader {
         let toUser: Set<String> = ["AskUserQuestion", "PushNotification", "SendUserFile"]
         var spoke: Date?, turn: Date?
         for l in lines {
-            let isAssistant = l.contains("\"assistant\""), isUser = l.contains("\"user\"")
+            let isAssistant = l.contains("\"assistant\""), isUser = l.contains("\"user\"") || l.contains("\"queued_command\"")
             guard isAssistant || isUser, let e = (try? JSONSerialization.jsonObject(with: Data(l.utf8))) as? [String: Any],
                   e["isSidechain"] as? Bool != true, let at = (e["timestamp"] as? String).flatMap(DirectorTranscript.parseDate) else { continue }
             let content = (e["message"] as? [String: Any])?["content"]
@@ -341,6 +341,8 @@ public enum DirectorFactsReader {
                 if e["isMeta"] as? Bool == true { continue }
                 if let blocks = content as? [[String: Any]], blocks.contains(where: { $0["type"] as? String == "tool_result" }) { continue }
                 turn = at
+            case "attachment":
+                if MidTurnPrompt.text(e) != nil { turn = at }   // typed while a turn ran (C-173, F-638)
             default: break
             }
         }
