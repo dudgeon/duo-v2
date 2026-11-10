@@ -9,4 +9,4 @@ The decision walkthrough (DL-309, DL-310) for the native PDF viewing research (`
 
 Rebuild with `node ~/.claude/skills/decision-walkthrough/build.mjs spec.json`. Only changed lines are re-voiced, under the GPU lock; `.cache/` is not committed.
 
-The director publishes the final page (DL-166), so answers reach director-duo-v2: db `answers/<id>`, one comment sent to Claude per answer, and Copy decisions for Claude.
+The director publishes the final page (DL-166), so answers reach director-duo-v2: db `answers/<id>`, one comment sent to Claude per answer, and Copy decisions for Claude. A worker's draft is at https://claude.ai/artifact/NaiCEKFx1vJFcGMgu8AVPo (private to Geoff's account; its answers go to this worker's session, not the director's).
