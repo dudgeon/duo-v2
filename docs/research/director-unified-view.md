@@ -14,7 +14,7 @@
 
 The dream that DL-328 stopped was a periodic pass too. But the one output the pilot tested was pages for other sessions to read. Its other outputs were never tried.
 
-**Finding 2: duo-v2 didn't need knowledge pages because it already turns evidence into fact.** A finding says what was run and what it showed. A question stays open until answered. A decision quotes Geoff. Each has a number, a source and an owner. A work project made of meeting notes has none of that. The "robust and nuanced approach to memory" Geoff asks for at work is that same ladder in a lighter form, kept inside the project. It is not a memory store beside the project.
+**Finding 2: duo-v2 didn't need knowledge pages because it already turns evidence into fact.** A finding says what was run and what it showed. A question stays open until answered. A decision quotes Geoff. Each has a number, a source and an owner. A work project made of meeting notes has none of that. The "robust and nuanced approach to memory" Geoff asks for at work is that same ladder in a lighter form, kept inside the project. It is not a memory store beside the project. Geoff's own version is simpler still (§5): the director comments on the note it is reading and asks, and what he confirms goes where that kind of thing already lives.
 
 **Finding 3: almost everything shipped so far watches the director, and almost nothing reaches the worker.** A worker still isn't asked how it will prove its work. That is the article's first point, and it is also what makes sign-off slow: a report with no proof in it can only be checked by a person.
 
@@ -27,7 +27,7 @@ The dream that DL-328 stopped was a periodic pass too. But the one output the pi
 3. Ask workers for proof, and mark each task as checkable by an agent or a matter of taste.
 4. Fix the readers that miss messages typed mid-turn (C-173).
 5. Run the review pass once by hand.
-6. Try the evidence ladder on one project of notes.
+6. Try the work use on a made-up project of notes (Geoff's choice).
 7. Then the one-line rules, and trim the skill.
 
 ## 1. What Geoff said
@@ -77,9 +77,11 @@ A proposal for a trial by hand. Nothing here is designed or built, and no screen
 | Output | What it does | Answers | Who decides |
 |---|---|---|---|
 | **a. Close-out** | For each open note, test its `done_when`: is the branch merged, do the named files exist, do the named checks pass. True: close it, naming the check that passed. False: back to in progress, saying what is missing. Not checkable: it joins one batch of taste questions for Geoff, each with its link. | It drops things | The agent, for what it can check. Geoff, for taste. |
-| **b. Corrections** | Reads what Geoff typed. A correction that repeats an earlier one, or that an existing rule should have prevented, becomes a suggested `Failure:` task with both quotes. A count goes in the report: corrections this period, and how many were repeats. | No evidence of learning | Geoff says go on each; the failure protocol does the rest. |
-| **c. Suggestions** | At most three, ranked, each with why now and what it costs. Drawn from the backlog, from found work, and from what the pass noticed. | Too few suggestions | Geoff. |
-| **d. Record candidates** (a project of notes) | Statements in new notes that look like a decision, a requirement, an open question or a fact, each proposed for the project's record with its source and its rung (§5). A new statement that disagrees with the record is marked, not resolved. | Understanding doesn't compound; the work use | See Q-485. |
+| **b. Corrections** | Reads what Geoff typed. A correction that repeats an earlier one, or that an existing rule should have prevented, becomes a suggested `Failure:` task with both quotes. Two numbers go in the weekly note: corrections this period, and how many were repeats. | No evidence of learning | Geoff says go on each; the failure protocol does the rest. |
+| **c. Suggestions** | A short ranked list, each item with why now and what it costs. Geoff wants all four kinds: what to do next (at most three, from the backlog, issues and found work); risks and things going wrong; better ways of working; and connections between notes, projects and decisions. The last three appear only when the pass found one. | Too few suggestions | Geoff. |
+| **d. Record candidates** (a project of notes) | Statements in new notes that look like a decision, a requirement, an open question or a fact, each raised as a comment on the note it came from (§5). A new statement that disagrees with an earlier decision is pointed out, not resolved. | Understanding doesn't compound; the work use | Geoff confirms each; the form is still open (Q-485). |
+
+**The weekly note.** Asked what would count as evidence of learning, Geoff chose a falling repeat count, a weekly "what changed" note, and in the end simply fewer complaints. So each pass ends in one short note: corrections this week and how many were repeats; which rules or evals changed and why; which notes were closed; the suggestions. He didn't choose having the director cite what it learned each time it acts, so no rule is added for that.
 
 **What it never does.** Write a page other sessions lean on. Start work. Change a rule. Treat what it reads as instructions (the cookbook's rule: transcripts are data). Move anything between projects.
 
@@ -109,7 +111,17 @@ Three rules make it a ladder and not a pile:
 
 This is also what "carrying context between projects with nuance" can mean without a cross-project memory. The rung travels with the statement: "heard in project A's 3 Nov notes, not decided" is a different thing to bring into project B than "the launch moved". DL-322's rules stand as the default: no stored cross-project memory, Home's director finds relations by search when they're needed, and a statement enters another project only through its inbox on Geoff's yes.
 
-**What is not settled.** Where a project of notes keeps this record, what it looks like on disk (it must stay readable by Obsidian and OKF), and what the director may add without asking. Those are design questions (Q-485). And the whole section is a hypothesis: the pilot suggests a project with few records gains more, on one small project and a one-point difference. It needs its own test, the pilot's way: the same questions put to a fresh session with and without the record.
+### Geoff's version: comment on the note, then ask
+
+I asked what the director may add to a project's record without asking. Geoff: "I don't understand this one, we should discuss. But I think in ingestion of new notes, the model could comment/append observations to notes and seek confirmation ; it could also request confirmation of suggestions/findings via askUserQuestions". The question was badly put: it assumed a separate record that nobody has agreed should exist. His answer needs none, and it uses what Duo already has:
+
+1. **Observations go on the note itself.** Duo has signed comments on Markdown files (`duo2 comment add <file> --at <text>`, with replies and close). Reading new notes, the director comments on the passage each observation is about: "this reads as a decision", "this disagrees with the 12 Oct decision", "a candidate requirement", "a task for the pricing project?". An unconfirmed observation exists nowhere else.
+2. **Confirmation is a reply, or one batch of questions.** Geoff answers in the note, or the director asks by AskUserQuestion with the note's link.
+3. **What he confirms goes where that kind of thing already lives.** A task becomes a suggested task in its project. A decision goes under `## Decisions` in the project's file. A requirement goes where the project keeps requirements, which its Director section says. Each links back to the note.
+
+That gives the ladder without a new store. A comment is "heard". A confirmed entry is "decided" or "wanted". The note stays the source.
+
+**What is not settled** (Q-485, for the discussion Geoff asked for). Where a confirmed fact lives when it is not a task, a decision or a requirement ("the launch moved to March"): found later by search over the notes and their closed comments, or kept in a short "what we know" file in the project. Whether comments written into a note suit a vault he also reads in Obsidian, which shows them as plain marks. And whether anything at all may be written before he has seen it; his answer suggests comments may, and nothing else. The whole section is also a hypothesis: the pilot suggests a project with few records gains more, on one small project and a one-point difference. It needs its own test, the pilot's way: the same questions put to a fresh session with and without the record.
 
 ## 6. What is worth pursuing, in order
 
@@ -120,7 +132,7 @@ This is also what "carrying context between projects with nuance" can mean witho
 | 3 | **Ask workers for proof, and mark what kind of sign-off a task needs.** Options A and B in `director-skill-article.md`: the brief carries a check; the worker's first progress line says how it will check and what it is unsure of; its report gives what it ran, what that showed and what it didn't check. New: each `done_when` is marked checkable by an agent, or taste. | Drops things; sign-off; Finding 3 | About +4 lines of skill, the worker prompt in `Director.swift`, two eval cases | A Sonnet worker; about $12 of eval turns on Haiku, more on Sonnet | 2 |
 | 4 | **Fix the readers that miss mid-turn messages** (C-173). 72 of about 390 typed messages in 14 days were mid-turn, and they are often corrections. | Learning; search | Code, known cause | A Sonnet worker | Nothing |
 | 5 | **The review pass, once by hand** (§4): close-out, corrections, suggestions. | All three build-time complaints | None until it proves itself | A Haiku worker reading about 65,000 tokens of typed text plus the notes; a Sonnet sample check | 1 (so close-out isn't done twice), 4 or its own reader |
-| 6 | **The evidence ladder on one project of notes** (§5), tested as the pilot was. | The work use; compounding understanding | None to duo-v2 until it shows a gain | A design round for the record's form, then a Haiku pilot | Geoff: which project (Q-486), what may be written unasked (Q-485) |
+| 6 | **The work use on a made-up project of notes** (§5). A worker writes a month of invented meeting and discussion notes for an invented team. A director reads them, comments, asks, and files what is confirmed. Scored as the pilot was, and the cases can become evals. | The work use; compounding understanding | None to the skill until it shows a gain | A Sonnet worker for the notes; a Haiku pilot, about the pilot's small-project cost | The discussion on Q-485. Geoff chose the made-up project. |
 | 7 | **The one-line rules and the trim.** Say what you didn't check (C). A fresh worker after a misread (D). Then cut the skill's repeats (H, ENH-338). | Reliability; over-process | About +2 lines, then about -10 | Covered by the eval rounds above | 2 |
 
 **Not now.**
@@ -146,4 +158,11 @@ This is also what "carrying context between projects with nuance" can mean witho
 
 **Round 1, 2026-11-09** (quoted in §1): the sign-off rule (DL-329), Sonnet as the eval bar and the one hand run of the corrections pass (DL-330).
 
-**Round 2:** *pending. Four questions: what would count as evidence of learning (Q-484); what kind of suggestions are missing; what the director may add to a project's record without asking (Q-485); which project to try the work use on (Q-486).*
+**Round 2, 2026-11-09**, by AskUserQuestion on this study's page. His words are the option labels he chose, and one answer he typed:
+
+- **What would count as evidence of learning** (he could choose several): "A falling repeat count (Recommended)", "A weekly \"what changed\" note", "Nothing shown, fewer complaints". Not chosen: "It cites what it learned". (Q-484, closed.)
+- **Which kinds of suggestion he misses** (several): all four. "What to do next", "Risks and things going wrong", "Better ways of working", "Connections". (Q-484.)
+- **What the director may add to a project's record without asking:** "I don't understand this one, we should discuss. But I think in ingestion of new notes, the model could comment/append observations to notes and seek confirmation ; it could also request confirmation of suggestions/findings via askUserQuestions". (Q-485, open; §5.)
+- **Which project to try the work use on:** "A made-up notes project (Recommended)". (Q-486, closed.)
+
+These three answers are recorded as questions with their answers, not as decisions: the task's two reserved decision numbers went to round 1. The director can give them numbers at merge.
