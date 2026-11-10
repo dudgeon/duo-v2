@@ -445,17 +445,17 @@ extension DuoAction {
 
         // Review in Markdown (DL-236, DL-237): comments and suggestions as signed CriticMarkup. A file open in Duo's editor is changed through the
         // editor (as Claude's change); any other file on disk. Run from a Claude session the author is `claude`, else the user's Mac name; --as names one.
-        .init(.commentAdd, .review, "<file> --at <line|text> [--as <name>] <text>",
-              "Comment on a line (its number) or on a text that appears once: the text becomes a highlight and the signed comment follows it. A comment that names @claude is addressed to a session (`duo2 comment send`).",
+        .init(.commentAdd, .review, "<file> --at <line|text|paragraph|slide> [--as <name>] <text>",
+              "On a Word or PowerPoint file (DL-331) the comment is written into the file's comment parts, with a backup of the original in Duo's support folder and nothing else touched: --at is a text that appears once in a Word document (or a paragraph number) or a slide number; its replies, resolved state and @claude routing work as below, with thread ids `c4` (Word) and `s3c1` (slide 3's first). Comment on a line (its number) or on a text that appears once: the text becomes a highlight and the signed comment follows it. A comment that names @claude is addressed to a session (`duo2 comment send`).",
               ui: ["Add Comment"]),
         .init(.commentList, .review, "<file> [--closed | --unsent]",
               "The file's comment threads: id, who and when, the text it is on, the comment and its replies. Closed threads are left out unless --closed (only those); --unsent lists the open ones that name @claude and have no reply."),
         .init(.commentReply, .review, "<id> <text> [--file <file>] [--suggest] [--as <name>]",
-              "Reply in a thread (or to a suggestion) with the next number, `#c1.2`; a closed thread reopens. --suggest instead proposes the reply text as a replacement of the text the thread is on. Never rewrites anyone's comment. Without --file, the document showing."),
+              "Reply in a thread (or to a suggestion) with the next number, `#c1.2`; a closed thread reopens (in a Word or PowerPoint file the reply goes in the file's comment parts, and --file names the file: the turn sent to a session says so). --suggest instead proposes the reply text as a replacement of the text the thread is on. Never rewrites anyone's comment. Without --file, the document showing."),
         .init(.commentSend, .review, "<id | --all> [--file <file>] [--to <session> | --new]",
               "Send a comment that names @claude to a session, quoted as data, when the person says to (DL-236 10): the turn is pasted and Returned through the idle-and-empty-prompt guard of `director send`, or waits (Queued) until the session is ready. Without --to, the thread's session, the document's last choice, the last to edit it through Duo, then the one on screen. --all sends every @claude comment not yet sent or answered. Never sent from the file on its own."),
         .init(.commentClose, .review, "<id> [--file <file>] [--as <name>]",
-              "Close and Keep: add a closing line `{>>@name date #c1.2 closed<<}` after the thread's last comment; the highlight and comments stay (Q-262).",
+              "Close and Keep (in a Word or PowerPoint file: mark the thread resolved, which Word and PowerPoint show as done): add a closing line `{>>@name date #c1.2 closed<<}` after the thread's last comment; the highlight and comments stay (Q-262).",
               ui: ["Close and Keep"]),
         .init(.commentDelete, .review, "<id> [--file <file>]",
               "Delete the thread: its highlight markers and every comment go, the text stays."),

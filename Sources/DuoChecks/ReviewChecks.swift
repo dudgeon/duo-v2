@@ -32,6 +32,12 @@ import Foundation
     check(p.thread("c2")?.anchor == nil, "a comment with no highlight is a thread with no anchor")
     check(Review.nextID("c", in: doc) == "c10" && Review.nextID("s", in: doc) == "s4", "the next ids come after every id in the file, code included")
 
+    // F-642: a Word or PowerPoint file can't take a comment; the refusal names the route that works
+    let wordMsg = Review.notMarkdownMessage("Plan.docx"), deckMsg = Review.notMarkdownMessage("Pitch.PPTX")
+    check(wordMsg.contains("duo2 file convert") && wordMsg.contains("read-only"), "a comment verb on a .docx names Convert to Markdown (F-642)")
+    check(deckMsg.contains("duo2 deck import") && deckMsg.contains("read-only"), "a comment verb on a .pptx names Convert to Duo Deck (F-642)")
+    check(Review.notMarkdownMessage("a.txt") == "a.txt isn't a Markdown document", "another file keeps the plain refusal")
+
     // Writing
     let added = try Review.addComment(to: doc, at: "6", author: "Geoff Q", date: "2026-10-28", body: "why")
     check(added.text.contains("{==# Offline==}") || added.text.contains("{==The price"), "comment --at <line> highlights the line's text")
