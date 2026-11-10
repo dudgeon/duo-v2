@@ -197,6 +197,8 @@ struct ConsoleChatBody: View {
     @Environment(AppModel.self) private var model
     let chat: ChatSession
     let terminal: TerminalSession?
+    /// Home's column at All projects: under a project it is out of sight, and its slot leaves the terminal to the console (F-640).
+    var home = false
 
     var body: some View {
         if chat.showsChat {
@@ -210,7 +212,7 @@ struct ConsoleChatBody: View {
         } else {
             VStack(spacing: 0) {
                 if chat.mode == .chat, let f = chat.fallback { ChatFallbackBar(chat: chat, message: f.message, command: f.command) }
-                if let terminal { TerminalSlot(session: terminal) } else { ChatTerminalStandIn(chat: chat) }
+                if let terminal { TerminalSlot(session: terminal, shown: home == model.altitude.isAllProjects, place: home ? "home" : "console") } else { ChatTerminalStandIn(chat: chat) }
             }
         }
     }
