@@ -5986,3 +5986,25 @@ Shape, from the keys and `origin` of real transcripts (no text copied): a messag
 - **Not affected, nothing to fix:** `discovery-gather.py` reads only assistant text and the session link; `tidy-gather.py` reads Duo's own logs, not transcripts; `session-links.py` reads titles and links. `SessionTitles`, `ForkLineage`, `ThreadCache` take the first user entry (a mid-turn message can't come first); `Inventory` reads tool results and edited files. So no Python fixture test was needed.
 - **The look:** a mid-turn message uses the existing message-of-yours bubble, so nothing new was drawn and there is no Q row (Q-487 not taken). Not captured on screen; the check proves the feed's log holds it.
 - **Not done:** the knowledge pilot's own filter (`docs/research/knowledge-pilot.md`) and the study's counting script are outside Duo's readers and unchanged.
+
+## F-644 · PDFKit draws and keeps PDF comment threads but can't write a reply or save incrementally; CGPDF reads threads and a small appender writes them; Read takes a whole PDF as images (pdf-viewing research, 2026-11-10)
+
+Spikes in `docs/research/pdf-viewing-spikes/` on an invented 120-page fixture (charts drawn only as bars, a two-column page, a table, an image-only scan). The decision document is `docs/research/pdf-viewing.md` (Q-490 to Q-493, ENH-339).
+- **Reading a PDF for a session:**
+  - Claude Code 2.1.316's Read with no `pages` read all 120 pages of a 300 KB PDF in one call, each as text and a page image. Anthropic's figure for that is about 1,500 to 3,000 tokens a page, so roughly 180k to 360k tokens for this fixture.
+  - PDFKit's `PDFPage.string` for all pages took 0.07 s: 133,894 characters, about 33k tokens. It kept columns and table rows in order but lost all 12 charts' values and the scanned page's words.
+  - One page rendered at 1000 px takes 15 ms (about 70 KB PNG).
+  - Page-range Read needs poppler's `pdftoppm`, which isn't installed here; not tested.
+- **PDFKit writes:**
+  - Text and Highlight annotations with `/T`, `/M`, `/NM` and `/Contents`, plus `/State` and `/StateModel` as text strings and `/RT /R`.
+  - Not `/IRT`: `setValue(_:forAnnotationKey: "/IRT")` with a `PDFAnnotation` fails and nothing is written. A highlight's `/Popup` wasn't written either.
+  - `write(to:)` rewrites the whole file (the original bytes aren't a prefix).
+- **PDFKit reads:** `annotationKeyValues` hides `/IRT`, `/RT`, `/State`, `/StateModel` and `/CreationDate`. Yet a PDFKit resave of a file holding a thread keeps all of them, with `/IRT` renumbered to the right parent.
+- **CGPDF reads threads:** the `/Annots` dictionaries expose every key, and the `CGPDFDictionaryRef` reached through `/IRT` is the same pointer as the parent's, so the tree rebuilds natively.
+- **An incremental update by hand works:** a reply and an Accepted state reply took 756 bytes (two objects, the page's `/Annots` array, an xref section, a trailer with `/Prev`). The original stays a byte prefix, and PDFKit, CGPDF and PDF.js all open it.
+- **PDF.js (pdfjs-dist 4.10.38, 13 MB `build/`):**
+  - It reports `inReplyTo` and `replyType` but doesn't return hidden (`/F 32`) state replies, so it shows no review state.
+  - `saveDocument()` is an incremental update.
+- **Quick Look** (`qlmanage -t`, headless) draws the highlight and the note icon.
+- **Not tested:** whether Preview's sidebar and Acrobat Reader show the `/IRT` thread and the status. That needs a window, and Acrobat isn't installed.
+- **Also learned:** split view refuses `.pptx` as well as PDFs (`FileKind.binaryTypes` includes `.presentation`), so no viewer takes part in a split today (Q-491).
