@@ -54,6 +54,7 @@ func repoFixture() throws -> Fixture {
         print(DuoAction.primer(sessionID: id, cli: "/Applications/Duo.app/Contents/Helpers/duo2"), terminator: ""); exit(0)
     }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "chat" { return try chatChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "midturn" { return try midTurnChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "chat-live" { return try chatLiveChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "task-send" { return try chatTaskSendChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "chat-real"{ return try chatRealChecks() }
@@ -2004,6 +2005,7 @@ func repoFixture() throws -> Fixture {
           "walks never enter Music, Photos, Documents… unless the project lives inside them")
     check(FileSource.files(in: URL(fileURLWithPath: "/")).isEmpty && FileSource.files(in: home.deletingLastPathComponent()).isEmpty,
           "folders above home are never walked for files (a session started in / or /Users)")
+    try midTurnChecks()  // MidTurnChecks.swift: messages typed mid-turn (C-173, F-638)
     walkGuardChecks()  // WalkGuardChecks.swift: every walk goes through ProtectedFolders (F-302)
 
     print("Claude folders (DL-103)")

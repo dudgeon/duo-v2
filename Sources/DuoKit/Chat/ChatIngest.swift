@@ -1,3 +1,4 @@
+import DuoControl
 import Foundation
 
 /// How a tool call reads on the dotted thread (handoff `tools`): a bold verb, its object, a detail.
@@ -278,6 +279,10 @@ public enum ChatIngest {
         if let cwd = r["cwd"] as? String, log.cwd == nil { log.cwd = cwd }
         let message = r["message"] as? ChatJSON
         switch type {
+        case "attachment":
+            // A message typed while a turn ran is shown like any of your messages; the hook's echo and this
+            // record claim one bubble (C-173, F-638). A peer's or a task notification's queued command isn't.
+            if let text = MidTurnPrompt.text(r) { log.prompt(text, time: time, fromHook: false) }
         case "user":
             if r["isMeta"] as? Bool == true || r["isCompactSummary"] as? Bool == true { return }
             if let text = message?["content"] as? String {
