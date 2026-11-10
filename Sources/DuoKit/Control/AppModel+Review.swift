@@ -77,7 +77,7 @@ extension AppModel {
         guard let url = reviewFile(inv, req, path: path) else {
             return done(.fail(path == nil && inv.flags["file"] == nil ? "no document is showing: name one with --file <file>" : "no file '\(path ?? inv.flags["file"] ?? "")' here (a path from the project's folder, or absolute)"))
         }
-        guard Self.markdownExtensions.contains(url.pathExtension.lowercased()) else { return done(.fail("\(url.lastPathComponent) isn't a Markdown document")) }
+        guard Self.markdownExtensions.contains(url.pathExtension.lowercased()) else { return done(.fail(Review.notMarkdownMessage(url.lastPathComponent))) }
         let name = displayPath(url)
         // The id verbs take it first; `comment add` takes its text after the path.
         let args = takesPath.contains(id) ? Array(inv.positional.dropFirst()) : inv.positional

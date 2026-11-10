@@ -5986,3 +5986,15 @@ Shape, from the keys and `origin` of real transcripts (no text copied): a messag
 - **Not affected, nothing to fix:** `discovery-gather.py` reads only assistant text and the session link; `tidy-gather.py` reads Duo's own logs, not transcripts; `session-links.py` reads titles and links. `SessionTitles`, `ForkLineage`, `ThreadCache` take the first user entry (a mid-turn message can't come first); `Inventory` reads tool results and edited files. So no Python fixture test was needed.
 - **The look:** a mid-turn message uses the existing message-of-yours bubble, so nothing new was drawn and there is no Q row (Q-487 not taken). Not captured on screen; the check proves the feed's log holds it.
 - **Not done:** the knowledge pilot's own filter (`docs/research/knowledge-pilot.md`) and the study's counting script are outside Duo's readers and unchanged.
+
+## F-642 · @claude comments in the Word and PowerPoint viewers: not built, by DL-162; the route that worked was the Markdown copy (claude-comments-office, 2026-11-10)
+
+- **Asked (Geoff, 2026-11-10):** confirm that commenting with an @claude tag works in the PowerPoint and "Docs" viewers; if not, find a solution urgently. "Docs" tested as the Word (.docx) viewer; no Google Docs viewer exists in Duo.
+- **Tested** in an isolated run (build of `91707d42`, scratch `DUO_SUPPORT_DIR` and `CLAUDE_CONFIG_DIR`, a fixture .docx with an @claude Word comment and the Decks study's `grower-update.pptx` with legacy and modern comments), through the control handler `duo2` uses:
+  - **Add a comment naming @claude in the viewer: not built.** Both viewers are read-only (DL-162, DL-125; "Duo never writes the .docx"): the bar has Markup, Select Text/Shape, Convert, Open With, and no composer. `duo2 comment add/list/send` on a .docx or .pptx refused with "isn't a Markdown document".
+  - **The @ menu (DL-251): not built** there; it belongs to the Markdown margin composer.
+  - **Unsent status: not built** on either file. The .pptx viewer draws no comments at all (only Convert to Duo Deck reads them, as Review marks).
+  - **Send and reply: not built**, since nothing can be written back.
+  - **What worked:** `duo2 file convert Review.docx` made `Review.md` with the Word @claude comment as thread `#c2` (replies kept), and `comment list --unsent` listed it. `comment send` then stopped at "no session to send it to" (the run had none). Select Text and Select Shape send a paragraph, shape or comment to Claude one way.
+- **Fixed (check failed before: no such function; the old message fails the new `contains` checks):** the comment verbs on a Word or PowerPoint file now say it is read-only and name the route (`duo2 file convert`, `duo2 deck import`) instead of "isn't a Markdown document" (`Review.notMarkdownMessage`, `ReviewChecks.swift`).
+- **Decision:** Geoff chose to write comments into the file (DL-331, Q-489 closed); the writer is the next slice.

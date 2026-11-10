@@ -145,6 +145,20 @@ public enum Review {
     }
 
     /// The signature at the front of a comment: `@name 2026-10-28 #id` then `: text`, or ` closed`.
+    /// Why a review verb refuses a file that isn't Markdown (F-642). A Word or PowerPoint file is shown read-only and Duo never
+    /// writes it (DL-162, DL-125), so a comment can't be added to it; the verb names the way that does work.
+    public static func notMarkdownMessage(_ fileName: String) -> String {
+        let ext = (fileName as NSString).pathExtension.lowercased()
+        switch ext {
+        case "docx", "dotx", "docm":
+            return "\(fileName) is a Word document: Duo shows it read-only and never writes it, so comments and @claude can't be added there. Make its Markdown copy with `duo2 file convert \"\(fileName)\"` (the Convert to Markdown… button; its comments come over as threads), then use the comment verbs on the copy."
+        case "pptx", "potx", "pptm":
+            return "\(fileName) is a PowerPoint file: Duo shows it read-only and never writes it, so comments and @claude can't be added there. Turn it into a Duo deck with `duo2 deck import \"\(fileName)\"` (the Convert to Duo Deck… button; its comments come over as Review marks), then use the comment verbs on the deck."
+        default:
+            return "\(fileName) isn't a Markdown document"
+        }
+    }
+
     public static func parseComment(_ body: String, range: NSRange = NSRange(location: 0, length: 0)) -> Comment {
         let s = body.trimmingCharacters(in: .whitespaces)
         let sig = try? NSRegularExpression(pattern: #"^@([^\s:]+)(?:\s+(\d{4}-\d{2}-\d{2}))?(?:\s+#([\w.]+))?"#)
