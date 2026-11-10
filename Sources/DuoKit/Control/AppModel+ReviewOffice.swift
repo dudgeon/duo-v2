@@ -5,7 +5,7 @@ import Foundation
 // `duo2 comment …` on a Word or PowerPoint file (DL-331): the comment, its replies and its resolved state are written
 // into the file's comment parts (`OfficeComments`), and @claude routing (`comment send`, `comment status`) reads the threads
 // back as `Review.Thread`s, so the same turn, delivery and reply tracking as a Markdown comment apply. No viewer controls yet:
-// the composer is a surface to design (Q-490).
+// the composer is a surface to design (Q-494).
 extension AppModel {
     static func isOffice(_ url: URL) -> Bool { OfficeComments.kind(url) != nil }
 
