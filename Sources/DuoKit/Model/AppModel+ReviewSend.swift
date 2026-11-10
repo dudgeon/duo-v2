@@ -58,18 +58,24 @@ extension AppModel {
         return Review.turn(path: displayPath(url), line: line, thread: t)
     }
 
+    /// A thread of a document: Markdown's from its text, a Word or PowerPoint file's from its comment parts (DL-331).
+    func reviewThread(_ url: URL, _ id: String, _ text: String) -> Review.Thread? {
+        if Self.isOffice(url) { return (try? Self.officeReviewThreads(url))?.first { $0.id == id } }
+        return Review.parse(text).thread(id)
+    }
+
     // MARK: Sending
 
     /// Sends a thread's comment to `target` (or the first guess). `done` says what happened, for the verb.
     func sendReviewComment(_ url: URL, thread id: String, to chosen: Fixture.Session? = nil, done: @escaping @MainActor (Reply) -> Void) {
         reviewText(url) { [self] text in
-            guard let text, let t = Review.parse(text).thread(id) else { return done(.fail("no thread #\(id) in \(displayPath(url))")) }
+            guard let text, let t = reviewThread(url, id, text) else { return done(.fail("no thread #\(id) in \(displayPath(url))")) }
             guard t.comments.contains(where: \.mentionsClaude) else { return done(.fail("#\(id) doesn't name @claude: nothing to send")) }
             guard let s = chosen ?? reviewTarget(url, thread: id) else {
                 return done(.fail("no session to send it to: pick one with --to <session>, or start a session in the project"))
             }
             let key = Self.reviewKey(url, id)
-            let turn = reviewTurn(url: url, thread: t, text: text)
+            let turn = Self.isOffice(url) ? (officeTurn(url: url, thread: id) ?? "") : reviewTurn(url: url, thread: t, text: text)
             let before = t.comments.filter { $0.author == "claude" }.count
             bindReviewSession(url, to: s)
             attemptReviewSend(key: key, url: url, session: s, turn: turn, claudeBefore: before, done: done)
@@ -148,7 +154,7 @@ extension AppModel {
                 reviewSending.remove(key)
             case .sent, .replying:
                 reviewText(url) { [weak self] text in
-                    guard let self, let text, let t = Review.parse(text).thread(thread) else { return }
+                    guard let self, let text, let t = self.reviewThread(url, thread, text) else { return }
                     let claude = t.comments.filter { $0.author == "claude" }.count
                     var next = d
                     if claude > d.claudeBefore { next.state = .replied }

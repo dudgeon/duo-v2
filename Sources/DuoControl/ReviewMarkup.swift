@@ -511,3 +511,14 @@ public enum Review {
     Duo reviews: review marks in Markdown use CriticMarkup with a signature: {++added++}, {--deleted--}, {~~old~>new~~}, {==highlight==}, each followed by {>>@author date #id: note<<}. Marks are suggestions awaiting a person's decision: never accept or reject one, and never close a thread, unless asked in so many words; "deal with the review" means answering what is addressed to you, not resolving it. If the file's frontmatter has `suggest-edits: true`, write every change as a mark signed @claude; otherwise edit directly as usual, and use a mark only when you're asked to propose a change. Reply to a comment by adding {>>@claude date #id.n: reply<<} right after it (`duo2 comment reply <id> <text>` does it in Duo's editor if the file is open); don't delete or rewrite anyone's comment. To close a thread, add {>>@claude date #id.n closed<<} after its last comment; never delete someone's comment. A comment that names @claude is addressed to you.
     """
 }
+
+extension Review.Comment {
+    /// A comment read from somewhere other than Markdown (a Word or PowerPoint file, DL-331).
+    /// The closing line of a resolved thread read from a Word or PowerPoint file.
+    public static var closingMark: Review.Comment { Review.Comment(author: nil, date: nil, id: nil, text: "", closing: true, range: NSRange(location: 0, length: 0)) }
+    public init(author: String?, date: String?, id: String?, text: String) { self.init(author: author, date: date, id: id, text: text, closing: false, range: NSRange(location: 0, length: 0)) }
+}
+
+extension Review.Thread {
+    public init(id: String, anchor: String?, comments: [Review.Comment]) { self.init(id: id, anchor: anchor, anchorRange: nil, pieces: [], comments: comments, range: NSRange(location: 0, length: 0)) }
+}
