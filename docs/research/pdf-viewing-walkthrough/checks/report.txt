@@ -1,0 +1,38 @@
+desktop after play: {"cur":0,"t":3.826289,"mode":"intro","cap":"You asked for native PDF viewing, so here's what I found, and four decisions."}
+desktop option playing: {"mode":"option","t":2.242574}
+desktop saved: Saved on this page. Copy decisions sends it by hand.
+desktop after save, chapter 4
+desktop copy button: Copied
+desktop clipboard:
+PDF viewing walkthrough · all decisions (pdf-viewing-2026-11)
+For director-duo-v2. Saved in this page's db under answers/<id>.
+
+Q-490 (q490-viewer) What draws the PDF: PDFKit, native [pdfkit] (recommended)
+  Comment: check run: a comment
+Q-491 (q491-split) PDFs in split view: not answered
+Q-492 (q492-read) What Claude reads: not answered
+Q-493 (q493-comments) Where comments live: not answered
+
+Research: https://github.com/dudgeon/duo-v2/blob/main/docs/research/pdf-viewing.md
+desktop horizontal overflow px: 0
+desktop targets under 40px: []
+desktop errors: []
+phone after play: {"cur":0,"t":3.805663,"mode":"intro","cap":"You asked for native PDF viewing, so here's what I found, and four decisions."}
+phone option playing: {"mode":"option","t":2.242201}
+phone saved: Saved on this page. Copy decisions sends it by hand.
+phone after save, chapter 4
+phone copy button: Copied
+phone clipboard:
+PDF viewing walkthrough · all decisions (pdf-viewing-2026-11)
+For director-duo-v2. Saved in this page's db under answers/<id>.
+
+Q-490 (q490-viewer) What draws the PDF: PDFKit, native [pdfkit] (recommended)
+  Comment: check run: a comment
+Q-491 (q491-split) PDFs in split view: not answered
+Q-492 (q492-read) What Claude reads: not answered
+Q-493 (q493-comments) Where comments live: not answered
+
+Research: https://github.com/dudgeon/duo-v2/blob/main/docs/research/pdf-viewing.md
+phone horizontal overflow px: 0
+phone targets under 40px: ["Why now 49x30","Reading 64x30","Comments 69x30","● Viewer 26x30","● Split 31x30","● Claude reads 24x30","● Comments 23x30","Done 29x30"]
+phone errors: []

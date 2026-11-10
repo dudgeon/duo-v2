@@ -1,0 +1,511 @@
+<title>Native PDF viewing</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Decision walkthrough player (skill: ~/.claude/skills/decision-walkthrough). Layout A, "Stage and captions"
+   (DL-309, canvas https://claude.ai/artifact/SYDWRHc8QJKhaqNidP62UA): a stage that animates with the narration,
+   captions, a chapter bar where decisions are marked, and a "Your call" panel at each decision.
+   Colours are Duo's tokens (docs/design/system/tokens.json). Built by build.mjs; don't edit the output by hand. */
+:root {
+  --ground: #f3f4f6; --pane: #ffffff; --selected: #e9ecef; --rule: #c9cdd3; --edge: #8b939c;
+  --text: #1f2328; --text2: #5b636d; --needs: #c2410c; --on-needs: #ffffff; --tint: #e8f0fa;
+  --console: #15171b; --console-text: #e6e8eb; --console-text2: #9aa1ab; --console-rule: #2b2f36;
+  --ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #131518; --pane: #181a1e; --selected: #262a30; --rule: #2b2f36; --edge: #6e7681;
+  --text: #e6e8eb; --text2: #9aa1ab; --needs: #f97316; --on-needs: #0c0d10; --tint: #18222e; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --ground: #131518; --pane: #181a1e; --selected: #262a30; --rule: #2b2f36; --edge: #6e7681;
+  --text: #e6e8eb; --text2: #9aa1ab; --needs: #f97316; --on-needs: #0c0d10; --tint: #18222e; color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--ground); color: var(--text); font: 15px/1.5 var(--ui); -webkit-text-size-adjust: 100%; }
+button, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+a { color: inherit; }
+.lbl { font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: .66px; text-transform: uppercase; color: var(--text2); }
+.btn { min-height: 44px; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--edge); background: var(--pane); font-size: 14px; line-height: 20px; }
+.btn.primary { background: var(--text); color: var(--pane); border-color: var(--text); font-weight: 600; }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn:focus-visible, .opt:focus-visible, .seg:focus-visible, .play:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+
+header.top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 24px; background: var(--pane); border-bottom: 1px solid var(--rule); }
+header.top .t { display: flex; flex-direction: column; flex: 1 1 260px; min-width: 0; }
+header.top h1 { margin: 0; font-size: 15px; line-height: 20px; font-weight: 600; }
+header.top .sub { font-size: 12px; line-height: 16px; color: var(--text2); }
+.pill { font-size: 12px; line-height: 16px; padding: 3px 9px; border: 1px solid var(--edge); border-radius: 10px; color: var(--text2); white-space: nowrap; }
+.pill.ok::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--text); margin-right: 6px; vertical-align: 1px; }
+
+.wrap { display: flex; gap: 24px; padding: 20px 24px 40px; align-items: flex-start; max-width: 1320px; margin: 0 auto; }
+main.left { flex: 1 1 700px; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+aside.right { flex: 0 0 340px; position: sticky; top: 16px; }
+
+/* The stage: a 640x400 world scaled to fit. */
+.stage { position: relative; width: 100%; aspect-ratio: 16 / 10; background: #ffffff; border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; color: #1f2328; }
+.stage .world { position: absolute; left: 0; top: 0; width: 640px; height: 400px; transform-origin: 0 0; }
+.stage .cam { position: absolute; inset: 0; transform-origin: 0 0; transition: transform 1.1s cubic-bezier(.45,0,.2,1); }
+.stage.instant *, .stage.instant *::before, .stage.instant *::after { transition: none !important; animation: none !important; }
+.stage .tag { position: absolute; left: 8px; top: 6px; z-index: 20; display: flex; gap: 6px; align-items: center; pointer-events: none; background: rgba(255,255,255,.94); border-radius: 6px; padding: 2px 7px; }
+.stage .tag .dot { width: 8px; height: 8px; border-radius: 50%; background: #c2410c; }
+.stage .tag span { font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: .66px; text-transform: uppercase; color: #5b636d; }
+.stage .tag.decide span { color: #c2410c; }
+.stage .poster { position: absolute; inset: 0; z-index: 30; background: #f3f4f6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 20px; text-align: center; }
+.stage .poster h2 { margin: 0; font-size: clamp(20px, 3.4vw, 34px); line-height: 1.15; font-weight: 600; color: #1f2328; }
+.stage .poster p { margin: 0; color: #5b636d; font-size: clamp(13px, 1.6vw, 16px); max-width: 34em; }
+.stage .poster .play { width: 76px; height: 76px; border-radius: 38px; border: none; background: #1f2328; display: flex; align-items: center; justify-content: center; }
+.stage .hint { position: absolute; right: 12px; bottom: 10px; z-index: 20; font: 11px/16px var(--mono); color: #5b636d; background: rgba(255,255,255,.85); padding: 1px 6px; border-radius: 4px; pointer-events: none; }
+
+/* What scenes get for free: entrances, focus, the cursor. */
+.world [data-in] { opacity: 0; transition: opacity .55s ease-out, transform .7s cubic-bezier(.2,.7,.2,1), left .8s cubic-bezier(.45,0,.2,1), top .8s cubic-bezier(.45,0,.2,1), width .8s cubic-bezier(.45,0,.2,1), height .8s cubic-bezier(.45,0,.2,1), background-color .6s, border-color .6s, color .6s, box-shadow .4s; }
+.world [data-in="up"] { transform: translateY(18px); }
+.world [data-in="down"] { transform: translateY(-18px); }
+.world [data-in="left"] { transform: translateX(40px); }
+.world [data-in="right"] { transform: translateX(-40px); }
+.world [data-in="scale"] { transform: scale(.85); }
+.world [data-in="grow"] { transform: scaleX(0); transform-origin: 0 50%; opacity: 1; }
+.world [data-in].on { opacity: 1; transform: none; }
+.world [data-f] { transition: opacity .45s ease, box-shadow .45s ease, transform .7s cubic-bezier(.2,.7,.2,1), left .8s cubic-bezier(.45,0,.2,1), top .8s cubic-bezier(.45,0,.2,1), width .8s cubic-bezier(.45,0,.2,1), height .8s cubic-bezier(.45,0,.2,1), background-color .6s, border-color .6s, color .6s; }
+.world.focusing [data-f]:not(.focus):not(:has(.focus)):not([data-in]:not(.on)) { opacity: .22; }
+.world [data-f].focus { box-shadow: 0 0 0 3px #1f2328; }
+.world [data-f].focus.soft { box-shadow: none; }
+.world .dw-cursor { position: absolute; z-index: 50; width: 22px; height: 22px; left: 600px; top: 420px; pointer-events: none; transition: left .7s cubic-bezier(.45,0,.2,1), top .7s cubic-bezier(.45,0,.2,1), opacity .3s; opacity: 0; }
+.world .dw-cursor.on { opacity: 1; }
+.world .dw-cursor::after { content: ""; position: absolute; left: -9px; top: -9px; width: 18px; height: 18px; border-radius: 50%; border: 2px solid #1f2328; opacity: 0; transform: scale(.4); }
+.world .dw-cursor.press::after { animation: dwpress .55s ease-out; }
+@keyframes dwpress { 0% { opacity: .9; transform: scale(.4); } 100% { opacity: 0; transform: scale(2.2); } }
+.world [data-tap] { cursor: pointer; }
+
+.transport { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.transport .play { width: 52px; height: 52px; border-radius: 26px; border: none; background: var(--text); display: flex; align-items: center; justify-content: center; flex: none; }
+.transport .play svg path, .transport .play svg rect { fill: var(--pane); }
+.transport .time { font: 12px/16px var(--mono); color: var(--text2); }
+.transport .where { flex: 1; min-width: 0; font-size: 13px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chapters { display: flex; gap: 4px; align-items: flex-start; }
+.seg { flex: 1 1 0; min-width: 0; background: none; border: none; padding: 6px 0 2px; display: flex; flex-direction: column; gap: 5px; text-align: left; min-height: 44px; }
+.seg .bar { height: 6px; border-radius: 3px; background: var(--rule); overflow: hidden; position: relative; }
+.seg .bar i { position: absolute; inset: 0 auto 0 0; width: 0; background: var(--text); }
+.seg.decision .bar { box-shadow: inset 0 0 0 1.5px var(--needs); }
+.seg.answered .bar { box-shadow: none; }
+.seg .nm { font-size: 11px; line-height: 15px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seg.cur .nm { color: var(--text); font-weight: 600; }
+.captions { display: flex; flex-direction: column; gap: 4px; min-height: 84px; }
+.captions .prev { font-size: 14px; line-height: 21px; color: var(--text2); }
+.captions .now { font-size: 18px; line-height: 27px; }
+
+.panel { background: var(--pane); border: 1px solid var(--rule); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.panel.call { border: 1.5px solid var(--needs); }
+.panel.call.waiting { animation: dwwait 1.6s ease-in-out 2; }
+@keyframes dwwait { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--needs) 25%, transparent); } }
+.panel .head { display: flex; align-items: center; gap: 6px; }
+.panel .head .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--needs); }
+.panel .head .lbl { color: var(--needs); }
+.panel h2 { margin: 0; font-size: 17px; line-height: 24px; font-weight: 600; }
+.panel .why { margin: 0; font-size: 13px; line-height: 20px; color: var(--text2); }
+.panel .look { font-size: 13px; line-height: 20px; }
+.opt { width: 100%; text-align: left; padding: 12px; border-radius: 8px; border: 1px solid var(--rule); background: var(--pane); display: flex; gap: 10px; align-items: center; min-height: 56px; }
+.opt[aria-pressed="true"] { border: 1.5px solid var(--text); background: var(--selected); }
+.opt .body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.opt .body b { font-size: 14px; line-height: 20px; }
+.opt .body small { font-size: 12px; line-height: 17px; color: var(--text2); }
+.opt .hear { flex: none; min-width: 44px; height: 44px; border-radius: 22px; border: 1px solid var(--edge); background: var(--pane); display: flex; align-items: center; justify-content: center; gap: 4px; padding: 0 10px; font-size: 12px; }
+.opt.other { border-style: dashed; border-color: var(--edge); }
+.panel textarea { width: 100%; min-height: 72px; resize: vertical; border: 1px solid var(--rule); border-radius: 6px; padding: 8px; background: var(--pane); font-size: 15px; line-height: 21px; }
+.panel .row { display: flex; gap: 8px; flex-wrap: wrap; }
+.panel .row .btn.primary { flex: 1; }
+.status { font-size: 12px; line-height: 17px; color: var(--text2); min-height: 17px; }
+.status.err { color: var(--needs); }
+.answer { font-size: 13px; line-height: 19px; background: var(--selected); border-radius: 6px; padding: 8px 10px; }
+.toc { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.toc button { width: 100%; min-height: 40px; display: flex; gap: 8px; align-items: center; text-align: left; background: none; border: none; border-radius: 6px; padding: 6px 8px; font-size: 14px; }
+.toc button.cur { background: var(--selected); font-weight: 600; }
+.toc .g { width: 10px; flex: none; display: flex; }
+.toc .d { margin-left: auto; font-size: 12px; color: var(--text2); font-weight: 400; }
+footer.foot { max-width: 1320px; margin: 0 auto; padding: 0 24px 40px; font-size: 12px; color: var(--text2); }
+
+@media (max-width: 860px) {
+  header.top { padding: 10px 16px; }
+  .wrap { flex-direction: column; padding: 0 0 32px; gap: 12px; }
+  main.left { width: 100%; gap: 10px; flex: none; }
+  #chan:not(.ok) { display: none; }
+  header.top .btn { min-height: 40px; padding: 6px 12px; font-size: 13px; }
+  .stagebox { position: sticky; top: 0; z-index: 40; background: var(--ground); padding: 8px 16px 0; }
+  .stage { border-radius: 8px; }
+  .transport, .chapters, .captions { padding: 0 16px; }
+  .seg .nm { display: none; }
+  .seg { min-height: 30px; }
+  aside.right { position: static; flex: none; width: 100%; padding: 0 16px; }
+  .transport .play { width: 60px; height: 60px; border-radius: 30px; }
+  .transport .btn { min-height: 48px; flex: 1; }
+  .transport .where { flex-basis: 100%; order: 5; }
+  .captions .now { font-size: 17px; line-height: 25px; }
+}
+@media (prefers-reduced-motion: reduce) { .stage .cam { transition-duration: .01s; } }
+</style>
+
+<header class="top">
+  <div class="t"><h1 id="h-title"></h1><span class="sub" id="h-sub"></span></div>
+  <span class="pill" id="chan">Answers are saved</span>
+  <span class="pill" id="count"></span>
+  <button class="btn" type="button" id="copy">Copy decisions for Claude</button>
+</header>
+<div class="wrap">
+  <main class="left">
+    <div class="stagebox"><div class="stage" id="stage" aria-label="Animated visual"></div></div>
+    <div class="transport">
+      <button class="play" id="play" type="button" aria-label="Play"></button>
+      <button class="btn" id="back" type="button">‹ Back</button>
+      <button class="btn" id="next" type="button">Next ›</button>
+      <span class="time" id="time"></span>
+      <span class="where" id="where"></span>
+    </div>
+    <nav class="chapters" id="chapters" aria-label="Chapters"></nav>
+    <div class="captions" id="captions" aria-live="polite"></div>
+  </main>
+  <aside class="right" id="aside"></aside>
+</div>
+<footer class="foot" id="foot"></footer>
+
+<script id="dw-spec" type="application/json">{"id":"pdf-viewing-2026-11","title":"Native PDF viewing","subtitle":"Decision walkthrough · 10 Nov 2026 · narrated by Duo's house voice","posterLine":"What the research found about PDFs in Duo, then four decisions. Tap play and listen; it stops when it needs you.","footer":"Built with the decision-walkthrough skill from docs/research/pdf-viewing-walkthrough/spec.json. Answers are saved in this page and sent to director-duo-v2.","source":{"label":"pdf-viewing.md","url":"https://github.com/dudgeon/duo-v2/blob/main/docs/research/pdf-viewing.md"},"director":"director-duo-v2","sendPrefix":"PDF viewing walkthrough","chapters":[{"id":"why","kind":"finding","title":"Why now","short":"Why now","scene":"\u003cstyle>/* Scenes for the PDF viewing walkthrough. The world is 640x400. Colours are Duo's light tokens\n   (as in the multi-window walkthrough); a PDF page is white paper on the pane. */\n.cam { font-family: -apple-system, BlinkMacSystemFont, \"SF Pro Text\", system-ui, sans-serif; color: #1f2328; }\n.cam > * { position: absolute; }\n.h { font-size: 26px; line-height: 32px; font-weight: 600; }\n.t { font-size: 18px; line-height: 25px; }\n.s { font-size: 15px; line-height: 21px; color: #5b636d; }\n.lab { font-size: 13px; line-height: 18px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: #5b636d; }\n.stamp { background: #1f2328; color: #ffffff; padding: 7px 13px; border-radius: 7px; font-size: 16px; line-height: 22px; font-weight: 600; white-space: nowrap; }\n.chip { display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border: 1px solid #8b939c; border-radius: 7px; background: #ffffff; font-size: 15px; white-space: nowrap; }\n.mono { font-family: ui-monospace, \"SF Mono\", Menlo, monospace; }\n\n/* A Duo pane with a tab strip. */\n.pane { border: 1px solid #c9cdd3; border-radius: 9px; background: #f3f4f6; overflow: hidden; box-shadow: 0 10px 28px rgba(31,35,40,.14); }\n.pane .tabs { position: absolute; left: 0; right: 0; top: 0; height: 28px; background: #ffffff; border-bottom: 1px solid #c9cdd3; display: flex; align-items: center; gap: 8px; padding: 0 10px; font-size: 13px; white-space: nowrap; }\n.pane .tab { padding: 3px 8px; border-radius: 5px; }\n.pane .tab.on { background: #e3e6ea; font-weight: 600; }\n.pane .strip { position: absolute; left: 0; right: 0; top: 29px; height: 26px; background: #f3f4f6; border-bottom: 1px solid #c9cdd3; display: flex; align-items: center; gap: 12px; padding: 0 10px; font-size: 13px; color: #5b636d; white-space: nowrap; }\n.pane .body { position: absolute; left: 0; right: 0; top: 56px; bottom: 0; }\n\n/* A PDF page. */\n.page { background: #ffffff; border: 1px solid #d5d9de; box-shadow: 0 2px 8px rgba(31,35,40,.10); padding: 12px; }\n.page .ph { height: 9px; width: 55%; border-radius: 3px; background: #1f2328; margin-bottom: 10px; }\n.page .b { display: block; height: 6px; border-radius: 3px; background: #c9cdd3; margin: 6px 0; }\n.page .hl { background: #f6d860; }\n.note { width: 18px; height: 18px; border-radius: 3px; background: #f6d860; border: 1px solid #b9971f; }\n\n/* Bars for numbers. */\n.bar { height: 30px; border-radius: 6px; background: #1f2328; color: #ffffff; font-size: 14px; line-height: 30px; padding: 0 10px; white-space: nowrap; transform-origin: left center; }\n.bar.light { background: #7fa6d9; }\n.bar.green { background: #2f8f5b; }\n\n/* A comment card. */\n.card { background: #ffffff; border: 1px solid #c9cdd3; border-radius: 8px; padding: 8px 10px; font-size: 13px; line-height: 18px; box-shadow: 0 4px 12px rgba(31,35,40,.08); }\n.card .who { font-weight: 600; }\n.card .who.claude { color: #2f8f5b; }\n.card .k { font-family: ui-monospace, \"SF Mono\", Menlo, monospace; font-size: 13px; color: #5b636d; }\n\n.ok { color: #2f8f5b; font-weight: 700; }\n.no { color: #c2410c; font-weight: 700; }\n.opt { display: flex; flex-direction: column; align-items: stretch; border: 1.5px solid #c9cdd3; border-radius: 10px; background: #ffffff; padding: 10px 12px; transition: border-color .4s, box-shadow .4s, opacity .4s; }\n.opt .t { font-weight: 600; }\n\n.ans-row { display: flex; gap: 12px; align-items: baseline; padding: 6px 0; border-bottom: 1px solid #e3e6ea; font-size: 16px; line-height: 22px; }\n.ans-row .q { width: 170px; flex: none; font-weight: 600; }\n.ans-row .a { color: #5b636d; }\n.ans-row.done .a { color: #1f2328; }\n\u003c/style>\u003cstyle>\n#pane { left: 24px; top: 30px; width: 360px; height: 300px; }\n#pg { left: 70px; top: 18px; width: 220px; height: 210px; }\n#ql { position: absolute; right: 10px; bottom: 8px; }\n#blind { left: 24px; top: 344px; width: 360px; }\n#q1 { left: 412px; top: 70px; } #q2 { left: 412px; top: 140px; } #q3 { left: 412px; top: 210px; }\n.qn { width: 204px; justify-content: flex-start; gap: 8px; }\n.qn b { display: inline-flex; width: 20px; height: 20px; border-radius: 50%; background: #1f2328; color: #fff; font-size: 12px; align-items: center; justify-content: center; }\n#qlabel { left: 412px; top: 36px; }\n\u003c/style>\n\u003cdiv class=\"pane\" id=\"pane\" data-f>\n  \u003cdiv class=\"tabs\">\u003cspan class=\"tab\">notes.md\u003c/span>\u003cspan class=\"tab on\">paper.pdf\u003c/span>\u003c/div>\n  \u003cdiv class=\"strip\" id=\"strip\" data-f>PDF · read only \u003cspan style=\"margin-left:auto\">Open With ⌄\u003c/span>\u003cspan>Show in Finder\u003c/span>\u003c/div>\n  \u003cdiv class=\"body\">\n    \u003cdiv class=\"page\" id=\"pg\" style=\"position:absolute\">\u003cdiv class=\"ph\">\u003c/div>\u003cspan class=\"b\">\u003c/span>\u003cspan class=\"b\" style=\"width:90%\">\u003c/span>\u003cspan class=\"b\">\u003c/span>\u003cspan class=\"b\" style=\"width:70%\">\u003c/span>\u003cspan class=\"b\">\u003c/span>\u003cspan class=\"b\" style=\"width:80%\">\u003c/span>\u003cspan class=\"b\">\u003c/span>\u003c/div>\n    \u003cspan class=\"lab\" id=\"ql\">Quick Look\u003c/span>\n  \u003c/div>\n\u003c/div>\n\u003cdiv class=\"s\" id=\"blind\" data-in=\"up\" data-f>It draws the page, but can't tell Duo which page or what's selected.\u003c/div>\n\u003cdiv class=\"lab\" id=\"qlabel\" data-in=\"fade\">Three questions\u003c/div>\n\u003cdiv class=\"chip qn\" id=\"q1\" data-in=\"left\" data-f>\u003cb>1\u003c/b>Where it opens\u003c/div>\n\u003cdiv class=\"chip qn\" id=\"q2\" data-in=\"left\" data-f>\u003cb>2\u003c/b>Claude reads all of it\u003c/div>\n\u003cdiv class=\"chip qn\" id=\"q3\" data-in=\"left\" data-f>\u003cb>3\u003c/b>Comments that travel\u003c/div>\n","audio":"audio/why.mp3","duration":21.7,"lines":[{"text":"You asked for native PDF viewing, so here's what I found, and four decisions.","cues":[{"do":"focus","sel":"#pane","soft":true,"t":1.033}],"dur":4.304917,"start":0.25},{"text":"Today a PDF opens in Quick Look, under a read-only strip.","cues":[{"do":"focus","sel":"#pane","t":6.411},{"do":"focus","sel":"#strip","t":7.751}],"dur":3.817167,"start":5.005},{"text":"It draws the page well. But it can't tell Duo which page you're on, or what you've selected. So nothing else can build on it.","cues":[{"do":"unfocus","t":9.272},{"do":"show","sel":"#blind","t":10.719},{"do":"focus","sel":"#blind","soft":true,"t":10.719}],"dur":5.833833,"start":9.272},{"text":"You asked three things. Where it opens, how Claude reads all of it, and comments that travel with the file.","cues":[{"do":"unfocus","t":15.556},{"do":"show","sel":"#qlabel","t":16.074},{"do":"show","sel":"#q1","t":16.799},{"do":"show","sel":"#q2","t":17.834},{"do":"show","sel":"#q3","t":19.284}],"dur":5.539958,"start":15.556}]},{"id":"reading","kind":"finding","title":"Reading a long PDF","short":"Reading","scene":"\u003cstyle>/* Scenes for the PDF viewing walkthrough. The world is 640x400. Colours are Duo's light tokens\n   (as in the multi-window walkthrough); a PDF page is white paper on the pane. */\n.cam { font-family: -apple-system, BlinkMacSystemFont, \"SF Pro Text\", system-ui, sans-serif; color: #1f2328; }\n.cam > * { position: absolute; }\n.h { font-size: 26px; line-height: 32px; font-weight: 600; }\n.t { font-size: 18px; line-height: 25px; }\n.s { font-size: 15px; line-height: 21px; color: #5b636d; }\n.lab { font-size: 13px; line-height: 18px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: #5b636d; }\n.stamp { background: #1f2328; color: #ffffff; padding: 7px 13px; border-radius: 7px; font-size: 16px; line-height: 22px; font-weight: 600; white-space: nowrap; }\n.chip { display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border: 1px solid #8b939c; border-radius: 7px; background: #ffffff; font-size: 15px; white-space: nowrap; }\n.mono { font-family: ui-monospace, \"SF Mono\", Menlo, monospace; }\n\n/* A Duo pane with a tab strip. */\n.pane { border: 1px solid #c9cdd3; border-radius: 9px; background: #f3f4f6; overflow: hidden; box-shadow: 0 10px 28px rgba(31,35,40,.14); }\n.pane .tabs { position: absolute; left: 0; right: 0; top: 0; height: 28px; background: #ffffff; border-bottom: 1px solid #c9cdd3; display: flex; align-items: center; gap: 8px; padding: 0 10px; font-size: 13px; white-space: nowrap; }\n.pane .tab { padding: 3px 8px; border-radius: 5px; }\n.pane .tab.on { background: #e3e6ea; font-weight: 600; }\n.pane .strip { position: absolute; left: 0; right: 0; top: 29px; height: 26px; background: #f3f4f6; border-bottom: 1px solid #c9cdd3; display: flex; align-items: center; gap: 12px; padding: 0 10px; font-size: 13px; color: #5b636d; white-space: nowrap; }\n.pane .body { position: absolute; left: 0; right: 0; top: 56px; bottom: 0; }\n\n/* A PDF page. */\n.page { background: #ffffff; border: 1px solid #d5d9de; box-shadow: 0 2px 8px rgba(31,35,40,.10); padding: 12px; }\n.page .ph { height: 9px; width: 55%; border-radius: 3px; background: #1f2328; margin-bottom: 10px; }\n.page .b { display: block; height: 6px; border-radius: 3px; background: #c9cdd3; margin: 6px 0; }\n.page .hl { background: #f6d860; }\n.note { width: 18px; height: 18px; border-radius: 3px; background: #f6d860; border: 1px solid #b9971f; }\n\n/* Bars for numbers. */\n.bar { height: 30px; border-radius: 6px; background: #1f2328; color: #ffffff; font-size: 14px; line-height: 30px; padding: 0 10px; white-space: nowrap; transform-origin: left center; }\n.bar.light { background: #7fa6d9; }\n.bar.green { background: #2f8f5b; }\n\n/* A comment card. */\n.card { background: #ffffff; border: 1px solid #c9cdd3; border-radius: 8px; padding: 8px 10px; font-size: 13px; line-height: 18px; box-shadow: 0 4px 12px rgba(31,35,40,.08); }\n.card .who { font-weight: 600; }\n.card .who.claude { color: #2f8f5b; }\n.card .k { font-family: ui-monospace, \"SF Mono\", Menlo, monospace; font-size: 13px; color: #5b636d; }\n\n.ok { color: #2f8f5b; font-weight: 700; }\n.no { color: #c2410c; font-weight: 700; }\n.opt { display: flex; flex-direction: column; align-items: stretch; border: 1.5px solid #c9cdd3; border-radius: 10px; background: #ffffff; padding: 10px 12px; transition: border-color .4s, box-shadow .4s, opacity .4s; }\n.opt .t { font-weight: 600; }\n\n.ans-row { display: flex; gap: 12px; align-items: baseline; padding: 6px 0; border-bottom: 1px solid #e3e6ea; font-size: 16px; line-height: 22px; }\n.ans-row .q { width: 170px; flex: none; font-weight: 600; }\n.ans-row .a { color: #5b636d; }\n.ans-row.done .a { color: #1f2328; }\n\u003c/style>\u003cstyle>\n#title { left: 24px; top: 26px; }\n#fx { left: 24px; top: 62px; }\n.row { left: 24px; width: 592px; height: 30px; }\n#r1 { top: 112px; } #r2 { top: 192px; } #r3 { top: 272px; }\n.rl { position: absolute; left: 0; top: -22px; font-size: 14px; color: #5b636d; white-space: nowrap; }\n#b1 { position: absolute; left: 0; top: 0; width: 560px; }\n#b2 { position: absolute; left: 0; top: 0; width: 76px; }\n#b3 { position: absolute; left: 0; top: 0; width: 124px; }\n#lost { left: 140px; top: 192px; height: 30px; display: flex; gap: 8px; align-items: center; }\n#lost .chip { height: 28px; font-size: 14px; border-color: #c2410c; color: #c2410c; }\n#kept { left: 188px; top: 272px; height: 30px; display: flex; align-items: center; }\n#foot { left: 24px; top: 336px; width: 592px; }\n\u003c/style>\n\u003cdiv class=\"h\" id=\"title\">Reading 120 pages\u003c/div>\n\u003cdiv class=\"s\" id=\"fx\" data-in=\"fade\">An invented fixture: charts drawn only as bars, two columns, a table, one scanned page.\u003c/div>\n\u003cdiv class=\"row\" id=\"r1\" data-in=\"up\" data-f>\u003cspan class=\"rl\">Read the whole PDF (every page as text + image)\u003c/span>\u003cdiv class=\"bar\" id=\"b1\">about 180k–360k tokens\u003c/div>\u003c/div>\n\u003cdiv class=\"row\" id=\"r2\" data-in=\"up\" data-f>\u003cspan class=\"rl\">PDFKit text with page markers · 0.07 s\u003c/span>\u003cdiv class=\"bar light\" id=\"b2\">33k\u003c/div>\u003c/div>\n\u003cdiv id=\"lost\" data-in=\"left\" data-f>\u003cspan class=\"chip\">12 charts' numbers\u003c/span>\u003cspan class=\"chip\">the scanned page\u003c/span>\u003c/div>\n\u003cdiv class=\"row\" id=\"r3\" data-in=\"up\" data-f>\u003cspan class=\"rl\">Text + images of only the 13 pages that need eyes\u003c/span>\u003cdiv class=\"bar green\" id=\"b3\">about 54k\u003c/div>\u003c/div>\n\u003cdiv id=\"kept\" data-in=\"left\">\u003cspan class=\"ok\">nothing lost\u003c/span>\u003c/div>\n\u003cdiv class=\"s\" id=\"foot\" data-in=\"up\">Columns and table rows came through in order in every route.\u003c/div>\n","audio":"audio/reading.mp3","duration":28.34,"lines":[{"text":"I made a hundred and twenty page test file, with charts, two columns, a table and a scanned page.","cues":[{"do":"show","sel":"#fx","t":2.889}],"dur":5.223667,"start":0.25},{"text":"Claude Code's Read took the whole thing in one call, every page as text and a picture. That's something like two to three hundred thousand tokens.","cues":[{"do":"show","sel":"#r1","t":7.253},{"do":"focus","sel":"#r1","soft":true,"t":12.52}],"dur":6.927708,"start":5.924},{"text":"Pulling just the text took seven hundredths of a second, and about a sixth of the tokens.","cues":[{"do":"unfocus","t":13.301},{"do":"show","sel":"#r2","t":14.132}],"dur":4.351125,"start":13.301},{"text":"But text loses the numbers in the charts, and the scanned page entirely.","cues":[{"do":"show","sel":"#lost","t":18.612},{"do":"focus","sel":"#lost, #r2","t":18.612}],"dur":4.081792,"start":18.102},{"text":"Text plus pictures of only the thirteen pages that need them lost nothing, at about fifty four thousand.","cues":[{"do":"unfocus","t":22.634},{"do":"show","sel":"#r3","t":23.145},{"do":"show","sel":"#kept, #foot","t":25.63},{"do":"focus","sel":"#r3, #kept","soft":true,"t":25.63}],"dur":5.108083,"start":22.634}]},{"id":"comments","kind":"finding","title":"Comments the standard already has","short":"Comments","scene":"\u003cstyle>/* Scenes for the PDF viewing walkthrough. The world is 640x400. Colours are Duo's light tokens\n   (as in the multi-window walkthrough); a PDF page is white paper on the pane. */\n.cam { font-family: -apple-system, BlinkMacSystemFont, \"SF Pro Text\", system-ui, sans-serif; color: #1f2328; }\n.cam > * { position: absolute; }\n.h { font-size: 26px; line-height: 32px; font-weight: 600; }\n.t { font-size: 18px; line-height: 25px; }\n.s { font-size: 15px; line-height: 21px; color: #5b636d; }\n.lab { font-size: 13px; line-height: 18px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: #5b636d; }\n.stamp { background: #1f2328; color: #ffffff; padding: 7px 13px; border-radius: 7px; font-size: 16px; line-height: 22px; font-weight: 600; white-space: nowrap; }\n.chip { display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border: 1px solid #8b939c; border-radius: 7px; background: #ffffff; font-size: 15px; white-space: nowrap; }\n.mono { font-family: ui-monospace, \"SF Mono\", Menlo, monospace; }\n\n/* A Duo pane with a tab strip. */\n.pane { border: 1px solid #c9cdd3; border-radius: 9px; background: #f3f4f6; overflow: hidden; box-shadow: 0 10px 28px rgba(31,35,40,.14); }\n.pane .tabs { position: absolute; left: 0; right: 0; top: 0; height: 28px; background: #ffffff; border-bottom: 1px solid #c9cdd3; display: flex; align-items: center; gap: 8px; padding: 0 10px; font-size: 13px; white-space: nowrap; }\n.pane .tab { padding: 3px 8px; border-radius: 5px; }\n.pane .tab.on { background: #e3e6ea; font-weight: 600; }\n.pane .strip { position: absolute; left: 0; right: 0; top: 29px; height: 26px; background: #f3f4f6; border-bottom: 1px solid #c9cdd3; display: flex; align-items: center; gap: 12px; padding: 0 10px; font-size: 13px; color: #5b636d; white-space: nowrap; }\n.pane .body { position: absolute; left: 0; right: 0; top: 56px; bottom: 0; }\n\n/* A PDF page. */\n.page { background: #ffffff; border: 1px solid #d5d9de; box-shadow: 0 2px 8px rgba(31,35,40,.10); padding: 12px; }\n.page .ph { height: 9px; width: 55%; border-radius: 3px; background: #1f2328; margin-bottom: 10px; }\n.page .b { display: block; height: 6px; border-radius: 3px; background: #c9cdd3; margin: 6px 0; }\n.page .hl { background: #f6d860; }\n.note { width: 18px; height: 18px; border-radius: 3px; background: #f6d860; border: 1px solid #b9971f; }\n\n/* Bars for numbers. */\n.bar { height: 30px; border-radius: 6px; background: #1f2328; color: #ffffff; font-size: 14px; line-height: 30px; padding: 0 10px; white-space: nowrap; transform-origin: left center; }\n.bar.light { background: #7fa6d9; }\n.bar.green { background: #2f8f5b; }\n\n/* A comment card. */\n.card { background: #ffffff; border: 1px solid #c9cdd3; border-radius: 8px; padding: 8px 10px; font-size: 13px; line-height: 18px; box-shadow: 0 4px 12px rgba(31,35,40,.08); }\n.card .who { font-weight: 600; }\n.card .who.claude { color: #2f8f5b; }\n.card .k { font-family: ui-monospace, \"SF Mono\", Menlo, monospace; font-size: 13px; color: #5b636d; }\n\n.ok { color: #2f8f5b; font-weight: 700; }\n.no { color: #c2410c; font-weight: 700; }\n.opt { display: flex; flex-direction: column; align-items: stretch; border: 1.5px solid #c9cdd3; border-radius: 10px; background: #ffffff; padding: 10px 12px; transition: border-color .4s, box-shadow .4s, opacity .4s; }\n.opt .t { font-weight: 600; }\n\n.ans-row { display: flex; gap: 12px; align-items: baseline; padding: 6px 0; border-bottom: 1px solid #e3e6ea; font-size: 16px; line-height: 22px; }\n.ans-row .q { width: 170px; flex: none; font-weight: 600; }\n.ans-row .a { color: #5b636d; }\n.ans-row.done .a { color: #1f2328; }\n\u003c/style>\u003cstyle>\n#pg { left: 24px; top: 30px; width: 230px; height: 300px; }\n#hlline { width: 100%; }\n#nt { position: absolute; right: 10px; top: 36px; }\n#c1 { left: 280px; top: 30px; width: 240px; }\n#c2 { left: 312px; top: 104px; width: 240px; }\n#c3 { left: 312px; top: 178px; width: 240px; }\n#irt { left: 290px; top: 106px; font-size: 18px; color: #5b636d; }\n#tbl { left: 280px; top: 252px; width: 340px; font-size: 14px; line-height: 21px; }\n#tbl div { display: flex; gap: 10px; }\n#tbl span:first-child { width: 230px; }\n#acro { left: 24px; top: 346px; width: 592px; }\n\u003c/style>\n\u003cdiv class=\"page\" id=\"pg\" data-f>\u003cdiv class=\"ph\">\u003c/div>\u003cspan class=\"b\">\u003c/span>\u003cspan class=\"b hl\" id=\"hlline\" data-f>\u003c/span>\u003cspan class=\"b\">\u003c/span>\u003cspan class=\"b\" style=\"width:80%\">\u003c/span>\u003cspan class=\"b\">\u003c/span>\u003cspan class=\"b\" style=\"width:60%\">\u003c/span>\u003cdiv class=\"note\" id=\"nt\" data-f>\u003c/div>\u003c/div>\n\u003cdiv class=\"card\" id=\"c1\" data-in=\"left\" data-f>\u003cspan class=\"who\">Geoff\u003c/span> · @claude is this right?\u003cdiv class=\"k\">Highlight · /T (Geoff)\u003c/div>\u003c/div>\n\u003cdiv id=\"irt\" data-in=\"fade\">↳\u003c/div>\n\u003cdiv class=\"card\" id=\"c2\" data-in=\"left\" data-f>\u003cspan class=\"who claude\">Claude\u003c/span> · Mostly. Line two repeats.\u003cdiv class=\"k\">reply · /IRT → Geoff's\u003c/div>\u003c/div>\n\u003cdiv class=\"card\" id=\"c3\" data-in=\"left\" data-f>\u003cspan class=\"who\">Geoff\u003c/span> · marked Completed\u003cdiv class=\"k\">/State (Completed) · hidden\u003c/div>\u003c/div>\n\u003cdiv id=\"tbl\" data-in=\"up\" data-f>\n  \u003cdiv>\u003cspan>PDFKit writes notes, highlights\u003c/span>\u003cspan class=\"ok\">yes\u003c/span>\u003c/div>\n  \u003cdiv id=\"t-irt\" data-f>\u003cspan>PDFKit writes a reply (/IRT)\u003c/span>\u003cspan class=\"no\">no\u003c/span>\u003c/div>\n  \u003cdiv id=\"t-inc\" data-f>\u003cspan>PDFKit saves without rewriting\u003c/span>\u003cspan class=\"no\">no\u003c/span>\u003c/div>\n  \u003cdiv id=\"t-own\" data-f data-in=\"fade\">\u003cspan>Duo's own append: reply + status\u003c/span>\u003cspan class=\"ok\">756 bytes\u003c/span>\u003c/div>\n\u003c/div>\n\u003cdiv class=\"s\" id=\"acro\" data-in=\"up\">The standard's own model: Acrobat reads it, and PDF.js shows the reply.\u003c/div>\n","audio":"audio/comments.mp3","duration":30.73,"lines":[{"text":"The PDF standard already has threaded comments. A highlight or a sticky note, with the author's name.","cues":[{"do":"focus","sel":"#hlline, #nt","soft":true,"t":3.063},{"do":"show","sel":"#c1","t":5.144}],"dur":5.681667,"start":0.25},{"text":"A reply points back at it, and resolving is a hidden status reply marked Completed.","cues":[{"do":"unfocus","t":6.382},{"do":"show","sel":"#irt, #c2","t":6.493},{"do":"show","sel":"#c3","t":8.097}],"dur":4.591167,"start":6.382},{"text":"Apple's PDFKit writes notes and highlights fine, but it can't write a reply, and every save rewrites the whole file.","cues":[{"do":"show","sel":"#tbl","t":11.423},{"do":"focus","sel":"#t-irt","t":14.585},{"do":"focus","sel":"#t-inc","t":16.618}],"dur":6.550417,"start":11.423},{"text":"So I wrote a small appender. It added a reply and a status in seven hundred bytes, after the original, which stays untouched.","cues":[{"do":"show","sel":"#t-own","t":19.54},{"do":"focus","sel":"#t-own","t":19.54}],"dur":7.348583,"start":18.423},{"text":"Acrobat reads that model, and PDF.js shows the reply.","cues":[{"do":"unfocus","t":26.222},{"do":"show","sel":"#acro","t":26.222}],"dur":3.90825,"start":26.222}]},{"id":"q490-viewer","kind":"decision","title":"What draws the PDF","short":"Viewer","q":"Q-490","ask":"What should draw a PDF in the editor area?","why":"Quick Look can't see the page or the selection, so it can't host Send Selection, duo2 page verbs or comments.","look":[{"label":"§2 of the research: the viewer","url":"https://github.com/dudgeon/duo-v2/blob/main/docs/research/pdf-viewing.md#2-the-viewer-q-490"}],"scene":"\u003cstyle>/* Scenes for the PDF viewing walkthrough. The world is 640x400. Colours are Duo's light tokens\n   (as in the multi-window walkthrough); a PDF page is white paper on the pane. */\n.cam { font-family: -apple-system, BlinkMacSystemFont, \"SF Pro Text\", system-ui, sans-serif; color: #1f2328; }\n.cam > * { position: absolute; }\n.h { font-size: 26px; line-height: 32px; font-weight: 600; }\n.t { font-size: 18px; line-height: 25px; }\n.s { font-size: 15px; line-height: 21px; color: #5b636d; }\n.lab { font-size: 13px; line-height: 18px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: #5b636d; }\n.stamp { background: #1f2328; color: #ffffff; padding: 7px 13px; border-radius: 7px; font-size: 16px; line-height: 22px; font-weight: 600; white-space: nowrap; }\n.chip { display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border: 1px solid #8b939c; border-radius: 7px; background: #ffffff; font-size: 15px; white-space: nowrap; }\n.mono { font-family: ui-monospace, \"SF Mono\", Menlo, monospace; }\n\n/* A Duo pane with a tab strip. */\n.pane { border: 1px solid #c9cdd3; border-radius: 9px; background: #f3f4f6; overflow: hidden; box-shadow: 0 10px 28px rgba(31,35,40,.14); }\n.pane .tabs { position: absolute; left: 0; right: 0; top: 0; height: 28px; background: #ffffff; border-bottom: 1px solid #c9cdd3; display: flex; align-items: center; gap: 8px; padding: 0 10px; font-size: 13px; white-space: nowrap; }\n.pane .tab { padding: 3px 8px; border-radius: 5px; }\n.pane .tab.on { background: #e3e6ea; font-weight: 600; }\n.pane .strip { position: absolute; left: 0; right: 0; top: 29px; height: 26px; background: #f3f4f6; border-bottom: 1px solid #c9cdd3; display: flex; align-items: center; gap: 12px; padding: 0 10px; font-size: 13px; color: #5b636d; white-space: nowrap; }\n.pane .body { position: absolute; left: 0; right: 0; top: 56px; bottom: 0; }\n\n/* A PDF page. */\n.page { background: #ffffff; border: 1px solid #d5d9de; box-shadow: 0 2px 8px rgba(31,35,40,.10); padding: 12px; }\n.page .ph { height: 9px; width: 55%; border-radius: 3px; background: #1f2328; margin-bottom: 10px; }\n.page .b { display: block; height: 6px; border-radius: 3px; background: #c9cdd3; margin: 6px 0; }\n.page .hl { background: #f6d860; }\n.note { width: 18px; height: 18px; border-radius: 3px; background: #f6d860; border: 1px solid #b9971f; }\n\n/* Bars for numbers. */\n.bar { height: 30px; border-radius: 6px; background: #1f2328; color: #ffffff; font-size: 14px; line-height: 30px; padding: 0 10px; white-space: nowrap; transform-origin: left center; }\n.bar.light { background: #7fa6d9; }\n.bar.green { background: #2f8f5b; }\n\n/* A comment card. */\n.card { background: #ffffff; border: 1px solid #c9cdd3; border-radius: 8px; padding: 8px 10px; font-size: 13px; line-height: 18px; box-shadow: 0 4px 12px rgba(31,35,40,.08); }\n.card .who { font-weight: 600; }\n.card .who.claude { color: #2f8f5b; }\n.card .k { font-family: ui-monospace, \"SF Mono\", Menlo, monospace; font-size: 13px; color: #5b636d; }\n\n.ok { color: #2f8f5b; font-weight: 700; }\n.no { color: #c2410c; font-weight: 700; }\n.opt { display: flex; flex-direction: column; align-items: stretch; border: 1.5px solid #c9cdd3; border-radius: 10px; background: #ffffff; padding: 10px 12px; transition: border-color .4s, box-shadow .4s, opacity .4s; }\n.opt .t { font-weight: 600; }\n\n.ans-row { display: flex; gap: 12px; align-items: baseline; padding: 6px 0; border-bottom: 1px solid #e3e6ea; font-size: 16px; line-height: 22px; }\n.ans-row .q { width: 170px; flex: none; font-weight: 600; }\n.ans-row .a { color: #5b636d; }\n.ans-row.done .a { color: #1f2328; }\n\u003c/style>\u003cstyle>\n#oA { left: 24px; top: 30px; width: 186px; height: 252px; }\n#oB { left: 227px; top: 30px; width: 186px; height: 252px; }\n#oC { left: 430px; top: 30px; width: 186px; height: 252px; }\n.opt .s { font-size: 14px; line-height: 20px; margin-top: 6px; }\n.opt ul { margin: 6px 0 0 0; padding-left: 16px; font-size: 14px; line-height: 21px; }\n[data-state~=\"o1\"] #oA, [data-state~=\"o2\"] #oB, [data-state~=\"o3\"] #oC { border-color: #1f2328; box-shadow: 0 0 0 2px #1f2328; }\n[data-state~=\"o1\"] #oB, [data-state~=\"o1\"] #oC, [data-state~=\"o2\"] #oA, [data-state~=\"o2\"] #oC, [data-state~=\"o3\"] #oA, [data-state~=\"o3\"] #oB { opacity: .45; }\n#rec { left: 24px; top: 304px; }\n#cost { left: 24px; top: 352px; width: 592px; }\n\u003c/style>\n\u003cdiv class=\"opt\" id=\"oA\" data-in=\"up\" data-f>\u003cdiv class=\"t\">PDFKit\u003c/div>\u003cdiv class=\"s\">Native, Preview's renderer\u003c/div>\u003cul>\u003cli>Already linked\u003c/li>\u003cli>Fast: 0.06 s to open\u003c/li>\u003cli>Zoom, find, select, free\u003c/li>\u003cli>Needs a native PageHost\u003c/li>\u003c/ul>\u003c/div>\n\u003cdiv class=\"opt\" id=\"oB\" data-in=\"up\" data-f>\u003cdiv class=\"t\">PDF.js\u003c/div>\u003cdiv class=\"s\">In a web view, like Word and decks\u003c/div>\u003cul>\u003cli>Picker plumbing reused\u003c/li>\u003cli>13 MB, a second engine\u003c/li>\u003cli>No review status\u003c/li>\u003c/ul>\u003c/div>\n\u003cdiv class=\"opt\" id=\"oC\" data-in=\"up\" data-f>\u003cdiv class=\"t\">Quick Look\u003c/div>\u003cdiv class=\"s\">Today's, plus a bar\u003c/div>\u003cul>\u003cli>No code to speak of\u003c/li>\u003cli>Blind to page and selection\u003c/li>\u003cli>No comments\u003c/li>\u003c/ul>\u003c/div>\n\u003cdiv class=\"stamp\" id=\"rec\" data-in=\"up\">Recommended · PDFKit\u003c/div>\n\u003cdiv class=\"s\" id=\"cost\" data-in=\"up\">About 3–4 days after a design round for the bar. Pages keep their own colours in dark (DL-224).\u003c/div>\n","audio":"audio/q490-viewer.mp3","duration":11.43,"lines":[{"text":"First decision. What draws the PDF.","cues":[{"do":"show","sel":"#oA, #oB, #oC","t":0.25}],"dur":2.559083,"start":0.25},{"text":"I recommend Apple's PDFKit. It's Preview's renderer, it's already in Duo, and it opened the test file in six hundredths of a second.","cues":[{"do":"state","value":"o1","t":4.406},{"do":"show","sel":"#rec","t":4.406}],"dur":7.573125,"start":3.259}],"options":[{"id":"pdfkit","label":"PDFKit, native","desc":"Preview's renderer, already linked; zoom, find and selection built in. Needs a native PageHost for Send Selection. About 3–4 days after the bar is designed.","recommended":true,"audio":"audio/q490-viewer--pdfkit.mp3","duration":10.52,"lines":[{"text":"Option one, PDFKit. Zoom, find and selection come free. The work is teaching Duo's send and picker plumbing about a native view. Three or four days, after a design round.","cues":[{"do":"state","value":"o1","t":0.25},{"do":"show","sel":"#cost","t":7.586}],"dur":9.6675,"start":0.25}]},{"id":"pdfjs","label":"PDF.js in a web view","desc":"Like the Word and PowerPoint viewers. Reuses the picker; adds 13 MB and a second PDF engine; shows no review status.","recommended":false,"audio":"audio/q490-viewer--pdfjs.mp3","duration":11.75,"lines":[{"text":"Option two, PDF.js in a web view, like the Word and PowerPoint viewers. The picker comes along, but it's thirteen megabytes and a second engine, and it hides review status.","cues":[{"do":"state","value":"o2","t":0.25}],"dur":10.899208,"start":0.25}]},{"id":"quicklook","label":"Keep Quick Look, add a bar","desc":"Cheapest. Still blind to the page and the selection, so no comments.","recommended":false,"audio":"audio/q490-viewer--quicklook.mp3","duration":4.78,"lines":[{"text":"Option three keeps Quick Look. Cheapest, but still blind, so no comments.","cues":[{"do":"state","value":"o3","t":0.25}],"dur":3.934,"start":0.25}]}]},{"id":"q491-split","kind":"decision","title":"PDFs in split view","short":"Split","q":"Q-491","ask":"Can a PDF be one side of a split view?","why":"Split view takes only text files today; PDFs, Word documents and decks are all refused, so PowerPoint isn't in split view yet either.","look":[{"label":"§3 of the research: split view","url":"https://github.com/dudgeon/duo-v2/blob/main/docs/research/pdf-viewing.md#3-split-view-q-491"}],"scene":"\u003cstyle>/* Scenes for the PDF viewing walkthrough. The world is 640x400. Colours are Duo's light tokens\n   (as in the multi-window walkthrough); a PDF page is white paper on the pane. */\n.cam { font-family: -apple-system, BlinkMacSystemFont, \"SF Pro Text\", system-ui, sans-serif; color: #1f2328; }\n.cam > * { position: absolute; }\n.h { font-size: 26px; line-height: 32px; font-weight: 600; }\n.t { font-size: 18px; line-height: 25px; }\n.s { font-size: 15px; line-height: 21px; color: #5b636d; }\n.lab { font-size: 13px; line-height: 18px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: #5b636d; }\n.stamp { background: #1f2328; color: #ffffff; padding: 7px 13px; border-radius: 7px; font-size: 16px; line-height: 22px; font-weight: 600; white-space: nowrap; }\n.chip { display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border: 1px solid #8b939c; border-radius: 7px; background: #ffffff; font-size: 15px; white-space: nowrap; }\n.mono { font-family: ui-monospace, \"SF Mono\", Menlo, monospace; }\n\n/* A Duo pane with a tab strip. */\n.pane { border: 1px solid #c9cdd3; border-radius: 9px; background: #f3f4f6; overflow: hidden; box-shadow: 0 10px 28px rgba(31,35,40,.14); }\n.pane .tabs { position: absolute; left: 0; right: 0; top: 0; height: 28px; background: #ffffff; border-bottom: 1px solid #c9cdd3; display: flex; align-items: center; gap: 8px; padding: 0 10px; font-size: 13px; white-space: nowrap; }\n.pane .tab { padding: 3px 8px; border-radius: 5px; }\n.pane .tab.on { background: #e3e6ea; font-weight: 600; }\n.pane .strip { position: absolute; left: 0; right: 0; top: 29px; height: 26px; background: #f3f4f6; border-bottom: 1px solid #c9cdd3; display: flex; align-items: center; gap: 12px; padding: 0 10px; font-size: 13px; color: #5b636d; white-space: nowrap; }\n.pane .body { position: absolute; left: 0; right: 0; top: 56px; bottom: 0; }\n\n/* A PDF page. */\n.page { background: #ffffff; border: 1px solid #d5d9de; box-shadow: 0 2px 8px rgba(31,35,40,.10); padding: 12px; }\n.page .ph { height: 9px; width: 55%; border-radius: 3px; background: #1f2328; margin-bottom: 10px; }\n.page .b { display: block; height: 6px; border-radius: 3px; background: #c9cdd3; margin: 6px 0; }\n.page .hl { background: #f6d860; }\n.note { width: 18px; height: 18px; border-radius: 3px; background: #f6d860; border: 1px solid #b9971f; }\n\n/* Bars for numbers. */\n.bar { height: 30px; border-radius: 6px; background: #1f2328; color: #ffffff; font-size: 14px; line-height: 30px; padding: 0 10px; white-space: nowrap; transform-origin: left center; }\n.bar.light { background: #7fa6d9; }\n.bar.green { background: #2f8f5b; }\n\n/* A comment card. */\n.card { background: #ffffff; border: 1px solid #c9cdd3; border-radius: 8px; padding: 8px 10px; font-size: 13px; line-height: 18px; box-shadow: 0 4px 12px rgba(31,35,40,.08); }\n.card .who { font-weight: 600; }\n.card .who.claude { color: #2f8f5b; }\n.card .k { font-family: ui-monospace, \"SF Mono\", Menlo, monospace; font-size: 13px; color: #5b636d; }\n\n.ok { color: #2f8f5b; font-weight: 700; }\n.no { color: #c2410c; font-weight: 700; }\n.opt { display: flex; flex-direction: column; align-items: stretch; border: 1.5px solid #c9cdd3; border-radius: 10px; background: #ffffff; padding: 10px 12px; transition: border-color .4s, box-shadow .4s, opacity .4s; }\n.opt .t { font-weight: 600; }\n\n.ans-row { display: flex; gap: 12px; align-items: baseline; padding: 6px 0; border-bottom: 1px solid #e3e6ea; font-size: 16px; line-height: 22px; }\n.ans-row .q { width: 170px; flex: none; font-weight: 600; }\n.ans-row .a { color: #5b636d; }\n.ans-row.done .a { color: #1f2328; }\n\u003c/style>\u003cstyle>\n#pane { left: 24px; top: 30px; width: 592px; height: 280px; }\n#left { position: absolute; left: 0; top: 0; bottom: 0; width: 50%; background: #ffffff; border-right: 1px solid #c9cdd3; padding: 14px; transition: width .6s; }\n#right { position: absolute; right: 0; top: 0; bottom: 0; width: 50%; padding: 14px; transition: width .6s, opacity .5s; }\n#left .md { font: 13px/20px ui-monospace, \"SF Mono\", Menlo, monospace; color: #1f2328; }\n#right .page { width: 200px; height: 180px; margin: 0 auto; }\n[data-state~=\"tab\"] #left { width: 100%; border-right: none; }\n[data-state~=\"tab\"] #right { width: 0; opacity: 0; padding: 0; overflow: hidden; }\n#today { left: 24px; top: 322px; width: 592px; }\n#no { position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%); font-size: 18px; font-weight: 700; color: #c2410c; background: #fff; border: 2px solid #c2410c; border-radius: 8px; padding: 4px 12px; z-index: 5; }\n\u003c/style>\n\u003cdiv class=\"pane\" id=\"pane\" data-f>\n  \u003cdiv class=\"tabs\">\u003cspan class=\"tab on\">notes.md + paper.pdf\u003c/span>\u003c/div>\n  \u003cdiv class=\"body\">\n    \u003cdiv id=\"left\" data-f>\u003cdiv class=\"md\"># Notes on the paper\u003cbr>\u003cbr>- Method on p.4 is new\u003cbr>- Table 57's fares \u003cspan style=\"background:#f6d860\">differ\u003c/span>\u003cbr>- \u003c/div>\u003c/div>\n    \u003cdiv id=\"right\" data-f>\u003cdiv class=\"page\">\u003cdiv class=\"ph\">\u003c/div>\u003cspan class=\"b\">\u003c/span>\u003cspan class=\"b hl\">\u003c/span>\u003cspan class=\"b\">\u003c/span>\u003cspan class=\"b\" style=\"width:70%\">\u003c/span>\u003cspan class=\"b\">\u003c/span>\u003c/div>\u003c/div>\n  \u003c/div>\n  \u003cdiv id=\"no\" data-in=\"scale\">Split view refuses it today\u003c/div>\n\u003c/div>\n\u003cdiv class=\"s\" id=\"today\" data-in=\"up\" data-f>Split view takes only text today: PDFs, Word documents and decks are all turned away.\u003c/div>\n","setup":[{"do":"state","value":"tab"}],"audio":"audio/q491-split.mp3","duration":13.66,"lines":[{"text":"Next, split view. You mentioned PowerPoint opens there, but today split view only takes text, so decks and Word files are refused too.","cues":[{"do":"show","sel":"#today","t":3.509},{"do":"show","sel":"#no","t":6.876}],"dur":7.277917,"start":0.25},{"text":"I recommend letting a PDF sit beside a text document, so you can read the paper and write the notes.","cues":[{"do":"hide","sel":"#no","t":7.978},{"do":"state","value":"","t":9.501},{"do":"focus","sel":"#left","t":12.244}],"dur":5.078333,"start":7.978}],"options":[{"id":"beside-text","label":"A PDF beside a text document","desc":"View-only side; the text side keeps the editor. Decide decks and Word with it. About a day after the viewer.","recommended":true,"audio":"audio/q491-split--beside-text.mp3","duration":7.7,"lines":[{"text":"Option one. The PDF is the view-only side, about a day of work after the viewer, and decks and Word documents could follow the same rule.","cues":[{"do":"state","value":"","t":0.25},{"do":"focus","sel":"#right","t":0.935}],"dur":6.851375,"start":0.25}]},{"id":"text-only","label":"Split view stays text-only","desc":"A PDF opens as its own tab; a session can sit in the other pane.","recommended":false,"audio":"audio/q491-split--text-only.mp3","duration":5.2,"lines":[{"text":"Option two keeps split view for text, and the PDF opens as its own tab.","cues":[{"do":"unfocus","t":0.25},{"do":"state","value":"tab","t":4.114}],"dur":4.354792,"start":0.25}]}]},{"id":"q492-read","kind":"decision","title":"What Claude reads","short":"Claude reads","q":"Q-492","ask":"What does a Claude session get when it reads a PDF?","why":"Read on the whole PDF costs about 180k–360k tokens for 120 pages; text alone loses charts and scans.","look":[{"label":"§4 of the research: the agent reads the whole PDF","url":"https://github.com/dudgeon/duo-v2/blob/main/docs/research/pdf-viewing.md#4-the-agent-reads-the-whole-pdf-q-492"}],"scene":"\u003cstyle>/* Scenes for the PDF viewing walkthrough. The world is 640x400. Colours are Duo's light tokens\n   (as in the multi-window walkthrough); a PDF page is white paper on the pane. */\n.cam { font-family: -apple-system, BlinkMacSystemFont, \"SF Pro Text\", system-ui, sans-serif; color: #1f2328; }\n.cam > * { position: absolute; }\n.h { font-size: 26px; line-height: 32px; font-weight: 600; }\n.t { font-size: 18px; line-height: 25px; }\n.s { font-size: 15px; line-height: 21px; color: #5b636d; }\n.lab { font-size: 13px; line-height: 18px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: #5b636d; }\n.stamp { background: #1f2328; color: #ffffff; padding: 7px 13px; border-radius: 7px; font-size: 16px; line-height: 22px; font-weight: 600; white-space: nowrap; }\n.chip { display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border: 1px solid #8b939c; border-radius: 7px; background: #ffffff; font-size: 15px; white-space: nowrap; }\n.mono { font-family: ui-monospace, \"SF Mono\", Menlo, monospace; }\n\n/* A Duo pane with a tab strip. */\n.pane { border: 1px solid #c9cdd3; border-radius: 9px; background: #f3f4f6; overflow: hidden; box-shadow: 0 10px 28px rgba(31,35,40,.14); }\n.pane .tabs { position: absolute; left: 0; right: 0; top: 0; height: 28px; background: #ffffff; border-bottom: 1px solid #c9cdd3; display: flex; align-items: center; gap: 8px; padding: 0 10px; font-size: 13px; white-space: nowrap; }\n.pane .tab { padding: 3px 8px; border-radius: 5px; }\n.pane .tab.on { background: #e3e6ea; font-weight: 600; }\n.pane .strip { position: absolute; left: 0; right: 0; top: 29px; height: 26px; background: #f3f4f6; border-bottom: 1px solid #c9cdd3; display: flex; align-items: center; gap: 12px; padding: 0 10px; font-size: 13px; color: #5b636d; white-space: nowrap; }\n.pane .body { position: absolute; left: 0; right: 0; top: 56px; bottom: 0; }\n\n/* A PDF page. */\n.page { background: #ffffff; border: 1px solid #d5d9de; box-shadow: 0 2px 8px rgba(31,35,40,.10); padding: 12px; }\n.page .ph { height: 9px; width: 55%; border-radius: 3px; background: #1f2328; margin-bottom: 10px; }\n.page .b { display: block; height: 6px; border-radius: 3px; background: #c9cdd3; margin: 6px 0; }\n.page .hl { background: #f6d860; }\n.note { width: 18px; height: 18px; border-radius: 3px; background: #f6d860; border: 1px solid #b9971f; }\n\n/* Bars for numbers. */\n.bar { height: 30px; border-radius: 6px; background: #1f2328; color: #ffffff; font-size: 14px; line-height: 30px; padding: 0 10px; white-space: nowrap; transform-origin: left center; }\n.bar.light { background: #7fa6d9; }\n.bar.green { background: #2f8f5b; }\n\n/* A comment card. */\n.card { background: #ffffff; border: 1px solid #c9cdd3; border-radius: 8px; padding: 8px 10px; font-size: 13px; line-height: 18px; box-shadow: 0 4px 12px rgba(31,35,40,.08); }\n.card .who { font-weight: 600; }\n.card .who.claude { color: #2f8f5b; }\n.card .k { font-family: ui-monospace, \"SF Mono\", Menlo, monospace; font-size: 13px; color: #5b636d; }\n\n.ok { color: #2f8f5b; font-weight: 700; }\n.no { color: #c2410c; font-weight: 700; }\n.opt { display: flex; flex-direction: column; align-items: stretch; border: 1.5px solid #c9cdd3; border-radius: 10px; background: #ffffff; padding: 10px 12px; transition: border-color .4s, box-shadow .4s, opacity .4s; }\n.opt .t { font-weight: 600; }\n\n.ans-row { display: flex; gap: 12px; align-items: baseline; padding: 6px 0; border-bottom: 1px solid #e3e6ea; font-size: 16px; line-height: 22px; }\n.ans-row .q { width: 170px; flex: none; font-weight: 600; }\n.ans-row .a { color: #5b636d; }\n.ans-row.done .a { color: #1f2328; }\n\u003c/style>\u003cstyle>\n#term { left: 24px; top: 30px; width: 400px; height: 300px; background: #15171b; border-radius: 9px; padding: 12px 14px; font: 13px/19px ui-monospace, \"SF Mono\", Menlo, monospace; color: #d5d9de; box-shadow: 0 10px 28px rgba(31,35,40,.16); }\n#term .p { color: #9aa1ab; }\n#term .g { color: #7DB38E; }\n#term > div { opacity: 0; transition: opacity .4s; }\n[data-state~=\"cmd\"] #t1, [data-state~=\"text\"] #t2, [data-state~=\"text\"] #t3, [data-state~=\"eyes\"] #t4, [data-state~=\"eyes\"] #t5, [data-state~=\"read\"] #t6 { opacity: 1; }\n#t1 { opacity: 1; }\n#side { left: 446px; top: 40px; width: 170px; }\n#side .bar { margin-top: 8px; }\n#s1 { width: 60px; } #s2 { width: 100px; } #s3 { width: 170px; }\n#rec { left: 446px; top: 268px; font-size: 14px; }\n\u003c/style>\n\u003cdiv id=\"term\" data-f>\n  \u003cdiv id=\"t1\">\u003cspan class=\"p\">$\u003c/span> duo2 doc read paper.pdf\u003c/div>\n  \u003cdiv id=\"t2\">--- page 1 ---\u003cbr>Chapter 1 · Section 1\u003cbr>Signal engine lane pier…\u003c/div>\n  \u003cdiv id=\"t3\">--- page 2 ---  …  --- page 120 ---\u003c/div>\n  \u003cdiv id=\"t4\">\u003cbr>\u003cspan class=\"g\">Pages to look at as images:\u003c/span>\u003c/div>\n  \u003cdiv id=\"t5\">4, 14, 24 … 114 (charts) · 88 (no text: a scan)\u003c/div>\n  \u003cdiv id=\"t6\">\u003cbr>\u003cspan class=\"p\">Claude:\u003c/span> Read paper.pdf, pages 88\u003c/div>\n\u003c/div>\n\u003cdiv id=\"side\">\n  \u003cdiv class=\"lab\">Tokens, 120 pages\u003c/div>\n  \u003cdiv class=\"bar light\" id=\"s1\" data-in=\"grow\" data-f>33k\u003c/div>\n  \u003cdiv class=\"bar green\" id=\"s2\" data-in=\"grow\" data-f>54k\u003c/div>\n  \u003cdiv class=\"bar\" id=\"s3\" data-in=\"grow\" data-f>180k–360k\u003c/div>\n\u003c/div>\n\u003cdiv class=\"stamp\" id=\"rec\" data-in=\"up\">Recommended · text\u003c/div>\n","audio":"audio/q492-read.mp3","duration":10.78,"lines":[{"text":"Third, what a Claude session gets.","cues":[{"do":"state","value":"cmd","t":0.25}],"dur":1.983292,"start":0.25},{"text":"I recommend duo2 doc read returns the text with page markers, then names the pages to look at as pictures, like charts and scans.","cues":[{"do":"state+","value":"text","t":5.473},{"do":"state+","value":"eyes","t":6.578},{"do":"show","sel":"#rec","t":9.833}],"dur":7.498458,"start":2.683}],"options":[{"id":"text-pages","label":"Text with page markers, plus the pages to view","desc":"duo2 doc read: about 54k tokens on the fixture, nothing lost. The path is in the payload too. About a day.","recommended":true,"audio":"audio/q492-read--text-pages.mp3","duration":8.32,"lines":[{"text":"Option one. Claude reads only the pages it's pointed at. About fifty four thousand tokens, nothing lost, and a day of work.","cues":[{"do":"state+","value":"read","t":0.25},{"do":"show","sel":"#s1, #s2, #s3","t":4.077},{"do":"focus","sel":"#s2","t":4.077}],"dur":7.472,"start":0.25}]},{"id":"path-only","label":"Just the path","desc":"Read takes every page as an image: complete, but several times the tokens, and it may not fit a 200k context.","recommended":false,"audio":"audio/q492-read--path-only.mp3","duration":5.43,"lines":[{"text":"Option two hands over just the path. Complete, but several times the tokens.","cues":[{"do":"show","sel":"#s1, #s2, #s3","t":0.25},{"do":"focus","sel":"#s3","t":1.167}],"dur":4.583542,"start":0.25}]},{"id":"markdown","label":"Convert to Markdown","desc":"docling or MarkItDown: better structure, but heavy (PyTorch) or weak (no layout).","recommended":false,"audio":"audio/q492-read--markdown.mp3","duration":5.67,"lines":[{"text":"Option three converts it to Markdown with an outside tool. Better structure, but heavy.","cues":[{"do":"unfocus","t":0.25}],"dur":4.814417,"start":0.25}]}]},{"id":"q493-comments","kind":"decision","title":"Where comments live","short":"Comments","q":"Q-493","ask":"Where do a PDF's comments live, and how are they written?","why":"Portable means other apps see them: in the PDF, in the standard's own form. PDFKit can't write replies and rewrites the file.","look":[{"label":"§5 of the research: portable comments","url":"https://github.com/dudgeon/duo-v2/blob/main/docs/research/pdf-viewing.md#5-portable-comments-q-493"}],"scene":"\u003cstyle>/* Scenes for the PDF viewing walkthrough. The world is 640x400. Colours are Duo's light tokens\n   (as in the multi-window walkthrough); a PDF page is white paper on the pane. */\n.cam { font-family: -apple-system, BlinkMacSystemFont, \"SF Pro Text\", system-ui, sans-serif; color: #1f2328; }\n.cam > * { position: absolute; }\n.h { font-size: 26px; line-height: 32px; font-weight: 600; }\n.t { font-size: 18px; line-height: 25px; }\n.s { font-size: 15px; line-height: 21px; color: #5b636d; }\n.lab { font-size: 13px; line-height: 18px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: #5b636d; }\n.stamp { background: #1f2328; color: #ffffff; padding: 7px 13px; border-radius: 7px; font-size: 16px; line-height: 22px; font-weight: 600; white-space: nowrap; }\n.chip { display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border: 1px solid #8b939c; border-radius: 7px; background: #ffffff; font-size: 15px; white-space: nowrap; }\n.mono { font-family: ui-monospace, \"SF Mono\", Menlo, monospace; }\n\n/* A Duo pane with a tab strip. */\n.pane { border: 1px solid #c9cdd3; border-radius: 9px; background: #f3f4f6; overflow: hidden; box-shadow: 0 10px 28px rgba(31,35,40,.14); }\n.pane .tabs { position: absolute; left: 0; right: 0; top: 0; height: 28px; background: #ffffff; border-bottom: 1px solid #c9cdd3; display: flex; align-items: center; gap: 8px; padding: 0 10px; font-size: 13px; white-space: nowrap; }\n.pane .tab { padding: 3px 8px; border-radius: 5px; }\n.pane .tab.on { background: #e3e6ea; font-weight: 600; }\n.pane .strip { position: absolute; left: 0; right: 0; top: 29px; height: 26px; background: #f3f4f6; border-bottom: 1px solid #c9cdd3; display: flex; align-items: center; gap: 12px; padding: 0 10px; font-size: 13px; color: #5b636d; white-space: nowrap; }\n.pane .body { position: absolute; left: 0; right: 0; top: 56px; bottom: 0; }\n\n/* A PDF page. */\n.page { background: #ffffff; border: 1px solid #d5d9de; box-shadow: 0 2px 8px rgba(31,35,40,.10); padding: 12px; }\n.page .ph { height: 9px; width: 55%; border-radius: 3px; background: #1f2328; margin-bottom: 10px; }\n.page .b { display: block; height: 6px; border-radius: 3px; background: #c9cdd3; margin: 6px 0; }\n.page .hl { background: #f6d860; }\n.note { width: 18px; height: 18px; border-radius: 3px; background: #f6d860; border: 1px solid #b9971f; }\n\n/* Bars for numbers. */\n.bar { height: 30px; border-radius: 6px; background: #1f2328; color: #ffffff; font-size: 14px; line-height: 30px; padding: 0 10px; white-space: nowrap; transform-origin: left center; }\n.bar.light { background: #7fa6d9; }\n.bar.green { background: #2f8f5b; }\n\n/* A comment card. */\n.card { background: #ffffff; border: 1px solid #c9cdd3; border-radius: 8px; padding: 8px 10px; font-size: 13px; line-height: 18px; box-shadow: 0 4px 12px rgba(31,35,40,.08); }\n.card .who { font-weight: 600; }\n.card .who.claude { color: #2f8f5b; }\n.card .k { font-family: ui-monospace, \"SF Mono\", Menlo, monospace; font-size: 13px; color: #5b636d; }\n\n.ok { color: #2f8f5b; font-weight: 700; }\n.no { color: #c2410c; font-weight: 700; }\n.opt { display: flex; flex-direction: column; align-items: stretch; border: 1.5px solid #c9cdd3; border-radius: 10px; background: #ffffff; padding: 10px 12px; transition: border-color .4s, box-shadow .4s, opacity .4s; }\n.opt .t { font-weight: 600; }\n\n.ans-row { display: flex; gap: 12px; align-items: baseline; padding: 6px 0; border-bottom: 1px solid #e3e6ea; font-size: 16px; line-height: 22px; }\n.ans-row .q { width: 170px; flex: none; font-weight: 600; }\n.ans-row .a { color: #5b636d; }\n.ans-row.done .a { color: #1f2328; }\n\u003c/style>\u003cstyle>\n#file { left: 24px; top: 60px; width: 592px; height: 64px; }\n#orig { position: absolute; left: 0; top: 0; width: 470px; height: 64px; background: #e3e6ea; border-radius: 8px 0 0 8px; display: flex; align-items: center; padding-left: 14px; font-size: 15px; transition: background-color .5s, width .6s; }\n#app { position: absolute; left: 472px; top: 0; width: 120px; height: 64px; background: #2f8f5b; color: #fff; border-radius: 0 8px 8px 0; font-size: 14px; line-height: 18px; padding: 12px 10px; }\n#flab { left: 24px; top: 30px; }\n[data-state~=\"rewrite\"] #orig { background: #f6c7b0; width: 592px; border-radius: 8px; }\n#side { left: 24px; top: 150px; width: 300px; height: 64px; border: 2px dashed #8b939c; border-radius: 8px; padding: 10px 12px; font-size: 15px; }\n#map { left: 24px; top: 236px; width: 592px; font-size: 14px; line-height: 21px; }\n#map div { display: flex; gap: 10px; }\n#map span:first-child { width: 120px; font-weight: 600; }\n#map span:last-child { font-family: ui-monospace, \"SF Mono\", Menlo, monospace; color: #5b636d; }\n\u003c/style>\n\u003cdiv class=\"lab\" id=\"flab\">paper.pdf\u003c/div>\n\u003cdiv id=\"file\" data-f>\n  \u003cdiv id=\"orig\" data-f>Original bytes, untouched (signatures still hold)\u003c/div>\n  \u003cdiv id=\"app\" data-in=\"left\" data-f>+ comments appended\u003c/div>\n\u003c/div>\n\u003cdiv id=\"side\" data-in=\"up\" data-f>paper.xfdf beside it · lost when the PDF is sent alone\u003c/div>\n\u003cdiv id=\"map\" data-in=\"up\" data-f>\n  \u003cdiv id=\"m1\">\u003cspan>Comment\u003c/span>\u003cspan>Highlight or note · /T you · /NM c1\u003c/span>\u003c/div>\n  \u003cdiv id=\"m2\">\u003cspan>Reply\u003c/span>\u003cspan>/IRT → c1 · /RT /R\u003c/span>\u003c/div>\n  \u003cdiv id=\"m3\">\u003cspan>Resolve\u003c/span>\u003cspan>/State (Completed), hidden\u003c/span>\u003c/div>\n  \u003cdiv id=\"m4\">\u003cspan>@claude\u003c/span>\u003cspan>routed and tracked by Duo, as in Markdown\u003c/span>\u003c/div>\n\u003c/div>\n","audio":"audio/q493-comments.mp3","duration":10.07,"lines":[{"text":"Last, where comments live.","cues":[{"do":"focus","sel":"#orig","soft":true,"t":0.25}],"dur":1.725875,"start":0.25},{"text":"I recommend keeping them inside the PDF, in the form the standard defines, added after the original bytes, so a signature still holds.","cues":[{"do":"show","sel":"#app","t":6.37},{"do":"focus","sel":"#orig, #app","t":8.316}],"dur":7.047375,"start":2.426}],"options":[{"id":"in-pdf","label":"In the PDF, appended by Duo","desc":"Standard annotations: replies by /IRT, Resolve as a /State reply. Read with CGPDF, written by Duo's incremental writer; PDFKit only draws. @claude as in DL-236. About 6–9 days with the margin UI.","recommended":true,"audio":"audio/q493-comments--in-pdf.mp3","duration":8.71,"lines":[{"text":"Option one. Add, reply and resolve map straight onto the standard, and at-Claude works as it does in Markdown. Six to nine days, including the margin.","cues":[{"do":"unfocus","t":0.25},{"do":"show","sel":"#map","t":0.25},{"do":"focus","sel":"#m4","t":3.97}],"dur":7.858167,"start":0.25}]},{"id":"xfdf","label":"An XFDF sidecar beside the PDF","desc":"The PDF is never touched; Acrobat can import it. Lost when the PDF is sent alone. Better as an export.","recommended":false,"audio":"audio/q493-comments--xfdf.mp3","duration":6.52,"lines":[{"text":"Option two keeps them in a file beside the PDF. Safe, but they're lost when the PDF is sent alone.","cues":[{"do":"hide","sel":"#map","t":0.25},{"do":"show","sel":"#side","t":0.817},{"do":"focus","sel":"#side","t":4.069}],"dur":5.671,"start":0.25}]},{"id":"pdfkit-save","label":"PDFKit's own save","desc":"Least code, but it rewrites the whole file, breaks signatures, and can't write replies.","recommended":false,"audio":"audio/q493-comments--pdfkit-save.mp3","duration":7.98,"lines":[{"text":"Option three uses PDFKit's own save. It's the smallest amount of code, but no replies, and it rewrites the whole file.","cues":[{"do":"hide","sel":"#map","t":0.25},{"do":"state","value":"rewrite","t":5.933},{"do":"hide","sel":"#app","t":5.933}],"dur":7.133375,"start":0.25}]}]},{"id":"wrap","kind":"finding","title":"That's all four","short":"Done","final":true,"scene":"\u003cstyle>/* Scenes for the PDF viewing walkthrough. The world is 640x400. Colours are Duo's light tokens\n   (as in the multi-window walkthrough); a PDF page is white paper on the pane. */\n.cam { font-family: -apple-system, BlinkMacSystemFont, \"SF Pro Text\", system-ui, sans-serif; color: #1f2328; }\n.cam > * { position: absolute; }\n.h { font-size: 26px; line-height: 32px; font-weight: 600; }\n.t { font-size: 18px; line-height: 25px; }\n.s { font-size: 15px; line-height: 21px; color: #5b636d; }\n.lab { font-size: 13px; line-height: 18px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: #5b636d; }\n.stamp { background: #1f2328; color: #ffffff; padding: 7px 13px; border-radius: 7px; font-size: 16px; line-height: 22px; font-weight: 600; white-space: nowrap; }\n.chip { display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border: 1px solid #8b939c; border-radius: 7px; background: #ffffff; font-size: 15px; white-space: nowrap; }\n.mono { font-family: ui-monospace, \"SF Mono\", Menlo, monospace; }\n\n/* A Duo pane with a tab strip. */\n.pane { border: 1px solid #c9cdd3; border-radius: 9px; background: #f3f4f6; overflow: hidden; box-shadow: 0 10px 28px rgba(31,35,40,.14); }\n.pane .tabs { position: absolute; left: 0; right: 0; top: 0; height: 28px; background: #ffffff; border-bottom: 1px solid #c9cdd3; display: flex; align-items: center; gap: 8px; padding: 0 10px; font-size: 13px; white-space: nowrap; }\n.pane .tab { padding: 3px 8px; border-radius: 5px; }\n.pane .tab.on { background: #e3e6ea; font-weight: 600; }\n.pane .strip { position: absolute; left: 0; right: 0; top: 29px; height: 26px; background: #f3f4f6; border-bottom: 1px solid #c9cdd3; display: flex; align-items: center; gap: 12px; padding: 0 10px; font-size: 13px; color: #5b636d; white-space: nowrap; }\n.pane .body { position: absolute; left: 0; right: 0; top: 56px; bottom: 0; }\n\n/* A PDF page. */\n.page { background: #ffffff; border: 1px solid #d5d9de; box-shadow: 0 2px 8px rgba(31,35,40,.10); padding: 12px; }\n.page .ph { height: 9px; width: 55%; border-radius: 3px; background: #1f2328; margin-bottom: 10px; }\n.page .b { display: block; height: 6px; border-radius: 3px; background: #c9cdd3; margin: 6px 0; }\n.page .hl { background: #f6d860; }\n.note { width: 18px; height: 18px; border-radius: 3px; background: #f6d860; border: 1px solid #b9971f; }\n\n/* Bars for numbers. */\n.bar { height: 30px; border-radius: 6px; background: #1f2328; color: #ffffff; font-size: 14px; line-height: 30px; padding: 0 10px; white-space: nowrap; transform-origin: left center; }\n.bar.light { background: #7fa6d9; }\n.bar.green { background: #2f8f5b; }\n\n/* A comment card. */\n.card { background: #ffffff; border: 1px solid #c9cdd3; border-radius: 8px; padding: 8px 10px; font-size: 13px; line-height: 18px; box-shadow: 0 4px 12px rgba(31,35,40,.08); }\n.card .who { font-weight: 600; }\n.card .who.claude { color: #2f8f5b; }\n.card .k { font-family: ui-monospace, \"SF Mono\", Menlo, monospace; font-size: 13px; color: #5b636d; }\n\n.ok { color: #2f8f5b; font-weight: 700; }\n.no { color: #c2410c; font-weight: 700; }\n.opt { display: flex; flex-direction: column; align-items: stretch; border: 1.5px solid #c9cdd3; border-radius: 10px; background: #ffffff; padding: 10px 12px; transition: border-color .4s, box-shadow .4s, opacity .4s; }\n.opt .t { font-weight: 600; }\n\n.ans-row { display: flex; gap: 12px; align-items: baseline; padding: 6px 0; border-bottom: 1px solid #e3e6ea; font-size: 16px; line-height: 22px; }\n.ans-row .q { width: 170px; flex: none; font-weight: 600; }\n.ans-row .a { color: #5b636d; }\n.ans-row.done .a { color: #1f2328; }\n\u003c/style>\u003cstyle>\n#done { left: 40px; top: 30px; }\n#list { left: 40px; top: 84px; width: 560px; }\n#next { left: 40px; top: 330px; width: 560px; }\n\u003c/style>\n\u003cdiv class=\"h\" id=\"done\" data-in=\"up\">That's all four\u003c/div>\n\u003cdiv id=\"list\" data-dw=\"answers\" data-in=\"up\" data-f>\u003c/div>\n\u003cdiv class=\"s\" id=\"next\" data-in=\"up\" data-f>Next: a design round for the viewer's bar and the comment margin, then the build.\u003c/div>\n","audio":"audio/wrap.mp3","duration":13.07,"lines":[{"text":"That's all four decisions.","cues":[{"do":"show","sel":"#done, #list","t":0.25}],"dur":1.433583,"start":0.25},{"text":"Each answer went to the director as you saved it, and Copy decisions puts them all on the clipboard.","cues":[{"do":"focus","sel":"#list","soft":true,"t":2.134}],"dur":4.802167,"start":2.134},{"text":"Whatever you pick, the viewer's bar and the comment margin need a design round before anything is built.","cues":[{"do":"unfocus","t":7.386},{"do":"show","sel":"#next","t":7.386}],"dur":5.08575,"start":7.386}]}]}</script>
+<script>
+(() => {
+const S = JSON.parse(document.getElementById("dw-spec").textContent);
+const $ = s => document.querySelector(s);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const ICON_PLAY = '<svg width="18" height="18" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z"/></svg>';
+const ICON_PAUSE = '<svg width="18" height="18" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" rx="1"/><rect x="9.5" y="2" width="3.5" height="12" rx="1"/></svg>';
+const fmt = s => { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+const LS = "dw:" + S.id;
+const store = { get(k, d) { try { const v = localStorage.getItem(LS + ":" + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+                set(k, v) { try { localStorage.setItem(LS + ":" + k, JSON.stringify(v)); } catch (e) {} } };
+
+// ---- state
+const CH = S.chapters;
+const decisions = CH.filter(c => c.kind === "decision");
+const answers = store.get("answers", {});        // id -> {q, choice, label, text, at}
+const drafts = {};                                // id -> {choice, text}
+let cur = 0, mode = "intro", optIdx = -1, playing = false, started = false, heard = store.get("heard", {});
+let db = null, comments = null, canSend = "off", threads = store.get("threads", {});
+
+// ---- stage
+const stage = $("#stage");
+let world, cam, cursor, applied = 0, cueList = [];
+function scale() { const w = stage.clientWidth; if (world) world.style.transform = "scale(" + (w / 640) + ")"; }
+new ResizeObserver(scale).observe(stage);
+function buildScene(ch) {
+  stage.replaceChildren();
+  const tag = el("div", "tag" + (ch.kind === "decision" ? " decide" : ""));
+  if (ch.kind === "decision") tag.append(el("span", "dot"));
+  tag.append(el("span", "", ch.kind === "decision" ? "Your call · " + ch.q : (ch.label || "Chapter " + (CH.indexOf(ch) + 1))));
+  world = el("div", "world"); cam = el("div", "cam"); cam.innerHTML = ch.scene || "";
+  cursor = el("div", "dw-cursor"); cursor.innerHTML = '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M3 2l14 8.5-6.2 1.3L7.6 18z" fill="#1f2328" stroke="#ffffff" stroke-width="1.4" stroke-linejoin="round"/></svg>';
+  cam.append(cursor); world.append(cam); stage.append(tag, world);
+  if (ch.hint) stage.append(el("div", "hint", ch.hint));
+  world.querySelectorAll("[data-tap]").forEach(t => {
+    t.setAttribute("role", "button"); t.tabIndex = 0;
+    const go = ev => { ev.stopPropagation(); (ch.actions?.[t.dataset.tap] || []).forEach(c => cue(c, false)); };
+    t.addEventListener("click", go); t.addEventListener("keydown", ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); go(ev); } });
+  });
+  world.querySelectorAll('[data-dw="answers"]').forEach(fillAnswers);
+  scale();
+  if (!started) poster();
+}
+function poster() {
+  const p = el("div", "poster");
+  p.append(el("h2", "", S.title), el("p", "", S.posterLine || S.subtitle || ""));
+  const b = el("button", "play"); b.type = "button"; b.setAttribute("aria-label", "Play the walkthrough"); b.innerHTML = '<svg width="26" height="26" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" fill="#ffffff"/></svg>';
+  b.onclick = () => { started = true; p.remove(); play(); };
+  p.append(b, el("p", "", fmtTotal()));
+  stage.append(p);
+}
+function fmtTotal() { const t = CH.reduce((a, c) => a + c.duration, 0); return "About " + Math.round(t / 60) + " minutes · " + CH.length + " chapters · " + decisions.length + " decisions"; }
+const sel = s => s ? [...world.querySelectorAll(s)] : [];
+function center(e) { let x = e.offsetWidth / 2, y = e.offsetHeight / 2; for (let n = e; n && n !== cam; n = n.offsetParent) { x += n.offsetLeft; y += n.offsetTop; } return [x, y]; }
+function cue(c, instant) {
+  const els = sel(c.sel);
+  switch (c.do) {
+    case "show": els.forEach(e => e.classList.add("on")); break;
+    case "hide": els.forEach(e => e.classList.remove("on")); break;
+    case "focus": world.querySelectorAll(".focus").forEach(e => e.classList.remove("focus", "soft")); els.forEach(e => { e.classList.add("focus"); if (c.soft) e.classList.add("soft"); }); world.classList.toggle("focusing", els.length > 0); break;
+    case "unfocus": world.querySelectorAll(".focus").forEach(e => e.classList.remove("focus", "soft")); world.classList.remove("focusing"); break;
+    case "add": els.forEach(e => e.classList.add(...c.cls.split(" "))); break;
+    case "remove": els.forEach(e => e.classList.remove(...c.cls.split(" "))); break;
+    case "state": world.dataset.state = c.value || ""; break;
+    case "state+": { const s = new Set((world.dataset.state || "").split(" ").filter(Boolean)); c.value.split(" ").forEach(v => s.add(v)); world.dataset.state = [...s].join(" "); break; }
+    case "state-": { const s = new Set((world.dataset.state || "").split(" ").filter(Boolean)); c.value.split(" ").forEach(v => s.delete(v)); world.dataset.state = [...s].join(" "); break; }
+    case "state~": { const s = new Set((world.dataset.state || "").split(" ").filter(Boolean)); c.value.split(" ").forEach(v => s.has(v) ? s.delete(v) : s.add(v)); world.dataset.state = [...s].join(" "); break; }
+    case "camera": { const z = c.z || 1, x = c.x ?? 320, y = c.y ?? 200; cam.style.transform = z === 1 && c.x == null ? "" : "translate(" + (320 - x * z) + "px," + (200 - y * z) + "px) scale(" + z + ")"; break; }
+    case "text": els.forEach(e => e.textContent = c.value); break;
+    case "tap": case "point": {
+      const e = els[0]; if (!e) break; const [x, y] = center(e);
+      cursor.classList.add("on"); cursor.style.left = (x - 3) + "px"; cursor.style.top = (y - 2) + "px";
+      if (c.do === "tap") { if (instant) break; setTimeout(() => { cursor.classList.remove("press"); void cursor.offsetWidth; cursor.classList.add("press"); }, 720); }
+      break; }
+    case "cursor-off": cursor.classList.remove("on"); break;
+    case "count": els.forEach(e => { const to = +c.to, from = parseFloat(e.textContent) || 0, d = (c.dur || 1) * 1000, t0 = performance.now(), dec = c.decimals || 0;
+      if (instant) { e.textContent = to.toFixed(dec); return; }
+      const step = now => { const k = Math.min(1, (now - t0) / d); e.textContent = (from + (to - from) * (1 - Math.pow(1 - k, 3))).toFixed(dec); if (k < 1) requestAnimationFrame(step); }; requestAnimationFrame(step); }); break;
+  }
+}
+function instantly(fn) { stage.classList.add("instant"); fn(); void stage.offsetWidth; requestAnimationFrame(() => requestAnimationFrame(() => stage.classList.remove("instant"))); }
+function cuesOf(lines) { return lines.flatMap(l => l.cues || []).sort((a, b) => a.t - b.t); }
+function runCues(t) { while (applied < cueList.length && cueList[applied].t <= t + 0.02) cue(cueList[applied++], false); }
+
+// ---- clock: an audio file, or a timer for drafts with no audio
+const audio = new Audio(); audio.preload = "auto"; audio.setAttribute("playsinline", "");
+let clock = null;
+function makeClock(src, duration) {
+  if (src) {
+    return { src, duration, get t() { return audio.currentTime; },
+      load() { if (audio.getAttribute("src") !== src) { audio.src = src; } audio.currentTime = 0; },
+      play() { return audio.play().catch(() => { playing = false; ui(); }); }, pause() { audio.pause(); } };
+  }
+  let t = 0, last = 0, raf = 0;
+  const c = { duration, get t() { return t; }, load() { t = 0; },
+    play() { last = performance.now(); cancelAnimationFrame(raf); const tick = now => { t += (now - last) / 1000; last = now; onTime(); if (t >= duration) { cancelAnimationFrame(raf); onEnded(); return; } raf = requestAnimationFrame(tick); }; raf = requestAnimationFrame(tick); },
+    pause() { cancelAnimationFrame(raf); } };
+  return c;
+}
+audio.addEventListener("timeupdate", () => onTime());
+audio.addEventListener("ended", () => onEnded());
+let rafA = 0; function pump() { if (playing && clock && clock.src) { runCues(clock.t); captions(); } rafA = requestAnimationFrame(pump); } pump();
+
+function linesNow() { return mode === "option" ? CH[cur].options[optIdx].lines : CH[cur].lines; }
+function onTime() { if (!clock) return; runCues(clock.t); captions(); progress(); }
+function onEnded() {
+  const ch = CH[cur];
+  runCues(1e9);
+  if (mode === "option") { playing = false; mode = "after"; ui(); return; }
+  heard[ch.id] = true; store.set("heard", heard);
+  if (ch.kind === "decision") { playing = false; ui(); const p = $(".panel.call"); if (p) { p.classList.remove("waiting"); void p.offsetWidth; p.classList.add("waiting"); if (innerWidth <= 860) p.scrollIntoView({ behavior: "smooth", block: "start" }); } return; }
+  if (cur < CH.length - 1) { load(cur + 1); play(); } else { playing = false; ui(); }
+}
+
+function load(i, opts = {}) {
+  clock?.pause(); cur = i; mode = "intro"; optIdx = -1; applied = 0;
+  const ch = CH[i]; buildScene(ch);
+  cueList = cuesOf(ch.lines); clock = makeClock(ch.audio, ch.duration); clock.load();
+  instantly(() => (ch.setup || []).forEach(c => cue(c, true)));
+  if (opts.end) instantly(() => { runCues(1e9); });
+  store.set("at", i); renderAside();
+}
+function playOption(k) {
+  const ch = CH[cur]; clock?.pause();
+  buildScene(ch); applied = 0;
+  instantly(() => { (ch.setup || []).forEach(c => cue(c, true)); cuesOf(ch.lines).forEach(c => cue(c, true)); });
+  mode = "option"; optIdx = k; cueList = cuesOf(ch.options[k].lines);
+  clock = makeClock(ch.options[k].audio, ch.options[k].duration); clock.load();
+  started = true; stage.querySelector(".poster")?.remove();
+  playing = true; clock.play(); ui(); renderAside();
+}
+function play() { if (!clock) return; started = true; stage.querySelector(".poster")?.remove();
+  if (mode === "after" || (clock.duration - clock.t) < 0.05) { if (mode === "option" || mode === "after") { playOption(optIdx < 0 ? 0 : optIdx); return; } load(cur); }
+  playing = true; clock.play(); ui(); }
+function pause() { playing = false; clock?.pause(); ui(); }
+
+// ---- captions and progress
+function captions() {
+  const box = $("#captions"), L = linesNow(), t = clock ? clock.t : 0;
+  let k = -1; L.forEach((l, i) => { if (t + 0.05 >= l.start) k = i; });
+  if (!started && mode === "intro") k = -1;
+  if (box.dataset.k === mode + k + cur) return; box.dataset.k = mode + k + cur;
+  box.replaceChildren();
+  if (k > 0) box.append(el("span", "prev", L[k - 1].text));
+  if (k >= 0) box.append(el("span", "now", L[k].text));
+}
+function progress() {
+  const t = clock ? clock.t : 0;
+  const before = CH.slice(0, cur).reduce((a, c) => a + c.duration, 0);
+  const total = CH.reduce((a, c) => a + c.duration, 0);
+  $("#time").textContent = mode === "intro" ? fmt(before + t) + " / " + fmt(total) : "option · " + fmt(t) + " / " + fmt(clock.duration);
+  document.querySelectorAll(".seg").forEach((s, i) => { s.querySelector("i").style.width = (i < cur ? 100 : i > cur ? 0 : mode === "intro" ? Math.min(100, 100 * t / CH[i].duration) : 100) + "%"; });
+}
+function ui() {
+  $("#play").innerHTML = playing ? ICON_PAUSE : ICON_PLAY; $("#play").setAttribute("aria-label", playing ? "Pause" : "Play");
+  const ch = CH[cur];
+  $("#where").textContent = "Chapter " + (cur + 1) + " of " + CH.length + " · " + ch.title + (mode === "option" || mode === "after" ? " · option " + (optIdx + 1) : "");
+  $("#back").disabled = cur === 0 && (!clock || clock.t < 1);
+  $("#next").disabled = cur === CH.length - 1;
+  document.querySelectorAll(".seg").forEach((s, i) => { s.classList.toggle("cur", i === cur); s.classList.toggle("answered", !!answers[CH[i].id]); });
+  const open = decisions.filter(d => !answers[d.id]).length;
+  $("#count").textContent = (decisions.length - open) + " of " + decisions.length + " answered";
+  document.querySelectorAll(".opt .hear").forEach(h => { const k = +h.dataset.k; if (!CH[cur].options?.[k]) return; const on = playing && mode === "option" && optIdx === k; h.innerHTML = (on ? ICON_PAUSE.replace(/18/g, "12") : ICON_PLAY.replace(/18/g, "12")) + "<span>" + fmt(CH[cur].options[k].duration) + "</span>"; h.setAttribute("aria-label", (on ? "Pause option " : "Hear option ") + (k + 1)); });
+  captions(); progress();
+}
+
+// ---- chapters bar
+function buildBar() {
+  const nav = $("#chapters"); nav.replaceChildren();
+  CH.forEach((c, i) => {
+    const b = el("button", "seg" + (c.kind === "decision" ? " decision" : "")); b.type = "button"; b.style.flexGrow = Math.max(1, c.duration);
+    b.setAttribute("aria-label", "Chapter " + (i + 1) + ": " + c.title + (c.kind === "decision" ? " (decision)" : ""));
+    const bar = el("span", "bar"); bar.append(el("i")); b.append(bar, el("span", "nm", (c.kind === "decision" ? "● " : "") + (c.short || c.title)));
+    b.onclick = () => { const was = playing; load(i); if (was || started) play(); };
+    nav.append(b);
+  });
+}
+
+// ---- the aside: chapter list, or Your call at a decision
+function glyph(c) {
+  const ns = "http://www.w3.org/2000/svg", s = document.createElementNS(ns, "svg"); s.setAttribute("width", "10"); s.setAttribute("height", "10"); s.setAttribute("viewBox", "0 0 10 10"); s.setAttribute("aria-hidden", "true");
+  const p = document.createElementNS(ns, c.kind === "decision" && !answers[c.id] ? "circle" : "path");
+  if (c.kind === "decision" && !answers[c.id]) { p.setAttribute("cx", 5); p.setAttribute("cy", 5); p.setAttribute("r", 4.5); p.setAttribute("fill", "var(--needs)"); }
+  else if (c.kind === "decision") { p.setAttribute("d", "M5 .8l4.2 4.2L5 9.2.8 5z"); p.setAttribute("fill", "var(--text)"); }
+  else if (heard[c.id]) { p.setAttribute("d", "M1.5 5.2l2.3 2.3 4.7-5"); p.setAttribute("fill", "none"); p.setAttribute("stroke", "var(--text2)"); p.setAttribute("stroke-width", "1.6"); p.setAttribute("stroke-linecap", "round"); }
+  else { p.setAttribute("d", "M2 5h6"); p.setAttribute("stroke", "var(--text2)"); p.setAttribute("stroke-width", "1.6"); p.setAttribute("stroke-linecap", "round"); }
+  s.append(p); return s;
+}
+function renderAside() {
+  const a = $("#aside"), ch = CH[cur]; const f = document.activeElement?.id;
+  a.replaceChildren();
+  if (ch.kind === "decision") a.append(callPanel(ch)); else if (ch.final) a.append(finalPanel()); else a.append(tocPanel());
+  if (f && document.getElementById(f)) document.getElementById(f).focus();
+  ui();
+}
+function tocPanel() {
+  const p = el("section", "panel"); p.setAttribute("aria-label", "Chapters");
+  p.append(el("span", "lbl", "Chapters"));
+  const ul = el("ul", "toc");
+  CH.forEach((c, i) => { const li = el("li"), b = el("button", i === cur ? "cur" : ""); b.type = "button";
+    const g = el("span", "g"); g.append(glyph(c)); b.append(g, el("span", "", (c.kind === "decision" ? c.q + " · " : "") + c.title), el("span", "d", c.kind === "decision" ? (answers[c.id] ? "answered" : "decide") : fmt(c.duration)));
+    b.onclick = () => { load(i); if (started) play(); }; li.append(b); ul.append(li); });
+  p.append(ul);
+  if (S.source) { const s = el("p", "why"); s.append("The research: "); const l = el("a", "", S.source.label); l.href = S.source.url; l.target = "_blank"; l.rel = "noopener"; s.append(l); p.append(s); }
+  return p;
+}
+function callPanel(ch) {
+  const ans = answers[ch.id], d = drafts[ch.id] || (drafts[ch.id] = { choice: ans?.choice || "", text: ans?.text || "" });
+  const p = el("section", "panel call"); p.setAttribute("aria-label", "Your call: " + ch.title);
+  const h = el("div", "head"); h.append(el("span", "dot"), el("span", "lbl", (ans ? "Answered · " : "Needs you · ") + ch.q)); p.append(h);
+  p.append(el("h2", "", ch.ask));
+  if (ch.why) p.append(el("p", "why", ch.why));
+  if (ch.look?.length) { const lk = el("div", "look"); lk.append(el("span", "lbl", "Look ")); ch.look.forEach((l, i) => { if (i) lk.append(" · "); const x = el("a", "", l.label + " ↗"); x.href = l.url; x.target = "_blank"; x.rel = "noopener"; lk.append(x); }); p.append(lk); }
+  const opts = ch.options.map((o, k) => ({ o, k })).sort((x, y) => (y.o.recommended ? 1 : 0) - (x.o.recommended ? 1 : 0));
+  opts.forEach(({ o, k }) => {
+    const b = el("div", "opt"); b.setAttribute("aria-pressed", String(d.choice === o.id));
+    const pick = el("button", "body"); pick.type = "button"; pick.style.cssText = "background:none;border:none;padding:0;text-align:left;cursor:pointer;";
+    pick.id = "pick-" + ch.id + "-" + o.id; pick.setAttribute("aria-pressed", String(d.choice === o.id));
+    if (o.recommended) pick.append(el("span", "lbl", "Recommended"));
+    pick.append(el("b", "", o.label)); if (o.desc) pick.append(el("small", "", o.desc));
+    pick.onclick = () => { d.choice = d.choice === o.id ? "" : o.id; renderAside(); };
+    const hear = el("button", "hear"); hear.type = "button"; hear.dataset.k = k; hear.id = "hear-" + ch.id + "-" + k;
+    hear.onclick = () => { if (playing && mode === "option" && optIdx === k) pause(); else playOption(k); };
+    b.append(pick, hear); p.append(b);
+  });
+  const other = el("button", "opt other"); other.type = "button"; other.id = "pick-" + ch.id + "-other"; other.setAttribute("aria-pressed", String(d.choice === "other"));
+  other.append(el("span", "body")); other.firstChild.append(el("b", "", "Something else…"), el("small", "", "Say what in the comment."));
+  other.onclick = () => { d.choice = d.choice === "other" ? "" : "other"; renderAside(); if (d.choice === "other") $("#note-" + ch.id)?.focus(); };
+  p.append(other);
+  const lab = el("label", "lbl", "Comment (optional)"); lab.htmlFor = "note-" + ch.id; lab.style.marginTop = "4px";
+  const ta = el("textarea"); ta.id = "note-" + ch.id; ta.placeholder = "Anything to add, or your own answer"; ta.value = d.text;
+  ta.oninput = () => { d.text = ta.value; save.disabled = !(d.choice || d.text.trim()); };
+  p.append(lab, ta);
+  const row = el("div", "row"), save = el("button", "btn primary", ans ? "Save again and continue ›" : "Save and continue ›"), skip = el("button", "btn", "Skip");
+  save.type = skip.type = "button"; save.id = "save-" + ch.id; save.disabled = !(d.choice || d.text.trim());
+  const st = el("div", "status"); st.id = "st-" + ch.id;
+  save.onclick = async () => {
+    const o = ch.options.find(x => x.id === d.choice);
+    const a = { q: ch.q, title: ch.title, choice: d.choice || "", label: o ? o.label : d.choice === "other" ? "Something else" : "", recommended: !!o?.recommended, text: d.text.trim(), at: new Date().toISOString() };
+    answers[ch.id] = a; store.set("answers", answers);
+    if (db) { try { await db.doc("answers/" + ch.id).set(a); } catch (e) {} }
+    renderAside(); const st2 = $("#st-" + ch.id);
+    const sent = await send("d:" + ch.id, $(".panel.call"), S.sendPrefix + " · " + ch.q + " `" + ch.id + "`: " + ch.title + "\nChoice: " + (a.label || "(own words)") + (a.recommended ? " (recommended)" : "") + (a.text ? "\nComment: " + a.text : "") + "\n(For " + S.director + ": saved in this page's db, answers/" + ch.id + ")", st2);
+    setTimeout(() => { if (cur < CH.length - 1 && CH[cur].id === ch.id) { load(cur + 1); play(); } }, sent ? 900 : 1800);
+  };
+  skip.onclick = () => { load(Math.min(cur + 1, CH.length - 1)); play(); };
+  row.append(save, skip); p.append(row, st);
+  if (ans) { const x = el("div", "answer"); x.append(el("b", "", "Saved: "), (ans.label || "own words") + (ans.text ? " · " + ans.text : "")); p.append(x); }
+  return p;
+}
+function finalPanel() {
+  const p = el("section", "panel"); p.setAttribute("aria-label", "Send");
+  p.append(el("span", "lbl", "Your answers"));
+  decisions.forEach(dc => { const a = answers[dc.id]; const r = el("button", "opt"); r.type = "button"; r.style.minHeight = "44px";
+    const b = el("span", "body"); b.append(el("b", "", dc.q + " · " + dc.title), el("small", "", a ? (a.label || "own words") + (a.text ? " · " + a.text : "") : "Not answered yet")); r.append(b);
+    r.onclick = () => { load(CH.indexOf(dc), { end: true }); }; p.append(r); });
+  const lab = el("label", "lbl", "Anything else for the director?"); lab.htmlFor = "note-final"; p.append(lab);
+  const ta = el("textarea"); ta.id = "note-final"; ta.value = drafts.final?.text || answers.final?.text || ""; ta.oninput = () => { drafts.final = { text: ta.value }; }; p.append(ta);
+  const row = el("div", "row"), s = el("button", "btn primary", "Send everything"), c = el("button", "btn", "Copy decisions for Claude"); s.type = c.type = "button"; s.id = "send-all";
+  const st = el("div", "status"); st.id = "st-final";
+  s.onclick = async () => { const t = ta.value.trim(); if (t) { answers.final = { text: t, at: new Date().toISOString(), kind: "message" }; store.set("answers", answers); if (db) { try { await db.doc("answers/final").set(answers.final); } catch (e) {} } } await send("all", p, summary(), $("#st-final")); };
+  c.onclick = () => copyAll($("#st-final"));
+  row.append(s, c); p.append(row, st);
+  return p;
+}
+function fillAnswers(box) {
+  box.replaceChildren();
+  decisions.forEach(dc => { const a = answers[dc.id]; const r = el("div", "ans-row" + (a ? " done" : "")); r.append(el("span", "q", dc.q + (dc.short ? " · " + dc.short : "")), el("span", "a", a ? (a.label || "own words") : "open")); box.append(r); });
+}
+
+// ---- sending and copying
+function summary() {
+  const lines = [S.sendPrefix + " · all decisions (" + S.id + ")", "For " + S.director + ". Saved in this page's db under answers/<id>.", ""];
+  decisions.forEach(dc => { const a = answers[dc.id];
+    lines.push(dc.q + " (" + dc.id + ") " + dc.title + ": " + (a ? (a.label || "own words") + " [" + (a.choice || "-") + "]" + (a.recommended ? " (recommended)" : "") : "not answered"));
+    if (a?.text) lines.push("  Comment: " + a.text); });
+  const f = (drafts.final?.text || answers.final?.text || "").trim(); if (f) { lines.push("", "General comment: " + f); }
+  if (S.source) lines.push("", "Research: " + S.source.url);
+  return lines.join("\n");
+}
+async function copyAll(st) {
+  const t = summary(); let ok = false;
+  try { await navigator.clipboard.writeText(t); ok = true; } catch (e) {}
+  if (!ok) { const ta = el("textarea"); ta.value = t; ta.style.cssText = "position:fixed;left:-9999px;top:0"; document.body.append(ta); ta.select(); try { ok = document.execCommand("copy"); } catch (e) {} ta.remove(); }
+  const where = st || $("#copy");
+  if (st) { st.className = "status" + (ok ? "" : " err"); st.textContent = ok ? "Copied. Paste it to Claude." : "Couldn't copy. Select the text below."; if (!ok) { const pre = el("pre", "", t); pre.style.cssText = "white-space:pre-wrap;font:12px/17px var(--mono);user-select:all"; st.after(pre); } }
+  else { const old = where.textContent; where.textContent = ok ? "Copied" : "Couldn't copy"; setTimeout(() => where.textContent = old, 1600); }
+  return ok;
+}
+$("#copy").onclick = () => copyAll(null);
+async function send(key, anchorEl, text, st) {
+  if (comments) { try { canSend = await comments.canSendToClaude(); } catch (e) {} }
+  if (!comments || canSend !== "available") { if (st) { st.className = "status"; st.textContent = canSend === "no_session" ? "Saved. Claude isn't listening right now; the director reads it here." : "Saved on this page. Copy decisions sends it by hand."; } return false; }
+  if (st) { st.className = "status"; st.textContent = "Sending…"; }
+  const msg = text.length > 3900 ? text.slice(0, 3900) + "\n…(cut; the full text is in the page's db)" : text;
+  try {
+    let r;
+    if (threads[key]) { try { r = await comments.sendToClaude({ threadId: threads[key], text: msg }); } catch (e) { if (e?.code === "not_found") delete threads[key]; else throw e; } }
+    if (!r) r = await comments.sendToClaude({ anchor: await comments.anchorFor(anchorEl), text: msg });
+    threads[key] = r.threadId; store.set("threads", threads);
+    if (st) { st.className = "status"; st.textContent = "Saved and sent to the director."; }
+    return true;
+  } catch (e) {
+    const c = e?.code; if (st) { st.className = "status err"; st.textContent = c === "consent_required" ? "Allow comments for this page, then save again." : c === "rate_limited" ? "Too fast. Wait a moment, then save again." : "Saved, but not sent (" + (c || "error") + "). Copy decisions works too."; }
+    return false;
+  }
+}
+
+// ---- controls
+$("#play").onclick = () => playing ? pause() : play();
+$("#back").onclick = () => { const was = playing || started; if (clock && clock.t > 3 && mode === "intro") load(cur); else load(Math.max(0, cur - 1)); if (was) play(); };
+$("#next").onclick = () => { const was = playing || started; load(Math.min(CH.length - 1, cur + 1)); if (was) play(); };
+document.addEventListener("keydown", e => { if (e.target.closest("textarea, input")) return; if (e.key === " " && !e.target.closest("button")) { e.preventDefault(); playing ? pause() : play(); } });
+
+// ---- start
+$("#h-title").textContent = S.title; $("#h-sub").textContent = S.subtitle || "";
+document.title = S.title;
+if (S.footer) $("#foot").textContent = S.footer;
+buildBar();
+load(Math.min(store.get("at", 0), CH.length - 1));
+
+(async () => {
+  try { comments = await window.claude?.use?.("comments"); } catch (e) { comments = null; }
+  const check = async () => { try { canSend = comments ? await comments.canSendToClaude() : "off"; } catch (e) { canSend = "off"; }
+    $("#chan").className = "pill" + (canSend === "available" ? " ok" : "");
+    $("#chan").textContent = canSend === "available" ? "Director listening" : canSend === "no_session" ? "Director away; answers are saved" : "Answers are saved"; };
+  await check(); setInterval(check, 30000);
+})();
+(async () => {
+  try { db = await window.claude?.use?.("db"); } catch (e) { db = null; }
+  if (!db) return;
+  db.collection("answers").onSnapshot(s => {
+    // The db is the truth whenever there is one: an answer deleted there, or kept only in this browser, must not come back.
+    const seen = new Set(); s.docs.forEach(d => { answers[d.id] = d.data(); seen.add(d.id); });
+    for (const k of Object.keys(answers)) if (!seen.has(k)) { delete answers[k]; delete drafts[k]; }
+    for (const k of Object.keys(drafts)) if (!seen.has(k) && k !== "final") delete drafts[k];
+    store.set("answers", answers); renderAside(); }, () => {});
+})();
+window.__dw = { load, play, pause, playOption, summary, get cur() { return cur; }, get mode() { return mode; }, get t() { return clock?.t; } };
+})();
+</script>

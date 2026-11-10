@@ -1,0 +1,24 @@
+<style>
+#file { left: 24px; top: 60px; width: 592px; height: 64px; }
+#orig { position: absolute; left: 0; top: 0; width: 470px; height: 64px; background: #e3e6ea; border-radius: 8px 0 0 8px; display: flex; align-items: center; padding-left: 14px; font-size: 15px; transition: background-color .5s, width .6s; }
+#app { position: absolute; left: 472px; top: 0; width: 120px; height: 64px; background: #2f8f5b; color: #fff; border-radius: 0 8px 8px 0; font-size: 14px; line-height: 18px; padding: 12px 10px; }
+#flab { left: 24px; top: 30px; }
+[data-state~="rewrite"] #orig { background: #f6c7b0; width: 592px; border-radius: 8px; }
+#side { left: 24px; top: 150px; width: 300px; height: 64px; border: 2px dashed #8b939c; border-radius: 8px; padding: 10px 12px; font-size: 15px; }
+#map { left: 24px; top: 236px; width: 592px; font-size: 14px; line-height: 21px; }
+#map div { display: flex; gap: 10px; }
+#map span:first-child { width: 120px; font-weight: 600; }
+#map span:last-child { font-family: ui-monospace, "SF Mono", Menlo, monospace; color: #5b636d; }
+</style>
+<div class="lab" id="flab">paper.pdf</div>
+<div id="file" data-f>
+  <div id="orig" data-f>Original bytes, untouched (signatures still hold)</div>
+  <div id="app" data-in="left" data-f>+ comments appended</div>
+</div>
+<div id="side" data-in="up" data-f>paper.xfdf beside it · lost when the PDF is sent alone</div>
+<div id="map" data-in="up" data-f>
+  <div id="m1"><span>Comment</span><span>Highlight or note · /T you · /NM c1</span></div>
+  <div id="m2"><span>Reply</span><span>/IRT → c1 · /RT /R</span></div>
+  <div id="m3"><span>Resolve</span><span>/State (Completed), hidden</span></div>
+  <div id="m4"><span>@claude</span><span>routed and tracked by Duo, as in Markdown</span></div>
+</div>
