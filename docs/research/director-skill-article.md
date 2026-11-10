@@ -104,4 +104,4 @@ Together: about 5 net lines (205 to about 210), one prompt string, one new case 
 
 ## 5. Geoff's answers
 
-*Pending: asked by AskUserQuestion; the answers go here and in DL-329 and DL-330.*
+Geoff declined the first set of questions and widened the task (2026-11-09): reread this article and the dreaming cookbook, look at the other director work in flight, and build one view of what is worth pursuing. That view, his answers and the order of work are in `director-unified-view.md`. The options above keep their letters there: A and B are its step 3, C, D and H its step 7, E its step 2, and G is the trial period for the review pass. His decisions are DL-329 and DL-330.
