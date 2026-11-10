@@ -1,0 +1,25 @@
+<style>
+#pg { left: 24px; top: 30px; width: 230px; height: 300px; }
+#hlline { width: 100%; }
+#nt { position: absolute; right: 10px; top: 36px; }
+#c1 { left: 280px; top: 30px; width: 240px; }
+#c2 { left: 312px; top: 104px; width: 240px; }
+#c3 { left: 312px; top: 178px; width: 240px; }
+#irt { left: 290px; top: 106px; font-size: 18px; color: #5b636d; }
+#tbl { left: 280px; top: 252px; width: 340px; font-size: 14px; line-height: 21px; }
+#tbl div { display: flex; gap: 10px; }
+#tbl span:first-child { width: 230px; }
+#acro { left: 24px; top: 346px; width: 592px; }
+</style>
+<div class="page" id="pg" data-f><div class="ph"></div><span class="b"></span><span class="b hl" id="hlline" data-f></span><span class="b"></span><span class="b" style="width:80%"></span><span class="b"></span><span class="b" style="width:60%"></span><div class="note" id="nt" data-f></div></div>
+<div class="card" id="c1" data-in="left" data-f><span class="who">Geoff</span> · @claude is this right?<div class="k">Highlight · /T (Geoff)</div></div>
+<div id="irt" data-in="fade">↳</div>
+<div class="card" id="c2" data-in="left" data-f><span class="who claude">Claude</span> · Mostly. Line two repeats.<div class="k">reply · /IRT → Geoff's</div></div>
+<div class="card" id="c3" data-in="left" data-f><span class="who">Geoff</span> · marked Completed<div class="k">/State (Completed) · hidden</div></div>
+<div id="tbl" data-in="up" data-f>
+  <div><span>PDFKit writes notes, highlights</span><span class="ok">yes</span></div>
+  <div id="t-irt" data-f><span>PDFKit writes a reply (/IRT)</span><span class="no">no</span></div>
+  <div id="t-inc" data-f><span>PDFKit saves without rewriting</span><span class="no">no</span></div>
+  <div id="t-own" data-f data-in="fade"><span>Duo's own append: reply + status</span><span class="ok">756 bytes</span></div>
+</div>
+<div class="s" id="acro" data-in="up">The standard's own model: Acrobat reads it, and PDF.js shows the reply.</div>

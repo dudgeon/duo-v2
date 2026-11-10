@@ -1,0 +1,16 @@
+<style>
+#oA { left: 24px; top: 30px; width: 186px; height: 252px; }
+#oB { left: 227px; top: 30px; width: 186px; height: 252px; }
+#oC { left: 430px; top: 30px; width: 186px; height: 252px; }
+.opt .s { font-size: 14px; line-height: 20px; margin-top: 6px; }
+.opt ul { margin: 6px 0 0 0; padding-left: 16px; font-size: 14px; line-height: 21px; }
+[data-state~="o1"] #oA, [data-state~="o2"] #oB, [data-state~="o3"] #oC { border-color: #1f2328; box-shadow: 0 0 0 2px #1f2328; }
+[data-state~="o1"] #oB, [data-state~="o1"] #oC, [data-state~="o2"] #oA, [data-state~="o2"] #oC, [data-state~="o3"] #oA, [data-state~="o3"] #oB { opacity: .45; }
+#rec { left: 24px; top: 304px; }
+#cost { left: 24px; top: 352px; width: 592px; }
+</style>
+<div class="opt" id="oA" data-in="up" data-f><div class="t">PDFKit</div><div class="s">Native, Preview's renderer</div><ul><li>Already linked</li><li>Fast: 0.06 s to open</li><li>Zoom, find, select, free</li><li>Needs a native PageHost</li></ul></div>
+<div class="opt" id="oB" data-in="up" data-f><div class="t">PDF.js</div><div class="s">In a web view, like Word and decks</div><ul><li>Picker plumbing reused</li><li>13 MB, a second engine</li><li>No review status</li></ul></div>
+<div class="opt" id="oC" data-in="up" data-f><div class="t">Quick Look</div><div class="s">Today's, plus a bar</div><ul><li>No code to speak of</li><li>Blind to page and selection</li><li>No comments</li></ul></div>
+<div class="stamp" id="rec" data-in="up">Recommended · PDFKit</div>
+<div class="s" id="cost" data-in="up">About 3–4 days after a design round for the bar. Pages keep their own colours in dark (DL-224).</div>

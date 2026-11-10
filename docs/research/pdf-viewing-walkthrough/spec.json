@@ -1,0 +1,167 @@
+{
+  "id": "pdf-viewing-2026-11",
+  "title": "Native PDF viewing",
+  "subtitle": "Decision walkthrough · 10 Nov 2026 · narrated by Duo's house voice",
+  "posterLine": "What the research found about PDFs in Duo, then four decisions. Tap play and listen; it stops when it needs you.",
+  "footer": "Built with the decision-walkthrough skill from docs/research/pdf-viewing-walkthrough/spec.json. Answers are saved in this page and sent to director-duo-v2.",
+  "source": { "label": "pdf-viewing.md", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/pdf-viewing.md" },
+  "director": "director-duo-v2",
+  "sendPrefix": "PDF viewing walkthrough",
+  "voice": "house",
+  "styles": "scenes.css",
+  "out": "page",
+  "assets": {},
+  "said": {
+    "Q-490": "Q four ninety", "Q-491": "Q four ninety one", "Q-492": "Q four ninety two", "Q-493": "Q four ninety three",
+    "DL-224": "D L two twenty four", "DL-236": "D L two thirty six", "PDFKit": "P D F kit", "PDF.js": "P D F dot J S",
+    "XFDF": "X F D F", "duo2": "duo two", "33k": "thirty three thousand", "54k": "fifty four thousand"
+  },
+  "chapters": [
+    {
+      "id": "why", "title": "Why now", "short": "Why now", "sceneFile": "scenes/why.html",
+      "lines": [
+        { "text": "You asked for native PDF viewing, so here's what I found, and four decisions.",
+          "cues": [ { "on": "native", "do": "focus", "sel": "#pane", "soft": true } ] },
+        { "text": "Today a PDF opens in Quick Look, under a read-only strip.",
+          "cues": [ { "on": "Quick Look", "do": "focus", "sel": "#pane" }, { "on": "read-only", "do": "focus", "sel": "#strip" } ] },
+        { "text": "It draws the page well. But it can't tell Duo which page you're on, or what you've selected. So nothing else can build on it.",
+          "cues": [ { "at": 0, "do": "unfocus" }, { "on": "can't tell", "do": "show", "sel": "#blind" }, { "on": "can't tell", "do": "focus", "sel": "#blind", "soft": true } ] },
+        { "text": "You asked three things. Where it opens, how Claude reads all of it, and comments that travel with the file.",
+          "cues": [ { "at": 0, "do": "unfocus" }, { "on": "three", "do": "show", "sel": "#qlabel" }, { "on": "Where", "do": "show", "sel": "#q1" },
+                    { "on": "Claude", "do": "show", "sel": "#q2" }, { "on": "comments", "do": "show", "sel": "#q3" } ] }
+      ]
+    },
+    {
+      "id": "reading", "title": "Reading a long PDF", "short": "Reading", "sceneFile": "scenes/reading.html",
+      "lines": [
+        { "text": "I made a hundred and twenty page test file, with charts, two columns, a table and a scanned page.",
+          "cues": [ { "on": "charts", "do": "show", "sel": "#fx" } ] },
+        { "text": "Claude Code's Read took the whole thing in one call, every page as text and a picture. That's something like two to three hundred thousand tokens.",
+          "cues": [ { "on": "whole thing", "do": "show", "sel": "#r1" }, { "on": "tokens", "do": "focus", "sel": "#r1", "soft": true } ] },
+        { "text": "Pulling just the text took seven hundredths of a second, and about a sixth of the tokens.",
+          "cues": [ { "at": 0, "do": "unfocus" }, { "on": "text", "do": "show", "sel": "#r2" } ] },
+        { "text": "But text loses the numbers in the charts, and the scanned page entirely.",
+          "cues": [ { "on": "loses", "do": "show", "sel": "#lost" }, { "on": "loses", "do": "focus", "sel": "#lost, #r2" } ] },
+        { "text": "Text plus pictures of only the thirteen pages that need them lost nothing, at about fifty four thousand.",
+          "cues": [ { "at": 0, "do": "unfocus" }, { "at": 0.1, "do": "show", "sel": "#r3" }, { "on": "lost nothing", "do": "show", "sel": "#kept, #foot" }, { "on": "lost nothing", "do": "focus", "sel": "#r3, #kept", "soft": true } ] }
+      ]
+    },
+    {
+      "id": "comments", "title": "Comments the standard already has", "short": "Comments", "sceneFile": "scenes/comments.html",
+      "lines": [
+        { "text": "The PDF standard already has threaded comments. A highlight or a sticky note, with the author's name.",
+          "cues": [ { "on": "highlight", "do": "focus", "sel": "#hlline, #nt", "soft": true }, { "on": "author's", "do": "show", "sel": "#c1" } ] },
+        { "text": "A reply points back at it, and resolving is a hidden status reply marked Completed.",
+          "cues": [ { "at": 0, "do": "unfocus" }, { "on": "reply", "do": "show", "sel": "#irt, #c2" }, { "on": "resolving", "do": "show", "sel": "#c3" } ] },
+        { "text": "Apple's PDFKit writes notes and highlights fine, but it can't write a reply, and every save rewrites the whole file.",
+          "cues": [ { "on": "Apple's", "do": "show", "sel": "#tbl" }, { "on": "can't write", "do": "focus", "sel": "#t-irt" }, { "on": "rewrites", "do": "focus", "sel": "#t-inc" } ] },
+        { "text": "So I wrote a small appender. It added a reply and a status in seven hundred bytes, after the original, which stays untouched.",
+          "cues": [ { "on": "appender", "do": "show", "sel": "#t-own" }, { "on": "appender", "do": "focus", "sel": "#t-own" } ] },
+        { "text": "Acrobat reads that model, and PDF.js shows the reply.",
+          "cues": [ { "at": 0, "do": "unfocus" }, { "on": "Acrobat", "do": "show", "sel": "#acro" } ] }
+      ]
+    },
+    {
+      "id": "q490-viewer", "kind": "decision", "q": "Q-490", "title": "What draws the PDF", "short": "Viewer",
+      "ask": "What should draw a PDF in the editor area?",
+      "why": "Quick Look can't see the page or the selection, so it can't host Send Selection, duo2 page verbs or comments.",
+      "look": [ { "label": "§2 of the research: the viewer", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/pdf-viewing.md#2-the-viewer-q-490" } ],
+      "sceneFile": "scenes/q490.html",
+      "lines": [
+        { "text": "First decision. What draws the PDF.",
+          "cues": [ { "at": 0, "do": "show", "sel": "#oA, #oB, #oC" } ] },
+        { "text": "I recommend Apple's PDFKit. It's Preview's renderer, it's already in Duo, and it opened the test file in six hundredths of a second.",
+          "cues": [ { "on": "PDFKit", "do": "state", "value": "o1" }, { "on": "PDFKit", "do": "show", "sel": "#rec" } ] }
+      ],
+      "options": [
+        { "id": "pdfkit", "label": "PDFKit, native", "desc": "Preview's renderer, already linked; zoom, find and selection built in. Needs a native PageHost for Send Selection. About 3–4 days after the bar is designed.", "recommended": true,
+          "lines": [ { "text": "Option one, PDFKit. Zoom, find and selection come free. The work is teaching Duo's send and picker plumbing about a native view. Three or four days, after a design round.",
+                       "cues": [ { "at": 0, "do": "state", "value": "o1" }, { "on": "three or four", "do": "show", "sel": "#cost" } ] } ] },
+        { "id": "pdfjs", "label": "PDF.js in a web view", "desc": "Like the Word and PowerPoint viewers. Reuses the picker; adds 13 MB and a second PDF engine; shows no review status.",
+          "lines": [ { "text": "Option two, PDF.js in a web view, like the Word and PowerPoint viewers. The picker comes along, but it's thirteen megabytes and a second engine, and it hides review status.",
+                       "cues": [ { "at": 0, "do": "state", "value": "o2" } ] } ] },
+        { "id": "quicklook", "label": "Keep Quick Look, add a bar", "desc": "Cheapest. Still blind to the page and the selection, so no comments.",
+          "lines": [ { "text": "Option three keeps Quick Look. Cheapest, but still blind, so no comments.",
+                       "cues": [ { "at": 0, "do": "state", "value": "o3" } ] } ] }
+      ]
+    },
+    {
+      "id": "q491-split", "kind": "decision", "q": "Q-491", "title": "PDFs in split view", "short": "Split",
+      "ask": "Can a PDF be one side of a split view?",
+      "why": "Split view takes only text files today; PDFs, Word documents and decks are all refused, so PowerPoint isn't in split view yet either.",
+      "look": [ { "label": "§3 of the research: split view", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/pdf-viewing.md#3-split-view-q-491" } ],
+      "sceneFile": "scenes/q491.html",
+      "setup": [ { "do": "state", "value": "tab" } ],
+      "lines": [
+        { "text": "Next, split view. You mentioned PowerPoint opens there, but today split view only takes text, so decks and Word files are refused too.",
+          "cues": [ { "on": "today", "do": "show", "sel": "#today" }, { "on": "refused", "do": "show", "sel": "#no" } ] },
+        { "text": "I recommend letting a PDF sit beside a text document, so you can read the paper and write the notes.",
+          "cues": [ { "at": 0, "do": "hide", "sel": "#no" }, { "on": "beside", "do": "state", "value": "" }, { "on": "write the notes", "do": "focus", "sel": "#left" } ] }
+      ],
+      "options": [
+        { "id": "beside-text", "label": "A PDF beside a text document", "desc": "View-only side; the text side keeps the editor. Decide decks and Word with it. About a day after the viewer.", "recommended": true,
+          "lines": [ { "text": "Option one. The PDF is the view-only side, about a day of work after the viewer, and decks and Word documents could follow the same rule.",
+                       "cues": [ { "at": 0, "do": "state", "value": "" }, { "at": 0.1, "do": "focus", "sel": "#right" } ] } ] },
+        { "id": "text-only", "label": "Split view stays text-only", "desc": "A PDF opens as its own tab; a session can sit in the other pane.",
+          "lines": [ { "text": "Option two keeps split view for text, and the PDF opens as its own tab.",
+                       "cues": [ { "at": 0, "do": "unfocus" }, { "on": "own tab", "do": "state", "value": "tab" } ] } ] }
+      ]
+    },
+    {
+      "id": "q492-read", "kind": "decision", "q": "Q-492", "title": "What Claude reads", "short": "Claude reads",
+      "ask": "What does a Claude session get when it reads a PDF?",
+      "why": "Read on the whole PDF costs about 180k–360k tokens for 120 pages; text alone loses charts and scans.",
+      "look": [ { "label": "§4 of the research: the agent reads the whole PDF", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/pdf-viewing.md#4-the-agent-reads-the-whole-pdf-q-492" } ],
+      "sceneFile": "scenes/q492.html",
+      "lines": [
+        { "text": "Third, what a Claude session gets.",
+          "cues": [ { "at": 0, "do": "state", "value": "cmd" } ] },
+        { "text": "I recommend duo2 doc read returns the text with page markers, then names the pages to look at as pictures, like charts and scans.",
+          "cues": [ { "on": "page markers", "do": "state+", "value": "text" }, { "on": "names the pages", "do": "state+", "value": "eyes" }, { "on": "scans", "do": "show", "sel": "#rec" } ] }
+      ],
+      "options": [
+        { "id": "text-pages", "label": "Text with page markers, plus the pages to view", "desc": "duo2 doc read: about 54k tokens on the fixture, nothing lost. The path is in the payload too. About a day.", "recommended": true,
+          "lines": [ { "text": "Option one. Claude reads only the pages it's pointed at. About fifty four thousand tokens, nothing lost, and a day of work.",
+                       "cues": [ { "at": 0, "do": "state+", "value": "read" }, { "on": "fifty four", "do": "show", "sel": "#s1, #s2, #s3" }, { "on": "fifty four", "do": "focus", "sel": "#s2" } ] } ] },
+        { "id": "path-only", "label": "Just the path", "desc": "Read takes every page as an image: complete, but several times the tokens, and it may not fit a 200k context.",
+          "lines": [ { "text": "Option two hands over just the path. Complete, but several times the tokens.",
+                       "cues": [ { "at": 0, "do": "show", "sel": "#s1, #s2, #s3" }, { "at": 0.2, "do": "focus", "sel": "#s3" } ] } ] },
+        { "id": "markdown", "label": "Convert to Markdown", "desc": "docling or MarkItDown: better structure, but heavy (PyTorch) or weak (no layout).",
+          "lines": [ { "text": "Option three converts it to Markdown with an outside tool. Better structure, but heavy.",
+                       "cues": [ { "at": 0, "do": "unfocus" } ] } ] }
+      ]
+    },
+    {
+      "id": "q493-comments", "kind": "decision", "q": "Q-493", "title": "Where comments live", "short": "Comments",
+      "ask": "Where do a PDF's comments live, and how are they written?",
+      "why": "Portable means other apps see them: in the PDF, in the standard's own form. PDFKit can't write replies and rewrites the file.",
+      "look": [ { "label": "§5 of the research: portable comments", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/pdf-viewing.md#5-portable-comments-q-493" } ],
+      "sceneFile": "scenes/q493.html",
+      "lines": [
+        { "text": "Last, where comments live.",
+          "cues": [ { "at": 0, "do": "focus", "sel": "#orig", "soft": true } ] },
+        { "text": "I recommend keeping them inside the PDF, in the form the standard defines, added after the original bytes, so a signature still holds.",
+          "cues": [ { "on": "added", "do": "show", "sel": "#app" }, { "on": "signature", "do": "focus", "sel": "#orig, #app" } ] }
+      ],
+      "options": [
+        { "id": "in-pdf", "label": "In the PDF, appended by Duo", "desc": "Standard annotations: replies by /IRT, Resolve as a /State reply. Read with CGPDF, written by Duo's incremental writer; PDFKit only draws. @claude as in DL-236. About 6–9 days with the margin UI.", "recommended": true,
+          "lines": [ { "text": "Option one. Add, reply and resolve map straight onto the standard, and at-Claude works as it does in Markdown. Six to nine days, including the margin.",
+                       "cues": [ { "at": 0, "do": "unfocus" }, { "at": 0, "do": "show", "sel": "#map" }, { "on": "at-Claude", "do": "focus", "sel": "#m4" } ] } ] },
+        { "id": "xfdf", "label": "An XFDF sidecar beside the PDF", "desc": "The PDF is never touched; Acrobat can import it. Lost when the PDF is sent alone. Better as an export.",
+          "lines": [ { "text": "Option two keeps them in a file beside the PDF. Safe, but they're lost when the PDF is sent alone.",
+                       "cues": [ { "at": 0, "do": "hide", "sel": "#map" }, { "at": 0.1, "do": "show", "sel": "#side" }, { "on": "lost", "do": "focus", "sel": "#side" } ] } ] },
+        { "id": "pdfkit-save", "label": "PDFKit's own save", "desc": "Least code, but it rewrites the whole file, breaks signatures, and can't write replies.",
+          "lines": [ { "text": "Option three uses PDFKit's own save. It's the smallest amount of code, but no replies, and it rewrites the whole file.",
+                       "cues": [ { "at": 0, "do": "hide", "sel": "#map" }, { "on": "rewrites", "do": "state", "value": "rewrite" }, { "on": "rewrites", "do": "hide", "sel": "#app" } ] } ] }
+      ]
+    },
+    {
+      "id": "wrap", "title": "That's all four", "short": "Done", "final": true, "sceneFile": "scenes/wrap.html",
+      "lines": [
+        { "text": "That's all four decisions.", "cues": [ { "at": 0, "do": "show", "sel": "#done, #list" } ] },
+        { "text": "Each answer went to the director as you saved it, and Copy decisions puts them all on the clipboard.", "cues": [ { "at": 0, "do": "focus", "sel": "#list", "soft": true } ] },
+        { "text": "Whatever you pick, the viewer's bar and the comment margin need a design round before anything is built.", "cues": [ { "at": 0, "do": "unfocus" }, { "at": 0, "do": "show", "sel": "#next" } ] }
+      ]
+    }
+  ]
+}

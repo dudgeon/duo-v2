@@ -1,0 +1,20 @@
+<style>
+#pane { left: 24px; top: 30px; width: 592px; height: 280px; }
+#left { position: absolute; left: 0; top: 0; bottom: 0; width: 50%; background: #ffffff; border-right: 1px solid #c9cdd3; padding: 14px; transition: width .6s; }
+#right { position: absolute; right: 0; top: 0; bottom: 0; width: 50%; padding: 14px; transition: width .6s, opacity .5s; }
+#left .md { font: 13px/20px ui-monospace, "SF Mono", Menlo, monospace; color: #1f2328; }
+#right .page { width: 200px; height: 180px; margin: 0 auto; }
+[data-state~="tab"] #left { width: 100%; border-right: none; }
+[data-state~="tab"] #right { width: 0; opacity: 0; padding: 0; overflow: hidden; }
+#today { left: 24px; top: 322px; width: 592px; }
+#no { position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%); font-size: 18px; font-weight: 700; color: #c2410c; background: #fff; border: 2px solid #c2410c; border-radius: 8px; padding: 4px 12px; z-index: 5; }
+</style>
+<div class="pane" id="pane" data-f>
+  <div class="tabs"><span class="tab on">notes.md + paper.pdf</span></div>
+  <div class="body">
+    <div id="left" data-f><div class="md"># Notes on the paper<br><br>- Method on p.4 is new<br>- Table 57's fares <span style="background:#f6d860">differ</span><br>- </div></div>
+    <div id="right" data-f><div class="page"><div class="ph"></div><span class="b"></span><span class="b hl"></span><span class="b"></span><span class="b" style="width:70%"></span><span class="b"></span></div></div>
+  </div>
+  <div id="no" data-in="scale">Split view refuses it today</div>
+</div>
+<div class="s" id="today" data-in="up" data-f>Split view takes only text today: PDFs, Word documents and decks are all turned away.</div>
