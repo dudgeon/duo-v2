@@ -21,7 +21,7 @@ rm -f $out/run.log
 # Commas separate actions, so none appear in the verbs' words; ~ stands for a space.
 acts="open:pdfgarden,open-file:$F,wait:10,verb:session new --project pdfgarden,wait:35"
 # The comment goes in through the composer's own path (select, Add Comment, Post): Post sends it, nothing calls `comment send`.
-acts+=",pdf-select:walrus~study,pdf-compose,pdf-post:@claude~in~one~short~line:~what~animal~is~studied?"
+acts+=",open-file:$F,wait:4,pdf-select:walrus~study,pdf-compose,pdf-post:@claude~in~one~short~line:~what~animal~is~studied?"
 acts+=",wait:6,verb:comment status c1 --file $F,wait:20,verb:comment status c1 --file $F,wait:25,verb:comment status c1 --file $F,wait:20,verb:comment list $F,wait:3"
 env -u DUO_SUPPORT_DIR DUO_CLAUDE_CONFIG_DIR=${DUO_CLAUDE_CONFIG_DIR:-$HOME/.claude} DUO_EXTRA_ENV="DUO_SUPPORT_DIR=$sup" DUO_TIMEOUT=${DUO_TIMEOUT:-300} \
   scripts/run-live.sh $root $out/final.png "$acts" $out/run.log
@@ -30,7 +30,9 @@ fails=0 total=0
 expect() { total=$((total+1)); local got=0; grep -qF -- "$3" "$2" && got=1
   if [[ $got == 1 ]]; then echo "ok   $1"; else fails=$((fails+1)); echo "FAIL $1 (${2:t} should have '$3')"; fi }
 expect "the composer's Post appended the comment to the PDF" $out/run.log "pdf-post: c1"
-expect "Post sent it to the live session (no comment send)" $out/run.log "delivery: sent"
+# By the first status read the send has gone and Claude is already on it: sent, replying or replied (never "not sent").
+total=$((total+1))
+if grep -qE "delivery: (sent|replying|replied) \(" $out/run.log; then echo "ok   Post sent it to the live session (no comment send)"; else fails=$((fails+1)); echo "FAIL Post did not send it (run.log has no delivery: sent|replying|replied)"; fi
 expect "Claude's reply is in the PDF's thread" $out/run.log "↳ #c1."
 # The original bytes are still the start of the file (an incremental update), and Claude's reply is an /IRT annotation.
 total=$((total+1)); o=$(stat -f%z $out/original.pdf)

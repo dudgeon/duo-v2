@@ -278,7 +278,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 pdf zoom [in \| out \| fit \| <percent>]` | Zoom the PDF showing: `in` and `out` step by a quarter, `fit` fits the pane's width (the viewer's default, and it follows the pane), a number sets a percentage (25 to 500). With no argument print the zoom. | Zoom Out, Zoom In, Fit |
 | `duo2 pdf find <text> [--previous]` | Find text in the PDF showing: go to the first match after the current one (--previous goes back), select it, and print "match n of m on page p". Repeating the same text steps on; wraps at the ends. Case is ignored. | Find in PDF, Next Match, Previous Match |
 | `duo2 pdf selection` | The text selected in the PDF showing, as Send Selection puts it in a prompt: `From <path>, page N:` and the text quoted. | — |
-| `duo2 pdf comments-panel [show \| hide]` | Show or hide the panel of comment threads at the right of the PDF viewer (off by default; stand-in, Q-496). With no argument print whether it is showing; the threads in it are `duo2 comment list`'s. | Comments |
+| `duo2 pdf comments-panel [show \| hide] [--show-closed on\|off]` | Show or hide the comment margin beside the PDF (on by default): the Markdown review margin's cards, one per open thread level with its highlight, with --show-closed on\|off for the closed ones (the margin's "n closed · Show"). With no argument print whether it shows and how many threads there are; the threads are `duo2 comment list`'s. Add Comment is `comment add`. | Comments, n closed · Show, Close and Keep, Reopen, Delete, Post, Reply |
 
 ## PowerPoint decks
 

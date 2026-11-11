@@ -250,14 +250,15 @@ public final class PdfViewer: NSObject {
             let y = dv.isFlipped ? b.minY : dv.bounds.height - b.maxY
             best = min(best ?? y, y)
         }
-        return best
+        // The pages' view counts in unscaled points (its bounds are scaled to its frame); the margin counts in screen points.
+        return best.map { $0 * pdfView.scaleFactor }
     }
 
     /// How far the pages are scrolled.
     private func scrollTop() -> CGFloat {
         guard let dv = pdfView.documentView, let sv = dv.enclosingScrollView else { return 0 }
         let vis = sv.documentVisibleRect
-        return dv.isFlipped ? vis.minY : dv.bounds.height - vis.maxY
+        return (dv.isFlipped ? vis.minY : dv.bounds.height - vis.maxY) * pdfView.scaleFactor
     }
 
     /// The threads as the margin page takes them: `{ id, closed, y, comments: [{ author, date, text, closing }] }`.
@@ -267,7 +268,9 @@ public final class PdfViewer: NSObject {
                 ["author": Review.signatureName($0.author), "date": $0.date.count >= 10 ? String($0.date.prefix(10)) : "", "text": $0.text, "closing": false]
             }
             if t.resolved { comments.append(["author": "", "date": "", "text": "", "closing": true]) }
-            return ["id": t.id, "closed": t.resolved, "y": Double(documentY(page: t.page, rects: t.rects) ?? 0), "comments": comments]
+            let y = Double(documentY(page: t.page, rects: t.rects) ?? 0)
+            if ProcessInfo.processInfo.environment["DUO_PDF_DEBUG"] != nil { FileHandle.standardError.write(Data("pdf-margin: \(t.id) page \(t.page) rects \(t.rects) y \(y) scroll \(scrollTop()) scale \(pdfView.scaleFactor)\n".utf8)) }
+            return ["id": t.id, "closed": t.resolved, "y": y, "comments": comments]
         }
     }
 

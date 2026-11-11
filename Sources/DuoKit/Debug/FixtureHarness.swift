@@ -655,6 +655,9 @@ public enum FixtureHarness {
                 let id = model.postPdfComment(v, text: (parts.count > 1 ? parts[1] : "").replacingOccurrences(of: "~", with: " "))
                 FileHandle.standardError.write(Data("pdf-post: \(id ?? "none")\n".utf8))
             }
+        case "pdf-type":   // pdf-type:<words~joined>: types into the margin's composer field (an input event, so the @ menu opens)
+            let t = (parts.count > 1 ? parts[1] : "").replacingOccurrences(of: "~", with: " ")
+            model.visiblePdf?.margin.evaluate("const f = document.querySelector('textarea'); if (!f) return false; f.focus(); f.value = \(String(reflecting: t)); f.setSelectionRange(f.value.length, f.value.length); f.dispatchEvent(new Event('input')); return true") { _ in }
         case "pdf-activate":   // pdf-activate:<thread id>: opens that card in the margin (a click on it)
             model.visiblePdf?.margin.activate(parts.count > 1 ? parts[1] : nil)
         case "pdf-width":   // pdf-width:<points>: the pane width the margin lays out for (under 420 is the narrow gutter)
