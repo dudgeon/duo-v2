@@ -1,0 +1,126 @@
+{
+ "id": "home-agent-panel-2026-11",
+ "title": "Home's agent panel",
+ "subtitle": "Decision walkthrough · 10 Nov 2026 · narrated by Duo's house voice",
+ "posterLine": "What the column costs, five ways out, then five decisions. Tap play and listen; it stops when it needs you.",
+ "footer": "Built with the decision-walkthrough skill from docs/research/home-agent-panel-walkthrough/spec.json. Answers are saved in this page and sent to director-duo-v2.",
+ "source": { "label": "home-agent-panel.md", "url": "https://github.com/dudgeon/duo-v2/blob/research/home-agent-panel/docs/research/home-agent-panel.md" },
+ "director": "director-duo-v2",
+ "sendPrefix": "Home agent panel walkthrough",
+ "voice": "house",
+ "styles": "scenes.css",
+ "out": "page",
+ "assets": { "f648": "assets/f648-launch.jpg" },
+ "said": {
+  "ENH-322": "E N H three twenty two",
+  "DL-315": "D L three fifteen",
+  "DL-54": "D L fifty four",
+  "F-641": "F six forty one",
+  "Q-488": "Q four eighty eight",
+  "duo2": "duo two",
+  "⌃⌘S": "control command S"
+ },
+ "chapters": [
+  { "id": "why", "title": "Why now", "short": "Why now", "sceneFile": "scenes/why.html",
+    "lines": [
+      { "text": "This is the study of Home's agent panel, and it ends in five decisions.", "cues": [ { "on": "Home's agent", "do": "camera", "x": 110, "y": 150, "z": 1.5 } ] },
+      { "text": "The Claude session in this left column at All projects is Home's agent.", "cues": [ { "at": 0, "do": "camera" }, { "on": "left column", "do": "focus", "sel": "#hc" } ] },
+      { "text": "On November third you said you weren't sure most people would use it, and that we were building strange workarounds for it.", "cues": [ { "on": "November", "do": "show", "sel": "#q1" }, { "on": "November", "do": "focus", "sel": "#q1", "soft": true } ] },
+      { "text": "Today, after Oliver's black terminal, you asked for options: gate it in Settings, or make starting it a deliberate act.", "cues": [ { "on": "Today", "do": "show", "sel": "#q2" }, { "on": "Today", "do": "focus", "sel": "#q2", "soft": true }, { "on": "deliberate", "do": "unfocus" } ] }
+    ] },
+  { "id": "costs", "title": "What the column costs", "short": "Costs", "sceneFile": "scenes/costs.html",
+    "lines": [
+      { "text": "Everything wrong with it comes from three facts.", "cues": [ { "at": 0, "do": "focus", "sel": "#hc", "soft": true } ] },
+      { "text": "It's narrow. Questions are drawn at thirty-eight to forty-three columns, and chat sends two to four of seventeen question shapes to the terminal.", "cues": [ { "on": "narrow", "do": "show", "sel": "#c1" }, { "on": "Questions", "do": "focus", "sel": "#hq" } ] },
+      { "text": "It lives in two places: one terminal, two slots in one window. That's the black terminal Oliver saw, and Show Here in every other window.", "cues": [ { "on": "two places", "do": "show", "sel": "#c2" }, { "on": "two places", "do": "focus", "sel": "#c2", "soft": true } ] },
+      { "text": "And it runs unseen. Since DL-315 the column starts closed, but Duo still starts Home's Claude at every launch. I checked: a fresh Duo lists a session nobody started.", "cues": [ { "on": "unseen", "do": "show", "sel": "#c3" }, { "on": "starts closed", "do": "state+", "value": "closed" }, { "on": "starts closed", "do": "unfocus" }, { "on": "lists a session", "do": "state+", "value": "ghost" }, { "on": "lists a session", "do": "focus", "sel": "#mid", "soft": true } ] }
+    ] },
+  { "id": "options", "title": "Five ways out", "short": "Options", "sceneFile": "scenes/options.html",
+    "lines": [
+      { "text": "I looked at five ways out.", "cues": [ { "at": 0, "do": "show", "sel": "#ot" }, { "on": "five", "do": "show", "sel": ".opt5" } ] },
+      { "text": "A, a Settings switch, and B, starting it only when asked, are your two ideas.", "cues": [ { "on": "A,", "do": "focus", "sel": "#oA" }, { "on": "B,", "do": "focus", "sel": "#oA, #oB" } ] },
+      { "text": "C moves Home's agent to Home's own page. D keeps the column and makes it fit. E is a Sessions view, for later.", "cues": [ { "on": "C moves", "do": "focus", "sel": "#oC" }, { "on": "D keeps", "do": "focus", "sel": "#oD" }, { "on": "E is", "do": "focus", "sel": "#oE" } ] },
+      { "text": "I recommend C. It's your second idea carried through, because the deliberate action already exists.", "cues": [ { "on": "recommend", "do": "add", "sel": "#oC", "cls": "rec" }, { "on": "recommend", "do": "focus", "sel": "#oC" }, { "on": "deliberate", "do": "show", "sel": "#rec" } ] }
+    ] },
+  { "id": "q498-shape", "kind": "decision", "q": "Q-498", "title": "What happens to the column", "short": "Shape",
+    "ask": "What happens to Home's agent panel at All projects?",
+    "why": "The column is narrow, lives in two places, and runs unseen.",
+    "look": [ { "label": "Canvas · boards C1 and C2 (recommended), A, B, D2", "url": "https://claude.ai/artifact/PBJttSgB17RzCn8WQQo6sF" } ],
+    "sceneFile": "scenes/q498.html",
+    "lines": [
+      { "text": "So, what happens to the column?", "cues": [ { "at": 0, "do": "focus", "sel": "#hc" } ] }
+    ],
+    "options": [
+      { "id": "c-page", "label": "C: Home's agent on Home's page only", "desc": "No column at All projects; New session in ★ home starts one; Home's questions get full cards. About two sessions, mostly removal.", "recommended": true,
+        "lines": [ { "text": "I recommend C. All projects is the list and Needs you, and Home's agent runs on Home's page at a full console's width. About two sessions, mostly removing code.", "cues": [ { "at": 0, "do": "unfocus" }, { "on": "All projects", "do": "state", "value": "c" }, { "on": "Needs you", "do": "focus", "sel": "#rp", "soft": true }, { "on": "Home's page", "do": "focus", "sel": "#newrow" } ] } ] },
+      { "id": "a-switch", "label": "A: a Settings switch, off by default", "desc": "Fixes it for people who leave it off; keeps every workaround for those who turn it on.",
+        "lines": [ { "text": "A adds a Settings switch, off by default. It fixes things for people who leave it off, and keeps every workaround for those who don't.", "cues": [ { "at": 0, "do": "unfocus" }, { "on": "Settings switch", "do": "state", "value": "a" }, { "on": "off by default", "do": "state", "value": "a closed home" } ] } ] },
+      { "id": "b-start", "label": "B: a start card; nothing runs until asked", "desc": "Fixes the unseen session; once started it's today's column.",
+        "lines": [ { "text": "B shows a start card the first time the column opens, and runs nothing until then. Once started, it's today's column.", "cues": [ { "at": 0, "do": "unfocus" }, { "on": "start card", "do": "state", "value": "b" }, { "on": "start card", "do": "focus", "sel": "#hc", "soft": true } ] } ] },
+      { "id": "d-fit", "label": "D: keep the column, make questions fit", "desc": "A 60-column floor (Q-488 a) or a 480-wide column. The two places and the launch start stay.",
+        "lines": [ { "text": "D keeps the column and makes questions fit, with a sixty column floor or a wider column.", "cues": [ { "at": 0, "do": "unfocus" }, { "on": "wider", "do": "state", "value": "d" } ] } ] }
+    ] },
+  { "id": "q499-launch", "kind": "decision", "q": "Q-499", "title": "Starting Home at launch", "short": "Launch",
+    "ask": "Should Duo still start a Home session at launch?",
+    "why": "DL-54 starts one whenever Home has none, even with the column closed.",
+    "look": [ { "label": "F-648's capture (canvas board 00 summarises it)", "url": "https://claude.ai/artifact/PBJttSgB17RzCn8WQQo6sF" } ],
+    "sceneFile": "scenes/q499.html",
+    "lines": [
+      { "text": "Whichever you pick, should Duo still start a Home session at launch?", "cues": [ { "on": "at launch", "do": "show", "sel": "#proc" }, { "on": "at launch", "do": "show", "sel": "#lab" } ] }
+    ],
+    "options": [
+      { "id": "first-use", "label": "No: start it on first use", "desc": "Home's page shows Start Claude in Home; the list's New session row starts one. Reverses DL-54.", "recommended": true,
+        "lines": [ { "text": "I recommend no. Duo waits until it's first used. Home's page shows Start Claude in Home, and the list's New session row starts one.", "cues": [ { "on": "first used", "do": "hide", "sel": "#proc" }, { "on": "Start Claude", "do": "show", "sel": "#start" }, { "on": "Start Claude", "do": "focus", "sel": "#start", "soft": true } ] } ] },
+      { "id": "keep", "label": "Yes: keep DL-54", "desc": "Home's agent is always ready, out of sight.",
+        "lines": [ { "text": "Or keep DL-54, and Home's agent is always ready, out of sight.", "cues": [ { "at": 0, "do": "focus", "sel": "#proc", "soft": true } ] } ] }
+    ] },
+  { "id": "q500-migrate", "kind": "decision", "q": "Q-500", "title": "Telling people who use it", "short": "Migration",
+    "ask": "How do people who use the column today learn where Home's agent went?",
+    "why": "Only matters if the column goes (C).",
+    "sceneFile": "scenes/q500.html",
+    "lines": [
+      { "text": "If the column goes, how do people who use it find Home's agent?", "cues": [ { "on": "find", "do": "show", "sel": "#note, #line" } ] }
+    ],
+    "options": [
+      { "id": "note", "label": "A release note only", "desc": "Their sessions don't move; ★ home and ⇧⌘H reach them.", "recommended": true,
+        "lines": [ { "text": "I recommend a release note only. DL-315 already closed the column for nearly everyone, and their sessions don't move.", "cues": [ { "on": "release note", "do": "focus", "sel": "#note" }, { "on": "already closed", "do": "show", "sel": "#sub" } ] } ] },
+      { "id": "line", "label": "A one-time line at All projects", "desc": "For installs whose column was open. A new surface to draw.",
+        "lines": [ { "text": "Or a one-time line at All projects for anyone whose column was open. That's a new thing to draw.", "cues": [ { "on": "one-time", "do": "focus", "sel": "#line" } ] } ] }
+    ] },
+  { "id": "q501-sidebar", "kind": "decision", "q": "Q-501", "title": "The sidebar button at All projects", "short": "Sidebar",
+    "ask": "With no column, what do the sidebar button and ⌃⌘S do at All projects?",
+    "why": "Only matters if the column goes (C).",
+    "look": [ { "label": "Canvas · board C1", "url": "https://claude.ai/artifact/PBJttSgB17RzCn8WQQo6sF" } ],
+    "sceneFile": "scenes/q501.html",
+    "setup": [ { "do": "state", "value": "closed" } ],
+    "lines": [
+      { "text": "With no column, what does the sidebar button do at All projects?", "cues": [ { "on": "sidebar button", "do": "tap", "sel": "#sbb" }, { "on": "sidebar button", "do": "show", "sel": "#lab" } ] }
+    ],
+    "options": [
+      { "id": "hide", "label": "Hidden at All projects", "desc": "The button and ⌃⌘S go there; duo2 view sidebar says All projects has no sidebar.", "recommended": true,
+        "lines": [ { "text": "I recommend hiding it there, with ⌃⌘S. duo2 says there's no sidebar.", "cues": [ { "at": 0, "do": "cursor-off" }, { "on": "hiding", "do": "state", "value": "c" } ] } ] },
+      { "id": "keep", "label": "Keep it for a projects sidebar later", "desc": "ENH-146; needs its own design.",
+        "lines": [ { "text": "Or keep it for a sidebar of projects later, which needs its own design.", "cues": [ { "at": 0, "do": "cursor-off" }, { "on": "keep", "do": "focus", "sel": "#sbb" } ] } ] }
+    ] },
+  { "id": "q488-floor", "kind": "decision", "q": "Q-488", "title": "Questions in a narrow pane", "short": "Narrow",
+    "ask": "How should chat stop falling back on questions in a narrow pane?",
+    "why": "Narrow consoles remain even without the column: narrow windows, split view.",
+    "sceneFile": "scenes/q488.html",
+    "lines": [
+      { "text": "Last, Q-488. I ran the question suite again: four of seventeen fall back at thirty-eight columns, two at forty-three, and none at sixty.", "cues": [ { "on": "suite", "do": "show", "sel": "#t" }, { "on": "four", "do": "show", "sel": "#b38, #n38" }, { "on": "two", "do": "show", "sel": "#b43, #n43" }, { "on": "none", "do": "show", "sel": "#b60, #n60" } ] }
+    ],
+    "options": [
+      { "id": "floor-60", "label": "(a) Hold the hidden terminal at 60 columns or more", "desc": "While chat shows, whatever the pane's width; and take F-641's mic margin off. Small.", "recommended": true,
+        "lines": [ { "text": "I recommend holding the hidden terminal at sixty columns or more while chat shows, and fixing F-641's slip.", "cues": [ { "on": "sixty", "do": "focus", "sel": "#b60" }, { "on": "F-641", "do": "show", "sel": "#f641" } ] } ] },
+      { "id": "matcher", "label": "(b) Teach the matcher the narrow layouts", "desc": "Each narrow layout proved in the live suite.",
+        "lines": [ { "text": "Or teach the reader each narrow layout, one by one.", "cues": [ { "at": 0, "do": "focus", "sel": "#b38, #b43" } ] } ] },
+      { "id": "leave", "label": "(c) Leave it", "desc": "The terminal answers them.",
+        "lines": [ { "text": "Or leave it, and the terminal answers them.", "cues": [ { "at": 0, "do": "unfocus" } ] } ] }
+    ] },
+  { "id": "wrap", "title": "That's all five", "short": "Done", "final": true, "sceneFile": "scenes/wrap.html",
+    "lines": [
+      { "text": "That's all five.", "cues": [ { "at": 0, "do": "show", "sel": "#done, #list" } ] },
+      { "text": "Each answer went to the director as you saved it, and Copy decisions puts them all on the clipboard.", "cues": [ { "at": 0, "do": "focus", "sel": "#list", "soft": true } ] }
+    ] }
+ ]
+}

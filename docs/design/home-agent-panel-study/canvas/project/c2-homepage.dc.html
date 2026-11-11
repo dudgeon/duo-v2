@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>C2 Home's page</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.tb{height:38px;display:flex;align-items:center;gap:18px;padding:0 14px;background:#f3f4f6;border-bottom:1px solid #c9cdd3;font-size:13px;white-space:nowrap}
+.dots{display:flex;gap:8px;margin-right:6px}
+.dots i{width:12px;height:12px;border-radius:50%;background:#c9cdd3;display:block}
+.lab{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5b636d}
+.ny{color:#c2410c}
+.g{width:12px;height:12px;display:inline-block;box-sizing:border-box;flex:none}
+.g.o{border:1.5px solid #1f2328;border-radius:50%}
+.g.i{border-top:1.5px solid #5b636d;height:1px}
+.g.n{background:#c2410c;border-radius:50%}
+.sr{display:flex;gap:8px;align-items:center;height:26px;font-size:13px;padding:0 8px;border-radius:5px}
+.sr .w{margin-left:auto;color:#5b636d}
+.bub{align-self:flex-end;background:#dfe8f6;border-radius:12px;padding:8px 14px;font-size:14px;line-height:21px;max-width:70%}
+.msg{font-size:14px;line-height:22px;max-width:640px}
+.opt{border:1px solid #c9cdd3;border-radius:6px;padding:7px 12px;font-size:13px;line-height:19px;display:flex;gap:10px;background:#ffffff}
+.opt b{width:16px;color:#5b636d;font-weight:600}
+.pm{display:inline-block;font-size:11px;line-height:15px;font-weight:600;color:#ffffff;background:#1f2328;border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:middle}
+.ann{position:absolute;font-size:12px;line-height:17px;color:#1f2328;background:#fff7d6;border:1px solid #d9c36a;border-radius:6px;padding:6px 9px;max-width:260px}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;position:relative;background:#ffffff;color:#1f2328;font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;display:flex;flex-direction:column;overflow:hidden">
+<div class="tb">
+<div class="dots"><i></i><i></i><i></i></div>
+<span style="color:#5b636d">▯</span>
+<span style="color:#5b636d">All projects ›</span><strong>★ home</strong>
+<span class="ny"><span class="g n"></span> 3 need you</span>
+<span style="margin-left:auto;border:1px solid #c9cdd3;border-radius:6px;background:#ffffff;width:290px;padding:3px 10px;color:#5b636d">Search home</span>
+<span style="color:#5b636d">▯▯</span>
+</div>
+<div style="flex:1;display:flex;min-height:0">
+<div style="width:300px;flex:none;border-right:1px solid #c9cdd3;padding:12px 8px;display:flex;flex-direction:column;gap:4px">
+<div style="display:flex;align-items:center;padding:0 8px 6px"><strong style="font-size:14px">★ home</strong><span style="margin-left:8px;font-family:ui-monospace, 'SF Mono', Menlo, monospace;font-size:12px;color:#5b636d">~/work/home</span></div>
+<div class="lab" style="padding:0 8px">Needs you · 1</div>
+<div class="sr" style="background:#e9ecef"><span class="g n"></span><strong>Morning triage</strong><span class="w">1h</span></div>
+<div class="lab" style="padding:6px 8px 0">Open · 1</div>
+<div class="sr"><span class="g i"></span><span>Weekly status draft</span><span class="w">at prompt</span></div>
+<div class="lab" style="padding:6px 8px 0">This week</div>
+<div class="sr"><span class="g i"></span><span>Director: cross-project</span><span class="w">2d</span></div>
+<div class="sr"><span class="g i"></span><span>“What came in overnight?”</span><span class="w">3d</span></div>
+<div style="margin-top:8px;padding:0 8px;font-size:13px;color:#5b636d">+ New session</div>
+</div>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;background:#ffffff">
+<div style="height:28px;display:flex;align-items:center;gap:16px;padding:0 12px;border-bottom:1px solid #c9cdd3;background:#f3f4f6;font-size:12px"><strong style="text-decoration:underline">Morning triage</strong><span>Weekly status draft</span><span style="margin-left:auto;border:1px solid #8b939c;border-radius:5px;display:flex"><span style="padding:0 7px">›_</span><span style="padding:0 7px;background:#e9ecef">▭</span></span></div>
+<div style="flex:1;padding:22px 28px;display:flex;flex-direction:column;gap:14px">
+<span style="align-self:flex-end;font-size:12px;color:#5b636d">You · 8:02</span>
+<span class="bub">What came in overnight?</span>
+<span style="font-size:12px;color:#5b636d">Claude · 8:03</span>
+<span class="msg">Five new asks. Three belong to projects: the refunds edge cases, the onboarding copy and the pricing readout. Two are yours.</span>
+<div style="border:1.5px solid #c2410c;border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;max-width:640px">
+<span class="lab ny">Claude asks</span>
+<strong style="font-size:14px">Route the three to their projects as tasks?</strong>
+<div class="opt"><b>1</b><span>Yes, one task each, in each project's tasks folder</span></div>
+<div class="opt"><b>2</b><span>Yes, and start a session on each</span></div>
+<div class="opt"><b>3</b><span>No, list them for me first</span></div>
+</div>
+</div>
+<div style="margin:0 20px 16px;border:1px solid #c9cdd3;border-radius:8px;padding:9px 12px;color:#5b636d;font-size:14px">Reply to Claude</div>
+</div>
+<div style="width:460px;flex:none;border-left:1px solid #c9cdd3;background:#ffffff;padding:14px 16px;display:flex;flex-direction:column;gap:8px">
+<div class="lab">Documents</div>
+<div style="font-size:13px;line-height:22px">_HOME.md<br>tasks/<br>inbox.md</div>
+</div>
+</div>
+<div class="ann" style="left:16px;top:330px;max-width:260px"><span class="pm">P</span> Home's page is the only place Home's sessions run. It's a project page like any other (★ home tile, ★ home rows, ⇧⌘H).</div>
+<div class="ann" style="left:640px;top:610px;max-width:420px"><span class="pm">P</span> Questions are drawn at the console's width (about 80 columns here; 59 at its 480 minimum, 60 or more with Q-488's floor), not the column's 38 to 43. No second slot, so no slot rule.</div>
+<div class="ann" style="left:16px;top:470px;max-width:260px"><span class="pm">P</span> With no Home session yet, the console shows the built “Start Claude in Home” state; nothing starts at launch (Q-499).</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
