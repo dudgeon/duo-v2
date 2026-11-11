@@ -6073,3 +6073,29 @@ Reported by Oliver, through Geoff: in chat mode Claude asked a question (AskUser
 - **So since DL-315** most people have a `claude` process in Home's folder they never opened, and anything it shows (a trust question, Claude's first-run screen, F-646) sits in a closed pane. Its needs-you, if any, still reaches the column's pointer card.
 - **The narrow fallbacks reproduce** (F-640, C-178): `DUO_CHAT_LIVE_SIZES=38x49,43x49,60x49 DUO_CHECKS=chat-live swift run DuoChecks` on Claude Code 2.1.316, under the shared GPU lock. 38×49: 4 of 17 cases fall back (four questions, long wrapped labels, both previews). 43×49: 2 (both previews). **60×49: none** (17 of 17), the first run at Home's column's height at Q-488 (a)'s floor. 45 passed, 6 failed overall: all six are the narrow ones. Log: `docs/research/home-agent-panel-checks/chat-live-38-43-60x49.txt`.
 - Not run: a real login, a real Claude turn, a visible window. The study (`docs/research/home-agent-panel.md`) puts the options to Geoff as Q-498 to Q-501 and recommends Q-488 (a).
+## F-645 · Native PDFs built: PDFKit viewer, comments appended as standard annotations, doc read with pages to view; PDFKit's selection boxes are wrong on macOS-printed PDFs (pdf-viewer build, 2026-11-10)
+
+Built on build/pdf-viewer to DL-332..DL-335. The visible parts are stand-ins: Q-495 (bar), Q-496 (comment controls), Q-497 (split side).
+- **Core** (`Sources/DuoSearch/PdfObjects.swift`, `PdfComments.swift`, Foundation and Compression only):
+  - Reads classic xref tables, xref streams and hybrids along `/Prev`, object streams, and Flate with PNG predictors.
+  - Writes add, reply, close, reopen and delete as one incremental update per call. A classic table or an uncompressed xref stream matches the file's newest section, and the original stays an exact byte prefix.
+  - Refuses `/Encrypt`, a DocMDP certification with P 1 or 2 (P 2 doesn't allow annotations; a missing P means 2), and an xref it can't read.
+  - Offsets count from `%PDF-` when junk precedes it, and `startxref` is searched in the last 1 MB.
+  - `COMPRESSION_ZLIB` is raw deflate, so the zlib header is skipped.
+- **Corpus:** 48 real PDFs from /System, /Library and /Applications, copied to scratch. All took add, reply, close, reopen and delete with the original as a prefix, and PDFKit and CGPDF opened every result. Seven were linearized and one used an xref stream (231 pages). None were encrypted, certified or carried foreign comments; foreign threads are covered by a hand-made Acrobat-style fixture.
+- **PDFKit's selection boxes are wrong on macOS-printed PDFs** (Monaco at 1 pt under a 12x text matrix, wrapped lines over two rows). Boxes are 27 to 39 pt tall, sometimes start at x −121, and `characterBounds` is off too. So highlights landed half a line low and anchors read back the neighbour line.
+  - Fix: `PdfTextRows.swift` reads the page's text rows from the content stream (CGPDFScanner: text matrix, CTM, Tf, /Widths). Duo keeps PDFKit's boxes when they look plausible, writes one box per row otherwise, and reads anchors from the rows first.
+  - Limits: simple fonts with /Widths and ASCII text only; others keep PDFKit's boxes. A foreign highlight on such a file falls back to `selection(for:)` and may read imperfectly.
+  - 15 checks failed before the fix. `Fixtures/pdf/quartz-mono.pdf` is the fixture.
+- **PDFKit lists hidden annotations:** the state replies (/F 32) are in `page.annotations`, so counts must come from Duo's threads, not PDFKit.
+- **Agent reading:** `doc read <pdf>` gives `--- page N ---` blocks, then the pages to view ("no text layer" under 20 characters, or "mostly a figure": an image /Do, or six or more path-paint operators with under 400 characters of text). `pdf render <file> <page>` writes a PNG, because Read's `pages` needs poppler, which this Mac lacks.
+- **Viewer:**
+  - `PdfViewer` replaces Quick Look for `.pdf` and falls back to Quick Look with a notice.
+  - The bar: ‹ › Page n of N, zoom − + Fit with ⌘+ ⌘− ⌘0, find, Add Comment, Comments, Open With.
+  - Send Selection sends "From <path>, page N:".
+  - Verbs: `pdf page`, `pdf zoom`, `pdf find`, `pdf selection`, `pdf comments-panel`.
+  - A PDF can be the view-only side of a split beside a text document.
+  - The comments panel (off by default) has Reply, Close and Reopen, Delete, Go to, and Send to Claude.
+- **Checks:** `DUO_CHECKS=pdf` 171/0; the full DuoChecks run was 6236/0 before the F-646 merge. Live @claude on a PDF: `scripts/check-review-pdf-live.sh`, one Haiku turn.
+- **Not tested:** whether Preview's and Acrobat's comment lists show Duo's threads and status, and the dark scheme. The inflate no-progress guard couldn't be triggered.
+check-review-editor.sh's "@ menu: Tab inserts @claude" (57 of 58) failed identically on origin/main dc8df8e9: the test sends down then Tab, and since DL-251 stage 2 Claude is row one and down lands on the first person (@geoff), so the expectation was stale, not the menu; it now expects `@geoff` after down+Tab.

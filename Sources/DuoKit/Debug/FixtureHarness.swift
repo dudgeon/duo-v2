@@ -479,6 +479,17 @@ public enum FixtureHarness {
                 return "window: \(Int(w.frame.width))x\(Int(w.frame.height)), min \(Int(m.width))x\(Int(m.height))"
             } ?? "window: none"
             FileHandle.standardError.write(Data((model.splitReport() + "\n" + size + "\n").utf8))
+        case "duo2":   // duo2:<verb and arguments, "double quotes" group words>: the control plane's verb as `duo2` runs it; its answer goes to stderr (captures of PDF states)
+            var words: [String] = [], word = "", quoted = false
+            for c in parts.count > 1 ? parts[1] : "" {
+                if c == "\"" { quoted.toggle() } else if c == " ", !quoted { if !word.isEmpty { words.append(word); word = "" } } else { word.append(c) }
+            }
+            if !word.isEmpty { words.append(word) }
+            guard let verb = words.first else { break }
+            let line = parts[1]
+            model.handle(ControlRequest(token: "", command: verb, args: Array(words.dropFirst()), session: nil, cwd: model.projectFolder?.path)) { r in
+                FileHandle.standardError.write(Data("duo2 \(line): \(r.ok ? "ok" : "FAILED") \(r.output)\n".utf8))
+            }
         case "doc": if parts.count > 1 { model.openDocument(parts[1]) }   // doc:<path>: a document tab, as the file tree opens it
         case "convert": if parts.count > 1 { model.convertToMarkdown(parts[1]) }   // convert:<docx>: the bar's Convert to Markdown (DL-123)
         case "converting":   // converting:<docx>: hold the progress bar (C) as drawn, for a capture
@@ -635,6 +646,22 @@ public enum FixtureHarness {
                 model.sendReviewComment(url, thread: id, to: s) { r in FileHandle.standardError.write(Data("review-send: \(r.text)\n".utf8)) }
             } else { FileHandle.standardError.write(Data("review-send: no session\n".utf8)) }
         case "review-menu": model.reviewMenu = parts.count > 1 ? (parts[1] == "markup" ? "markup" : "mode") : nil   // review-menu:markup|mode (all): the formatting bar's mode menu (DL-317), open for a capture; markup also opens Markup
+        case "pdf-select":   // pdf-select:<words~joined>: selects that text in the PDF showing
+            if let v = model.visiblePdf { _ = v.select(text: (parts.count > 1 ? parts[1] : "").replacingOccurrences(of: "~", with: " ")) }
+        case "pdf-compose":   // pdf-compose: Add Comment (⌘⌥M) on the selection: the composer opens in the margin
+            if let v = model.visiblePdf { model.composePdfComment(v) }
+        case "pdf-post":   // pdf-post:<words~joined>: the composer's Post, the call the margin's button makes (an @claude comment is sent as it is posted)
+            if let v = model.visiblePdf {
+                let id = model.postPdfComment(v, text: (parts.count > 1 ? parts[1] : "").replacingOccurrences(of: "~", with: " "))
+                FileHandle.standardError.write(Data("pdf-post: \(id ?? "none")\n".utf8))
+            }
+        case "pdf-type":   // pdf-type:<words~joined>: types into the margin's composer field (an input event, so the @ menu opens)
+            let t = (parts.count > 1 ? parts[1] : "").replacingOccurrences(of: "~", with: " ")
+            model.visiblePdf?.margin.evaluate("const f = document.querySelector('textarea'); if (!f) return false; f.focus(); f.value = \(String(reflecting: t)); f.setSelectionRange(f.value.length, f.value.length); f.dispatchEvent(new Event('input')); return true") { _ in }
+        case "pdf-activate":   // pdf-activate:<thread id>: opens that card in the margin (a click on it)
+            model.visiblePdf?.margin.activate(parts.count > 1 ? parts[1] : nil)
+        case "pdf-width":   // pdf-width:<points>: the pane width the margin lays out for (under 420 is the narrow gutter)
+            model.visiblePdf?.paneWidth = CGFloat(Double(parts.count > 1 ? parts[1] : "") ?? 1000)
         case "verb":   // verb:<duo2 words>[ --as name]: a duo2 verb through the control handler, as `duo2` sends it (from a Claude session); its reply to stderr
             let words = (parts.count > 1 ? parts[1] : "").split(separator: " ", omittingEmptySubsequences: true).map(String.init)
             guard let command = words.first else { break }

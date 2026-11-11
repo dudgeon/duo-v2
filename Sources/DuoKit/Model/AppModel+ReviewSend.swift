@@ -21,7 +21,7 @@ public struct ReviewDelivery: Equatable, Sendable, Codable {
 }
 
 extension AppModel {
-    static func reviewKey(_ url: URL, _ thread: String) -> String { url.resolvingSymlinksInPath().standardizedFileURL.path + "#" + thread }
+    public static func reviewKey(_ url: URL, _ thread: String) -> String { url.resolvingSymlinksInPath().standardizedFileURL.path + "#" + thread }
 
     // MARK: Which session
 
@@ -61,6 +61,7 @@ extension AppModel {
     /// A thread of a document: Markdown's from its text, a Word or PowerPoint file's from its comment parts (DL-331).
     func reviewThread(_ url: URL, _ id: String, _ text: String) -> Review.Thread? {
         if Self.isOffice(url) { return (try? Self.officeReviewThreads(url))?.first { $0.id == id } }
+        if Self.isPdf(url) { return (try? Self.pdfReviewThreads(url))?.first { $0.id == id } }
         return Review.parse(text).thread(id)
     }
 
@@ -75,7 +76,7 @@ extension AppModel {
                 return done(.fail("no session to send it to: pick one with --to <session>, or start a session in the project"))
             }
             let key = Self.reviewKey(url, id)
-            let turn = Self.isOffice(url) ? (officeTurn(url: url, thread: id) ?? "") : reviewTurn(url: url, thread: t, text: text)
+            let turn = Self.isOffice(url) ? (officeTurn(url: url, thread: id) ?? "") : Self.isPdf(url) ? (pdfTurn(url: url, thread: id) ?? "") : reviewTurn(url: url, thread: t, text: text)
             let before = t.comments.filter { $0.author == "claude" }.count
             bindReviewSession(url, to: s)
             attemptReviewSend(key: key, url: url, session: s, turn: turn, claudeBefore: before, done: done)
@@ -170,6 +171,7 @@ extension AppModel {
 
     /// The deliveries of the document showing, and each @claude thread's pill, pushed into the page.
     func pushReviewState() {
+        pushPdfReviewState()   // a PDF showing has the same margin (Q-496)
         guard let e = editorIfLoaded, let url = e.url, showingMarkdownDocument else { return }
         let prefix = url.resolvingSymlinksInPath().standardizedFileURL.path + "#"
         var map: [String: Any] = [:]

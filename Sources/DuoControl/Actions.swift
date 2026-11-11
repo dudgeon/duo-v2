@@ -7,7 +7,7 @@ import Foundation
 // menu item or click in the app isn't tied to an action here or listed in `Parity.uiOnly`.
 
 public enum ActionFamily: String, CaseIterable, Sendable {
-    case app, view, window, split, projects, sessions, director, files, repo, docs, review, html, slides, deck, send, search, setup
+    case app, view, window, split, projects, sessions, director, files, repo, docs, review, html, pdf, slides, deck, send, search, setup
 
     /// The families `duo2 help`, the primer and the skill show: `deck` only while Duo Decks is on (DeckFeature, DL-307).
     public static var shown: [ActionFamily] { allCases.filter { $0 != .deck || DeckFeature.enabled } }
@@ -26,6 +26,7 @@ public enum ActionFamily: String, CaseIterable, Sendable {
         case .docs: "Documents"
         case .review: "Review in Markdown"
         case .html: "HTML pages"
+        case .pdf: "PDF files"
         case .slides: "PowerPoint decks"
         case .deck: "Decks (Markdown to slides)"
         case .send: "Send to Claude"
@@ -97,6 +98,9 @@ public enum ActionID: String, CaseIterable, Sendable {
     case browserWait = "browser wait", browserScreenshot = "browser screenshot", browserScroll = "browser scroll",browserGo = "browser go", browserBack = "browser back"
     case browserForward = "browser forward", browserClose = "browser close"
     case browserZoom = "browser zoom", browserPrint = "browser print", browserUpload = "browser upload", browserDownloads = "browser downloads"
+    // PDF files (DL-332, DL-334)
+    case pdfRender = "pdf render"
+    case pdfPage = "pdf page", pdfZoom = "pdf zoom", pdfFind = "pdf find", pdfSelection = "pdf selection", pdfCommentsPanel = "pdf comments-panel"
     case htmlReload = "html reload", htmlPick = "html pick", htmlStop = "html stop", htmlElement = "html element", htmlSelection = "html selection"
     // PowerPoint decks
     case slide, slideGo = "slide go", slideShapes = "slide shapes", slideNotes = "slide notes", slidePick = "slide pick", slideElement = "slide element"
@@ -394,7 +398,7 @@ extension DuoAction {
         .init(.docClose, .docs, "[path] [--others]", "Close a document tab (saved first), or every other one.", ui: ["Close Tab", "Close Other Tabs"]),
         .init(.docTabs, .docs, "", "The open document tabs, and which one shows."),
         .init(.docStatus, .docs, "<file>", "Whether a file is open in Duo's editor, unsaved or in conflict. Check before editing a file the user may have open.", everyday: true),
-        .init(.docRead, .docs, "[path]", "A document's text as the editor has it (unsaved edits included); the showing document by default."),
+        .init(.docRead, .docs, "[path]", "A document's text as the editor has it (unsaved edits included); the showing document by default. A PDF (DL-334) comes back as its text with a `--- page N ---` line before each page, then a list of the pages to look at as images, each with why (no text layer: a scan; mostly a figure: it draws images or many shapes and carries little text); render one with `duo2 pdf render <file> <page>` and read the PNG."),
         .init(.docSelection, .docs, "", "The text selected in the editor, with its file and lines."),
         .init(.docSelect, .docs, "<line> [to-line]", "Select lines in the showing document."),
         .init(.docSave, .docs, "", "Save the showing document now (it also autosaves).", ui: ["Save"]),
@@ -445,20 +449,20 @@ extension DuoAction {
 
         // Review in Markdown (DL-236, DL-237): comments and suggestions as signed CriticMarkup. A file open in Duo's editor is changed through the
         // editor (as Claude's change); any other file on disk. Run from a Claude session the author is `claude`, else the user's Mac name; --as names one.
-        .init(.commentAdd, .review, "<file> --at <line|text|paragraph|slide> [--as <name>] <text>",
-              "On a Word or PowerPoint file (DL-331) the comment is written into the file's comment parts, with a backup of the original in Duo's support folder and nothing else touched: --at is a text that appears once in a Word document (or a paragraph number) or a slide number; its replies, resolved state and @claude routing work as below, with thread ids `c4` (Word) and `s3c1` (slide 3's first). Comment on a line (its number) or on a text that appears once: the text becomes a highlight and the signed comment follows it. A comment that names @claude is addressed to a session (`duo2 comment send`).",
+        .init(.commentAdd, .review, "<file> --at <line|text|paragraph|slide|page N [text]> [--as <name>] <text>",
+              "On a PDF (DL-335) the comment is appended to the file as a standard annotation (an incremental update: the original bytes are never rewritten, and a backup is kept in Duo's support folder): --at is a text that appears once (a Highlight over it), `page N` (a note at the page's top right) or `page N <text>` (a text on that page only); replies, close and reopen (a hidden Completed or None state reply), delete and @claude routing work as below, with thread ids `c1`, replies `c1.2`; encrypted or certified PDFs are refused. On a Word or PowerPoint file (DL-331) the comment is written into the file's comment parts, with a backup of the original in Duo's support folder and nothing else touched: --at is a text that appears once in a Word document (or a paragraph number) or a slide number; its replies, resolved state and @claude routing work as below, with thread ids `c4` (Word) and `s3c1` (slide 3's first). Comment on a line (its number) or on a text that appears once: the text becomes a highlight and the signed comment follows it. A comment that names @claude is addressed to a session (`duo2 comment send`).",
               ui: ["Add Comment"]),
         .init(.commentList, .review, "<file> [--closed | --unsent]",
               "The file's comment threads: id, who and when, the text it is on, the comment and its replies. Closed threads are left out unless --closed (only those); --unsent lists the open ones that name @claude and have no reply."),
         .init(.commentReply, .review, "<id> <text> [--file <file>] [--suggest] [--as <name>]",
-              "Reply in a thread (or to a suggestion) with the next number, `#c1.2`; a closed thread reopens (in a Word or PowerPoint file the reply goes in the file's comment parts, and --file names the file: the turn sent to a session says so). --suggest instead proposes the reply text as a replacement of the text the thread is on. Never rewrites anyone's comment. Without --file, the document showing."),
+              "Reply in a thread (or to a suggestion) with the next number, `#c1.2`; a closed thread reopens (in a Word or PowerPoint file the reply goes in the file's comment parts, and --file names the file: the turn sent to a session says so). --suggest instead proposes the reply text as a replacement of the text the thread is on. Never rewrites anyone's comment. Without --file, the document showing.", ui: ["Reply"]),
         .init(.commentSend, .review, "<id | --all> [--file <file>] [--to <session> | --new]",
               "Send a comment that names @claude to a session, quoted as data, when the person says to (DL-236 10): the turn is pasted and Returned through the idle-and-empty-prompt guard of `director send`, or waits (Queued) until the session is ready. Without --to, the thread's session, the document's last choice, the last to edit it through Duo, then the one on screen. --all sends every @claude comment not yet sent or answered. Never sent from the file on its own."),
         .init(.commentClose, .review, "<id> [--file <file>] [--as <name>]",
               "Close and Keep (in a Word or PowerPoint file: mark the thread resolved, which Word and PowerPoint show as done): add a closing line `{>>@name date #c1.2 closed<<}` after the thread's last comment; the highlight and comments stay (Q-262).",
-              ui: ["Close and Keep"]),
+              ui: ["Close and Keep", "Close Thread"]),
         .init(.commentDelete, .review, "<id> [--file <file>]",
-              "Delete the thread: its highlight markers and every comment go, the text stays."),
+              "Delete the thread: its highlight markers and every comment go, the text stays.", ui: ["Delete Thread"]),
         .init(.commentReopen, .review, "<id> [--file <file>]",
               "Reopen a closed thread: its closing line goes.", ui: ["Reopen"]),
         .init(.commentStatus, .review, "<id> [--file <file>]",
@@ -501,6 +505,26 @@ extension DuoAction {
         .init(.htmlStop, .html, "", "Close the element picker.", ui: ["Cancel picking"]),
         .init(.htmlElement, .html, "[selector]", "Describe an element (the picked one by default): selector, text, attributes, styles, box, HTML."),
         .init(.htmlSelection, .html, "", "The text and images selected in the HTML page."),
+
+        // PDF files (DL-332, DL-334)
+        .init(.pdfRender, .pdf, "<file> <page> [--out <png>] [--width <px>]",
+              "Draw one page of a PDF as a PNG (1000 px wide unless --width, 200 to 3000), as the viewer draws it, annotations included, and print the path. Needs no viewer open. The pages `duo2 doc read` lists as needing a look are the ones to render and read as images. PNGs go in the session's own folder (.duo/screenshots), or Duo's support folder outside a session."),
+
+        // The PDF viewer (DL-332; Q-495 stand-in bar)
+        .init(.pdfPage, .pdf, "[<n> | next | previous]",
+              "The PDF showing in the right pane (or on a side of a split): with no argument print \"page n of N\"; with a page number, `next` or `previous`, go there (also ‹ ›, Page Up and Page Down) and print the page. A number past the end goes to the last page.",
+              ui: ["Previous Page", "Next Page", "Go to Thread"]),
+        .init(.pdfZoom, .pdf, "[in | out | fit | <percent>]",
+              "Zoom the PDF showing: `in` and `out` step by a quarter, `fit` fits the pane's width (the viewer's default, and it follows the pane), a number sets a percentage (25 to 500). With no argument print the zoom.",
+              ui: ["Zoom Out", "Zoom In", "Fit"]),
+        .init(.pdfFind, .pdf, "<text> [--previous]",
+              "Find text in the PDF showing: go to the first match after the current one (--previous goes back), select it, and print \"match n of m on page p\". Repeating the same text steps on; wraps at the ends. Case is ignored.",
+              ui: ["Find in PDF", "Next Match", "Previous Match"]),
+        .init(.pdfSelection, .pdf, "",
+              "The text selected in the PDF showing, as Send Selection puts it in a prompt: `From <path>, page N:` and the text quoted."),
+        .init(.pdfCommentsPanel, .pdf, "[show | hide] [--show-closed on|off]",
+              "Show or hide the comment margin beside the PDF (on by default): the Markdown review margin's cards, one per open thread level with its highlight, with --show-closed on|off for the closed ones (the margin's \"n closed · Show\"). With no argument print whether it shows and how many threads there are; the threads are `duo2 comment list`'s. Add Comment is `comment add`.",
+              ui: ["Comments", "n closed · Show", "Close and Keep", "Reopen", "Delete", "Post", "Reply"]),
 
         // PowerPoint decks (ENH-12, DL-125)
         .init(.slide, .slides, "", "The deck showing and the slide on screen, with that slide's shapes and text."),
@@ -701,7 +725,7 @@ public struct Invocation: Sendable {
     public var flags: [String: String] = [:]
 
     /// Flags that take no value.
-    public static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "use-folder", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "full-page", "session", "open", "sessions", "keep-sessions", "synthetic", "resolved", "force", "session-only", "left", "right", "hidden", "anyway", "not-now", "no-interview", "cancel", "fetch", "background", "in-duo", "suggest", "closed", "unsent", "take-over", "handed-back", "no-worker", "adopt", "clear", "refresh", "no-open", "log", "add", "doc", "routine", "no-red-lines"]
+    public static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "use-folder", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "full-page", "session", "open", "sessions", "keep-sessions", "synthetic", "resolved", "force", "session-only", "left", "right", "hidden", "anyway", "not-now", "no-interview", "cancel", "fetch", "background", "in-duo", "suggest", "closed", "unsent", "take-over", "handed-back", "no-worker", "previous", "adopt", "clear", "refresh", "no-open", "log", "add", "doc", "routine", "no-red-lines"]
 
     /// Flags whose value is optional: the next word is theirs unless it's another flag.
     public static let optionalValues: Set<String> = ["remote-control"]
@@ -792,6 +816,7 @@ extension DuoAction {
             + "`duo2 doc edit --stdin`, piping the JSON your Edit tool takes ({\"file_path\",\"old_string\",\"new_string\"}, or {\"file_path\",\"content\"} to rewrite), "
             + "not with Edit, Write or shell redirection. Duo applies it in the editor the user is looking at, highlighted, and merges it with their unsaved typing."
             + "\nTo check a Word document you made, fit the check to where it goes (for Google Docs, structure, not pixels): `duo2 doc outline` and `duo2 doc layout` (page and text width, tables and pictures against it), and `duo2 doc screenshot` to see it; the duo2 skill's \"Checking documents\" says more. Don't start soffice in the sandbox."
+            + "\nTo read a PDF, `duo2 doc read <file.pdf>` gives its text with a `--- page N ---` line per page, then lists the pages that need a look (a scan, a figure); render one with `duo2 pdf render <file> <page>` and read the PNG, rather than reading the whole PDF as images."
             + "\nTo track work, make Duo tasks (`duo2 task new`, one note each in the project's tasks/ folder) and set their status with `duo2 task status`; do not write a TASKS.md or a to-do list file."
             + "\nWhen you start substantial work, `duo2 session note \"<one line>\"`; when you hand back, `duo2 session next \"<one line>\"`."
         if let sessionID {

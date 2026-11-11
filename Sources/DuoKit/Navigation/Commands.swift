@@ -59,7 +59,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case explainTasks       // Help: Explain Tasks, the Explainer at its trigger (DL-172)
     // Browser tabs (DL-124): print and page zoom, as in Safari
     case printPage          // ⌘P: File › Print…, the browser tab on screen
-    case zoomIn             // ⌘+ (⌘= too): View › Zoom In, while a browser tab has the keyboard
+    case zoomIn             // ⌘+ (⌘= too): View › Zoom In, while a browser tab or the PDF viewer has the keyboard
     case zoomOut            // ⌘-
     case actualSize         // ⌘0
     // All projects' middle (DL-142): no chords until Q-100 is decided
@@ -190,6 +190,19 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         }
     }
 
+    /// The PDF the zoom commands act on: the one showing, unless a browser tab or the editor has the keyboard.
+    @MainActor func pdfZoomTarget(_ model: AppModel) -> PdfViewer? {
+        guard model.webFocus != .html, model.webFocus != .editor, let v = model.visiblePdf, v.state == .ready else { return nil }
+        return v
+    }
+
+    /// The PDF that Add Comment (⌘⌥M) acts on: the one showing, with text selected and the editor not holding the keyboard.
+    @MainActor func pdfCommentTarget(_ model: AppModel) -> PdfViewer? {
+        guard model.terminalsMode == .live, model.webFocus != .editor, model.webFocus != .html,
+              let v = model.visiblePdf, v.state == .ready, v.selectionQuads() != nil else { return nil }
+        return v
+    }
+
     @MainActor
     public func isEnabled(in model: AppModel) -> Bool {
         switch self {
@@ -224,9 +237,11 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .openFile: model.terminalsMode == .live && model.projectFolder != nil
         case .revertChange: model.webFocus == .editor && (model.editorIfLoaded?.atClaudeChange ?? false)
         case .revertAllChanges: (model.editorIfLoaded?.claudeChanges ?? 0) > 0
-        case .suggestEdits, .addComment: model.terminalsMode == .live && model.showingMarkdownDocument
+        case .suggestEdits: model.terminalsMode == .live && model.showingMarkdownDocument
+        case .addComment: pdfCommentTarget(model) != nil || (model.terminalsMode == .live && model.showingMarkdownDocument)
         case .printPage: model.visibleWebTab.map { $0.blocked == nil } ?? false
-        case .zoomIn, .zoomOut, .actualSize: model.webFocus == .html && model.visibleWebTab.map { $0.blocked == nil } == true
+        case .zoomIn, .zoomOut, .actualSize:
+            (model.webFocus == .html && model.visibleWebTab.map { $0.blocked == nil } == true) || pdfZoomTarget(model) != nil
         case .showBoard: !(model.altitude.isAllProjects && model.homeView == .board)
         case .showList: !(model.altitude.isAllProjects && model.homeView == .list)
         case .voiceInput: model.voiceFocusTarget != nil && !model.voiceBlockedByNoMic
@@ -314,7 +329,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .revertChange: model.editor.revertAtCaret()
         case .revertAllChanges: model.editor.revertAll()
         case .suggestEdits: model.toggleSuggestEdits()
-        case .addComment: model.editor.reviewAddComment()
+        case .addComment: if let v = pdfCommentTarget(model) { model.composePdfComment(v) } else { model.editor.reviewAddComment() }
         case .newShell: model.newShell()
         case .chooseHome: model.chooseHomeFolder()
         case .newBrowserTab: model.newBrowserTab()
@@ -327,9 +342,10 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .nextTab: model.cycleTab(forward: true)
         case .previousTab: model.cycleTab(forward: false)
         case .printPage: model.visibleWebTab?.printPage()
-        case .zoomIn: if let t = model.visibleWebTab { t.zoom(ZoomStore.zoomIn(t.zoom)) }
-        case .zoomOut: if let t = model.visibleWebTab { t.zoom(ZoomStore.zoomOut(t.zoom)) }
-        case .actualSize: model.visibleWebTab?.zoom(1.0)
+        // The PDF viewer when it has the keyboard (DL-332: `pdf zoom in|out|100`), else the browser tab.
+        case .zoomIn: if let v = pdfZoomTarget(model) { v.zoomIn() } else if let t = model.visibleWebTab { t.zoom(ZoomStore.zoomIn(t.zoom)) }
+        case .zoomOut: if let v = pdfZoomTarget(model) { v.zoomOut() } else if let t = model.visibleWebTab { t.zoom(ZoomStore.zoomOut(t.zoom)) }
+        case .actualSize: if let v = pdfZoomTarget(model) { v.setScale(1) } else { model.visibleWebTab?.zoom(1.0) }
         case .voiceInput: model.toggleVoice()  // action: voice start
         case .showBoard, .showList:
             model.setHomeView(self == .showBoard ? .board : .list)

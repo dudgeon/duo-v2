@@ -900,6 +900,12 @@ struct RightPane: View {
                     .background {   // anchors: a sibling, so the bar's buttons keep their own names (`video.slide.select`, `video.picker.send`)
                         Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Deck").accessibilityIdentifier("video.right.document")
                     }
+            } else if let path = model.rightTab, AppModel.isPdfViewable(path), let file = model.liveFile(path) {
+                // A PDF: PDFKit's pages under a stand-in bar (DL-332, Q-495); Quick Look when PDFKit can't open it.
+                PdfView(viewer: model.pdfViewer, path: path, file: file)
+                    .background {   // anchors: a sibling, so the bar's buttons keep their own names
+                        Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("PDF").accessibilityIdentifier("video.right.document")
+                    }
             } else if let path = model.rightTab, AppModel.isWordViewable(path), let file = model.liveFile(path) {
                 // A Word document: drawn read only with its comments and tracked changes (DL-162).
                 DocxView(viewer: model.docxViewer, path: path, file: file)

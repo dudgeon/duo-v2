@@ -31,7 +31,7 @@ extension AppModel {
 
     /// The text as the editor has it (unsaved edits included), or the file's.
     func reviewText(_ url: URL, _ done: @escaping @MainActor (String?) -> Void) {
-        if Self.isOffice(url) { return done("") }   // a Word or PowerPoint file's threads come from its comment parts (DL-331)
+        if Self.isOffice(url) || Self.isPdf(url) { return done("") }   // a Word or PowerPoint file's threads come from its comment parts (DL-331)
         if let e = isOpenInEditor(url) { e.currentText { done($0) } }
         else if FileKind.isBinary(url) { done(nil) }
         else { done(FileManager.default.contents(atPath: url.path).map { String(decoding: $0, as: UTF8.self) }) }
@@ -81,6 +81,9 @@ extension AppModel {
         let args = takesPath.contains(id) ? Array(inv.positional.dropFirst()) : inv.positional
         if Self.isOffice(url), id != .suggestionList, id != .suggestionAccept, id != .suggestionReject {   // DL-331: a Word or PowerPoint file's comment parts
             return officeReviewVerb(id, inv, author: reviewAuthor(inv, req), url: url, args: args, done)
+        }
+        if Self.isPdf(url), id != .suggestionList, id != .suggestionAccept, id != .suggestionReject {   // DL-335: a PDF's annotations
+            return pdfReviewVerb(id, inv, author: reviewAuthor(inv, req), url: url, args: args, done)
         }
         guard Self.markdownExtensions.contains(url.pathExtension.lowercased()) else { return done(.fail(Review.notMarkdownMessage(url.lastPathComponent))) }
         let name = displayPath(url)

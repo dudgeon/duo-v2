@@ -207,7 +207,10 @@ struct SplitPreviewSide: View {
                 }
             case .document:
                 // Slice 2 (DL-278): the other document, in the second editor with its own bars.
-                if let w = model.splitTab(path)?.with, let f = model.liveFile(w) ?? model.keptFile(w) {
+                if let w = model.splitTab(path)?.with, AppModel.isPdfViewable(w), let f = model.liveFile(w) ?? model.keptFile(w) {
+                    // DL-333, Q-497: a PDF side is the viewer, view only, with its stand-in bar.
+                    PdfView(viewer: model.pdfViewer, path: w, file: f)
+                } else if let w = model.splitTab(path)?.with, let f = model.liveFile(w) ?? model.keptFile(w) {
                     DocumentStack(file: f, ref: .second)
                 } else { DuoColor.pane }
             case .markdown: DuoColor.pane   // no Markdown preview (Geoff, 2026-11-01: view/edit source is being explored)

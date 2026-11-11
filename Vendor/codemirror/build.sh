@@ -6,6 +6,8 @@ cd "${0:A:h}"
 [[ -d node_modules ]] || npm ci --no-audit --no-fund
 ./node_modules/.bin/esbuild src/duo-editor.js --bundle --minify --format=iife --target=safari18 \
   --legal-comments=external --outfile=dist/cm6.js
+./node_modules/.bin/esbuild src/side-margin.js --bundle --minify --format=iife --target=safari18 \
+  --legal-comments=none --outfile=dist/side-margin.js
 # Third-party licenses, for THIRD-PARTY-NOTICES.md (scripts/gen-notices.py) and the repo.
 node -e '
 const fs=require("fs"),p=require("path");const lock=require("./package-lock.json");let out="";

@@ -9,6 +9,7 @@ import Foundation
 
 /// Files that list folders without the rule, and why that's safe. Keys are paths under `Sources/`.
 let walkGuardExempt: [String: String] = [
+    "DuoSearch/PdfComments.swift": "one listing of Duo's own PDF backups folder in its support folder, to keep one copy of a file",
     "DuoKit/Deck/AppModel+DeckP3b.swift": "one listing of the deck's own folder, for its dated exports",
     "DuoKit/Deck/DeckCards.swift": "one listing of the deck's own folder, for its dated exports",
     "DuoKit/Deck/DeckSheets.swift": "the project folder's top-level folders (New Deck's Folder menu) and the packs' folders",

@@ -349,6 +349,11 @@ extension AppModel {
             guard let self, let text else { return }
             if let key { self.send(text, to: key) } else { self.send(text) }
         }
+        // A PDF's selection (DL-332): the viewer has the keyboard, or is the active side of a split.
+        if webFocus == .pdf || (splitHasKeys && showingSplit.map { $0.with.map(Self.isPdfViewable) == true && $0.active == .preview } == true) {
+            if let p = pdfSelectionPayload() { deliver(p) }
+            return
+        }
         // A split routes by its active side, model state (routing-verbs): the preview's selection, or the source's.
         if splitHasKeys, let t = showingSplit, t.active == .preview {
             if t.kind == .html { htmlSelectionPayload(deliver) }
