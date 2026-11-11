@@ -166,7 +166,7 @@ run at-look "${open}$A,wait:3,review-at:early~November=>Please~@cl=>"
 expect "@ menu: on a clean margin too" $out/at-look.log has "menu=claude"
 fresh_c at-tab
 run at-tab "${open}$A,wait:3,review-at:planned~for~early~November=>Please~@=>down+tab"
-expect "@ menu: Tab inserts @claude" $out/at-tab.log has 'field="Please @claude " menu=closed'
+expect "@ menu: down then Tab inserts the first person (Claude is row one, DL-251 stage 2)" $out/at-tab.log has 'field="Please @geoff " menu=closed'
 fresh_c at-esc
 run at-esc "${open}$A,wait:3,review-at:planned~for~early~November=>Please~@c=>esc"
 expect "@ menu: Esc closes it and leaves the text" $out/at-esc.log has 'field="Please @c" menu=closed'

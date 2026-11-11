@@ -6091,3 +6091,4 @@ Built on build/pdf-viewer to DL-332..DL-335. The visible parts are stand-ins: Q-
   - The comments panel (off by default) has Reply, Close and Reopen, Delete, Go to, and Send to Claude.
 - **Checks:** `DUO_CHECKS=pdf` 171/0; the full DuoChecks run was 6236/0 before the F-646 merge. Live @claude on a PDF: `scripts/check-review-pdf-live.sh`, one Haiku turn.
 - **Not tested:** whether Preview's and Acrobat's comment lists show Duo's threads and status, and the dark scheme. The inflate no-progress guard couldn't be triggered.
+check-review-editor.sh's "@ menu: Tab inserts @claude" (57 of 58) failed identically on origin/main dc8df8e9: the test sends down then Tab, and since DL-251 stage 2 Claude is row one and down lands on the first person (@geoff), so the expectation was stale, not the menu; it now expects `@geoff` after down+Tab.
