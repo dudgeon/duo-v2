@@ -4,7 +4,7 @@
   "subtitle": "Decision walkthrough · 11 Nov 2026 · findings from Aram · narrated by Duo's house voice",
   "posterLine": "What Aram found on first use, what's true in the code, then five decisions. Tap play and listen; it stops when it needs you.",
   "footer": "Findings from Aram's first-use notes. Built with the decision-walkthrough skill from docs/research/aram-feedback-walkthrough/spec.json. Answers are saved in this page and sent to director-duo-v2.",
-  "source": { "label": "aram-feedback.md", "url": "https://github.com/dudgeon/duo-v2/blob/research/aram-feedback/docs/research/aram-feedback.md" },
+  "source": { "label": "aram-feedback.md", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/aram-feedback.md" },
   "director": "director-duo-v2",
   "sendPrefix": "Aram feedback walkthrough",
   "voice": "house",
@@ -79,7 +79,7 @@
       "id": "q510-mode", "kind": "decision", "q": "Q-510", "title": "A new user's first session", "short": "First mode",
       "ask": "Which mode should a new user's first project session open in?",
       "why": "Chat is where replies are formatted and file names are links. New installs start in the terminal today.",
-      "look": [ { "label": "Research · 1.1 White IDE or terminal wrapper", "url": "https://github.com/dudgeon/duo-v2/blob/research/aram-feedback/docs/research/aram-feedback.md#11-sometimes-white-full-ide-other-times-a-terminal-wrapper" } ],
+      "look": [ { "label": "Research · 1.1 White IDE or terminal wrapper", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/aram-feedback.md#11-sometimes-white-full-ide-other-times-a-terminal-wrapper" } ],
       "sceneFile": "scenes/q510.html",
       "lines": [
         { "text": "First decision. Which mode should a new user's first session open in?", "cues": [ { "on": "mode", "do": "focus", "sel": "#pill" } ] },
@@ -101,7 +101,7 @@
       "id": "q511-onboarding", "kind": "decision", "q": "Q-511", "title": "Onboarding: what first", "short": "Onboarding",
       "ask": "What onboarding should be built first?",
       "why": "Aram's main note. The app has no welcome, one explainer, and no link to the guide or the films.",
-      "look": [ { "label": "Research · 2.3 Options, cheapest first", "url": "https://github.com/dudgeon/duo-v2/blob/research/aram-feedback/docs/research/aram-feedback.md#23-options-cheapest-first" } ],
+      "look": [ { "label": "Research · 2.3 Options, cheapest first", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/aram-feedback.md#23-options-cheapest-first" } ],
       "sceneFile": "scenes/q511.html",
       "lines": [
         { "text": "Next, Aram's main note, onboarding. What to build first?", "cues": [ { "at": 0, "do": "show", "sel": "#help" } ] },
@@ -123,7 +123,7 @@
       "id": "q512-director", "kind": "decision", "q": "Q-512", "title": "Starting the director", "short": "Director",
       "ask": "How should a user start the director?",
       "why": "Aram couldn't tell how. Today you type it, and the guide has no page on it.",
-      "look": [ { "label": "Research · 2.4 Starting the director", "url": "https://github.com/dudgeon/duo-v2/blob/research/aram-feedback/docs/research/aram-feedback.md#24-starting-the-director" } ],
+      "look": [ { "label": "Research · 2.4 Starting the director", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/aram-feedback.md#24-starting-the-director" } ],
       "sceneFile": "scenes/q512.html",
       "lines": [
         { "text": "Aram's example was the director. How should someone start one?", "cues": [ { "at": 0, "do": "show", "sel": "#side" } ] },
@@ -145,7 +145,7 @@
       "id": "q513-claude", "kind": "decision", "q": "Q-513", "title": "What Duo tells Claude", "short": "Tell Claude",
       "ask": "What more should Duo tell Claude about being inside Duo?",
       "why": "Aram wants files to show up on the right. Only Claude can open one without a click.",
-      "look": [ { "label": "Research · 3.3 Proposal", "url": "https://github.com/dudgeon/duo-v2/blob/research/aram-feedback/docs/research/aram-feedback.md#33-proposal-q-513" } ],
+      "look": [ { "label": "Research · 3.3 Proposal", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/aram-feedback.md#33-proposal-q-513" } ],
       "sceneFile": "scenes/q513.html",
       "lines": [
         { "text": "What more should Duo tell Claude?", "cues": [ { "at": 0, "do": "show", "sel": "#primer, #w" } ] },
@@ -167,7 +167,7 @@
       "id": "q514-spelling", "kind": "decision", "q": "Q-514", "title": "Colour or Color", "short": "Spelling",
       "ask": "Should the menu say Window Colour or Window Color?",
       "why": "Aram's nit. The app says Colour; macOS beside it says Color on a US Mac.",
-      "look": [ { "label": "Research · 1.5 Window Colour in the menu", "url": "https://github.com/dudgeon/duo-v2/blob/research/aram-feedback/docs/research/aram-feedback.md#15-window-colour-in-the-menu" } ],
+      "look": [ { "label": "Research · 1.5 Window Colour in the menu", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/aram-feedback.md#15-window-colour-in-the-menu" } ],
       "sceneFile": "scenes/q514.html",
       "lines": [
         { "text": "Last one, and it's Aram's nit. The menu says Window Colour, with a U.", "cues": [ { "at": 0, "do": "show", "sel": "#wm" }, { "on": "with a U", "do": "focus", "sel": "#mi-c" } ] },
