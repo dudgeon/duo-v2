@@ -316,5 +316,6 @@ private func xrefStreamPDF() -> Data {
     check(png.starts(with: [0x89, 0x50, 0x4E, 0x47]) && rep?.pixelsWide == 600 && rep?.pixelsHigh == 776, "pdf render makes a 600 px wide PNG of a page")
     check((try? PdfRead.render(fresh, page: 5)) == nil, "…and refuses a page that isn't there")
     check(DuoAction.all.contains { $0.id == .pdfRender } && ActionID.pdfRender.action.args.contains("<page>"), "pdf render is an action in the registry")
+    try pdfHighlightChecks(scratch: scratch)
     try pdfViewerChecks(scratch: scratch)
 }

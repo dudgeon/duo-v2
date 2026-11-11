@@ -22,13 +22,34 @@ extension AppModel {
     public static func pdfThreads(_ url: URL) throws -> [PdfComments.Thread] {
         var threads = try PdfComments.threads(url)
         guard threads.contains(where: { ["Highlight", "Underline", "StrikeOut", "Squiggly"].contains($0.kind) }), let doc = PDFDocument(url: url) else { return threads }
+        var pageRows: [Int: [PdfTextRows.Row]] = [:]
         for i in threads.indices where ["Highlight", "Underline", "StrikeOut", "Squiggly"].contains(threads[i].kind) {
             guard let page = doc.page(at: threads[i].page - 1) else { continue }
-            let parts = threads[i].rects.compactMap { page.selection(for: $0)?.string }
+            let rows = pageRows[threads[i].page] ?? { let r = page.pageRef.map(PdfTextRows.rows) ?? []; pageRows[threads[i].page] = r; return r }()
+            let parts = threads[i].rects.compactMap { r -> String? in
+                // The page's own text rows first (PDFKit's rectangle selection misses on files whose layout it gets wrong), then PDFKit,
+                // a hair inside the box so a neighbouring line's glyphs don't bleed in.
+                if let t = rowText(rows, in: r) { return t }
+                return page.selection(for: r.insetBy(dx: min(1, r.width / 4), dy: min(1.5, r.height / 4)))?.string }
                 .map { $0.split(whereSeparator: \.isWhitespace).joined(separator: " ") }.filter { !$0.isEmpty }
             if !parts.isEmpty { threads[i].anchor = parts.joined(separator: " ") }
         }
         return threads
+    }
+
+    /// The characters of the page's text rows whose middle falls inside `r`, one string per row, nil when none do or any is not plain ASCII.
+    static func rowText(_ rows: [PdfTextRows.Row], in r: CGRect) -> String? {
+        var parts: [String] = []
+        for row in rows where row.baseline > r.minY && row.baseline < r.maxY {
+            var x = row.x0, s = ""
+            for (c, a) in zip(row.text, row.advance) {
+                if x + a / 2 >= r.minX, x + a / 2 <= r.maxX { s.append(c) }
+                x += a
+            }
+            if s.contains(where: { !$0.isASCII }) { return nil }
+            if !s.isEmpty { parts.append(s.trimmingCharacters(in: .whitespaces)) }
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: " ")
     }
 
     /// A PDF's threads as the review model sees them (as `officeReviewThreads`).
@@ -92,7 +113,48 @@ extension AppModel {
             if b.width > 0, b.height > 0 { quads.append(b) }
         }
         guard let page, !quads.isEmpty else { throw PdfComments.Failure("couldn't place “\(text)” on a page") }
+        quads = pdfCorrected(quads, page: page, text: text)
         return PdfPlace(page: doc.index(for: page) + 1, quads: quads, point: nil)
+    }
+
+    // MARK: Where the text really is
+
+    /// PDFKit's selection boxes are right for most files, but a PDF whose text sits in a 1 pt font under a scaled text matrix, one
+    /// wrapped line split over two rows (what macOS prints), gets boxes as tall as several rows and an x that sometimes starts left
+    /// of the page; its per-character boxes are off as well (F-n). When a box is that wrong, read the rows from the page's content
+    /// (`PdfTextRows`: a baseline, a size and each character's advance) and make one box per row for the text. Where the content
+    /// can't be read that way, or the text isn't in it exactly once, PDFKit's boxes stay.
+    static func pdfCorrected(_ lines: [CGRect], page p: PDFPage, text: String) -> [CGRect] {
+        let crop = p.bounds(for: .cropBox).insetBy(dx: -2, dy: -2)
+        guard let string = p.string as NSString?, string.length > 0, let ref = p.pageRef else { return lines }
+        // Plausible? A line box is about one em high; the ink of the glyphs near the text is about 0.55 to 0.75 em.
+        func ws(_ i: Int) -> Bool { string.substring(with: NSRange(location: i, length: 1)).unicodeScalars.allSatisfy { CharacterSet.whitespacesAndNewlines.contains($0) } }
+        let centre = string.range(of: text.split(whereSeparator: \.isWhitespace).first.map(String.init) ?? "").location
+        let mid = centre == NSNotFound ? 0 : centre
+        let near = max(0, mid - 60)..<min(string.length, mid + 120)
+        let heights = near.filter { !ws($0) }.map { p.characterBounds(at: $0).height }.filter { $0 > 0.5 && $0 < 200 }.sorted()
+        if heights.count >= 3, lines.allSatisfy({ crop.contains($0) && $0.height <= 2.8 * heights[heights.count / 2] }) { return lines }
+        let rows = PdfTextRows.rows(ref)
+        let needle = Array(text.filter { !$0.isWhitespace })
+        guard !needle.isEmpty, !rows.isEmpty else { return lines }
+        var hay: [Character] = [], origin: [(row: Int, col: Int)] = []
+        for (ri, r) in rows.enumerated() { for (ci, c) in r.text.enumerated() where !c.isWhitespace { hay.append(c); origin.append((ri, ci)) } }
+        var found: [Int] = []
+        if hay.count >= needle.count {
+            for i in 0...(hay.count - needle.count) where hay[i] == needle[0] && Array(hay[i..<(i + needle.count)]) == needle { found.append(i) }
+        }
+        guard found.count == 1 else { return lines }
+        var cols: [Int: (Int, Int)] = [:]
+        for k in found[0]..<(found[0] + needle.count) {
+            let o = origin[k]
+            cols[o.row] = (min(cols[o.row]?.0 ?? o.col, o.col), max(cols[o.row]?.1 ?? o.col, o.col))
+        }
+        let out = cols.keys.sorted().map { ri -> CGRect in
+            let r = rows[ri], c = cols[ri]!
+            let x = r.span(c.0, c.1)
+            return CGRect(x: x.0, y: r.baseline - 0.23 * r.size, width: x.1 - x.0, height: r.size)
+        }
+        return out.isEmpty ? lines : out
     }
 
     // MARK: Verbs
