@@ -172,6 +172,7 @@ extension AppModel {
     /// The deliveries of the document showing, and each @claude thread's pill, pushed into the page.
     func pushReviewState() {
         pushPdfReviewState()   // a PDF showing has the same margin (Q-496)
+        pushOfficeReviewState()   // and a Word document or deck (DL-337)
         guard let e = editorIfLoaded, let url = e.url, showingMarkdownDocument else { return }
         let prefix = url.resolvingSymlinksInPath().standardizedFileURL.path + "#"
         var map: [String: Any] = [:]

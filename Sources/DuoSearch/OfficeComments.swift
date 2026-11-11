@@ -37,6 +37,8 @@ public enum OfficeComments {
         public var rangeStart: Int?
         public var rangeLength: Int?
         public var anchorLost = false
+        /// PowerPoint: the slide's number (from 1).
+        public var slide: Int?
         public var root: Item { items[0] }
     }
 

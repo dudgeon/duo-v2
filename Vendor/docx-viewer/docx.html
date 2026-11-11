@@ -62,6 +62,13 @@
   #host[data-docx-review-mode="final"] mark.duo-comment, #host[data-docx-review-mode="original"] mark.duo-comment { background: none; }
   #host[data-docx-review-mode="final"] .duo-resolved, #host[data-docx-review-mode="original"] .duo-resolved { display: none !important; }
   #host[data-docx-review-mode="final"] .duo-card, #host[data-docx-review-mode="original"] .duo-card { display: none !important; }
+  /* DL-337: comments are Duo's margin beside the page (the Markdown margin), so the cards under paragraphs are not drawn; the anchors are. */
+  body.margin .duo-card, body.margin .duo-resolved { display: none !important; }
+  body.margin mark.duo-comment { cursor: pointer; }
+  body.margin mark.duo-comment.duo-active { background: var(--duo-comment-highlight-active); }
+  body.margin mark.duo-comment.duo-done { background: none; border-bottom: 0; }
+  body.margin.show-closed mark.duo-comment.duo-done { border-bottom: 1.5px dotted var(--duo-control-edge); }
+  body.margin.show-closed mark.duo-comment.duo-done.duo-active { border-bottom-style: solid; }
   #host .duo-card, #host .duo-fold { box-sizing: border-box; font: 12px/16px var(--duo-font-ui); color: var(--duo-text); font-style: normal; font-weight: 400;
     text-indent: 0; text-align: left; letter-spacing: 0; background: var(--duo-pane); border: 1px solid var(--duo-rule); border-radius: 6px; }
   .duo-card { margin: 0 0 10px; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }

@@ -59,6 +59,7 @@ extension OfficeComments {
                         let a = Anchors.read(cm, shapes: shapesOf(s.part))
                         t.anchorKind = a.kind; t.shapeId = a.shape?.id; t.shapeName = a.shape?.name; t.rangeStart = a.cp; t.rangeLength = a.len; t.anchorLost = a.lost
                         t.anchor = a.text
+                        t.slide = s.number
                         if let shape = a.shape { t.place = "slide \(s.number), " + (a.text.map { "“\(($0.count > 30 ? String($0.prefix(27)) + "…" : $0))” in " } ?? "") + (shape.name.isEmpty ? "shape \(shape.id)" : shape.name) }
                         out.append(t)
                     }

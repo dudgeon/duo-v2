@@ -136,7 +136,7 @@ import Foundation
         check(a?.anchorKind == "shape" && a?.shapeId == "\(sh.id)" && a?.shapeName == sh.name && a?.anchorLost == false, "a comment on a shape reads back as that shape (\(a?.anchorKind ?? "?"), \(a?.shapeName ?? "?"))")
         check(b?.anchorKind == "shape" && b?.shapeId == "\(sh.id)" && onText.summary.contains("on the whole shape"), "a run of text falls back to its shape, and says so (the range isn't verified against PowerPoint)")
         // Reading a range anchor written elsewhere still works: turn the shape comment into a text one in the file and read it.
-        if let ap = a, let part = try changed(pptx0, pptx).added.first(where: { $0.contains("modernComment_102") }) ?? changed(pptx0, pptx).added.first, ap.anchorKind == "shape" {
+        if let ap = a, let part = try changed(pptx0, pptx).added.first(where: { String(decoding: (try? Pptx.Zip(pptx).read($0)) ?? Data(), as: UTF8.self).contains("About this box") }), ap.anchorKind == "shape" {
             var xml = String(decoding: try Pptx.Zip(pptx).read(part) ?? Data(), as: UTF8.self)
             xml = xml.replacingOccurrences(of: "<ac:deMkLst", with: "<ac:txMkLst").replacingOccurrences(of: "</ac:deMkLst>", with: "<ac:txMk cp=\"0\" len=\"4\"/></ac:txMkLst>")
             let hand = scratch.appending(path: "Hand.pptx")

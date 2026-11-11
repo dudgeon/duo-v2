@@ -286,6 +286,7 @@ extension AppModel {
 
     /// A deck in the right pane: changes redraw the bars; right-click offers Select Shape.
     func wireDeckViewer(_ v: DeckViewer) {
+        wireOfficeMargin(v.office, reload: { [weak v] in v?.reload() }, focus: { [weak v] in v?.webView.window?.makeFirstResponder(v?.webView) })
         v.onChange = { [weak self] in self?.pickerRevision += 1 }
         v.webView.extraMenuItems = { [weak self] _, _ in
             guard let self, self.terminalsMode == .live, v.state == .ready else { return [] }
@@ -296,6 +297,7 @@ extension AppModel {
     /// A Word document in the right pane: changes redraw the bar and the menu.
     func wireDocxViewer(_ v: DocxViewer) {
         v.onChange = { [weak self] in self?.pickerRevision += 1 }
+        wireOfficeMargin(v.office, reload: { [weak v] in v?.reload() }, focus: { [weak v] in v?.webView.window?.makeFirstResponder(v?.webView) })
     }
 
     /// Word documents open in the Word viewer (DL-162); the old .doc format opens it too, to say why it can't draw.

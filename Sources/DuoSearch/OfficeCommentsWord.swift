@@ -164,6 +164,14 @@ extension OfficeComments {
         /// Puts the range around `at` in document.xml: a text that appears once inside a plain run, else its paragraph; a number is a paragraph's position.
         static func anchor(_ doc: inout String, at: String, id: String) throws {
             let start = "<w:commentRangeStart w:id=\"\(id)\"/>"
+            // A paragraph by its w14:paraId (the viewer names a selection's paragraph this way).
+            if at.hasPrefix("para:") {
+                let pid = String(at.dropFirst(5))
+                guard let hit = doc.range(of: "w14:paraId=\"\(pid)\""), let p = doc[..<hit.lowerBound].range(of: "<w:p ", options: .backwards) else {
+                    throw Failure("no paragraph \(pid) in the document")
+                }
+                return try wrapParagraph(&doc, startingAt: p.lowerBound, id: id)
+            }
             // Paragraph by position.
             if let n = Int(at), n > 0 {
                 var ranges: [Range<String.Index>] = []

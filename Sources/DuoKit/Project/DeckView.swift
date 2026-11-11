@@ -24,8 +24,19 @@ struct DeckView: View {
             } else {
                 DeckBar(viewer: viewer, path: path, file: file)
                 // The slides end where the picker bar starts: nothing draws under it (board C).
-                DeckWebHost(viewer: viewer)
-                    .overlay { if viewer.state == .loading, viewer.listed > 0 { DeckDrawingFrames(count: viewer.listed) } }
+                GeometryReader { geo in
+                    // The comment margin beside the slides (DL-337): Markdown's, always in view; a narrow pane folds it to the gutter and its
+                    // popover floats over the slides (the page's own layout).
+                    HStack(spacing: 0) {
+                        DeckWebHost(viewer: viewer)
+                            .overlay { if viewer.state == .loading, viewer.listed > 0 { DeckDrawingFrames(count: viewer.listed) } }
+                        if viewer.office.margin.reserve > 0 { Color.clear.frame(width: viewer.office.margin.reserve) }
+                    }
+                    .overlay(alignment: .trailing) {
+                        if viewer.office.margin.width > 0 { PdfMarginHost(margin: viewer.office.margin).frame(width: viewer.office.margin.width) }
+                    }
+                    .onChange(of: geo.size.width, initial: true) { _, w in viewer.office.paneWidth = w }
+                }
                 if viewer.slidePicking { DeckSlidePickBar(viewer: viewer, path: path, file: file) } else { DeckPickerBar(viewer: viewer) }
             }
         }

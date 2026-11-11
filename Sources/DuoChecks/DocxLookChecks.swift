@@ -11,6 +11,7 @@ import Foundation
     _ = NSApplication.shared
     let fx = repoRoot().appending(path: "docs/design/docx-viewer-handoff/fixture")
     let viewer = DocxViewer(resources: repoRoot().appending(path: "Vendor/docx-viewer"))
+    viewer.office.replacesPageCards = false   // these checks are of the page's own card layer; the margin has its own (OfficeCommentChecks)
     let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 460, height: 800), styleMask: [.borderless], backing: .buffered, defer: false)
     window.contentView = viewer.webView
 

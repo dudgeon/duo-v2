@@ -291,6 +291,7 @@ const draw = {
       items().forEach(decorate);
       applyOverlay();
       if (slide > 1) go(slide, true); else track();   // opening lands on the slide, no scroll
+      applyMarginAnchors();
       post({ kind: 'ready', count: count(), slide: current, width: viewer.slideWidth, height: viewer.slideHeight });
       return { count: count() };
     } catch (err) {
@@ -326,6 +327,7 @@ const draw = {
       if (slidePicking) { host.classList.add('grid'); await fitGrid(true); }
       applyOverlay();
       scrollTo(0, y); track();
+      applyMarginAnchors();
       post({ kind: 'ready', count: count(), slide: current, width: viewer.slideWidth, height: viewer.slideHeight });
       return { count: count() };
     } catch (err) {
@@ -334,6 +336,92 @@ const draw = {
     } finally { stats.inFlight--; stats.refreshed++; }
   },
 };
+
+// ---- the comment margin (DL-337) ----------------------------------------------------------------------
+// Comments in a .pptx are Duo's margin beside this page (Vendor/codemirror side-margin.js): it draws the cards; this page draws what
+// each comment is on, as Markdown does: a run of text takes commentHighlight (commentHighlightActive for the active card's), a shape an
+// outline in the same tokens, the whole slide its number marker boxed. Swift sends the threads' anchors (`marginSet`); the page says
+// where they are (`anchors`), lights the active one (`setActive`), says what is selected (`selection`) and reports scrolling, layout
+// changes and clicks on an anchor.
+let marginThreads = [];
+const tellMargin = (m) => post({ kind: 'margin', ...m });
+function clearMarginAnchors() {
+  for (const m of host.querySelectorAll('mark.duo-comment')) { const p = m.parentNode; while (m.firstChild) p.insertBefore(m.firstChild, m); m.remove(); p.normalize(); }
+  for (const e of host.querySelectorAll('.duo-anchor, .duo-anchor-slide')) { e.classList.remove('duo-anchor', 'duo-anchor-slide', 'duo-active', 'duo-closed'); delete e.dataset.thread; }
+}
+// The characters cp..cp+len of a shape's text, as a range over its text nodes (a paragraph break counts one character).
+function rangeIn(el, cp, len) {
+  const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  let pos = 0, start = null, end = null, lastPara = null;
+  for (let n; (n = w.nextNode());) {
+    const para = n.parentElement.closest('p, [data-para], div') ;
+    if (lastPara && para !== lastPara && pos > 0) pos += 1;
+    lastPara = para;
+    const l = n.data.length;
+    if (!start && cp < pos + l) start = [n, cp - pos];
+    if (start && !end && cp + len <= pos + l) { end = [n, cp + len - pos]; break; }
+    pos += l;
+  }
+  if (!start || !end) return null;
+  const r = document.createRange(); r.setStart(...start); r.setEnd(...end);
+  return r;
+}
+function applyMarginAnchors() {
+  clearMarginAnchors();
+  for (const t of marginThreads) {
+    const item = host.querySelector(`[data-slide-index="${t.slide - 1}"]`);
+    if (!item) continue;
+    let el = null;
+    if (t.shape != null && t.kind !== 'slide') el = shapeAt(t.slide, t.shape);
+    if (t.kind === 'text' && el && t.cp != null && t.len) {
+      const r = rangeIn(el, t.cp, t.len);
+      if (r) {
+        const mk = document.createElement('mark'); mk.className = 'duo-comment'; mk.dataset.thread = t.id;
+        if (t.closed) mk.classList.add('duo-closed');
+        try { r.surroundContents(mk); continue; } catch (_) { /* a range across elements: the shape's outline instead */ }
+      }
+    }
+    if (el) { el.classList.add('duo-anchor'); el.dataset.thread = t.id; if (t.closed) el.classList.add('duo-closed'); continue; }
+    // The whole slide, or an anchor that can't be found: the slide's number marker.
+    const num = item.querySelector(':scope > .deck-number');
+    if (num) { num.classList.add('duo-anchor-slide'); num.dataset.thread = t.id; if (t.closed) num.classList.add('duo-closed'); }
+  }
+}
+const anchorEls = (id) => [...host.querySelectorAll('[data-thread]')].filter((e) => e.dataset.thread === id);
+function marginAnchors() {
+  const out = [];
+  for (const t of marginThreads) {
+    const e = anchorEls(t.id)[0] || host.querySelector(`[data-slide-index="${t.slide - 1}"]`);
+    out.push({ id: t.id, y: e ? e.getBoundingClientRect().top + scrollY : 0, found: !!anchorEls(t.id).length });
+  }
+  return out;
+}
+// What Add Comment is on: selected text in a shape, else the picked shape, else the whole slide on screen.
+function marginSelection() {
+  const sel = getSelection();
+  if (sel && !sel.isCollapsed && sel.rangeCount) {
+    const r = sel.getRangeAt(0);
+    const a = r.commonAncestorContainer.nodeType === 1 ? r.commonAncestorContainer : r.commonAncestorContainer.parentElement;
+    const shape = a?.closest?.('[data-duo-shape-id]');
+    if (shape && host.contains(shape)) {
+      const d = describe(shape).shape, text = sel.toString().trim();
+      return { at: text ? `${d.slide}/${d.id}/${text}` : `${d.slide}/${d.id}`, y: r.getBoundingClientRect().top + scrollY, text };
+    }
+  }
+  if (frozen) { const d = describe(frozen).shape; return { at: `${d.slide}/${d.id}`, y: frozen.getBoundingClientRect().top + scrollY, text: d.name }; }
+  const item = host.querySelector(`[data-slide-index="${current - 1}"]`);
+  return item ? { at: String(current), y: item.getBoundingClientRect().top + scrollY, text: '' } : null;
+}
+{
+  let queued = false;
+  addEventListener('scroll', () => { if (queued) return; queued = true; requestAnimationFrame(() => { queued = false; tellMargin({ op: 'scroll', y: scrollY }); }); }, { passive: true });
+  addEventListener('resize', () => tellMargin({ op: 'layout' }));
+  document.addEventListener('click', (e) => {
+    if (picking || !document.body.classList.contains('margin')) return;
+    const a = e.target.closest?.('[data-thread]');
+    if (a) tellMargin({ op: 'anchor', id: a.dataset.thread });
+  });
+}
 
 window.__duo = {
   open: (name, slide, v) => serial(() => draw.open(name, slide, v)),
@@ -352,7 +440,11 @@ window.__duo = {
   hover: (sel) => { const [s, id] = String(sel).split('/'); const el = shapeAt(+s, id); if (el && picking && !frozen) { hovered = el; place(el); } return !!el; },
   hideOutline: () => { hidden = true; place(null); },
   showOutline: () => { hidden = false; place(frozen); },
-  selection: () => null,
+  selection: marginSelection,
+  margin(on, showClosed) { document.body.classList.toggle('margin', !!on); document.body.classList.toggle('show-closed', !!showClosed); return true; },
+  marginSet(list) { marginThreads = list || []; applyMarginAnchors(); return true; },
+  anchors: marginAnchors,
+  setActive(id) { for (const e of host.querySelectorAll('[data-thread]')) e.classList.toggle('duo-active', !!id && e.dataset.thread === id); return true; },
   // What is on screen, from the DOM (redraw-blank.md): the visible container, its slides and their sizes.
   probe: (find) => {
     const cs = getComputedStyle(host), its = items();
