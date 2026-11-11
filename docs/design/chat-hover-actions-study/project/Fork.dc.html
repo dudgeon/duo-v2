@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fork from here</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.cap{font-size:12px;line-height:17px;color:#5B636D}
+.cap b{color:#1F2328;font-weight:600}
+.lab{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.mono{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:11px}
+.cmd{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:8px 10px;font:400 11px/18px 'SF Mono',ui-monospace,Menlo,monospace;color:#1F2328;white-space:pre-line}
+</style>
+</helmet>
+<div style="width: 1560px; height: 1180px; box-sizing: border-box; background: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; color: #1F2328; padding: 40px; display: flex; flex-direction: column; gap: 22px">
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <div style="font-size: 18px; line-height: 24px; font-weight: 600">Q-508 · Fork from here: a new session that starts at this turn, in a tab right after this one [P]</div>
+    <div class="cap" style="font-size: 13px; line-height: 19px; max-width: 1420px">No sheet: a fork changes nothing in the original, so there is nothing to confirm. The new tab follows DL-228: right after its original, the fork mark after its state glyph, the session’s own title; the left pane shows the two as a thread. Both sessions share the project folder, as every fork does today, so a fork never puts files back.</div>
+  </div>
+  <div style="display: flex; gap: 36px; align-items: flex-start">
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">A (recommended) · from your message</div>
+      <dc-import name="Chat" chat="{{fromYou}}" hint-size="480px,420px"></dc-import>
+      <div class="cap">The fork opens focused, in chat. Its conversation ends just before your message, and your message waits in its composer to change and send: “try it another way” without losing the first way.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">A · from Claude’s reply</div>
+      <dc-import name="Chat" chat="{{fromClaude}}" hint-size="480px,420px"></dc-import>
+      <div class="cap">The fork keeps everything up to and including that reply; the composer is empty. From the latest reply it’s a plain fork, as Resume as a Fork already runs.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">How Duo does it (A and B)</div>
+      <div class="cmd">1  claude --resume ‹this› --fork-session --session-id ‹new›
+   (Duo mints the id, DL-14; a whole copy)
+2  in the copy only, Claude’s rewind menu:
+   the prompt after the fork point › Restore conversation
+   (never code: both sessions share the folder)</div>
+      <div class="cap"><b>Step 2 is skipped</b> for the latest reply. From your message it rewinds to that message; from Claude’s reply, to your next one.</div>
+      <div class="cap"><b>Why not one flag:</b> Claude Code has <span class="mono">--resume-session-at ‹uuid›</span>, but only in print mode, which can’t open an interactive session. Duo doesn’t write a cut copy of the transcript itself.</div>
+      <div class="cap"><b>If step 2 can’t finish</b>, the fork shows its terminal with Claude’s menu open, as board 2. The fork already exists and is whole, so nothing is lost; the original is never touched.</div>
+      <div class="cap"><b>The fork’s name:</b> Claude titles it as its parent; the tab shows that title with the fork mark (DL-228). The left pane’s thread row says “Fork of Refund flows”.</div>
+    </div>
+  </div>
+  <div style="display: flex; gap: 36px; align-items: flex-start">
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">B · the same, opened behind</div>
+      <dc-import name="Chat" chat="{{behind}}" hint-size="480px,300px"></dc-import>
+      <div class="cap">You stay in the original; the new tab appears after it and a note says so. Good for “save this point and carry on”; worse for “try another way”, which is why you’d fork from your own message.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">C · only from the latest reply</div>
+      <dc-import name="Chat" chat="{{lastOnly}}" hint-size="480px,300px"></dc-import>
+      <div class="cap">Fork shows only on the latest reply: a plain whole fork, no rewind step, no risk. Earlier turns get Copy and Rewind only. The cheapest build; it isn’t “fork from here”.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 12px; padding-top: 26px">
+      <div class="cap"><b>While Claude works</b> Fork waits (board 1): the transcript’s last turn isn’t finished, and Claude’s fork would copy a half turn.</div>
+      <div class="cap"><b>A fork of a fork</b> works the same; the thread row lists it under the same original.</div>
+      <div class="cap"><b>Task links:</b> the fork joins the original’s tasks, as a /branch does (DL-227).</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1560,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const ask = 'Compare the two refund flows in a table, with a short recommendation.';
+    const t2 = [ { t: 'Refund flows' }, { t: 'Refund flows', fork: true, on: true }, { t: 'Teardown research' } ];
+    return {
+      fromYou: { w: 480, h: 420, tabs: t2, items: [ { bars: true }, { claude: true, meta: 'Claude · 9:41', lines: [ 'The refund docs are in docs/refunds/.' ] }, { note: true, text: 'Forked from Refund flows, before your 9:52 message' } ], composer: ask, composerFilled: true },
+      fromClaude: { w: 480, h: 420, tabs: t2, items: [ { you: true, meta: 'You · 9:52', text: ask }, { claude: true, meta: 'Claude · 9:52', lines: [ 'Both flows are in docs/refunds/flows.md. The main difference is who confirms the refund.' ] }, { note: true, text: 'Forked from Refund flows, after Claude’s 9:52 reply' } ] },
+      behind: { w: 480, h: 300, tabs: [ { t: 'Refund flows', on: true }, { t: 'Refund flows', fork: true }, { t: 'Teardown research' } ], items: [ { you: true, meta: 'You · 9:52', text: ask }, { note: true, text: 'Forked into a new tab, before this message' } ] },
+      lastOnly: { w: 480, h: 300, tabs: [ { t: 'Refund flows', on: true } ], items: [ { you: true, meta: 'You · 9:52', text: 'Make it shorter.', row: [ { icon: 'copy', label: 'Copy' }, { icon: 'rewind', label: 'Rewind' } ] }, { claude: true, meta: 'Claude · 9:53', lines: [ 'Self-serve by default; over $500, assisted.' ], row: [ { icon: 'copy', label: 'Copy' }, { icon: 'fork', label: 'Fork' } ] } ] }
+    };
+  }
+}
+</script>
+</body>
+</html>

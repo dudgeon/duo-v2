@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Chat with turn actions</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.ch{position:relative;box-sizing:border-box;display:flex;flex-direction:column;background:#F3F4F6;border:1px solid #C9CDD3;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;color:#1F2328;font-size:14px;line-height:22px;overflow:hidden}
+.ch .strip{height:32px;flex:none;box-sizing:border-box;background:#15171B;display:flex;align-items:center;gap:16px;padding:0 14px;font:400 12px/16px 'SF Mono',ui-monospace,Menlo,monospace;color:#9AA1AB;white-space:nowrap}
+.ch .strip .tb{display:flex;align-items:center;gap:6px}
+.ch .strip .on{color:#E6E8EB;font-weight:500}
+.ch .feed{flex:1;min-height:0;padding:16px 20px 8px;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.ch .who{font-size:12px;line-height:16px;color:#5B636D}
+.ch .yw{align-self:flex-end;display:flex;flex-direction:column;align-items:flex-end;gap:4px;max-width:400px}
+.ch .you{background:#DCE6F7;border-radius:14px 14px 3px 14px;padding:8px 14px;white-space:pre-line}
+.ch .you.sel{box-shadow:0 0 0 2px #1F2328}
+.ch .cw{margin-right:36px;display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+.ch .card{align-self:stretch;background:#FFFFFF;border-radius:14px 14px 14px 3px;padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+.ch .bar{height:9px;border-radius:2px;background:#D5D9DE}
+.ch .gone{opacity:.32}
+.ch .row{display:flex;gap:6px;align-items:center;height:22px}
+.ch .rb{display:inline-flex;align-items:center;gap:5px;height:22px;box-sizing:border-box;padding:0 8px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font:400 12px/16px -apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:#1F2328;white-space:nowrap}
+.ch .rb.dim{color:#5B636D;border-color:#C9CDD3}
+.ch .rb.dim svg{opacity:.55}
+.ch .rb.foc{box-shadow:0 0 0 3px rgba(31,35,40,.28)}
+.ch .tip{background:#FFFFFF;border-radius:8px;box-shadow:0 8px 24px rgba(31,35,40,.18),0 0 0 1px rgba(31,35,40,.08);padding:4px 9px;font-size:12px;line-height:16px;white-space:nowrap;color:#1F2328}
+.ch .note{align-self:center;font-size:12px;line-height:16px;color:#5B636D;display:flex;gap:6px;align-items:center}
+.ch .wk{display:flex;align-items:center;gap:8px;color:#5B636D;font-size:12px;line-height:16px;padding-left:4px}
+.ch .nb{flex:none;box-sizing:border-box;border-top:1px solid #C9CDD3;background:#F3F4F6;padding:8px 20px;display:flex;align-items:center;gap:10px}
+.ch .nb .msg{flex:1;min-width:0;font-size:13px;line-height:20px}
+.ch .nb button{font:400 12px/16px -apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:#1F2328;background:#FFFFFF;border:1px solid #8B939C;border-radius:6px;padding:3px 10px;white-space:nowrap}
+.ch .nb button.def{border-color:#1F2328;font-weight:600}
+.ch .comp{flex:none;margin:0 20px 6px;background:#FFFFFF;border:1px solid #8B939C;border-radius:12px;min-height:44px;box-sizing:border-box;padding:10px 14px;font-size:14px;line-height:22px;color:#5B636D}
+.ch .comp.full{color:#1F2328}
+.ch .hint{flex:none;margin:0 24px 10px;font-size:12px;line-height:16px;color:#5B636D}
+</style>
+</helmet>
+<div class="ch" style="width: {{w}}px; height: {{h}}px">
+<div class="strip">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="2">
+<span class="{{t.cls}}"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="none" stroke="currentColor" stroke-width="1.4"></circle></svg><sc-if value="{{t.fork}}"><svg width="10" height="10" viewBox="0 0 10 10" aria-label="fork"><path d="M3 1v3.2c0 1.2 1 1.8 2 1.8s2 .6 2 1.8V9M3 4.2V9" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></path></svg></sc-if>{{t.t}}</span>
+</sc-for>
+</div>
+<div class="feed">
+<sc-for list="{{items}}" as="it" hint-placeholder-count="3">
+<sc-if value="{{it.isBars}}"><div class="{{it.wcls}}" style="display: flex; flex-direction: column; gap: 7px"><div class="bar" style="width: 64%"></div><div class="bar" style="width: 48%"></div></div></sc-if>
+<sc-if value="{{it.isYou}}">
+<div class="{{it.wcls}}">
+<div class="who">{{it.meta}}</div>
+<div class="{{it.bcls}}">{{it.text}}</div>
+<sc-if value="{{it.hasTip}}"><div class="tip">{{it.tip}}</div></sc-if>
+<sc-if value="{{it.hasRow}}"><div class="row">
+<sc-for list="{{it.row}}" as="b" hint-placeholder-count="3">
+<button type="button" class="{{b.cls}}" aria-label="{{b.label}}"><sc-if value="{{b.isCopy}}"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" fill="none" stroke="#5B636D" stroke-width="1.2"></rect><path d="M8.5 3.5V2A1.5 1.5 0 0 0 7 .5H2A1.5 1.5 0 0 0 .5 2v5A1.5 1.5 0 0 0 2 8.5h1.5" fill="none" stroke="#5B636D" stroke-width="1.2" stroke-linecap="round"></path></svg></sc-if><sc-if value="{{b.isCheck}}"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.5 4.8 9 10 3" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if><sc-if value="{{b.isRewind}}"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.2 5.5A4 4 0 1 1 3.4 8.6" fill="none" stroke="#5B636D" stroke-width="1.2" stroke-linecap="round"></path><path d="M1.2 2.6 2.2 5.6 5 4.5" fill="none" stroke="#5B636D" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if><sc-if value="{{b.isFork}}"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="3" cy="2.2" r="1.3" fill="none" stroke="#5B636D" stroke-width="1.2"></circle><circle cx="3" cy="9.8" r="1.3" fill="none" stroke="#5B636D" stroke-width="1.2"></circle><circle cx="9" cy="4" r="1.3" fill="none" stroke="#5B636D" stroke-width="1.2"></circle><path d="M3 3.5v5M9 5.3c0 2-2 2.2-4 2.6L3.6 8.5" fill="none" stroke="#5B636D" stroke-width="1.2" stroke-linecap="round"></path></svg></sc-if>{{b.label}}</button>
+</sc-for>
+</div></sc-if>
+</div>
+</sc-if>
+<sc-if value="{{it.isClaude}}">
+<div class="{{it.wcls}}">
+<div class="who">{{it.meta}}</div>
+<div class="card">
+<sc-for list="{{it.lines}}" as="l" hint-placeholder-count="2"><div>{{l}}</div></sc-for>
+</div>
+<sc-if value="{{it.hasTip}}"><div class="tip">{{it.tip}}</div></sc-if>
+<sc-if value="{{it.hasRow}}"><div class="row">
+<sc-for list="{{it.row}}" as="b" hint-placeholder-count="2">
+<button type="button" class="{{b.cls}}" aria-label="{{b.label}}"><sc-if value="{{b.isCopy}}"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" fill="none" stroke="#5B636D" stroke-width="1.2"></rect><path d="M8.5 3.5V2A1.5 1.5 0 0 0 7 .5H2A1.5 1.5 0 0 0 .5 2v5A1.5 1.5 0 0 0 2 8.5h1.5" fill="none" stroke="#5B636D" stroke-width="1.2" stroke-linecap="round"></path></svg></sc-if><sc-if value="{{b.isCheck}}"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.5 4.8 9 10 3" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if><sc-if value="{{b.isRewind}}"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.2 5.5A4 4 0 1 1 3.4 8.6" fill="none" stroke="#5B636D" stroke-width="1.2" stroke-linecap="round"></path><path d="M1.2 2.6 2.2 5.6 5 4.5" fill="none" stroke="#5B636D" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if><sc-if value="{{b.isFork}}"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="3" cy="2.2" r="1.3" fill="none" stroke="#5B636D" stroke-width="1.2"></circle><circle cx="3" cy="9.8" r="1.3" fill="none" stroke="#5B636D" stroke-width="1.2"></circle><circle cx="9" cy="4" r="1.3" fill="none" stroke="#5B636D" stroke-width="1.2"></circle><path d="M3 3.5v5M9 5.3c0 2-2 2.2-4 2.6L3.6 8.5" fill="none" stroke="#5B636D" stroke-width="1.2" stroke-linecap="round"></path></svg></sc-if>{{b.label}}</button>
+</sc-for>
+</div></sc-if>
+</div>
+</sc-if>
+<sc-if value="{{it.isNote}}"><div class="note"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.2 5.5A4 4 0 1 1 3.4 8.6" fill="none" stroke="#5B636D" stroke-width="1.2" stroke-linecap="round"></path><path d="M1.2 2.6 2.2 5.6 5 4.5" fill="none" stroke="#5B636D" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>{{it.text}}</div></sc-if>
+<sc-if value="{{it.isWorking}}"><div class="wk"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg>{{it.text}}</div></sc-if>
+</sc-for>
+</div>
+<sc-if value="{{hasBar}}" hint-placeholder-val="{{ false }}">
+<div class="nb"><span class="msg">{{bar.msg}}</span><sc-for list="{{barBtns}}" as="b" hint-placeholder-count="1"><button type="button" class="{{b.cls}}">{{b.label}}</button></sc-for></div>
+</sc-if>
+<div class="{{compCls}}">{{composer}}</div>
+<div class="hint">⏎ send · ⇧⏎ new line · / commands · ⌥⌘↑ ⌥⌘↓ your messages</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"chat":{"editor":null},"$preview":{"width":620,"height":560}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const demo = {
+      w: 620, h: 560,
+      tabs: [ { t: 'Refund flows', on: true }, { t: 'Teardown research' } ],
+      items: [
+        { bars: true, gone: false },
+        { you: true, meta: 'You · 9:52', text: 'Compare the two refund flows in a table, with a short recommendation.', row: [ { icon: 'copy', label: 'Copy' }, { icon: 'rewind', label: 'Rewind' }, { icon: 'fork', label: 'Fork' } ] },
+        { claude: true, meta: 'Claude · 9:52', lines: [ 'Both flows are in docs/refunds/flows.md. The main difference is who confirms the refund.', 'Keep self-serve as the default; route orders over $500 to assisted.' ] }
+      ],
+      composer: 'Reply to Claude'
+    };
+    const c = this.props.chat || demo;
+    const btn = (b) => ({ label: b.label, isCopy: b.icon === 'copy', isCheck: b.icon === 'check', isRewind: b.icon === 'rewind', isFork: b.icon === 'fork', cls: 'rb' + (b.dim ? ' dim' : '') + (b.focus ? ' foc' : '') });
+    const items = (c.items || []).map((it) => ({
+      isBars: !!it.bars, isYou: !!it.you, isClaude: !!it.claude, isNote: !!it.note, isWorking: !!it.working,
+      wcls: (it.you ? 'yw' : it.claude ? 'cw' : '') + (it.gone ? ' gone' : ''),
+      bcls: 'you' + (it.sel ? ' sel' : ''),
+      meta: it.meta || '', text: it.text || '', lines: it.lines || [],
+      hasRow: !!(it.row && it.row.length), row: (it.row || []).map(btn),
+      hasTip: !!it.tip, tip: it.tip || ''
+    }));
+    const tabs = (c.tabs || []).map((t) => ({ t: t.t, fork: !!t.fork, cls: 'tb' + (t.on ? ' on' : '') }));
+    const bar = c.bar || null;
+    return {
+      w: c.w || 620, h: c.h || 560, tabs, items,
+      hasBar: !!bar, bar: bar || { msg: '' }, barBtns: ((bar && bar.buttons) || []).map((b) => ({ label: b.label, cls: b.def ? 'def' : '' })),
+      composer: c.composer || 'Reply to Claude', compCls: 'comp' + (c.composerFilled ? ' full' : '')
+    };
+  }
+}
+</script>
+</body>
+</html>
