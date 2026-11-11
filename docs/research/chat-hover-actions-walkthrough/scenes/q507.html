@@ -1,0 +1,23 @@
+<style>
+#s1 { left: 20px; } #s2 { left: 140px; } #s3 { left: 260px; } #s4 { left: 380px; } #s5 { left: 500px; }
+.step { position: absolute; top: 24px; width: 112px; height: 52px; display: flex; align-items: center; justify-content: center; }
+#term { left: 20px; top: 100px; width: 330px; height: 150px; }
+#m2 { display: none; } [data-state~="s2"] #m1 { display: none; } [data-state~="s2"] #m2 { display: block; }
+#fb { left: 370px; top: 112px; width: 250px; } #rd { left: 370px; top: 190px; width: 250px; }
+#uf { left: 370px; top: 112px; width: 250px; }
+[data-state~="b"] #s3, [data-state~="b"] #s4, [data-state~="b"] #s5 { opacity: .3; }
+#lbl { left: 20px; top: 280px; width: 600px; text-align: center; }
+</style>
+<div class="step" id="s1" data-in="down" data-f>Duo’s sheet</div>
+<div class="step" id="s2" data-in="down" data-f>Esc Esc</div>
+<div class="step" id="s3" data-in="down" data-f>Pick the prompt</div>
+<div class="step" id="s4" data-in="down" data-f>Option 2 or 1</div>
+<div class="step" id="s5" data-in="down" data-f>Prompt in composer</div>
+<div class="term" id="term" data-in="fade" data-f>
+<div id="m1"><div class="dm">Restore to the point before…</div><div>  hello</div><div class="hl">  write A      a.txt +1</div><div>  write B      b.txt +1</div><div>  bash C       No code changes</div></div>
+<div id="m2"><div class="dm">Restore to before this message:</div><div>  1 Restore code and conversation</div><div class="hl">  2 Restore conversation</div><div>  3 Restore code</div><div>  4 Summarize from here</div></div>
+</div>
+<div class="call" id="rd" data-in="up" data-f>Duo reads each screen’s words, on both versions, before it presses anything.</div>
+<div class="step dash" id="fb" style="position:absolute;top:112px;height:auto;width:250px" data-in="up" data-f>A screen that doesn’t match? The terminal opens. Duo never guesses.</div>
+<div class="call" id="uf" data-in="up" data-f>Claude’s menu opens in the terminal on that message. You finish it.</div>
+<div class="mlabel" id="lbl" data-in="up">Canvas board 2 · Rewind, the steps</div>
