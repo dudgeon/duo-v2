@@ -10,6 +10,16 @@ public enum ClaudeStorage {
         return FileManager.default.homeDirectoryForCurrentUser.appending(path: ".claude")
     }
 
+    /// `dir` names Claude's default folder, `~/.claude` (a trailing slash, a symlink or `..` aside). Claude Code reads its
+    /// global state from `<CLAUDE_CONFIG_DIR>/.claude.json` when the variable is set and from `~/.claude.json` when it isn't,
+    /// so naming the default folder is not the same to Claude as naming nothing: it finds no onboarding, no theme and no
+    /// trusted folders, and waits on the first-run screens (F-646). Duo treats the two alike and leaves the variable out.
+    public static func isDefaultFolder(_ dir: String, home: URL = FileManager.default.homeDirectoryForCurrentUser) -> Bool {
+        let fm = FileManager.default
+        func real(_ p: String) -> String { URL(fileURLWithPath: p).resolvingSymlinksInPath().standardized.path }
+        return real(dir) == real(home.appending(path: ".claude").path) && fm.fileExists(atPath: home.appending(path: ".claude.json").path)
+    }
+
     public static var projects: URL { root.appending(path: "projects") }
     public static var sessions: URL { root.appending(path: "sessions") }
 
