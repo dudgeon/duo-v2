@@ -421,7 +421,7 @@ extension DuoAction {
               ui: ["Markup", "All Markup", "Simple Markup", "No Markup", "Original", "Show Comments", "Show Closed Comments", "Show Closed Comments"]),
         .init(.docReview, .docs, "[on|off|next|previous]",
               "The Markdown document's Suggest Edits switch (DL-237): on, every change anyone makes becomes a signed suggestion; kept in the file as `suggest-edits: true` in its frontmatter, written only while on. With nothing, says which it is. next and previous select the next or previous suggestion or comment in the document (the review bar's ‹ ›). Edit › Suggest Edits does the same as on and off.",
-              ui: ["Suggest Edits", "Editing", "Suggesting", "Next Change", "Previous Change"]),
+              ui: ["Suggest Edits", "Editing", "Suggesting", "Next Change", "Previous Change", "Next Comment", "Previous Comment"]),
         .init(.docOutline, .docs, "<file.docx> [--json]",
               "A Word document's paragraphs, read from the file (no viewer needed): each with its w14:paraId (the id the viewer draws it under), style and heading level, its text with the tracked changes accepted, its tracked changes (kind, author, date, text) and the comments that end in it (thread, resolved). Then every comment thread. A picked paragraph's Send to Claude names the same ids."),
         .init(.docLayout, .docs, "<file.docx> [--json]",

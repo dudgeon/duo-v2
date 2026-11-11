@@ -444,6 +444,7 @@ window.__duo = {
   margin(on, showClosed) { document.body.classList.toggle('margin', !!on); document.body.classList.toggle('show-closed', !!showClosed); return true; },
   marginSet(list) { marginThreads = list || []; applyMarginAnchors(); return true; },
   anchors: marginAnchors,
+  setHover(id) { for (const e of host.querySelectorAll('[data-thread]')) e.classList.toggle('duo-hot', !!id && e.dataset.thread === id); return true; },
   setActive(id) { for (const e of host.querySelectorAll('[data-thread]')) e.classList.toggle('duo-active', !!id && e.dataset.thread === id); return true; },
   // What is on screen, from the DOM (redraw-blank.md): the visible container, its slides and their sizes.
   probe: (find) => {

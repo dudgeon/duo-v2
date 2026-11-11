@@ -126,6 +126,9 @@ public final class DocxViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
             }
         }
         office.scrollTo = { [weak self] y in self?.webView.callAsyncJavaScript("scrollTo(0, y)", arguments: ["y": y], in: nil, in: .page, completionHandler: nil) }
+        office.hoverAnchor = { [weak self] id in
+            self?.webView.callAsyncJavaScript("return __duo.setHover(t)", arguments: ["t": id as Any], in: nil, in: .page, completionHandler: nil)
+        }
         office.lightAnchor = { [weak self] id in
             self?.activeThread = id
             self?.office.activeID = id

@@ -24,9 +24,9 @@
   body.picking #host [data-duo-shape-id] { cursor: default; }
   /* DL-337: what a comment is on, as Markdown draws it: text in commentHighlight (active: commentHighlightActive), a shape outlined, the slide's number boxed. */
   body.margin mark.duo-comment { background: var(--duo-comment-highlight); color: inherit; cursor: pointer; }
-  body.margin mark.duo-comment.duo-active { background: var(--duo-comment-highlight-active); }
+  body.margin mark.duo-comment.duo-active, body.margin mark.duo-comment.duo-hot { background: var(--duo-comment-highlight-active); }
   body.margin .duo-anchor { outline: 2px solid var(--duo-comment-highlight); outline-offset: 0; cursor: pointer; }
-  body.margin .duo-anchor.duo-active { outline-color: var(--duo-comment-highlight-active); }
+  body.margin .duo-anchor.duo-active, body.margin .duo-anchor.duo-hot { outline-color: var(--duo-comment-highlight-active); }
   body.margin .deck-number.duo-anchor-slide { display: inline-block; align-self: flex-start; padding: 0 5px; border: 1px solid var(--duo-rule); border-radius: 4px; background: var(--duo-pane); cursor: pointer; }
   body.margin .deck-number.duo-anchor-slide.duo-active { border: 1.5px solid var(--duo-text); }
   body.margin mark.duo-comment.duo-closed, body.margin .duo-anchor.duo-closed { background: none; outline: 0; border-bottom: 0; }

@@ -32,7 +32,7 @@ struct DocxView: View {
                             // popover floats over it (the page's own layout, Markdown's; DL-337).
                             HStack(spacing: 0) {
                                 DocxWebHost(viewer: viewer)
-                                if viewer.office.margin.reserve > 0 { Color.clear.frame(width: viewer.office.margin.reserve) }
+                                if viewer.office.margin.reserve > 0 { DuoColor.ground.frame(width: viewer.office.margin.reserve) }
                             }
                             .overlay(alignment: .trailing) {
                                 if viewer.office.margin.width > 0 { PdfMarginHost(margin: viewer.office.margin).frame(width: viewer.office.margin.width) }
@@ -89,10 +89,14 @@ struct DocxBar: View {
             Button("Select Text") { viewer.picking ? viewer.stopPicking() : viewer.startPicking() }   // action: doc pick
                 .buttonStyle(DuoButtonStyle(on: viewer.picking)).fixedSize().disabled(viewer.state != .ready)
             Spacer(minLength: 0)
-            Button { viewer.office.step(-1) } label: { Text("‹") }   // action: doc review
-                .buttonStyle(.duo).disabled(viewer.state != .ready || viewer.office.threads.isEmpty).help("Previous Comment").accessibilityLabel("Previous Comment")
-            Button { viewer.office.step(1) } label: { Text("›") }   // action: doc review
-                .buttonStyle(.duo).disabled(viewer.state != .ready || viewer.office.threads.isEmpty).help("Next Comment").accessibilityLabel("Next Comment")
+            if viewer.office.paneWidth < 420 {
+                OfficeReviewMenu(office: viewer.office, ready: viewer.state == .ready)
+            } else {
+                Button { viewer.office.step(-1) } label: { Text("‹") }   // action: doc review
+                    .buttonStyle(.duo).disabled(viewer.state != .ready || viewer.office.threads.isEmpty).help("Previous Comment").accessibilityLabel("Previous Comment")
+                Button { viewer.office.step(1) } label: { Text("›") }   // action: doc review
+                    .buttonStyle(.duo).disabled(viewer.state != .ready || viewer.office.threads.isEmpty).help("Next Comment").accessibilityLabel("Next Comment")
+            }
             if folded {
                 DocxMoreMenu(path: path, file: file)
             } else {
@@ -252,5 +256,25 @@ struct DocxMoreMenu: View {
         }
         .menuStyle(.button).buttonStyle(.duo).fixedSize()
         .accessibilityLabel("More")
+    }
+}
+
+/// Review ⌄: under 420 the margin is a gutter and the bar has no room for ‹ ›, so Next and Previous Comment and Show Closed Comments
+/// move into one menu, as the Markdown bar's Review ⌄ does (DL-237, board S1b).
+struct OfficeReviewMenu: View {
+    @Bindable var office: OfficeMargin
+    let ready: Bool
+
+    var body: some View {
+        Menu {
+            Button("Next Comment") { office.step(1) }   // action: doc review
+            Button("Previous Comment") { office.step(-1) }   // action: doc review
+            Divider()
+            Toggle("Show Closed Comments", isOn: $office.showClosed)   // action: doc markup
+        } label: {
+            HStack(spacing: 4) { Text("Review"); Image(systemName: "chevron.down").font(.system(size: DuoSymbolSize.chevron, weight: .semibold)) }
+        }
+        .menuStyle(.button).buttonStyle(.duo).fixedSize().disabled(!ready || office.threads.isEmpty)
+        .accessibilityLabel("Review")
     }
 }

@@ -15,7 +15,8 @@ public final class OfficeMargin {
     public var commentsShown = true { didSet { if oldValue != commentsShown { if !commentsShown { cancelCompose() }; push() } } }
     /// "n closed · Show": closed threads drawn folded.
     public var showClosed = false { didSet { if oldValue != showClosed { push(); onShowClosed?(showClosed) } } }
-    @ObservationIgnored public var paneWidth: CGFloat = 1000 { didSet { if oldValue != paneWidth { push() } } }
+    /// Observed: the viewers' bars change under 420 (Review ⌄ in place of ‹ ›).
+    public var paneWidth: CGFloat = 1000 { didSet { if oldValue != paneWidth { push() } } }
     @ObservationIgnored public private(set) var threads: [OfficeComments.Thread] = []
     @ObservationIgnored public var reviewer = NSUserName()
     /// The margin replaces the cards the Word page draws under paragraphs (DL-337); DuoChecks turns this off to check that older layer's logic.
@@ -29,6 +30,8 @@ public final class OfficeMargin {
     @ObservationIgnored public var querySelection: (@escaping (Selection?) -> Void) -> Void = { $0(nil) }
     /// Lights a thread's anchor in the page (the active card's), nil for none.
     @ObservationIgnored public var lightAnchor: (String?) -> Void = { _ in }
+    /// A card under the pointer: its anchor takes the active fill until the pointer leaves.
+    @ObservationIgnored public var hoverAnchor: (String?) -> Void = { _ in }
     @ObservationIgnored public var onShowClosed: ((Bool) -> Void)?
     /// Scrolls the page so an anchor at `y` is in view.
     @ObservationIgnored public var scrollTo: (Double) -> Void = { _ in }

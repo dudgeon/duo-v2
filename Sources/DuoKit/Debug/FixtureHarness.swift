@@ -680,6 +680,8 @@ public enum FixtureHarness {
             if let o = model.visibleOfficeMargins.first { let id = parts.count > 1 ? parts[1] : nil; o.margin.activate(id); o.lightAnchor(id) }
         case "office-width":   // office-width:<points>: the pane width the margin lays out for (under 420 is the narrow gutter)
             model.visibleOfficeMargins.first?.paneWidth = CGFloat(Double(parts.count > 1 ? parts[1] : "") ?? 1000)
+        case "office-hover":   // office-hover:<thread id>|none: the pointer over that card (its anchor lights)
+            model.visibleOfficeMargins.first?.hoverAnchor(parts.count > 1 && parts[1] != "none" ? parts[1] : nil)
         case "office-closed":   // office-closed:on|off: Show Closed Comments
             model.visibleOfficeMargins.first?.showClosed = parts.count > 1 ? parts[1] == "on" : true
         case "office-step": FileHandle.standardError.write(Data("office-step: \(model.visibleOfficeMargins.first?.step(parts.count > 1 && parts[1] == "previous" ? -1 : 1) ?? "none")\n".utf8))

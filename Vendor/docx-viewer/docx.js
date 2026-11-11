@@ -386,6 +386,12 @@ Object.assign(window.__duo, {
     }
     return out;
   },
+  setHover(thread) {
+    const t = thread ? String(thread).replace(/^c/, '') : '';
+    const ids = new Set((window.__duo_comments || []).filter((c) => c.thread === t).map((c) => c.id));
+    for (const m of host.querySelectorAll('mark.duo-comment')) m.classList.toggle('duo-hot', ids.has(m.dataset.commentId));
+    return true;
+  },
   setActive(thread) {
     const t = thread ? String(thread).replace(/^c/, '') : '';
     const ids = new Set((window.__duo_comments || []).filter((c) => c.thread === t).map((c) => c.id));

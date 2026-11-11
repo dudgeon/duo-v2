@@ -35,6 +35,7 @@ extension AppModel {
         case "delete": if let id { officeDelete(o, thread: id, reload: reload) }
         case "showClosed": o.showClosed = body["value"] as? Bool ?? false
         case "active": o.lightAnchor(id)
+        case "hover": o.hoverAnchor(id)
         case "escaped": focus()
         case "send", "retry": if let id { officeSend(o, thread: id) }
         case "pill": officePillMenu(o, thread: id ?? "", x: body["x"] as? Double ?? 0, y: body["y"] as? Double ?? 0)

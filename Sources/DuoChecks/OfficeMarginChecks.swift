@@ -40,6 +40,10 @@ import WebKit
     check(run(wv.webView, "return document.body.classList.contains('margin') && getComputedStyle(document.querySelector('.duo-card')).display") as? String == "none", "with the margin on, the cards under paragraphs are not drawn")
     _ = run(wv.webView, "return __duo.setActive('c0')")
     check((run(wv.webView, "return document.querySelectorAll('mark.duo-comment.duo-active').length") as? Int ?? 0) > 0, "the active card's text is lit")
+    _ = run(wv.webView, "return __duo.setHover('c0')")
+    check((run(wv.webView, "return document.querySelectorAll('mark.duo-comment.duo-hot').length") as? Int ?? 0) > 0, "a card under the pointer lights its text")
+    _ = run(wv.webView, "return __duo.setHover(null)")
+    check(run(wv.webView, "return document.querySelectorAll('mark.duo-comment.duo-hot').length") as? Int == 0, "…and stops when the pointer leaves")
     _ = run(wv.webView, "return __duo.setActive(null)")
     check(run(wv.webView, "return document.querySelectorAll('mark.duo-comment.duo-active').length") as? Int == 0, "…and is not lit when no card is active")
     let none = run(wv.webView, "return __duo.selection()")
@@ -71,6 +75,10 @@ import WebKit
     let shapeID = dv.office.threads.first { $0.anchorKind == "shape" }?.id ?? ""
     _ = run(dv.webView, "return __duo.setActive('\(shapeID)')")
     check(run(dv.webView, "return document.querySelectorAll('.duo-anchor.duo-active').length") as? Int == 1, "the active card lights its shape")
+    _ = run(dv.webView, "return __duo.setHover('\(shapeID)')")
+    check(run(dv.webView, "return document.querySelectorAll('.duo-anchor.duo-hot').length") as? Int == 1, "a card under the pointer lights its shape")
+    _ = run(dv.webView, "return __duo.setHover(null)")
+    check(run(dv.webView, "return document.querySelectorAll('.duo-hot').length") as? Int == 0, "…and stops when the pointer leaves")
     var whole: OfficeMargin.Selection?
     dv.office.querySelection { whole = $0 }
     spin(10) { whole != nil }
