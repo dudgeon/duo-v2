@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="design-size" content="460x1120">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-337">
+<!--
+N · Exceptions to Markdown
+APPROVED BOARD. Geoff, 2026-11-11 (DL-337). Exported from the Design canvas https://claude.ai/artifact/8EpSVPXmKFyayEbBFZU2e3 (board Notes.dc.html, v9),
+rendered to static markup. It is a picture written in HTML: match what it draws, do not port its markup. Names and documents are illustrative.
+-->
+
+<title>Notes: exceptions to Markdown</title>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+:root{--pane:#ffffff;--rule:#c9cdd3;--controlEdge:#8b939c;--text:#1f2328;--text2:#5b636d}
+.ui{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;color:var(--text);font-size:13px;line-height:20px}
+h2{margin:0 0 4px;font:600 14px/20px -apple-system,system-ui,sans-serif}
+.lab{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:var(--text2);margin:16px 0 6px}
+ul{margin:0;padding-left:18px}li{margin-bottom:5px}
+.chg{display:inline-block;padding:0 6px;border-radius:6px;background:#1f2328;color:#fff;font:600 11px/16px -apple-system,system-ui,sans-serif}
+</style>
+</helmet>
+<div class="ui" style="width:460px;height:1120px;box-sizing:border-box;background:var(--pane);border:1px solid var(--rule);padding:20px 24px">
+  <h2>Word and PowerPoint behave as Markdown does <span class="chg">changed</span></h2>
+  <div style="color:var(--text2)">Everything on W1 to W4 and S1 to S2 is the Markdown margin (DL-236, DL-237, DL-251, the markdown-review handoff), in its tokens: reviewAuthor1/2 for people, reviewAuthor3 for Claude, commentHighlight and commentHighlightActive. Same keys: J K, R, ⌘Return, Esc, ‹ ›, ⌥⌘M. Same verbs: Close and Keep, Delete (⌘Z), Reopen. Closed threads hidden by default, “n closed · Show”, Show Closed Comments.</div>
+  <div class="lab">Amends DL-162 <span class="chg">for Geoff</span></div>
+  <ul><li>DL-162 draws Word comments as <b>cards under their paragraph</b>. This replaces that with the margin beside the text (DL-236 8, DL-237), as Markdown does and as DL-162 itself noted (“Word keeps cards until compared”, DL-236). The director records it on approval.</li></ul>
+  <div class="lab">Where the file format forces a difference</div>
+  <ul>
+    <li><b>Who closed it, and when.</b> A file's comment has only done or not (Word's <code>done</code>, PowerPoint's <code>status</code>). Markdown writes a closing line with a name and date. For a thread Duo closes, Duo remembers who and when in its own state; for one closed in Word it shows “Closed” with no name. A reply to a closed thread reopens it (Word clears done on the root).</li>
+    <li><b>Delete and ⌘Z.</b> Delete removes the comment, its replies and its anchor from the file's comment parts. ⌘Z restores them from the backup kept before the write (DL-331), so the file returns exactly; Markdown undoes through the editor's buffer.</li>
+    <li><b>Closed-thread look.</b> Markdown's dotted anchor underline needs an anchor: a PowerPoint comment is on the whole slide, so its “anchor” is the slide's number marker, drawn dotted; a Word comment with no range (a point comment) has none either, and its folded line carries the dotted marker.</li>
+    <li><b>Suggestions.</b> No suggestions of Duo's in a .docx or .pptx (a .docx's tracked changes stay as drawn, read only), so no Suggest Edits switch; the bar holds ‹ › and the Markup menu.</li>
+    <li><b>The bar at 460 (Word).</b> ‹ › need room: Convert to Markdown… and Open With fold into ⋯ ⌄, as the Decks bar folds (DL-305).</li>
+    <li><b>Slides at a 460 pane.</b> The rule is Markdown's: text (here the slide) takes what the margin leaves, 228 at 460. I drew the slide at normal size with the margin at 640 (S1, S2) and the gutter at 400 (S1b), and did not draw a 228 slide. Say if 460 should show something else.</li>
+    <li><b>Legacy PowerPoint comments</b> are read only: cards with no highlight, reply field, Close or Delete.</li>
+  </ul>
+  <div class="lab">PowerPoint anchors: what the format allows, what writing costs <span class="chg">changed</span></div>
+  <ul>
+    <li><b>The format</b> (MS-PPTX, MS-ODRAWXML): a modern comment is anchored to the slide (<code>pc:sldMkLst</code>), a shape (<code>ac:deMkLst</code> with <code>ac:spMk</code>, <code>picMk</code>, <code>graphicFrameMk</code>…) or a character range in a shape (<code>ac:txMkLst</code> with <code>ac:txMk</code> cp and len). Google and LibreOffice: LibreOffice drops modern comments; Google's import is untested (C-179).</li>
+    <li><b>Reading</b> all three anchors is cheap and is built first: the shape's id and name, and the text range, so the margin can draw the highlight and outline.</li>
+    <li><b>Writing a shape anchor</b> needs the shape's id and its <code>a16:creationId</code> GUID (added to the slide's shape if it has none: that touches the slide part), and the slide's <code>p14:creationId</code>. In reach.</li>
+    <li><b>Writing a text anchor</b> adds the character range, which PowerPoint re-finds by an <code>ac:context</code> hash I can't verify without a PowerPoint-written sample [unverified]. <span class="chg">changed</span> <b>So 0.2.28 falls back:</b> a comment “on a run of text” is written on its shape, and the verb says so. A range written by PowerPoint is still read and highlighted. Writing ranges waits for a sample.</li>
+    <li><span class="chg">changed</span> <b>Legacy comments:</b> a slide that has them takes no new modern comment (it would renumber them); the verb says to comment elsewhere or open the deck in PowerPoint once to convert them.</li>
+    <li><b>Keeping anchors valid when the deck changes elsewhere:</b> a shape id can change on copy, a range drifts when the text is edited. Duo never rewrites an anchor on its own. When it can't find one it shows the card with no highlight, as Markdown does for a comment whose text is gone.</li>
+    <li>A comment is on a slide, a shape or a run of text: “a comment on one shape” is <b>no longer Not built</b>.</li>
+  </ul>
+  <div class="lab">Approved by Geoff, 2026-11-11 (DL-337)</div>
+  <ul><li>Word, PowerPoint and Google haven't opened a file Duo wrote (C-179).</li></ul>
+</div>
+</x-dc>
+
+</body>
+</html>

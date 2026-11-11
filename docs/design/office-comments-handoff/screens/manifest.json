@@ -1,0 +1,42 @@
+[
+  {
+    "screen": "word-margin",
+    "size": "460x800",
+    "board": "W1 \u00b7 Word: the margin"
+  },
+  {
+    "screen": "word-composer",
+    "size": "460x800",
+    "board": "W2 \u00b7 Word: the composer and the @ menu"
+  },
+  {
+    "screen": "word-thread",
+    "size": "460x1160",
+    "board": "W3 \u00b7 Word: thread states"
+  },
+  {
+    "screen": "word-closed",
+    "size": "460x800",
+    "board": "W4 \u00b7 Word: Show Closed Comments"
+  },
+  {
+    "screen": "slides-margin",
+    "size": "640x800",
+    "board": "S1 \u00b7 PowerPoint: margin beside the slide (640)"
+  },
+  {
+    "screen": "slides-narrow",
+    "size": "400x800",
+    "board": "S1b \u00b7 PowerPoint: under 420, the gutter"
+  },
+  {
+    "screen": "slides-active",
+    "size": "640x800",
+    "board": "S2 \u00b7 PowerPoint: the active card, closed threads"
+  },
+  {
+    "screen": "notes",
+    "size": "460x1120",
+    "board": "N \u00b7 Exceptions to Markdown"
+  }
+]

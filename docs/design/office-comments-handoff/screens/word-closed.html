@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="design-size" content="460x800">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-337">
+<!--
+W4 · Word: Show Closed Comments
+APPROVED BOARD. Geoff, 2026-11-11 (DL-337). Exported from the Design canvas https://claude.ai/artifact/8EpSVPXmKFyayEbBFZU2e3 (board Word-closed.dc.html, v9),
+rendered to static markup. It is a picture written in HTML: match what it draws, do not port its markup. Names and documents are illustrative.
+-->
+
+<title>Word: Show Closed Comments</title>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+:root{--pane:#ffffff;--rule:#c9cdd3;--controlEdge:#8b939c;--text:#1f2328;--text2:#5b636d;--selected:#e9ecef;--reviewAuthor1:#b0244f;--reviewAuthor2:#1d5fa8;--reviewAuthor3:#2e7a3a;--commentHighlight:#fbe7a1}
+.ui{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;color:var(--text);font-size:13px;line-height:20px}
+.btn{display:inline-flex;align-items:center;height:26px;box-sizing:border-box;padding:4px 10px;border:1px solid var(--controlEdge);border-radius:6px;background:var(--pane);font:12px/16px -apple-system,system-ui,sans-serif;color:var(--text)}
+.card{position:absolute;left:264px;width:180px;box-sizing:border-box;border:1px solid var(--rule);border-radius:6px;background:var(--pane);padding:8px 10px}
+.doc{font:15px/24px Georgia,serif;position:absolute;left:16px;width:228px}
+.dot{border-bottom:1.5px dotted var(--controlEdge)}
+.who{font-weight:600}.dim{color:var(--text2)}
+.p{display:inline-block;margin-left:6px;padding:0 5px;border:1px dashed var(--controlEdge);border-radius:6px;font:11px/16px -apple-system,system-ui,sans-serif;color:var(--text2)}
+.chg{display:inline-block;padding:0 6px;border-radius:6px;background:#1f2328;color:#fff;font:600 11px/16px -apple-system,system-ui,sans-serif}
+.row{padding:3px 10px;border-radius:6px;display:flex;justify-content:space-between}
+</style>
+</helmet>
+<div class="ui" style="width:460px;height:800px;box-sizing:border-box;background:var(--pane);border:1px solid var(--rule);position:relative;overflow:hidden">
+  <div style="height:44px;box-sizing:border-box;padding:0 6px 0 16px;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--rule)">
+    <span class="btn" style="background:var(--selected)">Markup ⌄</span><span class="btn">Select Text</span><span style="flex:1"></span><span class="btn">‹</span><span class="btn">›</span><span class="btn">⋯ ⌄</span>
+  </div>
+  <div style="position:absolute;left:16px;top:48px;width:230px;background:var(--pane);border:1px solid var(--rule);border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.16);padding:5px;z-index:3">
+    <div class="row">All Markup <span>✓</span></div><div class="row">Simple Markup</div><div class="row">No Markup</div><div class="row">Original</div>
+    <div style="border-top:1px solid var(--rule);margin:4px 0"></div>
+    <div class="row">Show Comments <span>✓</span></div><div class="row" style="background:var(--selected)">Show Closed Comments <span>✓</span></div>
+  </div>
+  <div class="doc" style="top:230px">The volunteers planted <span class="dot">forty</span> rows of beans in April.</div>
+  <div class="doc" style="top:302px"><span style="text-decoration:underline">Casey added a third author</span>, and Blake replaced four words.</div>
+  <div class="doc" style="top:390px">Open comments still stand out: closed ones are a dotted line.</div>
+
+  <div class="card" style="top:228px;color:var(--text2)">› Closed · Dana: Is “forty” righ…</div>
+  <div style="position:absolute;left:260px;top:294px;width:192px;box-sizing:border-box;border:1.5px solid var(--text);border-radius:6px;padding:10px;background:var(--pane);color:var(--text2)">
+    Closed by Geoff · 10 Nov<br><span class="who">Morgan Editor</span> · 4 Sep<br>Who is the third author here?
+    <div style="margin:6px 0 0 12px"><span class="who">Casey</span> · 5 Sep<br>It's me.</div>
+    <div style="border:1px solid var(--rule);border-radius:6px;padding:4px 8px;margin-top:8px">Reply to reopen…</div>
+    <div style="display:flex;gap:6px;margin-top:8px;color:var(--text)"><span class="btn">Reopen</span><span class="btn">Delete</span></div>
+  </div>
+  <div style="position:absolute;left:264px;top:500px;color:var(--text2);font-size:12px">2 closed · <u>Hide</u></div>
+
+  <div style="position:absolute;left:16px;right:16px;top:560px;font:12px/16px -apple-system,system-ui,sans-serif;color:var(--text2);border-top:1px dashed var(--controlEdge);padding-top:12px">
+    <span class="chg">changed</span> new board: closed threads shown, as close-shown draws them. <b>Markup › Show Closed Comments</b> (off by default, kept per document while Duo runs) or the foot's Show. A closed card folds to one <b>text2</b> line, “› Closed · name: text”; its anchor is a dotted controlEdge underline, no fill. Opened, it reads in text2 with who closed it and when; Reopen and Delete; a reply reopens it. <span class="p">P</span><br><br>
+    Closing writes done into the file, so “closed by” and when come from Duo's own record of the write, not the file: a thread someone closed in Word shows “Closed” with no name (see N).
+  </div>
+</div>
+</x-dc>
+
+</body>
+</html>

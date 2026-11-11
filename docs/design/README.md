@@ -79,6 +79,7 @@ Start with the **design system**, `system/`. It's also published for Claude Desi
 | `claude-design-handoff.md` | The first brief for Claude Design | Historical |
 | `search-design-brief.md` | The search brief | Historical: answered by `search-handoff/` |
 | `pane-focus-handoff/` | Which pane has the keyboard, ⌥⌘←/→ between panes, ⌃Tab through the active pane's tabs (DL-165): 4 targets, 15 canvas boards (looks A–D in light and dark) | Provisional target (Geoff confirms on a desktop, Q-165, Q-166); built (F-257) |
+| `office-comments-handoff/` | Word and PowerPoint comments in the Markdown margin, with anchors on text, shapes and slides (DL-337, Q-494): 8 canvas boards; board N lists the exceptions to Markdown | Approved by Geoff 2026-11-11; built |
 | `legacy-requirements.md` | Requirements carried from legacy Duo (LR-n) | Reference; some revised by DL-n |
 | `stack-recommendation.md` | The technical stack | Reference; amended by DL-n |
 | `collisions.md` | Live edits against changes on disk (DL-77) | Current (behaviour, not look) |
