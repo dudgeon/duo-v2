@@ -190,11 +190,9 @@ public enum DuoMetric {
     public static let jumpFieldHeight: CGFloat = 24.0
     public static let newProjectTileHeight: CGFloat = 38.0
     public static let glyph: CGFloat = 9.0
-    public static let paneOverviewHome: CGFloat = 340.0
     public static let paneOverviewActionColumn: CGFloat = 340.0
     public static let paneProjectLeft: CGFloat = 300.0
     public static let paneProjectRight: CGFloat = 460.0
-    public static let paneMinHome: CGFloat = 280.0
     public static let paneMinActionColumn: CGFloat = 300.0
     public static let paneMinSessionsAndFiles: CGFloat = 240.0
     public static let paneMinRight: CGFloat = 360.0

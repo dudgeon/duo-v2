@@ -45,11 +45,7 @@ public final class AppModel {
         didSet { if altitude != .allProjects, idleOpen { idleOpen = false; IdleKeys.remove() } }
     }
 
-    /// The left pane is collapsed independently at each altitude (handoff §3.1).
-    /// All projects' left sidebar starts closed until the person opens or closes it themselves
-    /// (`leftTouchedAllProjects`); a project's starts open (DL-315).
-    public var leftCollapsedAllProjects = true
-    public var leftTouchedAllProjects = false
+    /// A project's left pane (handoff §3.1). All projects has none (DL-336).
     public var leftCollapsedProject = false
     /// The right pane hidden (DL-129): the action column at All projects, the document pane in a project.
     public var rightCollapsedAllProjects = false
@@ -186,11 +182,9 @@ public final class AppModel {
     public var peekSelection: String?
     /// The session last opened inside a project; selected again on zooming out (flow-zoom-4).
     public var lastVisitedSession: String?
-    /// Asks the Home terminal to take keyboard focus (consumed by the Home pane).
-    public var focusHomeRequest = 0
     /// The pane that has the keyboard's attention at each altitude (DL-165); `activePane` reads the one on screen.
     public var activePaneProject: DuoPane = .middle
-    public var activePaneAllProjects: DuoPane = .left
+    public var activePaneAllProjects: DuoPane = .middle
 
     /// Voice input (DL-260): one dictation at a time, into a chat composer or a terminal's prompt.
     /// One for the app (the core's), wired by the first window that asks.
@@ -388,7 +382,7 @@ public final class AppModel {
     /// The session whose terminal is on screen now.
     var visibleSessionId: String? {
         switch altitude {
-        case .allProjects: return homeTab
+        case .allProjects: return nil   // no console at All projects (DL-336)
         case .project: return consoleTab
         }
     }
@@ -717,10 +711,8 @@ public final class AppModel {
     }
 
     public var leftCollapsed: Bool {
-        get { altitude.isAllProjects ? leftCollapsedAllProjects : leftCollapsedProject }
-        set {
-            if altitude.isAllProjects { leftCollapsedAllProjects = newValue; leftTouchedAllProjects = true } else { leftCollapsedProject = newValue }
-        }
+        get { altitude.isAllProjects ? true : leftCollapsedProject }
+        set { if !altitude.isAllProjects { leftCollapsedProject = newValue } }
     }
 
     /// The toolbar's right-pane button, ⌥⌘0 and `duo2 view right` (DL-129), for the altitude on screen.
@@ -810,11 +802,10 @@ public final class AppModel {
         focusedTile = nil
     }
 
-    /// `⇧⌘H`: All projects with the Home terminal focused.
+    /// `⇧⌘H`: Home's page, on the session that needs you, else the one it was last on (DL-336).
     public func goHome() {
-        zoomOut()
-        if let s = fixture.needsYou.first(where: { $0.project == fixture.home?.name }) { homeTab = s.tabKey }
-        focusHome()
+        guard let home = fixture.home?.name else { return }
+        open(project: home, session: fixture.needsYou.first(where: { $0.project == home })?.name)
     }
 
     /// `⌘↩` in the peek: jump into the selected card's project, on that session.

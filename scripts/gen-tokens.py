@@ -127,7 +127,6 @@ w(f"    public static let jumpFieldWidth: CGFloat = {num(s['jumpField']['width']
 w(f"    public static let jumpFieldHeight: CGFloat = {num(s['jumpField']['height'])}")
 w(f"    public static let newProjectTileHeight: CGFloat = {num(s['newProjectTileHeight'])}")
 w(f"    public static let glyph: CGFloat = {num(s['glyph'])}")
-w(f"    public static let paneOverviewHome: CGFloat = {num(s['pane']['overview']['home'])}")
 w(f"    public static let paneOverviewActionColumn: CGFloat = {num(s['pane']['overview']['actionColumn'])}")
 w(f"    public static let paneProjectLeft: CGFloat = {num(s['pane']['project']['sessionsAndFiles'])}")
 w(f"    public static let paneProjectRight: CGFloat = {num(s['pane']['project']['right'])}")

@@ -20,13 +20,10 @@ import Foundation
     check(TerminalSlotProof.homePage(homeFirst: true, old: true)[1] == "none", "the old rule leaves Home's column empty back at All projects")
     check(TerminalSlotProof.twoWindows(old: false), "two windows on one session: the second console keeps the view when the first is updated again (C-43)")
 
-    // The Needs you card for a Home session ("← Waiting in the Home terminal") points at Home's column, which starts
-    // closed (DL-315). Its click chose the tab and bumped a counter nothing read: nothing happened on screen.
-    print("Home's Needs you card opens Home's column (F-640)")
+    // A Home session's Needs you card is an ordinary card and opens Home's page on that session (DL-336).
+    print("Home's Needs you card opens Home's page (DL-336)")
     let m = AppModel(fixture: try repoFixture())
-    check(m.altitude == .allProjects && m.leftCollapsedAllProjects, "All projects starts with Home's column closed (DL-315)")
+    check(m.altitude == .allProjects && m.leftCollapsed && m.visiblePanes() == [.middle, .right], "All projects has no left pane: the middle and the action column")
     m.showHomeSession("Morning triage")
-    check(m.homeTab == "Morning triage" && !m.leftCollapsedAllProjects, "the card's click chooses the session's tab and opens Home's column")
-    check(m.activePane == .left && m.focusHomeRequest == 1, "and Home's column is the active pane, asked for the keyboard")
-    check(!m.leftTouchedAllProjects, "opening it this way isn't the person's own toggle (DL-315's flag stays off)")
+    check(m.altitude == .project(m.fixture.home?.name ?? "") && m.consoleTab == "Morning triage", "the card's click opens Home's page with the session selected")
 }
