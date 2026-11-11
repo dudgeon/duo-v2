@@ -124,24 +124,36 @@ import Foundation
     check(pd2.changed.filter { $0.hasPrefix("ppt/slides/slide") && $0.hasSuffix(".xml") } == ["ppt/slides/slide2.xml"] && !pd2.changed.contains("ppt/presentation.xml") && !pd2.changed.contains { $0.contains("slideLayout") }, "only the commented slide, and no layout or the presentation part, was touched")
 
     // MARK: PowerPoint anchors (DL-337): a shape and a run of text, written and read back
-    let slide3 = try Pptx.outline(pptx, slide: 3).first!
+    let slide3 = try Pptx.outline(pptx, slide: 4).first!
     let textShape = slide3.shapes.first { ($0.text ?? "").count > 4 && $0.type == "shape" }
-    check(textShape != nil, "the fixture's slide 3 has a text shape to anchor to")
+    check(textShape != nil, "the fixture's slide 4 has a text shape to anchor to")
     if let sh = textShape, let shText = sh.text {
         let word = String(shText.split(separator: " ").first { $0.count > 3 } ?? Substring(shText.prefix(4)))
-        let onShape = try OfficeComments.add(pptx, at: "3/\(sh.id)", author: "geoff-q", text: "About this box", now: now)
-        let onText = try OfficeComments.add(pptx, at: "3/\(sh.name)/\(word)", author: "claude", text: "About this word", now: now)
+        let onShape = try OfficeComments.add(pptx, at: "4/\(sh.id)", author: "geoff-q", text: "About this box", now: now)
+        let onText = try OfficeComments.add(pptx, at: "4/\(sh.name)/\(word)", author: "claude", text: "About this word", now: now)
         let ts = try OfficeComments.threads(pptx)
         let a = ts.first { $0.id == onShape.id }, b = ts.first { $0.id == onText.id }
         check(a?.anchorKind == "shape" && a?.shapeId == "\(sh.id)" && a?.shapeName == sh.name && a?.anchorLost == false, "a comment on a shape reads back as that shape (\(a?.anchorKind ?? "?"), \(a?.shapeName ?? "?"))")
-        check(b?.anchorKind == "text" && b?.anchor == word && b?.rangeStart != nil && b?.rangeLength == (word as NSString).length && b?.anchorLost == false, "a comment on a run of text reads back as that text and range")
+        check(b?.anchorKind == "shape" && b?.shapeId == "\(sh.id)" && onText.summary.contains("on the whole shape"), "a run of text falls back to its shape, and says so (the range isn't verified against PowerPoint)")
+        // Reading a range anchor written elsewhere still works: turn the shape comment into a text one in the file and read it.
+        if let ap = a, let part = try changed(pptx0, pptx).added.first(where: { $0.contains("modernComment_102") }) ?? changed(pptx0, pptx).added.first, ap.anchorKind == "shape" {
+            var xml = String(decoding: try Pptx.Zip(pptx).read(part) ?? Data(), as: UTF8.self)
+            xml = xml.replacingOccurrences(of: "<ac:deMkLst", with: "<ac:txMkLst").replacingOccurrences(of: "</ac:deMkLst>", with: "<ac:txMk cp=\"0\" len=\"4\"/></ac:txMkLst>")
+            let hand = scratch.appending(path: "Hand.pptx")
+            try OfficeZip.patch(Data(contentsOf: pptx), changes: [part: Data(xml.utf8)]).write(to: hand)
+            let ht = try OfficeComments.threads(hand).first { $0.anchorKind == "text" }
+            check(ht != nil && ht?.anchor == String(shText.prefix(4)) && ht?.rangeStart == 0 && ht?.rangeLength == 4 && ht?.anchorLost == false, "a text range anchor written by PowerPoint reads back as its characters")
+        }
+        // A slide with legacy comments is refused, so no thread id shifts
+        check((try? OfficeComments.add(pptx, at: "3", author: "x", text: "y")) == nil, "a comment on a slide with legacy comments is refused: it would renumber them")
+        check(OfficeComments.refusal(pptx, at: "3")?.contains("legacy PowerPoint comments") == true, "…and the message says why and what to do")
         check(ts.first { $0.id == "s2c1" }?.anchorKind == "slide", "a comment on the slide stays a slide comment")
-        let slidePart = String(decoding: try Pptx.Zip(pptx).read("ppt/slides/slide3.xml") ?? Data(), as: UTF8.self)
+        let slidePart = String(decoding: try Pptx.Zip(pptx).read("ppt/slides/slide4.xml") ?? Data(), as: UTF8.self)
         check(slidePart.contains("a16:creationId") && slidePart.contains("p14:creationId"), "the slide and the shape get creation ids the monikers name")
         let d3 = try changed(pptx0, pptx)
-        check(d3.changed.contains("ppt/slides/slide3.xml") && !d3.changed.contains("ppt/presentation.xml") && !d3.changed.contains("ppt/slideLayouts/slideLayout10.xml"), "writing an anchor changes the slide's own part and no other slide, layout or presentation part")
-        check((try? OfficeComments.add(pptx, at: "3/\(sh.name)/zzzz-not-there", author: "x", text: "y")) == nil, "a text that isn't in the shape is refused")
-        check((try? OfficeComments.add(pptx, at: "3/no-such-shape", author: "x", text: "y")) == nil, "a shape that isn't on the slide is refused")
+        check(d3.changed.contains("ppt/slides/slide4.xml") && !d3.changed.contains("ppt/presentation.xml") && !d3.changed.contains("ppt/slideLayouts/slideLayout10.xml"), "writing an anchor changes the slide's own part and no other slide, layout or presentation part")
+        check((try? OfficeComments.add(pptx, at: "4/\(sh.name)/zzzz-not-there", author: "x", text: "y")) == nil, "a text that isn't in the shape is refused")
+        check((try? OfficeComments.add(pptx, at: "4/no-such-shape", author: "x", text: "y")) == nil, "a shape that isn't on the slide is refused")
         check((try? OfficeComments.add(pptx, at: "banana", author: "x", text: "y")) == nil, "an --at that names no slide is refused")
     }
 

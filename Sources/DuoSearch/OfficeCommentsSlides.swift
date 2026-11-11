@@ -165,12 +165,17 @@ extension OfficeComments {
         static func add(_ zip: Pptx.Zip, _ files: inout [String: Data], at: String, author: String, text: String, now: Date) throws -> Written {
             let spec = try Anchors.parse(at)
             let s = try slide(zip, number: spec.slide)
+            // A modern comment on a slide with legacy ones would renumber them (modern threads number first), and a thread id must
+            // stay what it was: refuse, and say what to do (DL-337, the director's must-fix).
+            if (try relsFile(zip, s.part)).contains(where: { $0.type == relLegacy }) {
+                throw Failure("slide \(s.number) has legacy PowerPoint comments, which Duo reads but doesn't write; adding a comment there would renumber them. Comment on another slide, or open the deck in PowerPoint once so it converts them to modern comments")
+            }
             var edit = Edit()
             let aid = authorID(zip, &files, &edit, name: author)
             var slideXML = string(try zip.read(s.part)) ?? ""
             let original = slideXML
             let cId = Anchors.slideCreationId(&slideXML)
-            var shape: Anchors.Shape?, shapeCid: String?, cp: Int?, len: Int?
+            var shape: Anchors.Shape?, shapeCid: String?, cp: Int?, len: Int?, fellBack = false
             if let key = spec.shape {
                 let sh = try Anchors.pick(Anchors.shapes(zip, part: s.part), key, slide: s.number)
                 shape = sh
@@ -182,7 +187,9 @@ extension OfficeComments {
                     guard ns.range(of: t, range: NSRange(location: first.location + first.length, length: ns.length - first.location - first.length)).location == NSNotFound else {
                         throw Failure("“\(t)” appears more than once in \(sh.name.isEmpty ? "shape \(sh.id)" : sh.name): name a longer piece of text")
                     }
-                    cp = first.location; len = first.length
+                    // The range PowerPoint would read back (cp and len, and the hash it re-finds text by) can't be checked here without a
+                    // PowerPoint-written sample, so the comment goes on the shape and says so; reading a range anchor still works (C-179, F-654).
+                    cp = nil; len = nil; fellBack = true
                 }
             }
             if slideXML != original { files[s.part] = Data(slideXML.utf8) }
@@ -206,7 +213,9 @@ extension OfficeComments {
             }
             try commit(zip, &files, edit)
             let n = (try? read(zip).filter { $0.id.hasPrefix("s\(s.number)c") && !$0.legacy }.count).map { $0 + 1 } ?? 1
-            return Written(id: "s\(s.number)c\(n)", summary: "Commented in \(display(author))'s name on slide \(s.number) (thread s\(s.number)c\(n)).")
+            let where_ = shape.map { $0.name.isEmpty ? "shape \($0.id)" : $0.name } ?? "the slide"
+            return Written(id: "s\(s.number)c\(n)", summary: "Commented in \(display(author))'s name on slide \(s.number)" + (shape == nil ? "" : ", on \(where_)") + " (thread s\(s.number)c\(n))."
+                + (fellBack ? " A run of text can't be anchored yet (the range isn't verified against PowerPoint): the comment is on the whole shape." : ""))
         }
 
         /// Finds thread `id` (`s3c1`): its slide, comments part and the position of its `<p188:cm`.

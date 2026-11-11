@@ -94,6 +94,12 @@ public enum OfficeComments {
         }
     }
 
+    /// The reason `add` would refuse `at`, without writing anything (for the checks).
+    public static func refusal(_ url: URL, at: String) -> String? {
+        do { _ = try write(url, backups: nil, dryRun: true) { zip, files in try Slides.add(zip, &files, at: at, author: "x", text: "x", now: Date()) }; return nil }
+        catch { return "\(error)" }
+    }
+
     /// Delete a thread (DL-337): the comment, its replies and its anchors go from the file's comment parts.
     public static func delete(_ url: URL, thread: String, backups: URL? = nil) throws -> Written {
         try write(url, backups: backups) { zip, files in
@@ -117,7 +123,7 @@ public enum OfficeComments {
         return Written(id: "", summary: "Restored \(url.lastPathComponent) to how it was before the last comment change.")
     }
 
-    static func write(_ url: URL, backups: URL?, _ make: (Pptx.Zip, inout [String: Data]) throws -> Written) throws -> Written {
+    static func write(_ url: URL, backups: URL?, dryRun: Bool = false, _ make: (Pptx.Zip, inout [String: Data]) throws -> Written) throws -> Written {
         let original = try Data(contentsOf: url)
         let zip = try Pptx.Zip(url)
         var files: [String: Data] = [:]
@@ -132,6 +138,7 @@ public enum OfficeComments {
             let prior = (try? String(contentsOf: journal, encoding: .utf8)) ?? ""
             try (prior + b.lastPathComponent + "\n").write(to: journal, atomically: true, encoding: .utf8)
         }
+        if dryRun { return w }
         let patched = try OfficeZip.patch(original, changes: files)
         guard (try? Pptx.Zip(patchedData: patched)) != nil else { throw Failure("the changed file didn't read back; nothing was written") }
         try patched.write(to: url, options: .atomic)
