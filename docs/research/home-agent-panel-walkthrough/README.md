@@ -9,4 +9,4 @@ The Home agent panel study (`../home-agent-panel.md`), narrated by Duo's house v
 
 Sketches are on the canvas https://claude.ai/artifact/PBJttSgB17RzCn8WQQo6sF (boards C1, C2, A, B, D2; sources in `docs/design/home-agent-panel-study/`).
 
-Rebuild with `node ~/.claude/skills/decision-walkthrough/build.mjs spec.json` (only changed lines are re-voiced, under the GPU lock; `.cache/` is not committed). The director publishes the final page (DL-166), so answers reach director-duo-v2.
+Rebuild with `node ~/.claude/skills/decision-walkthrough/build.mjs spec.json` (only changed lines are re-voiced, under the GPU lock; `.cache/` is not committed). The director publishes the final page (DL-166), so answers reach director-duo-v2. A worker's draft is at https://claude.ai/artifact/L3Pd83Fhyf4HjQcfvTuZct.

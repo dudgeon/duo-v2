@@ -1,5 +1,5 @@
-desktop after play: {"cur":0,"t":3.994299999618524,"mode":"intro","cap":"This is the study of Home's agent panel, and it ends in five decisions."}
-desktop option playing: {"mode":"option","t":2.4939999997138997}
+desktop after play: {"cur":0,"t":3.970321,"mode":"intro","cap":"This is the study of Home's agent panel, and it ends in five decisions."}
+desktop option playing: {"mode":"option","t":2.429508}
 desktop saved: Saved on this page. Copy decisions sends it by hand.
 desktop after save, chapter 4
 desktop copy button: Copied
@@ -16,10 +16,10 @@ Q-488 (q488-floor) Questions in a narrow pane: not answered
 
 Research: https://github.com/dudgeon/duo-v2/blob/research/home-agent-panel/docs/research/home-agent-panel.md
 desktop horizontal overflow px: 0
-desktop targets under 40px: ["● Shape 21x44","● Launch 33x44","● Migration 38x44","● Sidebar 35x44"]
+desktop targets under 40px: ["● Shape 21x44","● Launch 35x44","● Migration 33x44","● Sidebar 36x44"]
 desktop errors: []
-phone after play: {"cur":0,"t":3.9967000000953616,"mode":"intro","cap":"This is the study of Home's agent panel, and it ends in five decisions."}
-phone option playing: {"mode":"option","t":2.4934999999046323}
+phone after play: {"cur":0,"t":3.970475,"mode":"intro","cap":"This is the study of Home's agent panel, and it ends in five decisions."}
+phone option playing: {"mode":"option","t":2.422889}
 phone saved: Saved on this page. Copy decisions sends it by hand.
 phone after save, chapter 4
 phone copy button: Copied
@@ -36,5 +36,5 @@ Q-488 (q488-floor) Questions in a narrow pane: not answered
 
 Research: https://github.com/dudgeon/duo-v2/blob/research/home-agent-panel/docs/research/home-agent-panel.md
 phone horizontal overflow px: 0
-phone targets under 40px: ["Why now 69x30","Costs 86x30","Options 60x30","● Shape 8x30","● Launch 12x30","● Migration 14x30","● Sidebar 13x30","● Narrow 26x30","Done 24x30"]
+phone targets under 40px: ["Why now 65x30","Costs 88x30","Options 63x30","● Shape 8x30","● Launch 13x30","● Migration 12x30","● Sidebar 13x30","● Narrow 27x30","Done 22x30"]
 phone errors: []

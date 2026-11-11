@@ -24,7 +24,7 @@
   { "id": "why", "title": "Why now", "short": "Why now", "sceneFile": "scenes/why.html",
     "lines": [
       { "text": "This is the study of Home's agent panel, and it ends in five decisions.", "cues": [ { "on": "Home's agent", "do": "camera", "x": 110, "y": 150, "z": 1.5 } ] },
-      { "text": "Home's agent is the Claude session in this left column at All projects.", "cues": [ { "at": 0, "do": "camera" }, { "on": "left column", "do": "focus", "sel": "#hc" } ] },
+      { "text": "The Claude session in this left column at All projects is Home's agent.", "cues": [ { "at": 0, "do": "camera" }, { "on": "left column", "do": "focus", "sel": "#hc" } ] },
       { "text": "On November third you said you weren't sure most people would use it, and that we were building strange workarounds for it.", "cues": [ { "on": "November", "do": "show", "sel": "#q1" }, { "on": "November", "do": "focus", "sel": "#q1", "soft": true } ] },
       { "text": "Today, after Oliver's black terminal, you asked for options: gate it in Settings, or make starting it a deliberate act.", "cues": [ { "on": "Today", "do": "show", "sel": "#q2" }, { "on": "Today", "do": "focus", "sel": "#q2", "soft": true }, { "on": "deliberate", "do": "unfocus" } ] }
     ] },
@@ -66,11 +66,11 @@
     "look": [ { "label": "F-648's capture (canvas board 00 summarises it)", "url": "https://claude.ai/artifact/PBJttSgB17RzCn8WQQo6sF" } ],
     "sceneFile": "scenes/q499.html",
     "lines": [
-      { "text": "Whichever you pick, should Duo still start Home's Claude at launch?", "cues": [ { "on": "at launch", "do": "show", "sel": "#proc" }, { "on": "at launch", "do": "show", "sel": "#lab" } ] }
+      { "text": "Whichever you pick, should Duo still start a Home session at launch?", "cues": [ { "on": "at launch", "do": "show", "sel": "#proc" }, { "on": "at launch", "do": "show", "sel": "#lab" } ] }
     ],
     "options": [
       { "id": "first-use", "label": "No: start it on first use", "desc": "Home's page shows Start Claude in Home; the list's New session row starts one. Reverses DL-54.", "recommended": true,
-        "lines": [ { "text": "I recommend no. Start it on first use. Home's page shows Start Claude in Home, and the list's New session row starts one.", "cues": [ { "on": "first use", "do": "hide", "sel": "#proc" }, { "on": "Start Claude", "do": "show", "sel": "#start" }, { "on": "Start Claude", "do": "focus", "sel": "#start", "soft": true } ] } ] },
+        "lines": [ { "text": "I recommend no. Duo waits until it's first used. Home's page shows Start Claude in Home, and the list's New session row starts one.", "cues": [ { "on": "first used", "do": "hide", "sel": "#proc" }, { "on": "Start Claude", "do": "show", "sel": "#start" }, { "on": "Start Claude", "do": "focus", "sel": "#start", "soft": true } ] } ] },
       { "id": "keep", "label": "Yes: keep DL-54", "desc": "Home's agent is always ready, out of sight.",
         "lines": [ { "text": "Or keep DL-54, and Home's agent is always ready, out of sight.", "cues": [ { "at": 0, "do": "focus", "sel": "#proc", "soft": true } ] } ] }
     ] },
@@ -100,7 +100,7 @@
       { "id": "hide", "label": "Hidden at All projects", "desc": "The button and ⌃⌘S go there; duo2 view sidebar says All projects has no sidebar.", "recommended": true,
         "lines": [ { "text": "I recommend hiding it there, with ⌃⌘S. duo2 says there's no sidebar.", "cues": [ { "at": 0, "do": "cursor-off" }, { "on": "hiding", "do": "state", "value": "c" } ] } ] },
       { "id": "keep", "label": "Keep it for a projects sidebar later", "desc": "ENH-146; needs its own design.",
-        "lines": [ { "text": "Or keep it for a projects sidebar later, which needs its own design.", "cues": [ { "at": 0, "do": "cursor-off" }, { "on": "keep", "do": "focus", "sel": "#sbb" } ] } ] }
+        "lines": [ { "text": "Or keep it for a sidebar of projects later, which needs its own design.", "cues": [ { "at": 0, "do": "cursor-off" }, { "on": "keep", "do": "focus", "sel": "#sbb" } ] } ] }
     ] },
   { "id": "q488-floor", "kind": "decision", "q": "Q-488", "title": "Questions in a narrow pane", "short": "Narrow",
     "ask": "How should chat stop falling back on questions in a narrow pane?",
