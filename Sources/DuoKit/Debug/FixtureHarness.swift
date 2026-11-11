@@ -479,6 +479,17 @@ public enum FixtureHarness {
                 return "window: \(Int(w.frame.width))x\(Int(w.frame.height)), min \(Int(m.width))x\(Int(m.height))"
             } ?? "window: none"
             FileHandle.standardError.write(Data((model.splitReport() + "\n" + size + "\n").utf8))
+        case "duo2":   // duo2:<verb and arguments, "double quotes" group words>: the control plane's verb as `duo2` runs it; its answer goes to stderr (captures of PDF states)
+            var words: [String] = [], word = "", quoted = false
+            for c in parts.count > 1 ? parts[1] : "" {
+                if c == "\"" { quoted.toggle() } else if c == " ", !quoted { if !word.isEmpty { words.append(word); word = "" } } else { word.append(c) }
+            }
+            if !word.isEmpty { words.append(word) }
+            guard let verb = words.first else { break }
+            let line = parts[1]
+            model.handle(ControlRequest(token: "", command: verb, args: Array(words.dropFirst()), session: nil, cwd: model.projectFolder?.path)) { r in
+                FileHandle.standardError.write(Data("duo2 \(line): \(r.ok ? "ok" : "FAILED") \(r.output)\n".utf8))
+            }
         case "doc": if parts.count > 1 { model.openDocument(parts[1]) }   // doc:<path>: a document tab, as the file tree opens it
         case "convert": if parts.count > 1 { model.convertToMarkdown(parts[1]) }   // convert:<docx>: the bar's Convert to Markdown (DL-123)
         case "converting":   // converting:<docx>: hold the progress bar (C) as drawn, for a capture

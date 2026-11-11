@@ -48,13 +48,14 @@ struct PdfBar: View {
             bar(long: false, find: true, zoom: true)
             bar(long: false, find: false, zoom: true)
             bar(long: false, find: false, zoom: false)
+            bar(long: false, find: false, zoom: false, open: false)
         }
         .padding(.horizontal, DuoMetric.noticePaddingX)
         .frame(height: DuoMetric.deckBarHeight)
         .overlay(alignment: .bottom) { DuoColor.rule.frame(height: DuoMetric.borderHairline) }
     }
 
-    private func bar(long: Bool, find: Bool, zoom: Bool) -> some View {
+    private func bar(long: Bool, find: Bool, zoom: Bool, open: Bool = true) -> some View {
         let ready = viewer.state == .ready
         return HStack(spacing: DuoSpace.gapButtonToButton) {
             Button { viewer.go(viewer.page - 1) } label: { Text("‹") }   // action: pdf page
@@ -85,7 +86,7 @@ struct PdfBar: View {
             Button("Comments") { viewer.commentsOpen.toggle() }   // action: pdf comments-panel
                 .buttonStyle(DuoButtonStyle(on: viewer.commentsOpen)).disabled(!ready).fixedSize()
                 .accessibilityIdentifier("pdf.comments")
-            if long || !find { OpenWithMenu(path: path, file: file, bordered: true) }
+            if open, long || !find { OpenWithMenu(path: path, file: file, bordered: true) }
         }
     }
 }
@@ -173,7 +174,7 @@ struct PdfThreadCard: View {
                     Text(c.text).duoText(.body).fixedSize(horizontal: false, vertical: true)
                 }
             }
-            if let send { Text("Claude: \(send)").duoText(.pill).foregroundStyle(DuoColor.text2) }
+            if let send { Text(send == "Claude replied" ? send : "Claude: \(send)").duoText(.pill).foregroundStyle(DuoColor.text2) }
             VStack(alignment: .leading, spacing: DuoSpace.gapButtonToButton) {
                 HStack(spacing: DuoSpace.gapButtonToButton) {
                     Button("Reply") { model.askPdfReply(viewer, thread: thread.id) }.buttonStyle(.duo)   // action: comment reply
