@@ -1,0 +1,34 @@
+{
+ "note": "Publish with the Artifact tool: file_path = <this folder>/index.html, root = this folder, files = the map below, capabilities as below, icon 'play'. The director publishes the final page (DL-166).",
+ "file_path": "index.html",
+ "root": ".",
+ "files": {
+  "audio/why.mp3": "audio/why.mp3",
+  "audio/costs.mp3": "audio/costs.mp3",
+  "audio/options.mp3": "audio/options.mp3",
+  "audio/q498-shape.mp3": "audio/q498-shape.mp3",
+  "audio/q498-shape--c-page.mp3": "audio/q498-shape--c-page.mp3",
+  "audio/q498-shape--a-switch.mp3": "audio/q498-shape--a-switch.mp3",
+  "audio/q498-shape--b-start.mp3": "audio/q498-shape--b-start.mp3",
+  "audio/q498-shape--d-fit.mp3": "audio/q498-shape--d-fit.mp3",
+  "audio/q499-launch.mp3": "audio/q499-launch.mp3",
+  "audio/q499-launch--first-use.mp3": "audio/q499-launch--first-use.mp3",
+  "audio/q499-launch--keep.mp3": "audio/q499-launch--keep.mp3",
+  "audio/q500-migrate.mp3": "audio/q500-migrate.mp3",
+  "audio/q500-migrate--note.mp3": "audio/q500-migrate--note.mp3",
+  "audio/q500-migrate--line.mp3": "audio/q500-migrate--line.mp3",
+  "audio/q501-sidebar.mp3": "audio/q501-sidebar.mp3",
+  "audio/q501-sidebar--hide.mp3": "audio/q501-sidebar--hide.mp3",
+  "audio/q501-sidebar--keep.mp3": "audio/q501-sidebar--keep.mp3",
+  "audio/q488-floor.mp3": "audio/q488-floor.mp3",
+  "audio/q488-floor--floor-60.mp3": "audio/q488-floor--floor-60.mp3",
+  "audio/q488-floor--matcher.mp3": "audio/q488-floor--matcher.mp3",
+  "audio/q488-floor--leave.mp3": "audio/q488-floor--leave.mp3",
+  "audio/wrap.mp3": "audio/wrap.mp3",
+  "assets/f648-launch.jpg": "assets/f648-launch.jpg"
+ },
+ "capabilities": {
+  "db": {},
+  "comments": {}
+ }
+}
