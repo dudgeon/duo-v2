@@ -13,7 +13,7 @@ import PDFKit
 
 // MARK: Fixtures
 
-private func cgFixture(_ url: URL, encrypted: Bool = false) {
+func cgFixture(_ url: URL, encrypted: Bool = false) {
     var box = CGRect(x: 0, y: 0, width: 612, height: 792)
     var aux: [CFString: Any] = [:]
     if encrypted { aux[kCGPDFContextUserPassword] = "user"; aux[kCGPDFContextOwnerPassword] = "owner" }
@@ -316,4 +316,5 @@ private func xrefStreamPDF() -> Data {
     check(png.starts(with: [0x89, 0x50, 0x4E, 0x47]) && rep?.pixelsWide == 600 && rep?.pixelsHigh == 776, "pdf render makes a 600 px wide PNG of a page")
     check((try? PdfRead.render(fresh, page: 5)) == nil, "…and refuses a page that isn't there")
     check(DuoAction.all.contains { $0.id == .pdfRender } && ActionID.pdfRender.action.args.contains("<page>"), "pdf render is an action in the registry")
+    try pdfViewerChecks(scratch: scratch)
 }

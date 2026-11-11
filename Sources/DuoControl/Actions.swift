@@ -100,6 +100,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case browserZoom = "browser zoom", browserPrint = "browser print", browserUpload = "browser upload", browserDownloads = "browser downloads"
     // PDF files (DL-332, DL-334)
     case pdfRender = "pdf render"
+    case pdfPage = "pdf page", pdfZoom = "pdf zoom", pdfFind = "pdf find", pdfSelection = "pdf selection", pdfCommentsPanel = "pdf comments-panel"
     case htmlReload = "html reload", htmlPick = "html pick", htmlStop = "html stop", htmlElement = "html element", htmlSelection = "html selection"
     // PowerPoint decks
     case slide, slideGo = "slide go", slideShapes = "slide shapes", slideNotes = "slide notes", slidePick = "slide pick", slideElement = "slide element"
@@ -454,14 +455,14 @@ extension DuoAction {
         .init(.commentList, .review, "<file> [--closed | --unsent]",
               "The file's comment threads: id, who and when, the text it is on, the comment and its replies. Closed threads are left out unless --closed (only those); --unsent lists the open ones that name @claude and have no reply."),
         .init(.commentReply, .review, "<id> <text> [--file <file>] [--suggest] [--as <name>]",
-              "Reply in a thread (or to a suggestion) with the next number, `#c1.2`; a closed thread reopens (in a Word or PowerPoint file the reply goes in the file's comment parts, and --file names the file: the turn sent to a session says so). --suggest instead proposes the reply text as a replacement of the text the thread is on. Never rewrites anyone's comment. Without --file, the document showing."),
+              "Reply in a thread (or to a suggestion) with the next number, `#c1.2`; a closed thread reopens (in a Word or PowerPoint file the reply goes in the file's comment parts, and --file names the file: the turn sent to a session says so). --suggest instead proposes the reply text as a replacement of the text the thread is on. Never rewrites anyone's comment. Without --file, the document showing.", ui: ["Reply"]),
         .init(.commentSend, .review, "<id | --all> [--file <file>] [--to <session> | --new]",
               "Send a comment that names @claude to a session, quoted as data, when the person says to (DL-236 10): the turn is pasted and Returned through the idle-and-empty-prompt guard of `director send`, or waits (Queued) until the session is ready. Without --to, the thread's session, the document's last choice, the last to edit it through Duo, then the one on screen. --all sends every @claude comment not yet sent or answered. Never sent from the file on its own."),
         .init(.commentClose, .review, "<id> [--file <file>] [--as <name>]",
               "Close and Keep (in a Word or PowerPoint file: mark the thread resolved, which Word and PowerPoint show as done): add a closing line `{>>@name date #c1.2 closed<<}` after the thread's last comment; the highlight and comments stay (Q-262).",
-              ui: ["Close and Keep"]),
+              ui: ["Close and Keep", "Close Thread"]),
         .init(.commentDelete, .review, "<id> [--file <file>]",
-              "Delete the thread: its highlight markers and every comment go, the text stays."),
+              "Delete the thread: its highlight markers and every comment go, the text stays.", ui: ["Delete Thread"]),
         .init(.commentReopen, .review, "<id> [--file <file>]",
               "Reopen a closed thread: its closing line goes.", ui: ["Reopen"]),
         .init(.commentStatus, .review, "<id> [--file <file>]",
@@ -508,6 +509,22 @@ extension DuoAction {
         // PDF files (DL-332, DL-334)
         .init(.pdfRender, .pdf, "<file> <page> [--out <png>] [--width <px>]",
               "Draw one page of a PDF as a PNG (1000 px wide unless --width, 200 to 3000), as the viewer draws it, annotations included, and print the path. Needs no viewer open. The pages `duo2 doc read` lists as needing a look are the ones to render and read as images. PNGs go in the session's own folder (.duo/screenshots), or Duo's support folder outside a session."),
+
+        // The PDF viewer (DL-332; Q-495 stand-in bar)
+        .init(.pdfPage, .pdf, "[<n> | next | previous]",
+              "The PDF showing in the right pane (or on a side of a split): with no argument print \"page n of N\"; with a page number, `next` or `previous`, go there (also ‹ ›, Page Up and Page Down) and print the page. A number past the end goes to the last page.",
+              ui: ["Previous Page", "Next Page", "Go to Thread"]),
+        .init(.pdfZoom, .pdf, "[in | out | fit | <percent>]",
+              "Zoom the PDF showing: `in` and `out` step by a quarter, `fit` fits the pane's width (the viewer's default, and it follows the pane), a number sets a percentage (25 to 500). With no argument print the zoom.",
+              ui: ["Zoom Out", "Zoom In", "Fit"]),
+        .init(.pdfFind, .pdf, "<text> [--previous]",
+              "Find text in the PDF showing: go to the first match after the current one (--previous goes back), select it, and print \"match n of m on page p\". Repeating the same text steps on; wraps at the ends. Case is ignored.",
+              ui: ["Find in PDF", "Next Match", "Previous Match"]),
+        .init(.pdfSelection, .pdf, "",
+              "The text selected in the PDF showing, as Send Selection puts it in a prompt: `From <path>, page N:` and the text quoted."),
+        .init(.pdfCommentsPanel, .pdf, "[show | hide]",
+              "Show or hide the panel of comment threads at the right of the PDF viewer (off by default; stand-in, Q-496). With no argument print whether it is showing; the threads in it are `duo2 comment list`'s.",
+              ui: ["Comments"]),
 
         // PowerPoint decks (ENH-12, DL-125)
         .init(.slide, .slides, "", "The deck showing and the slide on screen, with that slide's shapes and text."),
@@ -708,7 +725,7 @@ public struct Invocation: Sendable {
     public var flags: [String: String] = [:]
 
     /// Flags that take no value.
-    public static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "use-folder", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "full-page", "session", "open", "sessions", "keep-sessions", "synthetic", "resolved", "force", "session-only", "left", "right", "hidden", "anyway", "not-now", "no-interview", "cancel", "fetch", "background", "in-duo", "suggest", "closed", "unsent", "take-over", "handed-back", "no-worker", "adopt", "clear", "refresh", "no-open", "log", "add", "doc", "routine", "no-red-lines"]
+    public static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "use-folder", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "full-page", "session", "open", "sessions", "keep-sessions", "synthetic", "resolved", "force", "session-only", "left", "right", "hidden", "anyway", "not-now", "no-interview", "cancel", "fetch", "background", "in-duo", "suggest", "closed", "unsent", "take-over", "handed-back", "no-worker", "previous", "adopt", "clear", "refresh", "no-open", "log", "add", "doc", "routine", "no-red-lines"]
 
     /// Flags whose value is optional: the next word is theirs unless it's another flag.
     public static let optionalValues: Set<String> = ["remote-control"]

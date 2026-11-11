@@ -777,6 +777,7 @@ extension AppModel {
                 e.run("return duo.text()") { v in done(.ok(v as? String ?? "")) }
             } else { done(.fail(inv[0] == nil ? "no document is open in the editor" : "'\(inv[0]!)' isn't a file in a project Duo knows")) }
         case .docSelection:
+            if let p = pdfSelectionPayload(), webFocus == .pdf { return done(.ok(p)) }
             documentSelectionPayload { p in done(p.map { .ok($0) } ?? .fail("nothing is selected in the editor")) }
         case .docSelect:
             guard let a = inv[0].flatMap(Int.init), editorIfLoaded?.url != nil else { return done(.fail("usage: \(id.action.usage) (with a document showing)")) }
@@ -916,6 +917,7 @@ extension AppModel {
         case .docMarkup, .docComments, .docOutline, .docPick, .docElement:
             docxVerb(id, inv, req, done)
         case .pdfRender: pdfRenderVerb(inv, req, done)
+        case .pdfPage, .pdfZoom, .pdfFind, .pdfSelection, .pdfCommentsPanel: pdfViewVerb(id, inv, done)
         case .htmlReload:
             guard let v = visiblePage, v.pageURL != nil else { return done(.fail("no web page is showing")) }
             v.reload(); done(.ok("Reloaded."))
@@ -949,6 +951,7 @@ extension AppModel {
             let group = DispatchGroup()
             group.enter(); documentSelectionPayload { if let p = $0 { parts.append(p) }; group.leave() }
             group.enter(); htmlSelectionPayload { if let p = $0 { parts.append(p) }; group.leave() }
+            if let p = pdfSelectionPayload() { parts.append(p) }
             group.notify(queue: .main) { [weak self] in
                 MainActor.assumeIsolated {
                     guard let self else { return }
@@ -1243,6 +1246,7 @@ extension AppModel {
             guard let n = inv[0], let p = project(named: n) else { return done(noProject(inv[0] ?? "")) }
             deliver(projectPayload(p.name))
         case .sendSelection:
+            if let p = pdfSelectionPayload() { return deliver(p) }
             documentSelectionPayload { [weak self] p in
                 if let p { deliver(p) } else { self?.htmlSelectionPayload(deliver) }
             }

@@ -209,6 +209,9 @@ public final class AppModel {
     /// PowerPoint decks in the right pane (ENH-12, DL-125).
     @ObservationIgnored public lazy var deckViewer: DeckViewer = { let v = DeckViewer(); deckViewerIfLoaded = v; wireDeckViewer(v); return v }()
     @ObservationIgnored public var deckViewerIfLoaded: DeckViewer?
+    /// PDFs in the right pane (DL-332).
+    @ObservationIgnored public lazy var pdfViewer: PdfViewer = { let v = PdfViewer(); pdfViewerIfLoaded = v; wirePdfViewer(v); return v }()
+    @ObservationIgnored public var pdfViewerIfLoaded: PdfViewer?
     /// Word documents in the right pane (DL-162).
     @ObservationIgnored public lazy var docxViewer: DocxViewer = { let v = DocxViewer(); docxViewerIfLoaded = v; wireDocxViewer(v); return v }()
     @ObservationIgnored public var docxViewerIfLoaded: DocxViewer?
@@ -221,7 +224,7 @@ public final class AppModel {
     public var pickerRevision = 0
     /// Which web view has the keyboard (menus re-validate on change).
     public var webFocus: WebFocus = .none
-    public enum WebFocus: Equatable, Sendable { case none, editor, html }
+    public enum WebFocus: Equatable, Sendable { case none, editor, html, pdf }
     /// Drag and drop on the map (F-51): what's being dragged, the tile under it, the tile that
     /// just took a drop (it pulses).
     public var dragging: String?
