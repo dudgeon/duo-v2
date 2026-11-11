@@ -14,7 +14,7 @@ Q-500 (q500-migrate) Telling people who use it: not answered
 Q-501 (q501-sidebar) The sidebar button at All projects: not answered
 Q-488 (q488-floor) Questions in a narrow pane: not answered
 
-Research: https://github.com/dudgeon/duo-v2/blob/research/home-agent-panel/docs/research/home-agent-panel.md
+Research: https://github.com/dudgeon/duo-v2/blob/main/docs/research/home-agent-panel.md
 desktop horizontal overflow px: 0
 desktop targets under 40px: ["● Shape 21x44","● Launch 35x44","● Migration 33x44","● Sidebar 36x44"]
 desktop errors: []
@@ -34,7 +34,7 @@ Q-500 (q500-migrate) Telling people who use it: not answered
 Q-501 (q501-sidebar) The sidebar button at All projects: not answered
 Q-488 (q488-floor) Questions in a narrow pane: not answered
 
-Research: https://github.com/dudgeon/duo-v2/blob/research/home-agent-panel/docs/research/home-agent-panel.md
+Research: https://github.com/dudgeon/duo-v2/blob/main/docs/research/home-agent-panel.md
 phone horizontal overflow px: 0
 phone targets under 40px: ["Why now 65x30","Costs 88x30","Options 63x30","● Shape 8x30","● Launch 13x30","● Migration 12x30","● Sidebar 13x30","● Narrow 27x30","Done 22x30"]
 phone errors: []

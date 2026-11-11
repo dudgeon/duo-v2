@@ -4,7 +4,7 @@
  "subtitle": "Decision walkthrough · 10 Nov 2026 · narrated by Duo's house voice",
  "posterLine": "What the column costs, five ways out, then five decisions. Tap play and listen; it stops when it needs you.",
  "footer": "Built with the decision-walkthrough skill from docs/research/home-agent-panel-walkthrough/spec.json. Answers are saved in this page and sent to director-duo-v2.",
- "source": { "label": "home-agent-panel.md", "url": "https://github.com/dudgeon/duo-v2/blob/research/home-agent-panel/docs/research/home-agent-panel.md" },
+ "source": { "label": "home-agent-panel.md", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/home-agent-panel.md" },
  "director": "director-duo-v2",
  "sendPrefix": "Home agent panel walkthrough",
  "voice": "house",
