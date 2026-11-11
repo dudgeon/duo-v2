@@ -1,0 +1,34 @@
+{
+ "note": "Publish with the Artifact tool: file_path = <this folder>/index.html, root = this folder, files = the map below, capabilities as below, icon 'play'. The director publishes the final page (DL-166).",
+ "file_path": "index.html",
+ "root": ".",
+ "files": {
+  "audio/why.mp3": "audio/why.mp3",
+  "audio/claude.mp3": "audio/claude.mp3",
+  "audio/duo.mp3": "audio/duo.mp3",
+  "audio/q505-actions.mp3": "audio/q505-actions.mp3",
+  "audio/q505-actions--a-row.mp3": "audio/q505-actions--a-row.mp3",
+  "audio/q505-actions--b-more.mp3": "audio/q505-actions--b-more.mp3",
+  "audio/q505-actions--c-copy.mp3": "audio/q505-actions--c-copy.mp3",
+  "audio/q506-restore.mp3": "audio/q506-restore.mp3",
+  "audio/q506-restore--a-sheet.mp3": "audio/q506-restore--a-sheet.mp3",
+  "audio/q506-restore--b-conv.mp3": "audio/q506-restore--b-conv.mp3",
+  "audio/q506-restore--c-menu.mp3": "audio/q506-restore--c-menu.mp3",
+  "audio/q507-how.mp3": "audio/q507-how.mp3",
+  "audio/q507-how--a-drive.mp3": "audio/q507-how--a-drive.mp3",
+  "audio/q507-how--b-open.mp3": "audio/q507-how--b-open.mp3",
+  "audio/q508-fork.mp3": "audio/q508-fork.mp3",
+  "audio/q508-fork--a-front.mp3": "audio/q508-fork--a-front.mp3",
+  "audio/q508-fork--b-behind.mp3": "audio/q508-fork--b-behind.mp3",
+  "audio/q508-fork--c-last.mp3": "audio/q508-fork--c-last.mp3",
+  "audio/q509-copy.mp3": "audio/q509-copy.mp3",
+  "audio/q509-copy--a-words.mp3": "audio/q509-copy--a-words.mp3",
+  "audio/q509-copy--b-tools.mp3": "audio/q509-copy--b-tools.mp3",
+  "audio/q509-copy--c-both.mp3": "audio/q509-copy--c-both.mp3",
+  "audio/wrap.mp3": "audio/wrap.mp3"
+ },
+ "capabilities": {
+  "db": {},
+  "comments": {}
+ }
+}

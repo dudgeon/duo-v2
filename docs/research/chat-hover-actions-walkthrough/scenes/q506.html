@@ -1,0 +1,22 @@
+<style>
+#chat { opacity: .45; }
+#sheet { left: 110px; top: 40px; width: 420px; }
+#sC { display: none; } [data-state~="c"] #sA { display: none; } [data-state~="c"] #sC { display: block; }
+[data-state~="b"] #r2, [data-state~="b"] #sm { display: none; }
+[data-state~="a2"] #r1 i { border-color: #8b939c; background: none; }
+[data-state~="a2"] #r2 i { border-color: #1f2328; background: radial-gradient(#1f2328 4px, transparent 5px); }
+#lbl { left: 20px; top: 352px; width: 600px; text-align: center; }
+</style>
+<div class="chat" id="chat" style="left:20px;top:26px;width:600px;height:316px"><div class="tabs" id="tabs"><span class="tab on" id="tab1">Refund flows</span><span class="tab" id="tab3">Teardown research</span></div><div class="bub" id="you" data-f style="left:160px;top:42px;width:410px">Compare the two refund flows in a table.</div><div class="cc" id="cl" data-f style="left:30px;top:128px;width:400px">Both flows are in docs/refunds/flows.md. Keep self-serve as the default.</div><div class="comp" id="comp" style="left:14px;right:14px;top:254px">Reply to Claude</div></div>
+<div class="sheet" id="sheet" data-in="scale" data-f>
+<h4>Rewind to before this message?</h4>
+<div class="sm" style="margin-bottom:4px">“Compare the two refund flows in a table.”</div>
+<div id="sA">
+<div class="rd on" id="r1" data-f><i></i><span>Conversation only</span></div>
+<div class="rd" id="r2" data-f><i></i><span>Conversation and 2 files<br><span class="sm">a.txt, b.txt go back to how they were</span></span></div>
+<div class="sm" id="sm" data-f>Bash changes aren’t undone. Later changes by anyone are lost.</div>
+</div>
+<div id="sC" class="mono"><div>1 Restore code and conversation</div><div>2 Restore conversation</div><div>3 Restore code</div><div>4 Summarize from here</div><div>5 Summarize up to here</div></div>
+<div class="btns"><span class="btn">Cancel</span><span class="btn pri">Rewind</span></div>
+</div>
+<div class="mlabel" id="lbl" data-in="up">Canvas board 2 · Rewind, the sheet</div>
