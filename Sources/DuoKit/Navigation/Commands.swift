@@ -196,6 +196,13 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         return v
     }
 
+    /// The PDF that Add Comment (⌘⌥M) acts on: the one showing, with text selected and the editor not holding the keyboard.
+    @MainActor func pdfCommentTarget(_ model: AppModel) -> PdfViewer? {
+        guard model.terminalsMode == .live, model.webFocus != .editor, model.webFocus != .html,
+              let v = model.visiblePdf, v.state == .ready, v.selectionQuads() != nil else { return nil }
+        return v
+    }
+
     @MainActor
     public func isEnabled(in model: AppModel) -> Bool {
         switch self {
@@ -230,7 +237,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .openFile: model.terminalsMode == .live && model.projectFolder != nil
         case .revertChange: model.webFocus == .editor && (model.editorIfLoaded?.atClaudeChange ?? false)
         case .revertAllChanges: (model.editorIfLoaded?.claudeChanges ?? 0) > 0
-        case .suggestEdits, .addComment: model.terminalsMode == .live && model.showingMarkdownDocument
+        case .suggestEdits: model.terminalsMode == .live && model.showingMarkdownDocument
+        case .addComment: pdfCommentTarget(model) != nil || (model.terminalsMode == .live && model.showingMarkdownDocument)
         case .printPage: model.visibleWebTab.map { $0.blocked == nil } ?? false
         case .zoomIn, .zoomOut, .actualSize:
             (model.webFocus == .html && model.visibleWebTab.map { $0.blocked == nil } == true) || pdfZoomTarget(model) != nil
@@ -321,7 +329,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .revertChange: model.editor.revertAtCaret()
         case .revertAllChanges: model.editor.revertAll()
         case .suggestEdits: model.toggleSuggestEdits()
-        case .addComment: model.editor.reviewAddComment()
+        case .addComment: if let v = pdfCommentTarget(model) { model.askPdfComment(v) } else { model.editor.reviewAddComment() }
         case .newShell: model.newShell()
         case .chooseHome: model.chooseHomeFolder()
         case .newBrowserTab: model.newBrowserTab()

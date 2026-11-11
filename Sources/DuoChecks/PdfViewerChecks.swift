@@ -4,6 +4,7 @@ import DuoKit
 import DuoSearch
 import Foundation
 import PDFKit
+import SwiftUI
 
 // DL-332, DL-333, DL-335: the PDF viewer (page, zoom, find, selection), the stand-in comments panel (Q-496), and a PDF on one side of a split (Q-497).
 
@@ -82,6 +83,15 @@ import PDFKit
     // pdf find: selects the match, steps, wraps; the selection is what Send Selection sends
     let f1 = duo2("pdf", "find", "turquoise")
     check(f1.output == "Match 1 of 1 on page 1." && v.page == 1, "`pdf find turquoise`: one match, on page 1 (\(f1.output))")
+
+    // Edit > Add Comment (⌘⌥M) acts on the PDF's selection, as the bar's Add Comment does
+    let focusBefore = m.webFocus
+    m.webFocus = .pdf
+    check(v.selectionQuads() != nil && DuoCommand.addComment.isEnabled(in: m), "Add Comment (⌘⌥M) is enabled with text selected in the PDF")
+    check(DuoCommand.addComment.shortcut == KeyboardShortcut("m", modifiers: [.command, .option]), "…on ⌘⌥M")
+    m.webFocus = .editor
+    check(!DuoCommand.addComment.isEnabled(in: m), "…and not for the PDF while the editor has the keyboard")
+    m.webFocus = focusBefore
     let sel1 = duo2("pdf", "selection").output
     check(sel1.hasPrefix("From ") && sel1.hasSuffix("paper.pdf, page 1:\n> turquoise\n"), "`pdf selection` is the match as Send Selection puts it: the file, the page, the quoted text (\(sel1))")
     let f2 = duo2("pdf", "find", "line")
