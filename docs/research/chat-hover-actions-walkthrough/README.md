@@ -10,3 +10,5 @@ The hover-actions study (`../chat-hover-actions.md`), narrated by Duo's house vo
 Canvas: https://claude.ai/artifact/HLHzGsZNpn3hS1KsZAZx71 (sources in `docs/design/chat-hover-actions-study/`).
 
 Rebuild with `node ~/.claude/skills/decision-walkthrough/build.mjs spec.json` (only changed lines are re-voiced, under the GPU lock; `.cache/` is not committed). Edit the scenes in `make-scenes.py`, then run `python3 make-scenes.py`. The director publishes the final page (DL-166), so answers reach director-duo-v2. Nothing is published yet.
+
+The director publishes the final page (DL-166), so answers reach director-duo-v2. A worker's draft is at https://claude.ai/artifact/P77HtNBoU2NSZP6YK98Q7K.
