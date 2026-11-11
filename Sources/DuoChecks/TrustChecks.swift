@@ -111,6 +111,17 @@ import Foundation
     _ = GitTool.git(["init", "-q"], in: root.appending(path: "repo"))
     check(ClaudeTrust.repositoryTop(of: gitRoot.path) == ClaudeTrust.realPath(root.appending(path: "repo").path), "the repository's top folder holds the key")
     check(ClaudeTrust.configFile(configDir: "/x/y").path == "/x/y/.claude.json", "CLAUDE_CONFIG_DIR names the file's folder")
+    // F-646: naming ~/.claude is the same as naming nothing. Claude Code reads <CLAUDE_CONFIG_DIR>/.claude.json when the variable
+    // is set, so a child started with the default folder named sat on first-run onboarding and never reached a prompt.
+    let homeDir = FileManager.default.homeDirectoryForCurrentUser
+    check(ClaudeTrust.configFile(configDir: homeDir.appending(path: ".claude").path).path == homeDir.appending(path: ".claude.json").path,
+          "the default folder named is ~/.claude.json, as with no variable (F-646)")
+    check(ClaudeTrust.configFile(configDir: homeDir.appending(path: ".claude/").path).path == homeDir.appending(path: ".claude.json").path,
+          "a trailing slash on the default folder changes nothing (F-646)")
+    let namedDefault = ChildEnvironment.make(sessionID: "abc", base: ["CLAUDE_CONFIG_DIR": homeDir.appending(path: ".claude").path, "HOME": homeDir.path])
+    check(!namedDefault.contains { $0.hasPrefix("CLAUDE_CONFIG_DIR=") }, "a session isn't handed the default folder by name: Claude then reads ~/.claude.json (F-646)")
+    let namedOther = ChildEnvironment.make(sessionID: "abc", base: ["CLAUDE_CONFIG_DIR": "/x/y"])
+    check(namedOther.contains("CLAUDE_CONFIG_DIR=/x/y"), "another config folder is still handed down (F-646)")
 
     // The model: the notice's life on a session's tab (DL-229)
     let m = AppModel(fixture: base)
