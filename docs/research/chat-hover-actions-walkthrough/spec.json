@@ -6,7 +6,7 @@
  "footer": "Built with the decision-walkthrough skill from docs/research/chat-hover-actions-walkthrough/spec.json. Answers are saved in this page and sent to director-duo-v2.",
  "source": {
   "label": "chat-hover-actions.md",
-  "url": "https://github.com/dudgeon/duo-v2/blob/research/chat-hover-actions/docs/research/chat-hover-actions.md"
+  "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/chat-hover-actions.md"
  },
  "director": "director-duo-v2",
  "sendPrefix": "Chat turn actions walkthrough",

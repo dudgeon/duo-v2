@@ -14,7 +14,7 @@ Q-507 (q507-how) How Duo rewinds: not answered
 Q-508 (q508-fork) Fork from a turn: not answered
 Q-509 (q509-copy) What Copy copies: not answered
 
-Research: https://github.com/dudgeon/duo-v2/blob/research/chat-hover-actions/docs/research/chat-hover-actions.md
+Research: https://github.com/dudgeon/duo-v2/blob/main/docs/research/chat-hover-actions.md
 desktop horizontal overflow px: 0
 desktop targets under 40px: ["● Restores 39x44","B: conversation only, alwaysFi 218x39"]
 desktop errors: []
@@ -34,7 +34,7 @@ Q-507 (q507-how) How Duo rewinds: not answered
 Q-508 (q508-fork) Fork from a turn: not answered
 Q-509 (q509-copy) What Copy copies: not answered
 
-Research: https://github.com/dudgeon/duo-v2/blob/research/chat-hover-actions/docs/research/chat-hover-actions.md
+Research: https://github.com/dudgeon/duo-v2/blob/main/docs/research/chat-hover-actions.md
 phone horizontal overflow px: 0
 phone targets under 40px: ["Why 38x30","Claude 93x30","Duo 47x30","● Actions 15x30","● Restores 14x30","● How 16x30","● Fork 38x30","● Copy 21x30","Done 29x30","B: conversation only, alwaysFi 221x39"]
 phone errors: []
