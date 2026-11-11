@@ -23,9 +23,12 @@ struct PdfView: View {
                 QuickLookPane(file: file)
             } else {
                 PdfBar(viewer: viewer, path: path, file: file)
-                HStack(spacing: 0) {
-                    PdfWebHost(viewer: viewer)
-                    if viewer.commentsOpen { PdfCommentsPanel(viewer: viewer) }
+                GeometryReader { geo in
+                    HStack(spacing: 0) {
+                        PdfWebHost(viewer: viewer)
+                        // In a pane narrower than 760 the panel is 260 wide, so the pages keep room.
+                        if viewer.commentsOpen { PdfCommentsPanel(viewer: viewer, width: geo.size.width < 760 ? 260 : 320) }
+                    }
                 }
             }
         }
@@ -129,6 +132,7 @@ struct PdfWebHost: NSViewRepresentable {
 /// and, for one that names @claude, where its send stands and Send to Claude. Nothing here is drawn (Q-496).
 struct PdfCommentsPanel: View {
     let viewer: PdfViewer
+    var width: CGFloat = 320
 
     var body: some View {
         VStack(spacing: 0) {
@@ -149,7 +153,7 @@ struct PdfCommentsPanel: View {
                 }
             }
         }
-        .frame(width: 320)
+        .frame(width: width)
         .background(DuoColor.ground)
         .overlay(alignment: .leading) { DuoColor.rule.frame(width: DuoMetric.borderHairline) }
         .accessibilityIdentifier("pdf.comments-panel")

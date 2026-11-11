@@ -64,6 +64,21 @@ import PDFKit
     check(!duo2("pdf", "zoom", "9").ok && !duo2("pdf", "zoom", "9000").ok && !duo2("pdf", "zoom", "big").ok, "a percentage outside 25 to 500, or a word, is refused")
     check(duo2("pdf", "zoom", "fit").output.contains("fitting the width") && v.fitting, "`pdf zoom fit` fits the width again")
 
+    // View > Zoom In / Zoom Out / Actual Size act on the PDF showing (⌘+ ⌘− ⌘0)
+    m.webFocus = .none
+    check(DuoCommand.zoomIn.isEnabled(in: m) && DuoCommand.zoomOut.isEnabled(in: m) && DuoCommand.actualSize.isEnabled(in: m), "View > Zoom In, Zoom Out and Actual Size are enabled while a PDF is showing")
+    _ = duo2("pdf", "zoom", "100")
+    DuoCommand.zoomIn.perform(in: m)
+    check(abs(v.scale - 1.25) < 0.001 && !v.fitting, "Zoom In steps the PDF a quarter (\(v.scale))")
+    DuoCommand.zoomOut.perform(in: m); DuoCommand.zoomOut.perform(in: m)
+    check(abs(v.scale - 0.8) < 0.001, "Zoom Out steps it back (\(v.scale))")
+    DuoCommand.actualSize.perform(in: m)
+    check(abs(v.scale - 1) < 0.001, "Actual Size is 100% (\(v.scale))")
+    m.webFocus = .editor
+    check(!DuoCommand.zoomIn.isEnabled(in: m), "…and not while the editor has the keyboard")
+    m.webFocus = .none
+    _ = duo2("pdf", "zoom", "fit")
+
     // pdf find: selects the match, steps, wraps; the selection is what Send Selection sends
     let f1 = duo2("pdf", "find", "turquoise")
     check(f1.output == "Match 1 of 1 on page 1." && v.page == 1, "`pdf find turquoise`: one match, on page 1 (\(f1.output))")
