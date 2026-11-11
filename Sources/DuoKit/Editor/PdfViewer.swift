@@ -1,4 +1,5 @@
 import AppKit
+import DuoControl
 import DuoSearch
 import Observation
 import PDFKit
@@ -29,8 +30,18 @@ public final class PdfViewer: NSObject {
     public private(set) var matchIndex = 0
     /// The comment threads, read from the file after each load (DL-335).
     public private(set) var threads: [PdfComments.Thread] = []
-    /// The stand-in comments panel (Q-496), off until asked for.
-    public var commentsOpen = false
+    /// The comment margin beside the pages (Geoff, 2026-11-10: built as Markdown review's margin, `PdfMargin`): on unless hidden.
+    public var commentsShown = true { didSet { if oldValue != commentsShown { if !commentsShown { cancelCompose() }; pushMargin() } } }
+    /// "n closed · Show": closed threads drawn as one line each in the margin.
+    public var showClosed = false { didSet { if oldValue != showClosed { pushMargin() } } }
+    /// The margin's page (the cards are Markdown's, `cards.js`).
+    @ObservationIgnored public let margin = PdfMargin()
+    /// A comment being composed in the margin: the selection it will be on, kept when the selection clears.
+    public struct Composing: Equatable { public var page: Int; public var quads: [CGRect]; public var text: String }
+    public private(set) var composing: Composing?
+    /// The pane's width (the margin goes narrow under 420, as Markdown's does) and who comments.
+    @ObservationIgnored public var paneWidth: CGFloat = 1000 { didSet { if oldValue != paneWidth { pushMargin() } } }
+    @ObservationIgnored public var reviewer = NSUserName()
     /// Told when the selection starts or ends (the model's keyboard focus for Send Selection).
     @ObservationIgnored public var onSelection: ((Bool) -> Void)?
 
@@ -40,6 +51,9 @@ public final class PdfViewer: NSObject {
     @ObservationIgnored private var timer: Timer?
     @ObservationIgnored private var dormant = false
     @ObservationIgnored private var observers: [NSObjectProtocol] = []
+    @ObservationIgnored private var scrollObserver: NSObjectProtocol?
+    @ObservationIgnored private weak var observedClip: NSClipView?
+    @ObservationIgnored private var pushPending = false
 
     public override init() {
         pdfView = DuoPdfView(frame: .zero)
@@ -58,7 +72,11 @@ public final class PdfViewer: NSObject {
             })
         }
         watch(.PDFViewPageChanged, pdfView) { v, _ in v.syncPage() }
-        watch(.PDFViewScaleChanged, pdfView) { v, _ in v.syncScale() }
+        watch(.PDFViewScaleChanged, pdfView) { v, _ in v.syncScale(); v.pushMargin() }
+        watch(.PDFViewVisiblePagesChanged, pdfView) { v, _ in v.pushMargin() }
+        pdfView.postsFrameChangedNotifications = true
+        watch(NSView.frameDidChangeNotification, pdfView) { v, _ in v.pushMargin() }
+        pdfView.onClick = { [weak self] point in self?.clicked(at: point) }
         watch(.PDFViewSelectionChanged, pdfView) { v, _ in v.syncSelection() }
         watch(.duoPdfChanged, nil) { v, p in
             if let p, p == v.url?.path { v.reload() }
@@ -80,19 +98,22 @@ public final class PdfViewer: NSObject {
     /// Reads the file again, keeping the page and the zoom (Duo also does this when the file changes).
     public func reload() {
         guard url != nil else { return }
-        load(page: max(page, 1), scale: fitting ? nil : scale)
+        // Where the top of the window was, so a comment written to the file doesn't jump the view to the top of its page.
+        var spot: (index: Int, point: CGPoint)?
+        if let doc = pdfView.document, let d = pdfView.currentDestination, let p = d.page { spot = (doc.index(for: p), d.point) }
+        load(page: max(page, 1), scale: fitting ? nil : scale, position: spot)
     }
 
-    private func load(page start: Int, scale keep: Double?) {
+    private func load(page start: Int, scale keep: Double?, position: (index: Int, point: CGPoint)? = nil) {
         guard let file = url else { return }
         stamp = Self.modified(file)
         guard let doc = PDFDocument(url: file) else {
             pdfView.document = nil
-            state = .failed("it’s damaged, or isn’t a PDF"); page = 0; count = 0; threads = []; return
+            state = .failed("it’s damaged, or isn’t a PDF"); page = 0; count = 0; threads = []; pushMargin(); return
         }
         if doc.isLocked {
             pdfView.document = nil
-            state = .failed("it’s protected with a password"); page = 0; count = 0; threads = []; return
+            state = .failed("it’s protected with a password"); page = 0; count = 0; threads = []; pushMargin(); return
         }
         pdfView.clearSelection()
         pdfView.document = doc
@@ -102,10 +123,15 @@ public final class PdfViewer: NSObject {
         matches = []; matchCount = 0; matchIndex = 0; matched = ""
         state = .ready
         let to = max(1, min(count, start))
-        if let p = doc.page(at: to - 1) { pdfView.go(to: PDFDestination(page: p, at: CGPoint(x: 0, y: p.bounds(for: .cropBox).maxY))) }
+        if let position, position.index < doc.pageCount, let p = doc.page(at: position.index) {
+            pdfView.go(to: PDFDestination(page: p, at: position.point))
+        } else if let p = doc.page(at: to - 1) { pdfView.go(to: PDFDestination(page: p, at: CGPoint(x: 0, y: p.bounds(for: .cropBox).maxY))) }
         page = to
         syncScale()
         syncSelection()
+        pushMargin()
+        // PDFKit lays the pages out a moment after the document is set: the highlights' places are read again then.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in MainActor.assumeIsolated { self?.pushMargin() } }
     }
 
     // MARK: Moving and zooming
@@ -196,7 +222,7 @@ public final class PdfViewer: NSObject {
         return (doc.index(for: first) + 1, quads)
     }
 
-    /// Scrolls to a thread's page and outlines where it is (the stand-in panel's Go to).
+    /// Scrolls to a thread's page and outlines where it is.
     public func show(_ t: PdfComments.Thread) {
         guard let doc = pdfView.document, let p = doc.page(at: t.page - 1) else { return }
         let rect = t.rects.dropFirst().reduce(t.rects.first ?? .zero) { $0.union($1) }
@@ -209,7 +235,97 @@ public final class PdfViewer: NSObject {
     }
 
     public func refreshThreads() {
-        if let u = url { threads = (try? AppModel.pdfThreads(u)) ?? [] }
+        if let u = url { threads = (try? AppModel.pdfThreads(u)) ?? []; pushMargin() }
+    }
+
+    // MARK: The margin (Markdown review's cards beside the pages)
+
+    /// Where a rectangle (page space) sits in the pages' scrolling view, from its top: the card's anchor.
+    private func documentY(page n: Int, rects: [CGRect]) -> CGFloat? {
+        guard let doc = pdfView.document, let p = doc.page(at: n - 1), let dv = pdfView.documentView else { return nil }
+        let boxes = rects.isEmpty ? [CGRect(x: 0, y: p.bounds(for: .cropBox).maxY - 20, width: 20, height: 20)] : rects
+        var best: CGFloat?
+        for r in boxes {
+            let b = pdfView.convert(pdfView.convert(r, from: p), to: dv)
+            let y = dv.isFlipped ? b.minY : dv.bounds.height - b.maxY
+            best = min(best ?? y, y)
+        }
+        return best
+    }
+
+    /// How far the pages are scrolled.
+    private func scrollTop() -> CGFloat {
+        guard let dv = pdfView.documentView, let sv = dv.enclosingScrollView else { return 0 }
+        let vis = sv.documentVisibleRect
+        return dv.isFlipped ? vis.minY : dv.bounds.height - vis.maxY
+    }
+
+    /// The threads as the margin page takes them: `{ id, closed, y, comments: [{ author, date, text, closing }] }`.
+    func marginThreads() -> [[String: Any]] {
+        threads.map { t in
+            var comments: [[String: Any]] = t.items.map {
+                ["author": Review.signatureName($0.author), "date": $0.date.count >= 10 ? String($0.date.prefix(10)) : "", "text": $0.text, "closing": false]
+            }
+            if t.resolved { comments.append(["author": "", "date": "", "text": "", "closing": true]) }
+            return ["id": t.id, "closed": t.resolved, "y": Double(documentY(page: t.page, rects: t.rects) ?? 0), "comments": comments]
+        }
+    }
+
+    /// Sends the margin its threads, the pane's width and the scroll (coalesced: PDFKit posts many changes at once).
+    func pushMargin() {
+        guard !pushPending else { return }
+        pushPending = true
+        DispatchQueue.main.async { [weak self] in MainActor.assumeIsolated { self?.pushMarginNow() } }
+    }
+
+    private func pushMarginNow() {
+        pushPending = false
+        bindScroll()
+        let live = state == .ready && commentsShown
+        margin.setState(threads: live ? marginThreads() : [], paneWidth: paneWidth, showClosed: showClosed, reviewer: Review.signatureName(reviewer))
+        margin.setScroll(scrollTop())
+        if live, let c = composing, let y = documentY(page: c.page, rects: c.quads) { margin.moveComposer(y: y) }
+    }
+
+    /// Follows the pages' scrolling so the cards move with them.
+    private func bindScroll() {
+        guard let clip = pdfView.documentView?.enclosingScrollView?.contentView, clip !== observedClip else { return }
+        if let o = scrollObserver { NotificationCenter.default.removeObserver(o) }
+        clip.postsBoundsChangedNotifications = true
+        observedClip = clip
+        scrollObserver = NotificationCenter.default.addObserver(forName: NSView.boundsDidChangeNotification, object: clip, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { if let self { self.margin.setScroll(self.scrollTop()) } }
+        }
+    }
+
+    /// Add Comment: opens the composer in the margin level with the selection (Markdown's `composeComment`).
+    @discardableResult
+    public func compose() -> Bool {
+        guard state == .ready, let at = selectionQuads() else { return false }
+        commentsShown = true
+        composing = Composing(page: at.page, quads: at.quads, text: SendFormat.line(selectionText))
+        guard let y = documentY(page: at.page, rects: at.quads) else { return false }
+        pushMarginNow()
+        margin.compose(y: y)
+        return true
+    }
+
+    public func cancelCompose() {
+        guard composing != nil else { return }
+        composing = nil
+        margin.closeComposer()
+    }
+
+    /// The composer posted: it is done with the selection.
+    func composed() { composing = nil; margin.closeComposer() }
+
+    /// A click on a commented highlight opens its card (Markdown's anchor click).
+    private func clicked(at point: CGPoint) {
+        guard commentsShown, state == .ready, let p = pdfView.page(for: point, nearest: false), let doc = pdfView.document else { return }
+        let n = doc.index(for: p) + 1, spot = pdfView.convert(point, to: p)
+        if let t = threads.first(where: { $0.page == n && $0.rects.contains { $0.insetBy(dx: -1, dy: -1).contains(spot) } }), !t.resolved || showClosed {
+            margin.activate(t.id)
+        }
     }
 
     // MARK: Syncing with PDFKit
@@ -284,6 +400,12 @@ public final class PdfViewer: NSObject {
 public final class DuoPdfView: PDFView {
     /// The right-click menu's extra items (Send Selection, Add Comment), when text is selected.
     var extraMenuItems: (() -> [NSMenuItem])?
+    /// A click, in this view's coordinates (a commented highlight opens its card).
+    var onClick: ((CGPoint) -> Void)?
+    public override func mouseDown(with event: NSEvent) {
+        onClick?(convert(event.locationInWindow, from: nil))
+        super.mouseDown(with: event)
+    }
     public override func menu(for event: NSEvent) -> NSMenu? {
         let menu = super.menu(for: event) ?? NSMenu()
         let extra = extraMenuItems?() ?? []

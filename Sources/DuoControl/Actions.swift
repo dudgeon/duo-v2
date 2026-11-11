@@ -522,9 +522,9 @@ extension DuoAction {
               ui: ["Find in PDF", "Next Match", "Previous Match"]),
         .init(.pdfSelection, .pdf, "",
               "The text selected in the PDF showing, as Send Selection puts it in a prompt: `From <path>, page N:` and the text quoted."),
-        .init(.pdfCommentsPanel, .pdf, "[show | hide]",
-              "Show or hide the panel of comment threads at the right of the PDF viewer (off by default; stand-in, Q-496). With no argument print whether it is showing; the threads in it are `duo2 comment list`'s.",
-              ui: ["Comments"]),
+        .init(.pdfCommentsPanel, .pdf, "[show | hide] [--show-closed on|off]",
+              "Show or hide the comment margin beside the PDF (on by default): the Markdown review margin's cards, one per open thread level with its highlight, with --show-closed on|off for the closed ones (the margin's \"n closed · Show\"). With no argument print whether it shows and how many threads there are; the threads are `duo2 comment list`'s. Add Comment is `comment add`.",
+              ui: ["Comments", "n closed · Show", "Close and Keep", "Reopen", "Delete", "Post", "Reply"]),
 
         // PowerPoint decks (ENH-12, DL-125)
         .init(.slide, .slides, "", "The deck showing and the slide on screen, with that slide's shapes and text."),

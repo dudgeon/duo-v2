@@ -6,6 +6,7 @@ import SwiftUI
 /// A PDF in the right pane (DL-332): PDFKit's pages under a bar, or Quick Look with why when PDFKit can't open the file.
 /// The bar is a stand-in modelled on the deck viewer's (Q-495): ‹ › Page n of N, find, zoom, Add Comment, Comments, Open With.
 /// Every control names a `duo2` verb (`pdf page`, `pdf zoom`, `pdf find`, `comment add`, `pdf comments-panel`).
+/// The comments are drawn beside the pages as Markdown review's margin (Q-496, built to the markdown-review-handoff screens).
 struct PdfView: View {
     @Environment(AppModel.self) private var model
     let viewer: PdfViewer
@@ -24,11 +25,16 @@ struct PdfView: View {
             } else {
                 PdfBar(viewer: viewer, path: path, file: file)
                 GeometryReader { geo in
+                    // The margin's page says how wide it wants to be and how much the pages give up: a narrow pane's
+                    // popover floats over them (the page's own layout, margin.js's).
                     HStack(spacing: 0) {
                         PdfWebHost(viewer: viewer)
-                        // In a pane narrower than 760 the panel is 260 wide, so the pages keep room.
-                        if viewer.commentsOpen { PdfCommentsPanel(viewer: viewer, width: geo.size.width < 760 ? 260 : 320) }
+                        if viewer.margin.reserve > 0 { Color.clear.frame(width: viewer.margin.reserve) }
                     }
+                    .overlay(alignment: .trailing) {
+                        if viewer.margin.width > 0 { PdfMarginHost(margin: viewer.margin).frame(width: viewer.margin.width) }
+                    }
+                    .onChange(of: geo.size.width, initial: true) { _, w in viewer.paneWidth = w }
                 }
             }
         }
@@ -83,11 +89,11 @@ struct PdfBar: View {
                         .buttonStyle(DuoButtonStyle(on: viewer.fitting)).disabled(!ready).help("Fit").accessibilityLabel("Fit")
                 }
             }
-            Button("Add Comment") { model.askPdfComment(viewer) }   // action: comment add
+            Button("Add Comment") { model.composePdfComment(viewer) }   // action: comment add
                 .buttonStyle(.duo).disabled(!ready || viewer.selectionText.isEmpty).fixedSize()
                 .help(viewer.selectionText.isEmpty ? "Select text to comment on" : "Add a comment on the selection")
-            Button("Comments") { viewer.commentsOpen.toggle() }   // action: pdf comments-panel
-                .buttonStyle(DuoButtonStyle(on: viewer.commentsOpen)).disabled(!ready).fixedSize()
+            Button("Comments") { viewer.commentsShown.toggle() }   // action: pdf comments-panel
+                .buttonStyle(DuoButtonStyle(on: viewer.commentsShown)).disabled(!ready).fixedSize()
                 .accessibilityIdentifier("pdf.comments")
             if open, long || !find { OpenWithMenu(path: path, file: file, bordered: true) }
         }
@@ -119,89 +125,18 @@ struct PdfFindField: View {
     }
 }
 
+/// The comment margin's page, beside the PDF.
+struct PdfMarginHost: NSViewRepresentable {
+    let margin: PdfMargin
+
+    func makeNSView(context: Context) -> DocumentEditorView.EditorHost { DocumentEditorView.EditorHost() }
+    func updateNSView(_ host: DocumentEditorView.EditorHost, context: Context) { host.show(margin.webView) }
+}
+
 /// The PDF's view in the pane.
 struct PdfWebHost: NSViewRepresentable {
     let viewer: PdfViewer
 
     func makeNSView(context: Context) -> DocumentEditorView.EditorHost { DocumentEditorView.EditorHost() }
     func updateNSView(_ host: DocumentEditorView.EditorHost, context: Context) { host.show(viewer.pdfView) }
-}
-
-/// The stand-in comments panel (Q-496): the PDF's threads in a column at the right, on `ground` with a `rule` at its left.
-/// Each thread: its page and state, the text it is on, the comments, and Reply, Close Thread or Reopen, Delete Thread, Go to Thread
-/// and, for one that names @claude, where its send stands and Send to Claude. Nothing here is drawn (Q-496).
-struct PdfCommentsPanel: View {
-    let viewer: PdfViewer
-    var width: CGFloat = 320
-
-    var body: some View {
-        VStack(spacing: 0) {
-            Text("Comments · \(viewer.threads.count)").duoText(.sectionLabel).foregroundStyle(DuoColor.text2)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, DuoMetric.noticePaddingX).frame(height: DuoMetric.deckBarHeight)
-                .overlay(alignment: .bottom) { DuoColor.rule.frame(height: DuoMetric.borderHairline) }
-            if viewer.threads.isEmpty {
-                Text("No comments yet. Select text and press Add Comment.").duoText(.body).foregroundStyle(DuoColor.text2)
-                    .padding(DuoMetric.noticePaddingX).frame(maxWidth: .infinity, alignment: .leading)
-                Spacer(minLength: 0)
-            } else {
-                ScrollView(.vertical) {
-                    VStack(alignment: .leading, spacing: DuoSpace.gapCardToCard) {
-                        ForEach(viewer.threads, id: \.id) { PdfThreadCard(viewer: viewer, thread: $0) }
-                    }
-                    .padding(DuoMetric.noticePaddingX)
-                }
-            }
-        }
-        .frame(width: width)
-        .background(DuoColor.ground)
-        .overlay(alignment: .leading) { DuoColor.rule.frame(width: DuoMetric.borderHairline) }
-        .accessibilityIdentifier("pdf.comments-panel")
-    }
-}
-
-struct PdfThreadCard: View {
-    @Environment(AppModel.self) private var model
-    let viewer: PdfViewer
-    let thread: PdfComments.Thread
-
-    var body: some View {
-        let send = model.pdfSendState(viewer, thread: thread.id)
-        VStack(alignment: .leading, spacing: DuoSpace.gapCardContent) {
-            Text("#\(thread.id) · \(thread.place) · \(thread.resolved ? "Closed" : "Open")").duoText(.pill).foregroundStyle(DuoColor.text2)
-            if let a = thread.anchor {
-                Text("“\(SendFormat.line(a).prefix(140))”").duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(3).fixedSize(horizontal: false, vertical: true)
-            }
-            ForEach(thread.items, id: \.id) { c in
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("\(c.author) · \(String(c.date.prefix(10)))").duoText(.body, weight: .semibold).lineLimit(1)
-                    Text(c.text).duoText(.body).fixedSize(horizontal: false, vertical: true)
-                }
-            }
-            if let send { Text(send == "Claude replied" ? send : "Claude: \(send)").duoText(.pill).foregroundStyle(DuoColor.text2) }
-            VStack(alignment: .leading, spacing: DuoSpace.gapButtonToButton) {
-                HStack(spacing: DuoSpace.gapButtonToButton) {
-                    Button("Reply") { model.askPdfReply(viewer, thread: thread.id) }.buttonStyle(.duo)   // action: comment reply
-                    if thread.resolved {
-                        Button("Reopen") { model.setPdfThreadClosed(viewer, thread: thread.id, closed: false) }.buttonStyle(.duo)   // action: comment reopen
-                    } else {
-                        Button("Close Thread") { model.setPdfThreadClosed(viewer, thread: thread.id, closed: true) }.buttonStyle(.duo)   // action: comment close
-                    }
-                    Button("Delete Thread") { model.askPdfDelete(viewer, thread: thread.id) }.buttonStyle(.duo)   // action: comment delete
-                }
-                HStack(spacing: DuoSpace.gapButtonToButton) {
-                    Button("Go to Thread") { viewer.show(thread) }.buttonStyle(.duo)   // action: pdf page
-                    if send != nil, !thread.resolved {
-                        Button("Send to Claude") { model.sendPdfThread(viewer, thread: thread.id) }.buttonStyle(.duo)   // action: comment send
-                    }
-                }
-            }
-            .fixedSize()
-        }
-        .padding(10)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).fill(DuoColor.pane))
-        .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
-        .opacity(thread.resolved ? 0.7 : 1)
-    }
 }

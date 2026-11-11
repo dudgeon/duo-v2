@@ -6,10 +6,10 @@ import Foundation
 import PDFKit
 import SwiftUI
 
-// DL-332, DL-333, DL-335: the PDF viewer (page, zoom, find, selection), the stand-in comments panel (Q-496), and a PDF on one side of a split (Q-497).
+// DL-332, DL-333, DL-335: the PDF viewer (page, zoom, find, selection), the comment margin, built as Markdown review's (Q-496), and a PDF on one side of a split (Q-497).
 
 @MainActor func pdfViewerChecks(scratch: URL) throws {
-    print("the PDF viewer: page, zoom, find, selection, comments panel, split (DL-332, DL-333, DL-335)")
+    print("the PDF viewer: page, zoom, find, selection, comment margin, split (DL-332, DL-333, DL-335)")
     let fm = FileManager.default
     let proj = scratch.appending(path: "reading")
     try fm.createDirectory(at: proj, withIntermediateDirectories: true)
@@ -22,10 +22,13 @@ import SwiftUI
 
     var fx = try repoFixture()
     fx.projects.append(try JSONDecoder().decode(Fixture.Project.self, from: JSONSerialization.data(withJSONObject: ["name": "reading", "topic": "Research", "path": proj.path, "goal": "g"])))
+    // A session of the project on screen: where an @claude comment goes (it runs outside Duo here, so the send ends "not delivered").
+    fx.sessions.append(try JSONDecoder().decode(Fixture.Session.self, from: JSONSerialization.data(withJSONObject: ["name": "Reader", "project": "reading", "state": "idle", "sessionId": "sid-reader-1"])))
     let m = AppModel(fixture: fx)
     m.terminalsMode = .live
     m.liveFolders["reading"] = proj
     m.open(project: "reading")
+    m.consoleTab = "sid-reader-1"
     func wait(_ s: Double = 5, _ ok: () -> Bool) -> Bool {
         let until = Date().addingTimeInterval(s)
         while !ok(), Date() < until { RunLoop.main.run(until: Date().addingTimeInterval(0.02)) }
@@ -109,40 +112,101 @@ import SwiftUI
     check(wait(2) { v.selectionText.isEmpty }, "clearing the selection empties the viewer's selection")
     check(!duo2("pdf", "selection").ok, "no selection: `pdf selection` says nothing is selected")
 
-    // The comments panel
-    check(duo2("pdf", "comments-panel").output.contains("hidden") && !v.commentsOpen, "the comments panel is off by default")
-    check(duo2("pdf", "comments-panel", "show").output.contains("showing") && v.commentsOpen && duo2("pdf", "comments-panel", "hide").output.contains("hidden") && !v.commentsOpen, "`pdf comments-panel show|hide` toggles it")
+    // The comment margin: Markdown review's margin beside the pages (Q-496)
+    check(duo2("pdf", "comments-panel").output.contains("showing") && v.commentsShown, "the comment margin is on by default: no click shows a comment")
+    check(duo2("pdf", "comments-panel", "hide").output.contains("hidden") && !v.commentsShown && duo2("pdf", "comments-panel", "show").output.contains("showing") && v.commentsShown, "`pdf comments-panel show|hide` shows and hides it")
+    check(duo2("pdf", "comments-panel", "--show-closed", "on").output.contains("closed comments shown") && v.showClosed && duo2("pdf", "comments-panel", "--show-closed", "off").output.contains("hidden") && !v.showClosed && !duo2("pdf", "comments-panel", "--show-closed", "maybe").ok, "…and `--show-closed on|off` is Show Closed Comments")
+    check(wait(10) { v.margin.isReady }, "the margin's page is up")
+    func cards() -> [[String: Any]] {
+        var out: [[String: Any]] = []
+        var got = false
+        v.margin.evaluate("return duoPdf.dump()") { out = ($0 as? [[String: Any]]) ?? []; got = true }
+        _ = wait(5) { got }
+        return out
+    }
+    func text(_ id: String) -> String { cards().first { $0["id"] as? String == id }?["text"] as? String ?? "" }
 
-    // Add Comment on a selection: the sheet asks for the text, then the same write `comment add` makes; the viewer reloads
+    // Add Comment on a selection: the composer opens in the margin (no sheet), and Post writes the same thing `comment add` does
     check(v.select(text: "turquoise walrus") && v.selectionQuads()?.page == 1 && (v.selectionQuads()?.quads.count ?? 0) >= 1, "a selection gives the page and its lines' rectangles for a comment")
-    let before = SheetCenter.shared.queue.count
+    let sheetsBefore = SheetCenter.shared.queue.count + (SheetCenter.shared.current == nil ? 0 : 1)
     let pageBefore = v.page
-    m.askPdfComment(v)
-    guard let q = SheetCenter.shared.current, q.field != nil, SheetCenter.shared.queue.count == before + 1 else { check(false, "Add Comment asks for the text in a Duo sheet"); return }
-    check(q.title == "Add a comment" && q.choices.map(\.label) == ["Cancel", "Add Comment"], "Add Comment asks for the text in a Duo sheet (SheetCenter), never an alert")
-    q.field?.text = "@claude is this the right phrase?"
-    SheetCenter.shared.answer(q.choices[1])
-    check(wait { v.threads.count == 1 }, "…and the comment is written; the viewer reloaded and lists the thread")
+    m.composePdfComment(v)
+    check(v.composing?.page == 1 && !(v.composing?.quads.isEmpty ?? true), "Add Comment keeps the selection's page and rectangles for the composer")
+    var composing = false
+    check(wait { v.margin.evaluate("return duoPdf.composing()") { composing = ($0 as? Bool) == true }; RunLoop.main.run(until: Date().addingTimeInterval(0.05)); return composing }, "…and the margin shows the composer card, level with the selection")
+    check(cards().contains { $0["id"] as? String == "composer" && ($0["top"] as? Double ?? -1) >= 0 }, "…a card in the margin, not a sheet")
+    check(SheetCenter.shared.queue.count + (SheetCenter.shared.current == nil ? 0 : 1) == sheetsBefore, "Add Comment asks nothing in a Duo sheet (the modal is gone)")
+    let addPath = repoRoot().appending(path: "Sources/DuoKit/Control/AppModel+PdfViewer.swift")
+    let addSource = (try? String(contentsOf: addPath, encoding: .utf8)) ?? ""
+    let addFns = addSource.range(of: "public func composePdfComment").flatMap { r in addSource.range(of: "static func namesClaude").map { String(addSource[r.lowerBound..<$0.lowerBound]) } } ?? ""
+    check(!addFns.isEmpty && !addFns.contains("SheetCenter") && !addFns.contains("DuoQuestion") && !addSource.contains("func askPdfComment") && !addSource.contains("func askPdfReply") && !addSource.contains("func askPdfDelete"), "source scan: no SheetCenter or DuoQuestion in the add path, and no askPdfComment, askPdfReply or askPdfDelete left")
+    let tid = m.postPdfComment(v, text: "@claude is this the right phrase?")
+    check(tid != nil && wait { v.threads.count == 1 }, "Post writes the comment; the viewer reloaded and lists the thread (\(tid ?? "nil"))")
     let th = v.threads.first
     check(th?.page == 1 && th?.kind == "Highlight" && (th?.anchor ?? "").contains("turquoise"), "…a Highlight on page 1 over the selected text (\(th?.anchor ?? "nil"))")
-    check(duo2("comment", "list", "paper.pdf").output.contains("is this the right phrase?"), "`duo2 comment list` reads what the panel wrote")
-    check(m.pdfSendState(v, thread: th?.id ?? "") == "Not sent", "a thread that names @claude shows its send state: Not sent")
-    check(v.page == pageBefore && v.count == 4, "the reload kept the page (\(v.page))")
-    let tid = th?.id ?? "c1"
-    m.setPdfThreadClosed(v, thread: tid, closed: true)
-    check(wait { v.threads.first?.resolved == true }, "Close Thread marks it Closed (a hidden Completed reply, DL-335)")
-    m.setPdfThreadClosed(v, thread: tid, closed: false)
+    check(duo2("comment", "list", "paper.pdf").output.contains("is this the right phrase?"), "`duo2 comment list` reads what the margin wrote")
+    check(v.composing == nil && v.page == pageBefore && v.count == 4, "the composer is done and the reload kept the page (\(v.page))")
+    check(wait { text(tid ?? "?").contains("is this the right phrase?") }, "the thread is a card in the margin with no click: its author and text are drawn")
+    let key = AppModel.reviewKey(proj.appending(path: "paper.pdf"), tid ?? "c1")
+    check(m.reviewDeliveries[key] != nil, "@claude on Post sends it at once: the thread has a delivery (\(m.reviewDeliveries[key].map { "\($0.state.rawValue): \($0.sessionName)" } ?? "none"))")
+    check(wait { text(tid ?? "?").contains("Not delivered") }, "…and the card says where it stands, as Markdown's: Not delivered (the fixture session runs outside Duo)")
+    check(m.pdfSendState(v, thread: tid ?? "") == "Not Delivered", "the model's send state agrees")
+    m.setPdfThreadClosed(v, thread: tid ?? "c1", closed: true)
+    check(wait { v.threads.first?.resolved == true }, "Close and Keep marks it closed (a hidden Completed reply, DL-335)")
+    check(wait { cards().contains { ($0["text"] as? String ?? "").contains("1 closed") } && !text(tid ?? "?").contains("right phrase") }, "…and it folds into \"1 closed · Show\", as Markdown's does")
+    v.margin.activate(nil)
+    v.showClosed = true
+    check(wait { text(tid ?? "?").hasPrefix("› Closed") }, "Show draws the closed thread as its one folded line")
+    v.showClosed = false
+    m.setPdfThreadClosed(v, thread: tid ?? "c1", closed: false)
     check(wait { v.threads.first?.resolved == false }, "Reopen opens it again")
-    let b2 = SheetCenter.shared.queue.count
-    m.askPdfDelete(v, thread: tid)
-    check(SheetCenter.shared.queue.count == b2 + 1 && SheetCenter.shared.current?.title == "Delete this thread?", "Delete Thread asks first, in a Duo sheet")
-    if let d = SheetCenter.shared.current { SheetCenter.shared.answer(d.choices[0]) }   // Cancel
-    check(v.threads.count == 1, "…and Cancel keeps it")
-    m.askPdfReply(v, thread: tid)
-    if let r = SheetCenter.shared.current, r.field != nil { r.field?.text = "A reply"; SheetCenter.shared.answer(r.choices[1]) }
-    check(wait { v.threads.first?.items.count == 2 }, "Reply asks for the text, then appends the reply")
+    v.margin.activate(nil)
+    check(m.replyPdfThread(v, thread: tid ?? "c1", text: "A reply"), "a reply from the card is written")
+    check(wait { v.threads.first?.items.count == 2 } && wait { text(tid ?? "?").contains("1 reply") }, "…and the card counts it")
+    // Claude's reply (what `duo2 comment reply … --file` writes) appears in the margin without a click
+    _ = try? PdfComments.reply(proj.appending(path: "paper.pdf"), to: tid ?? "c1", author: "claude", text: "It is the right phrase.", backups: AppModel.pdfBackups)
+    AppModel.pdfChanged(proj.appending(path: "paper.pdf"))
+    check(wait { v.threads.first?.items.count == 3 } && wait { text(tid ?? "?").contains("2 replies") }, "Claude's reply is in the thread and counted on the card, with no click")
+    check(!text(tid ?? "?").contains("Not delivered"), "…an answered thread drops its delivery line (the pill stays)")
+    // The active card (a click on its highlight, or on the card) shows the whole thread with its reply field and Close and Keep / Delete
+    v.margin.activate(tid)
+    check(wait { let t = text(tid ?? "?"); return t.contains("It is the right phrase.") && t.contains("Close and Keep") && t.contains("Delete") }, "the active card shows every reply with Close and Keep and Delete")
+    v.margin.activate(nil)
+    // Narrow: under 420 the margin is a gutter of count markers
+    v.paneWidth = 380
+    check(wait { cards().contains { $0["id"] as? String == tid && ($0["w"] as? Double ?? 0) <= 24 } && v.margin.reserve == 24 }, "a pane under 420 wide draws the gutter: a count marker, 24 wide (Markdown's narrow layout)")
+    v.paneWidth = 1000
+    check(wait { v.margin.reserve > 100 }, "…and the cards again when it widens")
+    // Delete (at once, as Markdown's; the original is kept first)
+    m.deletePdfThread(v, thread: tid ?? "c1")
+    check(wait { v.threads.isEmpty } && wait { v.margin.width == 0 }, "Delete removes the thread; with no comments the margin gives its width back (\(v.margin.width))")
+
+    // @claude for a PDF outside any project: the same route (the document's choice, the last editor, else the session on screen)
+    let loose = scratch.appending(path: "loose-folder")
+    try fm.createDirectory(at: loose, withIntermediateDirectories: true)
+    cgFixture(loose.appending(path: "loose.pdf"))
+    v.open(loose.appending(path: "loose.pdf"))
+    check(v.state == .ready && wait { v.select(text: "turquoise walrus") }, "a PDF in a folder that isn't a project opens and has a selection")
+    m.composePdfComment(v)
+    let lid = m.postPdfComment(v, text: "@claude and this one outside a project?")
+    check(lid != nil && wait { v.threads.count == 1 }, "…a comment on it is written")
+    let lkey = AppModel.reviewKey(loose.appending(path: "loose.pdf"), lid ?? "c1")
+    check(wait { m.reviewDeliveries[lkey] != nil }, "…and @claude on Post is sent from there too: a delivery to the session on screen (\(m.reviewDeliveries[lkey]?.sessionName ?? "none"))")
+    v.open(proj.appending(path: "paper.pdf"))
+    check(v.state == .ready && v.threads.isEmpty, "back to paper.pdf")
+    // A second composer for the next checks
+    check(v.select(text: "turquoise walrus"), "select again")
+    m.composePdfComment(v)
+    check(v.composing != nil, "Add Comment again opens the composer")
+    v.cancelCompose()
+    check(v.composing == nil && wait { var c = true; v.margin.evaluate("return duoPdf.composing()") { c = ($0 as? Bool) == true }; RunLoop.main.run(until: Date().addingTimeInterval(0.05)); return !c }, "Cancel closes it and writes nothing")
+    check(duo2("comment", "list", "paper.pdf").output.contains("no comment threads"), "…nothing was written to the file")
+    // Go to Thread (an outline) is still the viewer's, used by checks and the margin's click
+    _ = try? PdfComments.add(proj.appending(path: "paper.pdf"), page: 1, quads: v.selectionQuads()?.quads ?? [], point: nil, author: "geoff", text: "Go to this", backups: AppModel.pdfBackups)
+    AppModel.pdfChanged(proj.appending(path: "paper.pdf"))
+    check(wait { v.threads.count == 1 }, "a thread added by another program appears")
     v.show(v.threads[0])
-    check(v.pdfView.highlightedSelections?.isEmpty == false, "Go to Thread outlines where the thread is")
+    check(v.pdfView.highlightedSelections?.isEmpty == false, "show(thread) outlines where the thread is")
 
     // Fallback: a file PDFKit can't open
     v.open(proj.appending(path: "broken.pdf"))
@@ -177,6 +241,6 @@ import SwiftUI
     for id in [ActionID.pdfPage, .pdfZoom, .pdfFind, .pdfSelection, .pdfCommentsPanel] {
         check(DuoAction.all.contains { $0.id == id && $0.family == .pdf } && AppModel.appVerbs.contains(id), "\(id.rawValue) is a pdf verb the app answers")
     }
-    let labels = ["Comments", "Reply", "Close Thread", "Reopen", "Delete Thread", "Go to Thread", "Add Comment", "Previous Page", "Next Page", "Zoom In", "Zoom Out", "Fit", "Send to Claude"]
-    check(labels.allSatisfy { l in DuoAction.all.contains { $0.ui.contains(l) } }, "every control in the bar and the panel names a verb in the registry")
+    let labels = ["Comments", "Add Comment", "Previous Page", "Next Page", "Zoom In", "Zoom Out", "Fit", "n closed · Show", "Close and Keep", "Post"]
+    check(labels.allSatisfy { l in DuoAction.all.contains { $0.ui.contains(l) } }, "every control in the bar and the margin names a verb in the registry")
 }

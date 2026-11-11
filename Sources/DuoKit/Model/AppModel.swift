@@ -899,7 +899,7 @@ public final class AppModel {
     public var terminalsMode: TerminalsMode { get { core.terminalsMode } set { core.terminalsMode = newValue } _modify { yield &core.terminalsMode } }
     public var terminals: TerminalStore { core.terminals }
     public var chats: ChatStore { get { core.chats } set { core.chats = newValue } _modify { yield &core.chats } }
-    var reviewDeliveries: [String: ReviewDelivery] { get { core.reviewDeliveries } set { core.reviewDeliveries = newValue } _modify { yield &core.reviewDeliveries } }
+    public var reviewDeliveries: [String: ReviewDelivery] { get { core.reviewDeliveries } set { core.reviewDeliveries = newValue } _modify { yield &core.reviewDeliveries } }
     var reviewLastEditor: [String: String] { get { core.reviewLastEditor } set { core.reviewLastEditor = newValue } _modify { yield &core.reviewLastEditor } }
     var reviewSending: Set<String> { get { core.reviewSending } set { core.reviewSending = newValue } _modify { yield &core.reviewSending } }
     public var webTabs: [String: WebTab] { get { core.webTabs } set { core.webTabs = newValue } _modify { yield &core.webTabs } }

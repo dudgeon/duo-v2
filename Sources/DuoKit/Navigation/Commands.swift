@@ -329,7 +329,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .revertChange: model.editor.revertAtCaret()
         case .revertAllChanges: model.editor.revertAll()
         case .suggestEdits: model.toggleSuggestEdits()
-        case .addComment: if let v = pdfCommentTarget(model) { model.askPdfComment(v) } else { model.editor.reviewAddComment() }
+        case .addComment: if let v = pdfCommentTarget(model) { model.composePdfComment(v) } else { model.editor.reviewAddComment() }
         case .newShell: model.newShell()
         case .chooseHome: model.chooseHomeFolder()
         case .newBrowserTab: model.newBrowserTab()

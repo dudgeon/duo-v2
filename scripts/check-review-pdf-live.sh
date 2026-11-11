@@ -1,7 +1,7 @@
 #!/bin/zsh
 # @claude end to end on a PDF (DL-335): an isolated Duo hosts a REAL Claude session on Haiku 5.5 with the user's own CLI
-# login, in the background. A comment naming @claude is appended to the PDF as a highlight, sent to the session with
-# `duo2 comment send`, and Claude's reply (`duo2 comment reply … --file`) is read back from the PDF's annotations (/IRT).
+# login, in the background. A comment naming @claude is added through the margin composer's Post (the harness's pdf-post), which appends it to the
+# PDF as a highlight and sends it to the session, and Claude's reply (`duo2 comment reply … --file`) is read back from the PDF's annotations (/IRT).
 # An approved, routine real-login test: one short Haiku turn. Same set-up as check-review-office-live.sh.
 #   scripts/check-review-pdf-live.sh [out-dir]
 set -u
@@ -20,16 +20,17 @@ cp $F $out/original.pdf
 rm -f $out/run.log
 # Commas separate actions, so none appear in the verbs' words; ~ stands for a space.
 acts="open:pdfgarden,open-file:$F,wait:10,verb:session new --project pdfgarden,wait:35"
-acts+=",verb:comment add $F --at walrus~study @claude~in~one~short~line:~what~animal~is~studied? --as geoff-q"
-acts+=",verb:comment send --all --file $F,wait:6,verb:comment status c1 --file $F,wait:20,verb:comment status c1 --file $F,wait:25,verb:comment status c1 --file $F,wait:20,verb:comment list $F,wait:3"
+# The comment goes in through the composer's own path (select, Add Comment, Post): Post sends it, nothing calls `comment send`.
+acts+=",pdf-select:walrus~study,pdf-compose,pdf-post:@claude~in~one~short~line:~what~animal~is~studied?"
+acts+=",wait:6,verb:comment status c1 --file $F,wait:20,verb:comment status c1 --file $F,wait:25,verb:comment status c1 --file $F,wait:20,verb:comment list $F,wait:3"
 env -u DUO_SUPPORT_DIR DUO_CLAUDE_CONFIG_DIR=${DUO_CLAUDE_CONFIG_DIR:-$HOME/.claude} DUO_EXTRA_ENV="DUO_SUPPORT_DIR=$sup" DUO_TIMEOUT=${DUO_TIMEOUT:-300} \
   scripts/run-live.sh $root $out/final.png "$acts" $out/run.log
 sleep 3
 fails=0 total=0
 expect() { total=$((total+1)); local got=0; grep -qF -- "$3" "$2" && got=1
   if [[ $got == 1 ]]; then echo "ok   $1"; else fails=$((fails+1)); echo "FAIL $1 (${2:t} should have '$3')"; fi }
-expect "the comment was appended to the PDF" $out/run.log "Commented on page 1 as c1."
-expect "it was sent to the live session" $out/run.log "#c1: Sent to"
+expect "the composer's Post appended the comment to the PDF" $out/run.log "pdf-post: c1"
+expect "Post sent it to the live session (no comment send)" $out/run.log "delivery: sent"
 expect "Claude's reply is in the PDF's thread" $out/run.log "↳ #c1."
 # The original bytes are still the start of the file (an incremental update), and Claude's reply is an /IRT annotation.
 total=$((total+1)); o=$(stat -f%z $out/original.pdf)

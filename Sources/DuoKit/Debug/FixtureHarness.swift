@@ -646,6 +646,19 @@ public enum FixtureHarness {
                 model.sendReviewComment(url, thread: id, to: s) { r in FileHandle.standardError.write(Data("review-send: \(r.text)\n".utf8)) }
             } else { FileHandle.standardError.write(Data("review-send: no session\n".utf8)) }
         case "review-menu": model.reviewMenu = parts.count > 1 ? (parts[1] == "markup" ? "markup" : "mode") : nil   // review-menu:markup|mode (all): the formatting bar's mode menu (DL-317), open for a capture; markup also opens Markup
+        case "pdf-select":   // pdf-select:<words~joined>: selects that text in the PDF showing
+            if let v = model.visiblePdf { _ = v.select(text: (parts.count > 1 ? parts[1] : "").replacingOccurrences(of: "~", with: " ")) }
+        case "pdf-compose":   // pdf-compose: Add Comment (⌘⌥M) on the selection: the composer opens in the margin
+            if let v = model.visiblePdf { model.composePdfComment(v) }
+        case "pdf-post":   // pdf-post:<words~joined>: the composer's Post, the call the margin's button makes (an @claude comment is sent as it is posted)
+            if let v = model.visiblePdf {
+                let id = model.postPdfComment(v, text: (parts.count > 1 ? parts[1] : "").replacingOccurrences(of: "~", with: " "))
+                FileHandle.standardError.write(Data("pdf-post: \(id ?? "none")\n".utf8))
+            }
+        case "pdf-activate":   // pdf-activate:<thread id>: opens that card in the margin (a click on it)
+            model.visiblePdf?.margin.activate(parts.count > 1 ? parts[1] : nil)
+        case "pdf-width":   // pdf-width:<points>: the pane width the margin lays out for (under 420 is the narrow gutter)
+            model.visiblePdf?.paneWidth = CGFloat(Double(parts.count > 1 ? parts[1] : "") ?? 1000)
         case "verb":   // verb:<duo2 words>[ --as name]: a duo2 verb through the control handler, as `duo2` sends it (from a Claude session); its reply to stderr
             let words = (parts.count > 1 ? parts[1] : "").split(separator: " ", omittingEmptySubsequences: true).map(String.init)
             guard let command = words.first else { break }

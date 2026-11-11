@@ -16,7 +16,7 @@ extension AppModel {
     static func isPdf(_ url: URL) -> Bool { PdfComments.isPdf(url) }
 
     /// Where the originals are kept before Duo appends a comment to a PDF.
-    static var pdfBackups: URL { SupportFolder.duo.appendingPathComponent("PDF backups", isDirectory: true) }
+    public static var pdfBackups: URL { SupportFolder.duo.appendingPathComponent("PDF backups", isDirectory: true) }
 
     /// The file's threads with each highlight's anchor filled in: the page's text under the quads, as PDFKit reads it.
     public static func pdfThreads(_ url: URL) throws -> [PdfComments.Thread] {
@@ -75,7 +75,7 @@ extension AppModel {
     }
 
     /// Tell a viewer that has the file open to read it again.
-    @MainActor static func pdfChanged(_ url: URL) {
+    @MainActor public static func pdfChanged(_ url: URL) {
         NotificationCenter.default.post(name: .duoPdfChanged, object: nil, userInfo: ["path": url.path])
     }
 

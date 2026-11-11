@@ -21,7 +21,7 @@ public struct ReviewDelivery: Equatable, Sendable, Codable {
 }
 
 extension AppModel {
-    static func reviewKey(_ url: URL, _ thread: String) -> String { url.resolvingSymlinksInPath().standardizedFileURL.path + "#" + thread }
+    public static func reviewKey(_ url: URL, _ thread: String) -> String { url.resolvingSymlinksInPath().standardizedFileURL.path + "#" + thread }
 
     // MARK: Which session
 
@@ -171,6 +171,7 @@ extension AppModel {
 
     /// The deliveries of the document showing, and each @claude thread's pill, pushed into the page.
     func pushReviewState() {
+        pushPdfReviewState()   // a PDF showing has the same margin (Q-496)
         guard let e = editorIfLoaded, let url = e.url, showingMarkdownDocument else { return }
         let prefix = url.resolvingSymlinksInPath().standardizedFileURL.path + "#"
         var map: [String: Any] = [:]

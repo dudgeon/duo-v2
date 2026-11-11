@@ -1,10 +1,12 @@
+import AppKit
 import DuoControl
 import DuoSearch
 import Foundation
 import PDFKit
 
-// The PDF viewer's model side (DL-332, DL-333, DL-335): which PDF is on screen, Send Selection, `duo2 pdf …`, and the stand-in
-// comment panel's actions (Q-496), which write through the same `PdfComments` calls `duo2 comment …` makes.
+// The PDF viewer's model side (DL-332, DL-333, DL-335): which PDF is on screen, Send Selection, `duo2 pdf …`, and the comment
+// margin's actions (Q-496: the Markdown review margin beside the pages), which write through the same `PdfComments` calls
+// `duo2 comment …` makes and send a comment that names @claude when it is posted, as Markdown does (DL-236 10A).
 extension AppModel {
     /// PDFs open in the PDF viewer (DL-332); Quick Look is its fallback.
     public static func isPdfViewable(_ path: String) -> Bool { (path as NSString).pathExtension.lowercased() == "pdf" }
@@ -17,7 +19,11 @@ extension AppModel {
         v.pdfView.extraMenuItems = { [weak self, weak v] in
             guard let self, let v, self.terminalsMode == .live, !v.selectionText.isEmpty else { return [] }
             return self.sendMenuItems("Selection") { done in done(self.pdfSelectionPayload()) }
-                + [ActionMenuItem("Add Comment") { self.askPdfComment(v) }]
+                + [ActionMenuItem("Add Comment") { self.composePdfComment(v) }]
+        }
+        v.margin.onAction = { [weak self, weak v] op, body in
+            guard let self, let v else { return }
+            self.pdfMarginAction(v, op, body)
         }
     }
 
@@ -75,58 +81,64 @@ extension AppModel {
             done(.ok(p, ["file": path, "page": v.selectionPages?.lowerBound ?? 0, "text": v.selectionText]))
         case .pdfCommentsPanel:
             switch inv[0] {
-            case "show": v.commentsOpen = true
-            case "hide": v.commentsOpen = false
+            case "show": v.commentsShown = true
+            case "hide": v.commentsShown = false
             case nil: break
             default: return done(.fail("usage: \(id.action.usage)"))
             }
-            done(.ok("The comments panel is \(v.commentsOpen ? "showing" : "hidden").", ["showing": v.commentsOpen, "threads": v.threads.count]))
+            if let c = inv.flags["show-closed"] {
+                switch c.lowercased() {
+                case "on", "yes", "true", "": v.showClosed = true
+                case "off", "no", "false": v.showClosed = false
+                default: return done(.fail("--show-closed takes on or off"))
+                }
+            }
+            let closed = v.threads.filter(\.resolved).count
+            done(.ok("The comment margin is \(v.commentsShown ? "showing" : "hidden"); \(v.threads.count - closed) open threads, \(closed) closed (closed comments \(v.showClosed ? "shown" : "hidden")).",
+                     ["showing": v.commentsShown, "threads": v.threads.count, "closed": closed, "showClosed": v.showClosed]))
         default: done(.fail("not a pdf verb"))
         }
     }
 
-    // MARK: The stand-in comment panel (Q-496)
+    // MARK: The comment margin (Q-496)
 
     private var pdfAuthor: String { NSUserName() }
 
     /// Writes through `PdfComments` as `duo2 comment …` does, tells the viewers, and says why if it can't.
-    private func pdfWrite(_ url: URL, _ body: () throws -> PdfComments.Written) {
-        do { _ = try body(); Self.pdfChanged(url) } catch { info("\(error)") }
+    @discardableResult
+    private func pdfWrite(_ url: URL, _ body: () throws -> PdfComments.Written) -> PdfComments.Written? {
+        do { let w = try body(); Self.pdfChanged(url); return w } catch { info("\(error)"); return nil }
     }
 
-    /// Add Comment on the selection (`comment add --at`): asks for the text, then appends a Highlight over the selected lines.
-    public func askPdfComment(_ v: PdfViewer) {
-        guard let url = v.url, let at = v.selectionQuads() else { return }
-        let field = DuoQuestion.Field(label: "Comment", text: "")
-        if Env.autoconfirm { FileHandle.standardError.write(Data("question: Add a comment on page \(at.page)\n".utf8)); return }
-        SheetCenter.shared.ask(from: self, DuoQuestion(title: "Add a comment", paragraphs: ["On page \(at.page): “\(SendFormat.line(v.selectionText).prefix(120))”. Start with @claude to have it sent to a session."],
-                                                      field: field, choices: [
-            .init(label: "Cancel", isCancel: true) {},
-            .init(label: "Add Comment", isDefault: true) {
-                let text = field.text.trimmingCharacters(in: .whitespacesAndNewlines)
-                guard !text.isEmpty else { return }
-                self.addPdfComment(url, page: at.page, quads: at.quads, text: text)
-            },
-        ]))
+    /// Add Comment (the bar, ⌘⌥M, the right-click menu): the composer opens in the margin level with the selection, the same card
+    /// as Markdown's with the `@` menu (nothing is asked in a sheet).
+    public func composePdfComment(_ v: PdfViewer) {
+        guard v.compose() else { return }
+        pushPdfReviewState()
     }
 
-    /// The call `comment add` makes, with a selection's page and rectangles.
-    public func addPdfComment(_ url: URL, page: Int, quads: [CGRect], text: String) {
-        pdfWrite(url) { try PdfComments.add(url, page: page, quads: quads, point: nil, author: pdfAuthor, text: text, backups: Self.pdfBackups) }
+    /// The composer's Post: the call `comment add` makes, with the selection's page and rectangles; a comment that names @claude
+    /// goes to a session now (DL-236 10A), as in Markdown. Returns the thread's id.
+    @discardableResult
+    public func postPdfComment(_ v: PdfViewer, text: String) -> String? {
+        guard let url = v.url, let c = v.composing else { return nil }
+        let text = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return nil }
+        v.composed()
+        guard let w = pdfWrite(url, { try PdfComments.add(url, page: c.page, quads: c.quads, point: nil, author: pdfAuthor, text: text, backups: Self.pdfBackups) }) else { return nil }
+        v.margin.activate(w.id)
+        if Self.namesClaude(text) { sendPdfThread(v, thread: w.id) }
+        return w.id
     }
 
-    public func askPdfReply(_ v: PdfViewer, thread: String) {
-        guard let url = v.url else { return }
-        let field = DuoQuestion.Field(label: "Reply", text: "")
-        if Env.autoconfirm { FileHandle.standardError.write(Data("question: Reply to #\(thread)\n".utf8)); return }
-        SheetCenter.shared.ask(from: self, DuoQuestion(title: "Reply to #\(thread)", field: field, choices: [
-            .init(label: "Cancel", isCancel: true) {},
-            .init(label: "Reply", isDefault: true) {
-                let text = field.text.trimmingCharacters(in: .whitespacesAndNewlines)
-                guard !text.isEmpty else { return }
-                self.pdfWrite(url) { try PdfComments.reply(url, to: thread, author: self.pdfAuthor, text: text, backups: Self.pdfBackups) }
-            },
-        ]))
+    /// A reply from the active card: written to the file, and sent when it names @claude.
+    @discardableResult
+    public func replyPdfThread(_ v: PdfViewer, thread: String, text: String) -> Bool {
+        guard let url = v.url else { return false }
+        let text = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty, pdfWrite(url, { try PdfComments.reply(url, to: thread, author: pdfAuthor, text: text, backups: Self.pdfBackups) }) != nil else { return false }
+        if Self.namesClaude(text) { sendPdfThread(v, thread: thread) }
+        return true
     }
 
     public func setPdfThreadClosed(_ v: PdfViewer, thread: String, closed: Bool) {
@@ -134,22 +146,80 @@ extension AppModel {
         pdfWrite(url) { try PdfComments.resolve(url, thread: thread, resolved: closed, author: pdfAuthor, backups: Self.pdfBackups) }
     }
 
-    public func askPdfDelete(_ v: PdfViewer, thread: String) {
+    /// Delete on the active card, as Markdown's: at once. (The original is kept in Duo's support folder first, `PDF backups`.)
+    public func deletePdfThread(_ v: PdfViewer, thread: String) {
         guard let url = v.url else { return }
-        if Env.autoconfirm { FileHandle.standardError.write(Data("question: Delete #\(thread)\n".utf8)); return }
-        SheetCenter.shared.ask(from: self, DuoQuestion(title: "Delete this thread?", paragraphs: ["The highlight and every comment in #\(thread) are removed from the PDF. A copy of the file is kept in Duo’s support folder."], choices: [
-            .init(label: "Cancel", isCancel: true) {},
-            .init(label: "Delete", isDefault: true) { self.pdfWrite(url) { try PdfComments.delete(url, thread: thread, backups: Self.pdfBackups) } },
-        ]))
+        pdfWrite(url) { try PdfComments.delete(url, thread: thread, backups: Self.pdfBackups) }
     }
 
-    /// `comment send`: the same call, to the session the thread already has or the one on screen.
+    static func namesClaude(_ text: String) -> Bool { text.range(of: #"@claude\b"#, options: [.regularExpression, .caseInsensitive]) != nil }
+
+    /// What the margin page reported.
+    func pdfMarginAction(_ v: PdfViewer, _ op: String, _ body: [String: Any]) {
+        let id = body["id"] as? String
+        switch op {
+        case "post": postPdfComment(v, text: body["text"] as? String ?? "")
+        case "cancel": v.cancelCompose()
+        case "reply": if let id { replyPdfThread(v, thread: id, text: body["text"] as? String ?? "") }
+        case "close": if let id { setPdfThreadClosed(v, thread: id, closed: true) }
+        case "reopen": if let id { setPdfThreadClosed(v, thread: id, closed: false) }
+        case "delete": if let id { deletePdfThread(v, thread: id) }
+        case "showClosed": v.showClosed = body["value"] as? Bool ?? false
+        case "escaped": v.pdfView.window?.makeFirstResponder(v.pdfView)
+        case "send", "retry": if let id { sendPdfThread(v, thread: id) }
+        case "pill": pdfPillMenu(v, thread: id ?? "", x: body["x"] as? Double ?? 0, y: body["y"] as? Double ?? 0)
+        case "crashed": pushPdfReviewState(); v.pushMargin()
+        default: break
+        }
+    }
+
+    /// The pill's menu: the sessions of the project, as Markdown's (a thread not sent, or not delivered, goes to the one picked).
+    private func pdfPillMenu(_ v: PdfViewer, thread id: String, x: Double, y: Double) {
+        guard let url = v.url else { return }
+        let sessions = fixture.sessions.filter { $0.sessionId != nil && ($0.project == currentProject?.name) }
+        guard !sessions.isEmpty else { return }
+        let menu = NSMenu()
+        for s in sessions {
+            let item = NSMenuItem(title: "\(s.name) · \(reviewSessionStatus(s))", action: nil, keyEquivalent: "")
+            item.representedObject = s.tabKey
+            menu.addItem(item)
+        }
+        let delegate = ReviewPillMenu { [weak self, weak v] key in
+            guard let self, let s = sessions.first(where: { $0.tabKey == key }) else { return }
+            self.bindReviewSession(url, to: s)
+            if let d = self.reviewDeliveries[Self.reviewKey(url, id)], d.state == .notDelivered || d.state == .queued {
+                self.sendReviewComment(url, thread: id, to: s) { [weak v] _ in v?.refreshThreads() }
+            } else { self.pushPdfReviewState() }
+        }
+        for item in menu.items { item.target = delegate; item.action = #selector(ReviewPillMenu.pick(_:)) }
+        reviewPillMenu = delegate
+        menu.popUp(positioning: nil, at: NSPoint(x: x, y: y), in: v.margin.webView)
+    }
+
+    /// `comment send`: the same call, to the session the thread already has or the first guess (the document's last choice, the
+    /// last to edit it, the one on screen). With none, the usual Duo question says so; the card stays "Not sent" with Send.
     public func sendPdfThread(_ v: PdfViewer, thread: String) {
         guard let url = v.url else { return }
         sendReviewComment(url, thread: thread) { [weak self, weak v] r in
             v?.refreshThreads()
+            self?.pushPdfReviewState()
             if !r.ok { self?.info(r.text) }
         }
+    }
+
+    /// The deliveries of the PDF showing, and the first-guess session of the pill, pushed into the margin page (as `pushReviewState`).
+    func pushPdfReviewState() {
+        guard let v = visiblePdf, let url = v.url else { return }
+        let prefix = url.resolvingSymlinksInPath().standardizedFileURL.path + "#"
+        var map: [String: Any] = [:]
+        for (k, d) in reviewDeliveries where k.hasPrefix(prefix) {
+            let s = session(tabKey: d.session)
+            map[String(k.dropFirst(prefix.count))] = ["state": d.state.rawValue, "name": d.sessionName, "status": s.map(reviewSessionStatus) ?? "not running",
+                                                     "at": Self.clock(d.at), "why": d.why as Any, "session": d.session]
+        }
+        let first = reviewTarget(url, thread: "")
+        let def: [String: Any] = first.map { ["name": $0.name, "status": reviewSessionStatus($0), "session": $0.tabKey] } ?? ["name": "New Session", "status": "", "session": ""]
+        v.margin.setDelivery(map, def)
     }
 
     /// Where a thread's @claude send stands, in the panel's words: nil when it doesn't name @claude.
