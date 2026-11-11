@@ -1,0 +1,35 @@
+<style>
+#w { left: 30px; top: 24px; width: 580px; height: 300px; }
+#mid { flex: 1; position: relative; background: #15171b; transition: background-color .6s; }
+#strip { position: absolute; left: 0; right: 0; top: 0; height: 30px; background: #f3f4f6; border-bottom: 1px solid #c9cdd3; display: flex; align-items: center; gap: 8px; padding: 0 8px; font-size: 13px; }
+#p-term { background: #1f2328; color: #ffffff; }
+[data-state~="chat"] #p-term { background: transparent; color: #5b636d; }
+[data-state~="chat"] #p-chat { background: #1f2328; color: #ffffff; }
+[data-state~="chat"] #mid { background: #f3f4f6; }
+#term, #chat { position: absolute; left: 0; right: 0; top: 31px; bottom: 0; padding: 12px 10px; display: flex; flex-direction: column; gap: 8px; transition: opacity .5s; }
+#term { color: #e6e8eb; } #term .mono { color: #e6e8eb; }
+#chat { opacity: 0; }
+[data-state~="chat"] #chat { opacity: 1; } [data-state~="chat"] #term { opacity: 0; }
+#chat .me { align-self: flex-end; background: #e3e6ea; border-radius: 8px; padding: 4px 9px; font-size: 13px; }
+#chat .cl { background: #ffffff; border: 1px solid #c9cdd3; border-radius: 8px; padding: 6px 9px; font-size: 13px; line-height: 20px; }
+#chat .lk { color: #0969da; text-decoration: underline; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+#tip { left: 250px; top: 92px; width: 250px; }
+#ask { left: 190px; top: 110px; width: 260px; }
+[data-state~="tip"] #tip, [data-state~="ask"] #ask { --o: 1; }
+#today { left: 30px; top: 340px; }
+</style>
+<div class="win" id="w" data-f>
+  <div class="tb">notes-app</div>
+  <div class="bd">
+    <div class="lp"><span class="row sel">Fix the importer</span><span class="row">Write the guide</span><span class="lab" style="margin-top:8px">Files</span><span class="row">docs</span><span class="row">src</span></div>
+    <div id="mid">
+      <div id="strip"><span>Fix the importer</span><span class="pill" id="pill" data-f><i id="p-term">Terminal</i><i id="p-chat">Chat</i></span></div>
+      <div id="term"><span class="mono">⏺ The config is parsed in</span><span class="mono">&nbsp;&nbsp;src/app.py:4</span><span class="b" style="width:70%"></span><span class="b" style="width:45%"></span><span class="mono">› ▍</span></div>
+      <div id="chat"><span class="me">Where is the config parsed?</span><span class="cl" id="cl" data-f>In <span class="lk">src/app.py:4</span>. The plan is <span class="lk">docs/plan.md</span>.</span></div>
+    </div>
+    <div class="rp"><span class="row" style="font-weight:600">plan.md</span><span class="b" style="width:85%"></span><span class="b" style="width:60%"></span><span class="b" style="width:75%"></span></div>
+  </div>
+</div>
+<div class="sheet fade" id="tip"><b>Chat and Terminal</b>Two views of one session. Chat formats replies and links files.</div>
+<div class="sheet fade" id="ask"><b>Show this session as…</b><span class="btn pri">Chat</span><span class="btn">Terminal</span></div>
+<div class="stamp" id="today" data-in="up" data-f>Today · the mode used last · starts as Terminal</div>

@@ -1,0 +1,29 @@
+<style>
+#help { left: 24px; top: 24px; width: 250px; }
+.mi.new { display: none; }
+[data-state~="layer"] .mi.new { display: flex; }
+#exp { left: 300px; top: 24px; width: 290px; }
+#exp ul { margin: 4px 0 4px 18px; padding: 0; }
+#guide { left: 300px; top: 176px; width: 290px; }
+#wel { left: 300px; top: 252px; width: 290px; border-style: dashed; box-shadow: none; }
+#sample { left: 300px; top: 252px; width: 290px; }
+[data-state~="layer"] #exp, [data-state~="layer"] #guide, [data-state~="next"] #wel, [data-state~="welcome"] #wel, [data-state~="sample"] #sample { --o: 1; }
+[data-state~="welcome"] #wel { border-style: solid; box-shadow: 0 14px 36px rgba(31,35,40,.24); left: 190px; top: 110px; transition: opacity .5s, left .6s, top .6s; }
+#cost { left: 24px; top: 352px; }
+</style>
+<div class="menu" id="help" data-in="up" data-f>
+  <div class="mt">Help</div>
+  <div class="mi new" id="mi-guide">Duo Guide</div>
+  <div class="mi new">Watch the Intro Film</div>
+  <div class="mi new">Watch the Director Film</div>
+  <hr>
+  <div class="mi">duo2 Reference</div>
+  <div class="mi">What's New in This Version</div>
+  <div class="mi">Explain Tasks</div>
+  <div class="mi">Report an Issue…</div>
+</div>
+<div class="sheet fade" id="exp" data-f><b>Director</b>A session that runs the others.<ul><li>Give it a request</li><li>It starts workers</li><li>It brings you decisions</li></ul>Learn more</div>
+<div class="card fade" id="guide" data-f><b>Guide pages</b><span class="s">Director · Chat and Terminal · Tasks and sessions</span></div>
+<div class="sheet fade" id="wel" data-f><b>Welcome to Duo</b>Three things to try. A stand-in: designed on the canvas.</div>
+<div class="sheet fade" id="sample" data-f><b>Meet Duo</b>A sample project with sessions, tasks and a director.</div>
+<div class="s" id="cost" data-in="up" data-f>Today: four Help items, one explainer, no welcome</div>

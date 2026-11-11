@@ -1,0 +1,40 @@
+desktop after play: {"cur":0,"t":3.96736,"mode":"intro","cap":"This one starts with Aram. He's been using Duo, and he sent you his first-use notes."}
+desktop option playing: {"mode":"option","t":2.43392}
+desktop saved: Saved on this page. Copy decisions sends it by hand.
+desktop after save, chapter 5
+desktop copy button: Copied
+desktop clipboard:
+Aram feedback walkthrough · all decisions (aram-feedback-2026-11)
+For director-duo-v2. Saved in this page's db under answers/<id>.
+
+Q-510 (q510-mode) A new user's first session: Chat, for new installs [chat-new-installs] (recommended)
+  Comment: check run: a comment
+Q-511 (q511-onboarding) Onboarding: what first: not answered
+Q-512 (q512-director) Starting the director: not answered
+Q-513 (q513-claude) What Duo tells Claude: not answered
+Q-514 (q514-spelling) Colour or Color: not answered
+
+Research: https://github.com/dudgeon/duo-v2/blob/research/aram-feedback/docs/research/aram-feedback.md
+desktop horizontal overflow px: 0
+desktop targets under 40px: ["● First mode 40x44","● Tell Claude 38x44"]
+desktop errors: []
+phone after play: {"cur":0,"t":3.972454,"mode":"intro","cap":"This one starts with Aram. He's been using Duo, and he sent you his first-use notes."}
+phone option playing: {"mode":"option","t":2.437181}
+phone saved: Saved on this page. Copy decisions sends it by hand.
+phone after save, chapter 5
+phone copy button: Copied
+phone clipboard:
+Aram feedback walkthrough · all decisions (aram-feedback-2026-11)
+For director-duo-v2. Saved in this page's db under answers/<id>.
+
+Q-510 (q510-mode) A new user's first session: Chat, for new installs [chat-new-installs] (recommended)
+  Comment: check run: a comment
+Q-511 (q511-onboarding) Onboarding: what first: not answered
+Q-512 (q512-director) Starting the director: not answered
+Q-513 (q513-claude) What Duo tells Claude: not answered
+Q-514 (q514-spelling) Colour or Color: not answered
+
+Research: https://github.com/dudgeon/duo-v2/blob/research/aram-feedback/docs/research/aram-feedback.md
+phone horizontal overflow px: 0
+phone targets under 40px: ["Aram's notes 48x30","What's true 53x30","The test 55x30","Legacy and v2 54x30","● First mode 15x30","● Onboarding 17x30","● Director 16x30","● Tell Claude 14x30","● Spelling 18x30","Done 19x30"]
+phone errors: []
