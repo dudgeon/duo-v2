@@ -48,11 +48,20 @@ import Foundation
         records.first { ($0["message"] as? [String: Any])?["content"] as? String == text && $0["type"] as? String == "user" }?["uuid"] as? String
     }
     func uuid(ofReplyTo text: String) -> String? {
-        guard let p = uuid(ofPrompt: text) else { return nil }
-        return records.last { $0["type"] as? String == "assistant" && $0["parentUuid"] as? String == p }?["uuid"] as? String
+        guard let at = records.firstIndex(where: { $0["uuid"] as? String == uuid(ofPrompt: text) }) else { return nil }
+        // The reply's last assistant record: up to the next typed prompt in file order.
+        var found: String?
+        for r in records[(at + 1)...] {
+            if r["type"] as? String == "user", LiveBranch.isPrompt(r) { break }
+            if r["type"] as? String == "assistant" { found = r["uuid"] as? String }
+        }
+        return found
     }
-    let you = off?.items.compactMap { if case .you(let y) = $0 { y } else { nil } } ?? []
-    let turns = off?.items.compactMap { if case .claude(let t) = $0 { t } else { nil } } ?? []
+    var you: [ChatYou] = [], turns: [ChatTurn] = []
+    for item in off?.items ?? [] {
+        if case .you(let y) = item { you.append(y) }
+        if case .claude(let t) = item { turns.append(t) }
+    }
     check(you.map(\.uuid) == [uuid(ofPrompt: "Alpha question"), uuid(ofPrompt: "Delta question")] && you.allSatisfy { $0.uuid != nil },
           "each of your messages carries its record's uuid")
     check(turns.map(\.uuid) == [uuid(ofReplyTo: "Alpha question"), uuid(ofReplyTo: "Delta question")] && turns.allSatisfy { $0.uuid != nil },
@@ -128,8 +137,12 @@ import Foundation
                               "attachment": ["type": "queued_command", "prompt": "also this", "origin": ["kind": "human"]]]
     let withMid = [u("u1", nil, "one"), a("a1", "u1"), mid, a("a2", "a1"), u("u2", "a2", "two"), a("a3", "u2")]
     check(LiveBranch.deadPrompts(withMid).isEmpty, "a message typed mid-turn stays")
-    check(LiveBranch.branches(u("u9", "a1", "again"), from: LiveBranch.promptParents(withMid)) == false
-          && LiveBranch.branches(u("u9", "u1", "again"), from: LiveBranch.promptParents(withMid)) == false
-          && LiveBranch.branches(u("u9", "a2", "again"), from: LiveBranch.promptParents(withMid)) == true,
-          "only a typed prompt with a live prompt's parent counts as a rewound branch")
+    var track = LiveBranch.Tracker(withMid)
+    check(track.add(u("u9", "a3", "again")) == false, "a prompt after the last reply is not a rewind")
+    track = LiveBranch.Tracker(withMid)
+    var track2 = LiveBranch.Tracker(withMid)
+    check(track.add(u("u9", "a1", "rewound")) && track2.add(u("u9", "u1", "rewound")),
+          "a prompt whose parent is before the last prompt (even by a record or two) is a rewind")
+    track = LiveBranch.Tracker(withMid)
+    check(track.add(mid) == false, "…and a message typed mid-turn never is")
 }

@@ -21,8 +21,8 @@ final class ChatFeed {
     private(set) var historyStart = 0
     /// How many of your prompts the log was last built to show (a rewind rebuilds the same window).
     private var turnsWindow = ChatFeed.turnsShown
-    /// The parents of the live prompts: a new prompt with one of these is a rewound branch (F-656).
-    private var promptParents = Set<String>()
+    /// Tells a rewound branch's first prompt as the transcript grows (F-656).
+    private var tracker = LiveBranch.Tracker()
     nonisolated static let turnsShown = 50
 
     init(sessionId: String, cwd: String, chat: ChatSession) {
@@ -64,7 +64,13 @@ final class ChatFeed {
     }
 
     private struct Records: @unchecked Sendable { let all: [ChatJSON] }
-    private struct Built: @unchecked Sendable { let records: [ChatJSON]; let start: Int; let turns: Int; let log: ChatLog }
+    private struct Built: @unchecked Sendable {
+        let records: [ChatJSON]; let start: Int; let turns: Int; let log: ChatLog; let tracker: LiveBranch.Tracker
+        init(records: [ChatJSON], start: Int, turns: Int, log: ChatLog) {
+            self.records = records; self.start = start; self.turns = turns; self.log = log
+            tracker = LiveBranch.Tracker(records)   // built where the Built is: off the main thread
+        }
+    }
     private var loading = false
 
     /// A transcript's records on its live branch (F-656).
@@ -83,7 +89,7 @@ final class ChatFeed {
         history = built.records
         historyStart = built.start
         turnsWindow = built.turns
-        promptParents = LiveBranch.promptParents(built.records)
+        tracker = built.tracker
         chat?.log.adopt(built.log)
         loading = false
     }
@@ -214,10 +220,7 @@ final class ChatFeed {
         if let t = transcript {
             let fresh = read(t, &transcriptPos, &transcriptRest)
             var branched = false
-            for r in fresh {
-                if LiveBranch.branches(r, from: promptParents) { branched = true }
-                if let k = LiveBranch.branchKey(r) { promptParents.insert(k) }
-            }
+            for r in fresh where tracker.add(r) { branched = true }
             history.append(contentsOf: fresh)
             if branched { rewound(); return }
             for r in fresh { ChatIngest.record(r, into: chat.log, chat: chat) }

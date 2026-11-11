@@ -38,7 +38,7 @@ public enum LiveBranch {
         out.reserveCapacity(records.count)
         var skipping = false
         for (i, r) in records.enumerated() {
-            if isPrompt(r) { skipping = dead.contains(i) }
+            if r["type"] as? String == "user", isPrompt(r) { skipping = dead.contains(i) }
             if !skipping { out.append(r) }
         }
         return out
@@ -65,32 +65,38 @@ public enum LiveBranch {
             earliest = min(earliest, next)
         }
         var dead = Set<Int>()
-        for (i, r) in records.enumerated() where isPrompt(r) && !chain.contains(i) && r["uuid"] is String {
+        // Only typed prompts decide: a message typed mid-turn hangs off whatever record was last, often off the chain.
+        for (i, r) in records.enumerated() where r["type"] as? String == "user" && isPrompt(r) && !chain.contains(i) && r["uuid"] is String {
             if i < earliest && !complete { continue }   // before where the chain breaks: can't tell
             dead.insert(i)
         }
         return dead
     }
 
-    /// Whether a prompt arriving now is a rewound branch's first: its parent is also the parent of
-    /// a prompt already live (`parents` holds those, `nil` standing for a root).
-    public static func branches(_ r: [String: Any], from parents: Set<String>) -> Bool {
-        guard r["type"] as? String == "user", isPrompt(r), r["uuid"] is String else { return false }
-        return parents.contains(r["parentUuid"] as? String ?? "")
-    }
+    /// Follows a transcript as it grows and says when a typed prompt starts a rewound branch: its parent is
+    /// an ancestor of the last live typed prompt (the record before it, or any earlier one; a rewind writes
+    /// nothing else). A normal prompt's parent comes after the last prompt, so walking up from that prompt
+    /// never meets it. A message typed mid-turn is never counted.
+    public struct Tracker: @unchecked Sendable {
+        private var parents: [String: String] = [:]
+        private var last: String?
+        public init(_ records: [[String: Any]] = []) { for r in records { _ = add(r) } }
 
-    /// What a typed prompt contributes to the parents set: its parent ("" for a root), or nil for any other
-    /// record. A message typed mid-turn is an attachment hung off whatever record was last, so it never counts:
-    /// the next prompt may share that parent without being a rewind.
-    public static func branchKey(_ r: [String: Any]) -> String? {
-        guard r["type"] as? String == "user", isPrompt(r), r["uuid"] is String else { return nil }
-        return r["parentUuid"] as? String ?? ""
-    }
-
-    /// The parents of the live prompts, as `branches` wants them (a root is "").
-    public static func promptParents(_ records: [[String: Any]]) -> Set<String> {
-        var s = Set<String>()
-        for r in records { if let p = branchKey(r) { s.insert(p) } }
-        return s
+        /// Takes one more record; true when it is a typed prompt that rewinds.
+        @discardableResult public mutating func add(_ r: [String: Any]) -> Bool {
+            guard let u = r["uuid"] as? String else { return false }
+            let p = LiveBranch.parent(r)
+            if let p { parents[u] = p }
+            guard r["type"] as? String == "user", LiveBranch.isPrompt(r) else { return false }
+            defer { last = u }
+            guard let prev = last else { return false }
+            guard let p = r["parentUuid"] as? String else { return true }   // a second root
+            var at = prev, steps = 0
+            while let up = parents[at], steps < 1_000_000 {
+                if up == p { return true }
+                at = up; steps += 1
+            }
+            return false
+        }
     }
 }
