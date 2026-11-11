@@ -142,7 +142,7 @@ import Foundation
         check(c.contains(must), "the convention paragraph says “\(must)”")
     }
     check(c.count < 1400, "the paragraph stays short (\(c.count))")
-    let verbs: [ActionID] = [.commentAdd, .commentList, .commentReply, .commentSend, .commentClose, .commentDelete, .commentReopen, .commentStatus, .suggestionList, .suggestionAccept, .suggestionReject, .docReview]
+    let verbs: [ActionID] = [.commentAdd, .commentList, .commentReply, .commentSend, .commentClose, .commentDelete, .commentReopen, .commentStatus, .commentUndo, .suggestionList, .suggestionAccept, .suggestionReject, .docReview]
     for id in verbs {
         check(DuoAction.all.contains { $0.id == id } && !id.action.summary.isEmpty, "duo2 \(id.rawValue) is registered with help")
     }

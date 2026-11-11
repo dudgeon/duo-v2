@@ -94,9 +94,9 @@ import Foundation
     let pt = try OfficeComments.threads(pptx)
     check(pa.id == "s2c1" && pt.first { $0.id == "s2c1" }?.root.text == "@claude shorten this slide" && pt.first { $0.id == "s2c1" }?.place == "slide 2", "a comment is added to a slide that had none (new comments part)")
     let pd = try changed(pptx0, pptx)
-    check(pd.changed.isSubset(of: ["ppt/slides/_rels/slide2.xml.rels", "[Content_Types].xml", "ppt/authors.xml"]) && pd.changed.contains("ppt/slides/_rels/slide2.xml.rels")
+    check(pd.changed.isSubset(of: ["ppt/slides/_rels/slide2.xml.rels", "ppt/slides/slide2.xml", "[Content_Types].xml", "ppt/authors.xml"]) && pd.changed.contains("ppt/slides/_rels/slide2.xml.rels")
           && pd.added.count == 1 && pd.added.first?.hasPrefix("ppt/comments/modernComment_") == true && pd.removed.isEmpty,
-          "only the slide's relationships, the content types, the authors and the new comments part changed (\(pd.changed.sorted()) + \(pd.added.sorted()))")
+          "only the commented slide (it gets a creation id), its relationships, the content types, the authors and the new comments part changed (\(pd.changed.sorted()) + \(pd.added.sorted()))")
     check(try Pptx.outline(pptx).count == slidesBefore, "the deck still reads: same slide count")
     let ar = try AppModel.officeReviewThreads(pptx).first { $0.id == "s2c1" }
     check(ar?.root?.author == "geoff-q" && ar?.comments.first?.mentionsClaude == true, "routing sees it as a Review thread that names @claude")
@@ -104,7 +104,8 @@ import Foundation
     let pr = try OfficeComments.reply(pptx, to: "s2c1", author: "claude", text: "Cut to three bullets.", now: now)
     let pt2 = try OfficeComments.threads(pptx).first { $0.id == "s2c1" }
     check(pr.id == "s2c1.1" && pt2?.items.count == 2 && pt2?.items[1].author == "Claude", "a reply goes in the slide's thread, signed Claude (authors.xml gets Claude once)")
-    let part = String(decoding: try Pptx.Zip(pptx).read("ppt/comments/modernComment_101_0.xml") ?? Data(), as: UTF8.self)
+    let part2 = try changed(pptx0, pptx).added.first ?? ""
+    let part = String(decoding: try Pptx.Zip(pptx).read(part2) ?? Data(), as: UTF8.self)
     let replyAt = part.range(of: "<p188:replyLst>")?.lowerBound, bodyAt = part.range(of: "<p188:txBody>")?.lowerBound
     check(replyAt != nil && bodyAt != nil && replyAt! < bodyAt!,
           "a new reply list goes before the comment's own text body: PowerPoint drops replies after it (MS-PPTX child order)")
@@ -120,11 +121,59 @@ import Foundation
     check((try? OfficeComments.add(pptx, at: "99", author: "x", text: "y")) == nil, "a slide that isn't there is refused")
     check((try? OfficeComments.reply(pptx, to: "s3c1", author: "x", text: "y")) == nil, "a reply to a legacy comment is refused (read only)")
     let pd2 = try changed(pptx0, pptx)
-    check(!pd2.changed.contains { $0.hasPrefix("ppt/slides/slide") && $0.hasSuffix(".xml") } && !pd2.changed.contains("ppt/presentation.xml"), "no slide, layout or presentation part was touched")
+    check(pd2.changed.filter { $0.hasPrefix("ppt/slides/slide") && $0.hasSuffix(".xml") } == ["ppt/slides/slide2.xml"] && !pd2.changed.contains("ppt/presentation.xml") && !pd2.changed.contains { $0.contains("slideLayout") }, "only the commented slide, and no layout or the presentation part, was touched")
+
+    // MARK: PowerPoint anchors (DL-337): a shape and a run of text, written and read back
+    let slide3 = try Pptx.outline(pptx, slide: 3).first!
+    let textShape = slide3.shapes.first { ($0.text ?? "").count > 4 && $0.type == "shape" }
+    check(textShape != nil, "the fixture's slide 3 has a text shape to anchor to")
+    if let sh = textShape, let shText = sh.text {
+        let word = String(shText.split(separator: " ").first { $0.count > 3 } ?? Substring(shText.prefix(4)))
+        let onShape = try OfficeComments.add(pptx, at: "3/\(sh.id)", author: "geoff-q", text: "About this box", now: now)
+        let onText = try OfficeComments.add(pptx, at: "3/\(sh.name)/\(word)", author: "claude", text: "About this word", now: now)
+        let ts = try OfficeComments.threads(pptx)
+        let a = ts.first { $0.id == onShape.id }, b = ts.first { $0.id == onText.id }
+        check(a?.anchorKind == "shape" && a?.shapeId == "\(sh.id)" && a?.shapeName == sh.name && a?.anchorLost == false, "a comment on a shape reads back as that shape (\(a?.anchorKind ?? "?"), \(a?.shapeName ?? "?"))")
+        check(b?.anchorKind == "text" && b?.anchor == word && b?.rangeStart != nil && b?.rangeLength == (word as NSString).length && b?.anchorLost == false, "a comment on a run of text reads back as that text and range")
+        check(ts.first { $0.id == "s2c1" }?.anchorKind == "slide", "a comment on the slide stays a slide comment")
+        let slidePart = String(decoding: try Pptx.Zip(pptx).read("ppt/slides/slide3.xml") ?? Data(), as: UTF8.self)
+        check(slidePart.contains("a16:creationId") && slidePart.contains("p14:creationId"), "the slide and the shape get creation ids the monikers name")
+        let d3 = try changed(pptx0, pptx)
+        check(d3.changed.contains("ppt/slides/slide3.xml") && !d3.changed.contains("ppt/presentation.xml") && !d3.changed.contains("ppt/slideLayouts/slideLayout10.xml"), "writing an anchor changes the slide's own part and no other slide, layout or presentation part")
+        check((try? OfficeComments.add(pptx, at: "3/\(sh.name)/zzzz-not-there", author: "x", text: "y")) == nil, "a text that isn't in the shape is refused")
+        check((try? OfficeComments.add(pptx, at: "3/no-such-shape", author: "x", text: "y")) == nil, "a shape that isn't on the slide is refused")
+        check((try? OfficeComments.add(pptx, at: "banana", author: "x", text: "y")) == nil, "an --at that names no slide is refused")
+    }
+
+    // MARK: Delete and undo (DL-337)
+    let docxDel = scratch.appending(path: "Del.docx")
+    try FileManager.default.copyItem(at: docx0, to: docxDel)
+    let bk = scratch.appending(path: "bk2")
+    let before2 = try OfficeComments.threads(docxDel).count
+    let added = try OfficeComments.add(docxDel, at: "forty", author: "geoff-q", text: "to be deleted", now: now, backups: bk)
+    _ = try OfficeComments.reply(docxDel, to: added.id, author: "claude", text: "reply to be deleted", now: now, backups: bk)
+    _ = try OfficeComments.delete(docxDel, thread: added.id, backups: bk)
+    let afterDel = try OfficeComments.threads(docxDel)
+    check(afterDel.count == before2 && !afterDel.contains { $0.id == added.id }, "Delete removes the thread and its reply from the Word file")
+    let docXML = String(decoding: try Pptx.Zip(docxDel).read("word/document.xml") ?? Data(), as: UTF8.self)
+    let cXML = String(decoding: try Pptx.Zip(docxDel).read("word/comments.xml") ?? Data(), as: UTF8.self)
+    check(!docXML.contains("w:id=\"\(added.id.dropFirst())\"/><w:r><w:rPr><w:rStyle w:val=\"CommentReference\"/></w:rPr><w:commentReference w:id=\"\(added.id.dropFirst())\"") && !cXML.contains("to be deleted"), "…its anchors leave the document and its text leaves comments.xml")
+    check(try Docx.outline(docxDel).map(\.text) == beforeOutline.map(\.text), "…and the document's text is as it was")
+    _ = try OfficeComments.undo(docxDel, backups: bk)
+    check(try OfficeComments.threads(docxDel).contains { $0.id == added.id && $0.items.count == 2 }, "undo restores the thread from the backup kept before the delete")
+    _ = try OfficeComments.undo(docxDel, backups: bk)
+    _ = try OfficeComments.undo(docxDel, backups: bk)
+    check(try Data(contentsOf: docxDel) == Data(contentsOf: docx0), "undo three times returns the file to its original bytes")
+    check((try? OfficeComments.undo(docxDel, backups: bk)) == nil, "undo with nothing earlier says so")
+    let pptxDel = scratch.appending(path: "Del.pptx")
+    try FileManager.default.copyItem(at: pptx0, to: pptxDel)
+    _ = try OfficeComments.delete(pptxDel, thread: "s5c1")
+    check(try OfficeComments.threads(pptxDel).contains { $0.id == "s5c1" } == false, "Delete removes a PowerPoint thread and its reply")
 
     // The backup holds the first original
     let backups = scratch.appending(path: "backups")
     _ = try OfficeComments.add(pptx, at: "1", author: "claude", text: "Backup test", now: now, backups: backups)
     let kept = (try? FileManager.default.contentsOfDirectory(atPath: backups.path)) ?? []
-    check(kept.count == 1 && kept[0].hasSuffix("Deck.pptx"), "a backup of the file as it was is kept before the write")
+    let copies = kept.filter { !$0.hasSuffix(".undo") }
+    check(copies.count == 1 && copies[0].hasSuffix("Deck.pptx"), "a backup of the file as it was is kept before the write")
 }

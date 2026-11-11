@@ -41,6 +41,8 @@ extension OfficeComments {
         static func read(_ zip: Pptx.Zip) throws -> [Thread] {
             let names = authors(zip)
             var out: [Thread] = []
+            var shapeCache: [String: [Anchors.Shape]] = [:]
+            func shapesOf(_ part: String) -> [Anchors.Shape] { if let c = shapeCache[part] { return c }; let v = Anchors.shapes(zip, part: part); shapeCache[part] = v; return v }
             for s in try slides(zip) {
                 let rels = (try? relsFile(zip, s.part)) ?? []
                 var k = 0
@@ -53,7 +55,12 @@ extension OfficeComments {
                         for (i, rp) in (cm.first("replyLst")?.all("reply") ?? []).enumerated() {
                             items.append(Item(id: "\(tid).\(i + 1)", author: names[rp.attr("authorId") ?? ""] ?? "someone", date: rp.attr("created") ?? "", text: paras(rp)))
                         }
-                        out.append(Thread(id: tid, anchor: nil, place: "slide \(s.number)", items: items, resolved: ["resolved", "closed"].contains(cm.attr("status") ?? "")))
+                        var t = Thread(id: tid, anchor: nil, place: "slide \(s.number)", items: items, resolved: ["resolved", "closed"].contains(cm.attr("status") ?? ""))
+                        let a = Anchors.read(cm, shapes: shapesOf(s.part))
+                        t.anchorKind = a.kind; t.shapeId = a.shape?.id; t.shapeName = a.shape?.name; t.rangeStart = a.cp; t.rangeLength = a.len; t.anchorLost = a.lost
+                        t.anchor = a.text
+                        if let shape = a.shape { t.place = "slide \(s.number), " + (a.text.map { "“\(($0.count > 30 ? String($0.prefix(27)) + "…" : $0))” in " } ?? "") + (shape.name.isEmpty ? "shape \(shape.id)" : shape.name) }
+                        out.append(t)
                     }
                 }
                 // Legacy comments: read only.
@@ -156,18 +163,38 @@ extension OfficeComments {
         }
 
         static func add(_ zip: Pptx.Zip, _ files: inout [String: Data], at: String, author: String, text: String, now: Date) throws -> Written {
-            let s = try slide(zip, number: try slideNumber(at))
+            let spec = try Anchors.parse(at)
+            let s = try slide(zip, number: spec.slide)
             var edit = Edit()
             let aid = authorID(zip, &files, &edit, name: author)
+            var slideXML = string(try zip.read(s.part)) ?? ""
+            let original = slideXML
+            let cId = Anchors.slideCreationId(&slideXML)
+            var shape: Anchors.Shape?, shapeCid: String?, cp: Int?, len: Int?
+            if let key = spec.shape {
+                let sh = try Anchors.pick(Anchors.shapes(zip, part: s.part), key, slide: s.number)
+                shape = sh
+                shapeCid = try Anchors.shapeCreationId(&slideXML, shape: sh)
+                if let t = spec.text {
+                    let ns = sh.text as NSString
+                    let first = ns.range(of: t)
+                    guard first.location != NSNotFound else { throw Failure("“\(t)” isn't in the text of \(sh.name.isEmpty ? "shape \(sh.id)" : sh.name)") }
+                    guard ns.range(of: t, range: NSRange(location: first.location + first.length, length: ns.length - first.location - first.length)).location == NSNotFound else {
+                        throw Failure("“\(t)” appears more than once in \(sh.name.isEmpty ? "shape \(sh.id)" : sh.name): name a longer piece of text")
+                    }
+                    cp = first.location; len = first.length
+                }
+            }
+            if slideXML != original { files[s.part] = Data(slideXML.utf8) }
             let cm = "<p188:cm id=\"\(guid())\" authorId=\"\(aid)\" created=\"\(iso(now, millis: true))\">"
-                + "<pc:sldMkLst xmlns:pc=\"http://schemas.microsoft.com/office/powerpoint/2013/main/command\"><pc:docMk/><pc:sldMk cId=\"\(creationID(zip, s.part))\" sldId=\"\(s.sldId)\"/></pc:sldMkLst>"
+                + Anchors.anchorXML(cId: cId, sldId: s.sldId, shape: shape, shapeCid: shapeCid, cp: cp, len: len)
                 + body(text) + "</p188:cm>"
             if let existing = try commentsPart(zip, s) {
                 var xml = string(try zip.read(existing.part)) ?? ""
                 guard insert(&xml, cm, before: "</p188:cmLst>") else { throw Failure("damaged \(existing.part)") }
                 files[existing.part] = Data(xml.utf8)
             } else {
-                let cid = UInt32(creationID(zip, s.part)) ?? 0
+                let cid = UInt32(cId) ?? 0
                 let name = "ppt/comments/modernComment_\(String(Int(s.sldId) ?? 0, radix: 16, uppercase: true))_\(String(cid, radix: 16, uppercase: true)).xml"
                 files[name] = Data(("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<p188:cmLst xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:p188=\"\(p188)\">" + cm + "</p188:cmLst>").utf8)
                 var rels = string(try zip.read(relsPart(s.part))) ?? "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"></Relationships>"
@@ -178,7 +205,7 @@ extension OfficeComments {
                 files["[Content_Types].xml"] = Data(ct.utf8)
             }
             try commit(zip, &files, edit)
-            let n = try read(zip).filter { $0.place == "slide \(s.number)" }.count + 1
+            let n = (try? read(zip).filter { $0.id.hasPrefix("s\(s.number)c") && !$0.legacy }.count).map { $0 + 1 } ?? 1
             return Written(id: "s\(s.number)c\(n)", summary: "Commented in \(display(author))'s name on slide \(s.number) (thread s\(s.number)c\(n)).")
         }
 
@@ -225,6 +252,16 @@ extension OfficeComments {
             try commit(zip, &files, edit)
             let n = (try? read(zip).first(where: { $0.id == "s\(loc.number)c\(loc.k)" })?.items.count) ?? 1
             return Written(id: "s\(loc.number)c\(loc.k).\(n)", summary: "Replied in thread s\(loc.number)c\(loc.k) as \(display(author)).")
+        }
+
+        /// Delete a thread: its comment and replies go from the slide's comments part (an empty list stays; the part isn't removed).
+        static func delete(_ zip: Pptx.Zip, _ files: inout [String: Data], thread: String) throws -> Written {
+            let loc = try locate(zip, thread)
+            var xml = string(try zip.read(loc.part)) ?? ""
+            guard let range = cmRange(xml, loc.k) else { throw Failure("damaged \(loc.part)") }
+            xml.removeSubrange(range)
+            files[loc.part] = Data(xml.utf8)
+            return Written(id: "s\(loc.number)c\(loc.k)", summary: "Deleted thread s\(loc.number)c\(loc.k) and its replies.")
         }
 
         static func resolve(_ zip: Pptx.Zip, _ files: inout [String: Data], thread: String, resolved: Bool) throws -> Written {
