@@ -141,6 +141,9 @@ public enum ChildEnvironment {
         var env = base.filter { k, _ in
             !(k == "CLAUDECODE" || (k.hasPrefix("CLAUDE_") && k != "CLAUDE_CONFIG_DIR"))
         }
+        // Naming ~/.claude is not naming nothing to Claude: it then reads ~/.claude/.claude.json and starts on the first-run
+        // theme screen, never at a prompt (F-646). The default folder is left to the default.
+        if let dir = env["CLAUDE_CONFIG_DIR"], ClaudeStorage.isDefaultFolder(dir) { env.removeValue(forKey: "CLAUDE_CONFIG_DIR") }
         env["TERM"] = "xterm-256color"
         env["COLORTERM"] = "truecolor"
         env["LANG"] = env["LANG"] ?? "en_US.UTF-8"

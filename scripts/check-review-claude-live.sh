@@ -24,7 +24,7 @@ rm -f $out/run.log
 # A real-login proof: it names the account's Claude folder explicitly (Q-425); Duo's own state stays isolated.
 env -u DUO_SUPPORT_DIR DUO_CLAUDE_CONFIG_DIR=${DUO_CLAUDE_CONFIG_DIR:-$HOME/.claude} DUO_EXTRA_ENV="DUO_SUPPORT_DIR=$sup" DUO_TIMEOUT=${DUO_TIMEOUT:-300} \
   scripts/run-live.sh $root $out/final.png \
-  "open:garden,open-file:$A,wait:3,verb:session new --project garden,wait:35,open-file:$A,wait:3,review-send:c1,wait:2,verb:comment status c1,wait:6,verb:comment status c1,wait:10,verb:comment status c1,wait:20,verb:comment status c1,wait:20,verb:comment status c1,wait:20,verb:doc read,wait:8" $out/run.log
+  "open:garden,open-file:$A,wait:12,verb:session new --project garden,wait:35,open-file:$A,wait:3,review-send:c1,wait:1,verb:comment status c1,wait:1,verb:comment status c1,wait:1,verb:comment status c1,wait:1,verb:comment status c1,wait:2,verb:comment status c1,wait:4,verb:comment status c1,wait:10,verb:comment status c1,wait:20,verb:comment status c1,wait:20,verb:comment status c1,wait:20,verb:doc read,wait:8" $out/run.log
 sleep 3
 cp $A $out/after.md
 fails=0 total=0
