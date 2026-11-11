@@ -1,6 +1,6 @@
 # Home's agent panel: gate it, make it opt-in, or move it (2026-11-10)
 
-Research and design only; nothing here is built. Task: `tasks/home-agent-panel-options.md`. Records: F-648 (this study's findings), Q-498 to Q-501 (the open decisions), Q-488 answered here (recommendation), ENH-341 (bringing the column back, opt-in). Sketches: the Design canvas linked in "Sketches" below, every mark [P]. Decisions go to Geoff as a decision walkthrough (`docs/research/home-agent-panel-walkthrough/`; worker's draft https://claude.ai/artifact/L3Pd83Fhyf4HjQcfvTuZct, the director publishes the final page).
+**Decided: DL-336** (Geoff, 2026-11-11, every recommendation below). Build brief: `docs/research/home-agent-panel-build-brief.md`. Research and design only; nothing here is built. Task: `tasks/home-agent-panel-options.md`. Records: F-648 (this study's findings), Q-498 to Q-501 (the open decisions), Q-488 answered here (recommendation), ENH-341 (bringing the column back, opt-in). Sketches: the Design canvas linked in "Sketches" below, every mark [P]. Decisions go to Geoff as a decision walkthrough (`docs/research/home-agent-panel-walkthrough/`; worker's draft https://claude.ai/artifact/L3Pd83Fhyf4HjQcfvTuZct, the director publishes the final page).
 
 ## The ask
 
