@@ -1,0 +1,5 @@
+#!/bin/zsh
+print -r -- "$(date +%H:%M:%S) pid=$$ cwd=$PWD args=$*" >> /tmp/hapf/claude-starts.log
+[[ "$1" == "--version" ]] && { print "2.1.316 (Claude Code)"; exit 0; }
+print "stub claude (F-648 check): started"
+sleep 600

@@ -1,0 +1,59 @@
+chat mode, live: AskUserQuestion end to end against Claude Code 2.1.316 and the mock API (F-106)
+  — 38×49
+Info: SwiftTerm: Unknown OSC code: 7501
+  ✔ the TUI reaches its prompt (starting)
+  ✔ single: pick
+  ✔ single: Other text
+  ✔ multi: two ticks
+  ✔ multi: untick
+  ✔ multi: tick + Other
+  ✘ four questions, back and change  (pick("AppKit"): the question on screen is not the one Claude asked got nil)  (line 249)
+  ✘ long, wrapped labels  (pick("Copy, verify, then delete"): the options on screen differ from what Claude asked got Optional((answers: [:], notes: [], declined: true)))  (line 249)
+  ✘ preview: pick  (pick("Compact"): the options on screen differ from what Claude asked got Optional((answers: [:], notes: [], declined: true)))  (line 249)
+  ✘ preview: notes  (notes("Side by side", "keep it short"): the options on screen differ from what Claude asked got Optional((answers: [:], notes: [], declined: true)))  (line 249)
+  ✔ chat about this
+  ✔ decline (Esc)
+  ✔ review: cancel
+  ✔ stale card is refused
+  ✔ two questions: question 1's card is up, no fallback (screen question, pending AskUserQuestion, index 0, fallback answer-refused)
+  ✔ two questions: question 2's card is up, no fallback (screen question, pending AskUserQuestion, index 0, fallback answer-refused)
+  ✔ two questions: Claude got the second answer (Optional(["Should the importer read the whole export file into memory first (simpler, fine for small files) or stream it row by row (more code; safer for large exports from older accounts)?": "Stream rows"]))
+  — 43×49
+Info: SwiftTerm: Unknown OSC code: 7501
+  ✔ the TUI reaches its prompt (starting)
+  ✔ single: pick
+  ✔ single: Other text
+  ✔ multi: two ticks
+  ✔ multi: untick
+  ✔ multi: tick + Other
+  ✔ four questions, back and change
+  ✔ long, wrapped labels
+  ✘ preview: pick  (pick("Compact"): the options on screen differ from what Claude asked got nil)  (line 249)
+  ✘ preview: notes  (notes("Side by side", "keep it short"): the options on screen differ from what Claude asked got Optional((answers: [:], notes: [], declined: true)))  (line 249)
+  ✔ chat about this
+  ✔ decline (Esc)
+  ✔ review: cancel
+  ✔ stale card is refused
+  ✔ two questions: question 1's card is up, no fallback (screen question, pending AskUserQuestion, index 0, fallback answer-refused)
+  ✔ two questions: question 2's card is up, no fallback (screen question, pending AskUserQuestion, index 0, fallback answer-refused)
+  ✔ two questions: Claude got the second answer (Optional(["Should the importer read the whole export file into memory first (simpler, fine for small files) or stream it row by row (more code; safer for large exports from older accounts)?": "Stream rows"]))
+  — 60×49
+Info: SwiftTerm: Unknown OSC code: 7501
+  ✔ the TUI reaches its prompt (starting)
+  ✔ single: pick
+  ✔ single: Other text
+  ✔ multi: two ticks
+  ✔ multi: untick
+  ✔ multi: tick + Other
+  ✔ four questions, back and change
+  ✔ long, wrapped labels
+  ✔ preview: pick
+  ✔ preview: notes
+  ✔ chat about this
+  ✔ decline (Esc)
+  ✔ review: cancel
+  ✔ stale card is refused
+  ✔ two questions: question 1's card is up, no fallback (screen question, pending AskUserQuestion, index 0, fallback answer-refused)
+  ✔ two questions: question 2's card is up, no fallback (screen question, pending AskUserQuestion, index 0, fallback answer-refused)
+  ✔ two questions: Claude got the second answer (Optional(["Should the importer read the whole export file into memory first (simpler, fine for small files) or stream it row by row (more code; safer for large exports from older accounts)?": "Stream rows"]))
+45 passed, 6 failed

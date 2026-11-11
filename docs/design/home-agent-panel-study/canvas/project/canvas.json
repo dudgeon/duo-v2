@@ -1,0 +1,24 @@
+{
+ "v": 3,
+ "createdOnFiles": {"v": 1, "at": "2026-11-10T20:40:00Z"},
+ "title": "Duo Home agent panel study",
+ "launch": {"view": "canvas"},
+ "pages": [],
+ "boards": {
+  "Main.dc.html": {"x": 0, "y": 0, "w": 1440, "h": 900, "title": "00 · The study and the recommendation"},
+  "c1-allprojects.dc.html": {"x": 0, "y": 1243, "w": 1440, "h": 900, "title": "C1 · All projects without Home's column [P]"},
+  "c2-homepage.dc.html": {"x": 1520, "y": 1243, "w": 1440, "h": 900, "title": "C2 · Home's page: where Home's agent lives [P]"},
+  "a1-settings.dc.html": {"x": 0, "y": 2486, "w": 760, "h": 560, "title": "A · Settings › Home switch [P]"},
+  "b1-startcard.dc.html": {"x": 840, "y": 2486, "w": 1440, "h": 900, "title": "B · The column's start card [P]"},
+  "d2-wide.dc.html": {"x": 2360, "y": 2486, "w": 1440, "h": 900, "title": "D2 · A 480-wide column [P]"}
+ },
+ "order": ["Main.dc.html", "c1-allprojects.dc.html", "c2-homepage.dc.html", "a1-settings.dc.html", "b1-startcard.dc.html", "d2-wide.dc.html"],
+ "notes": {
+  "h0": {"x": 0, "y": -260, "text": "Home's agent panel: the study (2026-11-10)", "kind": "title1", "maxW": 1440},
+  "h1": {"x": 0, "y": 1003, "text": "C, recommended: Home's agent on Home's page only", "kind": "title1", "maxW": 2960},
+  "h2": {"x": 0, "y": 2246, "text": "The other options: A switch, B start card, D2 wider column", "kind": "title1", "maxW": 3800}
+ },
+ "designSystems": [
+  {"title": "Duo", "namespace": "duo", "artifact": "https://claude.ai/artifact/QMapKeLYS3TVV36QKEc6MH", "version": null, "copiedAt": "2026-11-10T20:40:00Z"}
+ ]
+}
