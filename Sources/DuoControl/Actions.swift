@@ -7,7 +7,7 @@ import Foundation
 // menu item or click in the app isn't tied to an action here or listed in `Parity.uiOnly`.
 
 public enum ActionFamily: String, CaseIterable, Sendable {
-    case app, view, window, split, projects, sessions, director, files, repo, docs, review, html, slides, deck, send, search, setup
+    case app, view, window, split, projects, sessions, director, files, repo, docs, review, html, pdf, slides, deck, send, search, setup
 
     /// The families `duo2 help`, the primer and the skill show: `deck` only while Duo Decks is on (DeckFeature, DL-307).
     public static var shown: [ActionFamily] { allCases.filter { $0 != .deck || DeckFeature.enabled } }
@@ -26,6 +26,7 @@ public enum ActionFamily: String, CaseIterable, Sendable {
         case .docs: "Documents"
         case .review: "Review in Markdown"
         case .html: "HTML pages"
+        case .pdf: "PDF files"
         case .slides: "PowerPoint decks"
         case .deck: "Decks (Markdown to slides)"
         case .send: "Send to Claude"
@@ -97,6 +98,8 @@ public enum ActionID: String, CaseIterable, Sendable {
     case browserWait = "browser wait", browserScreenshot = "browser screenshot", browserScroll = "browser scroll",browserGo = "browser go", browserBack = "browser back"
     case browserForward = "browser forward", browserClose = "browser close"
     case browserZoom = "browser zoom", browserPrint = "browser print", browserUpload = "browser upload", browserDownloads = "browser downloads"
+    // PDF files (DL-332, DL-334)
+    case pdfRender = "pdf render"
     case htmlReload = "html reload", htmlPick = "html pick", htmlStop = "html stop", htmlElement = "html element", htmlSelection = "html selection"
     // PowerPoint decks
     case slide, slideGo = "slide go", slideShapes = "slide shapes", slideNotes = "slide notes", slidePick = "slide pick", slideElement = "slide element"
@@ -394,7 +397,7 @@ extension DuoAction {
         .init(.docClose, .docs, "[path] [--others]", "Close a document tab (saved first), or every other one.", ui: ["Close Tab", "Close Other Tabs"]),
         .init(.docTabs, .docs, "", "The open document tabs, and which one shows."),
         .init(.docStatus, .docs, "<file>", "Whether a file is open in Duo's editor, unsaved or in conflict. Check before editing a file the user may have open.", everyday: true),
-        .init(.docRead, .docs, "[path]", "A document's text as the editor has it (unsaved edits included); the showing document by default."),
+        .init(.docRead, .docs, "[path]", "A document's text as the editor has it (unsaved edits included); the showing document by default. A PDF (DL-334) comes back as its text with a `--- page N ---` line before each page, then a list of the pages to look at as images, each with why (no text layer: a scan; mostly a figure: it draws images or many shapes and carries little text); render one with `duo2 pdf render <file> <page>` and read the PNG."),
         .init(.docSelection, .docs, "", "The text selected in the editor, with its file and lines."),
         .init(.docSelect, .docs, "<line> [to-line]", "Select lines in the showing document."),
         .init(.docSave, .docs, "", "Save the showing document now (it also autosaves).", ui: ["Save"]),
@@ -445,8 +448,8 @@ extension DuoAction {
 
         // Review in Markdown (DL-236, DL-237): comments and suggestions as signed CriticMarkup. A file open in Duo's editor is changed through the
         // editor (as Claude's change); any other file on disk. Run from a Claude session the author is `claude`, else the user's Mac name; --as names one.
-        .init(.commentAdd, .review, "<file> --at <line|text|paragraph|slide> [--as <name>] <text>",
-              "On a Word or PowerPoint file (DL-331) the comment is written into the file's comment parts, with a backup of the original in Duo's support folder and nothing else touched: --at is a text that appears once in a Word document (or a paragraph number) or a slide number; its replies, resolved state and @claude routing work as below, with thread ids `c4` (Word) and `s3c1` (slide 3's first). Comment on a line (its number) or on a text that appears once: the text becomes a highlight and the signed comment follows it. A comment that names @claude is addressed to a session (`duo2 comment send`).",
+        .init(.commentAdd, .review, "<file> --at <line|text|paragraph|slide|page N [text]> [--as <name>] <text>",
+              "On a PDF (DL-335) the comment is appended to the file as a standard annotation (an incremental update: the original bytes are never rewritten, and a backup is kept in Duo's support folder): --at is a text that appears once (a Highlight over it), `page N` (a note at the page's top right) or `page N <text>` (a text on that page only); replies, close and reopen (a hidden Completed or None state reply), delete and @claude routing work as below, with thread ids `c1`, replies `c1.2`; encrypted or certified PDFs are refused. On a Word or PowerPoint file (DL-331) the comment is written into the file's comment parts, with a backup of the original in Duo's support folder and nothing else touched: --at is a text that appears once in a Word document (or a paragraph number) or a slide number; its replies, resolved state and @claude routing work as below, with thread ids `c4` (Word) and `s3c1` (slide 3's first). Comment on a line (its number) or on a text that appears once: the text becomes a highlight and the signed comment follows it. A comment that names @claude is addressed to a session (`duo2 comment send`).",
               ui: ["Add Comment"]),
         .init(.commentList, .review, "<file> [--closed | --unsent]",
               "The file's comment threads: id, who and when, the text it is on, the comment and its replies. Closed threads are left out unless --closed (only those); --unsent lists the open ones that name @claude and have no reply."),
@@ -501,6 +504,10 @@ extension DuoAction {
         .init(.htmlStop, .html, "", "Close the element picker.", ui: ["Cancel picking"]),
         .init(.htmlElement, .html, "[selector]", "Describe an element (the picked one by default): selector, text, attributes, styles, box, HTML."),
         .init(.htmlSelection, .html, "", "The text and images selected in the HTML page."),
+
+        // PDF files (DL-332, DL-334)
+        .init(.pdfRender, .pdf, "<file> <page> [--out <png>] [--width <px>]",
+              "Draw one page of a PDF as a PNG (1000 px wide unless --width, 200 to 3000), as the viewer draws it, annotations included, and print the path. Needs no viewer open. The pages `duo2 doc read` lists as needing a look are the ones to render and read as images. PNGs go in the session's own folder (.duo/screenshots), or Duo's support folder outside a session."),
 
         // PowerPoint decks (ENH-12, DL-125)
         .init(.slide, .slides, "", "The deck showing and the slide on screen, with that slide's shapes and text."),

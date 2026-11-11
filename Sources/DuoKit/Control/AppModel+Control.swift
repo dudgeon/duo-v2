@@ -761,6 +761,11 @@ extension AppModel {
                 if editorIfLoaded?.url?.standardizedFileURL == url.standardizedFileURL {
                     editor.run("return duo.text()") { v in done(.ok(v as? String ?? "")) }
                 } else {
+                    // A PDF (DL-334): its text by page, then the pages to look at as images.
+                    if url.pathExtension.lowercased() == "pdf" {
+                        do { let r = try PdfRead.read(url); return done(.ok(r.text, ["pages": r.pages, "look": r.look.map { ["page": $0.page, "reason": $0.reason] as [String: Any] }])) }
+                        catch { return done(.fail("\(error)")) }
+                    }
                     // A deck or any other file that isn't text: say so, never its bytes (C-26).
                     if FileKind.isBinary(url) {
                         return done(.fail("\(rel) isn't text" + (Self.isDeck(rel) ? ": `duo2 slide shapes \(SendFormat.quoted(rel))` reads its slides" : "")))
@@ -910,6 +915,7 @@ extension AppModel {
         case .docScreenshot: docScreenshotVerb(inv, req, done)
         case .docMarkup, .docComments, .docOutline, .docPick, .docElement:
             docxVerb(id, inv, req, done)
+        case .pdfRender: pdfRenderVerb(inv, req, done)
         case .htmlReload:
             guard let v = visiblePage, v.pageURL != nil else { return done(.fail("no web page is showing")) }
             v.reload(); done(.ok("Reloaded."))
