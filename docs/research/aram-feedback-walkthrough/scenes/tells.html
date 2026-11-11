@@ -1,0 +1,23 @@
+<style>
+#lh { left: 24px; top: 22px; } #vh { left: 336px; top: 22px; }
+.col { width: 280px; }
+.lc { left: 24px; } .vc { left: 336px; }
+#l1 { top: 54px; } #l2 { top: 100px; } #l3 { top: 146px; } #l4 { top: 192px; } #l5 { top: 238px; }
+#reveal { left: 24px; top: 296px; width: 280px; }
+#v1 { top: 54px; } #v2 { top: 116px; } #v3 { top: 162px; }
+#gap { left: 336px; top: 232px; width: 280px; border-color: #c2410c; }
+#div { left: 319px; top: 22px; width: 1px; height: 356px; background: #c9cdd3; }
+</style>
+<div class="lab" id="lh" data-in="fade">Legacy Duo</div>
+<div class="card col lc" id="l1" data-in="left" data-f>A wrapper around <span class="mono">claude</span></div>
+<div class="card col lc" id="l2" data-in="left" data-f>A priming file, in the system prompt</div>
+<div class="card col lc" id="l3" data-in="left" data-f>A settings hook that repeats it</div>
+<div class="card col lc" id="l4" data-in="left" data-f>A block in your CLAUDE.md</div>
+<div class="card col lc" id="l5" data-in="left" data-f>A skill and a subagent</div>
+<div class="stamp" id="reveal" data-in="up" data-f style="white-space:normal;font-size:14px;line-height:20px">"After you create a file, reveal it."</div>
+<div id="div"></div>
+<div class="lab" id="vh" data-in="fade">Duo v2</div>
+<div class="card col vc" id="v1" data-in="right" data-f><b>A generated primer</b><span class="s">passed at every session start</span></div>
+<div class="card col vc" id="v2" data-in="right" data-f>"You are running inside Duo…"</div>
+<div class="card col vc" id="v3" data-in="right" data-f>The <span class="mono">duo2</span> verbs, tasks, open documents</div>
+<div class="card col vc" id="gap" data-in="up" data-f><b class="miss">Not said</b><span class="s">File names are links. When to open one. Which view you're in.</span></div>

@@ -1,0 +1,23 @@
+<style>
+#hd { left: 24px; top: 20px; }
+#reply { left: 24px; top: 66px; width: 400px; height: 214px; line-height: 30px; }
+#reply .who { font-size: 13px; color: #5b636d; display: block; line-height: 20px; }
+[data-state~="linked"] code.ok, [data-state~="fixed"] code.p { color: #0969da; text-decoration: underline; background: #e8f0fa; }
+[data-state~="miss"] code.no { border-color: #c2410c; border-style: dashed; }
+[data-state~="fixed"] code.no { border-color: transparent; }
+#tally { left: 444px; top: 66px; width: 172px; }
+#tally .n { font-size: 34px; line-height: 40px; font-weight: 600; display: block; }
+#rule { left: 444px; top: 176px; width: 172px; }
+#fix { left: 24px; top: 300px; width: 592px; }
+</style>
+<div class="h" id="hd">What Claude writes, unprompted</div>
+<div class="card" id="reply" data-in="up" data-f>
+  <span class="who">Claude · Haiku 5.5 · no instruction</span>
+  The config is parsed in <code class="p ok" id="c1" data-f>src/app.py:4</code><br>
+  The plan is <code class="p ok" id="c2" data-f>docs/plan.md</code>, settings <code class="p ok" id="c3" data-f>config.json</code><br>
+  Build with the <code class="p no" id="c4" data-f>Makefile</code><br>
+  Kickoff: <code class="p no" id="c5" data-f>Meeting Notes/2026-11-02 kickoff.md</code>
+</div>
+<div class="card" id="tally" data-in="right" data-f><span class="n"><span id="cnt">0</span> of 5</span>linked by chat today</div>
+<div class="card" id="rule" data-in="right" data-f><b>Added a rule</b><span class="s">Same replies. Nothing changed.</span></div>
+<div class="card" id="fix" data-in="up" data-f><b>Fix it in Duo:</b> a backticked name that is a real file is a link. ⌘-click in the terminal opens in Duo too.</div>

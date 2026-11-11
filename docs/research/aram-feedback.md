@@ -1,6 +1,6 @@
 # A new user's first-use feedback, and how Claude learns it is inside Duo
 
-Research only, 2026-11-11. Nothing is built. Records: F-660 to F-662, Q-510 to Q-514, ENH-343 to ENH-345.
+Research only, 2026-11-11. Nothing is built. Records: F-660 to F-662, Q-510 to Q-514, ENH-343 to ENH-345. The decisions as a narrated walkthrough: https://claude.ai/artifact/7HjjjCFhzPhMST6RGo2kmS (`aram-feedback-walkthrough/`).
 
 Aram, a Duo user, sent Geoff first-use feedback. In short: the onboarding is too thin for how much Duo does (he doesn't know how to start director mode, or how tasks differ from sessions); he can't tell why Duo is sometimes a white, IDE-like window and sometimes a terminal; he wants the file list to fold, the right side to hide, and file names in Claude's replies to be clickable and open on the right; and the menu says "Window Colour".
 

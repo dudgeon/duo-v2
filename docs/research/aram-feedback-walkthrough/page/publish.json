@@ -1,0 +1,36 @@
+{
+ "note": "Publish with the Artifact tool: file_path = <this folder>/index.html, root = this folder, files = the map below, capabilities as below, icon 'play'. The director publishes the final page (DL-166).",
+ "file_path": "index.html",
+ "root": ".",
+ "files": {
+  "audio/why.mp3": "audio/why.mp3",
+  "audio/found.mp3": "audio/found.mp3",
+  "audio/links.mp3": "audio/links.mp3",
+  "audio/tells.mp3": "audio/tells.mp3",
+  "audio/q510-mode.mp3": "audio/q510-mode.mp3",
+  "audio/q510-mode--chat-new-installs.mp3": "audio/q510-mode--chat-new-installs.mp3",
+  "audio/q510-mode--terminal-and-teach.mp3": "audio/q510-mode--terminal-and-teach.mp3",
+  "audio/q510-mode--ask-first.mp3": "audio/q510-mode--ask-first.mp3",
+  "audio/q511-onboarding.mp3": "audio/q511-onboarding.mp3",
+  "audio/q511-onboarding--layer-then-welcome.mp3": "audio/q511-onboarding--layer-then-welcome.mp3",
+  "audio/q511-onboarding--welcome-first.mp3": "audio/q511-onboarding--welcome-first.mp3",
+  "audio/q511-onboarding--sample-project.mp3": "audio/q511-onboarding--sample-project.mp3",
+  "audio/q512-director.mp3": "audio/q512-director.mp3",
+  "audio/q512-director--menu-item.mp3": "audio/q512-director--menu-item.mp3",
+  "audio/q512-director--menu-and-slot.mp3": "audio/q512-director--menu-and-slot.mp3",
+  "audio/q512-director--teach-phrase.mp3": "audio/q512-director--teach-phrase.mp3",
+  "audio/q513-claude.mp3": "audio/q513-claude.mp3",
+  "audio/q513-claude--one-sentence.mp3": "audio/q513-claude--one-sentence.mp3",
+  "audio/q513-claude--duo-side-only.mp3": "audio/q513-claude--duo-side-only.mp3",
+  "audio/q513-claude--per-mode.mp3": "audio/q513-claude--per-mode.mp3",
+  "audio/q514-spelling.mp3": "audio/q514-spelling.mp3",
+  "audio/q514-spelling--american.mp3": "audio/q514-spelling--american.mp3",
+  "audio/q514-spelling--keep.mp3": "audio/q514-spelling--keep.mp3",
+  "audio/q514-spelling--localize.mp3": "audio/q514-spelling--localize.mp3",
+  "audio/wrap.mp3": "audio/wrap.mp3"
+ },
+ "capabilities": {
+  "db": {},
+  "comments": {}
+ }
+}
