@@ -8,10 +8,9 @@ import SwiftUI
 struct ConsoleTabStrip: View {
     @Environment(AppModel.self) private var model
     let project: String?
-    /// `.middle` is the console; `.left` is Home's strip at All projects (same strip, Home's selection and height).
-    var pane: DuoPane = .middle
-    private var isHome: Bool { pane == .left }
-    private var selection: String? { isHome ? model.homeTab : model.consoleTab }
+    /// The console's strip is the middle pane's; Home's page is a project's (DL-336).
+    private let pane: DuoPane = .middle
+    private var selection: String? { model.consoleTab }
 
     struct Tab: Identifiable {
         let id: String
@@ -22,10 +21,10 @@ struct ConsoleTabStrip: View {
     }
 
     /// The selected Claude tab is showing chat: the thin light strip.
-    var light: Bool { isHome ? model.homeShowsChat : model.consoleShowsChat }
+    var light: Bool { model.consoleShowsChat }
     /// The thin strip's 28 include the rule under it (`bar-thin`).
-    var height: CGFloat { light ? DuoMetric.chatStripHeight - DuoMetric.borderHairline : isHome ? DuoMetric.homeSessionTabsHeight : DuoMetric.tabStripHeight }
-    var gap: CGFloat { isHome || light ? 16 : 18 }
+    var height: CGFloat { light ? DuoMetric.chatStripHeight - DuoMetric.borderHairline : DuoMetric.tabStripHeight }
+    var gap: CGFloat { light ? 16 : 18 }
     var groundStyle: AnyShapeStyle { light ? AnyShapeStyle(WindowTint.strip) : AnyShapeStyle(DuoColor.console) }
     var dim: Color { light ? DuoColor.text2 : DuoColor.consoleText2 }
 
@@ -45,9 +44,9 @@ struct ConsoleTabStrip: View {
                 }
                 .duoAnimation(.tabMove, value: tabs.map(\.id))
             },
-            // Home's empty strip starts with `+` and the pill (home-none); otherwise they end the strip (DL-253).
-            plus: { if isHome && tabs.isEmpty { newSessionPill } },
-            edge: { if !(isHome && tabs.isEmpty) { newSessionPill } })
+            // The `+` and the pill end the strip (DL-253).
+            plus: { EmptyView() },
+            edge: { newSessionPill })
         // A live session's tab is dragged as itself (onto a task or a project, DL-147); along the strip its place moves (DL-220).
         .onDrop(of: [.plainText, .utf8PlainText], delegate: TabStripDrop(model: model, pane: pane))  // action: view tab-move
         .overlay(alignment: .topLeading) {
@@ -87,15 +86,15 @@ struct ConsoleTabStrip: View {
         .accessibilityLabel("New session or shell")
     }
 
-    private var newSessionHelp: String { "New Claude session ⌘T · in \(isHome ? "home" : project ?? "this project")" }
+    private var newSessionHelp: String { "New Claude session ⌘T · in \(project ?? "this project")" }
     private var newShellHelp: String {
         let folder = project.flatMap { model.liveFolders[$0]?.path } ?? FileManager.default.homeDirectoryForCurrentUser.path
         return "New shell ⇧⌘T · in \((folder as NSString).abbreviatingWithTildeInPath)"
     }
 
-    private func open(_ key: String) { if isHome { model.homeTab = key } else { model.openConsoleTab(key) } }  // action: session open
+    private func open(_ key: String) { model.openConsoleTab(key) }  // action: session open
     private func newSession() {  // action: session new
-        if isHome { if let h = project { model.homeTab = model.newSession(in: h) } } else { model.newSession() }
+        model.newSession()
     }
 
     var allTabs: [Tab] {
@@ -178,10 +177,10 @@ struct ConsoleTabStrip: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel(t.state == nil ? "\(t.title), shell" : t.forkOf.map { "\(t.title), fork of \($0), \(t.state?.spokenName ?? "")" } ?? t.title)
         .modifier(KeepRunningLabel(pinned: t.state != nil && model.isKeepRunning(t.id), name: t.title, state: t.state ?? .idle))
-        .accessibilityIdentifier(isHome ? "" : "video.tab.middle.\(allTabs.firstIndex { $0.id == t.id } ?? 0)")   // anchors: the video cursor's target (0-based, strip order)
+        .accessibilityIdentifier("video.tab.middle.\(allTabs.firstIndex { $0.id == t.id } ?? 0)")   // anchors: the video cursor's target (0-based, strip order)
         .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
         .overlay(alignment: .leading) {   // anchors (scene 4): the × while the tab shows it (its 16 pt box, centred on the glyph's place), 1-based in strip order; a sibling so the tab's own name stays
-            if !isHome, model.videoDemoFolder != nil, model.showsTabClose(t.id) {
+            if model.videoDemoFolder != nil, model.showsTabClose(t.id) {
                 let glyph = t.state == nil ? 11 : DuoMetric.glyph
                 Color.clear.frame(width: DuoMetric.tabCloseSize, height: DuoMetric.tabCloseSize).allowsHitTesting(false)
                     .offset(x: (glyph - DuoMetric.tabCloseSize) / 2)

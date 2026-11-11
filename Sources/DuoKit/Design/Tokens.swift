@@ -179,7 +179,6 @@ public enum DuoMetric {
     public static let docxMenuTop: CGFloat = 39.0
     public static let docxBarTrailing: CGFloat = 6.0
     public static let docxMenuRowPaddingX: CGFloat = 8.0
-    public static let homeSessionTabsHeight: CGFloat = 32.0
     public static let overviewFooterHeight: CGFloat = 34.0
     public static let rowFile: CGFloat = 24.0
     public static let rowTileSession: CGFloat = 24.0
