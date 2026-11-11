@@ -15,7 +15,7 @@ public enum ConsoleEmpty: Equatable, Sendable {
     case elsewhere(session: String, sessionId: String, app: String, since: String?)
     /// The session's folder is gone (LR-18).
     case folderMissing(path: String, nearest: String)
-    /// The Home pane with no session (DL-54: only after the last Home tab closes).
+    /// Home's page with no session: its first state, since nothing starts at launch (DL-336).
     case homeNone
     /// No Home folder chosen yet (DL-84): sessions are all listed on the map; Home waits.
     case noHome
@@ -70,6 +70,7 @@ extension AppModel {
         if let last = past.first {
             return .noneOpen(project: project, last: last.name, lastKey: last.tabKey)
         }
+        if project == fixture.home?.name { return .homeNone }   // Home's page before its first session (DL-336)
         return .never(project: project, isFolder: fixture.projects.first { $0.name == project }?.isFolderOnly == true)
     }
 
@@ -183,7 +184,7 @@ struct ConsoleMessage: View {
         case .never(let project, _):
             Button("Start Claude here") { model.open(project: project); model.newSession() }.keyboardShortcut(.defaultAction)
         case .notFound:
-            Button("Open Settings…") { model.info("Settings isn't built yet: it's waiting on its design (DB-10). Install Claude Code, then Look Again.") }
+            Button("Open Settings…") { WindowColourMenu.openSettings() }
             Button("Look Again") { ClaudeLocator.forget(); model.refreshLive(); model.endedRevision += 1 }.keyboardShortcut(.defaultAction)
         case .elsewhere(_, let id, _, _):
             Button("Look Again") { model.refreshLive() }.keyboardShortcut(.defaultAction)
@@ -195,7 +196,7 @@ struct ConsoleMessage: View {
             Button("Choose Home Folder…") { model.chooseHomeFolder() }.keyboardShortcut(.defaultAction)
             Button("Not Now") { model.dismissHomePrompt() }
         case .homeNone:
-            Button("Start Claude in Home") { if let h = model.fixture.home?.name { model.homeTab = model.newSession(in: h) } }
+            Button("Start Claude in Home") { if let h = model.fixture.home?.name { model.open(project: h); model.newSession() } }
                 .keyboardShortcut(.defaultAction)
         }
     }

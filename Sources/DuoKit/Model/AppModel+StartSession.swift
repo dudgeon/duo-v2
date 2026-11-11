@@ -52,11 +52,11 @@ extension AppModel {
     }
 
     /// Starts a Claude session in a place chosen on the row. A project's opens inside it with the new tab
-    /// selected (DL-142 (5)); Home's and a plain folder's open in Home's pane.
+    /// selected (DL-142 (5)); Home's and a plain folder's open on Home's page (DL-336).
     public func startSession(in place: StartPlace) {
         switch place.kind {
         case .home:
-            if let name = place.project, let sid = newSession(in: name) { homeTab = sid }
+            if let name = place.project, newSession(in: name) != nil { open(project: name); consoleTab = fixture.sessions.last?.tabKey }   // Home's page (DL-336)
         case .project:
             guard let name = place.project else { return }
             open(project: name)
@@ -83,7 +83,7 @@ extension AppModel {
             _ = self.terminals.session(id, command: .newClaude(sessionID: id, prompt: nil, remoteControl: nil, name: nil), cwd: folder.path)
             self.fixture.sessions.append(Fixture.Session(name: LiveSnapshot.untitled(Date()), project: home ?? Self.tilde(folder.path), state: .working, wait: "now",
                                                          question: nil, options: nil, summary: nil, forkOf: nil, document: nil, sessionId: id, remoteControl: nil))
-            if self.altitude.isAllProjects { self.homeTab = id }
+            if self.altitude.isAllProjects, let home { self.open(project: home); self.consoleTab = self.fixture.sessions.last?.tabKey }   // Home's page (DL-336)
         }
         return id
     }

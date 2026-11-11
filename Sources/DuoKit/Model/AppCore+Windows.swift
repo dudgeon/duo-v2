@@ -81,27 +81,13 @@ extension AppCore {
         return true
     }
 
-    /// Forgets a window that closed: Home goes back to the primary if it was there, and the key window moves on.
+    /// Forgets a window that closed; the key window moves on.
     public func detach(_ m: AppModel) {
         m.rememberTabs()
         registered.removeAll { $0.model == nil || $0.model === m }
         opened.removeAll { $0 === m }
-        if homeOwnerNumber == m.windowNumber { homeOwnerNumber = nil }
         if keyWindowID != nil, keyWindowID == m.windowID { keyWindowID = primary?.windowID }
         count("closeWindow")
-    }
-
-    // MARK: - Home in one window (Q-431, board 10 B)
-
-    /// The window whose Home pane is live: the one Show Here was last pressed in, else the primary.
-    public var homeOwner: AppModel? {
-        homeOwnerNumber.flatMap { model(number: $0) } ?? primary
-    }
-
-    /// Show Here (board 10 B), `duo2 window home`: Home's terminal moves to this window; the others show the stand-in.
-    public func showHome(in m: AppModel) {
-        homeOwnerNumber = m.windowNumber
-        if m.homeTab == nil, let other = models.first(where: { $0 !== m && $0.homeTab != nil }) { m.homeTab = other.homeTab }
     }
 
     // MARK: - Colours (DL-312, DL-313)
@@ -151,12 +137,9 @@ extension AppCore {
         return (callerWindow(session: req.session) ?? primary, r, nil)
     }
 
-    /// The window that shows the caller's session: the window on its project, or Home's window for Home's.
+    /// The window that shows the caller's session: the window on its project (Home's page, for Home's).
     func callerWindow(session: String?) -> AppModel? {
         guard let session, let s = fixture.sessions.first(where: { $0.sessionId == session || $0.tabKey == session }) else { return nil }
-        if s.project == fixture.home?.name, let h = homeOwner, h.altitude.isAllProjects || h.altitude == .project(s.project) {
-            return model(showing: s.project) ?? h
-        }
         return model(showing: s.project)
     }
 
@@ -195,9 +178,6 @@ extension AppModel {
         guard !core.classicOn, let id = windowColourID else { return nil }
         return DuoWindowColour.all.first { $0.id == id }
     }
-
-    /// Whether this window's Home pane is live (Q-431): else it draws the stand-in, Show Here.
-    public var ownsHome: Bool { core.homeOwner === self }
 
     /// Window › Window Colour, the toolbar swatch, `duo2 window colour` (DL-312): nil is None.
     public func setWindowColour(_ id: String?) {

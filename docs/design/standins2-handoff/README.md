@@ -1,5 +1,7 @@
 # Duo: stand-ins, batch 2 — design handoff
 
+> **Superseded in part by DL-336 (2026-11-11):** `q57-home-pill` drew a pill in Home's column; the column is gone. Its screens are a snapshot and stay as drawn; see `../home-agent-panel-handoff/`.
+
 Status: approved by Geoff, 2026-10-07 (DL-132), in three rounds of buttons. Answers Q-46, Q-47, Q-50, Q-51, Q-52, Q-39, Q-57, Q-66, Q-67, Q-68 and DL-127's wording (Q-71). The boards were drawn on the Design canvas https://claude.ai/artifact/3TTPpMG5scibGpopR14afr with the Duo design system (every mark a [P]), beside captures of each stand-in as built. They are exported here as static HTML, with PNGs in `screens/png/`. Only the chosen boards are exported; the canvas keeps the options he didn't choose.
 
 ## What the boards settle

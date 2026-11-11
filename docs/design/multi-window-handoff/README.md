@@ -1,5 +1,7 @@
 # Multi-window slice 1: two windows, each with its project and its colour
 
+> **Superseded in part by DL-336 (2026-11-11):** `board-10-home` (Home in a second window, Show Here) is retired: Home's page in two windows behaves as any project's. Its screens are a snapshot and stay as drawn; see `../home-agent-panel-handoff/`.
+
 Status: **target** for multi-window slice 1 (DL-311), exported 2026-11-02 from the studies canvas https://claude.ai/artifact/46yWPpDZn16Qtfrfhbuaw1 as Geoff decided it: DL-141, DL-308, DL-311, DL-312, DL-313. Built on `build/multi-window-slice1` (F-552).
 
 The study is `../multi-window-studies/` (its README lists every board and decision). This handoff keeps only what slice 1 builds. Pinning (boards 2, 3), a session or document in two windows (6, 7), needs-you across windows (8) and the Window menu's marks (9 A) are later slices.

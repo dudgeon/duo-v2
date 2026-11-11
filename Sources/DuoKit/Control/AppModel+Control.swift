@@ -11,8 +11,9 @@ extension AppModel {
         public var ok: Bool
         public var text: String
         public var json: Any?
+        public var code: Int32?
         public static func ok(_ text: String, _ json: Any? = nil) -> Reply { Reply(ok: true, text: text, json: json) }
-        public static func fail(_ text: String) -> Reply { Reply(ok: false, text: text, json: nil) }
+        public static func fail(_ text: String, code: Int32? = nil) -> Reply { Reply(ok: false, text: text, json: nil, code: code) }
     }
 
     /// Verbs the app answers (everything not `local`); for the check.
@@ -28,7 +29,7 @@ extension AppModel {
                let data = try? JSONSerialization.data(withJSONObject: j is String ? ["result": j] : j, options: [.prettyPrinted, .sortedKeys, .fragmentsAllowed]) {
                 done(.init(ok: true, output: String(decoding: data, as: UTF8.self)))
             } else {
-                done(.init(ok: r.ok, output: r.text))
+                done(.init(ok: r.ok, output: r.text, code: r.ok ? nil : r.code))
             }
         }
     }
@@ -37,7 +38,7 @@ extension AppModel {
     func perform(_ id: ActionID, _ inv: Invocation, _ req: ControlRequest, _ done: @escaping @MainActor (Reply) -> Void) {
         switch id {
         // MARK: Windows (multi-window slice 1)
-        case .windowList, .windowNew, .windowFocus, .windowClose, .windowColour, .windowHome:
+        case .windowList, .windowNew, .windowFocus, .windowClose, .windowColour:
             windowVerb(id, inv, done)
 
         // MARK: Duo
@@ -57,7 +58,7 @@ extension AppModel {
 
         // MARK: What's on screen
         case .goAll: zoomOut(); done(.ok("Showing All projects."))
-        case .goHome: goHome(); done(.ok("Showing Home."))
+        case .goHome: guard fixture.home != nil else { return done(.fail("No Home folder is set.")) }; goHome(); done(.ok("Showing Home's page."))
         case .open:
             guard let name = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
             guard let p = project(named: name) else { return done(noProject(name)) }
@@ -78,6 +79,7 @@ extension AppModel {
             guard peekOpen else { return done(.fail("the peek isn't open")) }
             jumpToPeekSelection(); done(.ok("Jumped."))
         case .viewSidebar:
+            guard !altitude.isAllProjects else { return done(.fail("All projects has no sidebar", code: 64)) }   // DL-336
             if inv[0] == "peek" {
                 guard splits.sidebarFolded else { return done(.fail("the sidebar isn't folded by a split view; use show, hide or toggle")) }
                 splits.peek.toggle()
@@ -359,7 +361,7 @@ extension AppModel {
             done(.ok(text, j))
         case .sessionOpen:
             guard let k = inv[0], let s = findSession(k, in: nil) else { return done(.fail("no session '\(inv[0] ?? "")'")) }
-            if s.project == fixture.home?.name, altitude.isAllProjects { homeTab = s.tabKey } else { open(project: s.project).openConsoleTab(s.tabKey) }
+            open(project: s.project).openConsoleTab(s.tabKey)   // a Home session opens Home's page, as any project's session (DL-336)
             done(.ok("Showing \(s.name)."))
         case .sessionClose:
             guard let k = inv[0] ?? visibleSessionId, let s = findSession(k, in: nil) ?? session(tabKey: k) else { return done(.fail("no session to close")) }

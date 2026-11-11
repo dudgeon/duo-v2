@@ -50,9 +50,6 @@ extension AppModel {
             let colour = windowColourID.flatMap { id in DuoWindowColour.all.first { $0.id == id }?.name } ?? "None"
             let classic = core.classicOn ? " Window colours are off while Classic is on." : ""
             done(.ok("Window \(windowNumber): \(colour). Colour new windows automatically: \(core.colourNewWindows ? "on" : "off").\(classic)", windowJSON))
-        case .windowHome:
-            core.showHome(in: self)
-            done(.ok("Home is showing in window \(windowNumber)."))
         default:
             done(.fail("not a window verb"))
         }
@@ -63,7 +60,6 @@ extension AppModel {
         var marks: [String] = []
         if core.primary === self { marks.append("primary") }
         if core.keyModel === self, core.keyWindowID != nil { marks.append("key") }
-        if ownsHome { marks.append("Home") }
         if hiddenByClose { marks.append("hidden") }
         let colour = windowColourID.flatMap { id in DuoWindowColour.all.first { $0.id == id }?.name } ?? "None"
         return "\(windowNumber)  \(windowTitle)  \(colour)" + (marks.isEmpty ? "" : "  (" + marks.joined(separator: ", ") + ")")
@@ -71,7 +67,7 @@ extension AppModel {
 
     var windowJSON: [String: Any] {
         var j: [String: Any] = ["number": windowNumber, "title": windowTitle, "colour": windowColourID ?? "none",
-                                "primary": core.primary === self, "home": ownsHome]
+                                "primary": core.primary === self]
         if let p = currentProject?.name { j["project"] = p }
         return j
     }

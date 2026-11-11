@@ -530,11 +530,10 @@ public final class AppModel {
         // What was open when Duo last quit comes back once the sessions are known (LR-58).
         if !restoreApplied, !fixture.sessions.isEmpty || !folders.isEmpty { applyRestore() }
         defer { saveRestoreState() }
-        // Home is always on (brief: the director agent); its empty state isn't designed (§13), so
-        // live mode starts one Home session when there is none (concerns C-15).
+        // No Home session starts at launch (DL-336, supersedes DL-54 and C-15): one starts when asked, from Home's page,
+        // the List's New session row, ⌘T there, or `duo2 session new`. `homeTab` only remembers Home's first session;
+        // nothing resumes it, because only Home's page's console calls `terminal(project:session:)`.
         if let home = fixture.home {
-            let homeSessions = fixture.sessions(inProject: home.name)
-            if homeSessions.isEmpty { newSession(in: home.name) }
             for m in windows where m.homeTab == nil || !fixture.sessions(inProject: home.name).contains(where: { $0.tabKey == m.homeTab }) {
                 m.homeTab = fixture.sessions(inProject: home.name).first?.tabKey
             }

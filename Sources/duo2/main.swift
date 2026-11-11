@@ -212,7 +212,7 @@ default:
                                  cwd: FileManager.default.currentDirectoryPath)
     do {
         let r = try ControlClient.send(request, via: endpoint, source: source, timeout: action.timeout)
-        if r.ok { print(r.output, terminator: r.output.hasSuffix("\n") ? "" : "\n"); directorNudge(action.id, rest, duoReachable: true) } else { fail(r.output) }
+        if r.ok { print(r.output, terminator: r.output.hasSuffix("\n") ? "" : "\n"); directorNudge(action.id, rest, duoReachable: true) } else { fail(r.output, code: r.code ?? 1) }
     } catch {
         // A dead socket (a Duo that quit under a session that still has its address): nothing was sent.
         if strict { refuse(Isolation.Refusal("the test instance at \(endpoint.socket) stopped answering (\(error)); duo2 won't fall back to the offline verbs or the default Duo.")) }

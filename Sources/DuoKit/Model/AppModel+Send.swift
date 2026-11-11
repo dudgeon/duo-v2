@@ -67,7 +67,8 @@ extension AppModel {
     public func sendToNewSession(_ text: String) {
         let project = altitude.isAllProjects ? fixture.home?.name : currentProject?.name
         guard let project, let id = newSession(in: project) else { return }
-        if altitude.isAllProjects { homeTab = id } else { consoleTab = id }
+        if altitude.isAllProjects { open(project: project) }   // Home's page (DL-336)
+        consoleTab = id
         guard let t = terminals.existing(id) else { return }
         whenPromptReady(t) { [weak self] in self?.send(text, to: id) }
     }
