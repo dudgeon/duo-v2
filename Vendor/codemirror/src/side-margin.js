@@ -1,16 +1,19 @@
-// The margin column beside a PDF (Geoff, 2026-11-10: PDF comments look and work exactly like Markdown review comments).
+// The side margin: the comment column beside a viewer that is not the editor (the PDF viewer now; Word and PowerPoint next).
+// Geoff, 2026-11-10: PDF comments look and work exactly like Markdown review comments.
 // It is margin.js's margin: the same `Cards` (cards.js: cards, active card with reply field and Close and Keep / Delete,
 // "n closed · Show", the narrow gutter and popover, @claude's delivery lines and pill, the composer) and the same `@` menu
 // (atmenu.js), in a small page of its own beside the PDFView. What differs is the host: the anchors are where PDFKit draws
 // each highlight (Swift sends their y in the document's coordinates and the scroll offset), and what a card's buttons do
-// goes to Swift (`pdfMargin` messages), which writes the PDF through `PdfComments` and sends `@claude` comments when they
+// goes to Swift (messages of the kind the host names; the PDF viewer's are `pdfMargin`), which writes the PDF through `PdfComments` and sends `@claude` comments when they
 // are posted. The page keeps its own state (the active card, the composer) while Swift re-sends the threads after each write.
 import { Cards, cardStyles, reviewColourStyles, toCss, el, NARROW, MARGIN_W, MARGIN_RIGHT, GAP_TEXT, GUTTER, POPOVER_W } from "./cards.js";
 import { atPeople } from "./atmenu.js";
 
-const send = (a) => { try { window.webkit.messageHandlers.duo.postMessage({ kind: "pdfMargin", ...a }); } catch (e) { /* no host: a browser page for checks */ } };
+// The message kind is the host's to name: Swift sets window.duoMarginKind before the page loads (the PDF viewer: "pdfMargin").
+const KIND = window.duoMarginKind || "sideMargin";
+const send = (a) => { try { window.webkit.messageHandlers.duo.postMessage({ kind: KIND, ...a }); } catch (e) { /* no host: a browser page for checks */ } };
 
-class PdfMargin extends Cards {
+class SideMargin extends Cards {
   constructor(root) {
     const layer = el("div", "duo-mg");
     super(layer);
@@ -101,8 +104,8 @@ style.textContent = toCss({ ...cardStyles, ...reviewColourStyles })
   + "\nhtml, body { margin: 0; height: 100%; overflow: hidden; background: var(--duo-ground); }\n#root { position: relative; height: 100vh; overflow: hidden; }\n";
 document.head.append(style);
 const root = document.getElementById("root");
-const margin = new PdfMargin(root);
-window.duoPdf = {
+const margin = new SideMargin(root);
+window.duoSideMargin = {
   setState: (s) => margin.setState(s),
   setScroll: (y) => margin.setScroll(y),
   setDelivery: (m, d) => margin.setDelivery(m, d),

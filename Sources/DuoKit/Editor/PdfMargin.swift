@@ -3,7 +3,7 @@ import Observation
 import WebKit
 
 /// The margin beside a PDF: Markdown review's margin (Vendor/codemirror/src/margin.js and cards.js) in a small web page of
-/// its own (`pdfmargin.html`), so a PDF's comments look and work as a Markdown document's do (Geoff, 2026-11-10): every open
+/// its own (`side-margin.html`), so a PDF's comments look and work as a Markdown document's do (Geoff, 2026-11-10): every open
 /// thread a card level with its highlight, always visible, the active card with its reply field, Close and Keep / Delete,
 /// closed threads folded into "n closed · Show", a gutter and popover when the pane is narrow, @claude's delivery lines and
 /// pill, and the composer card with the `@` menu. The page draws; Swift owns the PDF: it says where each highlight is on the
@@ -29,13 +29,14 @@ public final class PdfMargin: NSObject, WKScriptMessageHandler, WKNavigationDele
         super.init()
         webView.configuration.userContentController.add(self, name: "duo")
         webView.configuration.userContentController.addUserScript(WKUserScript(source: EditorController.tokenCSS(), injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        webView.configuration.userContentController.addUserScript(WKUserScript(source: "window.duoMarginKind = \"pdfMargin\";", injectionTime: .atDocumentStart, forMainFrameOnly: true))
         webView.navigationDelegate = self
         webView.setValue(false, forKey: "drawsBackground")
         // DuoChecks has no app bundle: it names the built page's folder (Vendor/codemirror/dist), as the editor does.
         let override = ProcessInfo.processInfo.environment["DUO_EDITOR_DIR"].map { URL(fileURLWithPath: $0) }
         if let dir = override ?? Bundle.main.resourceURL?.appending(path: "editor"),
-           FileManager.default.fileExists(atPath: dir.appending(path: "pdfmargin.html").path) {
-            webView.loadFileURL(dir.appending(path: "pdfmargin.html"), allowingReadAccessTo: dir)
+           FileManager.default.fileExists(atPath: dir.appending(path: "side-margin.html").path) {
+            webView.loadFileURL(dir.appending(path: "side-margin.html"), allowingReadAccessTo: dir)
         }
     }
 
@@ -66,7 +67,7 @@ public final class PdfMargin: NSObject, WKScriptMessageHandler, WKNavigationDele
 
     // MARK: Telling the page
 
-    /// Runs `duoPdf.<call>` once the page is up (calls made before are kept, in order).
+    /// Runs `duoSideMargin.<call>` once the page is up (calls made before are kept, in order).
     private func call(_ js: String) {
         if ready { webView.evaluateJavaScript(js, completionHandler: nil) } else { queued.append(js) }
     }
@@ -79,16 +80,16 @@ public final class PdfMargin: NSObject, WKScriptMessageHandler, WKNavigationDele
     /// The threads (see `PdfViewer.marginThreads`), the pane's width and who is commenting.
     public func setState(threads: [[String: Any]], paneWidth: CGFloat, showClosed: Bool, reviewer: String) {
         let s: [String: Any] = ["threads": threads, "paneWidth": Double(paneWidth), "showClosed": showClosed, "reviewer": reviewer]
-        call("window.duoPdf && duoPdf.setState(\(Self.literal(s)))")
+        call("window.duoSideMargin && duoSideMargin.setState(\(Self.literal(s)))")
     }
-    public func setScroll(_ y: CGFloat) { call("window.duoPdf && duoPdf.setScroll(\(Double(y)))") }
+    public func setScroll(_ y: CGFloat) { call("window.duoSideMargin && duoSideMargin.setScroll(\(Double(y)))") }
     public func setDelivery(_ map: [String: Any], _ def: [String: Any]) {
-        call("window.duoPdf && duoPdf.setDelivery(\(Self.literal(map)), \(Self.literal(def)))")
+        call("window.duoSideMargin && duoSideMargin.setDelivery(\(Self.literal(map)), \(Self.literal(def)))")
     }
-    public func compose(y: CGFloat) { call("window.duoPdf && duoPdf.compose(\(Double(y)))") }
-    public func moveComposer(y: CGFloat) { call("window.duoPdf && duoPdf.moveComposer(\(Double(y)))") }
-    public func closeComposer() { call("window.duoPdf && duoPdf.closeComposer()") }
-    public func activate(_ id: String?) { call("window.duoPdf && duoPdf.activate(\(id.map(Self.literal) ?? "null"))") }
+    public func compose(y: CGFloat) { call("window.duoSideMargin && duoSideMargin.compose(\(Double(y)))") }
+    public func moveComposer(y: CGFloat) { call("window.duoSideMargin && duoSideMargin.moveComposer(\(Double(y)))") }
+    public func closeComposer() { call("window.duoSideMargin && duoSideMargin.closeComposer()") }
+    public func activate(_ id: String?) { call("window.duoSideMargin && duoSideMargin.activate(\(id.map(Self.literal) ?? "null"))") }
 
     /// Runs script in the page and hands back its value (for checks and `duo2`).
     public func evaluate(_ js: String, done: @escaping @MainActor (Any?) -> Void) {

@@ -2,7 +2,7 @@
 // `margin-narrow`, `close-*`, `margin-claude`): thread cards level with their anchors, the active card with its reply
 // field and Close and Keep / Delete, closed threads folded into "n closed · Show", under 420 a gutter of count markers
 // and a popover, @claude's delivery lines and session pill, and the composer. Two hosts draw them: the Markdown editor
-// (margin.js: anchors are text in a CodeMirror document, edits are transactions) and the PDF viewer (pdf-margin.js:
+// (margin.js: anchors are text in a CodeMirror document, edits are transactions) and the PDF viewer (side-margin.js:
 // anchors are highlights PDFKit draws, edits are Swift's writes to the file). The look is one thing because the code is.
 //
 // A host extends `Cards` and provides: relayout(), schedule(), anchorY(thread), composerY(), finish(bottom), reviewerName(),

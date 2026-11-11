@@ -120,7 +120,7 @@ import SwiftUI
     func cards() -> [[String: Any]] {
         var out: [[String: Any]] = []
         var got = false
-        v.margin.evaluate("return duoPdf.dump()") { out = ($0 as? [[String: Any]]) ?? []; got = true }
+        v.margin.evaluate("return duoSideMargin.dump()") { out = ($0 as? [[String: Any]]) ?? []; got = true }
         _ = wait(5) { got }
         return out
     }
@@ -133,7 +133,7 @@ import SwiftUI
     m.composePdfComment(v)
     check(v.composing?.page == 1 && !(v.composing?.quads.isEmpty ?? true), "Add Comment keeps the selection's page and rectangles for the composer")
     var composing = false
-    check(wait { v.margin.evaluate("return duoPdf.composing()") { composing = ($0 as? Bool) == true }; RunLoop.main.run(until: Date().addingTimeInterval(0.05)); return composing }, "…and the margin shows the composer card, level with the selection")
+    check(wait { v.margin.evaluate("return duoSideMargin.composing()") { composing = ($0 as? Bool) == true }; RunLoop.main.run(until: Date().addingTimeInterval(0.05)); return composing }, "…and the margin shows the composer card, level with the selection")
     check(cards().contains { $0["id"] as? String == "composer" && ($0["top"] as? Double ?? -1) >= 0 }, "…a card in the margin, not a sheet")
     check(SheetCenter.shared.queue.count + (SheetCenter.shared.current == nil ? 0 : 1) == sheetsBefore, "Add Comment asks nothing in a Duo sheet (the modal is gone)")
     let addPath = repoRoot().appending(path: "Sources/DuoKit/Control/AppModel+PdfViewer.swift")
@@ -199,7 +199,7 @@ import SwiftUI
     m.composePdfComment(v)
     check(v.composing != nil, "Add Comment again opens the composer")
     v.cancelCompose()
-    check(v.composing == nil && wait { var c = true; v.margin.evaluate("return duoPdf.composing()") { c = ($0 as? Bool) == true }; RunLoop.main.run(until: Date().addingTimeInterval(0.05)); return !c }, "Cancel closes it and writes nothing")
+    check(v.composing == nil && wait { var c = true; v.margin.evaluate("return duoSideMargin.composing()") { c = ($0 as? Bool) == true }; RunLoop.main.run(until: Date().addingTimeInterval(0.05)); return !c }, "Cancel closes it and writes nothing")
     check(duo2("comment", "list", "paper.pdf").output.contains("no comment threads"), "…nothing was written to the file")
     // Go to Thread (an outline) is still the viewer's, used by checks and the margin's click
     _ = try? PdfComments.add(proj.appending(path: "paper.pdf"), page: 1, quads: v.selectionQuads()?.quads ?? [], point: nil, author: "geoff", text: "Go to this", backups: AppModel.pdfBackups)
