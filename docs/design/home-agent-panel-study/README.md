@@ -1,6 +1,6 @@
 # Duo: Home's agent panel — design study
 
-Status: **proposed, waiting on Geoff** (Q-498 to Q-501, and Q-488's recommendation). Every mark is [P]. Nothing is built.
+Status: **decided, DL-336** (Geoff, 2026-11-11, every recommendation): C. Boards C1 and C2 are the build's targets; A, B and D2 were not chosen (ENH-341 may revisit them). Not built yet: `docs/research/home-agent-panel-build-brief.md`.
 
 The research is `docs/research/home-agent-panel.md`. The canvas is https://claude.ai/artifact/PBJttSgB17RzCn8WQQo6sF, with the Duo design system (its `tokens.json` installed on the canvas). The decisions go to Geoff as a decision walkthrough, `docs/research/home-agent-panel-walkthrough/`.
 
