@@ -1,6 +1,6 @@
 # Home's agent panel: gate it, make it opt-in, or move it (2026-11-10)
 
-Research and design only; nothing here is built. Task: `tasks/home-agent-panel-options.md`. Records: F-648 (this study's findings), Q-498 to Q-501 (the open decisions), Q-488 answered here (recommendation), ENH-341 spare. Sketches: the Design canvas linked in "Sketches" below, every mark [P]. Decisions go to Geoff as a decision walkthrough (`docs/research/home-agent-panel-walkthrough/`; worker's draft https://claude.ai/artifact/L3Pd83Fhyf4HjQcfvTuZct, the director publishes the final page).
+Research and design only; nothing here is built. Task: `tasks/home-agent-panel-options.md`. Records: F-648 (this study's findings), Q-498 to Q-501 (the open decisions), Q-488 answered here (recommendation), ENH-341 (bringing the column back, opt-in). Sketches: the Design canvas linked in "Sketches" below, every mark [P]. Decisions go to Geoff as a decision walkthrough (`docs/research/home-agent-panel-walkthrough/`; worker's draft https://claude.ai/artifact/L3Pd83Fhyf4HjQcfvTuZct, the director publishes the final page).
 
 ## The ask
 
@@ -105,7 +105,7 @@ DL-142's D: All projects lists every session on the left, ★ Home pinned first,
 
 ## Recommendation
 
-1. **Q-498: C.** Home's agent lives on Home's page only. It is Geoff's second idea carried through: the deliberate action already exists (`New session in ★ home`, and opening Home's page), and the column it would guard goes, with every workaround it needed. A (the switch) keeps every cost in the code for the people who turn it on, and B keeps them for everyone who starts it.
+1. **Q-498: C.** (Geoff, 2026-11-10: "I'm aligned that for most users, the home column should go away; I do want to have an enh to consider ways of bringing it back": ENH-341.) Home's agent lives on Home's page only. It is Geoff's second idea carried through: the deliberate action already exists (`New session in ★ home`, and opening Home's page), and the column it would guard goes, with every workaround it needed. A (the switch) keeps every cost in the code for the people who turn it on, and B keeps them for everyone who starts it.
 2. **Q-499: start Home's session on first use** (reverse DL-54). Whatever shape is chosen, no Claude session should run unseen. Home's page with no session shows the existing "Start Claude in Home" state (`ConsoleStates`), and the List's row starts one.
 3. **Q-500: a release note only**, no in-app note. Few people opened the column after DL-315; their sessions don't move.
 4. **Q-501: at All projects, the sidebar button and ⌃⌘S are hidden** (the toolbar keeps the right-pane button), rather than kept for a later projects sidebar (ENH-146), which would get its own design.
