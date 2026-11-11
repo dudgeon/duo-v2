@@ -64,9 +64,13 @@ public enum LiveBranch {
             at = next
             earliest = min(earliest, next)
         }
+        // A chain that passes through no typed prompt proves nothing (records without parentUuid, a tail of tool
+        // results): no prompt is called dead then.
+        guard chain.contains(where: { records[$0]["type"] as? String == "user" && isPrompt(records[$0]) }) else { return [] }
         var dead = Set<Int>()
         // Only typed prompts decide: a message typed mid-turn hangs off whatever record was last, often off the chain.
-        for (i, r) in records.enumerated() where r["type"] as? String == "user" && isPrompt(r) && !chain.contains(i) && r["uuid"] is String {
+        // A prompt with no parentUuid key at all isn't linked into any chain.
+        for (i, r) in records.enumerated() where r["type"] as? String == "user" && isPrompt(r) && !chain.contains(i) && r["uuid"] is String && r["parentUuid"] != nil {
             if i < earliest && !complete { continue }   // before where the chain breaks: can't tell
             dead.insert(i)
         }

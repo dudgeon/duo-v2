@@ -7,13 +7,13 @@ import Foundation
 // prompt's parentUuid points at the record before the rewound turn). Chat, search and every reader of
 // "what turns does this session have" follow the live branch, not file order.
 //
-// fixtures/rewind/rewound-session.jsonl is a real transcript: Claude Code 2.1.316 run with `claude -p` on the
+// Fixtures/rewind/rewound-session.jsonl is a real transcript: Claude Code 2.1.316 run with `claude -p` on the
 // repo's mock API (scripts/director-harness/mock-api.mjs), four prompts (invented text: Alpha, Bravo,
 // Charlie, then Delta after `--resume-session-at` Alpha's reply, which is the rewind's shape), trimmed to the
 // record kinds chat reads and with the attachment bodies and request blobs dropped.
 @MainActor func rewindChecks() throws {
     print("a rewound transcript: the live branch only (F-656)")
-    let fixture = repoRoot().appending(path: "fixtures/rewind/rewound-session.jsonl")
+    let fixture = repoRoot().appending(path: "Fixtures/rewind/rewound-session.jsonl")
     let data = try Data(contentsOf: fixture)
     let records = ChatIngest.lines(data)
     func prompts(_ log: ChatLog) -> [String] { log.items.compactMap { if case .you(let y) = $0 { y.text } else { nil } } }
