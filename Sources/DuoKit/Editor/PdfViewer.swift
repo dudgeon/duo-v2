@@ -269,7 +269,6 @@ public final class PdfViewer: NSObject {
             }
             if t.resolved { comments.append(["author": "", "date": "", "text": "", "closing": true]) }
             let y = Double(documentY(page: t.page, rects: t.rects) ?? 0)
-            if ProcessInfo.processInfo.environment["DUO_PDF_DEBUG"] != nil { FileHandle.standardError.write(Data("pdf-margin: \(t.id) page \(t.page) rects \(t.rects) y \(y) scroll \(scrollTop()) scale \(pdfView.scaleFactor)\n".utf8)) }
             return ["id": t.id, "closed": t.resolved, "y": y, "comments": comments]
         }
     }
