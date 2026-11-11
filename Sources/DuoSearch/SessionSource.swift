@@ -59,8 +59,10 @@ public enum SessionSource {
             turns.append(Turn(index: turns.count + 1, text: "You: \(p)" + (reply.isEmpty ? "" : "\n\nClaude: \(reply)")))
             prompt = nil; replies = []
         }
-        for line in data.split(separator: UInt8(ascii: "\n")) {
-            guard let r = try? JSONSerialization.jsonObject(with: Data(line)) as? [String: Any], let type = r["type"] as? String else { continue }
+        // Turns /rewind removed stay in the file as a dead branch: index the live one (F-656).
+        let records = LiveBranch.filter(data.split(separator: UInt8(ascii: "\n")).compactMap { try? JSONSerialization.jsonObject(with: Data($0)) as? [String: Any] })
+        for r in records {
+            guard let type = r["type"] as? String else { continue }
             if cwd == nil, let c = r["cwd"] as? String { cwd = c }
             switch type {
             case "custom-title": custom = r["customTitle"] as? String ?? custom
