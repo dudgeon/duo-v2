@@ -381,7 +381,7 @@ final class PdfUpdate {
         var out = [UInt8]()
         var offsets: [Int: Int] = [:]
         for n in bodies.keys.sorted() {
-            offsets[n] = base + out.count
+            offsets[n] = base + out.count - file.headerOffset
             let b = bodies[n]!
             out += Array("\(n) \(file.gen(n)) obj\n".utf8) + b.body
             if let s = b.stream { out += Array("\nstream\n".utf8) + [UInt8](s) + Array("\nendstream".utf8) }
@@ -395,7 +395,7 @@ final class PdfUpdate {
         trailerPairs.append(("Size", .int(size)))
         for k in ["Root", "Info", "ID"] { if let v = t[k] { trailerPairs.append((k, v)) } }
         trailerPairs.append(("Prev", .int(prev)))
-        let at = base + out.count
+        let at = base + out.count - file.headerOffset
         var all = offsets.map { ($0.key, $0.value, file.gen($0.key)) }
         if let x = xrefObj { all.append((x, at, 0)) }
         all.sort { $0.0 < $1.0 }

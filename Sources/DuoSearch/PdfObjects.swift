@@ -309,6 +309,7 @@ enum PdfFilters {
             sp.pointee.dst_ptr = dst
             sp.pointee.dst_size = dstSize
             while true {
+                let before = sp.pointee.src_size
                 let status = compression_stream_process(sp, Int32(COMPRESSION_STREAM_FINALIZE.rawValue))
                 let produced = dstSize - sp.pointee.dst_size
                 out.append(dst, count: produced)
@@ -317,6 +318,7 @@ enum PdfFilters {
                 if status == COMPRESSION_STATUS_END { return out }
                 if status == COMPRESSION_STATUS_ERROR { throw PdfFailure("a Flate stream is damaged") }
                 if produced == 0 && sp.pointee.src_size == 0 { return out }   // truncated stream: what came out
+                if produced == 0 && sp.pointee.src_size == before { throw PdfFailure("damaged compressed stream") }   // no input used, nothing made: it would loop
             }
         }
     }
@@ -365,6 +367,9 @@ final class PdfFile {
     private(set) var trailers: [[String: PdfObj]] = []
     private(set) var newestStartxref = 0
     private(set) var newestIsStream = false
+    /// Where `%PDF-` starts. Cross-reference offsets count from there (as Acrobat and the CoreGraphics reader take them), so a file with
+    /// junk in front keeps working: every offset read is shifted by this, and every one written is shifted back.
+    private(set) var headerOffset = 0
     private var cache: [Int: PdfObj] = [:]
     private var objStms: [Int: (objects: [Int: PdfObj], order: [Int])] = [:]
 
@@ -373,10 +378,16 @@ final class PdfFile {
 
     init(_ data: Data) throws {
         bytes = [UInt8](data)
-        guard bytes.count > 20, bytes.prefix(1024).starts(with: Array("%PDF-".utf8)) || Self.find(Array("%PDF-".utf8), in: bytes, from: 0, to: min(bytes.count, 1024)) != nil else {
+        guard bytes.count > 20, let h = Self.find(Array("%PDF-".utf8), in: bytes, from: 0, to: min(bytes.count, 1024)) else {
             throw PdfFailure("not a PDF file (no %PDF- header)")
         }
-        try readXrefChain()
+        headerOffset = h
+        do { try readXrefChain() }
+        catch where h > 0 {
+            // Offsets that count from byte 0 instead (a writer that ignored the junk in front): read them that way.
+            entries = [:]; trailers = []; headerOffset = 0
+            do { try readXrefChain() } catch { throw PdfFailure("the cross-reference data can't be read, with or without the \(h) bytes in front of %PDF-") }
+        }
         guard trailer["Root"]?.refNumber != nil else { throw PdfFailure("the trailer has no /Root: this file's cross-reference data can't be read") }
     }
 
@@ -401,7 +412,7 @@ final class PdfFile {
     // MARK: Cross-reference data
 
     private func readXrefChain() throws {
-        let tailStart = max(0, bytes.count - 2048)
+        let tailStart = max(0, bytes.count - 1 << 20)
         guard let k = Self.findLast(Array("startxref".utf8), in: bytes, from: tailStart) else { throw PdfFailure("no startxref near the end of the file") }
         var lx = PdfLexer(bytes, at: k + 9)
         guard let first = try? lx.int() else { throw PdfFailure("startxref has no offset") }
@@ -411,8 +422,8 @@ final class PdfFile {
         while let off = offset {
             guard !seen.contains(off) else { throw PdfFailure("the cross-reference chain loops") }
             seen.insert(off)
-            guard off > 0, off < bytes.count else { throw PdfFailure("a cross-reference offset (\(off)) is outside the file") }
-            var lex = PdfLexer(bytes, at: off)
+            guard off > 0, off + headerOffset < bytes.count else { throw PdfFailure("a cross-reference offset (\(off)) is outside the file") }
+            var lex = PdfLexer(bytes, at: off + headerOffset)
             lex.skipSpace()
             let tr: [String: PdfObj]
             if bytes[lex.pos...].starts(with: Array("xref".utf8)) {
@@ -420,11 +431,11 @@ final class PdfFile {
                 tr = try readTable(&lex)
                 if firstSection { newestIsStream = false }
                 if let xs = tr["XRefStm"]?.intValue {   // a hybrid file: the stream's entries rank below the table's
-                    guard xs > 0, xs < bytes.count else { throw PdfFailure("bad /XRefStm") }
-                    _ = try readStream(at: xs)
+                    guard xs > 0, xs + headerOffset < bytes.count else { throw PdfFailure("bad /XRefStm") }
+                    _ = try readStream(at: xs + headerOffset)
                 }
             } else {
-                tr = try readStream(at: off)
+                tr = try readStream(at: off + headerOffset)
                 if firstSection { newestIsStream = true }
             }
             trailers.append(tr)
@@ -445,7 +456,7 @@ final class PdfFile {
                 let o = try lex.int(), g = try lex.int()
                 let t = lex.word()
                 switch t {
-                case "n": put(start + i, .offset(o, gen: g))
+                case "n": put(start + i, .offset(o + headerOffset, gen: g))
                 case "f": put(start + i, .free)
                 default: throw PdfFailure("a cross-reference entry is damaged (byte \(lex.pos))")
                 }
@@ -476,7 +487,7 @@ final class PdfFile {
                 let f2 = field(w[1]), f3 = field(w[2])
                 switch t {
                 case 0: put(index[s] + i, .free)
-                case 1: put(index[s] + i, .offset(f2, gen: f3))
+                case 1: put(index[s] + i, .offset(f2 + headerOffset, gen: f3))
                 case 2: put(index[s] + i, .inStream(f2, index: f3))
                 default: break
                 }

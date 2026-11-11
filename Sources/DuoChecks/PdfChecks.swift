@@ -317,5 +317,6 @@ private func xrefStreamPDF() -> Data {
     check((try? PdfRead.render(fresh, page: 5)) == nil, "…and refuses a page that isn't there")
     check(DuoAction.all.contains { $0.id == .pdfRender } && ActionID.pdfRender.action.args.contains("<page>"), "pdf render is an action in the registry")
     try pdfHighlightChecks(scratch: scratch)
+    try pdfHardeningChecks(scratch: scratch)
     try pdfViewerChecks(scratch: scratch)
 }
