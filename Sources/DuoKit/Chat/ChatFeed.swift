@@ -19,6 +19,10 @@ final class ChatFeed {
     /// Every transcript record read at attach, for Earlier turns.
     private var history: [ChatJSON] = []
     private(set) var historyStart = 0
+    /// How many of your prompts the log was last built to show (a rewind rebuilds the same window).
+    private var turnsWindow = ChatFeed.turnsShown
+    /// The parents of the live prompts: a new prompt with one of these is a rewound branch (F-656).
+    private var promptParents = Set<String>()
     nonisolated static let turnsShown = 50
 
     init(sessionId: String, cwd: String, chat: ChatSession) {
@@ -47,9 +51,10 @@ final class ChatFeed {
         Task.detached(priority: .userInitiated) { [weak self] in
             let data = (try? Data(contentsOf: url)) ?? Data()
             let cut = data.lastIndex(of: UInt8(ascii: "\n")).map { $0 + 1 } ?? 0
-            let records = ChatIngest.lines(data.prefix(cut))
+            // Turns /rewind removed stay in the file as a dead branch: follow the live one (F-656).
+            let records = ChatFeed.liveRecords(data.prefix(cut))
             let start = ChatFeed.start(of: records, turns: ChatFeed.turnsShown)
-            let built = Built(records: records, start: start, log: ChatFeed.replay(records, from: start, cwd: cwd, lastDeclined: declined))
+            let built = Built(records: records, start: start, turns: ChatFeed.turnsShown, log: ChatFeed.replay(records, from: start, cwd: cwd, lastDeclined: declined))
             await MainActor.run { [weak self] in
                 guard let self else { return }
                 self.transcriptPos = UInt64(cut)
@@ -59,8 +64,11 @@ final class ChatFeed {
     }
 
     private struct Records: @unchecked Sendable { let all: [ChatJSON] }
-    private struct Built: @unchecked Sendable { let records: [ChatJSON]; let start: Int; let log: ChatLog }
+    private struct Built: @unchecked Sendable { let records: [ChatJSON]; let start: Int; let turns: Int; let log: ChatLog }
     private var loading = false
+
+    /// A transcript's records on its live branch (F-656).
+    nonisolated static func liveRecords(_ data: Data) -> [ChatJSON] { LiveBranch.filter(ChatIngest.lines(data)) }
 
     /// A scratch log of the records from `start` on, built wherever it's called.
     nonisolated static func replay(_ records: [ChatJSON], from start: Int, cwd: String?, lastDeclined: String?) -> ChatLog {
@@ -74,6 +82,8 @@ final class ChatFeed {
     private func land(_ built: Built) {
         history = built.records
         historyStart = built.start
+        turnsWindow = built.turns
+        promptParents = LiveBranch.promptParents(built.records)
         chat?.log.adopt(built.log)
         loading = false
     }
@@ -100,7 +110,21 @@ final class ChatFeed {
         Task.detached(priority: .userInitiated) { [weak self] in
             let records = held.all
             let start = ChatFeed.start(of: records, turns: shown + ChatFeed.turnsShown)
-            let built = Built(records: records, start: start, log: ChatFeed.replay(records, from: start, cwd: cwd, lastDeclined: declined))
+            let built = Built(records: records, start: start, turns: shown + ChatFeed.turnsShown, log: ChatFeed.replay(records, from: start, cwd: cwd, lastDeclined: declined))
+            await MainActor.run { [weak self] in self?.land(built) }
+        }
+    }
+
+    /// A rewind showed up in the transcript (a prompt on a branch that already has a live prompt):
+    /// the removed turns leave the log. `history` is the live branch plus what just arrived; the
+    /// filter drops the prompts the new branch replaced, and the same window is replayed.
+    private func rewound() {
+        let held = Records(all: history), cwd = cwd, declined = chat?.lastDeclined, turns = turnsWindow
+        loading = true
+        Task.detached(priority: .userInitiated) { [weak self] in
+            let records = LiveBranch.filter(held.all)
+            let start = ChatFeed.start(of: records, turns: turns)
+            let built = Built(records: records, start: start, turns: turns, log: ChatFeed.replay(records, from: start, cwd: cwd, lastDeclined: declined))
             await MainActor.run { [weak self] in self?.land(built) }
         }
     }
@@ -188,7 +212,15 @@ final class ChatFeed {
         readEvents(chat)
         if transcript == nil { transcript = ClaudeStorage.transcript(sessionId: sessionId, cwd: cwd) }
         if let t = transcript {
-            for r in read(t, &transcriptPos, &transcriptRest) { ChatIngest.record(r, into: chat.log, chat: chat) }
+            let fresh = read(t, &transcriptPos, &transcriptRest)
+            var branched = false
+            for r in fresh {
+                if LiveBranch.branches(r, from: promptParents) { branched = true }
+                if let k = LiveBranch.branchKey(r) { promptParents.insert(k) }
+            }
+            history.append(contentsOf: fresh)
+            if branched { rewound(); return }
+            for r in fresh { ChatIngest.record(r, into: chat.log, chat: chat) }
         }
     }
 
@@ -215,7 +247,7 @@ public enum ChatFeedProbe {
     @MainActor public static func start(_ records: [ChatJSON], turns: Int) -> Int { ChatFeed.start(of: records, turns: turns) }
     /// A replay built off the main thread, as opening a chat builds it (F-160).
     public static func replayOffMain(_ transcript: Data) async -> ChatLog {
-        await Task.detached { Held(log: ChatFeed.replay(ChatIngest.lines(transcript), from: 0, cwd: nil, lastDeclined: nil)) }.value.log!
+        await Task.detached { Held(log: ChatFeed.replay(ChatFeed.liveRecords(transcript), from: 0, cwd: nil, lastDeclined: nil)) }.value.log!
     }
     /// A transcript timestamp, read as the replay reads it.
     public static func date(_ s: String) -> Date? { ChatIngest.date(s) }

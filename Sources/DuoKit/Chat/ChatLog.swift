@@ -40,6 +40,8 @@ public enum ChatItem: Identifiable, Equatable, Sendable {
 
 public struct ChatYou: Equatable, Sendable {
     public var id: String
+    /// The transcript record's `uuid` (F-656): what Claude Code names this prompt by. Nil until the transcript has it.
+    public var uuid: String?
     public var text: String
     public var time: Date?
     /// Sent while Claude works: the TUI holds it until it's ready (composer board).
@@ -77,6 +79,8 @@ public struct ChatNote: Equatable, Sendable {
 /// Claude's turn: what it did and said, in order.
 public struct ChatTurn: Equatable, Sendable {
     public var id: String
+    /// The `uuid` of the reply's last assistant record in the transcript (F-656).
+    public var uuid: String?
     public var time: Date?
     public var segments: [ChatSegment] = []
 }
@@ -332,6 +336,21 @@ public final class ChatLog: @unchecked Sendable {
         if fromHook { y.fromHook = true } else { y.fromTranscript = true }
         items.append(.you(y))
         turnStarted = time ?? Date()
+    }
+
+    /// The transcript's `uuid` for your latest message (F-656).
+    public func stampYou(_ uuid: String) {
+        guard let i = items.indices.reversed().prefix(12).first(where: { if case .you = items[$0] { return true } else { return false } }),
+              case .you(var y) = items[i], y.uuid == nil else { return }
+        y.uuid = uuid
+        items[i] = .you(y)
+    }
+
+    /// The transcript's `uuid` for the reply in progress: the last assistant record names it (F-656).
+    public func stampTurn(_ uuid: String) {
+        guard let i = openTurnIndex, case .claude(var t) = items[i], t.uuid != uuid else { return }
+        t.uuid = uuid
+        items[i] = .claude(t)
     }
 
     /// A picture of your latest message (from its transcript record: they replace the composer's).

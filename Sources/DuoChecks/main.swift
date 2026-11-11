@@ -55,6 +55,7 @@ func repoFixture() throws -> Fixture {
     }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "chat" { return try chatChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "midturn" { return try midTurnChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "rewind" { return try rewindChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "office-comments" { return try officeCommentChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "chat-live" { return try chatLiveChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "task-send" { return try chatTaskSendChecks() }
@@ -2009,6 +2010,7 @@ func repoFixture() throws -> Fixture {
     check(FileSource.files(in: URL(fileURLWithPath: "/")).isEmpty && FileSource.files(in: home.deletingLastPathComponent()).isEmpty,
           "folders above home are never walked for files (a session started in / or /Users)")
     try midTurnChecks()  // MidTurnChecks.swift: messages typed mid-turn (C-173, F-638)
+    try rewindChecks()  // RewindChecks.swift: a rewound transcript's live branch (F-656)
     walkGuardChecks()  // WalkGuardChecks.swift: every walk goes through ProtectedFolders (F-302)
 
     print("Claude folders (DL-103)")

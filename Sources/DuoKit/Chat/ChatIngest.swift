@@ -282,13 +282,17 @@ public enum ChatIngest {
         case "attachment":
             // A message typed while a turn ran is shown like any of your messages; the hook's echo and this
             // record claim one bubble (C-173, F-638). A peer's or a task notification's queued command isn't.
-            if let text = MidTurnPrompt.text(r) { log.prompt(text, time: time, fromHook: false) }
+            if let text = MidTurnPrompt.text(r) {
+                log.prompt(text, time: time, fromHook: false)
+                if let u = r["uuid"] as? String { log.stampYou(u) }
+            }
         case "user":
             if r["isMeta"] as? Bool == true || r["isCompactSummary"] as? Bool == true { return }
             if let text = message?["content"] as? String {
                 if command(text, time: time, into: log) { return }
                 let origin = (r["origin"] as? ChatJSON)?["kind"] as? String
                 log.prompt(text, time: time, fromHook: false, injected: origin != nil && origin != "human", planMode: r["permissionMode"] as? String == "plan")
+                if origin == nil || origin == "human", let u = r["uuid"] as? String { log.stampYou(u) }
                 return
             }
             for b in message?["content"] as? [ChatJSON] ?? [] {
@@ -299,6 +303,7 @@ public enum ChatIngest {
                         log.endStreaming(interrupted: true)
                     } else if let t = b["text"] as? String, !command(t, time: time, into: log) {
                         log.prompt(t, time: time, fromHook: false)
+                        if let u = r["uuid"] as? String { log.stampYou(u) }
                     }
                 case "image":
                     if let src = b["source"] as? ChatJSON, let b64 = src["data"] as? String, let data = Data(base64Encoded: b64) {
@@ -338,6 +343,7 @@ public enum ChatIngest {
                 default: break
                 }
             }
+            if let u = r["uuid"] as? String { log.stampTurn(u) }
         case "system":
             if r["subtype"] as? String == "compact_boundary" { log.compacted(time: time) }
             // Some commands (`/rename`, …) are recorded here rather than as your message.
