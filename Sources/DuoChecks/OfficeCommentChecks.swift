@@ -104,6 +104,10 @@ import Foundation
     let pr = try OfficeComments.reply(pptx, to: "s2c1", author: "claude", text: "Cut to three bullets.", now: now)
     let pt2 = try OfficeComments.threads(pptx).first { $0.id == "s2c1" }
     check(pr.id == "s2c1.1" && pt2?.items.count == 2 && pt2?.items[1].author == "Claude", "a reply goes in the slide's thread, signed Claude (authors.xml gets Claude once)")
+    let part = String(decoding: try Pptx.Zip(pptx).read("ppt/comments/modernComment_101_0.xml") ?? Data(), as: UTF8.self)
+    let replyAt = part.range(of: "<p188:replyLst>")?.lowerBound, bodyAt = part.range(of: "<p188:txBody>")?.lowerBound
+    check(replyAt != nil && bodyAt != nil && replyAt! < bodyAt!,
+          "a new reply list goes before the comment's own text body: PowerPoint drops replies after it (MS-PPTX child order)")
     let existingReply = try OfficeComments.reply(pptx, to: "s5c1", author: "claude", text: "Yes, only here.", now: now)
     check(try OfficeComments.threads(pptx).first { $0.id == "s5c1" }?.items.count == 3 && existingReply.id == "s5c1.2", "a reply to a thread a person started in PowerPoint lands in that thread, after the reply there")
     let authorsXML = String(decoding: try Pptx.Zip(pptx).read("ppt/authors.xml") ?? Data(), as: UTF8.self)

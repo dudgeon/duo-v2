@@ -216,7 +216,9 @@ extension OfficeComments {
             var cm = String(xml[range])
             let reply = "<p188:reply id=\"\(guid())\" authorId=\"\(aid)\" created=\"\(iso(now, millis: true))\">" + body(text) + "</p188:reply>"
             if !insert(&cm, reply, before: "</p188:replyLst>") {
-                guard insert(&cm, "<p188:replyLst>" + reply + "</p188:replyLst>", before: "</p188:cm>") else { throw Failure("damaged \(loc.part)") }
+                // Child order matters (MS-PPTX, research-comments §1.2): anchor, pos, replyLst, then txBody. PowerPoint drops replies
+                // that come after the comment's own txBody, so a new list goes before it.
+                guard insert(&cm, "<p188:replyLst>" + reply + "</p188:replyLst>", before: "<p188:txBody>") else { throw Failure("damaged \(loc.part)") }
             }
             xml.replaceSubrange(range, with: cm)
             files[loc.part] = Data(xml.utf8)
