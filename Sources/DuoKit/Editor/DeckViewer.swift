@@ -71,6 +71,42 @@ public final class DeckViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         webView.appearance = NSAppearance(named: .aqua)   // a page keeps its author's colours in dark too (DL-224)
         super.init()
         proxy.owner = self
+        office.fileURL = { [weak self] in self?.url }
+        office.queryAnchors = { [weak self] done in
+            guard let self, self.state == .ready, self.officeOn else { return done([]) }
+            self.webView.callAsyncJavaScript("return __duo.anchors()", arguments: [:], in: nil, in: .page) { r in
+                MainActor.assumeIsolated { if case .success(let v) = r { done(v as? [[String: Any]] ?? []) } else { done([]) } }
+            }
+        }
+        office.querySelection = { [weak self] done in
+            guard let self, self.state == .ready, self.officeOn else { return done(nil) }
+            self.webView.callAsyncJavaScript("return __duo.selection()", arguments: [:], in: nil, in: .page) { r in
+                MainActor.assumeIsolated {
+                    guard case .success(let v) = r, let d = v as? [String: Any], let at = d["at"] as? String else { return done(nil) }
+                    done(OfficeMargin.Selection(at: [at], y: d["y"] as? Double ?? 0, text: d["text"] as? String ?? ""))
+                }
+            }
+        }
+        office.scrollTo = { [weak self] y in self?.webView.callAsyncJavaScript("scrollTo(0, y)", arguments: ["y": y], in: nil, in: .page, completionHandler: nil) }
+        office.hoverAnchor = { [weak self] id in
+            self?.webView.callAsyncJavaScript("return __duo.setHover(t)", arguments: ["t": id as Any], in: nil, in: .page, completionHandler: nil)
+        }
+        office.lightAnchor = { [weak self] id in
+            self?.activeThread = id
+            self?.office.activeID = id
+            self?.webView.callAsyncJavaScript("return __duo.setActive(t)", arguments: ["t": id as Any], in: nil, in: .page, completionHandler: nil)
+        }
+        office.threadsChanged = { [weak self] ts in
+            guard let self else { return }
+            let list: [[String: Any]] = ts.compactMap { t in
+                guard let slide = t.slide else { return nil }
+                return ["id": t.id, "slide": slide, "kind": t.anchorKind, "shape": t.shapeId.flatMap(Int.init) as Any, "cp": t.rangeStart as Any, "len": t.rangeLength as Any, "closed": t.resolved]
+            }
+            self.webView.callAsyncJavaScript("return __duo.marginSet(l)", arguments: ["l": list], in: nil, in: .page, completionHandler: nil)
+        }
+        office.onShowClosed = { [weak self] on in
+            self?.webView.callAsyncJavaScript("return __duo.margin(true, s)", arguments: ["s": on], in: nil, in: .page, completionHandler: nil)
+        }
         // These pages sit out appearance changes (they keep a document's own colours), so a change of scheme (Classic, DL-252) reaches their chrome here.
         NotificationCenter.default.addObserver(forName: DuoScheme.didChange, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.webView.evaluateJavaScript(EditorController.tokenCSS(), completionHandler: nil) }
@@ -82,6 +118,12 @@ public final class DeckViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
 
     /// Shows a deck at `slide` (the first by default). A deck the renderer can't open, or that
     /// isn't a deck (password-protected, damaged), is `.failed` with why, in the user's words.
+    /// The comment margin beside a .pptx opened from a file (DL-337): Markdown review's margin over the file's own comment parts.
+    /// A deck shown from memory (split view's preview) has none.
+    public let office = OfficeMargin(kind: "slideMargin")
+    public private(set) var activeThread: String?
+    private var officeOn: Bool { url != nil && memory == nil }
+
     public func open(_ file: URL, slide: Int = 1) {
         guard file.standardizedFileURL != url?.standardizedFileURL else { return }
         url = file
@@ -265,7 +307,20 @@ public final class DeckViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
             slide = body["slide"] as? Int ?? 1
             if let w = body["width"] as? Double, let h = body["height"] as? Double, w > 0, h > 0 { slideSize = CGSize(width: w, height: h) }
             state = .ready
+            if officeOn {
+                webView.callAsyncJavaScript("return __duo.margin(true, s)", arguments: ["s": office.showClosed], in: nil, in: .page, completionHandler: nil)
+                office.refresh()
+                if let a = activeThread { office.lightAnchor(a) }
+            } else { office.clear() }
             settle()
+        case "margin":
+            switch body["op"] as? String {
+            case "scroll": office.scrolled(body["y"] as? Double ?? 0)
+            case "layout": office.push()
+            case "anchor": if let id = body["id"] as? String, office.commentsShown { office.margin.activate(id); office.lightAnchor(id) }
+            default: break
+            }
+            return
         case "failed":
             DuoLog.write("deck: the renderer couldn't draw \(url?.lastPathComponent ?? "?"): \(body["reason"] as? String ?? "")")
             state = .failed("it uses something the viewer can’t read")

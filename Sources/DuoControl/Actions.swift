@@ -89,7 +89,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case docMarkup = "doc markup", docComments = "doc comments", docOutline = "doc outline", docLayout = "doc layout", docScreenshot = "doc screenshot", docPick = "doc pick", docElement = "doc element"
     case docReview = "doc review"
     case commentAdd = "comment add", commentList = "comment list", commentReply = "comment reply", commentSend = "comment send"
-    case commentClose = "comment close", commentDelete = "comment delete", commentReopen = "comment reopen", commentStatus = "comment status"
+    case commentClose = "comment close", commentDelete = "comment delete", commentReopen = "comment reopen", commentStatus = "comment status", commentUndo = "comment undo"
     case suggestionList = "suggestion list", suggestionAccept = "suggestion accept", suggestionReject = "suggestion reject"
     case docInsert = "doc insert", docReplace = "doc replace", docEdit = "doc edit", docResolve = "doc resolve", docHistory = "doc history", docRevert = "doc revert"
     // HTML pages
@@ -418,10 +418,10 @@ extension DuoAction {
               ui: ["Add a property", "property type menu", "Pick a date", "property checkbox"]),
         .init(.docMarkup, .docs, "[all|simple|none|original] [--comments on|off] [--show-resolved on|off] [--person <name>|everyone]",
               "On a Markdown document: the same modes for its suggestions and comments, with --show-closed on|off for closed threads (DL-237). The Word document showing: which markup its viewer draws, and change it, as the Markup menu does (DL-162). All Markup draws every change in its person's colour with the comments; simple accepts the changes and marks the margin where one was; none accepts them with no marks; original shows the text before them. --person shows only that person's marks. Kept per document while Duo runs. With nothing, says what it shows now and who is in the document.",
-              ui: ["Markup", "All Markup", "Simple Markup", "No Markup", "Original", "Show Comments", "Show Resolved Comments", "Show Closed Comments"]),
+              ui: ["Markup", "All Markup", "Simple Markup", "No Markup", "Original", "Show Comments", "Show Closed Comments", "Show Closed Comments"]),
         .init(.docReview, .docs, "[on|off|next|previous]",
               "The Markdown document's Suggest Edits switch (DL-237): on, every change anyone makes becomes a signed suggestion; kept in the file as `suggest-edits: true` in its frontmatter, written only while on. With nothing, says which it is. next and previous select the next or previous suggestion or comment in the document (the review bar's ‹ ›). Edit › Suggest Edits does the same as on and off.",
-              ui: ["Suggest Edits", "Editing", "Suggesting", "Next Change", "Previous Change"]),
+              ui: ["Suggest Edits", "Editing", "Suggesting", "Next Change", "Previous Change", "Next Comment", "Previous Comment"]),
         .init(.docOutline, .docs, "<file.docx> [--json]",
               "A Word document's paragraphs, read from the file (no viewer needed): each with its w14:paraId (the id the viewer draws it under), style and heading level, its text with the tracked changes accepted, its tracked changes (kind, author, date, text) and the comments that end in it (thread, resolved). Then every comment thread. A picked paragraph's Send to Claude names the same ids."),
         .init(.docLayout, .docs, "<file.docx> [--json]",
@@ -449,8 +449,8 @@ extension DuoAction {
 
         // Review in Markdown (DL-236, DL-237): comments and suggestions as signed CriticMarkup. A file open in Duo's editor is changed through the
         // editor (as Claude's change); any other file on disk. Run from a Claude session the author is `claude`, else the user's Mac name; --as names one.
-        .init(.commentAdd, .review, "<file> --at <line|text|paragraph|slide|page N [text]> [--as <name>] <text>",
-              "On a PDF (DL-335) the comment is appended to the file as a standard annotation (an incremental update: the original bytes are never rewritten, and a backup is kept in Duo's support folder): --at is a text that appears once (a Highlight over it), `page N` (a note at the page's top right) or `page N <text>` (a text on that page only); replies, close and reopen (a hidden Completed or None state reply), delete and @claude routing work as below, with thread ids `c1`, replies `c1.2`; encrypted or certified PDFs are refused. On a Word or PowerPoint file (DL-331) the comment is written into the file's comment parts, with a backup of the original in Duo's support folder and nothing else touched: --at is a text that appears once in a Word document (or a paragraph number) or a slide number; its replies, resolved state and @claude routing work as below, with thread ids `c4` (Word) and `s3c1` (slide 3's first). Comment on a line (its number) or on a text that appears once: the text becomes a highlight and the signed comment follows it. A comment that names @claude is addressed to a session (`duo2 comment send`).",
+        .init(.commentAdd, .review, "<file> --at <line|text|paragraph|slide[/shape[/text]]|page N [text]> [--as <name>] <text>",
+              "On a PDF (DL-335) the comment is appended to the file as a standard annotation (an incremental update: the original bytes are never rewritten, and a backup is kept in Duo's support folder): --at is a text that appears once (a Highlight over it), `page N` (a note at the page's top right) or `page N <text>` (a text on that page only); replies, close and reopen (a hidden Completed or None state reply), delete and @claude routing work as below, with thread ids `c1`, replies `c1.2`; encrypted or certified PDFs are refused. On a Word or PowerPoint file (DL-331) the comment is written into the file's comment parts, with a backup of the original in Duo's support folder and nothing else touched: --at is a text that appears once in a Word document (or a paragraph number) or a slide number; its replies, resolved state and @claude routing work as below, with thread ids `c4` (Word) and `s3c1` (slide 3's first). Comment on a line (its number) or on a text that appears once: the text becomes a highlight and the signed comment follows it. A comment that names @claude is addressed to a session (`duo2 comment send`). On a Word or PowerPoint file (DL-331) the comment is written into the file's comment parts, with a backup of the original in Duo's support folder and nothing else touched: --at is a text that appears once in a Word document (or a paragraph number) or a slide: `3` is the whole slide, `3/Photo` a shape (its name or id), `3/Title/some text` a run of text in it, which the viewer highlights; its replies, resolved state and @claude routing work as below, with thread ids `c4` (Word) and `s3c1` (slide 3's first). Comment on a line (its number) or on a text that appears once: the text becomes a highlight and the signed comment follows it. A comment that names @claude is addressed to a session (`duo2 comment send`).",
               ui: ["Add Comment"]),
         .init(.commentList, .review, "<file> [--closed | --unsent]",
               "The file's comment threads: id, who and when, the text it is on, the comment and its replies. Closed threads are left out unless --closed (only those); --unsent lists the open ones that name @claude and have no reply."),
@@ -462,9 +462,11 @@ extension DuoAction {
               "Close and Keep (in a Word or PowerPoint file: mark the thread resolved, which Word and PowerPoint show as done): add a closing line `{>>@name date #c1.2 closed<<}` after the thread's last comment; the highlight and comments stay (Q-262).",
               ui: ["Close and Keep", "Close Thread"]),
         .init(.commentDelete, .review, "<id> [--file <file>]",
-              "Delete the thread: its highlight markers and every comment go, the text stays.", ui: ["Delete Thread"]),
+              "Delete the thread: its highlight markers and every comment go, the text stays. In a Word or PowerPoint file the comment, its replies and its anchor go from the file's comment parts (`duo2 comment undo` restores them).", ui: ["Delete Thread"]),
         .init(.commentReopen, .review, "<id> [--file <file>]",
               "Reopen a closed thread: its closing line goes.", ui: ["Reopen"]),
+        .init(.commentUndo, .review, "[--file <file>]",
+              "Undo the last comment change Duo made to a Word or PowerPoint file (add, reply, close, reopen or delete): the file is restored from the copy kept before that write, and each further call steps back one more (DL-337, ⌘Z in the viewer). A Markdown document undoes through its editor, as always."),
         .init(.commentStatus, .review, "<id> [--file <file>]",
               "One thread: open or closed, who is in it, whether it names @claude, whether Claude has replied, and where its delivery stands: not sent, queued, sent, replying, replied or not delivered, with the session."),
         .init(.suggestionList, .review, "<file>",

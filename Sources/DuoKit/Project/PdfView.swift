@@ -29,7 +29,7 @@ struct PdfView: View {
                     // popover floats over them (the page's own layout, margin.js's).
                     HStack(spacing: 0) {
                         PdfWebHost(viewer: viewer)
-                        if viewer.margin.reserve > 0 { Color.clear.frame(width: viewer.margin.reserve) }
+                        if viewer.margin.reserve > 0 { DuoColor.ground.frame(width: viewer.margin.reserve) }
                     }
                     .overlay(alignment: .trailing) {
                         if viewer.margin.width > 0 { PdfMarginHost(margin: viewer.margin).frame(width: viewer.margin.width) }

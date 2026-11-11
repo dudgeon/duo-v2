@@ -164,6 +164,14 @@ extension OfficeComments {
         /// Puts the range around `at` in document.xml: a text that appears once inside a plain run, else its paragraph; a number is a paragraph's position.
         static func anchor(_ doc: inout String, at: String, id: String) throws {
             let start = "<w:commentRangeStart w:id=\"\(id)\"/>"
+            // A paragraph by its w14:paraId (the viewer names a selection's paragraph this way).
+            if at.hasPrefix("para:") {
+                let pid = String(at.dropFirst(5))
+                guard let hit = doc.range(of: "w14:paraId=\"\(pid)\""), let p = doc[..<hit.lowerBound].range(of: "<w:p ", options: .backwards) else {
+                    throw Failure("no paragraph \(pid) in the document")
+                }
+                return try wrapParagraph(&doc, startingAt: p.lowerBound, id: id)
+            }
             // Paragraph by position.
             if let n = Int(at), n > 0 {
                 var ranges: [Range<String.Index>] = []
@@ -273,6 +281,38 @@ extension OfficeComments {
             store(p, &files, zip)
             let n = (try? read(zip).first(where: { $0.id == "c\(rid)" })?.items.count) ?? 1
             return Written(id: "c\(rid).\(n)", summary: "Replied in thread c\(rid) as \(display(author)).")
+        }
+
+        /// Delete a thread: each comment of it from comments.xml and commentsExtended.xml, and its anchors from document.xml.
+        static func delete(_ zip: Pptx.Zip, _ files: inout [String: Data], thread: String) throws -> Written {
+            var p = try load(zip, files)
+            let all = try raws(zip)
+            let rid = wordID(thread)
+            guard let root = all.first(where: { $0.id == rid }) else { throw Failure("no thread \(thread) in this document") }
+            var ids = [rid], paras = Set<String>()
+            if let pid = root.paraId { paras.insert(pid) }
+            // Replies: comments whose parent chain reaches the root.
+            var byPara: [String: Raw] = [:]
+            for r in all { if let pid = r.paraId { byPara[pid] = r } }
+            for r in all where r.id != rid {
+                var cur = r, n = 0
+                while let pp = cur.parentPara, let up = byPara[pp], n < 50 { cur = up; n += 1 }
+                if cur.id == rid { ids.append(r.id); if let pid = r.paraId { paras.insert(pid) } }
+            }
+            for id in ids {
+                if let a = p.comments.range(of: "<w:comment w:id=\"\(id)\""), let e = p.comments.range(of: "</w:comment>", range: a.upperBound..<p.comments.endIndex) { p.comments.removeSubrange(a.lowerBound..<e.upperBound) }
+                for tag in ["<w:commentRangeStart w:id=\"\(id)\"/>", "<w:commentRangeEnd w:id=\"\(id)\"/>"] { p.doc = p.doc.replacingOccurrences(of: tag, with: "") }
+                if let ref = p.doc.range(of: "<w:commentReference w:id=\"\(id)\"/>"),
+                   let open = p.doc.range(of: "<w:r>", options: .backwards, range: p.doc.startIndex..<ref.lowerBound) ?? p.doc.range(of: "<w:r ", options: .backwards, range: p.doc.startIndex..<ref.lowerBound),
+                   let close = p.doc.range(of: "</w:r>", range: ref.upperBound..<p.doc.endIndex) {
+                    p.doc.removeSubrange(open.lowerBound..<close.upperBound)
+                }
+            }
+            for pid in paras {
+                if let a = p.ext.range(of: "<w15:commentEx w15:paraId=\"\(pid)\""), let e = p.ext.range(of: "/>", range: a.upperBound..<p.ext.endIndex) { p.ext.removeSubrange(a.lowerBound..<e.upperBound) }
+            }
+            store(p, &files, zip)
+            return Written(id: "c\(rid)", summary: "Deleted thread c\(rid) and its replies.")
         }
 
         static func resolve(_ zip: Pptx.Zip, _ files: inout [String: Data], thread: String, resolved: Bool) throws -> Written {

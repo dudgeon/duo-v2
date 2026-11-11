@@ -369,8 +369,60 @@ Object.assign(window.__duo, {
   hoverPara(sel) { const t = paragraphFor(sel); if (t && picking && !frozen) { hot = t.el; place(t.el); } return !!t; },
   hideOutline() { hidden = true; place(null); },
   showOutline() { hidden = false; place(frozen); },
-  selection: () => null,
+  // ---- the comment margin (DL-337) -----------------------------------------------------------
+  // The margin is Duo's own page beside this one (Vendor/codemirror side-margin.js): it draws the cards; this page says where each
+  // thread's text is (`anchors`), lights the active thread's text (`setActive`), says what is selected (`selection`) and reports
+  // scrolling, layout changes and clicks on commented text.
+  margin(on, showClosed) { document.body.classList.toggle('margin', !!on); document.body.classList.toggle('show-closed', !!showClosed); return true; },
+  anchors() {
+    const out = [], seen = new Set();
+    for (const c of window.__duo_comments || []) {
+      if (seen.has(c.thread)) continue; seen.add(c.thread);
+      const marks = [...host.querySelectorAll(`mark.duo-comment[data-comment-id="${CSS.escape(c.thread)}"]`)];
+      const m = marks[0] || host.querySelector(`mark.duo-comment[data-comment-id="${CSS.escape(String((window.__duo_comments || []).find((x) => x.thread === c.thread && host.querySelector(`mark.duo-comment[data-comment-id="${CSS.escape(x.id)}"]`))?.id ?? ''))}"]`);
+      const card = host.querySelector(`.duo-card[data-thread="${CSS.escape(c.thread)}"]`);
+      const el = m || (card && (card.closest('.duo-resolved') || card).previousElementSibling) || null;
+      out.push({ id: 'c' + c.thread, y: el ? el.getBoundingClientRect().top + scrollY : 0, found: !!m });
+    }
+    return out;
+  },
+  setHover(thread) {
+    const t = thread ? String(thread).replace(/^c/, '') : '';
+    const ids = new Set((window.__duo_comments || []).filter((c) => c.thread === t).map((c) => c.id));
+    for (const m of host.querySelectorAll('mark.duo-comment')) m.classList.toggle('duo-hot', ids.has(m.dataset.commentId));
+    return true;
+  },
+  setActive(thread) {
+    const t = thread ? String(thread).replace(/^c/, '') : '';
+    const ids = new Set((window.__duo_comments || []).filter((c) => c.thread === t).map((c) => c.id));
+    for (const m of host.querySelectorAll('mark.duo-comment')) m.classList.toggle('duo-active', ids.has(m.dataset.commentId));
+    return true;
+  },
+  // The text selected in the document: what Add Comment anchors to. `para` is its paragraph's w14:paraId.
+  selection() {
+    const sel = getSelection();
+    if (!sel || sel.isCollapsed || !sel.rangeCount) return null;
+    const r = sel.getRangeAt(0);
+    const anc = r.commonAncestorContainer.nodeType === 1 ? r.commonAncestorContainer : r.commonAncestorContainer.parentElement;
+    if (!anc || !host.contains(anc)) return null;
+    const p = anc.closest('p[data-office-target]');
+    const rect = r.getBoundingClientRect();
+    return { text: sel.toString(), y: rect.top + scrollY, para: p ? paraIdOf(p) : '' };
+  },
 });
+{
+  let queued = false;
+  const tell = (m) => post({ kind: 'margin', ...m });
+  addEventListener('scroll', () => { if (queued) return; queued = true; setTimeout(() => { queued = false; tell({ op: 'scroll', y: scrollY }); }, 16); }, { passive: true });
+  new ResizeObserver(() => tell({ op: 'layout' })).observe(document.getElementById('sheet'));
+  document.addEventListener('click', (e) => {
+    if (picking || !document.body.classList.contains('margin')) return;
+    const m = e.target.closest?.('mark.duo-comment');
+    if (!m) return;
+    const c = (window.__duo_comments || []).find((x) => x.id === m.dataset.commentId);
+    if (c) tell({ op: 'anchor', id: 'c' + c.thread });
+  });
+}
 
 const renders = () => host.querySelectorAll('section.docx').length;
 let opens = 0, sheetResizes = 0, mutations = 0, settled = false;

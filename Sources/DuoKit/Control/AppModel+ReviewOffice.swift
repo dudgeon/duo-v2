@@ -60,6 +60,7 @@ extension AppModel {
                 done(.ok(list.isEmpty ? "\(name) has no \(inv.has("closed") ? "closed " : "")comment threads." : "\(name)\n" + lines.joined(separator: "\n"),
                          list.map { t -> [String: Any] in
                              ["id": t.id, "closed": t.resolved, "anchor": t.anchor as Any, "place": t.legacy ? t.place + " (legacy)" : t.place,
+                              "anchorKind": t.anchorKind, "shape": t.shapeName as Any, "shapeId": t.shapeId as Any, "rangeStart": t.rangeStart as Any, "rangeLength": t.rangeLength as Any, "anchorLost": t.anchorLost,
                               "namesClaude": review.first { $0.id == t.id }?.comments.contains { $0.mentionsClaude } ?? false,
                               "comments": t.items.map { ["id": $0.id, "author": $0.author, "date": $0.date, "text": $0.text] }]
                          }))
@@ -77,7 +78,12 @@ extension AppModel {
                 let w = try OfficeComments.resolve(url, thread: tid, resolved: id == .commentClose, backups: Self.officeBackups)
                 done(.ok(w.summary, ["file": name, "id": w.id]))
             case .commentDelete:
-                done(.fail("deleting a comment from a Word or PowerPoint file isn't built; close it with `duo2 comment close`"))
+                guard let tid = args.first else { return done(.fail("usage: \(id.action.usage)")) }
+                let w = try OfficeComments.delete(url, thread: tid, backups: Self.officeBackups)
+                done(.ok(w.summary + " `duo2 comment undo` brings it back.", ["file": name, "id": w.id]))
+            case .commentUndo:
+                let w = try OfficeComments.undo(url, backups: Self.officeBackups)
+                done(.ok(w.summary, ["file": name]))
             case .commentStatus:
                 guard let raw = args.first?.trimmingCharacters(in: CharacterSet(charactersIn: "#")), let t = try Self.officeReviewThreads(url).first(where: { $0.id == raw }) else {
                     return done(.fail(args.first.map { "no thread #\($0) in \(name)" } ?? "usage: \(id.action.usage)"))

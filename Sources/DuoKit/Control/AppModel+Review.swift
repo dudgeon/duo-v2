@@ -186,6 +186,10 @@ extension AppModel {
 
     /// `duo2 doc review [on|off]`: the Suggest Edits switch of the document showing.
     func docReviewVerb(_ inv: Invocation, _ req: ControlRequest, _ done: @escaping @MainActor (Reply) -> Void) {
+        // A Word document or deck showing: next and previous step through its comments, the margin's J and K (DL-337).
+        if let w = inv[0], w == "next" || w == "previous", let o = visibleOfficeMargins.first {
+            return done(.ok(o.step(w == "next" ? 1 : -1) ?? "Nothing to review in this file."))
+        }
         guard let url = reviewFile(inv, req, path: nil), Self.markdownExtensions.contains(url.pathExtension.lowercased()) else {
             return done(.fail("no Markdown document is showing"))
         }

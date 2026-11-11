@@ -22,14 +22,19 @@ public final class PdfMargin: NSObject, WKScriptMessageHandler, WKNavigationDele
     public var isReady: Bool { ready }
     @ObservationIgnored private var queued: [String] = []
 
-    public override init() {
+    /// The message kind this margin's page posts and Swift listens for: the PDF viewer's is `pdfMargin`; Word's and PowerPoint's
+    /// (DL-337) name their own, so one page can't answer for another.
+    @ObservationIgnored public let kind: String
+
+    public init(kind: String = "pdfMargin") {
+        self.kind = kind
         let config = WKWebViewConfiguration()
         config.websiteDataStore = .nonPersistent()
         webView = PdfMarginWebView(frame: .zero, configuration: config)
         super.init()
         webView.configuration.userContentController.add(self, name: "duo")
         webView.configuration.userContentController.addUserScript(WKUserScript(source: EditorController.tokenCSS(), injectionTime: .atDocumentStart, forMainFrameOnly: true))
-        webView.configuration.userContentController.addUserScript(WKUserScript(source: "window.duoMarginKind = \"pdfMargin\";", injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        webView.configuration.userContentController.addUserScript(WKUserScript(source: "window.duoMarginKind = \"\(kind)\";", injectionTime: .atDocumentStart, forMainFrameOnly: true))
         webView.navigationDelegate = self
         webView.setValue(false, forKey: "drawsBackground")
         // DuoChecks has no app bundle: it names the built page's folder (Vendor/codemirror/dist), as the editor does.
@@ -41,7 +46,7 @@ public final class PdfMargin: NSObject, WKScriptMessageHandler, WKNavigationDele
     }
 
     public func userContentController(_ u: WKUserContentController, didReceive m: WKScriptMessage) {
-        guard let body = m.body as? [String: Any], body["kind"] as? String == "pdfMargin", let op = body["op"] as? String else { return }
+        guard let body = m.body as? [String: Any], body["kind"] as? String == kind, let op = body["op"] as? String else { return }
         switch op {
         case "ready":
             ready = true

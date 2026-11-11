@@ -29,6 +29,16 @@ public enum OfficeComments {
         public var resolved: Bool
         /// Legacy PowerPoint comments can be read but not written.
         public var legacy: Bool = false
+        /// PowerPoint (DL-337): what the comment is on: `slide`, `shape` or `text`; the shape (id and name) and, for a run of text, its
+        /// character range in the shape's text. `lost`: the anchor no longer matches the file (the shape is gone, or the text moved).
+        public var anchorKind: String = "slide"
+        public var shapeId: String?
+        public var shapeName: String?
+        public var rangeStart: Int?
+        public var rangeLength: Int?
+        public var anchorLost = false
+        /// PowerPoint: the slide's number (from 1).
+        public var slide: Int?
         public var root: Item { items[0] }
     }
 
@@ -86,7 +96,36 @@ public enum OfficeComments {
         }
     }
 
-    static func write(_ url: URL, backups: URL?, _ make: (Pptx.Zip, inout [String: Data]) throws -> Written) throws -> Written {
+    /// The reason `add` would refuse `at`, without writing anything (for the checks).
+    public static func refusal(_ url: URL, at: String) -> String? {
+        do { _ = try write(url, backups: nil, dryRun: true) { zip, files in try Slides.add(zip, &files, at: at, author: "x", text: "x", now: Date()) }; return nil }
+        catch { return "\(error)" }
+    }
+
+    /// Delete a thread (DL-337): the comment, its replies and its anchors go from the file's comment parts.
+    public static func delete(_ url: URL, thread: String, backups: URL? = nil) throws -> Written {
+        try write(url, backups: backups) { zip, files in
+            switch kind(url) {
+            case .word: return try Word.delete(zip, &files, thread: thread)
+            case .powerpoint: return try Slides.delete(zip, &files, thread: thread)
+            case nil: throw Failure("not a Word or PowerPoint file")
+            }
+        }
+    }
+
+    /// Undo the last write to this file (⌘Z, DL-337): restores it from the backup kept before that write.
+    public static func undo(_ url: URL, backups: URL) throws -> Written {
+        let journal = backups.appendingPathComponent(url.lastPathComponent + ".undo")
+        var lines = (try? String(contentsOf: journal, encoding: .utf8))?.split(separator: "\n").map(String.init) ?? []
+        guard let last = lines.popLast() else { throw Failure("nothing to undo in \(url.lastPathComponent): Duo has no earlier copy from before a comment was written") }
+        let backup = backups.appendingPathComponent(last)
+        guard let data = try? Data(contentsOf: backup) else { throw Failure("the earlier copy \(last) is gone from \(backups.path)") }
+        try data.write(to: url, options: .atomic)
+        try (lines.joined(separator: "\n") + (lines.isEmpty ? "" : "\n")).write(to: journal, atomically: true, encoding: .utf8)
+        return Written(id: "", summary: "Restored \(url.lastPathComponent) to how it was before the last comment change.")
+    }
+
+    static func write(_ url: URL, backups: URL?, dryRun: Bool = false, _ make: (Pptx.Zip, inout [String: Data]) throws -> Written) throws -> Written {
         let original = try Data(contentsOf: url)
         let zip = try Pptx.Zip(url)
         var files: [String: Data] = [:]
@@ -96,7 +135,12 @@ public enum OfficeComments {
             try FileManager.default.createDirectory(at: backups, withIntermediateDirectories: true)
             let b = backups.appendingPathComponent(String(format: "%08x-", OfficeZip.crc32(original)) + url.lastPathComponent)
             if !FileManager.default.fileExists(atPath: b.path) { try original.write(to: b) }
+            // The journal lists the backups in order, so undo can step back through several writes.
+            let journal = backups.appendingPathComponent(url.lastPathComponent + ".undo")
+            let prior = (try? String(contentsOf: journal, encoding: .utf8)) ?? ""
+            try (prior + b.lastPathComponent + "\n").write(to: journal, atomically: true, encoding: .utf8)
         }
+        if dryRun { return w }
         let patched = try OfficeZip.patch(original, changes: files)
         guard (try? Pptx.Zip(patchedData: patched)) != nil else { throw Failure("the changed file didn't read back; nothing was written") }
         try patched.write(to: url, options: .atomic)

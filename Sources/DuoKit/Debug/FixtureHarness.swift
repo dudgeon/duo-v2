@@ -662,6 +662,31 @@ public enum FixtureHarness {
             model.visiblePdf?.margin.activate(parts.count > 1 ? parts[1] : nil)
         case "pdf-width":   // pdf-width:<points>: the pane width the margin lays out for (under 420 is the narrow gutter)
             model.visiblePdf?.paneWidth = CGFloat(Double(parts.count > 1 ? parts[1] : "") ?? 1000)
+        case "office-select":   // office-select:<words~joined>: selects that text in the Word document or deck showing (DL-337)
+            let t = (parts.count > 1 ? parts[1] : "").replacingOccurrences(of: "~", with: " ")
+            let js = "const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); for (let n; (n = w.nextNode());) { const i = n.data.indexOf(t); if (i >= 0) { const r = document.createRange(); r.setStart(n, i); r.setEnd(n, i + t.length); const s = getSelection(); s.removeAllRanges(); s.addRange(r); return true; } } return false;"
+            (model.visibleDocx?.webView ?? model.visibleDeck?.webView)?.callAsyncJavaScript(js, arguments: ["t": t], in: nil, in: .page, completionHandler: nil)
+        case "office-compose": _ = model.composeOfficeComment()   // Add Comment (⌘⌥M) on the selection (a deck: else the slide): the composer opens in the margin
+        case "office-post":   // office-post:<words~joined>: the composer's Post (an @claude comment is sent as it is posted)
+            if let o = model.visibleOfficeMargins.first {
+                let reload: () -> Void = { model.visibleDocx?.reload(); model.visibleDeck?.reload() }
+                let id = model.officePost(o, text: (parts.count > 1 ? parts[1] : "").replacingOccurrences(of: "~", with: " "), reload: reload)
+                FileHandle.standardError.write(Data("office-post: \(id ?? "none")\n".utf8))
+            }
+        case "office-type":   // office-type:<words~joined>: types into the margin's composer field (an input event, so the @ menu opens)
+            let t = (parts.count > 1 ? parts[1] : "").replacingOccurrences(of: "~", with: " ")
+            model.visibleOfficeMargins.first?.margin.evaluate("const f = document.querySelector('textarea'); if (!f) return false; f.focus(); f.value = \(String(reflecting: t)); f.setSelectionRange(f.value.length, f.value.length); f.dispatchEvent(new Event('input', { bubbles: true })); return true;") { _ in }
+        case "office-activate":   // office-activate:<thread id>: that card active, its anchor lit (a click on it)
+            if let o = model.visibleOfficeMargins.first { let id = parts.count > 1 ? parts[1] : nil; o.margin.activate(id); o.lightAnchor(id) }
+        case "office-width":   // office-width:<points>: the pane width the margin lays out for (under 420 is the narrow gutter)
+            model.visibleOfficeMargins.first?.paneWidth = CGFloat(Double(parts.count > 1 ? parts[1] : "") ?? 1000)
+        case "office-hover":   // office-hover:<thread id>|none: the pointer over that card (its anchor lights)
+            model.visibleOfficeMargins.first?.hoverAnchor(parts.count > 1 && parts[1] != "none" ? parts[1] : nil)
+        case "office-closed":   // office-closed:on|off: Show Closed Comments
+            model.visibleOfficeMargins.first?.showClosed = parts.count > 1 ? parts[1] == "on" : true
+        case "office-step": FileHandle.standardError.write(Data("office-step: \(model.visibleOfficeMargins.first?.step(parts.count > 1 && parts[1] == "previous" ? -1 : 1) ?? "none")\n".utf8))
+        case "office-dump":   // the margin's cards as laid out, one stderr line
+            model.visibleOfficeMargins.first?.margin.evaluate("return JSON.stringify(duoSideMargin.dump())") { v in FileHandle.standardError.write(Data("office-dump: \(v ?? "nil")\n".utf8)) }
         case "verb":   // verb:<duo2 words>[ --as name]: a duo2 verb through the control handler, as `duo2` sends it (from a Claude session); its reply to stderr
             let words = (parts.count > 1 ? parts[1] : "").split(separator: " ", omittingEmptySubsequences: true).map(String.init)
             guard let command = words.first else { break }

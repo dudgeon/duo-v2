@@ -62,6 +62,10 @@ public final class DocxViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
     public var pickedViewRect: CGRect?
     public var picking = false
     public var onChange: (() -> Void)?
+    /// The comment margin beside the page (DL-337): Markdown review's margin over this file's own comment parts.
+    public let office = OfficeMargin(kind: "wordMargin")
+    /// The thread whose card is active: its text is lit in the page (kept across a redraw).
+    public private(set) var activeThread: String?
     private var outlineCache: (stamp: Date?, paragraphs: [Docx.Paragraph])?
     /// What the page's content security policy blocked (logged; checks expect none).
     public private(set) var blocked: [String] = []
@@ -100,6 +104,40 @@ public final class DocxViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         webView.appearance = NSAppearance(named: .aqua)   // a page keeps its author's colours in dark too (DL-224)
         super.init()
         proxy.owner = self
+        office.fileURL = { [weak self] in self?.url }
+        office.queryAnchors = { [weak self] done in
+            guard let self, self.state == .ready else { return done([]) }
+            self.webView.callAsyncJavaScript("return __duo.anchors()", arguments: [:], in: nil, in: .page) { r in
+                MainActor.assumeIsolated { if case .success(let v) = r { done(v as? [[String: Any]] ?? []) } else { done([]) } }
+            }
+        }
+        office.querySelection = { [weak self] done in
+            guard let self, self.state == .ready else { return done(nil) }
+            self.webView.callAsyncJavaScript("return __duo.selection()", arguments: [:], in: nil, in: .page) { r in
+                MainActor.assumeIsolated {
+                    guard case .success(let v) = r, let d = v as? [String: Any], let text = d["text"] as? String, !text.isEmpty else { return done(nil) }
+                    // The text first (a plain run it appears in once), else the whole paragraph it is in.
+                    var at: [String] = []
+                    let line = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !line.isEmpty, !line.contains("\n"), line.count <= 300 { at.append(line) }
+                    if let para = d["para"] as? String, !para.isEmpty { at.append("para:\(para)") }
+                    done(at.isEmpty ? nil : OfficeMargin.Selection(at: at, y: d["y"] as? Double ?? 0, text: line))
+                }
+            }
+        }
+        office.scrollTo = { [weak self] y in self?.webView.callAsyncJavaScript("scrollTo(0, y)", arguments: ["y": y], in: nil, in: .page, completionHandler: nil) }
+        office.hoverAnchor = { [weak self] id in
+            self?.webView.callAsyncJavaScript("return __duo.setHover(t)", arguments: ["t": id as Any], in: nil, in: .page, completionHandler: nil)
+        }
+        office.lightAnchor = { [weak self] id in
+            self?.activeThread = id
+            self?.office.activeID = id
+            self?.webView.callAsyncJavaScript("return __duo.setActive(t)", arguments: ["t": id as Any], in: nil, in: .page, completionHandler: nil)
+        }
+        office.onShowClosed = { [weak self] on in
+            guard let self, self.markup.resolved != on else { return }
+            self.markup.resolved = on
+        }
         // These pages sit out appearance changes (they keep a document's own colours), so a change of scheme (Classic, DL-252) reaches their chrome here.
         NotificationCenter.default.addObserver(forName: DuoScheme.didChange, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.webView.evaluateJavaScript(EditorController.tokenCSS(), completionHandler: nil) }
@@ -220,6 +258,9 @@ public final class DocxViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         if let u = url { markupByDocument[Self.key(u)] = markup }
         guard state == .ready else { return onChange?() ?? () }
         webView.callAsyncJavaScript("return __duo.markup(c)", arguments: ["c": markup.json], in: nil, in: .page, completionHandler: nil)
+        office.commentsShown = markup.comments
+        if office.showClosed != markup.resolved { office.showClosed = markup.resolved }
+        webView.callAsyncJavaScript("return __duo.margin(on, s)", arguments: ["on": office.replacesPageCards, "s": markup.resolved], in: nil, in: .page, completionHandler: nil)
         onChange?()
     }
 
@@ -315,8 +356,22 @@ public final class DocxViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
                             paragraph: $0["paragraph"] as? String ?? "", resolved: $0["resolved"] as? Bool ?? false, reply: $0["reply"] as? Bool ?? false)
                 }
                 state = .ready
+                webView.callAsyncJavaScript("return __duo.margin(on, s)", arguments: ["on": office.replacesPageCards, "s": markup.resolved], in: nil, in: .page, completionHandler: nil)
+                office.commentsShown = markup.comments
+                if office.showClosed != markup.resolved { office.showClosed = markup.resolved }
+                office.refresh()
+                if let a = activeThread { office.lightAnchor(a) }
                 settle()
             }
+        case "margin":
+            switch body["op"] as? String {
+            case "scroll": office.scrolled(body["y"] as? Double ?? 0)
+            case "layout": office.push()
+            case "anchor":
+                if let id = body["id"] as? String, office.commentsShown { office.margin.activate(id); office.lightAnchor(id) }
+            default: break
+            }
+            return
         case "failed":
             deadline?.invalidate()
             DuoLog.write("docx: the renderer couldn't draw \(url?.lastPathComponent ?? "?"): \(body["reason"] as? String ?? "")")

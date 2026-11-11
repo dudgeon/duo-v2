@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="design-size" content="460x800">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-337">
+<!--
+W2 · Word: the composer and the @ menu
+APPROVED BOARD. Geoff, 2026-11-11 (DL-337). Exported from the Design canvas https://claude.ai/artifact/8EpSVPXmKFyayEbBFZU2e3 (board Word-composer.dc.html, v9),
+rendered to static markup. It is a picture written in HTML: match what it draws, do not port its markup. Names and documents are illustrative.
+-->
+
+<title>Word: the composer</title>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+:root{--pane:#ffffff;--rule:#c9cdd3;--controlEdge:#8b939c;--text:#1f2328;--text2:#5b636d;--selected:#e9ecef;--reviewAuthor1:#b0244f;--reviewAuthor2:#1d5fa8;--reviewAuthor3:#2e7a3a;--commentHighlight:#fbe7a1;--commentHighlightActive:#f5d565}
+.ui{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;color:var(--text);font-size:13px;line-height:20px}
+.btn{display:inline-flex;align-items:center;height:26px;box-sizing:border-box;padding:4px 10px;border:1px solid var(--controlEdge);border-radius:6px;background:var(--pane);font:12px/16px -apple-system,system-ui,sans-serif;color:var(--text)}
+.pillbtn{display:inline-flex;align-items:center;gap:6px;height:24px;box-sizing:border-box;padding:0 8px;border:1px solid var(--controlEdge);border-radius:9px;background:var(--pane);font:11px/16px -apple-system,system-ui,sans-serif;color:var(--text2);max-width:100%;overflow:hidden;white-space:nowrap}
+.p{display:inline-block;margin-left:6px;padding:0 5px;border:1px dashed var(--controlEdge);border-radius:6px;font:11px/16px -apple-system,system-ui,sans-serif;color:var(--text2)}
+.chg{display:inline-block;padding:0 6px;border-radius:6px;background:#1f2328;color:#fff;font:600 11px/16px -apple-system,system-ui,sans-serif}
+.doc{font:15px/24px Georgia,serif;position:absolute;left:16px;width:228px}
+</style>
+</helmet>
+<div class="ui" style="width:460px;height:800px;box-sizing:border-box;background:var(--pane);border:1px solid var(--rule);position:relative;overflow:hidden">
+  <div style="height:44px;box-sizing:border-box;padding:0 6px 0 16px;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--rule)">
+    <span class="btn">Markup ⌄</span><span class="btn">Select Text</span><span style="flex:1"></span><span class="btn">‹</span><span class="btn">›</span><span class="btn">⋯ ⌄</span>
+  </div>
+  <div class="doc" style="top:60px;font:600 17px/24px -apple-system,system-ui,sans-serif;color:#2c4e99">Beds and crops</div>
+  <div class="doc" style="top:96px">The volunteers planted <span style="background:var(--commentHighlightActive)">forty</span> rows of beans in April.</div>
+  <div style="position:absolute;left:260px;top:94px;width:192px;box-sizing:border-box;border:1.5px solid var(--text);border-radius:6px;padding:10px;background:var(--pane)">
+    <div style="border:1px solid var(--rule);border-radius:6px;padding:6px 8px"><span style="color:var(--reviewAuthor3);font-weight:600">@claude</span> is “forty” right? The sheet says forty-two.</div>
+    <div style="color:var(--text2);margin:8px 0 2px">To</div>
+    <span class="pillbtn">&gt;_ Garden plan · at prompt ⌄</span>
+    <div style="display:flex;gap:6px;margin-top:8px"><span class="btn" style="border-color:var(--text)">Post</span><span class="btn">Cancel</span></div>
+  </div>
+  <div class="doc" style="top:330px">Casey added a third author, and Blake replaced four words.</div>
+  <div style="position:absolute;left:260px;top:326px;width:192px;box-sizing:border-box;border:1.5px solid var(--text);border-radius:6px;padding:10px;background:var(--pane)">
+    <div style="border:1px solid var(--rule);border-radius:6px;padding:6px 8px;min-height:20px">Can you check, @</div>
+    <div style="margin-top:6px;background:var(--pane);border:1px solid var(--rule);border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.16);padding:4px">
+      <div style="display:flex;justify-content:space-between;padding:2px 6px;border-radius:6px;background:var(--selected)"><span style="color:var(--reviewAuthor3);font-weight:600">@claude</span><span style="color:var(--text2);font-size:12px">to a session</span></div>
+      <div style="padding:2px 6px;font-weight:600">@dana-writer</div>
+      <div style="padding:2px 6px;font-weight:600">@morgan-editor</div>
+    </div>
+  </div>
+  <div style="position:absolute;left:16px;right:16px;top:520px;font:12px/16px -apple-system,system-ui,sans-serif;color:var(--text2);border-top:1px dashed var(--controlEdge);padding-top:12px">
+    <span class="chg">changed</span> the Markdown margin's composer and @ menu (DL-251), level with the selection; tokens, not hexes. @claude typed, the To pill, Post (⌘Return) and Cancel (Esc). Claude first in the menu, then the file's comment authors, newest first, yourself too (Q-308). <span class="p">P</span><br><br>
+    <b>@claude is sent when posted</b> (DL-236 10): Post writes the comment into the file, then sends the turn through the idle-and-empty-prompt guard. An @claude comment that came in with the file waits for Send (C-112). Same as Markdown.
+  </div>
+</div>
+</x-dc>
+
+</body>
+</html>

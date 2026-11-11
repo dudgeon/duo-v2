@@ -905,7 +905,7 @@ extension AppModel {
         // MARK: HTML pages
         case .slide, .slideGo, .slideShapes, .slideNotes, .slidePick, .slideElement:
             slideVerb(id, inv, req, done)
-        case .commentAdd, .commentList, .commentReply, .commentSend, .commentClose, .commentDelete, .commentReopen, .commentStatus,
+        case .commentAdd, .commentList, .commentReply, .commentSend, .commentClose, .commentDelete, .commentReopen, .commentStatus, .commentUndo,
              .suggestionList, .suggestionAccept, .suggestionReject:
             reviewVerb(id, inv, req, done)
         case .docReview:

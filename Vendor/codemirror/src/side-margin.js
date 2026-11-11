@@ -97,11 +97,15 @@ class SideMargin extends Cards {
   cancelCompose() { this.composer = null; this.composerDom = null; this.sig = ""; this.schedule(); send({ op: "cancel" }); }
   escaped() { send({ op: "escaped" }); }
   setActive(id) { super.setActive(id); send({ op: "active", id }); }
+  // Hovering a card lights its anchor in the viewer, as in Markdown (cards.js lets a host override setHover); a host that ignores "hover" loses nothing.
+  setHover(id) { super.setHover(id); send({ op: "hover", id }); }
 }
 
+// The page paints nothing of its own: the host gives the reserved column its ground, so a narrow pane's popover floats over the document
+// instead of hiding it (board S1b; the Word, PowerPoint and PDF viewers all draw this page over their content).
 const style = document.createElement("style");
 style.textContent = toCss({ ...cardStyles, ...reviewColourStyles })
-  + "\nhtml, body { margin: 0; height: 100%; overflow: hidden; background: var(--duo-ground); }\n#root { position: relative; height: 100vh; overflow: hidden; }\n";
+  + "\nhtml, body { margin: 0; height: 100%; overflow: hidden; background: transparent; }\n#root { position: relative; height: 100vh; overflow: hidden; }\n";
 document.head.append(style);
 const root = document.getElementById("root");
 const margin = new SideMargin(root);
