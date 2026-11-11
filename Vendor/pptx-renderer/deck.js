@@ -414,7 +414,7 @@ function marginSelection() {
 }
 {
   let queued = false;
-  addEventListener('scroll', () => { if (queued) return; queued = true; requestAnimationFrame(() => { queued = false; tellMargin({ op: 'scroll', y: scrollY }); }); }, { passive: true });
+  addEventListener('scroll', () => { if (queued) return; queued = true; setTimeout(() => { queued = false; tellMargin({ op: 'scroll', y: scrollY }); }, 16); }, { passive: true });
   addEventListener('resize', () => tellMargin({ op: 'layout' }));
   document.addEventListener('click', (e) => {
     if (picking || !document.body.classList.contains('margin')) return;

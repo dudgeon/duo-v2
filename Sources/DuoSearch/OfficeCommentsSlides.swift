@@ -77,7 +77,7 @@ extension OfficeComments {
                         let tid = "s\(s.number)c\(k)"
                         out.append(Thread(id: tid, anchor: nil, place: "slide \(s.number)",
                                           items: [Item(id: tid, author: legacyNames[cm.attr("authorId") ?? ""] ?? "someone", date: cm.attr("dt") ?? "", text: cm.first("text")?.value ?? "")],
-                                          resolved: false, legacy: true))
+                                          resolved: false, legacy: true, slide: s.number))
                     }
                 }
             }

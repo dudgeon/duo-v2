@@ -407,7 +407,7 @@ Object.assign(window.__duo, {
 {
   let queued = false;
   const tell = (m) => post({ kind: 'margin', ...m });
-  addEventListener('scroll', () => { if (queued) return; queued = true; requestAnimationFrame(() => { queued = false; tell({ op: 'scroll', y: scrollY }); }); }, { passive: true });
+  addEventListener('scroll', () => { if (queued) return; queued = true; setTimeout(() => { queued = false; tell({ op: 'scroll', y: scrollY }); }, 16); }, { passive: true });
   new ResizeObserver(() => tell({ op: 'layout' })).observe(document.getElementById('sheet'));
   document.addEventListener('click', (e) => {
     if (picking || !document.body.classList.contains('margin')) return;

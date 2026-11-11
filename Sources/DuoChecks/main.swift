@@ -55,7 +55,7 @@ func repoFixture() throws -> Fixture {
     }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "chat" { return try chatChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "midturn" { return try midTurnChecks() }
-    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "office-comments" { return try officeCommentChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "office-comments" { try officeCommentChecks(); try officeMarginChecks(); return }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "pdf" { return try pdfChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "chat-live" { return try chatLiveChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "task-send" { return try chatTaskSendChecks() }
@@ -837,6 +837,7 @@ func repoFixture() throws -> Fixture {
     try htmlViewerBlankChecks()
     try reviewChecks()
     try officeCommentChecks()
+    try officeMarginChecks()
     try pdfChecks()
     taskPaneKeyChecks()
     dockBadgeChecks()
