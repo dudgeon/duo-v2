@@ -201,7 +201,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 doc close [path] [--others]` | Close a document tab (saved first), or every other one. | Close Tab, Close Other Tabs |
 | `duo2 doc tabs` | The open document tabs, and which one shows. | — |
 | `duo2 doc status <file>` | Whether a file is open in Duo's editor, unsaved or in conflict. Check before editing a file the user may have open. | — |
-| `duo2 doc read [path]` | A document's text as the editor has it (unsaved edits included); the showing document by default. | — |
+| `duo2 doc read [path]` | A document's text as the editor has it (unsaved edits included); the showing document by default. A PDF (DL-334) comes back as its text with a `--- page N ---` line before each page, then a list of the pages to look at as images, each with why (no text layer: a scan; mostly a figure: it draws images or many shapes and carries little text); render one with `duo2 pdf render <file> <page>` and read the PNG. | — |
 | `duo2 doc selection` | The text selected in the editor, with its file and lines. | — |
 | `duo2 doc select <line> [to-line]` | Select lines in the showing document. | — |
 | `duo2 doc save` | Save the showing document now (it also autosaves). | Save |
@@ -229,7 +229,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 
 | Command | What it does | In the app |
 |---|---|---|
-| `duo2 comment add <file> --at <line\|text\|paragraph\|slide> [--as <name>] <text>` | On a Word or PowerPoint file (DL-331) the comment is written into the file's comment parts, with a backup of the original in Duo's support folder and nothing else touched: --at is a text that appears once in a Word document (or a paragraph number) or a slide number; its replies, resolved state and @claude routing work as below, with thread ids `c4` (Word) and `s3c1` (slide 3's first). Comment on a line (its number) or on a text that appears once: the text becomes a highlight and the signed comment follows it. A comment that names @claude is addressed to a session (`duo2 comment send`). | Add Comment |
+| `duo2 comment add <file> --at <line\|text\|paragraph\|slide\|page N [text]> [--as <name>] <text>` | On a PDF (DL-335) the comment is appended to the file as a standard annotation (an incremental update: the original bytes are never rewritten, and a backup is kept in Duo's support folder): --at is a text that appears once (a Highlight over it), `page N` (a note at the page's top right) or `page N <text>` (a text on that page only); replies, close and reopen (a hidden Completed or None state reply), delete and @claude routing work as below, with thread ids `c1`, replies `c1.2`; encrypted or certified PDFs are refused. On a Word or PowerPoint file (DL-331) the comment is written into the file's comment parts, with a backup of the original in Duo's support folder and nothing else touched: --at is a text that appears once in a Word document (or a paragraph number) or a slide number; its replies, resolved state and @claude routing work as below, with thread ids `c4` (Word) and `s3c1` (slide 3's first). Comment on a line (its number) or on a text that appears once: the text becomes a highlight and the signed comment follows it. A comment that names @claude is addressed to a session (`duo2 comment send`). | Add Comment |
 | `duo2 comment list <file> [--closed \| --unsent]` | The file's comment threads: id, who and when, the text it is on, the comment and its replies. Closed threads are left out unless --closed (only those); --unsent lists the open ones that name @claude and have no reply. | — |
 | `duo2 comment reply <id> <text> [--file <file>] [--suggest] [--as <name>]` | Reply in a thread (or to a suggestion) with the next number, `#c1.2`; a closed thread reopens (in a Word or PowerPoint file the reply goes in the file's comment parts, and --file names the file: the turn sent to a session says so). --suggest instead proposes the reply text as a replacement of the text the thread is on. Never rewrites anyone's comment. Without --file, the document showing. | — |
 | `duo2 comment send <id \| --all> [--file <file>] [--to <session> \| --new]` | Send a comment that names @claude to a session, quoted as data, when the person says to (DL-236 10): the turn is pasted and Returned through the idle-and-empty-prompt guard of `director send`, or waits (Queued) until the session is ready. Without --to, the thread's session, the document's last choice, the last to edit it through Duo, then the one on screen. --all sends every @claude comment not yet sent or answered. Never sent from the file on its own. | — |
@@ -268,6 +268,12 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 html stop` | Close the element picker. | Cancel picking |
 | `duo2 html element [selector]` | Describe an element (the picked one by default): selector, text, attributes, styles, box, HTML. | — |
 | `duo2 html selection` | The text and images selected in the HTML page. | — |
+
+## PDF files
+
+| Command | What it does | In the app |
+|---|---|---|
+| `duo2 pdf render <file> <page> [--out <png>] [--width <px>]` | Draw one page of a PDF as a PNG (1000 px wide unless --width, 200 to 3000), as the viewer draws it, annotations included, and print the path. Needs no viewer open. The pages `duo2 doc read` lists as needing a look are the ones to render and read as images. PNGs go in the session's own folder (.duo/screenshots), or Duo's support folder outside a session. | — |
 
 ## PowerPoint decks
 

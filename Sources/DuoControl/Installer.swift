@@ -127,6 +127,10 @@ public enum Installer {
 
         Fit the check to where the file goes. A Word document headed for Google Docs: check its structure, not pixels, because Docs reflows it with its own fonts and a render only approximates that. `duo2 doc outline <file.docx>` gives the headings, styles and lists; `duo2 doc layout <file.docx>` gives the page size and margins (the text width), each table's width and columns against that width, each picture's size, and a warning for anything wider than its room. Use built-in heading styles, native lists, and table widths in DXA that add up to no more than the text width. To see a document as Duo draws it, `duo2 doc screenshot <file.docx> [--all]` saves PNGs in `.duo/screenshots/` and prints their paths (text flows at the pane's width, tables at the document's own column widths; without `--all` you get the top, with it the whole document in pieces; read the PNG with your Read tool). The document needn't be showing. There are no page numbers: Duo shows a document as one flow. These verbs read only a document open in Duo or inside this project's folder. Don't start `soffice` or LibreOffice to render a document: it can't run inside Claude's sandbox, and Duo has no way around that by design.
 
+        ### Reading a PDF
+
+        `duo2 doc read <file.pdf>` returns the PDF's text, one `--- page N ---` line before each page (page numbers match Duo's viewer), then a list of the pages to look at as images with the reason: "no text layer" (a scan) or "mostly a figure" (it draws images or many shapes and carries little text). Render one with `duo2 pdf render <file> <page> [--out <png>] [--width <px>]` (1000 px wide by default; it saves a PNG and prints the path) and read the PNG with your Read tool. That costs a fraction of reading the whole PDF as images. `duo2 comment add <file.pdf> --at "<text>" "<comment>"` highlights a text that appears once (`--at "page 3"` puts a note on a page); replies, close, reopen and delete work as for other documents, and the comment is appended to the PDF itself.
+
         \(DeckFeature.enabled ? decksSkill : "")## Families
 
         \(families)

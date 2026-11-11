@@ -799,6 +799,7 @@ extension DuoAction {
             + "`duo2 doc edit --stdin`, piping the JSON your Edit tool takes ({\"file_path\",\"old_string\",\"new_string\"}, or {\"file_path\",\"content\"} to rewrite), "
             + "not with Edit, Write or shell redirection. Duo applies it in the editor the user is looking at, highlighted, and merges it with their unsaved typing."
             + "\nTo check a Word document you made, fit the check to where it goes (for Google Docs, structure, not pixels): `duo2 doc outline` and `duo2 doc layout` (page and text width, tables and pictures against it), and `duo2 doc screenshot` to see it; the duo2 skill's \"Checking documents\" says more. Don't start soffice in the sandbox."
+            + "\nTo read a PDF, `duo2 doc read <file.pdf>` gives its text with a `--- page N ---` line per page, then lists the pages that need a look (a scan, a figure); render one with `duo2 pdf render <file> <page>` and read the PNG, rather than reading the whole PDF as images."
             + "\nTo track work, make Duo tasks (`duo2 task new`, one note each in the project's tasks/ folder) and set their status with `duo2 task status`; do not write a TASKS.md or a to-do list file."
             + "\nWhen you start substantial work, `duo2 session note \"<one line>\"`; when you hand back, `duo2 session next \"<one line>\"`."
         if let sessionID {
