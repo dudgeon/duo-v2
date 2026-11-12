@@ -1,6 +1,6 @@
 # A new user's first-use feedback, and how Claude learns it is inside Duo
 
-Research only, 2026-11-11. Nothing is built. Records: F-660 to F-662, Q-510 to Q-514, ENH-343 to ENH-345. The decisions as a narrated walkthrough: https://claude.ai/artifact/7HjjjCFhzPhMST6RGo2kmS (`aram-feedback-walkthrough/`).
+Research only, 2026-11-11, with a second round on 2026-11-12 (sections 1.6 and 1.7). Nothing is built. Records: F-660 to F-664, Q-510 to Q-516, ENH-343 to ENH-346. The decisions as a narrated walkthrough: https://claude.ai/artifact/7HjjjCFhzPhMST6RGo2kmS (`aram-feedback-walkthrough/`).
 
 Aram, a Duo user, sent Geoff first-use feedback. In short: the onboarding is too thin for how much Duo does (he doesn't know how to start director mode, or how tasks differ from sessions); he can't tell why Duo is sometimes a white, IDE-like window and sometimes a terminal; he wants the file list to fold, the right side to hide, and file names in Claude's replies to be clickable and open on the right; and the menu says "Window Colour".
 
@@ -22,7 +22,12 @@ Recommendations, in the order I'd do them:
 | Q-513 | What more does Duo tell Claude? | One line: to show the user a file, `duo2 doc open`. No per-mode text and no file-name convention; fix the link rule in Duo and make the terminal's ⌘-click open in Duo. |
 | Q-514 | "Window Colour" or "Window Color"? | American spelling in the app's own words: "Window Color". `duo2 window colour` stays as an alias. |
 
-No decision needed, recommended as builds: the link fixes (ENH-343), the pane controls (ENH-344), the teaching items (ENH-345).
+| Q-515 | How does Duo show which project you're in, and what a project is? | Say it where he looked, now (ENH-346: the folder on the project's name and on New Session, a Projects explainer, the guide's file name fixed); the project list in the left nav (ENH-146, now asked for by two new users) as a canvas round. |
+| Q-516 | Sessions that start on Sonnet when the user wants Opus | No model setting in Duo (DL-153 stands). One line in the user's own Claude settings does it, and reaches Duo's sessions; put it in the guide and check it on the work Mac. Build a Duo setting only if that fails there. |
+
+No decision needed, recommended as builds: the link fixes (ENH-343), the pane controls (ENH-344), the teaching items (ENH-345), the project's folder and name made legible (ENH-346).
+
+**Second round, 2026-11-12.** Aram summed up his biggest onboarding problem as the project and session dynamic: New Session assumes a project, but which one, how is a project defined, and where can he see that? Geoff added that Aram likes every session to start on Opus and the work Macs put them back on Sonnet. Sections 1.6 and 1.7.
 
 ## 1. Per item: what is true today
 
@@ -117,6 +122,75 @@ Whatever is chosen for the default, B's teaching parts are worth building (they 
 - A. **American in the app's own words** (recommended): "Window Color", "Color new windows automatically"; `duo2 window color`, with `colour` kept as an alias so nothing breaks. Docs and code stay as they are. Record it as the house rule: the app's words follow US English, as macOS's own do.
 - B. Keep "Colour". Consistent with the repo's prose; odd beside the system's menus.
 - C. Localize (en-GB and en-US). Correct, and far more machinery than six strings deserve today.
+
+### 1.6 "What project am I in? How is a project defined?" (second round)
+
+**True today** (read in the code at `cd0855ff`).
+
+- **What a project is.** A folder with a `_PROJECT.md` in it (the older `PROJECT.md` counts too), anywhere on the Mac (`DuoControl/DuoFiles.swift:5-16`, DL-82, DL-259). The folder it sits in is its topic, the column it shows under at All projects (DL-83, DL-89). Folders don't nest into parent and child projects.
+- **Where a session belongs.** To the nearest folder at or above the one it was started in that has a project file (`ProjectDiscovery.enclosingProject`, DL-82). A session in no project isn't lost: its folder shows as "Folder · no project file" with Make a Project (DL-63, DL-110). So the answer to "is it my folder hierarchy?" is yes, and nothing in the app says so.
+- **Where the app shows the project you're in.**
+  - The toolbar: `All projects › [topic] › name`. Only "All projects" is clickable. The name has no tooltip and no path (`Shell/DuoToolbar.swift:110-146`). DL-92 decided "a full breadcrumb"; the code shows the topic's last folder name only.
+  - The window title is the bare name; the sidebar header is the name with its health line.
+  - **The folder itself appears once**: an unlabeled grey line in the Files section, low in the sidebar (`ProjectPanes.swift:523-531`). Reveal in Finder is in the Project menu and on that line's right-click.
+- **What New Session does.**
+
+  | Where | Control | Starts in | What says so |
+  |---|---|---|---|
+  | In a project | the sidebar's "+ New Claude Code session", ⌘T, the tab strip's + | the project's folder | Only a hover on the tab strip's +: "New Claude session ⌘T · in <project>". **The sidebar button says nothing.** |
+  | All projects, List | the "New session in [home ⌄]" row, ⌘T | Home's folder, else `~/Documents`; a popup picks a project or folder | The row names the place before the click (DL-262). |
+  | All projects, Board | ⌘T | the same default | Nothing on screen (not checked further). |
+
+- **What explains projects.** Nothing in the app. The New project sheet has no explainer; DL-147 decided one ("the service design is not intuitive and has no explainer content", Geoff) and it isn't built. The guide explains it well (`docs/guide/projects.md`, `where-a-session-belongs.md`) but still says `PROJECT.md` where the app writes `_PROJECT.md`, and the app doesn't link to it.
+- **Already asked for.** ENH-146 is another new user's report: "I would have expected… a listing in the left nav of my projects which I could expand (as I can in CC or ChatGPT)". DL-336 since removed All projects' left column; bringing one back, opt-in, is ENH-341. Aram is the second new user to stumble on the same thing.
+
+**Root cause.** A project is a real thing on disk (a folder with one file) and Duo shows only its name. The rule that puts a session in a project (nearest folder with a project file) is stated nowhere in the app. And the one control a new user presses first, the sidebar's New Session button, doesn't say where the session will start. At All projects the row does say, which is why he could "track it down" there.
+
+**Options** (Q-515).
+
+- A. **Say it where he looked, now** (recommended; ENH-346), with nothing that needs a new design:
+  1. The project's name in the toolbar gets a tooltip with its folder (`~/work/checkout · a folder with a _PROJECT.md`), and a click opens the project file, as the sidebar header already does.
+  2. The sidebar's New Session button gets the tab strip's tooltip, with the folder: "New Claude session ⌘T · in checkout (~/work/checkout)".
+  3. The Files path line gets a tooltip that names it: "The project's folder".
+  4. A **Projects explainer** on the approved component (DL-172), on the project's name and in the New project sheet (the one DL-147 decided): "A project is a folder with a _PROJECT.md. / Sessions started in it, or in a folder inside it, belong to it. / A folder with no project file still shows its sessions: Make a Project when it's worth tracking." Learn more opens the guide.
+  5. The guide says `_PROJECT.md`; "Where a session belongs" is linked from Help.
+  Then **a canvas round on where projects live in the window**: the expandable project list ENH-146 asked for, with ENH-341's opt-in column, drawn on the Duo design system. Two new users in a row is the reason to schedule it.
+- B. The canvas round first, and the small fixes with it. One coherent change; nothing improves until it's designed and approved.
+- C. Guide and explainer only (items 4 and 5). Teaches the rule; the button still doesn't say where a session starts.
+
+### 1.7 "Every session starts on Sonnet; he wants Opus" (second round)
+
+**True today.**
+
+- **Duo never chooses a model.** No `--model` on any session Duo starts, no model key in the per-session settings file, no model setting; a check enforces it (`Sources/DuoChecks/main.swift:2957`, DL-153: "Duo carries no model logic").
+- **Duo starts `claude` directly**, not through a shell (`Terminals.swift:249-275`). So an `export ANTHROPIC_MODEL=…` in `~/.zshrc`, or an alias like `claude --model opus`, works in Terminal and never reaches a session started in Duo (unless Duo itself was opened from a terminal). `ANTHROPIC_*` variables pass through when Duo's own process has them; every `CLAUDE_CODE_*` variable is stripped (DL-14).
+- **What Duo offers:** in chat mode, the model chip (DL-168) opens Claude Code's own `/model`, whose "Set as Default" writes `model` into `~/.claude/settings.json`. Terminal mode has Claude Code's `/model`. `duo2 session new` has no model option.
+- **How Claude Code picks the model** (its docs, model-config and settings; not Duo's doing): `/model` in the session, then `--model`, then the `ANTHROPIC_MODEL` variable, then the `model` key in settings files where **managed settings outrank a `--settings` file, which outranks the user's own file**, then the organization's default, then the plan's default. A managed `model` is "a starting default, not a lock"; an administrator who wants a lock uses `availableModels`.
+
+**Root cause** (inferred; the work Macs can't be inspected from here). "Reverts to Sonnet" is what a managed or organization default looks like: the user picks Opus, "Set as Default" writes the `model` key into his own settings file, and the next session starts from the managed `model`, which outranks that file. It isn't Duo: Duo passes no model and its settings file has no model key. If it turns out to happen only in Duo and not in Terminal, the cause is the other one: a shell export or alias that Duo's direct start never sees.
+
+**Run** (F-664; Claude Code 2.1.316, scratch config, two "say ok" turns). With `{"model": "sonnet"}` in a `--settings` file standing in for the managed tier (a real managed file needs root):
+
+| The user's own `settings.json` | Session ran on |
+|---|---|
+| `{"model": "claude-haiku-5-5"}` | **Sonnet**: the higher tier's `model` wins. This is the "revert". |
+| `{"env": {"ANTHROPIC_MODEL": "claude-haiku-5-5"}}` | **Haiku**: the variable wins over any file's `model` key, and a settings `env` block applies however `claude` was started, so it reaches Duo's sessions. |
+
+So one line in the user's own Claude settings does what Aram wants, in Duo and in Terminal alike:
+
+```json
+{ "env": { "ANTHROPIC_MODEL": "opus" } }
+```
+
+Limits: this was a stand-in for the managed tier, on 2.1.316, not the work Mac's 2.1.284 with its real policy. If the policy uses `availableModels` without Opus, nothing a user or Duo does will or should get around it. A resumed session keeps the model it was last on.
+
+**Options** (Q-516).
+
+- A. **No model setting in Duo; the one line, written down** (recommended). DL-153 stands. The guide gets "Starting every session on a model" with the line and why "Set as Default" doesn't stick under a managed default; Geoff or Aram tries it on a work Mac (two minutes). Costs nothing and works outside Duo too.
+- B. **A Duo setting, "New sessions start on: Claude's default | a model"**, which sets `ANTHROPIC_MODEL` for the sessions Duo starts. One click instead of a file edit. It reverses DL-153, puts model names (which change) into Duo, and does only what the line already does. Worth it only if A fails on the work Mac for a reason a Duo-set variable would survive, which is unlikely: both are the same variable.
+- C. **Duo reads the login shell's environment** once at launch and passes `ANTHROPIC_*` on, so a session in Duo matches one in Terminal. Fixes the "only in Duo" case if that's what it is; costs a shell start at launch and makes Duo's sessions depend on shell files. Hold until the work Mac shows that case.
+
+Whichever is chosen, one small thing is worth doing: when the chip's "Set as Default" is followed by a new session on a different model, chat could say why once ("This Mac's Claude settings start sessions on Sonnet"). That needs Duo to know the source of the model, which Claude Code doesn't report (its `/status` lists the settings files, not which one set the model), so it stays a note here, not a record.
 
 ## 2. Onboarding
 
@@ -225,6 +299,7 @@ About 45 words. The first half costs little and stops Claude from doing worse th
 
 - **Run:** four Haiku 5.5 turns (`claude -p`, Claude Code 2.1.316, a scratch project in `/tmp`, a scratch `CLAUDE_CONFIG_DIR`, Read/Glob/Grep only), two prompts with and without a convention in `--append-system-prompt`, plus one "say ok" turn to test the login; chat's link rule replayed over the replies in Python (the same two patterns and extension list as `ChatMarkdown.swift`). Details in F-662.
 - **Read, not run:** everything else: the mode logic, the panes, the menus, the terminal's link handling, Legacy Duo's repo, the installer. No Duo was launched and no capture was taken. The exact look of what he saw is inferred from the code and the tokens.
+- **Second round, run:** two more "say ok" turns (the model test in 1.7, F-664; one ran on Sonnet, by design of the test). **Read:** the project rules, the toolbar, the sidebar and New Session (1.6); Claude Code's docs for the model order (through a docs agent; one section it cites, "A new session starts on a different model than you picked", couldn't be fetched). **Not checked:** the work Mac's managed settings and its 2.1.284; whether the Sonnet start happens in Terminal there too; All projects' Board view for a New Session control.
 - **Not checked:** his Mac, his Duo version or his Claude Code version; whether Claude Code's own screen marks file names as links; the primer's token count; whether Claude over-uses `duo2 doc open` when told about it.
 
 ## 5. A reply Geoff can send
@@ -238,6 +313,9 @@ About 45 words. The first half costs little and stops Claude from doing worse th
 > - **Colour:** you're right, it should be Color. Fixing.
 > - **Director and tasks:** a task is a note for one piece of work, and it gathers the sessions working on it; a session is one conversation with Claude. To start a director, open a session in a project and type "be the director". There's a 7-minute film: [link]. You're right that the app doesn't teach any of this; a proper welcome, a Help menu that links the guide, and a Start Director menu item are next.
 >
+> - **Which project am I in:** a project is just a folder with a `_PROJECT.md` file in it. A session belongs to the nearest such folder at or above where it was started, so yes, it's your folder hierarchy. Inside a project, New Session starts in that project's folder; the name is top left, next to "All projects". You're right that the app never tells you any of this, and the button doesn't say where it will start. Fixing both, and I'm going to look properly at a project list in the left nav.
+> - **Opus by default:** Duo doesn't pick the model; your Claude settings do, and it looks like the work default wins over "Set as Default". Try adding `"env": { "ANTHROPIC_MODEL": "opus" }` to `~/.claude/settings.json`. In my test that beats a higher-level default and applies in Duo and Terminal. Tell me if it holds on the work Mac.
+>
 > And yes please, post anything else in the community channel.
 
 ## 6. Records
@@ -245,3 +323,4 @@ About 45 words. The first half costs little and stops Claude from doing worse th
 - **F-660** what is true today for the five items; **F-661** how Legacy Duo and Duo v2 tell Claude; **F-662** the convention test.
 - **Q-510** to **Q-514** as in the table at the top.
 - **ENH-343** links in both views; **ENH-344** pane controls; **ENH-345** the teaching layer.
+- Second round: **F-663** what a project is and where Duo shows it; **F-664** the model order and the settings-line test; **Q-515** and **Q-516**; **ENH-346** the project's folder and name made legible.

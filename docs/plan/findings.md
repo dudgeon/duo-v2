@@ -6169,3 +6169,21 @@ Read in Legacy Duo's repo at v0.13.8 and in v2 at `d8656529`. `docs/research/ara
 - **With the convention**, the replies were the same in every respect that matters: backticks, the same paths, no Markdown links. The two misses stayed.
 - **So:** the fix for the misses is in Duo's link rule (a code span that names a real file is a link, whole: ENH-343), not in an instruction. Four turns on one model is thin: it shows the default and that Haiku didn't take the finer rule, not that no model would.
 - **Left behind:** `/tmp/aram-spike` (the project, the scratch config, the four replies). No Duo was launched; Geoff's own config and sessions weren't touched.
+
+## F-663 · A project is a folder with a project file, and the app shows only its name (aram-feedback, second round, 2026-11-12)
+
+Read in the code at `cd0855ff`; nothing launched. `docs/research/aram-feedback.md` §1.6.
+- **The rule:** a folder with `_PROJECT.md` (or the older `PROJECT.md`) is a project, anywhere (`DuoFiles.swift:5-16`, DL-82, DL-259); a session belongs to the nearest such folder at or above its own (`ProjectDiscovery.enclosingProject`); a folder with sessions and no project file shows as "Folder · no project file" (DL-63, DL-110). No surface in the app states the rule.
+- **Where the project shows:** the toolbar's `All projects › [topic] › name` (only "All projects" is clickable; the name has no tooltip or path; DL-92's "full breadcrumb" is the topic's last folder name in the code), the window title, the sidebar header. The folder appears once, as an unlabeled grey path line in the Files section; Reveal in Finder is in the Project menu.
+- **New Session:** in a project it starts in the project's folder, and only the tab strip's + says so, on hover ("New Claude session ⌘T · in <project>"); the sidebar's "+ New Claude Code session" has no tooltip. At All projects' List, the "New session in [home ⌄]" row names the place first (DL-262).
+- **Not built:** DL-147's explainer on the New project sheet. DL-147 (3) also calls `project_brief: true` a second way Duo finds a project; `DuoFiles.isProject` doesn't read it.
+- **Docs:** the guide says `PROJECT.md` in `projects.md`, `home.md` and `where-a-session-belongs.md`; the app writes `_PROJECT.md`.
+- **Second report:** ENH-146 is an earlier new user asking for an expandable project list in the left nav.
+
+## F-664 · Why a session starts on another model than the one picked, and the settings line that holds (aram-feedback, second round, 2026-11-12)
+
+`docs/research/aram-feedback.md` §1.7.
+- **Duo:** no `--model`, no model key in the per-session `--settings` file, no model setting (DL-153; `DuoChecks/main.swift:2957` enforces it). `claude` is started directly, so `~/.zshrc` exports and aliases don't apply unless Duo was opened from a terminal; `ANTHROPIC_*` passes through from Duo's own environment and `CLAUDE_CODE_*` is stripped (DL-14).
+- **Claude Code's order** (its docs): `/model`, `--model`, `ANTHROPIC_MODEL`, then the `model` key with managed settings over a `--settings` file over the user's file, then the organization's default, then the plan's. `/model`'s "Set as Default" writes the user's file, so a managed `model` beats it at the next start: the "revert". `availableModels` is the administrator's lock.
+- **Run** (2.1.316, scratch `CLAUDE_CONFIG_DIR`, `claude -p "Say only: ok" --settings <file with model sonnet> --output-format json`, reading `modelUsage`): with `model: claude-haiku-5-5` in the user's settings the turn ran on Sonnet (the higher tier won); with `env: {ANTHROPIC_MODEL: claude-haiku-5-5}` in the user's settings it ran on Haiku. A `--settings` file stood in for managed settings, which need root.
+- **So** `"env": {"ANTHROPIC_MODEL": "opus"}` in `~/.claude/settings.json` should start every session on Opus, in Duo and in Terminal. Not checked: the work Mac's real policy and its 2.1.284; whether Sonnet is where sessions start in Terminal there too.
