@@ -1,6 +1,6 @@
 # A new user's first-use feedback, and how Claude learns it is inside Duo
 
-Research only, 2026-11-11, with a second round on 2026-11-12 (sections 1.6 and 1.7). Nothing is built. Records: F-660 to F-664, Q-510 to Q-516, ENH-343 to ENH-346. The decisions as a narrated walkthrough: https://claude.ai/artifact/7HjjjCFhzPhMST6RGo2kmS (`aram-feedback-walkthrough/`).
+Research only, 2026-11-11, with a second round on 2026-11-12 (sections 1.6 and 1.7). Nothing is built. Records: F-660 to F-664, Q-510 to Q-516, ENH-343 to ENH-347. The decisions as a narrated walkthrough: https://claude.ai/artifact/7HjjjCFhzPhMST6RGo2kmS (`aram-feedback-walkthrough/`).
 
 Aram, a Duo user, sent Geoff first-use feedback. In short: the onboarding is too thin for how much Duo does (he doesn't know how to start director mode, or how tasks differ from sessions); he can't tell why Duo is sometimes a white, IDE-like window and sometimes a terminal; he wants the file list to fold, the right side to hide, and file names in Claude's replies to be clickable and open on the right; and the menu says "Window Colour".
 
@@ -22,10 +22,10 @@ Recommendations, in the order I'd do them:
 | Q-513 | What more does Duo tell Claude? | One line: to show the user a file, `duo2 doc open`. No per-mode text and no file-name convention; fix the link rule in Duo and make the terminal's ⌘-click open in Duo. |
 | Q-514 | "Window Colour" or "Window Color"? | American spelling in the app's own words: "Window Color". `duo2 window colour` stays as an alias. |
 
-| Q-515 | How does Duo show which project you're in, and what a project is? | Say it where he looked, now (ENH-346: the folder on the project's name and on New Session, a Projects explainer, the guide's file name fixed); the project list in the left nav (ENH-146, now asked for by two new users) as a canvas round. |
+| Q-515 | How does Duo show which project you're in, and what a project is? | Say it where he looked, now (ENH-347: the folder on the project's name and on New Session, a Projects explainer, the guide's file name fixed); the project list in the left nav (ENH-146, now asked for by two new users) as a canvas round. |
 | Q-516 | Sessions that start on Sonnet when the user wants Opus | No model setting in Duo (DL-153 stands). One line in the user's own Claude settings does it, and reaches Duo's sessions; put it in the guide and check it on the work Mac. Build a Duo setting only if that fails there. |
 
-No decision needed, recommended as builds: the link fixes (ENH-343), the pane controls (ENH-344), the teaching items (ENH-345), the project's folder and name made legible (ENH-346).
+No decision needed, recommended as builds: the link fixes (ENH-343), the pane controls (ENH-344), the teaching items (ENH-345), the project's folder and name made legible (ENH-347).
 
 **Second round, 2026-11-12.** Aram summed up his biggest onboarding problem as the project and session dynamic: New Session assumes a project, but which one, how is a project defined, and where can he see that? Geoff added that Aram likes every session to start on Opus and the work Macs put them back on Sonnet. Sections 1.6 and 1.7.
 
@@ -148,7 +148,7 @@ Whatever is chosen for the default, B's teaching parts are worth building (they 
 
 **Options** (Q-515).
 
-- A. **Say it where he looked, now** (recommended; ENH-346), with nothing that needs a new design:
+- A. **Say it where he looked, now** (recommended; ENH-347), with nothing that needs a new design:
   1. The project's name in the toolbar gets a tooltip with its folder (`~/work/checkout · a folder with a _PROJECT.md`), and a click opens the project file, as the sidebar header already does.
   2. The sidebar's New Session button gets the tab strip's tooltip, with the folder: "New Claude session ⌘T · in checkout (~/work/checkout)".
   3. The Files path line gets a tooltip that names it: "The project's folder".
@@ -323,4 +323,4 @@ About 45 words. The first half costs little and stops Claude from doing worse th
 - **F-660** what is true today for the five items; **F-661** how Legacy Duo and Duo v2 tell Claude; **F-662** the convention test.
 - **Q-510** to **Q-514** as in the table at the top.
 - **ENH-343** links in both views; **ENH-344** pane controls; **ENH-345** the teaching layer.
-- Second round: **F-663** what a project is and where Duo shows it; **F-664** the model order and the settings-line test; **Q-515** and **Q-516**; **ENH-346** the project's folder and name made legible.
+- Second round: **F-663** what a project is and where Duo shows it; **F-664** the model order and the settings-line test; **Q-515** and **Q-516**; **ENH-347** the project's folder and name made legible.
