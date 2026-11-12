@@ -216,3 +216,25 @@ struct SelectionMenuItems: View {
     /// "1 Session", "5 Sessions": menu items are Title Case.
     static func sessions(_ n: Int) -> String { "\(n) Session\(n == 1 ? "" : "s")" }
 }
+
+/// The Chat menu (DL-338, board 4): the actions on a chat turn, for the message ⌥⌘↑/↓ selected, or the latest with none selected.
+struct ChatMenuItems: View {
+    let model: AppModel
+
+    var body: some View {
+        let chat = model.visibleChat
+        let you = chat?.menuTurnID, reply = chat?.menuReplyID
+        let idle = chat != nil && chat?.screen.kind != .busy
+        Button("Copy Message") { if let chat, let you { chat.copyTurn(you) } }   // action: session copy-turn
+            .disabled(you == nil)
+        Button("Copy Claude’s Reply") { if let chat, let reply { chat.copyTurn(reply) } }   // action: session copy-turn
+            .disabled(reply == nil)
+        Divider()
+        Button("Rewind to Before Message…") { if let chat, let you { chat.askRewind(you) } }   // action: session rewind
+            .disabled(!idle || you.map { chat?.canRewind($0) != true } ?? true)
+        Button("Fork from Message…") { if let chat, let you { chat.askFork(you) } }   // action: session fork
+            .disabled(!idle || you.map { chat?.forkPlan($0) == nil } ?? true)
+        Button("Fork After Reply") { if let chat, let reply { chat.askFork(reply) } }   // action: session fork
+            .disabled(!idle || reply.map { chat?.forkPlan($0) == nil } ?? true)
+    }
+}

@@ -104,7 +104,7 @@ struct ChatTurnRow: View {
         .background(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).fill(DuoColor.pane))
         .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).strokeBorder(dim ? DuoColor.rule : DuoColor.controlEdge, lineWidth: DuoMetric.borderHairline))
         .contentShape(Rectangle())
-        .onActivate { if !dim { perform(a) } }
+        .onActivate { if !dim { perform(a) } }  // action: session copy-turn
         .help(dim ? "When Claude finishes" : a.rawValue)
         .accessibilityLabel(a.rawValue)
     }
@@ -132,16 +132,31 @@ extension View {
     /// Shows the turn's row under it while the pointer is on the turn or the row (the row hangs
     /// below the turn, into the gap to the next one, so it moves nothing).
     func turnRow(id: String, chat: ChatSession, trailing: Bool, showRow: Bool = true) -> some View {
-        let actions = showRow && chat.ui.hoverTurn == id ? chat.turnActions(for: id) : []
+        let on = chat.ui.hoverTurn == id || chat.ui.selectedTurn == id
+        let actions = showRow && on ? chat.turnActions(for: id) : []
         let show = !actions.isEmpty && chat.turnIsFinished(id)
         return self
             .overlay(alignment: trailing ? .bottomTrailing : .bottomLeading) {
                 if show { ChatTurnRow(turnId: id, actions: actions, chat: chat).offset(y: 26) }
             }
             .onHover { inside in
-                if inside { chat.ui.hoverTurn = id } else if chat.ui.hoverTurn == id { chat.ui.hoverTurn = nil }
+                if inside {
+                    chat.ui.hoverTurn = id
+                    if chat.ui.selectedTurn != id { chat.ui.selectedTurn = nil }
+                } else if chat.ui.hoverTurn == id { chat.ui.hoverTurn = nil }
             }
             .zIndex(show ? 1 : 0)
+    }
+}
+
+extension View {
+    /// The row's actions for VoiceOver, without hover (board 4): Copy, Rewind…, Fork….
+    func turnAccessibility(id: String, chat: ChatSession, showRow: Bool = true) -> some View {
+        let actions = showRow ? chat.turnActions(for: id) : []
+        return self
+            .accessibilityAction(named: "Copy") { if actions.contains(.copy) { chat.copyTurn(id) } }
+            .accessibilityAction(named: "Rewind…") { if actions.contains(.rewind) { chat.askRewind(id) } }
+            .accessibilityAction(named: "Fork…") { if actions.contains(.fork) { chat.askFork(id) } }
     }
 }
 
@@ -175,5 +190,58 @@ struct ChatForkMark: Shape {
         p.addCurve(to: .init(x: 5 * s, y: 7.9 * s), control1: .init(x: 9 * s, y: 7.3 * s), control2: .init(x: 7 * s, y: 7.5 * s))
         p.addLine(to: .init(x: 3.6 * s, y: 8.5 * s))
         return p
+    }
+}
+
+/// One chat turn as `duo2 session turns` lists it.
+public struct ChatTurnRef: Equatable, Sendable {
+    public var n: Int
+    public var id: String
+    public var role: String
+    public var uuid: String?
+    public var preview: String
+}
+
+extension ChatSession {
+    /// Your messages and Claude's replies, numbered from 1, oldest first (what the log shows; rewound turns are gone from it).
+    public var turnList: [ChatTurnRef] {
+        var out: [ChatTurnRef] = []
+        for item in log.items {
+            switch item {
+            case .you(let y) where !y.queued:
+                out.append(.init(n: out.count + 1, id: y.id, role: "you", uuid: y.uuid, preview: Self.words(y.text)))
+            case .claude(let t):
+                out.append(.init(n: out.count + 1, id: t.id, role: "claude", uuid: t.uuid, preview: Self.words(ChatTurnCopy.markdown(turn: t))))
+            default: break
+            }
+        }
+        return out
+    }
+
+    static func words(_ s: String) -> String {
+        let one = s.split(whereSeparator: \.isWhitespace).joined(separator: " ")
+        return one.count > 60 ? String(one.prefix(60)) + "…" : one
+    }
+
+    /// The turn a verb names: its number in `turnList`, or its uuid (a prefix of 8 or more will do).
+    public func turnID(for ref: String) -> String? {
+        let list = turnList
+        if let n = Int(ref) { return list.first { $0.n == n }?.id }
+        guard ref.count >= 8 else { return nil }
+        let hits = list.filter { $0.uuid?.hasPrefix(ref) == true }
+        return hits.count == 1 ? hits[0].id : nil
+    }
+
+    /// The message the Chat menu acts on: the selected one (⌥⌘↑/↓), else the latest.
+    public var menuTurnID: String? {
+        if let s = ui.selectedTurn, log.items.contains(where: { $0.id == s }) { return s }
+        return turnList.last { $0.role == "you" }?.id
+    }
+
+    /// The reply that follows the message the menu acts on, if there is one.
+    public var menuReplyID: String? {
+        guard let you = menuTurnID, let at = log.items.firstIndex(where: { $0.id == you }) else { return nil }
+        for item in log.items[(at + 1)...] { if case .claude(let t) = item { return t.id } }
+        return nil
     }
 }

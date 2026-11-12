@@ -622,8 +622,18 @@ extension AppModel {
                 }.joined(separator: "\n")
             }.joined(separator: "\n")
             done(.ok(text, b.map { ["label": $0.label, "sessions": $0.rows.map { ["id": $0.id, "title": $0.name, "project": $0.project ?? "", "age": $0.age] }] as [String: Any] }))
+        case .sessionTurns, .sessionCopyTurn, .sessionRewind:
+            chatTurnVerb(id, inv, done)
         case .sessionFork:
             guard let k = inv[0], let s = findSession(k, in: nil), let sid = s.sessionId else { return done(.fail("usage: \(id.action.usage)")) }
+            if let at = inv.flags["at"] {
+                guard let chat = chat(for: s.tabKey) else { return done(.fail("\(s.name) has no chat yet: open it in Duo first")) }
+                guard let turn = chat.turnID(for: at) else { return done(.fail("no turn '\(at)' in \(s.name): `duo2 session turns \(k)` lists them")) }
+                guard chat.forkPlan(turn) != nil else { return done(.fail("that turn can't be forked from yet: the transcript doesn't have the next message's id")) }
+                guard chat.screen.kind != .busy else { return done(.fail("Claude is working in \(s.name); fork from a turn when it finishes")) }
+                guard forkFromTurn(sessionKey: s.tabKey, turnId: turn) else { return done(.fail("couldn't fork \(s.name) there")) }
+                return done(.ok("Forked \(s.name) in \(s.project) at turn \(at); the copy rewinds to that point once Claude Code is up in it (the tab shows the terminal if it can't)."))
+            }
             open(project: s.project).resumeAsFork(sid, in: s.project)
             done(.ok("Forked \(s.name) in \(s.project) as a new session with the same history."))
         case .sessionTrustFolder:

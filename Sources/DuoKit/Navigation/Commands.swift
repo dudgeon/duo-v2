@@ -505,6 +505,7 @@ public struct DuoCommands: Commands {
         // What's in front of you (DL-108, m1).
         CommandMenu("Project") { ProjectMenuItems(model: model) }
         CommandMenu("Session") { SessionMenuItems(model: model) }
+        CommandMenu("Chat") { ChatMenuItems(model: model) }
         CommandMenu("Go") {
             item(.search)
             Divider()

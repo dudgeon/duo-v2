@@ -143,6 +143,7 @@ struct ChatFeedRowView: View, Equatable {
                 }
             }
             .turnRow(id: row.id.split(separator: "|").first.map(String.init) ?? row.id, chat: chat, trailing: false, showRow: last)
+            .turnAccessibility(id: row.id.split(separator: "|").first.map(String.init) ?? row.id, chat: chat, showRow: last)
             .padding(.trailing, DuoSpace.chatCardTrailing)
         }
     }

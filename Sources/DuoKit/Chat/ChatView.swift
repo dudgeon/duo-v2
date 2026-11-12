@@ -21,6 +21,8 @@ public final class ChatUIState {
     public var thinkingOpen: Set<String> = []
     /// The turn under the pointer (its row shows), and the turn whose Copy just ran (DL-338).
     public var hoverTurn: String?
+    /// The message ⌥⌘↑/↓ selected: it gets a ring and shows its row (board 4).
+    public var selectedTurn: String?
     public var copiedTurn: String?
     var copiedAt: Date?
     /// Plan option 3's feedback, the free-text answers by question, a preview's notes.
@@ -291,6 +293,10 @@ struct ChatYouBubble: View {
                 .padding(EdgeInsets(top: 9, leading: 14, bottom: 9, trailing: 14))
                 .background(UnevenRoundedRectangle(cornerRadii: DuoMetric.radiusChatBubble).fill(DuoColor.chatYou))
             }
+            .overlay {
+                // ⌥⌘↑/↓ selected it: a 2 pt ring in `text` (board 4).
+                if chat.ui.selectedTurn == you.id { UnevenRoundedRectangle(cornerRadii: DuoMetric.radiusChatBubble).strokeBorder(DuoColor.text, lineWidth: 2) }
+            }
             .videoAnchor(chat.youIdentifier(you.id), group: true)
             .opacity(you.queued ? 0.6 : 1)
             if you.queued { Text("Queued · Claude reads it when it’s ready").duoText(.chatMeta).foregroundStyle(DuoColor.text2) }
@@ -299,6 +305,7 @@ struct ChatYouBubble: View {
         .turnRow(id: you.id, chat: chat, trailing: true)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("You: \(you.text)\(you.images.isEmpty ? "" : ", \(you.images.count) picture\(you.images.count == 1 ? "" : "s")")")
+        .turnAccessibility(id: you.id, chat: chat)
     }
 }
 
@@ -498,6 +505,7 @@ struct ChatClaudeCard: View {
             .background(UnevenRoundedRectangle(cornerRadii: DuoMetric.radiusChatCard).fill(DuoColor.pane))
         }
         .turnRow(id: turn.id, chat: chat, trailing: false)
+        .turnAccessibility(id: turn.id, chat: chat)
         .padding(.trailing, DuoSpace.chatCardTrailing)
     }
 

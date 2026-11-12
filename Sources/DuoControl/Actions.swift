@@ -62,6 +62,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case sessionPark = "session park", sessionKeepRunning = "session keep-running"
     case sessionNote = "session note", sessionNext = "session next", sessionCarryOn = "session carry-on"
     case sessionLink = "session link", sessionTask = "session task", sessionChat = "session chat"
+    case sessionTurns = "session turns", sessionCopyTurn = "session copy-turn", sessionRewind = "session rewind"
     case shellNew = "shell new", sessionFork = "session fork", sessionTrustFolder = "session trust-folder", sessionForkAgain = "session fork-again", idle, sessionDelete = "session delete", sessionArchive = "session archive", sessionUnarchive = "session unarchive"
     case tasks, taskMake = "task make", taskAdd = "task add", taskNew = "task new", taskSession = "task session", taskStatus = "task status"
     case taskRename = "task rename", taskArchive = "task archive", taskUnarchive = "task unarchive", taskDelete = "task delete"
@@ -277,8 +278,14 @@ extension DuoAction {
         .init(.sessionNext, .sessions, "<text>", "Tell the user what this session needs next (one line).", everyday: true),
         .init(.sessionTask, .sessions, "[id]", "The task(s) a session is attributed to (this session by default): each note's title, status and path. Duo's hooks tell Claude the same when the session starts, resumes, clears or compacts, and what changed on its next prompt (DL-116)."),
         .init(.sessionCarryOn, .sessions, "<id>", "Start a new session carrying on from an archived one."),
-        .init(.sessionFork, .sessions, "<id>", "Carry a session on as a fork: a new session with the same history (the original is left alone).",
-              ui: ["Resume as a Fork"]),
+        .init(.sessionFork, .sessions, "<id> [--at <turn>]", "Carry a session on as a fork: a new session with the same history (the original is left alone). With --at, the fork stops at that chat turn (a number from `session turns`, or its uuid): from your message the copy is rewound to before it and the message waits in the copy's composer; from Claude's reply, to before your next message (DL-338). Nothing is restored on disk: both sessions share the folder.",
+              ui: ["Resume as a Fork", "Fork", "Fork from Message…", "Fork After Reply"]),
+        .init(.sessionTurns, .sessions, "<id>", "The chat turns of a session, numbered oldest first, each with its role, its transcript uuid and its first words: what `session copy-turn`, `session rewind` and `session fork --at` take (DL-338). Rewound turns are not listed.",
+              everyday: false),
+        .init(.sessionCopyTurn, .sessions, "<id> <turn>", "Put one chat turn on the clipboard as Markdown: yours as typed (pictures as [Image #n]), Claude's text segments joined by blank lines, without thinking or tool calls (DL-338, Q-509). Works while Claude works.",
+              ui: ["Copy", "Copy Message", "Copy Claude’s Reply"]),
+        .init(.sessionRewind, .sessions, "<id> <turn> [--code]", "Rewind a session to before one of your messages: shows Duo's sheet (it names the files Claude changed since) and waits for the user's answer; there is no --yes. The message then waits in the chat composer. --code starts the sheet on Conversation and files. Duo works Claude Code's own /rewind menu; if a screen isn't one it knows, the terminal is shown (DL-338).",
+              ui: ["Rewind", "Rewind to Before Message…"], timeout: 600),
         .init(.sessionTrustFolder, .sessions, "<id>", "When a session's /fork said \"Workspace not trusted\", or Claude Code asks at a session's start whether it trusts the folder: show Duo's sheet and wait for the user's answer. After a /fork, Yes sets only that folder's hasTrustDialogAccepted in Claude Code's file; at the start, Duo gives Claude Code the answer on its own screen. It prints `trusted <path>`, or fails with `cancelled` or `not trusted`. There is no --yes: Claude can ask, but can't trust a folder for itself (DL-229, F-444).",
               ui: ["Trust This Folder…", "Try Again", "Trust Folder", "Don’t Trust"], timeout: 600),
         .init(.sessionForkAgain, .sessions, "<id>", "After the folder is trusted: type the session's blocked /fork line again, only while Claude is at its prompt with nothing typed (DL-229).",
@@ -693,6 +700,7 @@ public enum Parity {
         "Go": "a menu, not an action",
         "Format": "a menu, not an action",
         "Project": "a menu, not an action",
+        "Chat": "a menu, not an action",
         "Session": "a menu, not an action",
         "Heading": "a submenu, not an action",
         "Table": "a submenu, not an action",
@@ -727,7 +735,7 @@ public struct Invocation: Sendable {
     public var flags: [String: String] = [:]
 
     /// Flags that take no value.
-    public static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "use-folder", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "full-page", "session", "open", "sessions", "keep-sessions", "synthetic", "resolved", "force", "session-only", "left", "right", "hidden", "anyway", "not-now", "no-interview", "cancel", "fetch", "background", "in-duo", "suggest", "closed", "unsent", "take-over", "handed-back", "no-worker", "previous", "adopt", "clear", "refresh", "no-open", "log", "add", "doc", "routine", "no-red-lines"]
+    public static let switches: Set<String> = ["fork", "code", "draft", "browser", "pr", "sheet", "use-folder", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "full-page", "session", "open", "sessions", "keep-sessions", "synthetic", "resolved", "force", "session-only", "left", "right", "hidden", "anyway", "not-now", "no-interview", "cancel", "fetch", "background", "in-duo", "suggest", "closed", "unsent", "take-over", "handed-back", "no-worker", "previous", "adopt", "clear", "refresh", "no-open", "log", "add", "doc", "routine", "no-red-lines"]
 
     /// Flags whose value is optional: the next word is theirs unless it's another flag.
     public static let optionalValues: Set<String> = ["remote-control"]

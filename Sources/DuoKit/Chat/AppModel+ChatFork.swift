@@ -1,3 +1,4 @@
+import DuoControl
 import Foundation
 
 // Fork from a chat turn (DL-338, Q-508): a whole fork under a minted `--session-id` (DL-14), a new tab right after the
@@ -37,5 +38,32 @@ extension ChatSession {
     public func askFork(_ turnId: String) -> Bool {
         guard screen.kind != .busy, forkPlan(turnId) != nil else { return false }
         return onFork?(turnId) ?? false
+    }
+}
+
+extension AppModel {
+    /// `duo2 session turns | copy-turn | rewind` (DL-338).
+    func chatTurnVerb(_ id: ActionID, _ inv: Invocation, _ done: @escaping @MainActor (Reply) -> Void) {
+        let usage = "usage: \(id.action.usage)"
+        guard let k = inv[0], let s = findSession(k, in: nil) else { return done(.fail(usage)) }
+        guard let chat = chat(for: s.tabKey) else { return done(.fail("\(s.name) has no chat yet: open it in Duo first")) }
+        if id == .sessionTurns {
+            let list = chat.turnList
+            let text = list.isEmpty ? "No turns yet." : list.map { "\($0.n)  \($0.role)  \($0.uuid.map { String($0.prefix(8)) } ?? "-")  \($0.preview)" }.joined(separator: "\n")
+            return done(.ok(text, list.map { ["n": $0.n, "role": $0.role, "uuid": $0.uuid ?? "", "preview": $0.preview] as [String: Any] }))
+        }
+        guard let ref = inv[1] else { return done(.fail(usage)) }
+        guard let turn = chat.turnID(for: ref) else { return done(.fail("no turn '\(ref)' in \(s.name): `duo2 session turns \(k)` lists them")) }
+        if id == .sessionCopyTurn {
+            return done(chat.copyTurn(turn) ? .ok("Copied turn \(ref) of \(s.name) as Markdown.") : .fail("turn \(ref) has no words to copy"))
+        }
+        guard chat.canRewind(turn) else { return done(.fail("turn \(ref) isn't one of your messages that Claude Code knows (the transcript has no id for it yet)")) }
+        guard chat.screen.kind != .busy else { return done(.fail("Claude is working in \(s.name); rewind when it finishes")) }
+        // Always asks, in Duo's sheet, and waits for the user's answer (no --yes, DL-338).
+        let shown = chat.askRewind(turn, preferCode: inv.has("code")) { result in
+            guard let result else { return done(.fail("cancelled: the user clicked Cancel in Duo. Nothing changed.")) }
+            done(result.ok ? .ok("Rewound \(s.name) to before turn \(ref); the message waits in its composer.") : .fail("not rewound: \(result.why ?? "refused"). The terminal is showing."))
+        }
+        if !shown { done(.fail("couldn't ask: \(s.name) isn't at a prompt Duo can rewind")) }
     }
 }
