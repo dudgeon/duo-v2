@@ -7,6 +7,7 @@
   "audio/found.mp3": "audio/found.mp3",
   "audio/links.mp3": "audio/links.mp3",
   "audio/tells.mp3": "audio/tells.mp3",
+  "audio/proj.mp3": "audio/proj.mp3",
   "audio/q510-mode.mp3": "audio/q510-mode.mp3",
   "audio/q510-mode--chat-new-installs.mp3": "audio/q510-mode--chat-new-installs.mp3",
   "audio/q510-mode--terminal-and-teach.mp3": "audio/q510-mode--terminal-and-teach.mp3",
@@ -27,6 +28,14 @@
   "audio/q514-spelling--american.mp3": "audio/q514-spelling--american.mp3",
   "audio/q514-spelling--keep.mp3": "audio/q514-spelling--keep.mp3",
   "audio/q514-spelling--localize.mp3": "audio/q514-spelling--localize.mp3",
+  "audio/q515-project.mp3": "audio/q515-project.mp3",
+  "audio/q515-project--say-it-now.mp3": "audio/q515-project--say-it-now.mp3",
+  "audio/q515-project--canvas-first.mp3": "audio/q515-project--canvas-first.mp3",
+  "audio/q515-project--teach-only.mp3": "audio/q515-project--teach-only.mp3",
+  "audio/q516-model.mp3": "audio/q516-model.mp3",
+  "audio/q516-model--document-the-line.mp3": "audio/q516-model--document-the-line.mp3",
+  "audio/q516-model--duo-setting.mp3": "audio/q516-model--duo-setting.mp3",
+  "audio/q516-model--read-shell-env.mp3": "audio/q516-model--read-shell-env.mp3",
   "audio/wrap.mp3": "audio/wrap.mp3"
  },
  "capabilities": {
