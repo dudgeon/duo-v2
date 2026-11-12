@@ -1,197 +1,1542 @@
 {
-  "id": "aram-feedback-2026-11",
-  "title": "Aram's first-use notes",
-  "subtitle": "Decision walkthrough · 11 Nov 2026 · findings from Aram · narrated by Duo's house voice",
-  "posterLine": "What Aram found on first use, what's true in the code, then five decisions. Tap play and listen; it stops when it needs you.",
-  "footer": "Findings from Aram's first-use notes. Built with the decision-walkthrough skill from docs/research/aram-feedback-walkthrough/spec.json. Answers are saved in this page and sent to director-duo-v2.",
-  "source": { "label": "aram-feedback.md", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/aram-feedback.md" },
-  "director": "director-duo-v2",
-  "sendPrefix": "Aram feedback walkthrough",
-  "voice": "house",
-  "styles": "scenes.css",
-  "out": "page",
-  "said": { "⌥⌘0": "option command zero", "duo2": "duo two", "IDE": "I D E", "v2": "vee two" },
-  "chapters": [
+ "id": "aram-feedback-2026-11",
+ "title": "Aram's first-use notes",
+ "subtitle": "Decision walkthrough · 12 Nov 2026 · findings from Aram · narrated by Duo's house voice",
+ "posterLine": "What Aram found on first use, what's true in the code, then seven decisions. Tap play and listen; it stops when it needs you.",
+ "footer": "Findings from Aram's first-use notes. Built with the decision-walkthrough skill from docs/research/aram-feedback-walkthrough/spec.json. Answers are saved in this page and sent to director-duo-v2.",
+ "source": {
+  "label": "aram-feedback.md",
+  "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/aram-feedback.md"
+ },
+ "director": "director-duo-v2",
+ "sendPrefix": "Aram feedback walkthrough",
+ "voice": "house",
+ "styles": "scenes.css",
+ "out": "page",
+ "said": {
+  "⌥⌘0": "option command zero",
+  "duo2": "duo two",
+  "IDE": "I D E",
+  "v2": "vee two",
+  "ENH-146": "E N H one forty six",
+  "DL-153": "D L one fifty three"
+ },
+ "chapters": [
+  {
+   "id": "why",
+   "title": "Aram's notes",
+   "short": "Aram's notes",
+   "sceneFile": "scenes/why.html",
+   "lines": [
     {
-      "id": "why", "title": "Aram's notes", "short": "Aram's notes", "sceneFile": "scenes/why.html",
-      "lines": [
-        { "text": "This one starts with Aram. He's been using Duo, and he sent you his first-use notes.",
-          "cues": [ { "at": 0, "do": "show", "sel": "#from" }, { "on": "Aram", "do": "focus", "sel": "#from", "soft": true } ] },
-        { "text": "His big one is onboarding. He knows he's underusing Duo. He can't tell how to start a director, or how tasks differ from sessions.",
-          "cues": [ { "at": 0, "do": "unfocus" }, { "on": "onboarding", "do": "show", "sel": "#n0" }, { "on": "director", "do": "focus", "sel": "#n0" } ] },
-        { "text": "Then five smaller ones. Sometimes Duo is a white IDE, and sometimes a terminal. The file list should fold. The right side should hide. File names in replies should be clickable. And the menu spells colour with a U.",
-          "cues": [ { "at": 0, "do": "unfocus" }, { "on": "white", "do": "show", "sel": "#n1" }, { "on": "file list", "do": "show", "sel": "#n2" },
-                    { "on": "right side", "do": "show", "sel": "#n3" }, { "on": "File names", "do": "show", "sel": "#n4" }, { "on": "spells", "do": "show", "sel": "#n5" } ] },
-        { "text": "I checked each one against today's code. Every finding in here is his.",
-          "cues": [ { "on": "Every", "do": "show", "sel": "#credit" }, { "on": "Every", "do": "focus", "sel": "#credit", "soft": true } ] }
-      ]
+     "text": "This one starts with Aram. He's been using Duo, and he sent you his first-use notes.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "show",
+       "sel": "#from"
+      },
+      {
+       "on": "Aram",
+       "do": "focus",
+       "sel": "#from",
+       "soft": true
+      }
+     ]
     },
     {
-      "id": "found", "title": "Built, and hard to find", "short": "What's true", "sceneFile": "scenes/found.html",
-      "lines": [
-        { "text": "Most of what Aram asked for is already built, and he couldn't find it.",
-          "cues": [ { "at": 0, "do": "show", "sel": "#hd" } ] },
-        { "text": "The right side hides, with ⌥⌘0 or a toolbar button. It just isn't in the View menu.",
-          "cues": [ { "at": 0, "do": "show", "sel": "#r1" }, { "on": "View menu", "do": "focus", "sel": "#r1" } ] },
-        { "text": "Folders fold. The Files section doesn't, and Duo forgets which folders were open.",
-          "cues": [ { "at": 0, "do": "show", "sel": "#r2" }, { "at": 0, "do": "focus", "sel": "#r2" } ] },
-        { "text": "File names in replies are already links that open on the right. But only in chat mode.",
-          "cues": [ { "at": 0, "do": "show", "sel": "#r3" }, { "at": 0, "do": "focus", "sel": "#r3" } ] },
-        { "text": "That's the root of it. Home opens in chat, but a new project session opens in the terminal. So Duo looks like two apps, and his had no links.",
-          "cues": [ { "at": 0, "do": "show", "sel": "#r4" }, { "at": 0, "do": "focus", "sel": "#r4" }, { "on": "terminal", "do": "state", "value": "two" } ] },
-        { "text": "And the guide and the films exist, but Help links to neither.",
-          "cues": [ { "at": 0, "do": "show", "sel": "#r5" }, { "at": 0, "do": "focus", "sel": "#r5" } ] }
-      ]
+     "text": "His big one is onboarding. He knows he's underusing Duo. He can't tell how to start a director, or how tasks differ from sessions.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "unfocus"
+      },
+      {
+       "on": "onboarding",
+       "do": "show",
+       "sel": "#n0"
+      },
+      {
+       "on": "director",
+       "do": "focus",
+       "sel": "#n0"
+      }
+     ]
     },
     {
-      "id": "links", "title": "What Claude writes, unprompted", "short": "The test", "sceneFile": "scenes/links.html",
-      "lines": [
-        { "text": "You asked about conventions for Claude. So first I tested what it writes with none. Four Haiku turns, in a scratch project.",
-          "cues": [ { "on": "tested", "do": "show", "sel": "#reply" } ] },
-        { "text": "Unprompted, it wrote every file as a path from the project folder, in backticks, with the line number.",
-          "cues": [ { "on": "every file", "do": "focus", "sel": "#c1, #c2, #c3, #c4, #c5", "soft": true } ] },
-        { "text": "Chat's link rule caught three of the five.",
-          "cues": [ { "at": 0, "do": "unfocus" }, { "at": 0, "do": "show", "sel": "#tally" }, { "on": "three", "do": "state+", "value": "linked" }, { "on": "three", "do": "count", "sel": "#cnt", "to": 3, "dur": 0.6 } ] },
-        { "text": "It missed two. A name with no extension, and a path with a space in it.",
-          "cues": [ { "at": 0, "do": "state+", "value": "miss" }, { "on": "no extension", "do": "focus", "sel": "#c4" }, { "on": "space", "do": "focus", "sel": "#c5" } ] },
-        { "text": "Then I gave Claude a rule to write those two differently. Nothing changed.",
-          "cues": [ { "at": 0, "do": "unfocus" }, { "on": "rule", "do": "show", "sel": "#rule" }, { "on": "Nothing", "do": "focus", "sel": "#rule", "soft": true } ] },
-        { "text": "So the fix belongs in Duo. A backticked name that's a real file becomes a link, and a command click in the terminal opens in Duo too.",
-          "cues": [ { "at": 0, "do": "unfocus" }, { "on": "belongs", "do": "show", "sel": "#fix" }, { "on": "becomes", "do": "state+", "value": "fixed" }, { "on": "becomes", "do": "count", "sel": "#cnt", "to": 5, "dur": 0.6 } ] }
-      ]
+     "text": "Then five smaller ones. Sometimes Duo is a white IDE, and sometimes a terminal. The file list should fold. The right side should hide. File names in replies should be clickable. And the menu spells colour with a U.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "unfocus"
+      },
+      {
+       "on": "white",
+       "do": "show",
+       "sel": "#n1"
+      },
+      {
+       "on": "file list",
+       "do": "show",
+       "sel": "#n2"
+      },
+      {
+       "on": "right side",
+       "do": "show",
+       "sel": "#n3"
+      },
+      {
+       "on": "File names",
+       "do": "show",
+       "sel": "#n4"
+      },
+      {
+       "on": "spells",
+       "do": "show",
+       "sel": "#n5"
+      }
+     ]
     },
     {
-      "id": "tells", "title": "How Duo tells Claude", "short": "Legacy and v2", "sceneFile": "scenes/tells.html",
-      "lines": [
-        { "text": "You also asked how Legacy Duo told Claude it was inside Duo. Five ways at once.",
-          "cues": [ { "at": 0, "do": "show", "sel": "#lh" }, { "on": "Five", "do": "show", "sel": "#l1, #l2, #l3, #l4, #l5" } ] },
-        { "text": "A wrapper around the claude command added a priming file to the system prompt, and a hook in your own settings printed it again.",
-          "cues": [ { "on": "wrapper", "do": "focus", "sel": "#l1" }, { "on": "priming", "do": "focus", "sel": "#l2" }, { "on": "hook", "do": "focus", "sel": "#l3" } ] },
-        { "text": "Its one rule about showing things was, after you create a file, reveal it.",
-          "cues": [ { "at": 0, "do": "unfocus" }, { "on": "after", "do": "show", "sel": "#reveal" } ] },
-        { "text": "Duo v2 starts Claude itself. So it passes a short, generated primer at every session start, and touches none of your files.",
-          "cues": [ { "at": 0, "do": "show", "sel": "#vh" }, { "on": "primer", "do": "show", "sel": "#v1, #v2, #v3" }, { "on": "primer", "do": "focus", "sel": "#v1", "soft": true } ] },
-        { "text": "The primer already says you're inside Duo. It doesn't say file names are links, or when to open one. And Claude is never told which view you're in.",
-          "cues": [ { "at": 0, "do": "focus", "sel": "#v2", "soft": true }, { "on": "doesn't", "do": "show", "sel": "#gap" }, { "on": "doesn't", "do": "focus", "sel": "#gap" } ] }
-      ]
-    },
-    {
-      "id": "q510-mode", "kind": "decision", "q": "Q-510", "title": "A new user's first session", "short": "First mode",
-      "ask": "Which mode should a new user's first project session open in?",
-      "why": "Chat is where replies are formatted and file names are links. New installs start in the terminal today.",
-      "look": [ { "label": "Research · 1.1 White IDE or terminal wrapper", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/aram-feedback.md#11-sometimes-white-full-ide-other-times-a-terminal-wrapper" } ],
-      "sceneFile": "scenes/q510.html",
-      "lines": [
-        { "text": "First decision. Which mode should a new user's first session open in?", "cues": [ { "on": "mode", "do": "focus", "sel": "#pill" } ] },
-        { "text": "Today it's the mode used last, and that starts as terminal.", "cues": [ { "at": 0, "do": "unfocus" }, { "on": "starts", "do": "show", "sel": "#today" } ] }
-      ],
-      "options": [
-        { "id": "chat-new-installs", "label": "Chat, for new installs", "desc": "Existing users keep the mode used last.", "recommended": true,
-          "lines": [ { "text": "I'd start new installs in chat. Formatted replies, clickable files, and the pill becomes the way out to the terminal. Nobody's current setup changes.",
-            "cues": [ { "at": 0, "do": "state", "value": "" }, { "on": "chat", "do": "tap", "sel": "#p-chat" }, { "on": "chat", "delay": 0.6, "do": "state", "value": "chat" }, { "on": "clickable", "do": "focus", "sel": "#cl", "soft": true }, { "on": "Nobody's", "do": "unfocus" }, { "on": "Nobody's", "do": "cursor-off" } ] } ] },
-        { "id": "terminal-and-teach", "label": "Keep terminal first, and teach the pill", "desc": "A tooltip, a Session menu item, an explainer.",
-          "lines": [ { "text": "Or keep terminal first, and teach it, with a tooltip, a menu item and an explainer. A new user still starts without links.",
-            "cues": [ { "at": 0, "do": "state", "value": "" }, { "on": "teach", "do": "state", "value": "tip" } ] } ] },
-        { "id": "ask-first", "label": "Ask on the first session", "desc": "A new question; needs a design.",
-          "lines": [ { "text": "Or ask, chat or terminal, on the first session. That's a question before any value, and it needs a design.",
-            "cues": [ { "at": 0, "do": "state", "value": "" }, { "on": "ask", "do": "state", "value": "ask" } ] } ] }
-      ]
-    },
-    {
-      "id": "q511-onboarding", "kind": "decision", "q": "Q-511", "title": "Onboarding: what first", "short": "Onboarding",
-      "ask": "What onboarding should be built first?",
-      "why": "Aram's main note. The app has no welcome, one explainer, and no link to the guide or the films.",
-      "look": [ { "label": "Research · 2.3 Options, cheapest first", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/aram-feedback.md#23-options-cheapest-first" } ],
-      "sceneFile": "scenes/q511.html",
-      "lines": [
-        { "text": "Next, Aram's main note, onboarding. What to build first?", "cues": [ { "at": 0, "do": "show", "sel": "#help" } ] },
-        { "text": "Today Help has four items, one feature has an explainer, and there's no welcome.", "cues": [ { "on": "four", "do": "focus", "sel": "#help", "soft": true }, { "on": "no welcome", "do": "show", "sel": "#cost" }, { "at": 0.95, "do": "unfocus" } ] }
-      ],
-      "options": [
-        { "id": "layer-then-welcome", "label": "The no-new-design layer now, a designed welcome next", "desc": "Help links, guide pages, three explainers; then a canvas round for the welcome.", "recommended": true,
-          "lines": [ { "text": "I'd build what needs no new design now. Help links to the guide and both films, guide pages for the director and the two modes, and three more explainers. Then design a first-run welcome on the canvas.",
-            "cues": [ { "at": 0, "do": "unfocus" }, { "at": 0, "do": "state", "value": "" }, { "on": "Help links", "do": "state", "value": "layer" }, { "on": "Help links", "do": "focus", "sel": "#help", "soft": true }, { "on": "guide pages", "do": "focus", "sel": "#guide", "soft": true }, { "on": "explainers", "do": "focus", "sel": "#exp", "soft": true }, { "on": "Then", "do": "unfocus" }, { "on": "Then", "do": "state+", "value": "next" } ] } ] },
-        { "id": "welcome-first", "label": "The welcome first", "desc": "The best first minute; waits on a canvas round.",
-          "lines": [ { "text": "Or design the welcome first. It's the best first minute, but the cheap fixes wait on a canvas round.",
-            "cues": [ { "at": 0, "do": "unfocus" }, { "at": 0, "do": "state", "value": "" }, { "on": "welcome", "do": "state", "value": "welcome" } ] } ] },
-        { "id": "sample-project", "label": "A Meet Duo sample project", "desc": "About a week, and it has to stay true as Duo changes.",
-          "lines": [ { "text": "Or a sample project to poke at. That's about a week, and it has to stay true as Duo changes.",
-            "cues": [ { "at": 0, "do": "unfocus" }, { "at": 0, "do": "state", "value": "" }, { "on": "sample", "do": "state", "value": "sample" } ] } ] }
-      ]
-    },
-    {
-      "id": "q512-director", "kind": "decision", "q": "Q-512", "title": "Starting the director", "short": "Director",
-      "ask": "How should a user start the director?",
-      "why": "Aram couldn't tell how. Today you type it, and the guide has no page on it.",
-      "look": [ { "label": "Research · 2.4 Starting the director", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/aram-feedback.md#24-starting-the-director" } ],
-      "sceneFile": "scenes/q512.html",
-      "lines": [
-        { "text": "Aram's example was the director. How should someone start one?", "cues": [ { "at": 0, "do": "show", "sel": "#side" } ] },
-        { "text": "Today you type, be the director, in a session. It works, and nobody would guess it.", "cues": [ { "on": "type", "do": "show", "sel": "#typed" }, { "on": "nobody", "do": "focus", "sel": "#typed", "soft": true }, { "at": 0.95, "do": "unfocus" } ] }
-      ],
-      "options": [
-        { "id": "menu-item", "label": "Project › Start Director, plus an explainer", "desc": "On duo2 director start, which already exists.", "recommended": true,
-          "lines": [ { "text": "I'd add Start Director to the Project menu, on the verb that already exists, plus an explainer.",
-            "cues": [ { "at": 0, "do": "unfocus" }, { "at": 0, "do": "state", "value": "menu" }, { "on": "Project menu", "do": "tap", "sel": "#mi-dir" }, { "on": "Project menu", "delay": 0.7, "do": "state", "value": "slot" }, { "on": "explainer", "do": "cursor-off" }, { "on": "explainer", "do": "focus", "sel": "#full", "soft": true } ] } ] },
-        { "id": "menu-and-slot", "label": "Also an empty director slot in the sidebar", "desc": "Most discoverable; a new mark on an approved screen, so a canvas round.",
-          "lines": [ { "text": "Or also draw an empty director slot at the top of the sidebar. It's the most discoverable, and it needs the canvas first.",
-            "cues": [ { "at": 0, "do": "unfocus" }, { "at": 0, "do": "state", "value": "empty" }, { "on": "empty", "do": "focus", "sel": "#empty" } ] } ] },
-        { "id": "teach-phrase", "label": "Only teach the phrase", "desc": "A guide page and an explainer; no new control.",
-          "lines": [ { "text": "Or only teach the phrase, in the guide and an explainer.",
-            "cues": [ { "at": 0, "do": "unfocus" }, { "at": 0, "do": "state", "value": "teach" }, { "on": "guide", "do": "focus", "sel": "#guide", "soft": true } ] } ] }
-      ]
-    },
-    {
-      "id": "q513-claude", "kind": "decision", "q": "Q-513", "title": "What Duo tells Claude", "short": "Tell Claude",
-      "ask": "What more should Duo tell Claude about being inside Duo?",
-      "why": "Aram wants files to show up on the right. Only Claude can open one without a click.",
-      "look": [ { "label": "Research · 3.3 Proposal", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/aram-feedback.md#33-proposal-q-513" } ],
-      "sceneFile": "scenes/q513.html",
-      "lines": [
-        { "text": "What more should Duo tell Claude?", "cues": [ { "at": 0, "do": "show", "sel": "#primer, #w" } ] },
-        { "text": "The primer is the right place. It's rebuilt with every version, and it touches none of your files.", "cues": [ { "on": "primer", "do": "focus", "sel": "#primer", "soft": true }, { "on": "touches", "do": "show", "sel": "#why" }, { "at": 0.95, "do": "unfocus" } ] }
-      ],
-      "options": [
-        { "id": "one-sentence", "label": "One sentence, and fix the links in Duo", "desc": "File names are links; open a finished document with duo2 doc open.", "recommended": true,
-          "lines": [ { "text": "I'd add one sentence. File names in replies are links, and when you finish a document, open it for the user. That's the part only Claude can do. The file shows up on the right, with no click.",
-            "cues": [ { "at": 0, "do": "unfocus" }, { "at": 0, "do": "state", "value": "" }, { "on": "one sentence", "do": "state", "value": "one" }, { "on": "shows up", "do": "focus", "sel": "#rp" } ] } ] },
-        { "id": "duo-side-only", "label": "Fix the links in Duo only", "desc": "Tell Claude nothing new.",
-          "lines": [ { "text": "Or tell Claude nothing new. Files are clickable, but they never open by themselves.",
-            "cues": [ { "at": 0, "do": "unfocus" }, { "at": 0, "do": "state", "value": "" }, { "on": "clickable", "do": "state", "value": "duo" } ] } ] },
-        { "id": "per-mode", "label": "A fuller convention, per mode", "desc": "Chat and terminal variants, sent again when the view changes.",
-          "lines": [ { "text": "Or a fuller convention, with chat and terminal variants. It costs tokens, goes stale when you switch views, and in the test Claude ignored the finer rule.",
-            "cues": [ { "at": 0, "do": "unfocus" }, { "at": 0, "do": "state", "value": "" }, { "on": "fuller", "do": "state", "value": "full" }, { "on": "ignored", "do": "focus", "sel": "#primer", "soft": true } ] } ] }
-      ]
-    },
-    {
-      "id": "q514-spelling", "kind": "decision", "q": "Q-514", "title": "Colour or Color", "short": "Spelling",
-      "ask": "Should the menu say Window Colour or Window Color?",
-      "why": "Aram's nit. The app says Colour; macOS beside it says Color on a US Mac.",
-      "look": [ { "label": "Research · 1.5 Window Colour in the menu", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/aram-feedback.md#15-window-colour-in-the-menu" } ],
-      "sceneFile": "scenes/q514.html",
-      "lines": [
-        { "text": "Last one, and it's Aram's nit. The menu says Window Colour, with a U.", "cues": [ { "at": 0, "do": "show", "sel": "#wm" }, { "on": "with a U", "do": "focus", "sel": "#mi-c" } ] },
-        { "text": "Those six strings are the app's only use of either spelling, and macOS beside it says Color.", "cues": [ { "at": 0, "do": "unfocus" }, { "on": "six", "do": "show", "sel": "#six" }, { "on": "macOS", "do": "show", "sel": "#sys" } ] }
-      ],
-      "options": [
-        { "id": "american", "label": "Window Color", "desc": "US spelling in the app's own words; duo2 window colour stays as an alias.", "recommended": true,
-          "lines": [ { "text": "I'd use American spelling in the app's own words, and keep the old verb working.",
-            "cues": [ { "at": 0, "do": "state", "value": "" }, { "on": "American", "do": "state", "value": "us" } ] } ] },
-        { "id": "keep", "label": "Keep Window Colour", "desc": "Matches the docs; reads as a typo on a US Mac.",
-          "lines": [ { "text": "Or keep it. It matches the docs, and it reads as a typo on a US Mac.",
-            "cues": [ { "at": 0, "do": "state", "value": "" }, { "on": "typo", "do": "focus", "sel": "#mi-c" } ] } ] },
-        { "id": "localize", "label": "Localize both", "desc": "en-GB and en-US; a lot of machinery for six strings.",
-          "lines": [ { "text": "Or localize for both. Correct, and a lot of machinery for six strings.",
-            "cues": [ { "at": 0, "do": "unfocus" }, { "at": 0, "do": "state", "value": "loc" } ] } ] }
-      ]
-    },
-    {
-      "id": "wrap", "title": "That's all five", "short": "Done", "final": true, "sceneFile": "scenes/wrap.html",
-      "lines": [
-        { "text": "That's all five.", "cues": [ { "at": 0, "do": "show", "sel": "#done, #list" } ] },
-        { "text": "The link fixes, the pane controls and the teaching layer need no decision, so they're logged as builds.", "cues": [ { "at": 0, "do": "show", "sel": "#builds" } ] },
-        { "text": "Thanks to Aram for the notes. There's a reply drafted for him in the research doc.", "cues": [ { "on": "Thanks", "do": "show", "sel": "#thanks" }, { "on": "Thanks", "do": "focus", "sel": "#thanks", "soft": true } ] }
-      ]
+     "text": "I checked each one against today's code. Every finding in here is his.",
+     "cues": [
+      {
+       "on": "Every",
+       "do": "show",
+       "sel": "#credit"
+      },
+      {
+       "on": "Every",
+       "do": "focus",
+       "sel": "#credit",
+       "soft": true
+      }
+     ]
     }
-  ]
+   ]
+  },
+  {
+   "id": "found",
+   "title": "Built, and hard to find",
+   "short": "What's true",
+   "sceneFile": "scenes/found.html",
+   "lines": [
+    {
+     "text": "Most of what Aram asked for is already built, and he couldn't find it.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "show",
+       "sel": "#hd"
+      }
+     ]
+    },
+    {
+     "text": "The right side hides, with ⌥⌘0 or a toolbar button. It just isn't in the View menu.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "show",
+       "sel": "#r1"
+      },
+      {
+       "on": "View menu",
+       "do": "focus",
+       "sel": "#r1"
+      }
+     ]
+    },
+    {
+     "text": "Folders fold. The Files section doesn't, and Duo forgets which folders were open.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "show",
+       "sel": "#r2"
+      },
+      {
+       "at": 0,
+       "do": "focus",
+       "sel": "#r2"
+      }
+     ]
+    },
+    {
+     "text": "File names in replies are already links that open on the right. But only in chat mode.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "show",
+       "sel": "#r3"
+      },
+      {
+       "at": 0,
+       "do": "focus",
+       "sel": "#r3"
+      }
+     ]
+    },
+    {
+     "text": "That's the root of it. Home opens in chat, but a new project session opens in the terminal. So Duo looks like two apps, and his had no links.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "show",
+       "sel": "#r4"
+      },
+      {
+       "at": 0,
+       "do": "focus",
+       "sel": "#r4"
+      },
+      {
+       "on": "terminal",
+       "do": "state",
+       "value": "two"
+      }
+     ]
+    },
+    {
+     "text": "And the guide and the films exist, but Help links to neither.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "show",
+       "sel": "#r5"
+      },
+      {
+       "at": 0,
+       "do": "focus",
+       "sel": "#r5"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "links",
+   "title": "What Claude writes, unprompted",
+   "short": "The test",
+   "sceneFile": "scenes/links.html",
+   "lines": [
+    {
+     "text": "You asked about conventions for Claude. So first I tested what it writes with none. Four Haiku turns, in a scratch project.",
+     "cues": [
+      {
+       "on": "tested",
+       "do": "show",
+       "sel": "#reply"
+      }
+     ]
+    },
+    {
+     "text": "Unprompted, it wrote every file as a path from the project folder, in backticks, with the line number.",
+     "cues": [
+      {
+       "on": "every file",
+       "do": "focus",
+       "sel": "#c1, #c2, #c3, #c4, #c5",
+       "soft": true
+      }
+     ]
+    },
+    {
+     "text": "Chat's link rule caught three of the five.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "unfocus"
+      },
+      {
+       "at": 0,
+       "do": "show",
+       "sel": "#tally"
+      },
+      {
+       "on": "three",
+       "do": "state+",
+       "value": "linked"
+      },
+      {
+       "on": "three",
+       "do": "count",
+       "sel": "#cnt",
+       "to": 3,
+       "dur": 0.6
+      }
+     ]
+    },
+    {
+     "text": "It missed two. A name with no extension, and a path with a space in it.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "state+",
+       "value": "miss"
+      },
+      {
+       "on": "no extension",
+       "do": "focus",
+       "sel": "#c4"
+      },
+      {
+       "on": "space",
+       "do": "focus",
+       "sel": "#c5"
+      }
+     ]
+    },
+    {
+     "text": "Then I gave Claude a rule to write those two differently. Nothing changed.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "unfocus"
+      },
+      {
+       "on": "rule",
+       "do": "show",
+       "sel": "#rule"
+      },
+      {
+       "on": "Nothing",
+       "do": "focus",
+       "sel": "#rule",
+       "soft": true
+      }
+     ]
+    },
+    {
+     "text": "So the fix belongs in Duo. A backticked name that's a real file becomes a link, and a command click in the terminal opens in Duo too.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "unfocus"
+      },
+      {
+       "on": "belongs",
+       "do": "show",
+       "sel": "#fix"
+      },
+      {
+       "on": "becomes",
+       "do": "state+",
+       "value": "fixed"
+      },
+      {
+       "on": "becomes",
+       "do": "count",
+       "sel": "#cnt",
+       "to": 5,
+       "dur": 0.6
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "tells",
+   "title": "How Duo tells Claude",
+   "short": "Legacy and v2",
+   "sceneFile": "scenes/tells.html",
+   "lines": [
+    {
+     "text": "You also asked how Legacy Duo told Claude it was inside Duo. Five ways at once.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "show",
+       "sel": "#lh"
+      },
+      {
+       "on": "Five",
+       "do": "show",
+       "sel": "#l1, #l2, #l3, #l4, #l5"
+      }
+     ]
+    },
+    {
+     "text": "A wrapper around the claude command added a priming file to the system prompt, and a hook in your own settings printed it again.",
+     "cues": [
+      {
+       "on": "wrapper",
+       "do": "focus",
+       "sel": "#l1"
+      },
+      {
+       "on": "priming",
+       "do": "focus",
+       "sel": "#l2"
+      },
+      {
+       "on": "hook",
+       "do": "focus",
+       "sel": "#l3"
+      }
+     ]
+    },
+    {
+     "text": "Its one rule about showing things was, after you create a file, reveal it.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "unfocus"
+      },
+      {
+       "on": "after",
+       "do": "show",
+       "sel": "#reveal"
+      }
+     ]
+    },
+    {
+     "text": "Duo v2 starts Claude itself. So it passes a short, generated primer at every session start, and touches none of your files.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "show",
+       "sel": "#vh"
+      },
+      {
+       "on": "primer",
+       "do": "show",
+       "sel": "#v1, #v2, #v3"
+      },
+      {
+       "on": "primer",
+       "do": "focus",
+       "sel": "#v1",
+       "soft": true
+      }
+     ]
+    },
+    {
+     "text": "The primer already says you're inside Duo. It doesn't say file names are links, or when to open one. And Claude is never told which view you're in.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "focus",
+       "sel": "#v2",
+       "soft": true
+      },
+      {
+       "on": "doesn't",
+       "do": "show",
+       "sel": "#gap"
+      },
+      {
+       "on": "doesn't",
+       "do": "focus",
+       "sel": "#gap"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "proj",
+   "title": "Which project am I in?",
+   "short": "Projects",
+   "sceneFile": "scenes/proj.html",
+   "lines": [
+    {
+     "text": "Aram wrote again a day later. His biggest onboarding problem was projects and sessions. New Session assumes a project. But which one, and what is a project?",
+     "cues": [
+      {
+       "at": 0,
+       "do": "show",
+       "sel": "#note"
+      }
+     ]
+    },
+    {
+     "text": "Here's the rule. A project is a folder with a project file in it.",
+     "cues": [
+      {
+       "on": "rule",
+       "do": "show",
+       "sel": "#tree"
+      },
+      {
+       "on": "project file",
+       "do": "focus",
+       "sel": "#pf"
+      }
+     ]
+    },
+    {
+     "text": "A session belongs to the nearest project folder above where it started. So yes, it's his folder hierarchy.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "focus",
+       "sel": "#sess"
+      },
+      {
+       "on": "nearest",
+       "do": "state",
+       "value": "belongs"
+      },
+      {
+       "on": "nearest",
+       "do": "focus",
+       "sel": "#fold, #sess",
+       "soft": true
+      }
+     ]
+    },
+    {
+     "text": "The app never says so. The toolbar shows the project's name, with no folder.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "unfocus"
+      },
+      {
+       "at": 0,
+       "do": "show",
+       "sel": "#w"
+      },
+      {
+       "on": "toolbar",
+       "do": "focus",
+       "sel": "#crumb"
+      }
+     ]
+    },
+    {
+     "text": "And the New Session button doesn't say where it will start.",
+     "cues": [
+      {
+       "on": "button",
+       "do": "focus",
+       "sel": "#nsb"
+      }
+     ]
+    },
+    {
+     "text": "He's the second new user to trip here. The first asked for a project list in the left nav.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "unfocus"
+      },
+      {
+       "on": "second",
+       "do": "show",
+       "sel": "#second"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "q510-mode",
+   "kind": "decision",
+   "q": "Q-510",
+   "title": "A new user's first session",
+   "short": "First mode",
+   "ask": "Which mode should a new user's first project session open in?",
+   "why": "Chat is where replies are formatted and file names are links. New installs start in the terminal today.",
+   "look": [
+    {
+     "label": "Research · 1.1 White IDE or terminal wrapper",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/aram-feedback.md#11-sometimes-white-full-ide-other-times-a-terminal-wrapper"
+    }
+   ],
+   "sceneFile": "scenes/q510.html",
+   "lines": [
+    {
+     "text": "First decision. Which mode should a new user's first session open in?",
+     "cues": [
+      {
+       "on": "mode",
+       "do": "focus",
+       "sel": "#pill"
+      }
+     ]
+    },
+    {
+     "text": "Today it's the mode used last, and that starts as terminal.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "unfocus"
+      },
+      {
+       "on": "starts",
+       "do": "show",
+       "sel": "#today"
+      }
+     ]
+    }
+   ],
+   "options": [
+    {
+     "id": "chat-new-installs",
+     "label": "Chat, for new installs",
+     "desc": "Existing users keep the mode used last.",
+     "recommended": true,
+     "lines": [
+      {
+       "text": "I'd start new installs in chat. Formatted replies, clickable files, and the pill becomes the way out to the terminal. Nobody's current setup changes.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "state",
+         "value": ""
+        },
+        {
+         "on": "chat",
+         "do": "tap",
+         "sel": "#p-chat"
+        },
+        {
+         "on": "chat",
+         "delay": 0.6,
+         "do": "state",
+         "value": "chat"
+        },
+        {
+         "on": "clickable",
+         "do": "focus",
+         "sel": "#cl",
+         "soft": true
+        },
+        {
+         "on": "Nobody's",
+         "do": "unfocus"
+        },
+        {
+         "on": "Nobody's",
+         "do": "cursor-off"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "terminal-and-teach",
+     "label": "Keep terminal first, and teach the pill",
+     "desc": "A tooltip, a Session menu item, an explainer.",
+     "lines": [
+      {
+       "text": "Or keep terminal first, and teach it, with a tooltip, a menu item and an explainer. A new user still starts without links.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "state",
+         "value": ""
+        },
+        {
+         "on": "teach",
+         "do": "state",
+         "value": "tip"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "ask-first",
+     "label": "Ask on the first session",
+     "desc": "A new question; needs a design.",
+     "lines": [
+      {
+       "text": "Or ask, chat or terminal, on the first session. That's a question before any value, and it needs a design.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "state",
+         "value": ""
+        },
+        {
+         "on": "ask",
+         "do": "state",
+         "value": "ask"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "q511-onboarding",
+   "kind": "decision",
+   "q": "Q-511",
+   "title": "Onboarding: what first",
+   "short": "Onboarding",
+   "ask": "What onboarding should be built first?",
+   "why": "Aram's main note. The app has no welcome, one explainer, and no link to the guide or the films.",
+   "look": [
+    {
+     "label": "Research · 2.3 Options, cheapest first",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/aram-feedback.md#23-options-cheapest-first"
+    }
+   ],
+   "sceneFile": "scenes/q511.html",
+   "lines": [
+    {
+     "text": "Next, Aram's main note, onboarding. What to build first?",
+     "cues": [
+      {
+       "at": 0,
+       "do": "show",
+       "sel": "#help"
+      }
+     ]
+    },
+    {
+     "text": "Today Help has four items, one feature has an explainer, and there's no welcome.",
+     "cues": [
+      {
+       "on": "four",
+       "do": "focus",
+       "sel": "#help",
+       "soft": true
+      },
+      {
+       "on": "no welcome",
+       "do": "show",
+       "sel": "#cost"
+      },
+      {
+       "at": 0.95,
+       "do": "unfocus"
+      }
+     ]
+    }
+   ],
+   "options": [
+    {
+     "id": "layer-then-welcome",
+     "label": "The no-new-design layer now, a designed welcome next",
+     "desc": "Help links, guide pages, three explainers; then a canvas round for the welcome.",
+     "recommended": true,
+     "lines": [
+      {
+       "text": "I'd build what needs no new design now. Help links to the guide and both films, guide pages for the director and the two modes, and three more explainers. Then design a first-run welcome on the canvas.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "unfocus"
+        },
+        {
+         "at": 0,
+         "do": "state",
+         "value": ""
+        },
+        {
+         "on": "Help links",
+         "do": "state",
+         "value": "layer"
+        },
+        {
+         "on": "Help links",
+         "do": "focus",
+         "sel": "#help",
+         "soft": true
+        },
+        {
+         "on": "guide pages",
+         "do": "focus",
+         "sel": "#guide",
+         "soft": true
+        },
+        {
+         "on": "explainers",
+         "do": "focus",
+         "sel": "#exp",
+         "soft": true
+        },
+        {
+         "on": "Then",
+         "do": "unfocus"
+        },
+        {
+         "on": "Then",
+         "do": "state+",
+         "value": "next"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "welcome-first",
+     "label": "The welcome first",
+     "desc": "The best first minute; waits on a canvas round.",
+     "lines": [
+      {
+       "text": "Or design the welcome first. It's the best first minute, but the cheap fixes wait on a canvas round.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "unfocus"
+        },
+        {
+         "at": 0,
+         "do": "state",
+         "value": ""
+        },
+        {
+         "on": "welcome",
+         "do": "state",
+         "value": "welcome"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "sample-project",
+     "label": "A Meet Duo sample project",
+     "desc": "About a week, and it has to stay true as Duo changes.",
+     "lines": [
+      {
+       "text": "Or a sample project to poke at. That's about a week, and it has to stay true as Duo changes.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "unfocus"
+        },
+        {
+         "at": 0,
+         "do": "state",
+         "value": ""
+        },
+        {
+         "on": "sample",
+         "do": "state",
+         "value": "sample"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "q512-director",
+   "kind": "decision",
+   "q": "Q-512",
+   "title": "Starting the director",
+   "short": "Director",
+   "ask": "How should a user start the director?",
+   "why": "Aram couldn't tell how. Today you type it, and the guide has no page on it.",
+   "look": [
+    {
+     "label": "Research · 2.4 Starting the director",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/aram-feedback.md#24-starting-the-director"
+    }
+   ],
+   "sceneFile": "scenes/q512.html",
+   "lines": [
+    {
+     "text": "Aram's example was the director. How should someone start one?",
+     "cues": [
+      {
+       "at": 0,
+       "do": "show",
+       "sel": "#side"
+      }
+     ]
+    },
+    {
+     "text": "Today you type, be the director, in a session. It works, and nobody would guess it.",
+     "cues": [
+      {
+       "on": "type",
+       "do": "show",
+       "sel": "#typed"
+      },
+      {
+       "on": "nobody",
+       "do": "focus",
+       "sel": "#typed",
+       "soft": true
+      },
+      {
+       "at": 0.95,
+       "do": "unfocus"
+      }
+     ]
+    }
+   ],
+   "options": [
+    {
+     "id": "menu-item",
+     "label": "Project › Start Director, plus an explainer",
+     "desc": "On duo2 director start, which already exists.",
+     "recommended": true,
+     "lines": [
+      {
+       "text": "I'd add Start Director to the Project menu, on the verb that already exists, plus an explainer.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "unfocus"
+        },
+        {
+         "at": 0,
+         "do": "state",
+         "value": "menu"
+        },
+        {
+         "on": "Project menu",
+         "do": "tap",
+         "sel": "#mi-dir"
+        },
+        {
+         "on": "Project menu",
+         "delay": 0.7,
+         "do": "state",
+         "value": "slot"
+        },
+        {
+         "on": "explainer",
+         "do": "cursor-off"
+        },
+        {
+         "on": "explainer",
+         "do": "focus",
+         "sel": "#full",
+         "soft": true
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "menu-and-slot",
+     "label": "Also an empty director slot in the sidebar",
+     "desc": "Most discoverable; a new mark on an approved screen, so a canvas round.",
+     "lines": [
+      {
+       "text": "Or also draw an empty director slot at the top of the sidebar. It's the most discoverable, and it needs the canvas first.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "unfocus"
+        },
+        {
+         "at": 0,
+         "do": "state",
+         "value": "empty"
+        },
+        {
+         "on": "empty",
+         "do": "focus",
+         "sel": "#empty"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "teach-phrase",
+     "label": "Only teach the phrase",
+     "desc": "A guide page and an explainer; no new control.",
+     "lines": [
+      {
+       "text": "Or only teach the phrase, in the guide and an explainer.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "unfocus"
+        },
+        {
+         "at": 0,
+         "do": "state",
+         "value": "teach"
+        },
+        {
+         "on": "guide",
+         "do": "focus",
+         "sel": "#guide",
+         "soft": true
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "q513-claude",
+   "kind": "decision",
+   "q": "Q-513",
+   "title": "What Duo tells Claude",
+   "short": "Tell Claude",
+   "ask": "What more should Duo tell Claude about being inside Duo?",
+   "why": "Aram wants files to show up on the right. Only Claude can open one without a click.",
+   "look": [
+    {
+     "label": "Research · 3.3 Proposal",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/aram-feedback.md#33-proposal-q-513"
+    }
+   ],
+   "sceneFile": "scenes/q513.html",
+   "lines": [
+    {
+     "text": "What more should Duo tell Claude?",
+     "cues": [
+      {
+       "at": 0,
+       "do": "show",
+       "sel": "#primer, #w"
+      }
+     ]
+    },
+    {
+     "text": "The primer is the right place. It's rebuilt with every version, and it touches none of your files.",
+     "cues": [
+      {
+       "on": "primer",
+       "do": "focus",
+       "sel": "#primer",
+       "soft": true
+      },
+      {
+       "on": "touches",
+       "do": "show",
+       "sel": "#why"
+      },
+      {
+       "at": 0.95,
+       "do": "unfocus"
+      }
+     ]
+    }
+   ],
+   "options": [
+    {
+     "id": "one-sentence",
+     "label": "One sentence, and fix the links in Duo",
+     "desc": "File names are links; open a finished document with duo2 doc open.",
+     "recommended": true,
+     "lines": [
+      {
+       "text": "I'd add one sentence. File names in replies are links, and when you finish a document, open it for the user. That's the part only Claude can do. The file shows up on the right, with no click.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "unfocus"
+        },
+        {
+         "at": 0,
+         "do": "state",
+         "value": ""
+        },
+        {
+         "on": "one sentence",
+         "do": "state",
+         "value": "one"
+        },
+        {
+         "on": "shows up",
+         "do": "focus",
+         "sel": "#rp"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "duo-side-only",
+     "label": "Fix the links in Duo only",
+     "desc": "Tell Claude nothing new.",
+     "lines": [
+      {
+       "text": "Or tell Claude nothing new. Files are clickable, but they never open by themselves.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "unfocus"
+        },
+        {
+         "at": 0,
+         "do": "state",
+         "value": ""
+        },
+        {
+         "on": "clickable",
+         "do": "state",
+         "value": "duo"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "per-mode",
+     "label": "A fuller convention, per mode",
+     "desc": "Chat and terminal variants, sent again when the view changes.",
+     "lines": [
+      {
+       "text": "Or a fuller convention, with chat and terminal variants. It costs tokens, goes stale when you switch views, and in the test Claude ignored the finer rule.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "unfocus"
+        },
+        {
+         "at": 0,
+         "do": "state",
+         "value": ""
+        },
+        {
+         "on": "fuller",
+         "do": "state",
+         "value": "full"
+        },
+        {
+         "on": "ignored",
+         "do": "focus",
+         "sel": "#primer",
+         "soft": true
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "q514-spelling",
+   "kind": "decision",
+   "q": "Q-514",
+   "title": "Colour or Color",
+   "short": "Spelling",
+   "ask": "Should the menu say Window Colour or Window Color?",
+   "why": "Aram's nit. The app says Colour; macOS beside it says Color on a US Mac.",
+   "look": [
+    {
+     "label": "Research · 1.5 Window Colour in the menu",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/aram-feedback.md#15-window-colour-in-the-menu"
+    }
+   ],
+   "sceneFile": "scenes/q514.html",
+   "lines": [
+    {
+     "text": "Now Aram's nit. The menu says Window Colour, with a U.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "show",
+       "sel": "#wm"
+      },
+      {
+       "on": "with a U",
+       "do": "focus",
+       "sel": "#mi-c"
+      }
+     ]
+    },
+    {
+     "text": "Those six strings are the app's only use of either spelling, and macOS beside it says Color.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "unfocus"
+      },
+      {
+       "on": "six",
+       "do": "show",
+       "sel": "#six"
+      },
+      {
+       "on": "macOS",
+       "do": "show",
+       "sel": "#sys"
+      }
+     ]
+    }
+   ],
+   "options": [
+    {
+     "id": "american",
+     "label": "Window Color",
+     "desc": "US spelling in the app's own words; duo2 window colour stays as an alias.",
+     "recommended": true,
+     "lines": [
+      {
+       "text": "I'd use American spelling in the app's own words, and keep the old verb working.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "state",
+         "value": ""
+        },
+        {
+         "on": "American",
+         "do": "state",
+         "value": "us"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "keep",
+     "label": "Keep Window Colour",
+     "desc": "Matches the docs; reads as a typo on a US Mac.",
+     "lines": [
+      {
+       "text": "Or keep it. It matches the docs, and it reads as a typo on a US Mac.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "state",
+         "value": ""
+        },
+        {
+         "on": "typo",
+         "do": "focus",
+         "sel": "#mi-c"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "localize",
+     "label": "Localize both",
+     "desc": "en-GB and en-US; a lot of machinery for six strings.",
+     "lines": [
+      {
+       "text": "Or localize for both. Correct, and a lot of machinery for six strings.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "unfocus"
+        },
+        {
+         "at": 0,
+         "do": "state",
+         "value": "loc"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "q515-project",
+   "kind": "decision",
+   "q": "Q-515",
+   "title": "Showing the project you're in",
+   "short": "Projects",
+   "ask": "How should Duo show which project you're in, and what a project is?",
+   "why": "Aram's biggest onboarding problem, and the second new user to report it.",
+   "look": [
+    {
+     "label": "Research · 1.6 What project am I in?",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/aram-feedback.md#16-what-project-am-i-in-how-is-a-project-defined-second-round"
+    }
+   ],
+   "sceneFile": "scenes/q515.html",
+   "lines": [
+    {
+     "text": "So how should Duo show which project you're in?",
+     "cues": [
+      {
+       "at": 0,
+       "do": "show",
+       "sel": "#w"
+      }
+     ]
+    },
+    {
+     "text": "Today the folder appears once, as an unlabeled grey line in the sidebar.",
+     "cues": [
+      {
+       "on": "folder",
+       "do": "focus",
+       "sel": "#path"
+      },
+      {
+       "at": 0.95,
+       "do": "unfocus"
+      }
+     ]
+    }
+   ],
+   "options": [
+    {
+     "id": "say-it-now",
+     "label": "Say it where he looked, now; a project list on the canvas next",
+     "desc": "The folder on the project's name and on New Session, a Projects explainer, the guide fixed.",
+     "recommended": true,
+     "lines": [
+      {
+       "text": "I'd say it where he looked, now. The folder on the project's name and on New Session, plus a Projects explainer. Then a canvas round on a project list in the left nav.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "state",
+         "value": ""
+        },
+        {
+         "on": "folder",
+         "do": "state",
+         "value": "tips"
+        },
+        {
+         "on": "canvas",
+         "do": "state",
+         "value": "nav"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "canvas-first",
+     "label": "The canvas round first",
+     "desc": "One coherent change; nothing improves until it's designed.",
+     "lines": [
+      {
+       "text": "Or do the canvas round first and ship it all together. Nothing improves until it's designed.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "state",
+         "value": ""
+        },
+        {
+         "on": "canvas",
+         "do": "state",
+         "value": "nav"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "teach-only",
+     "label": "Guide and explainer only",
+     "desc": "Teaches the rule; the button still doesn't say where a session starts.",
+     "lines": [
+      {
+       "text": "Or only the guide and the explainer. That teaches the rule, but the button still doesn't say where it starts.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "state",
+         "value": ""
+        },
+        {
+         "on": "guide",
+         "do": "state",
+         "value": "docs"
+        },
+        {
+         "on": "button",
+         "do": "focus",
+         "sel": "#nsb"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "q516-model",
+   "kind": "decision",
+   "q": "Q-516",
+   "title": "Starting on Opus",
+   "short": "Model",
+   "ask": "Aram wants every session on Opus and the work Macs start them on Sonnet. Should Duo do anything?",
+   "why": "Duo never picks the model. A managed default outranks the one Set as Default writes.",
+   "look": [
+    {
+     "label": "Research · 1.7 Every session starts on Sonnet",
+     "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/aram-feedback.md#17-every-session-starts-on-sonnet-he-wants-opus-second-round"
+    }
+   ],
+   "sceneFile": "scenes/q516.html",
+   "lines": [
+    {
+     "text": "Last, the Opus gripe. Aram wants every session on Opus, and the work Macs put them back on Sonnet.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "show",
+       "sel": "#hd, #r-man, #r-user, #res"
+      }
+     ]
+    },
+    {
+     "text": "Duo never picks the model. Claude's settings do, and a managed default outranks the one that Set as Default writes.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "show",
+       "sel": "#none"
+      },
+      {
+       "on": "managed",
+       "do": "focus",
+       "sel": "#r-man"
+      },
+      {
+       "on": "managed",
+       "do": "show",
+       "sel": "#wins"
+      }
+     ]
+    },
+    {
+     "text": "I tested a stand-in for that. One line in his own settings beat the higher default, and it reaches Duo's sessions too.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "unfocus"
+      },
+      {
+       "on": "One line",
+       "do": "state",
+       "value": "env"
+      },
+      {
+       "on": "beat",
+       "do": "focus",
+       "sel": "#r-env, #res",
+       "soft": true
+      },
+      {
+       "at": 0.95,
+       "do": "unfocus"
+      }
+     ]
+    }
+   ],
+   "options": [
+    {
+     "id": "document-the-line",
+     "label": "No model setting in Duo; put the line in the guide",
+     "desc": "DL-153 stands. Check it on a work Mac.",
+     "recommended": true,
+     "lines": [
+      {
+       "text": "I'd keep Duo out of model choice, put that line in the guide, and check it on a work Mac.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "state",
+         "value": "env"
+        },
+        {
+         "on": "Duo out",
+         "do": "focus",
+         "sel": "#none",
+         "soft": true
+        },
+        {
+         "on": "work Mac",
+         "do": "unfocus"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "duo-setting",
+     "label": "A Duo setting for new sessions' model",
+     "desc": "One click; reverses DL-153 and sets the same variable.",
+     "lines": [
+      {
+       "text": "Or add a Duo setting for the model new sessions start on. It's one click, but it reverses your decision that Duo carries no model logic.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "unfocus"
+        },
+        {
+         "at": 0,
+         "do": "state",
+         "value": "setting"
+        },
+        {
+         "on": "reverses",
+         "do": "focus",
+         "sel": "#none"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "read-shell-env",
+     "label": "Duo reads the shell's environment",
+     "desc": "Sessions in Duo match Terminal's; only helps if the problem is only in Duo.",
+     "lines": [
+      {
+       "text": "Or have Duo read the shell's environment, so its sessions match Terminal's. That only helps if the problem is only in Duo.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "unfocus"
+        },
+        {
+         "at": 0,
+         "do": "state",
+         "value": "shell"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "wrap",
+   "title": "That's all seven",
+   "short": "Done",
+   "final": true,
+   "sceneFile": "scenes/wrap.html",
+   "lines": [
+    {
+     "text": "That's all seven.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "show",
+       "sel": "#done, #list"
+      }
+     ]
+    },
+    {
+     "text": "The small fixes need no decision, so they're logged as builds.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "show",
+       "sel": "#builds"
+      }
+     ]
+    },
+    {
+     "text": "Thanks to Aram for the notes. There's a reply drafted for him in the research doc.",
+     "cues": [
+      {
+       "on": "Thanks",
+       "do": "show",
+       "sel": "#thanks"
+      },
+      {
+       "on": "Thanks",
+       "do": "focus",
+       "sel": "#thanks",
+       "soft": true
+      }
+     ]
+    }
+   ]
+  }
+ ]
 }
