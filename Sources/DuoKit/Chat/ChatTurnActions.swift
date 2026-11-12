@@ -1,0 +1,140 @@
+import SwiftUI
+
+// Actions on a chat turn (DL-338): a quiet row under the turn on hover. This file is the turn
+// model (what a turn copies as, which turns can be acted on) and the row. Rewind and Fork come in
+// their own files and plug into the same row.
+
+/// What a turn puts on the clipboard (Q-509): the turn's words as Markdown.
+public enum ChatTurnCopy {
+    /// Yours as typed; each picture as `[Image #n]` (the transcript keeps the pictures apart from the text).
+    public static func markdown(you: ChatYou) -> String {
+        let pictures = you.images.indices.map { "[Image #\($0 + 1)]" }
+        return (pictures + [you.text]).filter { !$0.isEmpty }.joined(separator: "\n")
+    }
+
+    /// Claude's text segments, trimmed and joined by a blank line; no thinking, tool calls or questions.
+    public static func markdown(turn: ChatTurn) -> String {
+        turn.segments.compactMap { seg -> String? in
+            guard case .text(let t) = seg else { return nil }
+            let s = t.markdown.trimmingCharacters(in: .whitespacesAndNewlines)
+            return s.isEmpty ? nil : s
+        }.joined(separator: "\n\n")
+    }
+
+    /// The item's copy text, nil for items that aren't a turn.
+    public static func markdown(item: ChatItem) -> String? {
+        switch item {
+        case .you(let y): markdown(you: y)
+        case .claude(let t): markdown(turn: t)
+        default: nil
+        }
+    }
+}
+
+/// One of the buttons in a turn's row.
+enum ChatTurnAction: String, CaseIterable {
+    case copy = "Copy", rewind = "Rewind", fork = "Fork"
+}
+
+extension ChatSession {
+    /// The actions a turn's row offers (board 1): Copy, Rewind, Fork under yours; Copy, Fork under Claude's.
+    func turnActions(for id: String) -> [ChatTurnAction] {
+        switch log.items.first(where: { $0.id == id }) {
+        case .you?, .claude?: [.copy]
+        default: []
+        }
+    }
+
+    /// A turn still being written has no row.
+    func turnIsFinished(_ id: String) -> Bool {
+        guard let last = log.items.last else { return true }
+        if last.id == id, case .claude(let t) = last {
+            if screen.kind == .busy { return false }
+            return !t.segments.contains { if case .text(let x) = $0 { return x.streaming } else { return false } }
+        }
+        return true
+    }
+
+    /// Copy the turn `id` (its row's Copy, the Chat menu, `duo2 session copy-turn`). False when there's nothing to copy.
+    @discardableResult
+    func copyTurn(_ id: String) -> Bool {
+        guard let item = log.items.first(where: { $0.id == id }), let text = ChatTurnCopy.markdown(item: item), !text.isEmpty else { return false }
+        FileActions.copy(text)
+        ui.copiedTurn = id
+        let stamp = Date()
+        ui.copiedAt = stamp
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(1.5))
+            if let self, self.ui.copiedAt == stamp { self.ui.copiedTurn = nil }
+        }
+        return true
+    }
+}
+
+/// The row: 22 high buttons, radius 6, a 1 pt `controlEdge` edge on `pane`, a 12 icon in `text2` and the label (board 1).
+struct ChatTurnRow: View {
+    let turnId: String
+    let actions: [ChatTurnAction]
+    let chat: ChatSession
+
+    var body: some View {
+        HStack(spacing: 6) {
+            ForEach(actions, id: \.self) { a in button(a) }
+        }
+        .frame(height: 22)
+    }
+
+    @ViewBuilder func button(_ a: ChatTurnAction) -> some View {
+        let copied = a == .copy && chat.ui.copiedTurn == turnId
+        let label = copied ? "Copied" : a.rawValue
+        HStack(spacing: 5) {
+            Group {
+                if copied { CheckMark().stroke(DuoColor.text2, style: StrokeStyle(lineWidth: 1.4, lineCap: .round, lineJoin: .round)) }
+                else { CopyMark().stroke(DuoColor.text2, style: StrokeStyle(lineWidth: 1.2, lineCap: .round)) }
+            }.frame(width: 12, height: 12)
+            Text(label).duoText(.chatMeta).foregroundStyle(DuoColor.text)
+        }
+        .padding(.horizontal, 8)
+        .frame(height: 22)
+        .background(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).fill(DuoColor.pane))
+        .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).strokeBorder(DuoColor.controlEdge, lineWidth: DuoMetric.borderHairline))
+        .contentShape(Rectangle())
+        .onActivate { perform(a) }
+        .help(a.rawValue)
+        .accessibilityLabel(a.rawValue)
+    }
+
+    func perform(_ a: ChatTurnAction) {
+        switch a {
+        case .copy: chat.copyTurn(turnId)  // action: session copy-turn
+        case .rewind, .fork: break
+        }
+    }
+}
+
+/// The check that replaces Copy's icon for 1.5 s (board 2).
+struct CheckMark: Shape {
+    func path(in r: CGRect) -> Path {
+        let s = r.width / 12
+        var p = Path()
+        p.move(to: .init(x: 2 * s, y: 6.5 * s)); p.addLine(to: .init(x: 4.8 * s, y: 9 * s)); p.addLine(to: .init(x: 10 * s, y: 3 * s))
+        return p
+    }
+}
+
+extension View {
+    /// Shows the turn's row under it while the pointer is on the turn or the row (the row hangs
+    /// below the turn, into the gap to the next one, so it moves nothing).
+    func turnRow(id: String, chat: ChatSession, trailing: Bool, showRow: Bool = true) -> some View {
+        let actions = showRow && chat.ui.hoverTurn == id ? chat.turnActions(for: id) : []
+        let show = !actions.isEmpty && chat.turnIsFinished(id)
+        return self
+            .overlay(alignment: trailing ? .bottomTrailing : .bottomLeading) {
+                if show { ChatTurnRow(turnId: id, actions: actions, chat: chat).offset(y: 26) }
+            }
+            .onHover { inside in
+                if inside { chat.ui.hoverTurn = id } else if chat.ui.hoverTurn == id { chat.ui.hoverTurn = nil }
+            }
+            .zIndex(show ? 1 : 0)
+    }
+}

@@ -1182,6 +1182,7 @@ func spikeScreen(_ name: String) -> String {
 
     chatChipChecks()
     chatFooterChecks()
+    chatTurnActionChecks()
     chatFallbackReportChecks()
     try chatRequestChecks()
     try trustStartChecks()

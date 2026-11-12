@@ -19,6 +19,10 @@ public final class ChatUIState {
     /// Your long messages shown in full.
     public var fullYou: Set<String> = []
     public var thinkingOpen: Set<String> = []
+    /// The turn under the pointer (its row shows), and the turn whose Copy just ran (DL-338).
+    public var hoverTurn: String?
+    public var copiedTurn: String?
+    var copiedAt: Date?
     /// Plan option 3's feedback, the free-text answers by question, a preview's notes.
     public var planFeedback = ""
     public var other: [Int: String] = [:]
@@ -292,6 +296,7 @@ struct ChatYouBubble: View {
             if you.queued { Text("Queued · Claude reads it when it’s ready").duoText(.chatMeta).foregroundStyle(DuoColor.text2) }
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
+        .turnRow(id: you.id, chat: chat, trailing: true)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("You: \(you.text)\(you.images.isEmpty ? "" : ", \(you.images.count) picture\(you.images.count == 1 ? "" : "s")")")
     }
@@ -492,6 +497,7 @@ struct ChatClaudeCard: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(UnevenRoundedRectangle(cornerRadii: DuoMetric.radiusChatCard).fill(DuoColor.pane))
         }
+        .turnRow(id: turn.id, chat: chat, trailing: false)
         .padding(.trailing, DuoSpace.chatCardTrailing)
     }
 
