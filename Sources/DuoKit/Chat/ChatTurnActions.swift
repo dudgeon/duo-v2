@@ -40,7 +40,8 @@ extension ChatSession {
     /// The actions a turn's row offers (board 1): Copy, Rewind, Fork under yours; Copy, Fork under Claude's.
     func turnActions(for id: String) -> [ChatTurnAction] {
         switch log.items.first(where: { $0.id == id }) {
-        case .you?, .claude?: [.copy]
+        case .you?: (canRewind(id) ? [.copy, .rewind] : [.copy]) + (forkPlan(id) != nil ? [.fork] : [])
+        case .claude?: [.copy] + (forkPlan(id) != nil ? [.fork] : [])
         default: []
         }
     }

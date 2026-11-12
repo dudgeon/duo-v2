@@ -34,6 +34,9 @@ import Foundation
     check(chat.turnID(for: "2") == "t0" && chat.turnID(for: "cccccccc") == "y1" && chat.turnID(for: "cccccccc-3333") == "y1"
           && chat.turnID(for: "9") == nil && chat.turnID(for: "ccc") == nil, "a turn is named by its number or its uuid (8 characters or more)")
     check(chat.menuTurnID == "y1" && chat.menuReplyID == nil, "the Chat menu acts on the latest message when none is selected")
+    check(chat.turnActions(for: "y0") == [.copy, .rewind, .fork] && chat.turnActions(for: "t0") == [.copy, .fork] && chat.turnActions(for: "t1") == [], "the row: Copy, Rewind, Fork under your message; Copy, Fork under Claude’s; none under a note")
+    chat.log.items.append(.you(ChatYou(id: "y9", text: "no id yet")))
+    check(chat.turnActions(for: "y9") == [.copy], "a message the transcript has no id for yet offers Copy only")
     chat.ui.selectedTurn = "y0"
     check(chat.menuTurnID == "y0" && chat.menuReplyID == "t0", "and on the selected one, whose reply follows it")
     check(chat.copyTurn("t0") && chat.ui.copiedTurn == "t0" && !chat.copyTurn("n0"), "Copy marks the turn copied for 1.5 s; a note has nothing to copy")
