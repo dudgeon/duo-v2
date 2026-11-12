@@ -37,7 +37,7 @@ private func rewindPrompt(_ version: String, _ text: String) -> String {
 
     for v in ["2.1.284", "2.1.316"] {
         // A scripted TUI that is the real menu: each key moves to the screen the real run showed.
-        func drive(code: Bool, tweak: ((String) -> String)? = nil) -> (ChatAnswerResult?, [String], ChatSession) {
+        func drive(code: Bool, keep: Bool = true, tweak: ((String) -> String)? = nil) -> (ChatAnswerResult?, [String], ChatSession) {
             let tui = FakeTUI(rewindScreen(v, "00-after-turns"))
             var typed = ""
             var step = 0   // 0 idle, 1 list, 2 up1, 3 up2, 4 confirm, 5 confirm-down, 6 done
@@ -49,6 +49,7 @@ private func rewindPrompt(_ version: String, _ text: String) -> String {
                 else if k == ChatKey.up.bytes, (1...2).contains(step) { step += 1; show(t) }
                 else if k == ChatKey.down.bytes, step == 4 { step = 5; show(t) }
                 else if k == ChatKey.up.bytes, step == 5 { step = 4; show(t) }
+                else if k == ChatKey.esc.bytes, step == 6 { typed = ""; step = 0; show(t) }
             }
             let chat = ChatSession(key: "rw-\(v)-\(code)", mode: .chat)
             chat.setVersion(v)
@@ -58,7 +59,7 @@ private func rewindPrompt(_ version: String, _ text: String) -> String {
                 chat.log.items.append(.claude(ChatTurn(id: "turn-\(i)", uuid: "a\(i)")))
             }
             var r: ChatAnswerResult?
-            Task { r = await chat.rewind(toPrompt: "you-1", code: code) }
+            Task { r = await chat.rewind(toPrompt: "you-1", code: code, keepPrompt: keep) }
             spin(3.0)
             return (r, tui.keys, chat)
         }
@@ -70,6 +71,12 @@ private func rewindPrompt(_ version: String, _ text: String) -> String {
         check(prompts == ["hello"], "\(v): the log drops “write A” and what came after (\(prompts))")
         check(chat.ui.composer == "write A", "\(v): the prompt waits in the composer (\(chat.ui.composer))")
         check(chat.log.items.contains { if case .note(let n) = $0 { n.text.hasPrefix("Rewound to before “write A”") } else { false } }, "\(v): a quiet line says where")
+
+        // A fork from Claude's reply: the same rewind, the message not wanted in the copy: no note, no composer text, the prompt cleared.
+        let (rf, kf, cf) = drive(code: false, keep: false)
+        check(rf?.ok == true && Array(kf.suffix(2)) == [ChatKey.esc.bytes, ChatKey.esc.bytes] && cf.ui.composer.isEmpty
+              && !cf.log.items.contains { if case .note = $0 { true } else { false } },
+              "\(v): a fork from a reply drops the rewound message from Claude’s prompt (Esc, Esc) and says nothing in the copy (\(rf?.why ?? "-"))")
 
         let (rc, kc, _) = drive(code: true)
         check(rc?.ok == true && Array(kc.suffix(2)) == [ChatKey.enter.bytes, ChatKey.enter.bytes] && !kc.contains(ChatKey.down.bytes), "\(v): with the files, the first option (no Down) is taken (\(rc?.why ?? "-"))")
@@ -92,6 +99,18 @@ private func rewindPrompt(_ version: String, _ text: String) -> String {
     Task { rb = await busy.rewind(toPrompt: "you-0", code: false) }
     spin(0.4)
     check(rb?.ok == false && busyTUI.keys.isEmpty, "while Claude works, rewind sends nothing (\(rb?.why ?? "-"))")
+
+    // Fork from a turn (Q-508): from your message, the copy rewinds to before it and keeps it for the composer; from a
+    // reply, to before your next message and drops it; from the latest reply, nothing to rewind.
+    let forked = ChatSession(key: "fork-plan", mode: .chat)
+    forked.log.items = [.you(ChatYou(id: "y0", uuid: "u0", text: "one")), .claude(ChatTurn(id: "t0", uuid: "a0")),
+                        .you(ChatYou(id: "y1", uuid: "u1", text: "two")), .claude(ChatTurn(id: "t1", uuid: "a1")),
+                        .you(ChatYou(id: "y2", uuid: nil, text: "three, not in the transcript yet"))]
+    check(forked.forkPlan("y1") == .rewind(promptUuid: "u1", keepPrompt: true), "a fork from your message rewinds the copy to before it and keeps it for the composer")
+    check(forked.forkPlan("t0") == .rewind(promptUuid: "u1", keepPrompt: false), "a fork from Claude’s reply rewinds to before your next message, and drops it")
+    check(forked.forkPlan("t1") == nil && forked.forkPlan("y2") == nil, "a turn whose next message the transcript doesn’t have yet can’t be forked from (nothing guessed)")
+    forked.log.items.removeLast()
+    check(forked.forkPlan("t1") == .whole, "a fork from the latest reply is the plain fork")
 
     // The sheet (board 3): files named when the turns changed some; Conversation only is the default every time.
     let sheet = ChatSession(key: "rw-sheet", mode: .chat)

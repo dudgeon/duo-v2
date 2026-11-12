@@ -88,7 +88,7 @@ extension ChatSession {
     /// Rewinds the conversation to before the prompt `uuid` (and the files too, with `code`), by working Claude
     /// Code's `/rewind` menu. The sheet has been answered. On success the prompt is in the composer and the removed turns
     /// have left the log; on a refusal the terminal is showing, with why.
-    public func rewind(toPrompt id: String, code: Bool) async -> ChatAnswerResult {
+    public func rewind(toPrompt id: String, code: Bool, keepPrompt: Bool = true) async -> ChatAnswerResult {
         let prompts = rewindablePrompts
         guard let index = prompts.firstIndex(where: { $0.id == id }) else { return .refused("that message isn’t in the conversation any more") }
         let target = prompts[index]
@@ -154,7 +154,8 @@ extension ChatSession {
             let r = reread()
             if r.kind == .idle, readMenu() == nil {
                 if ChatRewindReader.same(r.input ?? "", target.text) || (r.input ?? "").chatNorm.hasPrefix(String(target.text.chatNorm.prefix(20))) {
-                    land(afterRewindTo: target, code: code)
+                    land(afterRewindTo: target, code: code, keepPrompt: keepPrompt)
+                    if !keepPrompt { await clearPrompt() }
                     return .done
                 }
             }
@@ -179,13 +180,60 @@ extension ChatSession {
 
     /// The rewind happened: the prompt and everything after it leave the log, and the prompt waits in the composer.
     /// (Claude Code writes nothing to the transcript until the next prompt, F-652, so the log is cut here.)
-    func land(afterRewindTo y: ChatYou, code: Bool) {
+    func land(afterRewindTo y: ChatYou, code: Bool, keepPrompt: Bool = true) {
         log.cut(from: y.id)
         feedRows = [:]
-        if ui.composer.isEmpty { ui.composer = y.text; ui.composerBasis = y.text }
-        let short = y.text.split(whereSeparator: \.isNewline).first.map(String.init) ?? y.text
-        let name = short.count > 40 ? String(short.prefix(40)) + "…" : short
-        log.append(note: "Rewound to before “\(name)”. \(code ? "Files put back." : "Files are as they were.")", id: "rewound-\(y.id)")
+        if keepPrompt {
+            if ui.composer.isEmpty { ui.composer = y.text; ui.composerBasis = y.text }
+            let short = y.text.split(whereSeparator: \.isNewline).first.map(String.init) ?? y.text
+            let name = short.count > 40 ? String(short.prefix(40)) + "…" : short
+            log.append(note: "Rewound to before “\(name)”. \(code ? "Files put back." : "Files are as they were.")", id: "rewound-\(y.id)")
+        }
         focusComposer += 1
+    }
+
+    /// Esc twice over a prompt that holds text clears it (F-652); used after a rewind whose prompt isn't wanted (a fork
+    /// from Claude's reply). If the prompt still holds text, it is left as it is.
+    func clearPrompt() async {
+        for _ in 0..<2 { terminal?.sendKeys(ChatKey.esc.bytes); await pause(250_000_000) }
+        if (reread().input ?? "").isEmpty { ui.composer = ""; ui.composerBasis = nil }
+    }
+}
+
+/// Fork from a turn (Q-508): a whole fork, then a conversation-only rewind in the copy.
+public enum ChatForkPlan: Equatable, Sendable {
+    /// From Claude's latest reply: the fork as it is.
+    case whole
+    /// Rewind the copy to before the prompt with this uuid; `keepPrompt` puts it in the copy's composer (a fork from your message).
+    case rewind(promptUuid: String, keepPrompt: Bool)
+}
+
+extension ChatSession {
+    /// How to fork from the turn `id`, nil when it isn't a turn or the transcript doesn't have what the rewind needs yet.
+    /// From your message: the copy rewinds to before it. From Claude's reply: before your next message, and none after the latest.
+    public func forkPlan(_ id: String) -> ChatForkPlan? {
+        guard let at = log.items.firstIndex(where: { $0.id == id }) else { return nil }
+        switch log.items[at] {
+        case .you(let y):
+            guard !y.queued, let u = y.uuid else { return nil }
+            return .rewind(promptUuid: u, keepPrompt: true)
+        case .claude:
+            for item in log.items[(at + 1)...] {
+                if case .you(let y) = item, !y.queued {
+                    guard let u = y.uuid else { return nil }
+                    return .rewind(promptUuid: u, keepPrompt: false)
+                }
+            }
+            return .whole
+        default: return nil
+        }
+    }
+
+    /// Rewinds to the prompt the transcript calls `uuid` (the fork's log has its own item ids; the uuids are the original's).
+    public func rewind(toPromptUuid uuid: String, code: Bool = false, keepPrompt: Bool = true) async -> ChatAnswerResult {
+        guard case .you(let y)? = log.items.first(where: { if case .you(let y) = $0 { y.uuid == uuid } else { false } }) else {
+            return .refused("the fork doesn’t have that message")
+        }
+        return await rewind(toPrompt: y.id, code: code, keepPrompt: keepPrompt)
     }
 }

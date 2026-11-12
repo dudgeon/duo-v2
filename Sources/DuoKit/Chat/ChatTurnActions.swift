@@ -93,6 +93,7 @@ struct ChatTurnRow: View {
         HStack(spacing: 5) {
             Group {
                 if copied { CheckMark().stroke(icon, style: StrokeStyle(lineWidth: 1.4, lineCap: .round, lineJoin: .round)) }
+                else if a == .fork { ChatForkMark().stroke(icon, style: StrokeStyle(lineWidth: 1.2, lineCap: .round)) }
                 else if a == .rewind { RewindMark().stroke(icon, style: StrokeStyle(lineWidth: 1.2, lineCap: .round, lineJoin: .round)) }
                 else { CopyMark().stroke(icon, style: StrokeStyle(lineWidth: 1.2, lineCap: .round)) }
             }.frame(width: 12, height: 12)
@@ -112,7 +113,7 @@ struct ChatTurnRow: View {
         switch a {
         case .copy: chat.copyTurn(turnId)  // action: session copy-turn
         case .rewind: chat.askRewind(turnId)  // action: session rewind
-        case .fork: break
+        case .fork: chat.askFork(turnId)  // action: session fork --at
         }
     }
 }
@@ -149,8 +150,30 @@ struct RewindMark: Shape {
     func path(in r: CGRect) -> Path {
         let s = r.width / 12
         var p = Path()
-        p.addArc(center: .init(x: 6.4 * s, y: 6 * s), radius: 4 * s, startAngle: .degrees(190), endAngle: .degrees(120), clockwise: false)
+        // The board's `M2.2 5.5 A4 4 0 1 1 3.4 8.6`: the circle's centre is (6.19, 5.74); drawn as points, from 183.4° round to 494.3°.
+        let c = CGPoint(x: 6.19 * s, y: 5.74 * s)
+        for i in 0...24 {
+            let a = (183.4 + (494.3 - 183.4) * Double(i) / 24) * .pi / 180
+            let pt = CGPoint(x: c.x + 4 * s * cos(a), y: c.y + 4 * s * sin(a))
+            if i == 0 { p.move(to: pt) } else { p.addLine(to: pt) }
+        }
         p.move(to: .init(x: 1.2 * s, y: 2.6 * s)); p.addLine(to: .init(x: 2.2 * s, y: 5.6 * s)); p.addLine(to: .init(x: 5 * s, y: 4.5 * s))
+        return p
+    }
+}
+
+/// Fork's icon in the row: two nodes in a line and one branching off (board 1).
+struct ChatForkMark: Shape {
+    func path(in r: CGRect) -> Path {
+        let s = r.width / 12
+        var p = Path()
+        for (x, y) in [(3.0, 2.2), (3.0, 9.8), (9.0, 4.0)] {
+            p.addEllipse(in: CGRect(x: (x - 1.3) * s, y: (y - 1.3) * s, width: 2.6 * s, height: 2.6 * s))
+        }
+        p.move(to: .init(x: 3 * s, y: 3.5 * s)); p.addLine(to: .init(x: 3 * s, y: 8.5 * s))
+        p.move(to: .init(x: 9 * s, y: 5.3 * s))
+        p.addCurve(to: .init(x: 5 * s, y: 7.9 * s), control1: .init(x: 9 * s, y: 7.3 * s), control2: .init(x: 7 * s, y: 7.5 * s))
+        p.addLine(to: .init(x: 3.6 * s, y: 8.5 * s))
         return p
     }
 }

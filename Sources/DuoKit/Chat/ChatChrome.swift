@@ -157,6 +157,7 @@ extension AppModel {
         }
         let c = chats.session(t.key, home: isHomeTerminal(t))
         c.isShown = { [weak self, key = t.key] in self?.chatIsShown(key) ?? true }
+        c.onFork = { [weak self, key = t.key] turn in self?.forkFromTurn(sessionKey: key, turnId: turn) ?? false }
         // Claude Code's folder trust question at the start: Duo's sheet, then your answer on its screen (F-444).
         c.onTrustQuestion = { [weak self, weak c, cwd = t.cwd] path in
             guard let self, let c else { return false }
