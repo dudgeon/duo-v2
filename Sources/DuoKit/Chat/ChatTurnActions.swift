@@ -87,27 +87,32 @@ struct ChatTurnRow: View {
     @ViewBuilder func button(_ a: ChatTurnAction) -> some View {
         let copied = a == .copy && chat.ui.copiedTurn == turnId
         let label = copied ? "Copied" : a.rawValue
+        // Rewind and Fork wait while Claude works (board 1): dimmed, and "When Claude finishes" on hover.
+        let dim = a != .copy && chat.screen.kind == .busy
+        let icon = dim ? DuoColor.text2.opacity(0.55) : DuoColor.text2
         HStack(spacing: 5) {
             Group {
-                if copied { CheckMark().stroke(DuoColor.text2, style: StrokeStyle(lineWidth: 1.4, lineCap: .round, lineJoin: .round)) }
-                else { CopyMark().stroke(DuoColor.text2, style: StrokeStyle(lineWidth: 1.2, lineCap: .round)) }
+                if copied { CheckMark().stroke(icon, style: StrokeStyle(lineWidth: 1.4, lineCap: .round, lineJoin: .round)) }
+                else if a == .rewind { RewindMark().stroke(icon, style: StrokeStyle(lineWidth: 1.2, lineCap: .round, lineJoin: .round)) }
+                else { CopyMark().stroke(icon, style: StrokeStyle(lineWidth: 1.2, lineCap: .round)) }
             }.frame(width: 12, height: 12)
-            Text(label).duoText(.chatMeta).foregroundStyle(DuoColor.text)
+            Text(label).duoText(.chatMeta).foregroundStyle(dim ? DuoColor.text2 : DuoColor.text)
         }
         .padding(.horizontal, 8)
         .frame(height: 22)
         .background(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).fill(DuoColor.pane))
-        .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).strokeBorder(DuoColor.controlEdge, lineWidth: DuoMetric.borderHairline))
+        .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).strokeBorder(dim ? DuoColor.rule : DuoColor.controlEdge, lineWidth: DuoMetric.borderHairline))
         .contentShape(Rectangle())
-        .onActivate { perform(a) }
-        .help(a.rawValue)
+        .onActivate { if !dim { perform(a) } }
+        .help(dim ? "When Claude finishes" : a.rawValue)
         .accessibilityLabel(a.rawValue)
     }
 
     func perform(_ a: ChatTurnAction) {
         switch a {
         case .copy: chat.copyTurn(turnId)  // action: session copy-turn
-        case .rewind, .fork: break
+        case .rewind: chat.askRewind(turnId)  // action: session rewind
+        case .fork: break
         }
     }
 }
@@ -136,5 +141,16 @@ extension View {
                 if inside { chat.ui.hoverTurn = id } else if chat.ui.hoverTurn == id { chat.ui.hoverTurn = nil }
             }
             .zIndex(show ? 1 : 0)
+    }
+}
+
+/// Rewind's icon: an arrow turning back (board 1).
+struct RewindMark: Shape {
+    func path(in r: CGRect) -> Path {
+        let s = r.width / 12
+        var p = Path()
+        p.addArc(center: .init(x: 6.4 * s, y: 6 * s), radius: 4 * s, startAngle: .degrees(190), endAngle: .degrees(120), clockwise: false)
+        p.move(to: .init(x: 1.2 * s, y: 2.6 * s)); p.addLine(to: .init(x: 2.2 * s, y: 5.6 * s)); p.addLine(to: .init(x: 5 * s, y: 4.5 * s))
+        return p
     }
 }

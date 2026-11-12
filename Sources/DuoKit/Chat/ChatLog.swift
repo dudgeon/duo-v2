@@ -227,6 +227,18 @@ public final class ChatLog: @unchecked Sendable {
 
     public init() {}
 
+    /// Drops the item `id` and everything after it (a rewind: Claude Code writes nothing to the transcript until the next
+    /// prompt, so Duo cuts what it shows, DL-338).
+    func cut(from id: String) {
+        guard let i = items.firstIndex(where: { $0.id == id }) else { return }
+        items.removeSubrange(i...)
+        stepItem = stepItem.filter { $0.value < i }
+        turnStarted = nil
+    }
+
+    /// A quiet line at the end of the log.
+    func append(note text: String, id: String) { items.append(.note(ChatNote(id: id, text: text, time: nil))) }
+
     /// Empties the log (before a history replay).
     func reset() {
         items = []
