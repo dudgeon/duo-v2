@@ -827,6 +827,9 @@ extension DuoAction {
             + "not with Edit, Write or shell redirection. Duo applies it in the editor the user is looking at, highlighted, and merges it with their unsaved typing."
             + "\nTo check a Word document you made, fit the check to where it goes (for Google Docs, structure, not pixels): `duo2 doc outline` and `duo2 doc layout` (page and text width, tables and pictures against it), and `duo2 doc screenshot` to see it; the duo2 skill's \"Checking documents\" says more. Don't start soffice in the sandbox."
             + "\nTo read a PDF, `duo2 doc read <file.pdf>` gives its text with a `--- page N ---` line per page, then lists the pages that need a look (a scan, a figure); render one with `duo2 pdf render <file> <page>` and read the PNG, rather than reading the whole PDF as images."
+            + "\nFile names you write in a reply (`docs/plan.md`, `src/app.py:42`: a path from the project folder) are links the user can click to open the file beside the conversation; "
+            + "when you finish a document the user should read, open it for them with `duo2 doc open <path>`. Duo tells you at the start, and again when it changes, whether the user is reading in chat or in a terminal. "
+            + "The user's own CLAUDE.md and instructions win over any of this."
             + "\nTo track work, make Duo tasks (`duo2 task new`, one note each in the project's tasks/ folder) and set their status with `duo2 task status`; do not write a TASKS.md or a to-do list file."
             + "\nWhen you start substantial work, `duo2 session note \"<one line>\"`; when you hand back, `duo2 session next \"<one line>\"`."
         if let sessionID {

@@ -376,6 +376,8 @@ public enum TerminalKeys {
 /// SwiftTerm's view, with LR-14's floor: never shrink the terminal below 8 columns by 1 row,
 /// whatever its pane does (collapse animations pass through zero width).
 public final class GuardedTerminalView: LocalProcessTerminalView {
+    /// A ⌘-clicked link: true when Duo opened it (ENH-343 3); set by the slot that shows the view.
+    var onOpenLink: ((String) -> Bool)?
     static let minColumns: CGFloat = 8
     static let minRows: CGFloat = 1
 
@@ -707,6 +709,8 @@ struct TerminalSlot: NSViewRepresentable {
         slot.mic.session = session
         slot.mic.voice = model.voice
         slot.mic.onClick = { [weak model] in model?.toggleVoice(.terminal(key)) }  // action: voice start
+        let cwd = session.cwd
+        session.view.onOpenLink = { [weak model] link in model?.openTerminalLink(link, cwd: cwd) ?? false }
     }
 
     final class SlotView: NSView {
@@ -847,7 +851,11 @@ final class CopyCleaningDelegate: TerminalViewDelegate {
     func hostCurrentDirectoryUpdate(source: TerminalView, directory: String?) { base.hostCurrentDirectoryUpdate(source: source, directory: directory) }
     func send(source: TerminalView, data: ArraySlice<UInt8>) { base.send(source: source, data: data) }
     func scrolled(source: TerminalView, position: Double) { base.scrolled(source: source, position: position) }
-    func requestOpenLink(source: TerminalView, link: String, params: [String: String]) { base.requestOpenLink(source: source, link: link, params: params) }
+    func requestOpenLink(source: TerminalView, link: String, params: [String: String]) {
+        // ⌘-click goes through Duo's own link rule (ENH-343 3), not the Mac's default app.
+        if base.onOpenLink?(link) == true { return }
+        base.requestOpenLink(source: source, link: link, params: params)
+    }
     func bell(source: TerminalView) { base.bell(source: source) }
     func clipboardRead(source: TerminalView) -> Data? { base.clipboardRead(source: source) }
     func kittyClipboardCapabilities(source: TerminalView) -> KittyClipboardCapabilities { base.kittyClipboardCapabilities(source: source) }
