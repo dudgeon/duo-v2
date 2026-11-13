@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>D · A projects table (broad) [P]</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.root{position:relative;background:#FFFFFF;color:#1F2328;font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;font-size:13px;line-height:18px;overflow:hidden;display:flex;flex-direction:column}
+.tb{height:38px;flex:none;display:flex;align-items:center;gap:16px;padding:0 14px;background:#F3F4F6;border-bottom:1px solid #C9CDD3;white-space:nowrap}
+.dots{display:flex;gap:8px;margin-right:4px}
+.dots i{width:12px;height:12px;border-radius:50%;background:#C9CDD3;display:block}
+.cnt{color:#5B636D}
+.cnt.ny{color:#C2410C;font-weight:600}
+.srch{margin-left:auto;border:1px solid #C9CDD3;border-radius:6px;background:#FFFFFF;width:290px;padding:3px 10px;color:#5B636D}
+.body{flex:1;display:flex;min-height:0}
+.mid{flex:1;min-width:0;padding:14px 16px;display:flex;flex-direction:column;gap:10px;overflow:hidden;background:#FFFFFF}
+.right{width:340px;flex:none;border-left:1px solid #C9CDD3;padding:14px 12px;display:flex;flex-direction:column;gap:10px;background:#FFFFFF}
+.hdr{display:flex;gap:10px;align-items:center;font-size:12px}
+.seg{border:1px solid #8B939C;border-radius:6px;display:flex}
+.seg span{padding:2px 10px}
+.seg .on{background:#E9ECEF;font-weight:600}
+.flt{border:1px solid #C9CDD3;border-radius:6px;padding:2px 10px;width:230px;color:#5B636D}
+.pop{border:1px solid #8B939C;border-radius:6px;padding:2px 10px}
+.newp{border:1px dashed #8B939C;border-radius:6px;padding:2px 10px}
+.lab{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5B636D;display:flex;align-items:center;gap:8px}
+.lab .rl{flex:1;height:1px;background:#C9CDD3}
+.grid{display:grid;gap:12px;align-items:start}
+.tile{box-sizing:border-box;border:1px solid #C9CDD3;border-radius:8px;background:#FFFFFF;padding:11px 12px 6px;display:flex;flex-direction:column;min-width:0}
+.tile.home{border-color:#1F2328}
+.tile.foc{box-shadow:0 0 0 2px #1F2328}
+.tn{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tp{font-family:'SF Mono', ui-monospace, Menlo, monospace;font-size:11px;line-height:16px;color:#5B636D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tg{margin-top:2px}
+.th{color:#5B636D}
+.ss{margin-top:6px;display:flex;flex-direction:column}
+.sr{display:grid;grid-template-columns:16px minmax(0,1fr) auto;align-items:center;height:24px;gap:4px}
+.sr span:nth-child(2){white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sr .w{color:#5B636D;font-size:12px}
+.sr.open{background:#E8F0FA;margin:0 -6px;padding:0 6px;border-radius:4px}
+.more{color:#5B636D;height:22px;display:flex;align-items:center}
+.quiet{color:#5B636D;margin-top:6px;height:22px;display:flex;align-items:center}
+.ns{margin:4px -6px 0;padding:0 6px;height:24px;border-top:1px solid #E9ECEF;display:grid;grid-template-columns:16px minmax(0,1fr) auto;gap:4px;align-items:center;color:#5B636D;font-size:12px;background:none;border-left:0;border-right:0;border-bottom:0;font-family:inherit;text-align:left;width:calc(100% + 12px);cursor:default}
+.ns b{font-weight:400;font-size:14px;line-height:14px}
+.ns.hov{background:#E9ECEF;color:#1F2328;border-radius:0 0 7px 7px}
+.ns .k{font-size:11px;color:#5B636D}
+.g{width:16px;height:16px;display:flex;align-items:center;justify-content:center}
+.g i{display:block}
+.g .dot{width:8px;height:8px;border-radius:50%;background:#C2410C}
+.g .ring{width:8px;height:8px;border-radius:50%;border:1.5px solid #1F2328;box-sizing:border-box}
+.g .dash{width:9px;height:1.5px;background:#5B636D}
+.g .dia{width:7px;height:7px;background:#1F2328;transform:rotate(45deg)}
+.btn{border:1px solid #8B939C;border-radius:6px;padding:2px 9px;font-size:12px;line-height:16px;background:#FFFFFF;font-family:inherit;color:#1F2328;white-space:nowrap}
+.row{display:grid;grid-template-columns:minmax(0,1fr) 220px 80px;align-items:center;height:24px;color:#1F2328}
+.row .p{color:#5B636D}
+.row .w{text-align:right;color:#5B636D}
+.card{border:1px solid #C9CDD3;border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.q{border:1px solid #C2410C;border-radius:6px;padding:6px 10px}
+.ann{position:absolute;font-size:12px;line-height:17px;color:#1F2328;background:#FFF7D6;border:1px solid #D9C36A;border-radius:6px;padding:6px 9px;max-width:280px;z-index:5}
+.pm{display:inline-block;font-size:11px;line-height:15px;font-weight:600;color:#FFFFFF;background:#1F2328;border-radius:4px;padding:1px 6px;margin-right:4px;vertical-align:middle}
+.tip{position:absolute;background:#1F2328;color:#FFFFFF;font-size:11px;line-height:15px;border-radius:5px;padding:4px 8px;white-space:nowrap;z-index:4}
+.h1{font-size:28px;line-height:34px;font-weight:700}
+.h2{font-size:17px;line-height:24px;font-weight:600}
+.txt{font-size:14px;line-height:21px}
+.mut{color:#5B636D}
+.nsf{display:flex;align-items:center;margin:4px -6px 0;border-top:1px solid #E9ECEF}
+.nsf .ns{margin:0;border-top:0;flex:1;width:auto}
+.mk{border:0;background:none;font-family:inherit;font-size:12px;color:#1F2328;text-decoration:underline;text-underline-offset:2px;padding:0 6px;white-space:nowrap}
+.prow{display:grid;grid-template-columns:16px 190px minmax(0,1fr) 230px 56px 120px;gap:8px;align-items:center;height:28px;border-bottom:1px solid #E9ECEF}
+.prow .pp{font-family:'SF Mono', ui-monospace, Menlo, monospace;font-size:11px;color:#5B636D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .w{color:#5B636D;text-align:right;font-size:12px}
+.plus{border:0;background:none;font-family:inherit;font-size:12px;color:#5B636D;text-align:right;padding:0}
+.chip{border:1px solid #C9CDD3;border-radius:11px;padding:1px 9px;font-size:12px;color:#1F2328;white-space:nowrap}
+.chip.on{background:#1F2328;color:#FFFFFF;border-color:#1F2328}
+.th2{font-size:11px;font-weight:600;letter-spacing:.04em;color:#5B636D;text-transform:uppercase}
+.g .bub{width:10px;height:8px;border:1.3px solid #5B636D;border-radius:3px;box-sizing:border-box}
+
+</style>
+</helmet>
+<div class="root" style="width:1440px;height:900px">
+<div class="tb"><div class="dots"><i></i><i></i><i></i></div><span class="cnt">▯</span><strong>All projects</strong><span class="cnt ny">● 4 need you</span><span class="cnt">◆ 2 to review</span><span class="cnt">○ 3 working</span><span class="cnt">– 14 idle</span><span class="srch">Search all projects ⇧⌘A</span><span class="cnt">▯▯</span></div><div class="body"><div class="mid"><div class="hdr"><span class="seg"><span class="on">Projects</span><span>Sessions</span></span><span class="flt">Filter projects</span><span style="margin-left:auto" class="newp">+ New project</span><span class="mut">Group</span><span class="pop">None ⌃</span></div><div class="prow" style="height:24px"><span></span><span class="th2">Project ⌃</span><span class="th2">Folder</span><span class="th2">Status</span><span class="th2" style="text-align:right">Active</span><span></span></div><div class="lab"><span>Pinned · 3</span></div><div class="prow"><span class="g"><i class="dot"></i></span><span class="tn" style="font-weight:600">★ home</span><span class="pp">~/work/home</span><span class="mut" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Home · 21 sessions</span><span class="w">now</span><button type="button" class="plus" aria-label="New session in home">+</button></div><div class="prow"><span class="g"><i class="dot"></i></span><span class="tn" style="font-weight:600">checkout-redesign</span><span class="pp">~/work/home/payments/checkout-redesign</span><span class="mut" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">On track · Exec review Oct 14</span><span class="w">now</span><button type="button" class="plus" aria-label="New session in checkout-redesign">+</button></div><div class="prow"><span class="g"><i class="dot"></i></span><span class="tn" style="font-weight:600">onboarding-v3</span><span class="pp">~/work/home/growth/onboarding-v3</span><span class="mut" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">On track · Copy freeze Oct 6</span><span class="w">now</span><button type="button" class="plus" aria-label="New session in onboarding-v3">+</button></div><div class="lab"><span>All · 11</span></div><div class="prow"><span class="g"><i class="bub"></i></span><span class="tn" style="font-weight:500">q4-planning</span><span class="pp">~/work/home/q4-planning</span><span class="mut" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">At risk · Draft due Oct 9</span><span class="w">now</span><button type="button" class="plus" aria-label="New session in q4-planning">+</button></div><div class="prow" style="background:#E9ECEF"><span class="g"><i class="dia"></i></span><span class="tn" style="font-weight:500">pricing-experiment-q4</span><span class="pp">~/work/home/growth/pricing-experiment-q4</span><span class="mut" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">On track · Readout Oct 20</span><span class="w">now</span><button type="button" class="plus" style="color:#1F2328" title="New session in pricing-experiment-q4">+ New session</button></div><div class="prow"><span class="g"><i class="dot"></i></span><span class="tn" style="font-weight:500">board-deck</span><span class="pp">~/Desktop/board-deck</span><span class="mut" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">No project file</span><span class="w">now</span><button type="button" class="plus" aria-label="New session in board-deck">+</button></div><div class="prow"><span class="g"><i class="bub"></i></span><span class="tn" style="font-weight:500">site</span><span class="pp">~/repos/site</span><span class="mut" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Has CLAUDE.md · no project file</span><span class="w">now</span><button type="button" class="plus" aria-label="New session in site">+</button></div><div class="prow"><span class="g"></span><span class="tn" style="font-weight:500">vendor-review</span><span class="pp">~/work/home/vendor-review</span><span class="mut" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">On track</span><span class="w">3h</span><button type="button" class="plus" aria-label="New session in vendor-review">+</button></div><div class="prow"><span class="g"></span><span class="tn" style="font-weight:500">weekly-metrics</span><span class="pp">~/work/home/weekly-metrics</span><span class="mut" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">On track · Next Mon</span><span class="w">5h</span><button type="button" class="plus" aria-label="New session in weekly-metrics">+</button></div><div class="prow"><span class="g"></span><span class="tn" style="font-weight:500">payments-api</span><span class="pp">~/repos/payments-api</span><span class="mut" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Has CLAUDE.md · no project file</span><span class="w">2d</span><button type="button" class="plus" aria-label="New session in payments-api">+</button></div><div class="prow"><span class="g"></span><span class="tn" style="font-weight:500">api-deprecations</span><span class="pp">~/work/home/api-deprecations</span><span class="mut" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Off track</span><span class="w">4d</span><button type="button" class="plus" aria-label="New session in api-deprecations">+</button></div><div class="prow"><span class="g"></span><span class="tn" style="font-weight:500">research-notes</span><span class="pp">~/Documents/research-notes</span><span class="mut" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">No project file</span><span class="w">6d</span><button type="button" class="plus" aria-label="New session in research-notes">+</button></div><div class="prow"><span class="g"></span><span class="tn" style="font-weight:500">refunds-api-spec</span><span class="pp">~/work/home/payments/refunds-api-spec</span><span class="mut" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">At risk · Spec review Oct 8</span><span class="w">2w</span><button type="button" class="plus" aria-label="New session in refunds-api-spec">+</button></div><div class="prow"><span class="g"></span><span class="tn" style="font-weight:500">scripts</span><span class="pp">~/repos/scripts</span><span class="mut" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">No project file</span><span class="w">3w</span><button type="button" class="plus" aria-label="New session in scripts">+</button></div></div><div class="right"><div class="lab"><span>Needs you · 4</span></div><div class="card"><div style="display:flex;gap:6px;align-items:center"><span class="g"><i class="dot"></i></span><strong>Morning triage</strong><span class="mut" style="margin-left:auto">1h</span></div><span class="mut">★ home · question</span><div class="q">Send the weekly status as drafted?</div><div><span class="btn">Open Home</span></div></div><div class="card"><div style="display:flex;gap:6px;align-items:center"><span class="g"><i class="dot"></i></span><strong>Slide 7 numbers</strong><span class="mut" style="margin-left:auto">9m</span></div><span class="mut">board-deck · permission</span><div class="q">Run python3 chart.py?</div><div><span class="btn">Open project</span></div></div><div class="card"><div style="display:flex;gap:6px;align-items:center"><span class="g"><i class="dot"></i></span><strong>PRD v2 edits</strong><span class="mut" style="margin-left:auto">4m</span></div><span class="mut">checkout-redesign · question</span></div><div class="card"><div style="display:flex;gap:6px;align-items:center"><span class="g"><i class="dot"></i></span><strong>Copy review pass 2</strong><span class="mut" style="margin-left:auto">12m</span></div><span class="mut">onboarding-v3 · permission</span></div><div class="lab"><span>Ready for review · 2</span></div><div class="card"><div style="display:flex;gap:6px;align-items:center"><span class="g"><i class="dia"></i></span><strong>Results readout</strong></div><span class="mut">pricing-experiment-q4</span></div></div></div><div class="ann" style="left:20px;top:730px;max-width:300px"><span class="pm">P</span> Board | List becomes Projects | Sessions: a table of projects next to the List of sessions. Headers sort; Group ⌄ is shared with B (Activity, Folder, None).</div><div class="ann" style="left:370px;top:730px;max-width:330px"><span class="pm">P</span> The densest view, and it works best with 60 or more folders. But it loses what makes a tile useful: a project's live sessions at a glance. Inside a project you'd still see them, and here only as a glyph. Better as an extra view later (ENH-351) than in place of the Board.</div><div class="ann" style="left:720px;top:730px;max-width:330px"><span class="pm">P</span> Each row ends in a quiet + (+ New session on hover, as drawn), with the same verb and tooltip as T1.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

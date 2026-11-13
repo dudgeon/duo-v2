@@ -1,0 +1,82 @@
+<title>All Projects Board Study</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one reading column for the words, boards full width under each heading. Duo's own neutrals and needs-you orange. */
+:root{
+  --bg:#F3F4F6; --pane:#FFFFFF; --fg:#1F2328; --fg2:#5B636D; --rule:#C9CDD3; --accent:#C2410C; --note:#FFF7D6; --noteEdge:#D9C36A;
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+  --mono:"SF Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#131518;--pane:#181A1E;--fg:#E6E8EB;--fg2:#9AA1AB;--rule:#2B2F36;--accent:#F97316;--note:#2E2A1C;--noteEdge:#6B5D2A;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#131518;--pane:#181A1E;--fg:#E6E8EB;--fg2:#9AA1AB;--rule:#2B2F36;--accent:#F97316;--note:#2E2A1C;--noteEdge:#6B5D2A;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:15px;line-height:1.55}
+.wrap{max-width:1180px;margin:0 auto;padding-block:40px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:28px}
+h1{font-size:30px;line-height:1.2;margin:0;text-wrap:balance}
+h2{font-size:20px;line-height:1.3;margin:0;text-wrap:balance}
+p{margin:0;max-width:68ch}
+.lede{color:var(--fg2)}
+.eyebrow{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:var(--fg2)}
+section{display:flex;flex-direction:column;gap:12px;min-width:0}
+figure{margin:0;background:var(--pane);border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+figure img{display:block;width:100%;height:auto}
+figcaption{font-size:13px;color:var(--fg2);padding:8px 12px;border-top:1px solid var(--rule)}
+.rec{color:var(--accent);font-weight:600}
+ol.q{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+ol.q li{background:var(--pane);border:1px solid var(--rule);border-radius:8px;padding:12px 14px;min-width:0}
+ol.q b{font-family:var(--mono);font-size:13px}
+.opts{color:var(--fg2);font-size:14px}
+.note{background:var(--note);border:1px solid var(--noteEdge);border-radius:8px;padding:12px 14px;font-size:14px}
+code{font-family:var(--mono);font-size:.9em}
+a{color:inherit}
+nav{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px}
+</style>
+<div class="wrap">
+<header style="display:flex;flex-direction:column;gap:10px">
+<span class="eyebrow">Duo design study · 2026-11-13 · nothing built · sample data</span>
+<h1>All projects' Board: organise by what's happening, not by Home</h1>
+<p class="lede">You said the Board wastes space (a tall stack under Home, empty space on the right), that many users don't keep a Home folder, and that the one New session control doesn't say which project it starts in. Four directions follow, from a small fix to a broad rethink, with a New session row on every tile in each of them. B is the recommendation. Every mark is a [P].</p>
+<nav aria-label="Boards"><a href="#why">01 Why</a><a href="#tile">T New session</a><a href="#b">B By activity</a><a href="#a">A Folder bands</a><a href="#c">C Flat</a><a href="#d">D Table</a><a href="#x">X Fit</a><a href="#decide">Decisions</a></nav>
+</header>
+
+<div class="note">These boards are also on the Design canvas, https://claude.ai/artifact/7zdNWzWyfrCPDgGtBot5M4, once their sources (in the repo at <code>docs/design/all-projects-board-study/canvas/project/</code>) are loaded there. This page shows the same boards as images.</div>
+
+<section><span class="eyebrow">Board 00</span><h2>The ask, the directions, the decisions</h2>
+<figure><img src="boards/Main.png" alt="Board 00: summary of the problem, four directions and seven decisions" width="1440" height="900"></figure></section>
+
+<section id="why"><span class="eyebrow">Board 01</span><h2>Why the space goes unused</h2>
+<p>The Board packs whole folders into three columns at most. Home's ★ tile and every project sitting directly in Home share the first column, so that column is always the tallest. A wider window only makes the three columns wider. Captured from main on the sample data, isolated and in the background.</p>
+<figure><img src="boards/Today.png" alt="Board 01: today's Board at 1900 and 1440 wide, with six numbered causes" width="1440" height="900"></figure></section>
+
+<section id="tile"><span class="eyebrow">Board T · every direction</span><h2>+ New session on every tile</h2>
+<p><span class="rec">Recommended: T1.</span> A quiet last row inside the tile's frame, so you can tell which project it belongs to. The tooltip names the project and its folder. ⌘T starts a session in the focused tile's project. The verb is <code>duo2 session new --project</code>, which already exists.</p>
+<figure><img src="boards/T-tile-button.png" alt="Board T: the tile's New session row at rest, on hover with its tooltip, focused with ⌘T, on Home's tile, on folders with no project file, at 220 wide, and the + in the name row as the alternative" width="1440" height="900"></figure></section>
+
+<section id="b"><span class="eyebrow">Boards B1, B2 · recommended</span><h2>B · By activity</h2>
+<p>Sections replace folders: Pinned, Now, Today as tiles, This week as rows, Earlier and Archived folded. The folder is a line on each tile. Group ⌄ still offers Folder (A's bands) and None. At 1900 the Board shows six tiles across and fits without scrolling.</p>
+<figure><img src="boards/B1-activity.png" alt="Board B1: All projects at 1440 grouped by Pinned, Now, Today, This week" width="1440" height="900"><figcaption>B1 · 1440</figcaption></figure>
+<figure><img src="boards/B2-activity-wide.png" alt="Board B2: the same at 1900 wide, six tiles across" width="1900" height="1060"><figcaption>B2 · 1900</figcaption></figure></section>
+
+<section id="a"><span class="eyebrow">Board A</span><h2>A · Folder bands, the smallest fix</h2>
+<p>Keeps grouping by folder, but each folder is a row of tiles across the width, Home is a band like any other folder, and short folders share a row.</p>
+<figure><img src="boards/A-folder-bands.png" alt="Board A: folders as bands of tiles, four across" width="1440" height="900"></figure></section>
+
+<section id="c"><span class="eyebrow">Board C</span><h2>C · Flat, with pins and a folder filter</h2>
+<figure><img src="boards/C-flat-pinned.png" alt="Board C: a pinned row, then one grid by recency with folder chips" width="1440" height="900"></figure></section>
+
+<section id="d"><span class="eyebrow">Board D</span><h2>D · A projects table, the broad rethink</h2>
+<figure><img src="boards/D-table.png" alt="Board D: a sortable table of projects in place of the Board" width="1440" height="900"></figure></section>
+
+<section id="x"><span class="eyebrow">Board X</span><h2>Fit with the Projects pane and Getting started; keys and verbs; what wasn't drawn</h2>
+<figure><img src="boards/X-fit.png" alt="Board X: how each direction fits the Projects pane study and the Getting started card, the keys and duo2 verbs, and three ideas considered but not drawn" width="1440" height="900"></figure></section>
+
+<section id="decide"><span class="eyebrow">Your decisions · recommendation first</span><h2>Seven questions</h2>
+<ol class="q">
+<li><b>Q-539</b> How should the Board organise projects? (boards B1, A, C, D)<br><span class="rec">B, by activity</span> <span class="opts">· A, folder bands · C, flat with a folder filter · D, a projects table</span></li>
+<li><b>Q-540</b> What should the Board's Group ⌄ offer? (B1)<br><span class="rec">Activity, Folder and None, with A's bands as Folder</span> <span class="opts">· only the chosen direction</span></li>
+<li><b>Q-541</b> Should projects be pinnable? (B1, C)<br><span class="rec">Yes: a Pinned row first, with ★ home pinned when there is a Home</span> <span class="opts">· no pins</span></li>
+<li><b>Q-542</b> What should the tile's New session control be? (T)<br><span class="rec">A quiet last row, + New session</span> <span class="opts">· a + in the name row · shown only on hover</span></li>
+<li><b>Q-543</b> What should ⌘T do on the Board? (T)<br><span class="rec">Start in the focused tile's project, else as today</span> <span class="opts">· always as today (Home, else ~/Documents)</span></li>
+<li><b>Q-544</b> Where do folders with no project file, Outside Home and Archived go? (B1, T)<br><span class="rec">In the same sections, marked, with Make a Project; no Outside Home part</span> <span class="opts">· keep today's Outside Home part</span></li>
+<li><b>Q-545</b> How many tiles across? (A, B2)<br><span class="rec">As many as fit at 220 wide: four at 1440, six at 1900</span> <span class="opts">· keep three at most</span></li>
+</ol></section>
+</div>
