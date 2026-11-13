@@ -56,6 +56,8 @@ func repoFixture() throws -> Fixture {
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "chat" { return try chatChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "midturn" { return try midTurnChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "rewind" { return try rewindChecks() }
+    // `DUO_CHECKS=btw`: /btw from chat (BtwChecks.swift, F-688 to F-690). Fails until fixed; not in the default run.
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "btw" { return try btwChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "office-comments" { try officeCommentChecks(); try officeMarginChecks(); return }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "pdf" { return try pdfChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "chat-live" { return try chatLiveChecks() }

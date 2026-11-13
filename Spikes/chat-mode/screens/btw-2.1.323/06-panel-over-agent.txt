@@ -1,0 +1,34 @@
+
+ ▐▛███▛█   Claude Code v2.1.323
+▝▜██████▀  Haiku 5.5 · API Usage Billing
+ ▝▝   ▝▝   /tmp/ws
+
+
+❯ SCENARIO:agent go                                                                                 
+
+⏺ Agent(Look around)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔ ◐ medium · /effort ▔
+
+    /btw quick one
+
+      BTW-ANSWER: the mock's side answer to "quick one". It has bold and a second sentence.
+
+    ↑/↓ to scroll · c to copy · f to fork · Esc to close

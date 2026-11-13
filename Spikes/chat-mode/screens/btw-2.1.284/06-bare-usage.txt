@@ -1,0 +1,34 @@
+
+ ▐▛███▛█   Claude Code v2.1.284
+▝▜██████▀  claude-haiku-5-5 · API Usage Billing
+ ▝▝   ▝▝   /tmp/ws
+
+
+❯ SCENARIO:agent go                                                                                 
+
+⏺ Agent(Look around)
+  ⎿  Initializing…
+  ⎿  Error: Auto mode could not evaluate this action and is blocking it for safety — run with 
+     --debug for details. This is not a judgment that the action is unsafe. This is usually 
+     transient — wait briefly and try this action again as-is; don't rewrite it. If it keeps 
+     failing, continue with other tasks that don't require this action and come back to it later. 
+     Note: reading files, searching code, and other read-only operations do not require the 
+     classifier and can still be used.
+
+⏺ Done. The tool said: "Auto mode could not evaluate this action and is blocking it for safety — run
+  with --debug for details. This is not a judgment that the action is unsafe. This i
+
+✻ Baked for 1s · done 12:36 PM
+
+❯ /btw 
+  ⎿  Usage: /btw <your question>
+
+
+
+
+
+                                                                                  ● high · /effort
+────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⏵⏵ auto mode on (shift+tab to cycle) · ← for agents
