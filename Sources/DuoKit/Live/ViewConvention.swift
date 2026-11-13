@@ -1,7 +1,7 @@
 import Foundation
 import DuoControl
 
-/// What a session is told about the view the user is reading it in (DL-339 Q-513, F-661, F-675):
+/// What a session is told about the view the user is reading it in (DL-339 Q-513, F-661, F-676):
 /// the primer says what holds in both views; this says what only one view does. Chat and terminal
 /// are the same process (DL-118) and the user switches at will, so it goes by `duo2 hook context`
 /// (DL-116's route): in full at SessionStart, and at UserPromptSubmit only when the view differs from
