@@ -177,3 +177,4 @@ def fold(text):
 
 os.makedirs(OUT, exist_ok=True)
 exec(open(os.path.join(HERE, "boards.py")).read())
+exec(open(os.path.join(HERE, "boards_list.py")).read())

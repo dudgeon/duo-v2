@@ -35,7 +35,7 @@ nav{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px}
 <span class="eyebrow">Duo design study · 2026-11-13 · nothing built · sample data</span>
 <h1>All projects' Board: organise by what's happening, not by Home</h1>
 <p class="lede">You said the Board wastes space (a tall stack under Home, empty space on the right), that many users don't keep a Home folder, and that the one New session control doesn't say which project it starts in. Four directions follow, from a small fix to a broad rethink, with a New session row on every tile in each of them. B is the recommendation. Every mark is a [P].</p>
-<nav aria-label="Boards"><a href="#why">01 Why</a><a href="#tile">T New session</a><a href="#b">B By activity</a><a href="#a">A Folder bands</a><a href="#c">C Flat</a><a href="#d">D Table</a><a href="#x">X Fit</a><a href="#decide">Decisions</a></nav>
+<nav aria-label="Boards"><a href="#why">01 Why</a><a href="#tile">T New session</a><a href="#b">B By activity</a><a href="#a">A Folder bands</a><a href="#c">C Flat</a><a href="#d">D Table</a><a href="#x">X Fit</a><a href="#list">L List by project</a><a href="#decide">Decisions</a></nav>
 </header>
 
 <div class="note">These boards are also on the Design canvas, https://claude.ai/artifact/7zdNWzWyfrCPDgGtBot5M4, once their sources (in the repo at <code>docs/design/all-projects-board-study/canvas/project/</code>) are loaded there. This page shows the same boards as images.</div>
@@ -69,7 +69,12 @@ nav{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px}
 <section id="x"><span class="eyebrow">Board X</span><h2>Fit with the Projects pane and Getting started; keys and verbs; what wasn't drawn</h2>
 <figure><img src="boards/X-fit.png" alt="Board X: how each direction fits the Projects pane study and the Getting started card, the keys and duo2 verbs, and three ideas considered but not drawn" width="1440" height="900"></figure></section>
 
-<section id="decide"><span class="eyebrow">Your decisions · recommendation first</span><h2>Seven questions</h2>
+<section id="list"><span class="eyebrow">Boards L1, L2 · your second ask</span><h2>The List grouped by project, with + New session on each project</h2>
+<p>Group ⌄ on the List gains <strong>Project</strong>, beside Recent. Each project is a header with its name, its folder, a count, and <strong>+ New session</strong> at the right end. <span class="rec">Recommended: the button on the header</span>, always shown, quiet until you hover, with a tooltip naming the project and its folder. The alternative is a last row in each project (L2). Projects go newest activity first, and quiet ones fold. The dashed New session row at the top stays, for any other folder.</p>
+<figure><img src="boards/L1-list-by-project.png" alt="Board L1: All projects List grouped by project, each project header ending in + New session, the Group popup open on Project" width="1440" height="900"><figcaption>L1 · 1440, Group popup open</figcaption></figure>
+<figure><img src="boards/L2-header-button.png" alt="Board L2: the header button at rest, on hover, with ⌘T, on a folder with no project file, folded, and the last-row alternative" width="1440" height="900"><figcaption>L2 · states and the alternative</figcaption></figure></section>
+
+<section id="decide"><span class="eyebrow">Your decisions · recommendation first</span><h2>Nine questions</h2>
 <ol class="q">
 <li><b>Q-539</b> How should the Board organise projects? (boards B1, A, C, D)<br><span class="rec">B, by activity</span> <span class="opts">· A, folder bands · C, flat with a folder filter · D, a projects table</span></li>
 <li><b>Q-540</b> What should the Board's Group ⌄ offer? (B1)<br><span class="rec">Activity, Folder and None, with A's bands as Folder</span> <span class="opts">· only the chosen direction</span></li>
@@ -78,5 +83,7 @@ nav{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px}
 <li><b>Q-543</b> What should ⌘T do on the Board? (T)<br><span class="rec">Start in the focused tile's project, else as today</span> <span class="opts">· always as today (Home, else ~/Documents)</span></li>
 <li><b>Q-544</b> Where do folders with no project file, Outside Home and Archived go? (B1, T)<br><span class="rec">In the same sections, marked, with Make a Project; no Outside Home part</span> <span class="opts">· keep today's Outside Home part</span></li>
 <li><b>Q-545</b> How many tiles across? (A, B2)<br><span class="rec">As many as fit at 220 wide: four at 1440, six at 1900</span> <span class="opts">· keep three at most</span></li>
+<li><b>Q-546</b> Where is a project's New session in the List grouped by project? (L1, L2)<br><span class="rec">At the right end of the project's header</span> <span class="opts">· a last row in each project, "+ New session in ‹project›"</span></li>
+<li><b>Q-547</b> How is the List grouped by project ordered? (L1)<br><span class="rec">Projects by newest activity (pinned first if Q-541 is yes); sessions newest first, five then "n more"; projects quiet for a week folded; the dashed row kept</span> <span class="opts">· projects by name · every project open, nothing folded</span></li>
 </ol></section>
 </div>
