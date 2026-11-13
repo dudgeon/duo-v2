@@ -57,6 +57,10 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case whatsNew           // Help: this version's release notes
     case reportIssue        // Help: a new GitHub issue with the version and macOS filled in
     case explainTasks       // Help: Explain Tasks, the Explainer at its trigger (DL-172)
+    case explainModes       // Help: Explain Chat and Terminal, the Explainer on the mode pill (DL-339)
+    case duoGuide           // Help: the user guide on GitHub (DL-339, ENH-345)
+    case watchIntroFilm     // Help: the intro film (DL-339)
+    case watchDirectorFilm  // Help: the director film (DL-339)
     // Browser tabs (DL-124): print and page zoom, as in Safari
     case printPage          // ⌘P: File › Print…, the browser tab on screen
     case zoomIn             // ⌘+ (⌘= too): View › Zoom In, while a browser tab or the PDF viewer has the keyboard
@@ -132,6 +136,10 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .whatsNew: "What’s New in This Version"
         case .reportIssue: "Report an Issue…"
         case .explainTasks: "Explain Tasks"
+        case .explainModes: "Explain Chat and Terminal"
+        case .duoGuide: "Duo Guide"
+        case .watchIntroFilm: "Watch the Intro Film"
+        case .watchDirectorFilm: "Watch the Director Film"
         case .printPage: "Print…"
         case .zoomIn: "Zoom In"
         case .zoomOut: "Zoom Out"
@@ -174,7 +182,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .link: KeyboardShortcut("k", modifiers: .command)  // DL-108
         case .newSlide: KeyboardShortcut("n", modifiers: [.command, .control])  // DL-295: adds to DL-34's map; only in a deck
         case .revertChange, .revertAllChanges, .chooseHome, .newTask, .newDeck, .newProject, .newProjectFromGitHub, .code, .heading1, .heading2, .heading3,
-             .task, .body, .quote, .bullet, .numbered, .codeBlock, .toggleFormatBar, .addProperties, .duo2Reference, .whatsNew, .reportIssue, .explainTasks, .tableInsert, .tableRowAbove, .tableRowBelow,
+             .task, .body, .quote, .bullet, .numbered, .codeBlock, .toggleFormatBar, .addProperties, .duo2Reference, .whatsNew, .reportIssue, .explainTasks, .explainModes, .duoGuide, .watchIntroFilm, .watchDirectorFilm, .tableInsert, .tableRowAbove, .tableRowBelow,
              .tableColumnBefore, .tableColumnAfter, .tableDeleteRow, .tableDeleteColumn, .tableAlignLeft, .tableAlignCenter,
              .tableAlignRight, .showBoard, .showList: nil  // Show Board / Show List: Q-100
         case .nextPane, .previousPane: nil  // ⌥⌘→ / ⌥⌘← freed (DL-289)
@@ -227,7 +235,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
              .tableAlignLeft, .tableAlignCenter, .tableAlignRight: model.webFocus == .editor && (model.editorIfLoaded?.inTable ?? false)
         case .newTask: model.terminalsMode == .live && model.currentProject.map { !$0.isFolderOnly } == true
         case .newProject, .newProjectFromGitHub: model.terminalsMode == .live && model.liveRoot != nil
-        case .duo2Reference, .whatsNew, .reportIssue: true
+        case .duo2Reference, .whatsNew, .reportIssue, .duoGuide, .watchIntroFilm, .watchDirectorFilm: true
+        case .explainModes: model.terminalsMode == .live && model.explainer.frames["modes.pill"] != nil
         case .explainTasks: model.terminalsMode == .live && model.currentProject.map { !$0.isFolderOnly } == true
         case .sendSelection: model.canSendSelection
         case .newClaudeSession, .newShell: model.terminalsMode == .live
@@ -319,6 +328,10 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .whatsNew: NSWorkspace.shared.open(DuoLinks.releaseNotes)
         case .reportIssue: NSWorkspace.shared.open(DuoLinks.newIssue)
         case .explainTasks: model.explainTasks()
+        case .explainModes: model.explainModes()
+        case .duoGuide: NSWorkspace.shared.open(DuoLinks.guide)
+        case .watchIntroFilm: NSWorkspace.shared.open(DuoLinks.introFilm)
+        case .watchDirectorFilm: NSWorkspace.shared.open(DuoLinks.directorFilm)
         case .closeWindow:
             // A Duo window closes through the core (DL-311): a second one goes, the last only hides. Settings and
             // other windows close as AppKit closes them.
@@ -463,10 +476,13 @@ public struct DuoCommands: Commands {
             item(.suggestEdits)
             item(.addComment)
         }
-        // View (DL-108, m2): the items that aren't built (the right pane's toggle, moving between
+        // View (DL-108, m2): the items that aren't built (moving between
         // panes) are left out until they work; Enter Full Screen is the system's.
         CommandGroup(after: .sidebar) {
             item(.toggleSidebar)
+            // The right pane's toggle (DL-339, ENH-344): it has worked since DL-129 and the menu never got it.
+            Button(model.rightCollapsed ? "Show Right Pane" : "Hide Right Pane") { DuoCommand.toggleRightPane.perform(in: model) }  // action: view right
+                .keyboardShortcut(DuoCommand.toggleRightPane.shortcut)
             // Split view (DL-277): the showing file's preview beside its source.
             Button(model.showingSplit != nil ? "Close Split View" : DuoCommand.previewInSplitView.title) { DuoCommand.previewInSplitView.perform(in: model) }  // action: split
                 .keyboardShortcut(DuoCommand.previewInSplitView.shortcut)
@@ -531,9 +547,14 @@ public struct DuoCommands: Commands {
         }
         // Help (DL-108, m4); the system adds its search field.
         CommandGroup(replacing: .help) {
+            item(.duoGuide)
+            item(.watchIntroFilm)
+            item(.watchDirectorFilm)
+            Divider()
             item(.duo2Reference)
             item(.whatsNew)
             item(.explainTasks)
+            item(.explainModes)
             Divider()
             item(.reportIssue)
         }

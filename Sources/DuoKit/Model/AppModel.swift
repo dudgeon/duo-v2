@@ -892,6 +892,7 @@ public final class AppModel {
     public var formatBarHidden: Bool { get { core.formatBarHidden } set { core.formatBarHidden = newValue } _modify { yield &core.formatBarHidden } }
     public var sourceDocuments: Set<String> { get { core.sourceDocuments } set { core.sourceDocuments = newValue } _modify { yield &core.sourceDocuments } }
     public var expandedFolders: [String: Set<String>] { get { core.expandedFolders } set { core.expandedFolders = newValue } _modify { yield &core.expandedFolders } }
+    public var filesFolded: Set<String> { get { core.filesFolded } set { core.filesFolded = newValue } _modify { yield &core.filesFolded } }
     public var browseRoots: [String: URL] { get { core.browseRoots } set { core.browseRoots = newValue } _modify { yield &core.browseRoots } }
     public var browseExpanded: [String: Set<String>] { get { core.browseExpanded } set { core.browseExpanded = newValue } _modify { yield &core.browseExpanded } }
     public var lastConsoleTab: [String: String] { get { core.lastConsoleTab } set { core.lastConsoleTab = newValue } _modify { yield &core.lastConsoleTab } }

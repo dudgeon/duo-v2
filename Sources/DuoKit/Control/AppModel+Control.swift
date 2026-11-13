@@ -181,6 +181,10 @@ extension AppModel {
             let path = f.hasSuffix("/") ? String(f.dropLast()) : f
             if (inv[1] == "open") != isFolderOpen(path) { toggleFolder(path) }
             done(.ok("\(path)/ \(isFolderOpen(path) ? "open" : "closed")."))
+        case .viewFiles:
+            guard terminalsMode == .live, currentProject != nil else { return done(.fail("no project is open")) }
+            switch inv[0] { case "expand": setFilesFolded(false); case "collapse": setFilesFolded(true); default: return done(.fail("usage: \(id.action.usage)")) }
+            done(.ok("Files \(isFilesFolded ? "folded" : "showing")."))
         case .viewPane:
             guard let arg = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
             switch arg {

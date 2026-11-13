@@ -46,10 +46,10 @@ public enum ActionID: String, CaseIterable, Sendable {
     case goAll = "go all", goHome = "go home", open, peek, peekJump = "peek jump"
     case split, splitClose = "split close", splitFocus = "split focus", splitSwap = "split swap", splitUnfold = "split unfold", splitRatio = "split ratio", splitSeparate = "split separate"
     case viewSidebar = "view sidebar", viewRight = "view right", viewTab = "view tab", viewTabMove = "view tab-move", viewPane = "view pane", viewGroup = "view group", viewSelect = "view select"
-    case viewSort = "view sort", viewFilter = "view filter", viewHidden = "view hidden", viewFormatBar = "view format-bar", viewFolder = "view folder", viewHome = "view home"
+    case viewSort = "view sort", viewFilter = "view filter", viewHidden = "view hidden", viewFormatBar = "view format-bar", viewFolder = "view folder", viewFiles = "view files", viewHome = "view home"
     // Windows (multi-window slice 1, DL-311)
     case windowList = "window list", windowNew = "window new", windowFocus = "window focus", windowClose = "window close"
-    case windowColour = "window colour", windowHome = "window home"
+    case windowColour = "window color", windowHome = "window home"
     // Projects
     case projects, projectShow = "project show", projectMake = "project make", projectMerge = "project merge"
     case projectArchive = "project archive", projectUnarchive = "project unarchive"
@@ -216,7 +216,8 @@ extension DuoAction {
               ui: ["Board", "List", "Show Board", "Show List", "Group By Recent", "Show Archived", "list group popup"]),
         .init(.viewFormatBar, .view, "show|hide|toggle", "Show or hide the Markdown formatting bar over the editor (View › Hide Formatting Bar). It shows only while a Markdown document has the keyboard.", ui: ["Hide Formatting Bar", "Show Formatting Bar", "Formatting Bar"]),
         .init(.viewHidden, .view, "on|off|toggle", "Show or hide dotfiles in the project's file tree (View › Show Hidden Files).", ui: ["Show Hidden Files"]),
-        .init(.viewFolder, .view, "<folder> open|close", "Open or close a folder in the project's file tree.", ui: ["folder row"]),
+        .init(.viewFolder, .view, "<folder> open|close", "Open or close a folder in the project's file tree. The open folders are remembered per project.", ui: ["folder row"]),
+        .init(.viewFiles, .view, "expand|collapse", "Fold the project's Files section to its header, or show it again (the chevron on the Files header, DL-339). Remembered per project.", ui: ["Files header chevron"]),
 
         // Windows (DL-311): every verb that acts on what's on screen also takes --window <n|project>; with none, it acts
         // on the window showing the caller's session, else the primary window (the oldest open), never the key window (Q-430).
@@ -227,8 +228,8 @@ extension DuoAction {
               ui: ["Go There"]),
         .init(.windowClose, .window, "[<n|project>]", "Close a window (File › Close Window ⇧⌘W); with none named, the one --window or your session picks. Its projects keep their tabs and sessions. The last window hides; Duo keeps running.",
               ui: ["Close Window"]),
-        .init(.windowColour, .window, "[<colour>|none] [--auto on|off]", "A window's colour (Window › Window Colour, the swatch after the project's name; DL-312, DL-313): blue, ochre, purple, green, coral, teal, deep-blue, deep-ochre, deep-purple, deep-green, deep-coral, deep-teal, or none. --auto turns 'Colour new windows automatically' on or off. With nothing, the window's colour and the setting. Classic turns window colours off; each comes back after.",
-              ui: ["Window Colour", "Colour new windows automatically", "window swatch"]),
+        .init(.windowColour, .window, "[<color>|none] [--auto on|off]", "A window's color (Window › Window Color, the swatch after the project's name; DL-312, DL-313, DL-339: the app says Color, and `window colour` still works): blue, ochre, purple, green, coral, teal, deep-blue, deep-ochre, deep-purple, deep-green, deep-coral, deep-teal, or none. --auto turns 'Color new windows automatically' on or off. With nothing, the window's colour and the setting. Classic turns window colors off; each comes back after.",
+              ui: ["Window Color", "Color new windows automatically", "window swatch"]),
         .init(.windowHome, .window, "", "Show Home's terminal in this window (Show Here, Q-431): Home is live in one window and the others say where it is.",
               ui: ["Show Here"]),
 
@@ -664,7 +665,8 @@ extension DuoAction {
 
     static func resolveAll(_ args: [String]) -> (DuoAction, rest: [String])? {
         if args.count >= 3, let id = ActionID(rawValue: args.prefix(3).joined(separator: " ")) { return (byID[id]!, Array(args.dropFirst(3))) }
-        let words = args.prefix(2).map { aliases[$0] ?? $0 }
+        var words = args.prefix(2).map { aliases[$0] ?? $0 }
+        if words == ["window", "colour"] { words = ["window", "color"] }   // DL-339 (Q-514): the verb is American, the old spelling stays
         if words.count == 2, let id = ActionID(rawValue: words.joined(separator: " ")) { return (byID[id]!, Array(args.dropFirst(2))) }
         if let w = words.first {
             if let id = ActionID(rawValue: w) { return (byID[id]!, Array(args.dropFirst())) }
@@ -706,6 +708,10 @@ public enum Parity {
         "Table": "a submenu, not an action",
         "Align Column": "a submenu, not an action",
         "What’s New in This Version": "opens this version's release notes on GitHub; `duo2 status` names the version",
+        "Duo Guide": "opens the user guide on GitHub for a person at the screen (DL-339); the guide is `docs/guide/`, and `duo2 help` is the same material for Claude",
+        "Watch the Intro Film": "opens the intro film for a person to watch (DL-339); a film has no action to take",
+        "Watch the Director Film": "opens the director film for a person to watch (DL-339); `duo2 director guide` prints the skill it shows",
+        "Explain Chat and Terminal": "Help › Explain Chat and Terminal shows an explanation to a person at the screen (DL-172, DL-339); `duo2 session chat` is the action it explains",
         "Report an Issue…": "opens GitHub's new-issue form, filled in, for the user to edit and submit",
         "No templates yet: add .md files to a templates folder": "a disabled hint",
         "No other sessions in": "a disabled hint on + Add",

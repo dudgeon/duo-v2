@@ -6205,3 +6205,15 @@ Read in the code at `cd0855ff`; nothing launched. `docs/research/aram-feedback.m
 - **The row is an overlay** hanging 26 pt under the turn into the 16 pt gap, so it moves nothing and shows on the turn or the row under the pointer, or on the message ⌥⌘↑/↓ selected (a 2 pt `text` ring). A long Claude turn is several pieces; any piece sets the hover and the last carries the row.
 - **Not built:** Tab through the row's buttons (Q-519); the narrow-chat icon-only row under about 420 pt; the count in "n files put back" (Q-520).
 - **Captures:** see the report; WebKit-free surfaces, so `check-ui.sh` states compare directly.
+
+## F-673 · A new install is "no chat.json and no state.json"; the chat default is seeded once and saved (aram-teaching-layer, 2026-11-12)
+
+- **Fact:** `ChatPrefs.load` seeds `last = chat` and writes `chat.json` when the support folder has neither `chat.json` nor Duo's `state.json` (DL-339, Q-510). Anyone who has run Duo has `state.json`, so an existing user who never clicked Chat keeps the terminal. A fresh `ChatPrefs()` is still terminal (checks and fixtures rely on it).
+- **Run:** DuoChecks `teaching layer (DL-339)`: new install opens in chat and persists; an existing folder stays terminal and writes nothing; a saved choice and `--default` win. **Not run:** a real first launch on an empty support folder.
+- **Also:** the Files fold and open folders are saved in `state.json` (`filesFolded`, `expandedFolders`, by project name); only a live run writes them.
+
+## F-674 · What the teaching layer built and what it left (aram-teaching-layer, 2026-11-12)
+
+- **Built:** Help › Duo Guide, Watch the Intro Film, Watch the Director Film, Explain Chat and Terminal; View › Hide/Show Right Pane (⌥⌘0); Files header chevron and `duo2 view files expand|collapse`; Settings › New sessions open in; the mode pill's tooltip; Window Color (verb `duo2 window color`, `colour` an alias); Explainers for Chat and Terminal (on the pill), Director and Home (content only, no trigger); guide pages (director, the two modes, tasks and sessions); `_PROJECT.md` in the guide.
+- **Film links** are the README's release-asset URLs (v0.2.26, v0.2.13): re-cut a film and update `DuoLinks`.
+- **Not run:** a live capture of the chevron, Help menu or Settings row (fixture states don't show live-only chrome); `check-ui` project and overview were captured and unchanged by this work. DuoChecks: 4 backoff/folder-watcher checks failed in the work tree (`BackoffChecks` lines 100 to 103, 178); not compared with main.

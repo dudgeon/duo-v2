@@ -29,8 +29,18 @@ public struct ChatPrefs: Codable, Sendable, Equatable {
 
     public static var url: URL { DuoPaths.support.appending(path: "chat.json") }
 
-    public static func load(_ url: URL = ChatPrefs.url) -> ChatPrefs {
-        (try? Data(contentsOf: url)).flatMap { try? JSONDecoder().decode(ChatPrefs.self, from: $0) } ?? ChatPrefs()
+    public static func load(_ url: URL = ChatPrefs.url, state: URL? = nil) -> ChatPrefs {
+        if let p = (try? Data(contentsOf: url)).flatMap({ try? JSONDecoder().decode(ChatPrefs.self, from: $0) }) { return p }
+        var p = ChatPrefs()
+        // DL-339 (Q-510): a new install's project sessions open in chat. A new install is a support
+        // folder with neither chat.json nor Duo's state.json; anyone who has run Duo has the latter, so
+        // existing users keep the terminal until they switch. Saved at once, so it stays the choice.
+        let stateFile = state ?? url.deletingLastPathComponent().appending(path: "state.json")
+        if !FileManager.default.fileExists(atPath: url.path), !FileManager.default.fileExists(atPath: stateFile.path) {
+            p.last = .chat
+            p.save(url)
+        }
+        return p
     }
 
     public func save(_ url: URL = ChatPrefs.url) {

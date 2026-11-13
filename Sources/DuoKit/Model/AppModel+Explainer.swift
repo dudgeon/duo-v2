@@ -8,8 +8,14 @@ extension AppModel {
         guard SheetCenter.shared.current == nil, !search.isOpen else { return }
         if explainer.show(id, key: key, origin: origin, pinned: true) {
             NSAccessibility.post(element: NSApp as Any, notification: .announcementRequested,
-                                 userInfo: [.announcement: ExplainerContent.tasks.spoken, .priority: NSAccessibilityPriorityLevel.high.rawValue])
+                                 userInfo: [.announcement: ExplainerContent.content(id).spoken, .priority: NSAccessibilityPriorityLevel.high.rawValue])
         }
+    }
+
+    /// Help › Explain Chat and Terminal: at the mode pill on the selected Claude tab (DL-339).
+    func explainModes() {
+        if explainer.frames["modes.pill"] != nil { return explain(.modes, key: "modes.pill", origin: "modes.pill") }
+        info("Open a Claude session to see the Chat and Terminal pill.")
     }
 
     /// Help › Explain Tasks: at the New task row, or the Tasks fold's header when the fold is closed.

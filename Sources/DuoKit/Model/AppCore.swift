@@ -262,7 +262,22 @@ public final class AppCore {
     public var formatBarHidden = DuoState.load().formatBarHidden
     /// Documents shown in Source mode (DL-167), by standardized path; remembered.
     public var sourceDocuments = Set(DuoState.load().sourceDocuments)
-    public var expandedFolders: [String: Set<String>] = [:]
+    /// Remembered per project over a relaunch (DL-339, ENH-344); only a live run writes it.
+    public var expandedFolders: [String: Set<String>] = DuoState.load().expandedFolders.mapValues(Set.init) {
+        didSet {
+            guard terminalsMode == .live, expandedFolders != oldValue else { return }
+            let saved = expandedFolders.filter { !$0.value.isEmpty }.mapValues { $0.sorted() }
+            DuoState.update { $0.expandedFolders = saved }
+        }
+    }
+    /// Projects whose Files section is folded (the header's chevron, DL-339, ENH-344); remembered.
+    public var filesFolded = Set(DuoState.load().filesFolded) {
+        didSet {
+            guard terminalsMode == .live, filesFolded != oldValue else { return }
+            let saved = filesFolded.sorted()
+            DuoState.update { $0.filesFolded = saved }
+        }
+    }
     /// The folder the tree shows when it has gone up from the project's (DL-106, Q-162), by project; none = the project's own.
     public var browseRoots: [String: URL] = [:]
     /// Folders opened while browsing up, as paths from that browse root.

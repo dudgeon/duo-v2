@@ -293,6 +293,10 @@ public struct DuoState: Codable, Sendable, Equatable {
     public var keepRunning: [String] = []
     /// Window › Window Colour's "Colour new windows automatically" (DL-312): a new window takes the next free colour.
     public var colourNewWindows = true
+    /// The folders open in each project's file tree, by project name (DL-339, ENH-344); remembered over a relaunch.
+    public var expandedFolders: [String: [String]] = [:]
+    /// Projects whose Files section is folded away (DL-339, ENH-344).
+    public var filesFolded: [String] = []
 
     public init() {}
     public init(from decoder: Decoder) throws {
@@ -326,6 +330,8 @@ public struct DuoState: Codable, Sendable, Equatable {
         startFolders = try c.decodeIfPresent([String].self, forKey: .startFolders) ?? []
         formatBarHidden = try c.decodeIfPresent(Bool.self, forKey: .formatBarHidden) ?? false
         colourNewWindows = try c.decodeIfPresent(Bool.self, forKey: .colourNewWindows) ?? true
+        expandedFolders = try c.decodeIfPresent([String: [String]].self, forKey: .expandedFolders) ?? [:]
+        filesFolded = try c.decodeIfPresent([String].self, forKey: .filesFolded) ?? []
     }
 
     public static func load(_ url: URL = DuoPaths.state) -> DuoState {

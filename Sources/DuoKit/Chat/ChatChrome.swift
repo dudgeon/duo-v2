@@ -59,6 +59,8 @@ struct ChatToggle: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Show session as")
+        .help("Chat shows replies formatted, with file names as links. Terminal is Claude Code’s own screen. Switch any time; nothing is sent.")   // DL-339 (Q-510)
+        .explainerTrigger(.modes, key: "modes.pill")
         .accessibilityIdentifier("video.chat.toggle")   // anchors: the video cursor's target
     }
 }
