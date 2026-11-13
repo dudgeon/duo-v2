@@ -6205,3 +6205,29 @@ Read in the code at `cd0855ff`; nothing launched. `docs/research/aram-feedback.m
 - **The row is an overlay** hanging 26 pt under the turn into the 16 pt gap, so it moves nothing and shows on the turn or the row under the pointer, or on the message ⌥⌘↑/↓ selected (a 2 pt `text` ring). A long Claude turn is several pieces; any piece sets the hover and the last carries the row.
 - **Not built:** Tab through the row's buttons (Q-519); the narrow-chat icon-only row under about 420 pt; the count in "n files put back" (Q-520).
 - **Captures:** see the report; WebKit-free surfaces, so `check-ui.sh` states compare directly.
+
+## F-671 · The director skill's install and update are intact; what was proved, and what Geoff's Mac holds (director-skill-install-check, 2026-11-12)
+
+Geoff, on Q-512: "do ensure (now) that director skill installation and updating is intact." Traced in `Installer.install` / `installDirectorSkill` / `writeSkill` and proved by DuoChecks `director-install` (13, new, in the full run) plus the director and installer-lock checks that were already there, and an isolated run of `duo2 install` / `doctor` (scratch `DUO_SUPPORT_DIR`, `DUO_ISOLATED=1`, scratch `CLAUDE_CONFIG_DIR`, a scratch `DUO_INSTALL_ROOT`; no Claude turn; Geoff's `~/.claude/skills` mtimes unchanged before and after).
+
+| Case | Result |
+|---|---|
+| First launch (consented) | writes `skills/director/SKILL.md` and the `duo-director` stub; second launch changes neither |
+| New Duo version | a copy whose hash Duo recorded is rewritten ("updated"); until then doctor says "from an older Duo (updates at launch)" |
+| User-edited copy | left alone at every later launch, and doctor says "edited by you (left alone)"; uninstall leaves it |
+| Copy there before Duo's | left alone and never recorded as Duo's (existing check) |
+| Deleted copy | written again at the next launch, folder included |
+| Read-only skills folder | "skipped … its folder isn't writable"; the duo2 skill, the link and CLAUDE.md still done; nothing recorded as Duo's; doctor lists it under "Skipped at the last install"; fixed, the next launch writes it |
+| Linked skill folder | untouched (existing check) |
+| `CLAUDE_CONFIG_DIR` set | both skill files follow it (`LegacyDuo.claudeDir`) |
+| Isolated, no `DUO_INSTALL_ROOT` | refused ("Not installed: …"); nothing written |
+| Isolated with `DUO_INSTALL_ROOT` | written under that root only, never in `CLAUDE_CONFIG_DIR` or `~/.claude` |
+| A project skill named `director` | installed as `duo-director` until the user answers (existing check) |
+
+**Geoff's Mac.** `/Applications/Duo.app` is **0.2.26**; `duo2 doctor` there says the director skill and the stub are "current" for it. The file is revision 4 (0.2.26's text). `main` is revision 5, and 0.2.27 and 0.2.28 are released, so his copy refreshes the first time he runs a newer Duo (the "from an older Duo" path above). Nothing is wrong; the gap is that the app on that Mac isn't the newest release.
+
+**The work Mac's pin, 2.1.284.** The skill is one `SKILL.md` whose frontmatter is only `name` and `description`: no hooks, no `allowed-tools`, no newer fields. What it asks of Claude Code is `claude --bg`, `--remote-control`, `-n`, `SendMessage`, `Monitor`, `ScheduleWakeup` and `AskUserQuestion`; `docs/research/director-messaging.md` tested the messaging and background-resume parts on 2.1.284 itself, and `Director.swift` gates resume on `2.1.284+` and messaging on `2.1.224+` and falls back below. The `duo2 director …` verbs it names are checked to exist (DirectorChecks). Not run: no 2.1.284 binary is installed on this Mac (only 2.1.310, .311, .316), and a skill-loading run needs a real turn; so "works on the pin" rests on that earlier test and on reading, not on a new run.
+
+## F-672 · A first install into a missing CLAUDE.md is rewritten once at the second launch (director-skill-install-check, 2026-11-12)
+
+Found by the isolated run, not a skill fault. With no `CLAUDE.md`, the first launch writes the block with no blank line before it; the second finds it "current" by hash but `replaceBlock` returns it with a leading newline, so it reports "CLAUDE.md block: updated." once and is stable from then on. Harmless (one blank line, one report line), and the existing "a second launch changes nothing" check starts from a file that already has text, so it never saw it. Not fixed here (outside the skill); a fix is to write `"\n" + block + "\n"` the first time, with a check that starts from a missing file.
