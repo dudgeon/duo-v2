@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>First-run welcome study</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.lab{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5B636D}
+.card{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.rec{border:2px solid #1F2328}
+.row{display:flex;gap:10px;font-size:13px;line-height:20px}
+.row b{width:56px;flex:none}
+.p{font-size:11px;line-height:16px;color:#5B636D;font-weight:600}
+.t{font-size:13px;line-height:19px}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;box-sizing:border-box;padding:44px 56px;background:#F3F4F6;color:#1F2328;font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<div class="lab">Study · not built · every mark [P]</div>
+<h1 style="margin:0;font-size:28px;line-height:34px;font-weight:600">What a new user sees the first time Duo opens, and how they get back to it</h1>
+<p style="margin:0;font-size:14px;line-height:21px;color:#5B636D;max-width:1240px">Aram, a new user: so much he is underusing; how to start director mode; tasks vs sessions; why sometimes chat and sometimes a terminal. DL-339 (Q-511): the teaching layer that needs no design is on main (Help › Duo Guide and both films, guide pages, explainers for Tasks, Chat and Terminal, Director, Home); a designed welcome is this round. Geoff on Q-512: “I don't want to force director usage.”</p>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:20px">
+<div class="card"><div class="lab">A · A welcome sheet</div><span class="t">One Duo sheet at first launch: the intro film's poster, three short panels (sessions in chat or terminal; projects and tasks; a director, when you want one), Start Using Duo. Help › Welcome to Duo shows it again.</span><span class="t" style="color:#5B636D">Said once, before any use; read or skipped, then gone. Queues with the install question.</span><span class="p">Board A1</span></div>
+<div class="card rec"><div class="lab" style="color:#1F2328">B · Getting started with Duo · recommended</div><span class="t">A card at the top of All projects: three optional steps that tick on the real action (open or make a project; start a session, chat or terminal; make a task), each with Show me, which opens that explainer on the real control. The director is a line to know about, with its film: never a step.</span><span class="t" style="color:#5B636D">Learn by doing; nothing modal; the same pattern DL-147 chose for a new project's card. Hide, or Help › Getting Started.</span><span class="p">Boards B1, B2, B3</span></div>
+<div class="card"><div class="lab">C · Explainers that open themselves</div><span class="t">No welcome. The first time a new user meets the pill, a project, Home or a task, that explainer opens once by itself; after a few sessions in one project, a quiet line in the sidebar says a director could run them.</span><span class="t" style="color:#5B636D">Least new surface; but popovers that open by themselves interrupt, and DL-172 kept explainers to a long hover.</span><span class="p">Boards C1, C2</span></div>
+</div>
+<div style="display:grid;grid-template-columns:minmax(0, 1.45fr) minmax(0, 1fr);gap:20px">
+<div class="card rec">
+<div class="lab" style="color:#1F2328">The decisions, each with the recommendation</div>
+<div class="row"><b>Q-532</b><span><strong>B</strong>, the Getting started card (B1 to B3). Or A, the sheet; or C, explainers that open themselves.</span></div>
+<div class="row"><b>Q-533</b><span>Where and for whom: <strong>at All projects, above the List or Board, on new installs only</strong>; it ends at Hide or when the three steps are ticked. Existing users reach it from Help.</span></div>
+<div class="row"><b>Q-534</b><span>The director: <strong>a line to know about</strong> (what it is, Watch the director film, Explain), never a step or a tick. Or a fourth optional step; or leave it to the guide.</span></div>
+<div class="row"><b>Q-535</b><span>The way back: <strong>Help › Getting Started</strong> at the top of Help, then Duo Guide, the films, and Explain ▸ for all four explainers (X1).</span></div>
+<div class="row"><b>Q-536</b><span>Explainer pictures and anchors (closes Q-523): <strong>as drawn on X2</strong>: Director on the director's slot, Home on ★ home at All projects; both from the card and Explain ▸.</span></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:20px">
+<div class="card"><div class="lab">What it reuses</div><span class="t">The explainer (DL-172) as built, unchanged; the guide pages and both films behind Learn more and Watch; DL-147's ticking card (board 08) at a new place; the List and Board as they are.</span></div>
+<div class="card"><div class="lab">Overlap with the left-nav round</div><span class="t">design-projects-left-nav owns where projects live and the Projects explainer (ENH-347). Step 1's Show me opens that explainer; it is not redrawn here. If a project list comes back to the left, the card stays in the middle.</span></div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
