@@ -23,7 +23,7 @@ import Foundation
     m.documentsExists = false
     check(m.startDefault?.kind == .home, "the fixture's Home is the default")
     let src = (try? String(contentsOf: repoRoot().appending(path: "Sources/DuoKit/Model/AppModel.swift"), encoding: .utf8)) ?? ""
-    check(src.contains("if altitude.isAllProjects { return pressNewSessionRow() }"), "New Claude Session (⌘T) at All projects presses the New session row")
+    check(src.contains("return pressNewSessionRow()   // F-446, DL-262"), "New Claude Session (⌘T) at All projects presses the New session row (unless a project is selected, DL-341)")
     let row = (try? String(contentsOf: repoRoot().appending(path: "Sources/DuoKit/AllProjects/NewSessionRow.swift"), encoding: .utf8)) ?? ""
     check(row.contains("model.pressNewSessionRow()") && row.contains("// action: session new"), "the row runs `duo2 session new`")
 

@@ -63,6 +63,40 @@ import Foundation
         check(DuoAction.resolve(["session", "chat"]).map { $0.0.args.contains("--home chat|terminal|last") } == true, "duo2 session chat --home (DL-71)")
     }
     check(DuoAction.resolve(["view", "home", "list"]) != nil && ActionID.viewHome.action.ui.contains("Show List"), "duo2 view home (DL-71)")
+    // The List grouped by project (DL-341, Q-547).
+    do {
+        let all = l.projects + l.quietProjects
+        let ago = l.projects.map(\.newestAgo)
+        check(ago == ago.sorted() && l.projects.allSatisfy { $0.newestAgo <= SessionList.quietAfter } && l.quietProjects.allSatisfy { $0.newestAgo > SessionList.quietAfter },
+              "by project: projects newest activity first; those with nothing this week are Quieter projects")
+        check(all.flatMap(\.rows).count == f.sessions.count && Set(all.flatMap(\.rows).map(\.id)).count == f.sessions.count,
+              "by project: every live session sits under its project once, needs-you ones too (as L1 draws them)")
+        check(all.allSatisfy { g in zip(g.rows, g.rows.dropFirst()).allSatisfy { SessionList.secondsAgo($0.session, now: evening) <= SessionList.secondsAgo($1.session, now: evening) } },
+              "by project: sessions newest first inside a project")
+        let home = all.first { $0.home }
+        check(home?.title == "★ home" && home.map { $0.firstRows.count == min(5, $0.rows.count) && $0.hiddenCount == max(0, $0.rows.count - 5) } == true,
+              "by project: Home is ★ home; five rows then 'n more'")
+        check(l.archived.count == 4, "by project: Archived stays its own fold, last")
+        let m = AppModel(fixture: f)
+        m.altitude = .allProjects; m.homeView = .list
+        check(m.listGroup == .recent && m.listSelectedProject == nil, "the List groups by recent until chosen; nothing selected, ⌘T is DL-262's")
+        m.listGroup = .project   // not setListGroup: it writes Duo's state file
+        let first = all.first { !$0.home }!
+        m.listSelection = SessionListKeys.header(first.id)
+        check(m.listSelectedProject == first.id && m.startPlace(forProject: first.id)?.project == first.id, "a selected header: ⌘T starts in its project")
+        m.listSelection = first.rows[0].id
+        check(m.listSelectedProject == first.id, "a selected row of a project: ⌘T starts in its project")
+        let entries = m.listProjectEntries(l)
+        check(entries.first?.id == SessionListKeys.header(l.projects[0].id) && entries.contains { $0.row == nil && $0.id == SessionListKeys.header(first.id) },
+              "arrow keys stop at each project's header, then its rows")
+        m.expandedGroups.insert(SessionListKeys.folded(first.id))
+        check(!m.listProjectEntries(l).contains { $0.row?.session.project == first.id } && m.listProjectEntries(l).contains { $0.id == SessionListKeys.header(first.id) },
+              "a folded project keeps its header, and its rows leave the walk")
+        check(m.startPlace(forProject: home?.id ?? "")?.kind == .home, "Home's + starts in Home")
+        check(ListGroup(rawValue: DuoState().listGroup ?? "") == nil, "a new user's List groups by recent")
+        check(DuoAction.resolve(["view", "list", "group", "project"]) != nil && ActionID.viewList.action.ui.contains("Group Sessions By")
+              && ActionID.sessionNew.action.ui.contains("List project header +"), "duo2 view list group, and the header's + is session new (DL-71)")
+    }
     // The List's header carries the Board tile's action (Q-158): same sheet call, same verb.
     let panes = (try? String(contentsOf: repoRoot().appending(path: "Sources/DuoKit/AllProjects/AllProjectsPanes.swift"), encoding: .utf8)) ?? ""
     let calls = panes.split(separator: "\n").filter { $0.contains("model.showNewProject()") && $0.contains("// action: project new") }

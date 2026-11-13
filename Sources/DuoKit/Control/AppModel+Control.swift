@@ -172,6 +172,10 @@ extension AppModel {
                 listShowsArchived = a == "on"
             }
             done(.ok("All projects shows the \(homeView.title)\(homeView == .list && !listShowsArchived ? ", archived sessions hidden" : "")."))
+        case .viewList:
+            guard inv[0] == "group", let g = inv[1].flatMap(ListGroup.init(rawValue:)) else { return done(.fail("usage: \(id.action.usage)")) }
+            setListGroup(g)
+            done(.ok("The List is grouped by \(g.rawValue)."))
         case .viewFormatBar:
             switch inv[0] { case "show": setFormatBarHidden(false); case "hide": setFormatBarHidden(true); default: setFormatBarHidden(!formatBarHidden) }
             done(.ok(formatBarHidden ? "Formatting bar hidden." : "Formatting bar on (it shows while a Markdown document has the keyboard)."))

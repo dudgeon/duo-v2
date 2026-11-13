@@ -296,7 +296,11 @@ struct MapHeader: View {
             Menu {
                 if list {
                     // The Group popup's menu isn't drawn (home-evolution-handoff, Not drawn): a system menu.
-                    Button { } label: { Label("Group By Recent", systemImage: "checkmark") }
+                    ForEach(ListGroup.allCases, id: \.self) { g in
+                        Button { model.setListGroup(g) } label: {  // action: view list
+                            if g == model.listGroup { Label(g.title, systemImage: "checkmark") } else { Text(g.title) }
+                        }
+                    }
                     Divider()
                     Button { model.listShowsArchived.toggle() } label: {
                         if model.listShowsArchived { Label("Show Archived", systemImage: "checkmark") } else { Text("Show Archived") }
@@ -310,7 +314,7 @@ struct MapHeader: View {
                 }
             } label: {
                 HStack(spacing: 6) {
-                    Text(list ? "Recent" : model.mapSort.title).duoText(.control).foregroundStyle(DuoColor.text)
+                    Text(list ? model.listGroup.title : model.mapSort.title).duoText(.control).foregroundStyle(DuoColor.text)
                     Image(systemName: "chevron.up.chevron.down").font(.system(size: DuoSymbolSize.chevronSmall, weight: .semibold)).foregroundStyle(DuoColor.text2)
                 }
                 .padding(.leading, 8).padding(.trailing, 6)
@@ -322,7 +326,7 @@ struct MapHeader: View {
             .buttonStyle(.plain)
             .menuIndicator(.hidden)
             .fixedSize()
-            .accessibilityLabel(list ? "Group sessions by recent" : "Sort projects by \(model.mapSort.title)")
+            .accessibilityLabel(list ? "Group sessions by \(model.listGroup.title.lowercased())" : "Sort projects by \(model.mapSort.title)")
         }
         .frame(height: DuoMetric.mapHeaderControlHeight)
     }

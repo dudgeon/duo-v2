@@ -283,6 +283,8 @@ public struct DuoState: Codable, Sendable, Equatable {
     public var mapSort: String?
     /// All projects' middle (DL-142): "board" or "list"; nil until the user chooses (a new user sees List).
     public var homeView: String?
+    /// The List's grouping (DL-341): "recent" (the default) or "project".
+    public var listGroup: String?
     /// View › Show Hidden Files (DL-105).
     public var showHiddenFiles = false
     /// View › Hide Formatting Bar (DL-266): the Markdown bar over the editor is turned off.
@@ -326,6 +328,7 @@ public struct DuoState: Codable, Sendable, Equatable {
         mapSort = try c.decodeIfPresent(String.self, forKey: .mapSort)
         appearance = try c.decodeIfPresent(String.self, forKey: .appearance)   // C-122: the one field this init forgot
         homeView = try c.decodeIfPresent(String.self, forKey: .homeView)
+        listGroup = try c.decodeIfPresent(String.self, forKey: .listGroup)
         showHiddenFiles = try c.decodeIfPresent(Bool.self, forKey: .showHiddenFiles) ?? false
         dismissedExplainers = try c.decodeIfPresent([String].self, forKey: .dismissedExplainers) ?? []
         keepRunning = try c.decodeIfPresent([String].self, forKey: .keepRunning) ?? []

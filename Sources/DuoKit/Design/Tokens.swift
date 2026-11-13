@@ -258,6 +258,9 @@ public enum DuoMetric {
     public static let sessionListRowInset: CGFloat = 8.0
     public static let sessionListToggleSegmentPadding: CGFloat = 10.0
     public static let sessionListToggleIconGap: CGFloat = 5.0
+    public static let sessionListProjectHeaderHeight: CGFloat = 30.0
+    public static let sessionListProjectPlusSize: CGFloat = 22.0
+    public static let sessionListProjectPlusRadius: CGFloat = 5.0
     public static let rowActionSize: CGFloat = 18.0
     public static let rowActionRadius: CGFloat = 4.0
     public static let rowActionGlyph: CGFloat = 14.0

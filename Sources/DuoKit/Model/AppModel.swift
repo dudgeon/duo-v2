@@ -331,6 +331,10 @@ public final class AppModel {
     /// The middle at All projects (DL-142): Board (the map) or List (every session by recency). A new
     /// user sees List; after that the last choice (`setHomeView`).
     public var homeView: HomeView = HomeView(rawValue: DuoState.load().homeView ?? "") ?? .list
+    /// The List's grouping (DL-341): by recency or by project; remembered (`setListGroup`).
+    public var listGroup: ListGroup = ListGroup(rawValue: DuoState.load().listGroup ?? "") ?? .recent
+    /// The project whose header + the pointer is on (DL-341); target states set it for a capture.
+    public var listPlusHover: String?
     /// The list's filter, its selected row (a session's `id`), and Group › Show Archived.
     public var listFilter = "" { didSet { if listFilter != oldValue { listFilterChanged() } } }
     /// The filter's answer (DL-142 (4)): sessions best first, each with the passage that matched;
@@ -668,7 +672,10 @@ public final class AppModel {
     /// `+ New session` (handoff §6.2): a new Claude Code session in the current project's folder,
     /// with a Duo-minted id recorded in the project's session index first (CONS FR-7.7.7).
     public func newSession() {
-        if altitude.isAllProjects { return pressNewSessionRow() }   // F-446, DL-262
+        if altitude.isAllProjects {
+            if let p = listSelectedProject { return newSessionFromHeader(p) }   // DL-341: ⌘T starts in the selected project
+            return pressNewSessionRow()   // F-446, DL-262
+        }
         guard let project = currentProject?.name else { return }
         newSession(in: project)
         consoleTab = fixture.sessions.last?.tabKey
