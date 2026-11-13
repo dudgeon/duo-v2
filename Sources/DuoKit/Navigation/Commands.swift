@@ -512,6 +512,11 @@ public struct DuoCommands: Commands {
                 Text("Recent Activity").tag(MapSort.recent)
                 Text("Name").tag(MapSort.name)
             }
+            // The List's grouping (DL-341), the same choice as its Group popup.
+            Picker("Group Sessions By", selection: Binding(get: { model.listGroup }, set: { model.setListGroup($0) })) {  // action: view list
+                Text("Recent").tag(ListGroup.recent)
+                Text("Project").tag(ListGroup.project)
+            }
             Divider()
             // The system's item, made here: AppKit's own isn't added to a SwiftUI View menu.
             Button(model.fullScreen ? "Exit Full Screen" : "Enter Full Screen") {

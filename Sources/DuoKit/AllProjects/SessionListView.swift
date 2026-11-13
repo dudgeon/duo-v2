@@ -50,6 +50,14 @@ struct SessionListPane: View {
                         if list.needsYou.isEmpty, list.sections.isEmpty, list.earlier.isEmpty, model.firstRunFolders == nil {
                             EmptySessionList()   // DL-262: the words (not drawn: a stand-in, C-127)
                         }
+                        if model.listGroup == .project {
+                            // DL-341: a header per project, its sessions under it; needs-you sessions sit in their project (L1).
+                            ForEach(list.projects) { g in SessionListProjectGroup(group: g, twoLine: twoLine, narrow: twoLine) }
+                            SessionListQuieter(groups: list.quietProjects, twoLine: twoLine, narrow: twoLine)
+                            if model.listShowsArchived {
+                                SessionListFold(key: SessionListKeys.archived, title: "Archived", rows: list.archived, twoLine: twoLine)
+                            }
+                        } else {
                         if model.rightCollapsedAllProjects {
                             // N1 with the column hidden: the line opens into the rows themselves.
                             if !list.needsYou.isEmpty {
@@ -70,6 +78,7 @@ struct SessionListPane: View {
                         if model.listShowsArchived {
                             SessionListFold(key: SessionListKeys.archived, title: "Archived", rows: list.archived, twoLine: twoLine)
                         }
+                        }
                     }
                 }
                 .padding(.bottom, DuoSpace.panePadding)
@@ -88,8 +97,8 @@ struct SessionListPane: View {
                 }
             }
             .onKeyPress(.return) {
-                guard let id = model.listSelection else { return .ignored }
-                model.openListRow(id)
+                guard model.listSelection != nil else { return .ignored }
+                model.activateListSelection()
                 return .handled
             }
             // ⌘F in the list focuses its filter (`filter`, A).
@@ -235,6 +244,8 @@ struct SessionListRow: View {
     @Environment(AppModel.self) private var model
     let row: SessionList.Row
     let twoLine: Bool
+    /// False under a project's header (DL-341): the project is the header's, so the column shows only the task.
+    var showProject = true
 
     var body: some View {
         let selected = model.listSelection == row.id
@@ -249,9 +260,9 @@ struct SessionListRow: View {
                         WaitLabel(text: row.wait)
                     }
                     HStack(spacing: 5) {
-                        Text(row.project).lineLimit(1).truncationMode(.tail)
+                        if showProject { Text(row.project).lineLimit(1).truncationMode(.tail) }
                         if let task = row.task {
-                            Text("›")
+                            if showProject { Text("›") }
                             TaskBox()
                             Text(task).lineLimit(1).truncationMode(.tail)
                         }
@@ -266,7 +277,7 @@ struct SessionListRow: View {
                     SessionGlyph(kind: model.sessionKind(row.session), state: row.session.state)
                     Text(row.session.name).duoText(.body, weight: bold ? .semibold : nil).lineLimit(1).truncationMode(.tail)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                    Text(row.project).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1).truncationMode(.tail)
+                    Text(showProject ? row.project : "").duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1).truncationMode(.tail)
                         .frame(width: DuoMetric.sessionListProjectWidth, alignment: .leading)
                     HStack(spacing: 5) {
                         if let task = row.task {
@@ -391,6 +402,11 @@ extension SessionListPane {
         let b = SessionSelection.breaker
         if filtering { return model.listMatches.map(\.row.session.tabKey) }
         var out: [String] = []
+        if model.listGroup == .project {
+            // A breaker before each project's rows, so ⇧ doesn't range across projects (DL-341).
+            for e in model.listProjectEntries(list) { if let r = e.row { out.append(r.session.tabKey) } else { out.append(b) } }
+            return out
+        }
         if model.rightCollapsedAllProjects, !list.needsYou.isEmpty { out.append(b); out += list.needsYou.map(\.session.tabKey) }
         for s in list.sections { out.append(b); out += s.rows.map(\.session.tabKey) }
         out.append(b)
@@ -398,5 +414,126 @@ extension SessionListPane {
         out.append(b)
         if model.listShowsArchived, model.expandedGroups.contains(SessionListKeys.archived) { out += list.archived.map(\.session.tabKey) }
         return out
+    }
+}
+
+/// One project in the grouped List (DL-341): its header, then five sessions and "n more ›", unless folded.
+struct SessionListProjectGroup: View {
+    @Environment(AppModel.self) private var model
+    let group: SessionList.ProjectGroup
+    let twoLine: Bool
+    let narrow: Bool
+
+    var body: some View {
+        let folded = model.expandedGroups.contains(SessionListKeys.folded(group.id))
+        let all = model.expandedGroups.contains(SessionListKeys.more(group.id))
+        VStack(alignment: .leading, spacing: 0) {
+            SessionListProjectHeader(group: group, folded: folded, narrow: narrow)
+            if !folded {
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(all ? group.rows : group.firstRows) { r in SessionListRow(row: r, twoLine: twoLine, showProject: false) }
+                    if group.hiddenCount > 0 {
+                        Text(all ? "Show fewer ‹" : "\(group.hiddenCount) more ›")
+                            .duoText(.body).foregroundStyle(DuoColor.text2)
+                            .padding(.leading, DuoSpace.panePadding + DuoMetric.glyph + DuoSpace.gapRowItems)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .frame(height: DuoMetric.rowSession)
+                            .contentShape(Rectangle())
+                            .onActivate { withDuoAnimation(.fold) { let k = SessionListKeys.more(group.id); if all { model.expandedGroups.remove(k) } else { model.expandedGroups.insert(k) } } }  // not an action: a fold in the list
+                            .accessibilityLabel(all ? "Show fewer \(group.title) sessions" : "Show \(group.hiddenCount) more \(group.title) sessions")
+                    }
+                }
+                .transition(.foldRows)
+            }
+        }
+    }
+}
+
+/// `Quieter projects · 6`: the projects with nothing this week, closed (DL-341, Q-547); open, the same headers.
+struct SessionListQuieter: View {
+    @Environment(AppModel.self) private var model
+    let groups: [SessionList.ProjectGroup]
+    let twoLine: Bool
+    let narrow: Bool
+
+    var body: some View {
+        if !groups.isEmpty {
+            let key = SessionListKeys.quieter
+            let expanded = model.expandedGroups.contains(key)
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(spacing: DuoSpace.gapRowItems) {
+                    Chevron(direction: expanded ? .down : .right).frame(width: 8, height: 10)
+                    Text("Quieter projects · \(groups.count)").duoText(.body).foregroundStyle(DuoColor.text2)
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, DuoSpace.panePadding)
+                .frame(height: DuoMetric.rowSession)
+                .contentShape(Rectangle())
+                .onActivate { withDuoAnimation(.fold) { if expanded { model.expandedGroups.remove(key) } else { model.expandedGroups.insert(key) } } }  // not an action: a fold in the list
+                .accessibilityLabel(expanded ? "Hide quieter projects" : "Show \(groups.count) quieter projects")
+                if expanded {
+                    ForEach(groups) { g in SessionListProjectGroup(group: g, twoLine: twoLine, narrow: narrow) }.transition(.foldRows)
+                }
+            }
+        }
+    }
+}
+
+/// A project's header in the grouped List (DL-341, L1/L2): 30 high with a `rule` hairline above; the fold
+/// chevron, the name in 13 semibold, its folder in `monoPath` text2 (middle-truncated), the count; at the right
+/// end a + in text2 (22×22) that widens leftward to "+ New session" on a `selected` pill while the pointer is on it.
+struct SessionListProjectHeader: View {
+    @Environment(AppModel.self) private var model
+    let group: SessionList.ProjectGroup
+    let folded: Bool
+    /// Under 520 the folder hides first, then the count; the + always stays.
+    let narrow: Bool
+
+    var body: some View {
+        let selected = model.listSelection == SessionListKeys.header(group.id)
+        let hover = model.listPlusHover == group.id
+        // ⌘T targets this project while its header or one of its rows is selected: the + says so.
+        let cmdT = model.listSelectedProject == group.id
+        HStack(spacing: DuoSpace.gapRowItems) {
+            Chevron(direction: folded ? .right : .down).frame(width: 8, height: 10)
+            Text(group.title).duoText(.body, weight: .semibold).lineLimit(1).fixedSize()
+            if !narrow {
+                Text(group.folder).duoText(.monoPath).foregroundStyle(DuoColor.text2).lineLimit(1).truncationMode(.middle)
+                Text("\(group.count)").duoText(.control).foregroundStyle(DuoColor.text2).fixedSize()
+            }
+            Spacer(minLength: 0)
+            if cmdT && !hover { Text("⌘T").duoText(.control).foregroundStyle(DuoColor.text2).fixedSize() }
+            plus(hover: hover)
+        }
+        .padding(.horizontal, DuoSpace.panePadding)
+        .frame(height: DuoMetric.sessionListProjectHeaderHeight)
+        .background { if selected { RoundedRectangle(cornerRadius: DuoMetric.radiusSelection).fill(DuoColor.selected).padding(.horizontal, DuoMetric.sessionListRowInset) } }
+        .overlay(alignment: .top) { Rectangle().fill(DuoColor.rule).frame(height: DuoMetric.borderHairline) }
+        .contentShape(Rectangle())
+        .onActivate { model.listSelection = SessionListKeys.header(group.id); model.toggleProjectFold(group.id) }  // not an action: a fold in the list
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("\(group.title), \(group.count) session\(group.count == 1 ? "" : "s"), \(folded ? "folded" : "open")")
+        .accessibilityIdentifier("list-project-header.\(group.id)")
+    }
+
+    private func plus(hover: Bool) -> some View {
+        let size = DuoMetric.sessionListProjectPlusSize
+        return HStack(spacing: 4) {
+            Text("+").duoText(.body).foregroundStyle(hover ? DuoColor.text : DuoColor.text2)
+            if hover { Text("New session").duoText(.control).foregroundStyle(DuoColor.text).fixedSize() }
+        }
+        .padding(.horizontal, hover ? 7 : 0)
+        .frame(minWidth: size, minHeight: size, maxHeight: size)
+        .background(RoundedRectangle(cornerRadius: DuoMetric.sessionListProjectPlusRadius).fill(hover ? DuoColor.selected : Color.clear))
+        .contentShape(Rectangle())
+        .duoAnimation(.chipIn, value: hover)
+        .onHover { inside in
+            if inside { model.listPlusHover = group.id } else if model.listPlusHover == group.id { model.listPlusHover = nil }
+        }
+        .onActivate { model.newSessionFromHeader(group.id) }  // action: session new
+        .help("New session in \(group.title)\n\(group.folder)")
+        .accessibilityLabel("New session in \(group.title)")
+        .accessibilityAddTraits(.isButton)
+        .accessibilityIdentifier("list-project-plus.\(group.id)")
     }
 }
