@@ -12,7 +12,7 @@
   body { padding: 16px 20px 16px; }
   /* The sheet: on `pane`, a 1 `rule` edge, 28 24 padding. Never paginated: the renderer's pages become
      one flow at the pane's width, so its page box, margins, shadow and grey ground are all undone here. */
-  #sheet { position: relative; background: var(--duo-pane); border: 1px solid var(--duo-rule); padding: 28px 24px; }
+  #sheet { position: relative; background: var(--duo-docx-page); color: var(--duo-docx-ink); border: 1px solid var(--duo-rule); padding: 28px 24px; }   /* white in every appearance (Q-239) */
   #host .docx-wrapper { background: none !important; padding: 0 !important; display: block !important; }
   #host .docx-wrapper > section.docx, #host section.docx { width: auto !important; min-height: 0 !important; padding: 0 !important; margin: 0 !important;
     box-shadow: none !important; background: none !important; overflow-wrap: anywhere; }

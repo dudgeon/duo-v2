@@ -214,5 +214,30 @@ import Foundation
         check(dateLine.hasPrefix("· ") && dateLine.contains(" Sep") && !dateLine.contains("Sept"), "a comment's date reads “1 Sep”, as the boards write it (\(dateLine))")
         check(viewer.blocked.isEmpty, "the page's policy blocked nothing (\(viewer.blocked))")
     }
+
+    // Q-239 (DL-340): the page stays a white sheet in every appearance, in the document's own colours; the pane around it stays Duo's ground.
+    let savedAppearance = NSApp.appearance
+    defer { NSApp.appearance = savedAppearance }
+    for (label, appearance) in [("Light", NSAppearance.Name.aqua), ("Dark", .darkAqua)] {
+        NSApp.appearance = NSAppearance(named: appearance)
+        let probeViewer = DocxViewer(resources: repoRoot().appending(path: "Vendor/docx-viewer"))
+        probeViewer.office.replacesPageCards = false
+        let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 460, height: 800), styleMask: [.borderless], backing: .buffered, defer: false)
+        w.contentView = probeViewer.webView
+        var done = false
+        probeViewer.open(fx.appending(path: "look/Google export.docx"))
+        probeViewer.whenSettled { done = true }
+        let until = Date().addingTimeInterval(40)
+        while !done, Date() < until { RunLoop.main.run(until: Date().addingTimeInterval(0.02)) }
+        var out: Any??
+        probeViewer.inspect("const c = getComputedStyle(document.querySelector('#sheet')); const p = document.querySelector('#host p:not([class])'); return { sheet: c.backgroundColor, ground: getComputedStyle(document.body).backgroundColor, text: p ? getComputedStyle(p.querySelector('span') || p).color : '' };") { out = .some($0) }
+        let until2 = Date().addingTimeInterval(20)
+        while out == nil, Date() < until2 { RunLoop.main.run(until: Date().addingTimeInterval(0.02)) }
+        let r = (out ?? nil) as? [String: String] ?? [:]
+        check(r["sheet"] == "rgb(255, 255, 255)", "\(label): the Word page is a white sheet (\(r))")
+        check(r["text"] == "rgb(0, 0, 0)" || r["text"] == "rgb(31, 35, 40)", "\(label): its text is dark on the white sheet (\(r))")
+        if label == "Dark" { check(r["ground"] != r["sheet"], "Dark: the pane around the sheet stays in the dark ground (\(r))") }
+        w.contentView = nil
+    }
     wait(0.1)
 }
