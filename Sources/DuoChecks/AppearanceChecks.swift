@@ -73,7 +73,7 @@ import Foundation
     // Style audit fix list: the terminal has a palette per scheme (the same in light and dark for now), and the web gets every token.
     check(DuoScheme.light.terminal.ansi == DuoScheme.dark.terminal.ansi && DuoScheme.dark.terminal.ansi.count == 16, "the terminal palette is picked by scheme; dark takes the base while it has no override of its own")
     let css = EditorController.tokenCSS()
-    check(DuoWebTokens.colors.count == 41 && DuoWebTokens.colors.allSatisfy { css.contains("--duo-\($0.name):") }, "the web pages get all 41 colours as variables, generated from tokens")
+    check(DuoWebTokens.colors.count == 42 && DuoWebTokens.colors.allSatisfy { css.contains("--duo-\($0.name):") }, "the web pages get all 42 colours as variables, generated from tokens")
     check(css.contains("--duo-font-ui:") && css.contains("--duo-font-mono:") && css.contains("--duo-font-document:") && css.contains("--duo-document-size: 13px") && css.contains("--duo-shadow-popover: 0px 12px 32px"), "the web pages get the faces, the document's type and the whole popover shadow")
     check(AppearanceSetting.allCases.map(\.rawValue) == ["system", "light", "dark", "classic"], "the setting is system, light, dark or classic")
 
