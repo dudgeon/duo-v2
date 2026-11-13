@@ -218,6 +218,10 @@ public final class ChatLog: @unchecked Sendable {
     public internal(set) var earlierHidden = false
     @ObservationIgnored private var nextID = 0
     @ObservationIgnored private var agentsStarted: [String: String] = [:]
+    /// SubagentStops whose agent never had a SubagentStart: Claude's own side agents, /btw's answer among them
+    /// (agent_type empty, F-689, F-691). Not an Agent card's result, so no card uses them; kept for a later /btw design.
+    public struct SideStop: Sendable { public var agentId: String?; public var agentType: String?; public var message: String?; public var time: Date? }
+    public private(set) var sideStops: [SideStop] = []
     @ObservationIgnored private var askedIDs: Set<String> = []
     /// Tool calls the transcript has reached: a hook can show one before the text that preceded it.
     @ObservationIgnored var transcriptTools: Set<String> = []
@@ -248,7 +252,7 @@ public final class ChatLog: @unchecked Sendable {
 
     /// Takes over a log built elsewhere (a replay): everything it holds, in one change.
     func adopt(_ o: ChatLog) {
-        nextID = o.nextID; agentsStarted = o.agentsStarted; askedIDs = o.askedIDs
+        nextID = o.nextID; agentsStarted = o.agentsStarted; sideStops = o.sideStops; askedIDs = o.askedIDs
         transcriptTools = o.transcriptTools; stepItem = o.stepItem
         if o.model != nil { model = o.model }
         if o.streams { streams = true }
@@ -523,9 +527,14 @@ public final class ChatLog: @unchecked Sendable {
     public func agentStarted(id: String, agentType: String?) { agentsStarted[id] = agentType ?? "agent" }
 
     public func agentFinished(agentType: String?, message: String?, time: Date?, agentId: String? = nil) {
-        // Claude's own side agents stop without a start: not shown (F-103).
-        if let agentId, agentsStarted[agentId] == nil, !steps.contains(where: { $0.agent?.finished == false }) { return }
-        if steps.last(where: { $0.agent != nil && $0.agent?.finished == false }) == nil, let agentId, let name = agentsStarted[agentId] {
+        // A stop with no matching start is Claude's own side agent (/btw's answer, F-103, F-689): never an Agent
+        // card's result, so it finishes and fills no card. Its text is kept in `sideStops` (F-691).
+        guard let agentId, agentsStarted[agentId] != nil else {
+            sideStops.append(SideStop(agentId: agentId, agentType: agentType, message: message, time: time))
+            if sideStops.count > 20 { sideStops.removeFirst(sideStops.count - 20) }
+            return
+        }
+        if steps.last(where: { $0.agent != nil && $0.agent?.finished == false }) == nil, let name = agentsStarted[agentId] {
             items.append(.note(ChatNote(id: newID("note"), text: "Background agent finished: \(name)", time: time)))
             return
         }
