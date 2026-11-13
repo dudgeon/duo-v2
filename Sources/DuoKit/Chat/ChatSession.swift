@@ -487,6 +487,8 @@ public final class ChatSession {
         if s.kind != .trust { trustAsked = nil }
     }
 
+    /// Set by the app, which owns the tabs: forks this session from a chat turn (DL-338). Says whether it did.
+    @ObservationIgnored public var onFork: (@MainActor (String) -> Bool)?
     /// Set by the app: shows the trust sheet for the folder Claude Code named, and says whether it did (it is the session's).
     @ObservationIgnored public var onTrustQuestion: (@MainActor (String) -> Bool)?
     /// The trust question already put to you, so a repaint doesn't ask again.

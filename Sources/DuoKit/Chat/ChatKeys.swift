@@ -149,6 +149,7 @@ extension ChatSession {
         let here = revealRequest.flatMap { ids.firstIndex(of: $0) } ?? ids.count
         let next = min(max(here + by, 0), ids.count - 1)
         revealRequest = ids[next]
+        ui.selectedTurn = ids[next]
     }
 
     /// The mode chip: Shift+Tab, as the TUI cycles manual → accept edits → plan (F-104).

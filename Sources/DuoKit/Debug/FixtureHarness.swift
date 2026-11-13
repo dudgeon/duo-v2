@@ -1075,6 +1075,31 @@ public enum FixtureHarness {
                     FileHandle.standardError.write(Data("composer: chat=\(c.coordinator?.chat.key.prefix(8) ?? "-") shown=\(shown) first=\(w.firstResponder === c) text=\(c.string.debugDescription) frame=\(c.convert(c.bounds, to: nil))\n".utf8))
                 }
             }
+        case "turn-uuids", "turn-hover", "turn-select", "turn-copy", "turn-rewind", "turn-fork":
+            // DL-338's boards: turn-uuids stamps the fixture chat's turns with ids (the fixtures have none, so Rewind and Fork are
+            // offered as they are on a real session); turn-hover:<n> / turn-select:<n> show turn n's row; turn-copy:<n> presses its Copy;
+            // turn-rewind:<n> opens the Rewind sheet; turn-fork:<n> reports the fork plan (no tab is made in a fixture).
+            guard let c = model.visibleSessionId.flatMap(model.chat(for:)) else { break }
+            // Stamped on every action: the fixture chat's log is rebuilt now and then, which drops ids put on it earlier.
+            do {
+                for (i, item) in c.log.items.enumerated() {
+                    switch item {
+                    case .you(var y): y.uuid = "uuid-you-\(i)"; c.log.items[i] = .you(y)
+                    case .claude(var t): t.uuid = "uuid-turn-\(i)"; c.log.items[i] = .claude(t)
+                    default: break
+                    }
+                }
+                FileHandle.standardError.write(Data("\(parts[0]): \(c.turnList.map { "\($0.role):\($0.uuid ?? "-")" }) rewind=\(c.turnList.first.map { c.canRewind($0.id) } ?? false) screen=\(c.screen.kind)\n".utf8))
+            }
+            if parts.count > 1, let n = Int(parts[1]), let t = c.turnList.first(where: { $0.n == n }) {
+                switch parts[0] {
+                case "turn-hover": c.ui.hoverTurn = t.id
+                case "turn-select": c.ui.selectedTurn = t.id
+                case "turn-copy": c.copyTurn(t.id)
+                case "turn-rewind": FileHandle.standardError.write(Data("turn-rewind: \(c.askRewind(t.id) ? "asked" : "refused")\n".utf8))
+                default: FileHandle.standardError.write(Data("turn-fork: \(String(describing: c.forkPlan(t.id)))\n".utf8))
+                }
+            }
         case "chat-clear":   // the composer emptied, as select-all and delete would
             if let c = model.visibleSessionId.flatMap(model.chat(for:)) { c.ui.composer = "" }
         case "chat-fallback":   // the visible chat falls back to the terminal with the bar, as a screen it can't show does (F-640's run)

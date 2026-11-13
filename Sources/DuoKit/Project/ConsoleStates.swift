@@ -74,8 +74,9 @@ extension AppModel {
     }
 
     /// Resume as a Fork (DB-3): a new session with the same history, here, under a Duo-minted id.
-    public func resumeAsFork(_ sessionId: String, in project: String) {
-        guard let folder = liveFolders[project] else { return }
+    @discardableResult
+    public func resumeAsFork(_ sessionId: String, in project: String) -> String? {
+        guard let folder = liveFolders[project] else { return nil }
         let new = UUID().uuidString.lowercased()
         var index = SessionIndex.load(project: folder)
         index.sessions.append(.init(sessionId: new, provenance: "forked-from:\(sessionId)"))
@@ -83,6 +84,7 @@ extension AppModel {
         _ = terminals.session(new, command: .forkClaude(from: sessionId, sessionID: new), cwd: folder.path)
         consoleTab = new
         refreshLive()
+        return new
     }
 
     /// The ended bar's Resume: the same tab, the session resumed (DB-3).

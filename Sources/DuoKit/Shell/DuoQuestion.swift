@@ -37,6 +37,13 @@ public struct DuoQuestion: Identifiable {
             self.label = label; self.options = options; self.selected = selected
         }
     }
+    /// Radio options, each with a line under it in `text2` (the rewind sheet, DL-338). A class, so the choices read what was picked.
+    public final class Radios {
+        public struct Option { public var value: String; public var title: String; public var sub: String? ; public init(value: String, title: String, sub: String? = nil) { self.value = value; self.title = title; self.sub = sub } }
+        public let options: [Option]
+        public var selected: String
+        public init(options: [Option], selected: String) { self.options = options; self.selected = selected }
+    }
     public struct Choice {
         public var label: String
         public var isDefault = false
@@ -54,6 +61,9 @@ public struct DuoQuestion: Identifiable {
     public var itemsMaxHeight: CGFloat? = nil
     public var field: Field? = nil
     public var pick: Pick? = nil
+    /// A message quoted in a bubble under the title, drawn as the chat draws yours (the rewind sheet, DL-338).
+    public var quote: String? = nil
+    public var radios: Radios? = nil
     public var note: String? = nil
     /// The note in `control` type (12/16), as the memory question draws it (park-handoff); others use body.
     public var noteIsSmall = false
@@ -227,10 +237,16 @@ struct QuestionSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: DuoSpace.gapCardToCard) {
             Text(q.title).duoText(.bodyEmphasis).fixedSize(horizontal: false, vertical: true)
+            if let quote = q.quote {
+                Text(quote).duoText(.body).lineLimit(3).fixedSize(horizontal: false, vertical: true)
+                    .padding(EdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12))
+                    .background(UnevenRoundedRectangle(cornerRadii: DuoMetric.radiusChatBubble).fill(DuoColor.chatYou))
+            }
             ForEach(Array(q.paragraphs.enumerated()), id: \.offset) { n, p in
                 Text(Self.rich(p)).duoText(.body).fixedSize(horizontal: false, vertical: true)
                 if n == 0 && !q.notes.isEmpty { NotesBox(lines: q.notes) }
             }
+            if let r = q.radios { RadioRows(radios: r) }
             if let r = q.report { ReportBox(text: r) }
             if !q.items.isEmpty {
                 // Clash rows (with a detail) sit 6 apart in their own padding, a rule between (q50-clash).
@@ -345,6 +361,33 @@ struct QuestionSheet: View {
             out += a
         }
         return out
+    }
+}
+
+/// The rewind sheet's options: a round radio, the title in body type and its line in `text2` (board 3).
+struct RadioRows: View {
+    let radios: DuoQuestion.Radios
+
+    var body: some View {
+        let center = SheetCenter.shared
+        let _ = center.pickRevision
+        VStack(alignment: .leading, spacing: 8) {
+            ForEach(radios.options, id: \.value) { o in
+                let on = radios.selected == o.value
+                HStack(alignment: .top, spacing: 8) {
+                    Circle().strokeBorder(on ? DuoColor.text : DuoColor.controlEdge, lineWidth: on ? 4 : DuoMetric.borderHairline)
+                        .background(Circle().fill(DuoColor.pane)).frame(width: 14, height: 14).padding(.top, 3)
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(o.title).duoText(.body)
+                        if let sub = o.sub { Text(sub).duoText(.control).foregroundStyle(DuoColor.text2).fixedSize(horizontal: false, vertical: true) }
+                    }
+                }
+                .contentShape(Rectangle())
+                .onActivate { radios.selected = o.value; center.pickRevision += 1 }  // not an action: picks an option of the question
+                .accessibilityLabel(o.title + (o.sub.map { ". " + $0 } ?? ""))
+                .accessibilityAddTraits(on ? .isSelected : [])
+            }
+        }
     }
 }
 

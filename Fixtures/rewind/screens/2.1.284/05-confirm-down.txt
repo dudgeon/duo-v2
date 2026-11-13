@@ -1,0 +1,39 @@
+
+
+❯ write A
+
+⏺ Write(a.txt)
+  ⎿  Wrote 1 line to a.txt
+      1 A
+
+⏺ Done.
+
+✻ Worked for 0s · done 6:15 PM
+
+❯ write B
+
+⏺ Write(b.txt)
+  ⎿  Wrote 1 line to b.txt
+      1 B
+
+⏺ Done.
+
+✻ Brewed for 0s · done 6:15 PM
+▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
+   Rewind
+
+   Confirm you want to restore to the point before you sent this message:
+
+   │ write A
+   │ (22s ago)
+
+   The conversation will be forked.
+   The code will be unchanged.
+
+     1. Restore code and conversation
+   ❯ 2. Restore conversation
+     3. Restore code
+     4. Summarize from here
+   ↓ 5. Summarize up to here
+
+   ⚠ Rewinding does not affect files edited manually or via bash.

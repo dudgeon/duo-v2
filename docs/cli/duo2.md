@@ -106,7 +106,10 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 session next <text>` | Tell the user what this session needs next (one line). | — |
 | `duo2 session task [id]` | The task(s) a session is attributed to (this session by default): each note's title, status and path. Duo's hooks tell Claude the same when the session starts, resumes, clears or compacts, and what changed on its next prompt (DL-116). | — |
 | `duo2 session carry-on <id>` | Start a new session carrying on from an archived one. | — |
-| `duo2 session fork <id>` | Carry a session on as a fork: a new session with the same history (the original is left alone). | Resume as a Fork |
+| `duo2 session fork <id> [--at <turn>]` | Carry a session on as a fork: a new session with the same history (the original is left alone). With --at, the fork stops at that chat turn (a number from `session turns`, or its uuid): from your message the copy is rewound to before it and the message waits in the copy's composer; from Claude's reply, to before your next message (DL-338). Nothing is restored on disk: both sessions share the folder. | Resume as a Fork, Fork, Fork from Message…, Fork After Reply |
+| `duo2 session turns <id>` | The chat turns of a session, numbered oldest first, each with its role, its transcript uuid and its first words: what `session copy-turn`, `session rewind` and `session fork --at` take (DL-338). Rewound turns are not listed. | — |
+| `duo2 session copy-turn <id> <turn>` | Put one chat turn on the clipboard as Markdown: yours as typed (pictures as [Image #n]), Claude's text segments joined by blank lines, without thinking or tool calls (DL-338, Q-509). Works while Claude works. | Copy, Copy Message, Copy Claude’s Reply |
+| `duo2 session rewind <id> <turn> [--code]` | Rewind a session to before one of your messages: shows Duo's sheet (it names the files Claude changed since) and waits for the user's answer; there is no --yes. The message then waits in the chat composer. --code starts the sheet on Conversation and files. Duo works Claude Code's own /rewind menu; if a screen isn't one it knows, the terminal is shown (DL-338). | Rewind, Rewind to Before Message… |
 | `duo2 session trust-folder <id>` | When a session's /fork said "Workspace not trusted", or Claude Code asks at a session's start whether it trusts the folder: show Duo's sheet and wait for the user's answer. After a /fork, Yes sets only that folder's hasTrustDialogAccepted in Claude Code's file; at the start, Duo gives Claude Code the answer on its own screen. It prints `trusted <path>`, or fails with `cancelled` or `not trusted`. There is no --yes: Claude can ask, but can't trust a folder for itself (DL-229, F-444). | Trust This Folder…, Try Again, Trust Folder, Don’t Trust |
 | `duo2 session fork-again <id>` | After the folder is trusted: type the session's blocked /fork line again, only while Claude is at its prompt with nothing typed (DL-229). | Fork Again |
 | `duo2 session link <session>` | A Markdown link to a session for a note or task: [title](duo2://session/<id>). Clicking it in Duo opens or resumes the session (DL-87). | Copy Link, Copy Markdown link |
@@ -368,6 +371,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | Ask Claude to Combine | drafts the conflict's instruction into the project's Claude session, unsent (DL-149 board 11) |
 | Ask Claude to Remove It | drafts an instruction about the refused secret into the project's Claude session, unsent (DL-149 board 10) |
 | Cancel | a step inside another action's dialog or picker |
+| Chat | a menu, not an action |
 | Enter Full Screen | window management |
 | Exit Full Screen | window management |
 | Explain Tasks | Help › Explain Tasks shows an explanation to a person at the screen (DL-172); `duo2 task new` is the action it explains |
