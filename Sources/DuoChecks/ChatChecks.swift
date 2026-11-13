@@ -529,6 +529,27 @@ func spikeScreen(_ name: String) -> String {
         check(links.contains { $0.scheme == "duo-file" && $0.path == "notes.md" }, "a bare file name with a known extension is a link")
         check(links.contains { $0.absoluteString == "https://stripe.com/docs/refunds" }, "a bare URL is a link, without its full stop")
         check(ChatMarkdown.inline("Version 2.1.291 is e.g. fine").runs.compactMap(\.link).isEmpty, "version numbers and e.g. aren't files")
+        // A code span that names a file is one link, whole (ENH-343 1, DL-339).
+        func spanLink(_ s: String) -> URL? { ChatMarkdown.inline(s).runs.compactMap(\.link).first }
+        check(spanLink("see `Meeting Notes/2026-11-02 kickoff.md`")?.path == "Meeting Notes/2026-11-02 kickoff.md", "a code span with a space in the path links whole")
+        check(ChatMarkdown.inline("see `Meeting Notes/2026-11-02 kickoff.md`").runs.compactMap(\.link).count == 1, "…as one link, not pieces")
+        check(spanLink("run `Makefile`")?.path == "Makefile", "a code span with a bare known name (Makefile) links")
+        check(spanLink("at `src/app.py:42`")?.query == "line=42" && spanLink("at `src/app.py:42`")?.path == "src/app.py", "a code span with :line links at the line")
+        check(!ChatMarkdown.isFileSpan("make build") && !ChatMarkdown.isFileSpan("and/or") && !ChatMarkdown.isFileSpan("2.1.291") && !ChatMarkdown.isFileSpan("two words.md"),
+              "commands, prose slashes, versions and two bare words aren't files")
+        check(ViewConvention.hook("start", sessionId: "s", view: nil, in: URL(fileURLWithPath: "/nonexistent")) == "", "view unknown: says nothing")
+        let vcDir = FileManager.default.temporaryDirectory.appending(path: "vc-\(UUID().uuidString)")
+        let vc1 = ViewConvention.hook("start", sessionId: "s", view: .chat, in: vcDir)
+        check(vc1.hasPrefix("Duo: ") && vc1.contains("chat view") && vc1.contains("backticks"), "start: told the chat convention")
+        check(ViewConvention.hook("prompt", sessionId: "s", view: .chat, in: vcDir) == "", "same view at the next prompt: nothing")
+        let vc2 = ViewConvention.hook("prompt", sessionId: "s", view: .terminal, in: vcDir)
+        check(vc2.contains("terminal view") && vc2.contains("⌘-click"), "view changed: told once")
+        check(ViewConvention.hook("prompt", sessionId: "s", view: .terminal, in: vcDir) == "" && !ViewConvention.hook("start", sessionId: "s", view: .terminal, in: vcDir).isEmpty,
+              "…then nothing; a resume (start) tells again")
+        check(ViewConvention.text(.chat).count < 420 && ViewConvention.text(.terminal).count < 320, "each per-mode text stays short")
+        try? FileManager.default.removeItem(at: vcDir)
+        check(DuoAction.primer().contains("duo2 doc open <path>") && DuoAction.primer().contains("links the user can click") && DuoAction.primer().contains("CLAUDE.md and instructions win"),
+              "the primer says file names are links, to open a finished document, and that the user's CLAUDE.md wins")
         // Task items (F-305, Q-194): the box is read from the item's start only.
         check(ChatMarkdown.task([.paragraph("[ ] check the numbers")]) == (false, [.paragraph("check the numbers")]), "an open task item")
         check(ChatMarkdown.task([.paragraph("[x] name the owner")]) == (true, [.paragraph("name the owner")]), "a done task item")

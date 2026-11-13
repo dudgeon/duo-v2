@@ -464,9 +464,25 @@ extension AppModel {
         if !path.hasPrefix("/"), let base = cwd ?? projectFolder?.path { path = (base as NSString).appendingPathComponent(path) }
         let line = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "line" }?.value.flatMap(Int.init)
         let file = URL(fileURLWithPath: path).standardizedFileURL
-        guard FileManager.default.fileExists(atPath: file.path) else { return }
+        guard FileManager.default.fileExists(atPath: file.path) else { return info("\(file.lastPathComponent) isn't there.") }
         guard let tab = openFile(at: file) else { NSWorkspace.shared.open(file); return }
         if let line { editor.revealLine(tab: tab, line: line) }
+    }
+
+    /// A ⌘-clicked address in a terminal (ENH-343 3): a web address opens as Duo opens links; a path (`src/app.py:42`,
+    /// `file://…`) resolves against the session's folder and opens in the right pane at the line, as in chat. False: not ours.
+    @discardableResult
+    public func openTerminalLink(_ raw: String, cwd: String?) -> Bool {
+        let text = raw.trimmingCharacters(in: .whitespaces)
+        if let u = URL(string: text), let scheme = u.scheme?.lowercased(), scheme != "file" {
+            guard ["http", "https", "duo2"].contains(scheme) else { return false }
+            openLink(text); return true
+        }
+        var token = text
+        if token.hasPrefix("file://") { token = URL(string: token)?.path ?? String(token.dropFirst(7)) }
+        guard let url = ChatMarkdown.fileURL(token) else { return false }
+        openChatLink(url, cwd: cwd)
+        return true
     }
 
     /// Chat hands the terminal over for something only the TUI does (Amend, the agents manager).
