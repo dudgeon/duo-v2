@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>K Keyboard and duo2 verbs</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+table{border-collapse:collapse;width:100%;background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;font-size:12px;line-height:17px}
+th{text-align:left;font-size:11px;line-height:16px;font-weight:600;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;padding:8px 10px;border-bottom:1px solid #C9CDD3;background:#F3F4F6}
+td{padding:6px 10px;border-bottom:1px solid #E9ECEF;vertical-align:top}
+code{font-family:ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;font-size:11px}
+.new{display:inline-block;font-size:10px;line-height:14px;font-weight:600;color:#FFFFFF;background:#1F2328;border-radius:4px;padding:0 5px;margin-left:4px}
+.mut{color:#5B636D}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;box-sizing:border-box;background:#F3F4F6;color:#1F2328;font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;font-size:13px;line-height:20px;padding:24px 28px;display:flex;flex-direction:column;gap:14px;overflow:hidden">
+<div>
+<h1 style="margin:0;font-size:17px;line-height:24px;font-weight:600">K · Every action, its keys, its menu item and its duo2 verb (DL-34, DL-71)</h1>
+<p style="margin:0;color:#5B636D;font-size:12px;line-height:18px;max-width:1300px">NEW marks a key or verb that doesn't exist today; everything else is built. One new chord is proposed, ⇧⌘O (Q-530); it is free in Duo's map today, and DL-34 locks the map, so it needs the decision.</p>
+</div>
+<table>
+<tr><th style="width:230px">Action</th><th style="width:140px">Keys</th><th style="width:230px">Menu</th><th>duo2</th><th style="width:150px">In</th></tr>
+<tr><td>Show or hide the left pane at All projects</td><td>⌃⌘S</td><td>View › Show/Hide Projects</td><td><code>duo2 view sidebar show|hide|toggle</code>, which works at All projects again instead of exiting 64 (amends DL-336 (4))</td><td>A, B</td></tr>
+<tr><td>Show the Projects list inside a project (‹ Projects), and back</td><td>⇧⌘O shows it; Esc back</td><td>View › Show Projects</td><td><code>duo2 view sidebar projects|project</code><span class="new">NEW</span></td><td>A</td></tr>
+<tr><td>Go to Project… (the filter focused)</td><td>⇧⌘O<span class="new">NEW</span></td><td>Go › Go to Project…</td><td><code>duo2 open &lt;project&gt;</code> is the action; the filter itself is a picker (in <code>Parity.uiOnly</code>, as search's field is)</td><td>A, B, C</td></tr>
+<tr><td>Move in the list; open a project</td><td>↑ ↓, ↩</td><td>—</td><td><code>duo2 open &lt;project&gt;</code></td><td>A, B, C</td></tr>
+<tr><td>Expand or fold a project in the list</td><td>→ ←</td><td>—</td><td><code>duo2 view project-list &lt;project&gt; expand|collapse</code><span class="new">NEW</span></td><td>A, B</td></tr>
+<tr><td>New session in the selected project (row's + or + New session)</td><td>⌘T, with a project row selected</td><td>File › New Claude Session</td><td><code>duo2 session new --project &lt;p&gt;</code></td><td>A, B</td></tr>
+<tr><td>+ New project</td><td>—</td><td>File › New Project…</td><td><code>duo2 project new</code> (<code>--sheet</code> opens the sheet)</td><td>A, B, C</td></tr>
+<tr><td>Make a Project, on a folder row</td><td>—</td><td>the row's menu</td><td><code>duo2 project make &lt;folder&gt;</code></td><td>A, B</td></tr>
+<tr><td>Go to a project in another window (its swatch)</td><td>⌘`</td><td>Window › its title</td><td><code>duo2 window focus &lt;project&gt;</code></td><td>A, B, C</td></tr>
+<tr><td>The project's name in the toolbar: open its _PROJECT.md</td><td>—</td><td>Project › Open Project File</td><td><code>duo2 view tab Project</code></td><td>A, B; C in the popup</td></tr>
+<tr><td>The project switcher popup on the name</td><td>⇧⌘O</td><td>Go › Go to Project…</td><td><code>duo2 open</code>; the popup is a picker (<code>Parity.uiOnly</code>)</td><td>C</td></tr>
+<tr><td>Projects explainer</td><td>—</td><td>Help › Explain Projects<span class="new">NEW</span></td><td>None: it is for a person at the screen, like Explain Tasks (<code>Parity.uiOnly</code>); what it explains has <code>duo2 project new|make</code></td><td>A, B, C</td></tr>
+<tr><td>Help › Where a Session Belongs</td><td>—</td><td>Help<span class="new">NEW</span></td><td>opens the guide page; <code>Parity.uiOnly</code> as the other Help links</td><td>A, B, C</td></tr>
+</table>
+<p style="margin:0;font-size:12px;line-height:18px;color:#5B636D">The list keeps the keyboard the way the session list does: it takes focus by a click or by View › Next Pane, and a focused list never sees keys typed into a terminal (every Duo chord carries ⌘). The Projects pane is a pane for Next Pane and Previous Pane (DL-165) and for <code>duo2 view pane left</code>.</p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

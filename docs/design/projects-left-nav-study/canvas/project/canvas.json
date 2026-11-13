@@ -1,0 +1,25 @@
+{
+ "v": 3,
+ "createdOnFiles": {"v": 1, "at": "2026-11-13T09:05:00Z"},
+ "title": "Duo projects in the left nav",
+ "launch": {"view": "canvas"},
+ "pages": [],
+ "boards": {
+  "Main.dc.html": {"x": 0, "y": 0, "w": 1440, "h": 900, "title": "00 · The ask, three directions, the recommendation"},
+  "L1-legible.dc.html": {"x": 1520, "y": 0, "w": 1440, "h": 900, "title": "L · Which project, which folder: in every direction [P]"},
+  "K-keys-verbs.dc.html": {"x": 3040, "y": 0, "w": 1440, "h": 900, "title": "K · Keyboard and duo2 verbs, per direction [P]"},
+  "A1-allprojects.dc.html": {"x": 0, "y": 1243, "w": 1440, "h": 900, "title": "A1 · All projects with the Projects pane [P]"},
+  "A2-inside.dc.html": {"x": 1520, "y": 1243, "w": 1440, "h": 900, "title": "A2 · Inside a project: ‹ Projects in the sidebar [P]"},
+  "B1-tree.dc.html": {"x": 0, "y": 2486, "w": 1440, "h": 900, "title": "B1 · One tree of projects in every left pane [P]"},
+  "C1-switcher.dc.html": {"x": 1520, "y": 2486, "w": 1440, "h": 900, "title": "C1 · No list: a project switcher on the name [P]"}
+ },
+ "order": ["Main.dc.html", "L1-legible.dc.html", "K-keys-verbs.dc.html", "A1-allprojects.dc.html", "A2-inside.dc.html", "B1-tree.dc.html", "C1-switcher.dc.html"],
+ "notes": {
+  "h0": {"x": 0, "y": -260, "text": "Where projects live in the window (2026-11-13)", "kind": "title1", "maxW": 4480},
+  "h1": {"x": 0, "y": 1003, "text": "A, recommended: a Projects pane, one level up from a project", "kind": "title1", "maxW": 2960},
+  "h2": {"x": 0, "y": 2246, "text": "The other directions: B a tree, C a switcher", "kind": "title1", "maxW": 2960}
+ },
+ "designSystems": [
+  {"title": "Duo", "namespace": "duo", "artifact": "https://claude.ai/artifact/QMapKeLYS3TVV36QKEc6MH", "version": null, "copiedAt": "2026-11-13T09:05:00Z"}
+ ]
+}
