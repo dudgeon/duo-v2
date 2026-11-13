@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Projects in the left nav: the study</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.cap{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;margin:0}
+.card{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.card.rec{border:1.5px solid #1F2328}
+.card h3{margin:0;font-size:14px;line-height:20px;font-weight:600}
+.card p{margin:0}
+.card ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px}
+.mut{color:#5B636D}
+.pm{display:inline-block;font-size:11px;line-height:15px;font-weight:600;color:#FFFFFF;background:#1F2328;border-radius:4px;padding:1px 6px;vertical-align:1px}
+.tag{display:inline-block;font-size:11px;line-height:16px;font-weight:600;letter-spacing:.66px;border:1px solid #1F2328;border-radius:9px;padding:0 7px;margin-left:6px;vertical-align:1px}
+.sch{display:flex;height:64px;border:1px solid #C9CDD3;border-radius:6px;overflow:hidden;background:#FFFFFF;font-size:10px;line-height:12px;color:#5B636D}
+.sch div{box-sizing:border-box;padding:4px 5px}
+.sch .l{border-right:1px solid #C9CDD3;background:#F3F4F6;color:#1F2328;font-weight:600}
+.sch .c{background:#15171B;color:#9AA1AB}
+.sch .r{border-left:1px solid #C9CDD3}
+.q{display:grid;grid-template-columns:52px minmax(0,1fr);gap:2px 8px;font-size:12px;line-height:17px}
+.q b{font-weight:600}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;box-sizing:border-box;background:#F3F4F6;color:#1F2328;font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;font-size:13px;line-height:20px;padding:28px 32px;display:flex;flex-direction:column;gap:16px;overflow:hidden">
+<div style="display:flex;flex-direction:column;gap:4px">
+<h1 style="margin:0;font-size:17px;line-height:24px;font-weight:600">Where projects live in the window, and which project you are in</h1>
+<p style="margin:0;color:#5B636D;font-size:12px;line-height:18px;max-width:1300px">Q-515 (DL-339): a canvas round first. Two new users could not tell which project they were in or what a project is (ENH-146, 2026-10-14; F-663, 2026-11-12). Every new mark on these boards is a proposal, [P]. Sample data is the home-evolution study's. Nothing here is built.</p>
+</div>
+<div style="display:grid;grid-template-columns:330px minmax(0,1fr) 380px;gap:20px;flex:1;min-height:0">
+
+<div style="display:flex;flex-direction:column;gap:12px">
+<p class="cap">What they said</p>
+<div class="card">
+<p>“When I go to all projects, I would have expected to see a add new project and a listing in the left nav of my projects which I could expand (as I can in CC or ChatGPT) then I can start new sessions in my projects.”</p>
+<p class="mut" style="font-size:12px">First new user, ENH-146</p>
+</div>
+<div class="card">
+<p>New Session assumes a project, “but which one, how is a project defined, and where can I see that?”</p>
+<p class="mut" style="font-size:12px">Second new user, F-663 (aram-feedback §1.6)</p>
+</div>
+<p class="cap" style="margin-top:4px">What's true today</p>
+<div class="card" style="gap:6px">
+<ul>
+<li>A project is a folder with a <code>_PROJECT.md</code>; a session belongs to the nearest one at or above where it started. <span class="mut">The app says neither.</span></li>
+<li>All projects has no left pane since DL-336; its sidebar button is hidden there.</li>
+<li>Inside a project, the folder shows once, as an unlabelled grey line under FILES; the sidebar's “+ New Claude Code session” doesn't say where it starts.</li>
+<li>The Board is a map of projects, but you can't start a session from a tile in one step, and it's gone once you're in a project.</li>
+</ul>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+<p class="cap">Three directions</p>
+<div class="card rec">
+<h3>A · A Projects pane, one level up from a project <span class="tag">RECOMMENDED</span></h3>
+<div class="sch"><div class="l" style="width:22%">PROJECTS<br>★ home<br>› checkout…<br>⌄ refunds…</div><div style="flex:1">List or Board</div><div class="r" style="width:24%">Needs you</div></div>
+<p>All projects gets its left pane back as <b>Projects</b>: ★ home, then every project under its topic, each one expanding to the sessions that matter now and <b>+ New session</b> naming its folder; <b>+ New project</b> at the foot. Inside a project the sidebar is unchanged except for one row at its top, <b>‹ Projects</b>, which slides the same list in over it. One list, two levels, like Mail's mailboxes. Boards A1, A2.</p>
+<p class="mut" style="font-size:12px">Keeps the approved project sidebar whole (DL-174, DL-217); uses the 340 DL-336 freed; Home is the list's first row, which is ENH-341's way back. Cost: one more pane at All projects (the List goes 1100 → 840 at 1440).</p>
+</div>
+<div class="card">
+<h3>B · One tree of projects in every left pane</h3>
+<div class="sch"><div class="l" style="width:22%">PROJECTS<br>› fraud…<br>⌄ checkout<br>&#160;&#160;NEEDS YOU…</div><div class="c" style="flex:1">console</div><div class="r" style="width:30%">documents</div></div>
+<p>The Claude app's shape: the left pane is the same tree at both altitudes, and the project you're in is the open branch, with its sidebar's sections nested under it. Board B1.</p>
+<p class="mut" style="font-size:12px">Closest to what the first user named. Costs a level of indent and about 100 points of height in every project's sidebar, and reopens the approved order (PINNED first, DL-217).</p>
+</div>
+<div class="card">
+<h3>C · No list: a project switcher on the name</h3>
+<div class="sch"><div style="flex:1;border-bottom:0">All projects › payments › <b style="color:#1F2328">checkout ⌄</b> <span style="border:1px solid #C9CDD3;border-radius:6px;padding:2px 4px;margin-left:4px;background:#FFFFFF">Go to project · ★ home · refunds…</span></div></div>
+<p>The project's name in the toolbar becomes a popup: a filter, the projects by attention, + New Project…. All projects stays as DL-336 left it. Board C1.</p>
+<p class="mut" style="font-size:12px">Smallest change. Doesn't give what both users looked for: a list that stays, that you can expand and start a session from.</p>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:12px">
+<p class="cap">In every direction (board L)</p>
+<div class="card" style="gap:6px">
+<ul>
+<li>The project's name in the toolbar: its folder in the tooltip; a click opens <code>_PROJECT.md</code>, as the sidebar header does (ENH-347).</li>
+<li>The sidebar's button says where: <b>+ New session in checkout-redesign</b>, the folder and ⌘T in its tooltip.</li>
+<li>FILES' path line is named in its tooltip: “This project's folder”.</li>
+<li>A <b>Projects explainer</b> on DL-172's component, on a long hover over the project's name and in the New project sheet; Help › Explain Projects.</li>
+</ul>
+</div>
+<p class="cap" style="margin-top:4px">Geoff's decisions</p>
+<div class="card" style="gap:8px">
+<div class="q"><b>Q-527</b><span>Which direction? <span class="mut">Rec. A.</span></span></div>
+<div class="q"><b>Q-528</b><span>All projects' left pane: shown for everyone, its sidebar button and ⌃⌘S back there (amends DL-336 (4))? <span class="mut">Rec. shown, remembered once hidden.</span></span></div>
+<div class="q"><b>Q-529</b><span>What an expanded project shows. <span class="mut">Rec. needs you, open and today's, five at most, then + New session.</span></span></div>
+<div class="q"><b>Q-530</b><span>A new shortcut, Go to Project… ⇧⌘O (DL-34's map)? <span class="mut">Rec. yes.</span></span></div>
+<div class="q"><b>Q-531</b><span>The New session button names its project? <span class="mut">Rec. yes, “+ New session in ‹project›”.</span></span></div>
+</div>
+<p class="mut" style="font-size:12px;line-height:17px;margin:0"><span class="pm">P</span> Every mark on boards A to C and L is proposed. Keys and verbs for each direction are on board K.</p>
+</div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

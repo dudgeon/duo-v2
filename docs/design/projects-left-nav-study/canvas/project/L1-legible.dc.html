@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>L Which project, which folder</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.cap{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;margin:0}
+.frame{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;position:relative}
+.tb{height:40px;display:flex;align-items:center;gap:8px;padding:0 14px;background:#F3F4F6;border-bottom:1px solid #C9CDD3;font-size:13px;white-space:nowrap;border-radius:8px 8px 0 0}
+.dots{display:flex;gap:7px;margin-right:6px}
+.dots i{width:11px;height:11px;border-radius:50%;background:#C9CDD3;display:block}
+.tip{position:absolute;background:#FFFFFF;border:1px solid #C9CDD3;border-radius:5px;padding:2px 7px;font-size:11px;line-height:16px;color:#1F2328;box-shadow:0 2px 6px rgba(31,35,40,.18);white-space:nowrap;z-index:2}
+.btn{font-family:inherit;display:inline-flex;align-items:center;height:26px;border:1px solid #8B939C;border-radius:6px;padding:0 10px;font-size:12px;line-height:16px;background:#FFFFFF;color:#1F2328;white-space:nowrap}
+.btn.def{background:#1F2328;color:#FFFFFF;border-color:#1F2328}
+.mono{font-family:ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace}
+.pm{display:inline-block;font-size:11px;line-height:15px;font-weight:600;color:#FFFFFF;background:#1F2328;border-radius:4px;padding:1px 6px;margin-right:4px;vertical-align:1px}
+.note{font-size:12px;line-height:18px;margin:0}
+.mut{color:#5B636D}
+.pop{width:300px;background:#FFFFFF;border:1px solid #C9CDD3;border-radius:10px;box-shadow:0 12px 32px rgba(31,35,40,.22);padding:14px 16px 12px;display:flex;flex-direction:column;gap:10px;box-sizing:border-box}
+.num{flex:none;width:16px;height:16px;border-radius:8px;background:#1F2328;color:#FFFFFF;font-size:10px;line-height:16px;font-weight:600;text-align:center}
+.pts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+.pts li{display:flex;gap:9px;align-items:flex-start;font-size:12px;line-height:17px;color:#5B636D}
+.pts b{color:#1F2328;font-weight:600}
+.trow{display:flex;align-items:center;gap:6px;font-size:11.5px;line-height:20px}
+.fld{display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px;align-items:center;font-size:13px}
+.inp{border:1px solid #C9CDD3;border-radius:6px;height:24px;display:flex;align-items:center;padding:0 8px;font-size:13px}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;box-sizing:border-box;background:#F3F4F6;color:#1F2328;font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;font-size:13px;line-height:20px;padding:24px 28px;display:flex;flex-direction:column;gap:16px;overflow:hidden">
+<div>
+<h1 style="margin:0;font-size:17px;line-height:24px;font-weight:600">L · Which project you're in, and its folder: the same in A, B and C</h1>
+<p style="margin:0;color:#5B636D;font-size:12px;line-height:18px;max-width:1300px">ENH-347's items, drawn. They need no list and ship with whichever direction is chosen (Q-515: drawn and built with the round). The words are the research's (aram-feedback §1.6), tightened.</p>
+</div>
+<div style="display:grid;grid-template-columns:640px minmax(0,1fr);gap:28px;flex:1;min-height:0">
+
+<div style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;flex-direction:column;gap:6px">
+<p class="cap">1 · The name in the toolbar: hover, then a long hover</p>
+<div class="frame" style="height:390px">
+<div class="tb"><div class="dots"><i></i><i></i><i></i></div><span class="mut">All projects ›</span><span class="mut">payments ›</span><strong style="background:#E9ECEF;border-radius:5px;padding:1px 5px">checkout-redesign</strong><span style="width:10px;height:10px;border-radius:3px;background:#3B6FD8;margin-left:2px"></span></div>
+<div class="tip" style="left:150px;top:46px">~/work/payments/checkout-redesign · click to open _PROJECT.md</div>
+<div class="pop" style="position:absolute;left:150px;top:76px">
+<h2 style="margin:0;font-size:14px;line-height:20px;font-weight:600">Projects</h2>
+<p style="margin:-8px 0 0;font-size:13px;line-height:20px">A project is a folder with a _PROJECT.md.</p>
+<div style="background:#F3F4F6;border-radius:6px;padding:10px 12px" aria-hidden="true">
+<div style="background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:7px 10px" class="mono">
+<div class="trow"><svg width="12" height="11" viewBox="0 0 12 11"><path d="M1 2.5h3.5l1 1.2H11v6H1z" fill="none" stroke="#5B636D" stroke-width="1" stroke-linejoin="round"></path></svg>checkout-redesign/<span class="num" style="margin-left:auto">1</span></div>
+<div class="trow" style="padding-left:16px">_PROJECT.md<span class="num" style="margin-left:auto">2</span></div>
+<div class="trow" style="padding-left:16px">research/</div>
+<div class="trow" style="padding-left:32px;font-family:-apple-system, system-ui, sans-serif"><svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="3.8" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg>Teardown research<span class="num" style="margin-left:auto">3</span></div>
+</div>
+</div>
+<ol class="pts">
+<li><span class="num">1</span><span><b>A folder,</b> anywhere on your Mac.</span></li>
+<li><span class="num">2</span><span><b>_PROJECT.md makes it a project.</b> Its goal and notes; Claude reads it.</span></li>
+<li><span class="num">3</span><span><b>A session belongs to the project</b> it started in, or in a folder inside it. A folder with no project file still shows its sessions.</span></li>
+</ol>
+<div style="border-top:1px solid #C9CDD3;margin:2px -16px 0;padding:9px 16px 0;display:flex;justify-content:space-between;font-size:12px;line-height:16px"><a href="#" style="color:#1F2328">Learn more</a><a href="#" style="color:#5B636D;text-decoration:none">Don't show again</a></div>
+</div>
+<div style="position:absolute;left:470px;top:84px;width:150px;display:flex;flex-direction:column;gap:8px">
+<p class="note"><span class="pm">P</span>A hover: the folder, and what a click does.</p>
+<p class="note"><span class="pm">P</span>A long hover (DL-172's two stages): the <b>Projects explainer</b>. Help › Explain Projects shows it too; Learn more opens the guide's “Where a session belongs”.</p>
+</div>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<p class="cap">2 · New project's sheet: the one-line explainer (DL-147)</p>
+<div class="frame" style="padding:16px 18px;display:flex;flex-direction:column;gap:10px">
+<div style="font-size:14px;font-weight:600">New project</div>
+<p class="note">A project is a folder with a _PROJECT.md. Sessions you start in it stay together. <a href="#" style="color:#1F2328">Learn more</a></p>
+<div class="fld"><span class="mut" style="text-align:right">Start from</span><span style="display:flex;gap:6px"><span class="btn" style="background:#E9ECEF;font-weight:600">A new folder</span><span class="btn">A folder I have</span><span class="btn">From GitHub</span></span></div>
+<div class="fld"><span class="mut" style="text-align:right">Name</span><span class="inp">vendor-review</span></div>
+<div class="fld"><span class="mut" style="text-align:right">Will write</span><span class="mono mut" style="font-size:11px">~/work/vendor-review/_PROJECT.md</span></div>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;flex-direction:column;gap:6px">
+<p class="cap">3 · The sidebar's button says where</p>
+<div style="display:flex;gap:16px">
+<div class="frame" style="width:300px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box">
+<span class="cap">Today</span>
+<span><button type="button" class="btn">+ New Claude Code session</button></span>
+<span class="note mut">No tooltip. The tab strip's + says “in checkout-redesign”; this doesn't.</span>
+</div>
+<div class="frame" style="width:300px;padding:14px 16px 46px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box">
+<span class="cap">Proposed, 300 <span class="pm" style="margin-left:4px">P</span></span>
+<span><button type="button" class="btn">+ New session in checkout-redesign</button></span>
+<div class="tip" style="left:16px;top:76px">New Claude session ⌘T · in checkout-redesign (~/work/payments/checkout-redesign)</div>
+</div>
+<div class="frame" style="width:240px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box">
+<span class="cap">At 240 <span class="pm" style="margin-left:4px">P</span></span>
+<span><button type="button" class="btn" style="max-width:208px;overflow:hidden">+ New session in checkout-re…</button></span>
+<span class="note mut">The name's tail truncates, never “in”.</span>
+</div>
+</div>
+<p class="note"><span class="pm">P</span>Q-531. The other way, ENH-347 as written: keep the words and add only the tooltip. Naming the project on the button is what the second user needed before the click, not after a hover. Home's page reads “+ New session in ★ home”.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<p class="cap">4 · FILES' path line, named</p>
+<div class="frame" style="width:300px;padding:6px 0 40px;position:relative;border-top:2px solid #C9CDD3">
+<div class="cap" style="padding:8px 16px 0">Files</div>
+<div class="mono" style="font-size:11px;line-height:20px;color:#5B636D;padding:0 16px;background:#E9ECEF;margin:0 8px;border-radius:6px;padding-left:8px">~/work/payments/checkout-redesign</div>
+<div class="mono" style="font-size:12px;line-height:24px;padding:0 16px">_PROJECT.md</div>
+<div class="tip" style="left:16px;top:58px">This project's folder · right-click to Reveal in Finder</div>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<p class="cap">Built with it, no drawing needed</p>
+<p class="note">The guide says <code>_PROJECT.md</code> where it says PROJECT.md (DL-259); Help gets “Where a Session Belongs” beside the guide and films (ENH-345). Explain Projects is a Help item and a long hover, like Explain Tasks, so it is listed in <code>Parity.uiOnly</code>: what it explains has its verbs (<code>duo2 project new</code>, <code>duo2 project make</code>).</p>
+</div>
+</div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
