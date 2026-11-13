@@ -115,7 +115,7 @@ public enum DirectorSkill {
     public static let format = 1
     /// Bump when the skill starts needing a `duo2 director` verb or behaviour an older Duo lacks
     /// (F-341): `status` compares the installed skill's revision with the running Duo's.
-    public static let revision = 5
+    public static let revision = 6
     public static func text(name: String = "director") -> String {
         let t = source.replacingOccurrences(of: "{{FORMAT}}", with: "\(format)").replacingOccurrences(of: "{{REVISION}}", with: "\(revision)")
         return name == "director" ? t : t.replacingOccurrences(of: "name: director\n", with: "name: \(name)\n")
