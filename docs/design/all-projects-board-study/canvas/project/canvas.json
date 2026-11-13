@@ -1,0 +1,150 @@
+{
+ "v": 3,
+ "createdOnFiles": {
+  "v": 1,
+  "at": "2026-11-13T12:10:00Z"
+ },
+ "pages": [],
+ "notes": {
+  "h0": {
+   "x": 0,
+   "y": -260,
+   "text": "All projects' Board: organising projects (2026-11-13)",
+   "kind": "title1",
+   "maxW": 4480
+  },
+  "h1": {
+   "x": 0,
+   "y": 1003,
+   "text": "B, recommended: by activity",
+   "kind": "title1",
+   "maxW": 3420
+  },
+  "h2": {
+   "x": 0,
+   "y": 2406,
+   "text": "The other directions: A folder bands, C flat, D a table",
+   "kind": "title1",
+   "maxW": 4480
+  },
+  "h3": {
+   "x": 0,
+   "y": 3649,
+   "text": "Fit, keys, not drawn",
+   "kind": "title1",
+   "maxW": 1440
+  },
+  "h4": {
+   "x": 0,
+   "y": 4892,
+   "text": "The List grouped by project",
+   "kind": "title1",
+   "maxW": 2960
+  }
+ },
+ "designSystems": [
+  {
+   "title": "Duo",
+   "namespace": "duo",
+   "artifact": "https://claude.ai/artifact/QMapKeLYS3TVV36QKEc6MH",
+   "version": null,
+   "copiedAt": "2026-11-13T12:10:00Z"
+  }
+ ],
+ "title": "Duo All projects board",
+ "launch": {
+  "view": "canvas"
+ },
+ "boards": {
+  "Main.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "title": "00 · The ask, why, four directions, the decisions"
+  },
+  "Today.dc.html": {
+   "x": 1520,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "title": "01 · Today: why the space goes unused (captures, sample data)"
+  },
+  "T-tile-button.dc.html": {
+   "x": 3040,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "title": "T · + New session on every tile [P]"
+  },
+  "B1-activity.dc.html": {
+   "x": 0,
+   "y": 1243,
+   "w": 1440,
+   "h": 900,
+   "title": "B1 · By activity, recommended, 1440 [P]"
+  },
+  "B2-activity-wide.dc.html": {
+   "x": 1520,
+   "y": 1243,
+   "w": 1900,
+   "h": 1060,
+   "title": "B2 · By activity at 1900 [P]"
+  },
+  "A-folder-bands.dc.html": {
+   "x": 0,
+   "y": 2646,
+   "w": 1440,
+   "h": 900,
+   "title": "A · Folder bands, the smallest fix [P]"
+  },
+  "C-flat-pinned.dc.html": {
+   "x": 1520,
+   "y": 2646,
+   "w": 1440,
+   "h": 900,
+   "title": "C · Flat, pins and a folder filter [P]"
+  },
+  "D-table.dc.html": {
+   "x": 3040,
+   "y": 2646,
+   "w": 1440,
+   "h": 900,
+   "title": "D · A projects table, the broad rethink [P]"
+  },
+  "X-fit.dc.html": {
+   "x": 0,
+   "y": 3889,
+   "w": 1440,
+   "h": 900,
+   "title": "X · Fit with the other studies; keys and verbs; not drawn"
+  },
+  "L1-list-by-project.dc.html": {
+   "x": 0,
+   "y": 5132,
+   "w": 1440,
+   "h": 900,
+   "title": "L1 · List grouped by project, + New session per project [P]"
+  },
+  "L2-header-button.dc.html": {
+   "x": 1520,
+   "y": 5132,
+   "w": 1440,
+   "h": 900,
+   "title": "L2 · The header's +: its states [P]"
+  }
+ },
+ "order": [
+  "Main.dc.html",
+  "Today.dc.html",
+  "T-tile-button.dc.html",
+  "B1-activity.dc.html",
+  "B2-activity-wide.dc.html",
+  "A-folder-bands.dc.html",
+  "C-flat-pinned.dc.html",
+  "D-table.dc.html",
+  "X-fit.dc.html",
+  "L1-list-by-project.dc.html",
+  "L2-header-button.dc.html"
+ ]
+}

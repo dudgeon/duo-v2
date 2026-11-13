@@ -6287,3 +6287,16 @@ Each case on Haiku 5.5, 2.1.316; a run costs about $0.03 at list price including
 ## F-683 · What the evals cost and what they showed about the noise (director-evals-upkeep, 2026-11-13)
 
 A full run, 31 cases at one run each, cost about $0.85 at list price ($0.55 runs, $0.30 judges); three runs each is about $2.50. The task spent about $1.5 in all, well under its $5 cap. F-622's "$15" counted several rounds on two branches. Single runs still flip (s02 went 3/3 and then failed in the full run), so a fail in a one-run sweep means "re-run that case three times", not "regression".
+## F-684 · Why All projects' Board leaves space unused (design-all-projects-board, 2026-11-13)
+Design study only; nothing built. study page https://claude.ai/artifact/KssyGmv9iLu75RAtsAnkHV (canvas https://claude.ai/artifact/7zdNWzWyfrCPDgGtBot5M4 once its sources are loaded), `docs/design/all-projects-board-study/` (captures in `today/`, `scripts/check-ui.sh map-many` at 1440 and 1900, isolated, background).
+- **Folders are packed whole.** `PackedColumns` (`AllProjects/AllProjectsPanes.swift`) places each topic, a folder's whole `MapColumn`, under the shortest column so far (DL-129) and never splits one, so a folder's tiles always run down one column.
+- **Home's column is always the tallest.** Home's ★ tile and every project directly in Home share the first, unlabelled topic (DL-83, DL-104); Home's tile is the tallest tile (five sessions and "n more"). Only when Home's projects are the sole topic does `loneColumn` flow them three across (DL-111).
+- **Three columns at most.** `MapPacking.columnCount` caps at `maxPerRow` 3 with `mapColumnMin` 220, so a wider window widens the three (526 pt each at a 1900 window, 1560 middle) and never adds a fourth.
+- **The rest waits below the tallest column.** OUTSIDE HOME, its active tiles (`TileFlow`) and the rows by parent folder start under the grid, so the space beside a short folder is never used.
+- **No Home folder:** every folder groups under its parent's path and the map is all OUTSIDE HOME.
+
+## F-685 · Where a new session starts from All projects today (design-all-projects-board, 2026-11-13)
+- The Board has no New session control. The List's dashed row `New session in [★ home ⌄] ⌘T` (DL-262, `NewSessionRow.swift`) and ⌘T start in Home, else `~/Documents`; neither names a project you can see. A project's sidebar has "+ New Claude Code session" (Q-531 proposes naming the project).
+- The verb a tile's button would use already exists: `duo2 session new --project <p>` or `--folder <path>` (a folder with no project file). Arrow keys already move a focus ring between tiles and Enter opens one (§6.3), so ⌘T can target the focused tile.
+- Session glyphs on tiles are DL-174's (kind glyph, replaced by attention); the study's boards draw them simplified (dot for needs you, a bubble, ◆), as the sketches in other studies do.
+- **The Design canvas can't be published from a background session:** the director minted https://claude.ai/artifact/7zdNWzWyfrCPDgGtBot5M4 for this study, but the Artifact tool here refuses any publish to an artifact made from an Artifact type. The boards' sources are in `canvas/project/` ready for a session with the Design canvas tools, and the study page shows them as images.
