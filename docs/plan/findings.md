@@ -6300,3 +6300,10 @@ Design study only; nothing built. study page https://claude.ai/artifact/KssyGmv9
 - The verb a tile's button would use already exists: `duo2 session new --project <p>` or `--folder <path>` (a folder with no project file). Arrow keys already move a focus ring between tiles and Enter opens one (§6.3), so ⌘T can target the focused tile.
 - Session glyphs on tiles are DL-174's (kind glyph, replaced by attention); the study's boards draw them simplified (dot for needs you, a bubble, ◆), as the sketches in other studies do.
 - **The Design canvas can't be published from a background session:** the director minted https://claude.ai/artifact/7zdNWzWyfrCPDgGtBot5M4 for this study, but the Artifact tool here refuses any publish to an artifact made from an Artifact type. The boards' sources are in `canvas/project/` ready for a session with the Design canvas tools, and the study page shows them as images.
+
+## F-691 · A stop with no start no longer finishes a running Agent card (fix-sidestop-misfile, 2026-11-13)
+
+- Cause (F-689): `ChatLog.agentFinished` ignored an unmatched SubagentStop only when no Agent card was running. With one running, /btw's side answer (SubagentStop with `agent_type: ""`, an agent id, no SubagentStart) finished that card and filled it with the side answer.
+- Fix: a stop counts for a card only when its agent id had a SubagentStart (`agentsStarted`). Any other stop, with no id or an unknown one, touches no card and adds no "Background agent finished" line. Its id, type, text and time go to `ChatLog.sideStops` (last 20), so the later /btw design (Q-550..Q-554) can use the answer.
+- Check: `Sources/DuoChecks/ChatSideStopChecks.swift`, run by `chatChecks()`: red first (5 failures), green after; a side stop between a real start and stop leaves the card running and the real stop still finishes it with its own message.
+- The EDITOR/VISUAL helper checks (ChatChecks around line 787) fail in this tree before and after the change; not caused by this.
