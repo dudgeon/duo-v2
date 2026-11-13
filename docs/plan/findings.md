@@ -6308,3 +6308,22 @@ Design study only; nothing built. study page https://claude.ai/artifact/KssyGmv9
 - **Needs-you sessions sit in their project** in this grouping, as L1 draws them with the column showing; the `N need you ›` line is not shown while grouped (Q-548).
 - **A session whose project isn't in the project list** still gets a header, with no folder, instead of vanishing (the fixture has some); a real project always has a folder.
 - **`compare.sh` wrote a 40×17 image in this session's environment** for `L1-list-by-project` (the reference render was not made: `build/reference-renders` doesn't exist), so the target and the capture were compared by eye, region by region (F-686's capture `build/ui/L1-list-by-project.png` against `screens/png/L1-list-by-project@2x.png`).
+## F-688 · What /btw does on 2.1.284 and 2.1.323: a panel in the prompt's place, nothing in the transcript, one SubagentStop (btw-in-chat, 2026-11-13)
+
+- **Checked** headless on the chat spike's mock (a copy with a slow reply and a side-question reply), scratch `CLAUDE_CONFIG_DIR` and `HOME`, a dummy key, Haiku 5.5, 100×34, a hook logger on every event; no login, no tokens, nothing on screen. Runs: /btw during a turn (fast and slow answers), at the prompt, over an Agent step, and bare.
+- **Command:** `local-jsx`, `immediate: true` (runs during a turn, never queues), "Ask a quick side question without interrupting the main conversation". The model is told to answer in one response, with no tools.
+- **Screen:** a panel replaces the input box and footer, topped by the `▔` effort rule: `/btw <q>`, `· Answering…`, then the answer (Markdown marks dropped) and `↑/↓ to scroll · c to copy · f to fork · Esc to close`; at the prompt it browses earlier side questions (`⇧←/→ to browse … x to clear history`). Esc restores the box and footer. Bare `/btw` prints `Usage: /btw <your question>`. The same on both versions.
+- **Records:** nothing in the transcript on either version; the typed line is in `history.jsonl`. **Hooks:** no UserPromptSubmit, no SubagentStart; one `SubagentStop` with `agent_type: ""`, an `agent_id`, the answer's Markdown in `last_assistant_message`, and an `agent_transcript_path` that is never written.
+- **`f` (fork) not run:** the code either forks a background agent (`forkOrigin: "btw"`) or branches the session titled `btw: <q>`.
+- Screens: `Spikes/chat-mode/screens/btw-2.1.284/`, `btw-2.1.323/`. Research: `docs/research/btw-in-chat.md`.
+
+## F-689 · Why chat falls back on /btw, and two faults with it (btw-in-chat, 2026-11-13)
+
+- **Cause:** the panel has no `─`-ruled input box (`ChatScreen.swift:355`), so the reader returns unknown (`ChatScreen.swift:454`); after `grace` 0.5 s (`ChatSession.swift:272`) chat falls back with the named bar, "/btw opens in Claude Code's own screen…" (`ChatSession.swift:434`), since `/btw` is on `terminalCommands` (`ChatScreen.swift:87`, F-173) and the menu says "Opens in the terminal" (`ChatComposerView.swift:159`).
+- **A Queued bubble that never clears:** `send` records a /btw sent mid-turn as a queued message (`ChatSend.swift:49`); nothing ever echoes it, so it stays "Queued · Claude reads it when it's ready" until a reload.
+- **The side answer finishes an Agent card:** with an Agent step running, /btw's SubagentStop (no start) passes the side-agent guard (`ChatLog.swift:527`) and marks that card done with the side answer as its result (`ChatLog.swift:532–533`).
+
+## F-690 · A failing check reproduces /btw's fallback (btw-in-chat, 2026-11-13)
+
+- `Sources/DuoChecks/BtwChecks.swift`, run alone with `DUO_CHECKS=btw swift run DuoChecks` and not in the default run (it fails until the fix; the fix build adds it there). On the captured screens of both versions: the panel reads unknown (6 fail), a `/btw` sent through `ChatSession.send` on a scripted TUI falls back and leaves a queued bubble (4 fail), and the hook payload finishes a running Agent card (1 fail). 8 sanity checks pass (the screens before and after read busy; the send itself succeeds).
+- Method notes for the next run: an inherited `CLAUDE_CODE_*` environment from a Claude session turns transcript saving off ("inherited CLAUDE_CODE_CHILD_SESSION marker") and leaks the host's tools into requests, so the TUI runs under `env -i` with a scratch `HOME`; port 8791 was another session's mock, so pick a free port and check the mock's own log.
