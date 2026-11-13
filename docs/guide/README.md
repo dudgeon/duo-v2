@@ -9,6 +9,7 @@ Duo is a Mac app for working with Claude Code across many pieces of work at once
 1. [Sessions](sessions.md): a session is one conversation with Claude. Duo finds every one on your Mac, and keeps it.
 2. [Projects](projects.md): a project is something you're trying to finish, kept in its own folder.
 3. [Tasks](tasks.md) (optional): a to-do note that collects the sessions working on it.
+   - [The director](director.md) (optional): one session that makes tasks and runs worker sessions for you.
 4. [Where a session belongs](where-a-session-belongs.md): the project around the folder it ran in, and how to move one.
 5. [Home](home.md): one folder for the projects you're working on, with its own Claude session.
 6. [Topics](topics.md): a folder in Home for an area you own, holding its projects.
@@ -16,6 +17,8 @@ Duo is a Mac app for working with Claude Code across many pieces of work at once
 8. [What needs you](what-needs-you.md): the states a session can be in, and where Duo shows them.
 9. [Getting around](getting-around.md): All projects, inside a project, and search.
 10. [Plain files, and Claude driving Duo](plain-files.md).
+
+Two films show Duo at work: [the intro to Duo](https://github.com/dudgeon/duo-v2/releases/download/v0.2.26/duo-intro.mp4) (9 min 34 s) and [the director agent](https://github.com/dudgeon/duo-v2/releases/download/v0.2.13/duo-director.mp4) (6 min 47 s). Both are in Duo's Help menu.
 
 Using Legacy Duo today? Read [Coming from Legacy Duo](coming-from-legacy-duo.md).
 

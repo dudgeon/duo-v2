@@ -12,7 +12,7 @@ struct WindowSwatch: View {
     var body: some View {
         if !model.core.classicOn {
             Button {
-                model.colourPopoverOpen.toggle()   // action: window colour
+                model.colourPopoverOpen.toggle()   // action: window color
             } label: {
                 HStack(spacing: 3) {
                     Circle()
@@ -30,8 +30,8 @@ struct WindowSwatch: View {
                 .contentShape(RoundedRectangle(cornerRadius: 4))
             }
             .buttonStyle(.plain)
-            .help("Window Colour")
-            .accessibilityLabel("Window Colour")
+            .help("Window Color")
+            .accessibilityLabel("Window Color")
             .accessibilityValue(model.windowColour?.name ?? "None")
             .popover(isPresented: Binding(get: { model.colourPopoverOpen }, set: { model.colourPopoverOpen = $0 }), arrowEdge: .bottom) {
                 WindowColourPopover().environment(model)
@@ -40,7 +40,7 @@ struct WindowSwatch: View {
     }
 }
 
-/// The swatch's popover (DL-314, board 4b′ A): "Window Colour"; None on its own row, naming the window's
+/// The swatch's popover (DL-314, board 4b′ A): "Window Color"; None on its own row, naming the window's
 /// colour at the right; one column per hue, named once on top, with Light and Deep rows; then the switch.
 struct WindowColourPopover: View {
     @Environment(AppModel.self) private var model
@@ -52,7 +52,7 @@ struct WindowColourPopover: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Window Colour").duoText(.bodyEmphasis).foregroundStyle(DuoColor.text)
+            Text("Window Color").duoText(.bodyEmphasis).foregroundStyle(DuoColor.text)
             HStack(spacing: 8) {
                 dot(nil)
                 Text("None").duoText(.body).foregroundStyle(DuoColor.text)
@@ -70,8 +70,8 @@ struct WindowColourPopover: View {
                 row("Deep", Self.deepRow)
             }
             Divider()
-            Toggle(isOn: Binding(get: { model.core.colourNewWindows }, set: { model.core.colourNewWindows = $0 })) {   // action: window colour
-                Text("Colour new windows automatically").duoText(.body).foregroundStyle(DuoColor.text)
+            Toggle(isOn: Binding(get: { model.core.colourNewWindows }, set: { model.core.colourNewWindows = $0 })) {   // action: window color
+                Text("Color new windows automatically").duoText(.body).foregroundStyle(DuoColor.text)
             }
             .toggleStyle(.checkbox)
         }
@@ -89,7 +89,7 @@ struct WindowColourPopover: View {
     private func dot(_ c: DuoWindowColour.Colour?) -> some View {
         let own = model.windowColourID == c?.id
         return Button {
-            model.setWindowColour(c?.id)   // action: window colour
+            model.setWindowColour(c?.id)   // action: window color
         } label: {
             Circle()
                 .fill(Color(nsColor: WindowTint.nsColor(.swatch, c)))
@@ -112,9 +112,9 @@ struct WindowColourMenu: View {
 
     var body: some View {
         let classic = model.core.classicOn
-        Menu("Window Colour") {   // action: window colour
+        Menu("Window Color") {   // action: window color
             if classic {
-                Text("Window colours are off while Classic is on. Each window gets its colour back when you choose another appearance.")
+                Text("Window colors are off while Classic is on. Each window gets its color back when you choose another appearance.")
                 Divider()
             }
             item(nil).disabled(classic)

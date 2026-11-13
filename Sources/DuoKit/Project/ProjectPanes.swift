@@ -509,13 +509,20 @@ struct FileTreePane: View {
             if let n = model.repoNotice {
                 RepoNoticeView(notice: n).padding(.horizontal, DuoSpace.panePadding).padding(.top, 8)
             }
+            let folded = model.isFilesFolded
             HStack(spacing: DuoSpace.gapRowItems) {
+                // DL-339 (ENH-344): a stand-in on the session groups' chevron, until a board marks it (Q-522).
+                if model.terminalsMode == .live { Chevron(direction: folded ? .right : .down).frame(width: 10) }
                 SectionLabel(text: "Files")
                 Spacer(minLength: 8)
                 // The repo state (B, DL-149; any repo project, DL-157): the branch at the right.
                 if let repo { RepoBranchLabel(view: repo) }
             }
-            .padding(EdgeInsets(top: 12, leading: DuoSpace.panePadding, bottom: 0, trailing: DuoSpace.panePadding))
+            .padding(EdgeInsets(top: 12, leading: DuoSpace.panePadding, bottom: folded ? 10 : 0, trailing: DuoSpace.panePadding))
+            .contentShape(Rectangle())
+            .onActivate { if model.terminalsMode == .live { withDuoAnimation(.fold) { model.setFilesFolded(!folded) } } }   // action: view files
+            .accessibilityLabel(folded ? "Show Files" : "Hide Files")
+            if !folded {
             if let repo {
                 RepoFactLine(view: repo)
                     .padding(.horizontal, DuoSpace.panePadding)
@@ -536,6 +543,7 @@ struct FileTreePane: View {
                 BrowseTree(root: browsing)
             } else {
                 ForEach(tree) { node in FileRow(node: node, depth: 0) }
+            }
             }
             }
             .padding(.bottom, 12)

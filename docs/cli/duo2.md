@@ -38,7 +38,8 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 view home board\|list\|toggle [--archived on\|off]` | All projects' middle (DL-142): the Board (the map) or the List, every session across projects by recency (View › Show Board / Show List). Duo remembers the choice. --archived shows or hides the List's Archived fold (its Group popup's Show Archived). | Board, List, Show Board, Show List, Group By Recent, Show Archived, list group popup |
 | `duo2 view format-bar show\|hide\|toggle` | Show or hide the Markdown formatting bar over the editor (View › Hide Formatting Bar). It shows only while a Markdown document has the keyboard. | Hide Formatting Bar, Show Formatting Bar, Formatting Bar |
 | `duo2 view hidden on\|off\|toggle` | Show or hide dotfiles in the project's file tree (View › Show Hidden Files). | Show Hidden Files |
-| `duo2 view folder <folder> open\|close` | Open or close a folder in the project's file tree. | folder row |
+| `duo2 view folder <folder> open\|close` | Open or close a folder in the project's file tree. The open folders are remembered per project. | folder row |
+| `duo2 view files expand\|collapse` | Fold the project's Files section to its header, or show it again (the chevron on the Files header, DL-339). Remembered per project. | Files header chevron |
 
 ## Windows
 
@@ -48,7 +49,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 window new [<project>]` | Open a new window (File › New Window ⌥⌘N) at All projects, or on a project (Project › Open in New Window). A project already in a window brings that window forward instead: a project lives in one window (DL-308). A new window takes the next colour no open window has, while that's on (DL-312). | New Window, Open in New Window |
 | `duo2 window focus <n\|project>` | Bring a window forward (the Window menu, ⌘`; Go There on Home's pane in another window, DL-314). | Go There |
 | `duo2 window close [<n\|project>]` | Close a window (File › Close Window ⇧⌘W); with none named, the one --window or your session picks. Its projects keep their tabs and sessions. The last window hides; Duo keeps running. | Close Window |
-| `duo2 window colour [<colour>\|none] [--auto on\|off]` | A window's colour (Window › Window Colour, the swatch after the project's name; DL-312, DL-313): blue, ochre, purple, green, coral, teal, deep-blue, deep-ochre, deep-purple, deep-green, deep-coral, deep-teal, or none. --auto turns 'Colour new windows automatically' on or off. With nothing, the window's colour and the setting. Classic turns window colours off; each comes back after. | Window Colour, Colour new windows automatically, window swatch |
+| `duo2 window color [<color>\|none] [--auto on\|off]` | A window's color (Window › Window Color, the swatch after the project's name; DL-312, DL-313, DL-339: the app says Color, and `window colour` still works): blue, ochre, purple, green, coral, teal, deep-blue, deep-ochre, deep-purple, deep-green, deep-coral, deep-teal, or none. --auto turns 'Color new windows automatically' on or off. With nothing, the window's colour and the setting. Classic turns window colors off; each comes back after. | Window Color, Color new windows automatically, window swatch |
 | `duo2 window home` | Show Home's terminal in this window (Show Here, Q-431): Home is live in one window and the others say where it is. | Show Here |
 
 ## Split view
@@ -372,8 +373,10 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | Ask Claude to Remove It | drafts an instruction about the refused secret into the project's Claude session, unsent (DL-149 board 10) |
 | Cancel | a step inside another action's dialog or picker |
 | Chat | a menu, not an action |
+| Duo Guide | opens the user guide on GitHub for a person at the screen (DL-339); the guide is `docs/guide/`, and `duo2 help` is the same material for Claude |
 | Enter Full Screen | window management |
 | Exit Full Screen | window management |
+| Explain Chat and Terminal | Help › Explain Chat and Terminal shows an explanation to a person at the screen (DL-172, DL-339); `duo2 session chat` is the action it explains |
 | Explain Tasks | Help › Explain Tasks shows an explanation to a person at the screen (DL-172); `duo2 task new` is the action it explains |
 | Format | a menu, not an action |
 | Go | a menu, not an action |
@@ -403,6 +406,8 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | Table | a submenu, not an action |
 | Template picker's typing | the New Slide list (⌃⌘N) and the slide chip's list filter their templates as you type, like the editor's autocomplete (DL-295); `duo2 deck templates` lists them and `deck insert` / `deck change` take the name |
 | Toggle Right Pane | not built yet |
+| Watch the Director Film | opens the director film for a person to watch (DL-339); `duo2 director guide` prints the skill it shows |
+| Watch the Intro Film | opens the intro film for a person to watch (DL-339); a film has no action to take |
 | What’s New in This Version | opens this version's release notes on GitHub; `duo2 status` names the version |
 | confirmation sheet | the user's own consent; Claude can't confirm for them |
 | files dropped on a terminal | types the dropped paths at the cursor, as Terminal.app does (DL-117); a session already has the paths, and `duo2 send` types text into a Claude session |

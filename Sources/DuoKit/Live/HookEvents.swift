@@ -295,6 +295,10 @@ public struct DuoState: Codable, Sendable, Equatable {
     public var colourNewWindows = true
     /// Settings › Claude Code › Model for sessions (DL-339, Q-516): "opus", "sonnet" or "haiku"; nil is Claude's default.
     public var sessionModel: String?
+    /// The folders open in each project's file tree, by project name (DL-339, ENH-344); remembered over a relaunch.
+    public var expandedFolders: [String: [String]] = [:]
+    /// Projects whose Files section is folded away (DL-339, ENH-344).
+    public var filesFolded: [String] = []
 
     public init() {}
     public init(from decoder: Decoder) throws {
@@ -329,6 +333,8 @@ public struct DuoState: Codable, Sendable, Equatable {
         formatBarHidden = try c.decodeIfPresent(Bool.self, forKey: .formatBarHidden) ?? false
         colourNewWindows = try c.decodeIfPresent(Bool.self, forKey: .colourNewWindows) ?? true
         sessionModel = try c.decodeIfPresent(String.self, forKey: .sessionModel)
+        expandedFolders = try c.decodeIfPresent([String: [String]].self, forKey: .expandedFolders) ?? [:]
+        filesFolded = try c.decodeIfPresent([String].self, forKey: .filesFolded) ?? []
     }
 
     public static func load(_ url: URL = DuoPaths.state) -> DuoState {

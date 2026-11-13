@@ -42,14 +42,14 @@ extension AppModel {
                 else {
                     let key = name.replacingOccurrences(of: " ", with: "-")
                     guard let c = DuoWindowColour.all.first(where: { $0.id == key || $0.name.lowercased() == name }) else {
-                        return done(.fail("no colour '\(name)'. Colours: none, " + DuoWindowColour.all.map(\.id).joined(separator: ", ")))
+                        return done(.fail("no color '\(name)'. Colors: none, " + DuoWindowColour.all.map(\.id).joined(separator: ", ")))
                     }
                     setWindowColour(c.id)
                 }
             }
             let colour = windowColourID.flatMap { id in DuoWindowColour.all.first { $0.id == id }?.name } ?? "None"
-            let classic = core.classicOn ? " Window colours are off while Classic is on." : ""
-            done(.ok("Window \(windowNumber): \(colour). Colour new windows automatically: \(core.colourNewWindows ? "on" : "off").\(classic)", windowJSON))
+            let classic = core.classicOn ? " Window colors are off while Classic is on." : ""
+            done(.ok("Window \(windowNumber): \(colour). Color new windows automatically: \(core.colourNewWindows ? "on" : "off").\(classic)", windowJSON))
         case .windowHome:
             core.showHome(in: self)
             done(.ok("Home is showing in window \(windowNumber)."))

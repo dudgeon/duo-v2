@@ -55,6 +55,14 @@ extension AppModel {
         return expandedFolders[p]?.contains(path) ?? false
     }
 
+    /// Whether the current project's Files section is folded to its header (DL-339, ENH-344).
+    public var isFilesFolded: Bool { terminalsMode == .live && currentProject.map { filesFolded.contains($0.name) } == true }
+
+    public func setFilesFolded(_ folded: Bool) {
+        guard terminalsMode == .live, let p = currentProject?.name else { return }
+        if folded { filesFolded.insert(p) } else { filesFolded.remove(p) }
+    }
+
     public func toggleFolder(_ path: String) {
         guard terminalsMode == .live, let p = currentProject?.name else { return }
         if expandedFolders[p, default: []].remove(path) == nil {

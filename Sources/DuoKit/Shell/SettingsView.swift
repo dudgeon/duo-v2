@@ -126,6 +126,15 @@ public struct SettingsView: View {
                         Text("Terminal").tag(HomeChatDefault.terminal)
                         Text("The mode used last").tag(HomeChatDefault.last)
                     }.labelsHidden().fixedSize(), sub: "New Home sessions, the one Duo starts at launch too. Each keeps its own once switched.") { EmptyView() }
+                    // DL-339 (Q-510): the same for project sessions; a stand-in row beside Home's (Q-522).
+                    // `duo2 session chat --default`.
+                    DuoColor.rule.frame(height: DuoMetric.borderHairline)
+                    row("New sessions open in", value: Picker("", selection: Binding(get: { model.chats.prefs.fixedDefault },
+                                                                                      set: { model.chats.setDefault($0) })) {
+                        Text("Chat").tag(ChatViewMode?.some(.chat))
+                        Text("Terminal").tag(ChatViewMode?.some(.terminal))
+                        Text("The mode used last").tag(ChatViewMode?.none)
+                    }.labelsHidden().fixedSize(), sub: "Project sessions. Chat shows replies formatted, with file names as links; Terminal is Claude Code's own screen. Each session keeps its own once switched.") { EmptyView() }
                 }
                 // DL-146 (templates-handoff A4, 1): the templates new projects and tasks are made from.
                 if model.homeFolder != nil {

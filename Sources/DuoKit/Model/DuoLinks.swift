@@ -5,6 +5,12 @@ import Foundation
 public enum DuoLinks {
     static let repo = "https://github.com/dudgeon/duo-v2"
 
+    public static let guide = URL(string: "\(repo)/blob/main/docs/guide/README.md")!
+    public static func guidePage(_ name: String) -> URL { URL(string: "\(repo)/blob/main/docs/guide/\(name).md")! }
+    /// The films are release assets (README's Films section); update with it when one is re-cut.
+    public static let introFilm = URL(string: "\(repo)/releases/download/v0.2.26/duo-intro.mp4")!
+    public static let directorFilm = URL(string: "\(repo)/releases/download/v0.2.13/duo-director.mp4")!
+
     public static let duo2Reference = URL(string: "\(repo)/blob/main/docs/cli/duo2.md")!
 
     /// This version's release notes; a development build has none, so the list of releases.
