@@ -65,6 +65,7 @@ func repoFixture() throws -> Fixture {
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "remote-control" { return try remoteControlChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "project-interview" { return try projectInterviewChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "installer-lock" { return try installerLockChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "director-install" { return try directorInstallChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "launch-shell" { return try launchShellChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "launch-hang" { return try launchHangChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "voice" { return try voiceChecks() }
@@ -3130,7 +3131,7 @@ func repoFixture() throws -> Fixture {
     }
 }
 
-do { try MainActor.assumeIsolated { try run(); if ProcessInfo.processInfo.environment["DUO_CHECKS"] == nil { try remoteControlChecks(); try projectInterviewChecks(); try parkChecks(); try directorChecks(); try directorDutyChecks(); try installerLockChecks(); try launchShellChecks(); try launchHangChecks(); try terminalKeyChecks(); try terminalSlotChecks(); try returnChordChecks(); try promptKeyChecks(); try voiceChecks(); try ambiguousNameChecks(); try revealTreeChecks(); try controlPlaneChecks(); try isolationChecks(); try chatChecks() } } } catch { print("✘ setup: \(error)"); failures += 1 }
+do { try MainActor.assumeIsolated { try run(); if ProcessInfo.processInfo.environment["DUO_CHECKS"] == nil { try remoteControlChecks(); try projectInterviewChecks(); try parkChecks(); try directorChecks(); try directorDutyChecks(); try installerLockChecks(); try directorInstallChecks(); try launchShellChecks(); try launchHangChecks(); try terminalKeyChecks(); try terminalSlotChecks(); try returnChordChecks(); try promptKeyChecks(); try voiceChecks(); try ambiguousNameChecks(); try revealTreeChecks(); try controlPlaneChecks(); try isolationChecks(); try chatChecks() } } } catch { print("✘ setup: \(error)"); failures += 1 }
 print("\(passes) passed, \(failures) failed")
 exit(Int32(failures))
 
