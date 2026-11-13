@@ -6205,3 +6205,10 @@ Read in the code at `cd0855ff`; nothing launched. `docs/research/aram-feedback.m
 - **The row is an overlay** hanging 26 pt under the turn into the 16 pt gap, so it moves nothing and shows on the turn or the row under the pointer, or on the message ⌥⌘↑/↓ selected (a 2 pt `text` ring). A long Claude turn is several pieces; any piece sets the hover and the last carries the row.
 - **Not built:** Tab through the row's buttons (Q-519); the narrow-chat icon-only row under about 420 pt; the count in "n files put back" (Q-520).
 - **Captures:** see the report; WebKit-free surfaces, so `check-ui.sh` states compare directly.
+
+## F-675 · The model setting: ANTHROPIC_MODEL for every session Duo starts (aram-model-setting, 2026-11-12)
+
+- **Mechanism:** Settings › Claude Code › Model for sessions (`duo2 settings model default|opus|sonnet|haiku`, state `sessionModel`) is put in `ANTHROPIC_MODEL` by `ChildEnvironment.make`, which every new, resumed and forked session goes through. Default (nothing saved) changes nothing. No `--model` flag; a DuoChecks check still scans the app sources for it. A scripted, isolated run (`DUO_ISOLATED`) ignores the setting, so run-live.sh's Haiku stays.
+- **Run (real Haiku/Sonnet turns, scratch folder, 2 turns):** a session started on `ANTHROPIC_MODEL=sonnet` (reply by claude-sonnet-5-5), then `--resume` of it with `ANTHROPIC_MODEL=haiku`: the resumed turn was answered by claude-haiku-5-5. So the launch override beats the model the transcript saved. The transcript also holds one claude-opus-5-5 entry that Duo did not ask for (unexplained; probably a side call).
+- **Read, not run:** Claude Code's docs say `/model` inside a session lasts for that session and the launch override applies on reopen (so a `/model` change is overridden on reopen: the row's help says so); a managed `availableModels` lock still wins over `ANTHROPIC_MODEL`.
+- **Not run:** a click in the live Settings window (no visible runs); the row is a stand-in (Q-524), uncaptured.

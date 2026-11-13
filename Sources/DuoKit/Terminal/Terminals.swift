@@ -137,7 +137,8 @@ public enum ChildEnvironment {
     /// F-17): a child inheriting CLAUDE_CODE_SESSION_ID would write into the parent's session.
     /// CLAUDE_CONFIG_DIR is the user's and is kept.
     /// `base` is Duo's own environment; checks pass a fixed one.
-    public static func make(sessionID: String?, base: [String: String] = ProcessInfo.processInfo.environment) -> [String] {
+    public static func make(sessionID: String?, base: [String: String] = ProcessInfo.processInfo.environment,
+                            model: String? = ModelSetting.saved, isolated: Bool = SupportFolder.isIsolated) -> [String] {
         var env = base.filter { k, _ in
             !(k == "CLAUDECODE" || (k.hasPrefix("CLAUDE_") && k != "CLAUDE_CONFIG_DIR"))
         }
@@ -153,6 +154,9 @@ public enum ChildEnvironment {
         // user's own, take the shared socket and remove it on quit (C-28, F-113). Without it, a
         // scripted launch gets a temporary folder (F-89); an isolated instance keeps passing its own.
         if !SupportFolder.isIsolated { env.removeValue(forKey: SupportFolder.variable) }
+        // The model Settings names (DL-339, Q-516) goes in ANTHROPIC_MODEL, which beats the model a transcript saved, so resumes and
+        // reopens come back on it too. Never a --model flag, and never in a scripted run, which keeps the Haiku its driver set.
+        if let model, !isolated, sessionID != nil { env["ANTHROPIC_MODEL"] = model }
         if let sessionID { env["DUO_SESSION_ID"] = sessionID }  // LR-20
         // Chat mode's composer is Claude's external editor (Ctrl+G, F-104, F-112): `duo2 compose`
         // hands over the composer's text, and opens the user's own editor for anything else.

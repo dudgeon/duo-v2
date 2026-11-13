@@ -2955,7 +2955,17 @@ func repoFixture() throws -> Fixture {
         }
         let naming = appSources.filter { ((try? String(contentsOf: $0, encoding: .utf8)) ?? "").contains("\"--model\"") }.map(\.lastPathComponent)
         check(!args.contains("--model") && !appSources.isEmpty && naming.isEmpty,
-              "Duo never picks a model: no --model in claude's arguments, even in a test instance with DUO_MODEL set, and no app source passes one (DL-153; got \(args.filter { $0.hasPrefix("--") }), sources \(naming))")
+              "Duo never passes --model: not in claude's arguments, even in a test instance with DUO_MODEL set, and no app source names the flag. The user's own choice reaches Claude only as ANTHROPIC_MODEL from Settings (DL-339 supersedes DL-153 for that; got \(args.filter { $0.hasPrefix("--") }), sources \(naming))")
+        // DL-339 (Q-516): the Settings model goes into ANTHROPIC_MODEL for every session Duo starts (new, resume, fork all go through
+        // ChildEnvironment); unset it adds nothing, and a scripted run keeps the model its driver set.
+        let baseEnv = ["PATH": "/usr/bin", "ANTHROPIC_MODEL": "claude-haiku-5-5"]
+        func modelVar(_ e: [String]) -> String? { e.first { $0.hasPrefix("ANTHROPIC_MODEL=") }.map { String($0.dropFirst(16)) } }
+        check(modelVar(ChildEnvironment.make(sessionID: "s", base: baseEnv, model: "opus", isolated: false)) == "opus", "a chosen model reaches a session as ANTHROPIC_MODEL")
+        check(modelVar(ChildEnvironment.make(sessionID: "s", base: baseEnv, model: nil, isolated: false)) == "claude-haiku-5-5", "no choice leaves the environment as it was")
+        check(modelVar(ChildEnvironment.make(sessionID: "s", base: ["PATH": "/usr/bin"], model: nil, isolated: false)) == nil, "no choice and none inherited sets nothing: Claude's default")
+        check(modelVar(ChildEnvironment.make(sessionID: "s", base: baseEnv, model: "opus", isolated: true)) == "claude-haiku-5-5", "a scripted, isolated run keeps its Haiku whatever the setting")
+        check(modelVar(ChildEnvironment.make(sessionID: nil, base: baseEnv, model: "opus", isolated: false)) == "claude-haiku-5-5", "a plain shell is left alone")
+        check(ModelSetting.aliases == ["opus", "sonnet", "haiku"], "the aliases are opus, sonnet, haiku")
         check(m.lastDrafted?.key == id && m.lastDrafted?.text == "@tasks/exec-review-prep.md ", "once Claude's prompt is up, Duo drafts @tasks/exec-review-prep.md into it")
         check(typed == "\u{1b}[200~@tasks/exec-review-prep.md \u{1b}[201~", "the terminal received exactly the bracketed draft (\(typed.debugDescription))")
         check(!got.contains(13) && !got.contains(10), "no Return was sent: the draft waits for the user")
