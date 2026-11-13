@@ -1,0 +1,28 @@
+{
+ "v": 3,
+ "createdOnFiles": {"v": 1, "at": "2026-11-13T09:05:00Z"},
+ "title": "Duo first-run welcome study",
+ "launch": {"view": "canvas"},
+ "pages": [],
+ "boards": {
+  "Main.dc.html": {"x": 0, "y": 0, "w": 1440, "h": 900, "title": "00 · The ask, three directions, the recommendation"},
+  "b1-allprojects-fresh.dc.html": {"x": 0, "y": 1243, "w": 1440, "h": 900, "title": "B1 · Getting started with Duo, on a new install [P]"},
+  "b2-card-progress.dc.html": {"x": 1520, "y": 1243, "w": 1440, "h": 900, "title": "B2 · Two steps done; the director as something to know [P]"},
+  "b3-showme-chat.dc.html": {"x": 3040, "y": 1243, "w": 1440, "h": 900, "title": "B3 · Show me: the Chat and Terminal explainer on the real pill [P]"},
+  "a1-welcome-sheet.dc.html": {"x": 0, "y": 2486, "w": 1440, "h": 900, "title": "A1 · A Welcome to Duo sheet at first launch [P]"},
+  "c1-first-session.dc.html": {"x": 1520, "y": 2486, "w": 1440, "h": 900, "title": "C1 · No welcome: an explainer opens itself the first time [P]"},
+  "c2-director-hint.dc.html": {"x": 3040, "y": 2486, "w": 1440, "h": 900, "title": "C2 · No welcome: a director hint after several sessions [P]"},
+  "x1-help-menu.dc.html": {"x": 0, "y": 3729, "w": 760, "h": 620, "title": "X1 · The Help menu: how to get back to it (Q-522) [P]"},
+  "x2-explainers.dc.html": {"x": 840, "y": 3729, "w": 1440, "h": 900, "title": "X2 · Explainer pictures and anchors: Chat and Terminal, Director, Home (Q-523) [P]"}
+ },
+ "order": ["Main.dc.html", "b1-allprojects-fresh.dc.html", "b2-card-progress.dc.html", "b3-showme-chat.dc.html", "a1-welcome-sheet.dc.html", "c1-first-session.dc.html", "c2-director-hint.dc.html", "x1-help-menu.dc.html", "x2-explainers.dc.html"],
+ "notes": {
+  "h0": {"x": 0, "y": -260, "text": "Duo's first-run welcome: the study (2026-11-13)", "kind": "title1", "maxW": 1440},
+  "h1": {"x": 0, "y": 1003, "text": "B, recommended: Getting started with Duo, a card that ticks as you go", "kind": "title1", "maxW": 4480},
+  "h2": {"x": 0, "y": 2246, "text": "The others: A a welcome sheet, C explainers that open themselves", "kind": "title1", "maxW": 4480},
+  "h3": {"x": 0, "y": 3489, "text": "For any direction: the way back, and the explainers' pictures", "kind": "title1", "maxW": 2280}
+ },
+ "designSystems": [
+  {"title": "Duo", "namespace": "duo", "artifact": "https://claude.ai/artifact/QMapKeLYS3TVV36QKEc6MH", "version": null, "copiedAt": "2026-11-13T09:05:00Z"}
+ ]
+}

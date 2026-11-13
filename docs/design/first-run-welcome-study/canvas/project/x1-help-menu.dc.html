@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>X1 The Help menu</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.lab{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5B636D}
+.menu{width:250px;background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;box-shadow:0 12px 32px rgba(31,35,40,.22);padding:5px;display:flex;flex-direction:column;font-size:13px;line-height:20px;box-sizing:border-box}
+.it{padding:1px 10px;border-radius:4px;display:flex;gap:8px}
+.it .k{margin-left:auto;color:#5B636D}
+.sep{height:1px;background:#E9ECEF;margin:5px 8px}
+.new{background:#E9ECEF}
+.sub{width:200px;margin-top:150px}
+.pm{display:inline-block;font-size:11px;line-height:15px;font-weight:600;color:#FFFFFF;background:#1F2328;border-radius:4px;padding:1px 6px;margin-right:4px;vertical-align:middle}
+.ann{font-size:12px;line-height:17px;color:#1F2328;background:#FFF7D6;border:1px solid #D9C36A;border-radius:6px;padding:8px 10px}
+</style>
+</helmet>
+<div style="width:760px;height:620px;box-sizing:border-box;padding:28px 32px;background:#F3F4F6;color:#1F2328;font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;gap:28px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<div class="lab">Today (ENH-345, built)</div>
+<div class="menu">
+<div class="it">Duo Guide</div><div class="it">Watch the Intro Film</div><div class="it">Watch the Director Film</div>
+<div class="sep"></div>
+<div class="it">duo2 Reference</div><div class="it">What's New in This Version</div><div class="it">Explain Tasks</div><div class="it">Explain Chat and Terminal</div>
+<div class="sep"></div>
+<div class="it">Report an Issue…</div>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<div class="lab">Proposed [P]</div>
+<div style="display:flex;gap:2px;align-items:flex-start">
+<div class="menu">
+<div class="it new">Getting Started</div>
+<div class="it">Duo Guide</div><div class="it">Watch the Intro Film</div><div class="it">Watch the Director Film</div>
+<div class="sep"></div>
+<div class="it new">Explain<span class="k">›</span></div>
+<div class="sep"></div>
+<div class="it">duo2 Reference</div><div class="it">What's New in This Version</div>
+<div class="sep"></div>
+<div class="it">Report an Issue…</div>
+</div>
+<div class="menu sub">
+<div class="it">Projects</div><div class="it">Chat and Terminal</div><div class="it">Tasks</div><div class="it">Home</div><div class="it">Director</div>
+</div>
+</div>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:12px">
+<div class="ann"><span class="pm">P</span> Getting Started first: it brings the card back at All projects (B). Under A it reads Welcome to Duo and shows the sheet; under C it opens the guide's first page.</div>
+<div class="ann"><span class="pm">P</span> Explain ▸ gathers the explainers, in the order the card teaches them. Each opens on its control when it is on screen, else at the window's top centre. Projects is the left-nav round's.</div>
+<div class="ann"><span class="pm">P</span> Director is in the list even with no director: it is how someone who has heard of it finds out, without anything on screen pushing it.</div>
+<div class="ann"><span class="pm">P</span> duo2: getting-started show | hide, explain &lt;tasks|modes|home|director|projects&gt; (DL-71).</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":760,"height":620}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
