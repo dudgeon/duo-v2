@@ -177,6 +177,7 @@ public final class DocxViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         let authors = [DuoNSColor.reviewAuthor1, DuoNSColor.reviewAuthor2, DuoNSColor.reviewAuthor3, DuoNSColor.reviewAuthor4, DuoNSColor.reviewAuthor5]
         var js = authors.enumerated().map { "s.setProperty('--duo-review-author-\($0.offset + 1)', '\(hex($0.element))');" }.joined(separator: " ")
         js += " s.setProperty('--duo-comment-highlight', '\(hex(DuoNSColor.commentHighlight))');"
+        js += " s.setProperty('--duo-docx-ink', '\(hex(DuoNSColor.text))');"   // the sheet is white in dark too (Q-239), so its default ink is the light one
         return "(() => { const s = document.documentElement.style; \(js) })();"
     }
 

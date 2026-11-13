@@ -67,6 +67,8 @@ public enum DuoColor {
     public static let commentHighlight = Color(nsColor: NSColor.duoDynamic(light: 0xFBE7A1, dark: 0x4F4112, classic: 0xFBE7A1, name: "commentHighlight"))
     /// A comment's range while its card is hovered or active (markdown-review-handoff, DL-237). Light value provisional (Q-265); the dark one is a stand-in.
     public static let commentHighlightActive = Color(nsColor: NSColor.duoDynamic(light: 0xF5D565, dark: 0x6B5A1A, classic: 0xF0CB6A, name: "commentHighlightActive"))
+    /// The Word viewer's sheet, white in every appearance as in Word and Google Docs: a document keeps its own colours (Q-239, DL-340). The pane around it, and the comment cards, follow the appearance.
+    public static let docxPage = Color(nsColor: NSColor.duoDynamic(light: 0xFFFFFF, dark: 0xFFFFFF, classic: 0xFFFFFF, name: "docxPage"))
 
     // Console chrome: light values here, and in dark the console sinks (DL-224).
     /// Console pane, console tab strips, terminal background
@@ -123,6 +125,7 @@ public enum DuoNSColor {
     public static let reviewAuthor5 = NSColor.duoDynamic(light: 0x9A5A00, dark: 0xE0A64A, classic: 0x9A5A00, name: "reviewAuthor5")
     public static let commentHighlight = NSColor.duoDynamic(light: 0xFBE7A1, dark: 0x4F4112, classic: 0xFBE7A1, name: "commentHighlight")
     public static let commentHighlightActive = NSColor.duoDynamic(light: 0xF5D565, dark: 0x6B5A1A, classic: 0xF0CB6A, name: "commentHighlightActive")
+    public static let docxPage = NSColor.duoDynamic(light: 0xFFFFFF, dark: 0xFFFFFF, classic: 0xFFFFFF, name: "docxPage")
     public static let console = NSColor.duoDynamic(light: 0x15171B, dark: 0x0C0D10, classic: 0x1A1410, name: "console")
     public static let consoleRule = NSColor.duoDynamic(light: 0x2B2F36, dark: 0x24272D, classic: 0x352D23, name: "consoleRule")
     public static let consoleMenuTarget = NSColor.duoDynamic(light: 0x2D3138, dark: 0x262A30, classic: 0x352D23, name: "consoleMenuTarget")
@@ -619,6 +622,7 @@ public enum DuoWebTokens {
         ("review-5", DuoNSColor.reviewAuthor5),
         ("comment-highlight", DuoNSColor.commentHighlight),
         ("comment-highlight-active", DuoNSColor.commentHighlightActive),
+        ("docx-page", DuoNSColor.docxPage),
         ("console", DuoNSColor.console),
         ("console-rule", DuoNSColor.consoleRule),
         ("console-menu-target", DuoNSColor.consoleMenuTarget),
