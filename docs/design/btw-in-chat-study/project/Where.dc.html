@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Where the side answer shows</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.cap{font-size:12px;line-height:17px;color:#5B636D}
+.cap b{color:#1F2328;font-weight:600}
+.lab{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.mono{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:11px}
+</style>
+</helmet>
+<div style="width: 1640px; height: 1060px; box-sizing: border-box; background: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; color: #1F2328; padding: 40px; display: flex; flex-direction: column; gap: 22px">
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <div style="font-size: 18px; line-height: 24px; font-weight: 600">Q-550 · Where the side answer shows, while Claude keeps working [P]</div>
+    <div class="cap" style="font-size: 13px; line-height: 19px; max-width: 1500px">The same moment in each: Claude is writing a reply, you typed <span class="mono">/btw What does “idempotent” mean for a refund?</span> and the answer is in. Nothing here uses the accent: a side question never needs you. Words are Claude Code’s own where it has them (“Answering”, its keys); the rest is Duo’s.</div>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-start">
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">Today · the terminal, with the named bar</div>
+      <dc-import name="Chat" chat="{{today}}" hint-size="480px,400px"></dc-import>
+      <div class="cap">Chat falls back after half a second, and a Queued bubble for <span class="mono">/btw …</span> is left in the feed. Esc brings chat back; the answer is gone with the panel.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">A (recommended) · a side card in the composer’s place</div>
+      <dc-import name="Chat" chat="{{dock}}" hint-size="480px,400px"></dc-import>
+      <div class="cap"><b>Where Claude Code puts it, so it’s honest.</b> Claude’s panel takes its prompt’s place, and so does this card: there is no prompt to type into until it closes. Drawn like the review cards (DL-119: docks at the bottom, rises with <span class="mono">motionCardIn</span>), but on <span class="mono">pane</span> with a 1 <span class="mono">controlEdge</span> edge, never the needs-you border. The reply above keeps streaming.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 12px; padding-top: 26px">
+      <div class="cap"><b>The card, top to bottom:</b> the section label “Side question · not part of the conversation” (<span class="mono">sectionLabel</span>), your question (<span class="mono">bodyEmphasis</span>), the answer as Markdown in chat’s body face, then buttons in the review card’s style, each with its key: Copy <span class="mono">c</span>, Fork… <span class="mono">f</span>, Close <span class="mono">esc</span>. At the right, in <span class="mono">text2</span>: “Claude keeps working above”.</div>
+      <div class="cap"><b>Its keys are Claude Code’s</b> and act only while the card has focus, as the review cards’ number keys do. Chat sends the same key to the panel, so what you see and what Claude Code holds stay the same.</div>
+      <div class="cap"><b>Long answers</b> scroll inside the card up to half the pane’s height; ↑/↓ scroll it, as in the panel.</div>
+      <div class="cap"><b>The tab</b> shows no needs-you dot; it stays “working” while Claude works.</div>
+    </div>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-start">
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">B · an aside in the feed</div>
+      <dc-import name="Chat" chat="{{aside}}" hint-size="480px,400px"></dc-import>
+      <div class="cap">The question and answer drop into the feed as a framed aside, indented on both sides so it doesn’t read as Claude’s reply. Duo closes Claude’s panel as soon as the answer is captured (an Esc it sends itself), so the composer stays. <b>Against:</b> Duo pressing a key you didn’t, and the aside lands in the middle of a reply that is still streaming.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">C · a popover over the composer</div>
+      <dc-import name="Chat" chat="{{pop}}" hint-size="480px,400px"></dc-import>
+      <div class="cap">Floats over the foot of the feed with <span class="mono">shadowPopover</span>; the composer shows under it. <b>Against:</b> the composer can’t take text while Claude’s panel is up, so it would be a composer that refuses, and the popover covers the reply you are reading.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 12px; padding-top: 26px">
+      <div class="cap"><b>All three read the same things:</b> the panel on screen (question, “Answering…”, the answer, its footer), and the answer’s Markdown from the SubagentStop hook that comes with it, which keeps the bold, code and lists the screen drops.</div>
+      <div class="cap"><b>Not drawn:</b> a separate pane or tab for side questions (heavier than the thing it holds), and a Duo-run side query without Claude Code (DL-118: chat is an overlay on Claude Code, never a second client).</div>
+      <div class="cap"><b>Narrow chat:</b> the buttons drop to their keys’ labels (“Copy c”) under 420; the section label shortens to “Side question”.</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1640,"height":1060}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const q = 'What does “idempotent” mean for a refund?';
+    const ans = [ 'A refund request that can be sent again safely: a second copy refunds nothing more.', 'The flows keep one idempotency key per order for this.' ];
+    const feed = [
+      { you: true, meta: 'You · 9:52', text: 'Compare the two refund flows in a table, with a short recommendation.' },
+      { claude: true, meta: 'Claude · 9:52', lines: [ 'Both flows are in docs/refunds/flows.md. The main difference is who confirms the refund.' ] },
+      { working: true, text: 'Writing · 32s' }
+    ];
+    const base = (over) => Object.assign({ w: 480, h: 400, busy: true }, over);
+    return {
+      today: base({ term: [ { t: '  self-serve refunds confirm in the app;', dim: true }, { t: '  assisted refunds go through support.', dim: true }, { t: '▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔', dim: true }, '    /btw ' + q, '      A refund request that can be sent again', '      safely: a second copy refunds nothing more.', { t: '    ↑/↓ to scroll · c to copy · f to fork · Esc to close', dim: true } ] }),
+      dock: base({ items: feed, dock: { q, lines: ans, btns: [ { label: 'Copy', key: 'c' }, { label: 'Fork…', key: 'f' }, { label: 'Close', key: 'esc' } ], why: 'Claude keeps working above' } }),
+      aside: base({ items: [ feed[0], feed[1], { aside: true, meta: 'Side question · 9:53', q, lines: ans }, feed[2] ] }),
+      pop: base({ items: feed, pop: { q, lines: ans }, popBottom: 92 })
+    };
+  }
+}
+</script>
+</body>
+</html>
