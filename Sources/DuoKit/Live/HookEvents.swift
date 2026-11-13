@@ -293,6 +293,8 @@ public struct DuoState: Codable, Sendable, Equatable {
     public var keepRunning: [String] = []
     /// Window › Window Colour's "Colour new windows automatically" (DL-312): a new window takes the next free colour.
     public var colourNewWindows = true
+    /// Settings › Claude Code › Model for sessions (DL-339, Q-516): "opus", "sonnet" or "haiku"; nil is Claude's default.
+    public var sessionModel: String?
 
     public init() {}
     public init(from decoder: Decoder) throws {
@@ -326,6 +328,7 @@ public struct DuoState: Codable, Sendable, Equatable {
         startFolders = try c.decodeIfPresent([String].self, forKey: .startFolders) ?? []
         formatBarHidden = try c.decodeIfPresent(Bool.self, forKey: .formatBarHidden) ?? false
         colourNewWindows = try c.decodeIfPresent(Bool.self, forKey: .colourNewWindows) ?? true
+        sessionModel = try c.decodeIfPresent(String.self, forKey: .sessionModel)
     }
 
     public static func load(_ url: URL = DuoPaths.state) -> DuoState {

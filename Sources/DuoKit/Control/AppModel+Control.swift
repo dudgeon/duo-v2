@@ -494,6 +494,7 @@ extension AppModel {
                         "notify: \(DuoState.load().notifyNeedsYou ? "on" : "off")",
                         "dock-badge: \(DuoState.load().dockBadge ? "on" : "off") (showing \(NSApp.dockTile.badgeLabel ?? "nothing"))",
                         "appearance: \(AppearanceSetting.current.rawValue)",
+                        "model: \(ModelSetting.saved ?? "default") (sessions Duo starts or resumes use \(ModelSetting.saved.map { "ANTHROPIC_MODEL=\($0)" } ?? "Claude's own default"))",
                         "explanations dismissed: \(DuoState.load().dismissedExplainers.isEmpty ? "none" : DuoState.load().dismissedExplainers.joined(separator: ", "))",
                         "home: \(liveRoot.map { Self.short($0.path) } ?? "none")"].joined(separator: "\n")
             }
@@ -519,10 +520,14 @@ extension AppModel {
                 guard let a = AppearanceSetting(rawValue: value) else { return done(.fail("usage: \(id.action.usage)")) }
                 do { try AppearanceSetting.set(a) } catch { return done(.fail((error as? DuoState.WriteError)?.reason ?? error.localizedDescription)) }
                 SettingsInfo.shared.revision += 1
+            case "model":
+                guard value == "default" || ModelSetting.aliases.contains(value) else { return done(.fail("usage: \(id.action.usage)")) }
+                DuoState.update { $0.sessionModel = value == "default" ? nil : value }
+                SettingsInfo.shared.revision += 1
             case "explainers":
                 guard value == "reset" else { return done(.fail("usage: \(id.action.usage)")) }
                 explainer.resetDismissed()
-            default: return done(.fail("no setting '\(key)'. Settings: claude-path, notify, dock-badge, appearance, explainers"))
+            default: return done(.fail("no setting '\(key)'. Settings: claude-path, notify, dock-badge, appearance, model, explainers"))
             }
             reply()
         case .projectReconnect:

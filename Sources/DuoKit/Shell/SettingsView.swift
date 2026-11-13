@@ -93,7 +93,16 @@ public struct SettingsView: View {
                             .disabled(state.dismissedExplainers.isEmpty)
                     }
                 }
-                group("Claude Code") { claudeRow(state) }
+                group("Claude Code") {
+                    claudeRow(state)
+                    ruleLine
+                    // DL-339 (Q-516): a stand-in row, not drawn (Q-524). `duo2 settings model`.
+                    row("Model for sessions", value: Picker("", selection: Binding(get: { ModelSetting.saved ?? "default" },
+                                                                                  set: { v in DuoState.update { $0.sessionModel = v == "default" ? nil : v }; info.revision += 1 })) {
+                        Text("Claude’s default").tag("default")
+                        ForEach(ModelSetting.aliases, id: \.self) { Text(ModelSetting.label($0)).tag($0) }
+                    }.labelsHidden().fixedSize(), sub: ModelSetting.help) { EmptyView() }
+                }
                 group("Home") {
                     if let root = model.liveRoot {
                         let ps = model.fixture.projects.filter { !$0.isFolderOnly && model.isInHome($0.name) && $0.isHome != true }
