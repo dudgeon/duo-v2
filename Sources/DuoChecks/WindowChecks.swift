@@ -89,12 +89,16 @@ import Foundation
     RunLoop.main.run(until: Date().addingTimeInterval(0.05))
     check(!core.classicOn && two.windowColour?.id == "blue", "each window gets its colour back after Classic")
 
-    // MARK: Home in one window (Q-431)
-    check(one.ownsHome && !two.ownsHome && core.homeOwner === one, "Home is live in the primary at first")
-    core.showHome(in: two)
-    check(two.ownsHome && !one.ownsHome, "Show Here moves Home to this window")
+    // MARK: Home's page in two windows is any project's (DL-336)
+    if let home = one.fixture.home?.name {
+        one.open(project: home)
+        let shower = two.open(project: home)
+        check(shower === one && one.altitude == .project(home) && two.altitude != .project(home), "Home's page open in one window: opening it from another brings that window forward, as for any project")
+        one.zoomOut()
+        check(one.altitude.isAllProjects && core.model(showing: home) == nil, "a window back at All projects holds no Home")
+        one.open(project: p)
+    }
     core.detach(two)
-    check(core.homeOwner === one, "when Home's window closes, Home goes back to the primary")
     check(core.closeWindow(three) && core.models.count == 1, "Close Window closes a second window")
     check(!core.closeWindow(one) && core.models.count == 1, "the last window only hides; Duo keeps running")
     check(core.freeWindowNumber() == 2, "a closed window's number is free again")
@@ -144,7 +148,7 @@ import Foundation
     core.handle(req("window", ["focus", "1"])) { out = $0 }
     check(out?.ok == true && core.focusLog.last == 1, "duo2 window focus 1")
     core.handle(req("window", ["home", "--window", "2"])) { out = $0 }
-    check(w2.ownsHome, "duo2 window home --window 2 is Show Here in window 2")
+    check(out?.ok == false, "duo2 window home is gone (DL-336)")
     core.handle(req("window", ["new"])) { out = $0 }
     check(out?.ok == true && core.models.count == 3, "duo2 window new opens a window")
     let w3 = core.models[2]

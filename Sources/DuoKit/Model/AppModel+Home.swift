@@ -59,7 +59,6 @@ extension AppModel {
     /// Not Now on Home's prompt (DL-100): collapse the pane at All projects and don't ask again.
     public func dismissHomePrompt() {
         DuoState.update { $0.homePromptDismissed = true }
-        leftCollapsedAllProjects = true
     }
 
     /// Whether a project or folder already sits in Home's folder.

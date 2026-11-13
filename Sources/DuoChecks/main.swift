@@ -553,7 +553,7 @@ func repoFixture() throws -> Fixture {
     check(nav.altitude == .allProjects && nav.selectedActionSession == "onboarding-v3/Copy review pass 2", "zooming out selects the session last in (flow-zoom-4)")
     nav.open(project: "checkout-redesign")
     nav.goHome()
-    check(nav.altitude == .allProjects && nav.homeTab == "Morning triage" && nav.focusHomeRequest == 1, "shift-cmd-H: All projects, Home terminal focused")
+    check(nav.altitude == .project(nav.fixture.home?.name ?? "") && nav.consoleTab == "Morning triage", "shift-cmd-H: Home's page, on the session that needs you (DL-336)")
     let tiles = AppModel(fixture: f)
     tiles.moveTileFocus(dx: 0, dy: 0)
     check(tiles.focusedTile == "home", "first arrow focuses the first tile: Home's, in a column of its own (DL-104)")
@@ -1613,7 +1613,7 @@ func repoFixture() throws -> Fixture {
     print("tokens")
     check(DuoTextStyle.body.spec.size == 13 && DuoTextStyle.body.spec.lineHeight == 20, "body 13/20")
     check(DuoTextStyle.sectionLabel.spec.uppercase && DuoTextStyle.sectionLabel.spec.tracking == 0.66, "section label caps +0.66")
-    check(DuoMetric.paneOverviewHome == 340 && DuoMetric.paneProjectRight == 460, "pane widths")
+    check(DuoMetric.paneOverviewActionColumn == 340 && DuoMetric.paneProjectRight == 460, "pane widths")
     // C-22: the editor's H2 and smaller sit 4 lower, from the token the app hands the page.
     let editorSource = (try? String(contentsOf: repoRoot().appending(path: "Vendor/codemirror/src/duo-editor.js"), encoding: .utf8)) ?? ""
     check(EditorController.tokenCSS().contains("--duo-heading-above: \(Int(DuoSpace.gapAboveDocumentHeading))px")

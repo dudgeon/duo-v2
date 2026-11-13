@@ -49,7 +49,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case viewSort = "view sort", viewFilter = "view filter", viewHidden = "view hidden", viewFormatBar = "view format-bar", viewFolder = "view folder", viewFiles = "view files", viewHome = "view home"
     // Windows (multi-window slice 1, DL-311)
     case windowList = "window list", windowNew = "window new", windowFocus = "window focus", windowClose = "window close"
-    case windowColour = "window color", windowHome = "window home"
+    case windowColour = "window color"
     // Projects
     case projects, projectShow = "project show", projectMake = "project make", projectMerge = "project merge"
     case projectArchive = "project archive", projectUnarchive = "project unarchive"
@@ -184,12 +184,12 @@ extension DuoAction {
 
         // What's on screen
         .init(.goAll, .view, "", "Show All projects.", ui: ["All Projects"]),
-        .init(.goHome, .view, "", "Show Home.", ui: ["Home"]),
+        .init(.goHome, .view, "", "Open Home's page, on the session that needs you, else the one it was last on (DL-336).", ui: ["Home"]),
         .init(.open, .view, "<project> [session] [--file <path>]", "Open a project, optionally on one of its sessions or documents.",
               ui: ["Open project", "Review", "project tile", "map session row"], everyday: true),
         .init(.peek, .view, "[open|close]", "Show or hide the sessions that need the user in other projects.", ui: ["Needs You Elsewhere"]),
         .init(.peekJump, .view, "", "Jump into the project selected in the peek.", ui: ["Jump into Selected Project"]),
-        .init(.viewSidebar, .view, "show|hide|toggle|peek", "Show or hide the left pane. `peek` slides it over the console while a split view has folded it to its rail; a second peek closes it (DL-276).", ui: ["Toggle Sidebar", "Show Sidebar", "sidebar rail"]),
+        .init(.viewSidebar, .view, "show|hide|toggle|peek", "Show or hide the left pane (a project's; All projects has none and exits 64, DL-336). `peek` slides it over the console while a split view has folded it to its rail; a second peek closes it (DL-276).", ui: ["Toggle Sidebar", "Show Sidebar", "sidebar rail"]),
         .init(.split, .split, "[<file>] [--side left|right] [--with <file>]",
               "Split view (DL-275): with a file, show it beside its own preview (a deck, Markdown or HTML) as one tab in the right pane, source on the left, or on the side given. With nothing, report the sides, the active side, the ratio, whether it is folded, and whether the split folded the sidebar. `--with <file>`: two documents side by side, both editable (DL-278), <file> (or the showing tab) on the left and the other on the right with the keyboard; a file already open moves its tab into the split, and one already in a split selects it. ⌥⌘P does the same for the showing file's preview.",
               ui: ["Show Preview in Split View", "Close Split View", "Open in Split View", "Open in split view"]),
@@ -230,8 +230,6 @@ extension DuoAction {
               ui: ["Close Window"]),
         .init(.windowColour, .window, "[<color>|none] [--auto on|off]", "A window's color (Window › Window Color, the swatch after the project's name; DL-312, DL-313, DL-339: the app says Color, and `window colour` still works): blue, ochre, purple, green, coral, teal, deep-blue, deep-ochre, deep-purple, deep-green, deep-coral, deep-teal, or none. --auto turns 'Color new windows automatically' on or off. With nothing, the window's colour and the setting. Classic turns window colors off; each comes back after.",
               ui: ["Window Color", "Color new windows automatically", "window swatch"]),
-        .init(.windowHome, .window, "", "Show Home's terminal in this window (Show Here, Q-431): Home is live in one window and the others say where it is.",
-              ui: ["Show Here"]),
 
         // Projects
         .init(.projects, .projects, "", "Projects and folders with sessions, with goal, health and next step.", everyday: true),
@@ -698,7 +696,7 @@ public enum Parity {
         "Toggle Right Pane": "not built yet",
         "Cancel": "a step inside another action's dialog or picker",
         "Look Again": "re-reads what Duo already refreshes every 2 s; the CLI always reads fresh state",
-        "Open Settings…": "not built: Settings waits on its design (DB-10)",
+        "Open Settings…": "opens the Settings window; `duo2 settings` reads and sets what it holds",
         "Go": "a menu, not an action",
         "Format": "a menu, not an action",
         "Project": "a menu, not an action",

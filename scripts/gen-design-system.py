@@ -177,7 +177,6 @@ layout = [
     {"name": "docxMenuTop", "value": px(s["docxMenuTop"]), "usage": "Where that menu starts below the viewer's bar top: 4 under the Markup button."},
     {"name": "docxBarTrailing", "value": px(s["docxBarTrailing"]), "usage": "The Word viewer's bar: space right of Open With (the board's four buttons run to 10 from the pane's edge; 6 here because Duo's buttons are a few points wider)."},
     {"name": "docxMenuRowPaddingX", "value": px(s["docxMenuRowPaddingX"]), "usage": "Side padding of a row in the Markup menu."},
-    {"name": "homeSessionTabsHeight", "value": px(s["homeSessionTabsHeight"]), "usage": "Home's session tabs under its header."},
     {"name": "overviewFooterHeight", "value": px(s["overviewFooterHeight"]), "usage": "The map's footer (`N idle, resumable ›`)."},
     {"name": "buttonHeight", "value": px(s["buttonHeight"]), "usage": "Buttons."},
     {"name": "newProjectTileHeight", "value": px(s["newProjectTileHeight"]), "usage": "The dashed New project tile."},

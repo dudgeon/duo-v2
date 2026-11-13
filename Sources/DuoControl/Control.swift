@@ -79,8 +79,10 @@ public struct ControlResponse: Codable, Sendable, Equatable {
     public var ok: Bool
     /// Human-readable output, printed as is.
     public var output: String
+    /// The exit status for a refusal that is a usage error (64) rather than a failure (1); nil in older Duos.
+    public var code: Int32?
 
-    public init(ok: Bool, output: String) { self.ok = ok; self.output = output }
+    public init(ok: Bool, output: String, code: Int32? = nil) { self.ok = ok; self.output = output; self.code = code }
 }
 
 /// A blocking client: connect, send one line, read one line. Plain sockets keep the CLI small.

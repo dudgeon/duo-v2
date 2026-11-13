@@ -38,12 +38,12 @@ extension AppModel {
     // MARK: - Which pane is active
 
     /// The active pane at the altitude on screen. A hidden pane can't be active: it falls back to
-    /// a visible one (the middle in a project; Home, else the middle, at All projects).
+    /// the middle (All projects has no left pane, DL-336).
     public var activePane: DuoPane {
         get {
             let stored = altitude.isAllProjects ? activePaneAllProjects : activePaneProject
             if visiblePanes().contains(stored) { return stored }
-            return altitude.isAllProjects && visiblePanes().contains(.left) ? .left : .middle
+            return .middle
         }
         set {
             if altitude.isAllProjects { activePaneAllProjects = newValue } else { activePaneProject = newValue }
@@ -64,7 +64,7 @@ extension AppModel {
 
     /// The panes on screen, left to right.
     public func visiblePanes() -> [DuoPane] {
-        let leftHidden = leftCollapsed || (!altitude.isAllProjects && boardShown)
+        let leftHidden = altitude.isAllProjects || leftCollapsed || boardShown   // All projects has no left pane (DL-336)
         return PaneCycle.order(leftShown: !leftHidden, rightShown: !rightCollapsed)
     }
 
@@ -95,32 +95,17 @@ extension AppModel {
     /// The main window; none in DuoChecks, which has no application.
     var paneWindow: NSWindow? { window }
 
-    /// The keyboard in Home's session at All projects: its chat's composer, or its terminal. `focusHomeRequest` was
-    /// the whole of this until F-640, and nothing ever read it, so a Home terminal never took the keyboard this way.
-    func focusHome() {
-        focusHomeRequest += 1
-        guard let key = homeTab else { return }
-        if let c = chat(for: key), c.showsChat { c.focusComposer += 1 } else { focusTerminal(key) }
-    }
-
-    /// A Home session asked for by name at All projects (its Needs you card, a session link, F-640): its tab, Home's
-    /// column opened if it is closed (it starts closed, DL-315, and the card points at it), and the keyboard in it.
-    /// Opening it here isn't the person's own toggle, so it doesn't count as one (`leftTouchedAllProjects`).
+    /// A Home session asked for by name (its Needs you card, a session link): Home's page, that session selected,
+    /// as any project's page opens on a session (DL-336).
     public func showHomeSession(_ tab: String) {
-        homeTab = tab
-        if leftCollapsedAllProjects { leftCollapsedAllProjects = false }
-        activePaneAllProjects = .left
-        focusHome()
+        guard let home = fixture.home?.name else { return }
+        open(project: home, session: fixture.sessions(inProject: home).first { $0.tabKey == tab }?.name)
     }
 
     /// Moves the keyboard into `pane`: a terminal, the chat's composer, the editor or a page; the
     /// panes with no keyboard navigation yet just let go of the old responder.
     func focusPane(_ pane: DuoPane) {
-        if altitude.isAllProjects {
-            guard pane == .left else { paneWindow?.makeFirstResponder(nil); return }
-            focusHome()
-            return
-        }
+        if altitude.isAllProjects { paneWindow?.makeFirstResponder(nil); return }   // no pane holds the keyboard here (DL-336)
         switch pane {
         case .left: paneWindow?.makeFirstResponder(nil)
         case .middle:
@@ -168,15 +153,9 @@ extension AppModel {
 
     public func rightTabKeys() -> [String] { rightTabItems().map(\.id) }
 
-    /// Home's tab keys, in HomePane's order: sessions, then shells.
-    public func homeTabKeys() -> [String] {
-        guard let h = fixture.home?.name else { return [] }
-        return consoleTabKeys(inProject: h)   // in Home's own order, as moved (DL-225)
-    }
-
     /// The tab keys of `pane` at the altitude on screen; panes with no tabs have none.
     public func tabKeys(in pane: DuoPane) -> [String] {
-        if altitude.isAllProjects { return pane == .left ? homeTabKeys() : [] }
+        if altitude.isAllProjects { return [] }
         switch pane {
         case .middle: return currentProject.map { consoleTabKeys(inProject: $0.name) } ?? []
         case .right: return rightTabKeys()

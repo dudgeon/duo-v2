@@ -2,93 +2,8 @@ import SwiftUI
 
 // All projects (handoff §3.2). Targets: screens/overview.html, flow-zoom-1.html, flow-zoom-4.html.
 
-// MARK: - Home pane
-
-/// The Home terminal pane: header, one tab per live Home session, then the terminal. The body is
-/// Claude Code's own TUI (handoff §0.4), so it stays empty until terminals exist (Phase D).
-/// While the selected Home tab shows chat, the header and tab strip are DL-136's thin light strip,
-/// as the console's (DL-142 (7), home-evolution `home-chat` board 10); a terminal keeps them dark.
-struct HomePane: View {
-    @Environment(AppModel.self) private var model
-
-    var body: some View {
-        let home = model.fixture.home
-        let tabs = home.map { model.tabSessions(inProject: $0.name) } ?? []
-        let light = model.homeShowsChat && model.ownsHome   // Home's stand-in is dark (board 10 B)
-        let text = light ? DuoColor.text : DuoColor.consoleText
-        let text2 = light ? DuoColor.text2 : DuoColor.consoleText2
-        let ground = light ? AnyShapeStyle(WindowTint.strip) : AnyShapeStyle(DuoColor.console)
-        VStack(spacing: 0) {
-            HStack(spacing: light ? 10 : DuoSpace.gapRowItems) {
-                Text("★ \(home?.name ?? "Home")")
-                    .duoText(.bodyEmphasis)
-                    .foregroundStyle(text)
-                    .contentShape(Rectangle())
-                    // Home's heading opens Home as a project, like any tile's name (Geoff, 2026-10-04).
-                    .onActivate { if let h = home?.name { model.open(project: h) } }  // action: open
-                    .accessibilityLabel("Open \(home?.name ?? "home")")
-                // Light, the path follows the name (`home-chat` board 10); dark, it sits at the right.
-                if !light { Spacer(minLength: 8) }
-                Text(home?.path ?? "")
-                    .duoText(.mono)
-                    .foregroundStyle(text2)
-                    .lineLimit(1)
-                if light { Spacer(minLength: 0) }
-            }
-            .padding(.horizontal, DuoSpace.panePadding)
-            .frame(height: light ? DuoMetric.tabStripHeight - DuoMetric.borderHairline : DuoMetric.tabStripHeight)
-            .background(ground)
-            HomeRule(light: light)
-
-            // No Home yet: no session row, the message sits under the heading (S2-3).
-            let noHome = model.fixtureConsole == .noHome || (model.terminalsMode == .live && home == nil)
-            if !model.ownsHome {
-                // Home is live in another window (Q-431, board 10 B): say where, with Show Here (Q-447 stand-in).
-                HomeElsewhere()
-            } else {
-            if !noHome {
-            ConsoleTabStrip(project: home?.name, pane: .left)
-            HomeRule(light: light)
-            }
-
-            let _ = model.endedRevision
-            if let home, let tab = model.homeTab, model.fixtureConsole != .homeNone,
-               let t = model.terminal(project: home.name, session: tab), !t.missingClaude {
-                // Home's sessions read as chat too (DL-132 g), the same body as the console's.
-                // Home's chat draws only at All projects: this pane stays in the window under a project, and
-                // its composer, out of sight, took the keyboard from the project's (C-47, F-183).
-                if let chat = model.chat(for: t.key) {
-                    if model.altitude.isAllProjects || !chat.showsChat { ConsoleChatBody(chat: chat, terminal: t, home: true) } else { Color.clear }
-                } else { TerminalSlot(session: t, shown: model.altitude.isAllProjects, place: "home") }
-                if t.ended != nil { ConsoleEndedBar(session: t, name: model.consoleTitle(t.key)) }
-                else if model.chat(for: t.key)?.showsChat != true { TrustBar(key: t.key) }
-                Color.clear.frame(height: 0).task(id: t.key) { model.attachChat(t) }
-            } else if let tab = model.homeTab, let chat = model.fixtureChats[tab] {
-                // A target state's Home chat (no terminal in fixture mode); at All projects only, as above.
-                if model.altitude.isAllProjects { ConsoleChatBody(chat: chat, terminal: nil) } else { Color.clear }
-            } else if noHome {
-                // No Home folder chosen (DL-84, S2-3): sessions are listed anyway (DL-82).
-                ConsoleMessage(state: .noHome, inHome: true)
-            } else if model.fixtureConsole == .homeNone || (model.terminalsMode == .live && home != nil) {
-                // Duo starts a Home session at launch (DL-54); this shows once the last one is closed.
-                ConsoleMessage(state: ClaudeLocator.resolve() == nil && model.terminalsMode == .live ? .notFound : .homeNone, inHome: true)
-            } else {
-                Color.clear
-            }
-            }
-        }
-        .background(light ? AnyShapeStyle(WindowTint.strip) : AnyShapeStyle(DuoColor.console))
-    }
-}
-
 struct ConsoleRule: View {
     var body: some View { DuoColor.consoleRule.frame(height: 1) }
-}
-
-/// Home's rules: the console's on the dark strip, `rule` on the light one (DL-136).
-struct HomeRule: View {
-    let light: Bool
-    var body: some View { (light ? DuoColor.rule : DuoColor.consoleRule).frame(height: DuoMetric.borderHairline) }
 }
 
 extension AppModel {
@@ -821,7 +736,7 @@ struct ActionColumnPane: View {
         let needsYou = f.needsYou
         let reviews = f.sessions.filter { $0.state == .readyForReview }
         // What ⇧ ranges over in the column (DL-247): the needs-you cards, then the review cards.
-        let _ = model.noteSelectionOrder("action", needsYou.filter { $0.project != f.home?.name }.map(\.tabKey) + [SessionSelection.breaker] + reviews.map(\.tabKey))
+        let _ = model.noteSelectionOrder("action", needsYou.map(\.tabKey) + [SessionSelection.breaker] + reviews.map(\.tabKey))
         ScrollView {
             VStack(alignment: .leading, spacing: DuoSpace.gapCardToCard) {
                 if needsYou.isEmpty && model.terminalsMode == .live {
@@ -835,13 +750,7 @@ struct ActionColumnPane: View {
                     VStack(alignment: .leading, spacing: DuoSpace.gapCardToCard) {
                         SectionLabel(text: "Needs you", count: needsYou.count, needsYou: true)
                         ForEach(Array(needsYou.enumerated()), id: \.element.id) { i, s in
-                            Group {
-                                if s.project == f.home?.name {
-                                    HomePointerCard(session: s)
-                                } else {
-                                    NeedsYouCard(session: s, selected: model.selectedActionSession == s.id || model.selectionRun(s.tabKey, list: "action") != .none)
-                                }
-                            }
+                            NeedsYouCard(session: s, selected: model.selectedActionSession == s.id || model.selectionRun(s.tabKey, list: "action") != .none)
                             .accessibilityIdentifier("video.s3.needs.\(i + 1)")   // anchors: the video cursor's target (1-based)
                         }
                     }
@@ -896,13 +805,14 @@ struct NeedsYouCard: View {
     @Environment(AppModel.self) private var model
     let session: Fixture.Session
     var selected = false
+    private var isHome: Bool { session.project == model.fixture.home?.name }
 
     var body: some View {
         VStack(alignment: .leading, spacing: DuoSpace.gapCardContent) {
             VStack(alignment: .leading, spacing: 0) {
-                CardHeader(session: session)
+                CardHeader(session: session, suffix: isHome ? "★ \(session.project)" : nil)   // C1 draws Home's name beside the title
                 // The reason follows the project (DL-100): "checkout · permission".
-                Text(session.project + (session.reason.map { " · \($0)" } ?? "")).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1)
+                Text((isHome ? "★ " : "") + session.project + (session.reason.map { " · \($0)" } ?? "")).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1)
                     .onActivate { model.open(project: session.project) }  // action: open
             }
             if let q = session.question {
@@ -922,7 +832,8 @@ struct NeedsYouCard: View {
                 .modifier(QuestionBox(boxed: selected))
             }
             HStack(spacing: DuoSpace.gapButtonToButton) {
-                Button("Open project") { model.open(project: session.project, session: session.name) }.buttonStyle(.duo)
+                // A Home session is an ordinary card; board C1 words its button "Open Home" (DL-336, Q-502).
+                Button(isHome ? "Open Home" : "Open project") { model.open(project: session.project, session: session.name) }.buttonStyle(.duo)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -950,25 +861,6 @@ struct QuestionBox: ViewModifier {
         } else {
             content
         }
-    }
-}
-
-/// A Home session needing you is a pointer, not a card: the Home terminal is already on screen.
-struct HomePointerCard: View {
-    @Environment(AppModel.self) private var model
-    let session: Fixture.Session
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            CardHeader(session: session, suffix: session.project)
-            Text("← Waiting in the Home terminal").duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .bordered(DuoSpace.pointerCardPadding, color: DuoColor.controlEdge, dashed: true)
-        .contentShape(Rectangle())
-        .onActivate { model.showHomeSession(session.tabKey) }  // action: session open
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(session.name), needs you, waiting in the Home terminal")
     }
 }
 

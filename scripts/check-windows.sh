@@ -1,6 +1,6 @@
 #!/bin/bash
 # Multi-window slice 1's captures (DL-311 to DL-314; docs/design/multi-window-handoff): two windows in
-# different colours, light and dark; the same under Classic; Home in a second window. Fixture state,
+# different colours, light and dark; the same under Classic; Home's page in two windows (DL-336: it behaves as any project's). Fixture state,
 # background, isolated (F-227): nothing is shown and Geoff's Duo is never touched.
 #
 #   scripts/check-windows.sh            build, then capture every case to build/windows/
@@ -42,9 +42,9 @@ for c in "${cases[@]}"; do
     two-dark)  run "$c" dark  window-colour:1:ochre window-new:checkout-redesign wait:1 "window-shot:2:$out/$c-w2.png" ;;
     # The same under Classic: both windows draw Classic, the swatch leaves the toolbar (board 4c A).
     classic)   run "$c" classic window-colour:1:ochre window-new:checkout-redesign wait:1 "window-shot:2:$out/$c-w2.png" ;;
-    # Home in a second window (board 10′ A): window 1 Blue holds Home; window 2 opens at All projects and takes Ochre.
-    home-light) run "$c" light window-colour:1:blue window-new wait:1 "window-shot:2:$out/$c-w2.png" ;;
-    home-dark)  run "$c" dark  window-colour:1:deep-blue window-new wait:1 "window-shot:2:$out/$c-w2.png" ;;
+    # Home's page in two windows (DL-336): window 1 Blue is on Home's page; window 2 opens at All projects and takes Ochre.
+    home-light) run "$c" light window-colour:1:blue window-open:1:home window-new wait:1 "window-shot:2:$out/$c-w2.png" ;;
+    home-dark)  run "$c" dark  window-colour:1:deep-blue window-open:1:home window-new wait:1 "window-shot:2:$out/$c-w2.png" ;;
     *) echo "unknown case $c" >&2; exit 2 ;;
   esac
 done

@@ -22,11 +22,11 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | Command | What it does | In the app |
 |---|---|---|
 | `duo2 go all` | Show All projects. | All Projects |
-| `duo2 go home` | Show Home. | Home |
+| `duo2 go home` | Open Home's page, on the session that needs you, else the one it was last on (DL-336). | Home |
 | `duo2 open <project> [session] [--file <path>]` | Open a project, optionally on one of its sessions or documents. | Open project, Review, project tile, map session row |
 | `duo2 peek [open\|close]` | Show or hide the sessions that need the user in other projects. | Needs You Elsewhere |
 | `duo2 peek jump` | Jump into the project selected in the peek. | Jump into Selected Project |
-| `duo2 view sidebar show\|hide\|toggle\|peek` | Show or hide the left pane. `peek` slides it over the console while a split view has folded it to its rail; a second peek closes it (DL-276). | Toggle Sidebar, Show Sidebar, sidebar rail |
+| `duo2 view sidebar show\|hide\|toggle\|peek` | Show or hide the left pane (a project's; All projects has none and exits 64, DL-336). `peek` slides it over the console while a split view has folded it to its rail; a second peek closes it (DL-276). | Toggle Sidebar, Show Sidebar, sidebar rail |
 | `duo2 view right show\|hide\|toggle` | Show or hide the right pane: the action column at All projects, the documents in a project (⌥⌘0, DL-129). | Toggle Right Pane, right pane button |
 | `duo2 view tab <Project \| document path \| group \| next \| previous>` | Switch the right pane's tab; next and previous step through the active pane's tabs instead (⌃Tab, ⌃⇧Tab, DL-165). | right pane tab, Open Project File, Show Next Tab, Show Previous Tab |
 | `duo2 view tab-move left\|right\|<n> [tab] [--pane middle\|right]` | Move a tab along its strip: one place left or right (Move Tab Left / Right on its menu), or to place n among the tabs that move (1 is the leftmost), as a drag does (DL-220). The tab is a document path, a session id or name, or by default the selected tab of the active pane (or --pane). The right pane's Project tab stays first. | Move Tab Left, Move Tab Right, tab dragged along its strip |
@@ -50,7 +50,6 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 window focus <n\|project>` | Bring a window forward (the Window menu, ⌘`; Go There on Home's pane in another window, DL-314). | Go There |
 | `duo2 window close [<n\|project>]` | Close a window (File › Close Window ⇧⌘W); with none named, the one --window or your session picks. Its projects keep their tabs and sessions. The last window hides; Duo keeps running. | Close Window |
 | `duo2 window color [<color>\|none] [--auto on\|off]` | A window's color (Window › Window Color, the swatch after the project's name; DL-312, DL-313, DL-339: the app says Color, and `window colour` still works): blue, ochre, purple, green, coral, teal, deep-blue, deep-ochre, deep-purple, deep-green, deep-coral, deep-teal, or none. --auto turns 'Color new windows automatically' on or off. With nothing, the window's colour and the setting. Classic turns window colors off; each comes back after. | Window Color, Color new windows automatically, window swatch |
-| `duo2 window home` | Show Home's terminal in this window (Show Here, Q-431): Home is live in one window and the others say where it is. | Show Here |
 
 ## Split view
 
@@ -389,7 +388,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | No templates yet: add .md files to a templates folder | a disabled hint |
 | Not Now | the user's answer to the install question; `duo2 install` and `duo2 uninstall` change it later |
 | OK | dismisses a notice |
-| Open Settings… | not built: Settings waits on its design (DB-10) |
+| Open Settings… | opens the Settings window; `duo2 settings` reads and sets what it holds |
 | Open in Browser (HTML page bar) | the bar over a local HTML page that uses scripts or styles from the web (F-629): hands the file to the person's own browser, which Claude has no use for; `duo2 browser open` opens a tab in Duo, and `duo2 html reload` is the bar's Reload |
 | Paste or drop a picture in the editor | a gesture, not a menu item: the picture is saved beside the document and linked (LR-39); `duo2 doc insert` adds the same `![](name)` text, and `duo2 file move` puts a picture beside a note |
 | Project | a menu, not an action |

@@ -57,29 +57,23 @@ public struct RootView: View {
     }
 }
 
-/// All projects (handoff §3.2): Home terminal · project map · action column.
+/// All projects (handoff §3.2, DL-336): the project map (or List) · action column. No Home column:
+/// Home's sessions run in the console on Home's page.
 struct AllProjectsLayout: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
         PaneSplit(
             panes: [
-                .init(view: AnyView(HomePane().paneFocusRule(.left, onConsole: true)), width: DuoMetric.paneOverviewHome, minWidth: DuoMetric.paneMinHome,
-                      collapsible: true, collapsed: model.leftCollapsedAllProjects),
                 .init(view: AnyView(DimmedUnderSheet { ProjectMapPane() }.paneFocusRule(.middle)), width: nil, minWidth: DuoMetric.paneMinMap),
                 .init(view: AnyView(ActionColumnPane().paneFocusRule(.right)), width: DuoMetric.paneOverviewActionColumn,
                       minWidth: DuoMetric.paneMinActionColumn, collapsible: true, collapsed: model.rightCollapsedAllProjects),
             ],
-            dividerColors: [DuoNSColor.consoleRule, DuoNSColor.rule],
-            paneBackgrounds: [DuoNSColor.console, model.tint(.pane), model.tint(.pane)],
+            dividerColors: [DuoNSColor.rule],
+            paneBackgrounds: [model.tint(.pane), model.tint(.pane)],
             model: model,
-            // Home in chat is light, its divider too (DL-142 (7), `home-chat` board 10): watched by
-            // the split, never read here (F-208).
-            liveColors: { m in
-                let light = m.homeShowsChat && m.ownsHome   // Home's stand-in stays dark (board 10 B)
-                return ([light ? DuoNSColor.rule : DuoNSColor.consoleRule, DuoNSColor.rule], [light ? m.tint(.strip) : DuoNSColor.console, m.tint(.pane), m.tint(.pane)])
-            },
-            onActivePane: { [weak model] i in model?.panePicked(DuoPane.allCases[i], allProjects: true) }
+            liveColors: { m in ([DuoNSColor.rule], [m.tint(.pane), m.tint(.pane)]) },
+            onActivePane: { [weak model] i in model?.panePicked(i == 0 ? .middle : .right, allProjects: true) }
         )
     }
 }

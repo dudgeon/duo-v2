@@ -7,7 +7,7 @@ struct DuoToolbar: ToolbarContent {
 
     var body: some ToolbarContent {
         ToolbarItem(placement: .navigation) {
-            SidebarToggle().dimmedUnderSearch()
+            if !model.altitude.isAllProjects { SidebarToggle().dimmedUnderSearch() }   // none at All projects (DL-336)
         }
         .sharedBackgroundVisibility(.hidden)
 

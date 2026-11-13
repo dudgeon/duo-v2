@@ -18,14 +18,13 @@ extension AppModel {
 
     /// ⇧⌘T or the chevron's New Shell: a login shell in the project's folder (Home's at All projects).
     public func newShell() {
-        let project = altitude.isAllProjects ? fixture.home?.name : currentProject?.name
-        guard let project else { return }
+        guard let project = currentProject?.name else { return }
         let folder = liveFolders[project]?.path ?? FileManager.default.homeDirectoryForCurrentUser.path
         let key = Self.shellPrefix + UUID().uuidString.lowercased()
         _ = terminals.session(key, command: .shell, cwd: folder)
         shellTabs[project, default: []].append(key)
         shellTitles[key] = ((ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh") as NSString).lastPathComponent
-        if altitude.isAllProjects { homeTab = key } else { consoleTab = key }
+        consoleTab = key
     }
 
     /// The shells open in a project, in the order they were opened.

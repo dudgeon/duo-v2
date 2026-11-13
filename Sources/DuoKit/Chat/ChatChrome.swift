@@ -144,10 +144,10 @@ extension AppModel {
             ]))
     }
 
-    /// A chat on screen (ENH-45): Home's tab at All projects, or the console's tab in a project
-    /// that isn't showing its task board (DL-148: the board covers the console).
+    /// A chat on screen (ENH-45): the console's tab in a project that isn't showing its task board (DL-148: the board
+    /// covers the console). All projects shows none (DL-336).
     func chatIsShown(_ key: String) -> Bool {
-        altitude.isAllProjects ? homeTab == key : consoleTab == key && !boardShown
+        !altitude.isAllProjects && consoleTab == key && !boardShown
     }
 
     /// The chat for a Claude terminal: made on first use, reading that terminal's screen.
@@ -200,9 +200,6 @@ struct ConsoleChatBody: View {
     @Environment(AppModel.self) private var model
     let chat: ChatSession
     let terminal: TerminalSession?
-    /// Home's column at All projects: under a project it is out of sight, and its slot leaves the terminal to the console (F-640).
-    var home = false
-
     var body: some View {
         if chat.showsChat {
             ChatPane(chat: chat)
@@ -215,7 +212,7 @@ struct ConsoleChatBody: View {
         } else {
             VStack(spacing: 0) {
                 if chat.mode == .chat, let f = chat.fallback { ChatFallbackBar(chat: chat, message: f.message, command: f.command) }
-                if let terminal { TerminalSlot(session: terminal, shown: home == model.altitude.isAllProjects, place: home ? "home" : "console") } else { ChatTerminalStandIn(chat: chat) }
+                if let terminal { TerminalSlot(session: terminal, shown: !model.altitude.isAllProjects, place: "console") } else { ChatTerminalStandIn(chat: chat) }
             }
         }
     }

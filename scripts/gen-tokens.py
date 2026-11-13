@@ -118,7 +118,6 @@ w(f"    public static let docxMenuWidth: CGFloat = {num(s['docxMenuWidth'])}")  
 w(f"    public static let docxMenuTop: CGFloat = {num(s['docxMenuTop'])}")
 w(f"    public static let docxBarTrailing: CGFloat = {num(s['docxBarTrailing'])}")   # the Word viewer's bar runs close to the right edge, as the board draws it
 w(f"    public static let docxMenuRowPaddingX: CGFloat = {num(s['docxMenuRowPaddingX'])}")
-w(f"    public static let homeSessionTabsHeight: CGFloat = {num(s['homeSessionTabsHeight'])}")
 w(f"    public static let overviewFooterHeight: CGFloat = {num(s['overviewFooterHeight'])}")
 for k, v in s["row"].items():
     w(f"    public static let row{k[0].upper() + k[1:]}: CGFloat = {num(v)}")
@@ -127,7 +126,6 @@ w(f"    public static let jumpFieldWidth: CGFloat = {num(s['jumpField']['width']
 w(f"    public static let jumpFieldHeight: CGFloat = {num(s['jumpField']['height'])}")
 w(f"    public static let newProjectTileHeight: CGFloat = {num(s['newProjectTileHeight'])}")
 w(f"    public static let glyph: CGFloat = {num(s['glyph'])}")
-w(f"    public static let paneOverviewHome: CGFloat = {num(s['pane']['overview']['home'])}")
 w(f"    public static let paneOverviewActionColumn: CGFloat = {num(s['pane']['overview']['actionColumn'])}")
 w(f"    public static let paneProjectLeft: CGFloat = {num(s['pane']['project']['sessionsAndFiles'])}")
 w(f"    public static let paneProjectRight: CGFloat = {num(s['pane']['project']['right'])}")

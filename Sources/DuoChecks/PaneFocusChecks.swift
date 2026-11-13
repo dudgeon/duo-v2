@@ -84,23 +84,18 @@ import Foundation
     check(m.consoleTab == before.0 && m.rightTab == before.1 && m.tabCount(in: .left) == 0, "the left pane has no tabs: ⌃Tab changes nothing")
     check(!DuoCommand.nextTab.isEnabled(in: m), "Show Next Tab is disabled there")
 
-    // All projects
+    // All projects (DL-336): the map and the action column; no left pane, no Home tabs
     let all = AppModel(fixture: f)
     TargetState.overview.apply(to: all)
-    check(all.activePane == .left, "at All projects Home is active")
-    check(all.homeTabKeys().count >= 2 && all.homeTab == "Morning triage", "Home has tabs")
-    let home = all.homeTabKeys()
+    check(all.activePane == .middle && all.visiblePanes() == [.middle, .right], "at All projects the map is active, and Home has no pane")
+    check(all.tabKeys(in: .left).isEmpty && all.tabKeys(in: .middle).isEmpty, "no pane there has tabs")
     all.cycleTab(forward: true)
-    check(all.homeTab == home[(home.firstIndex(of: "Morning triage")! + 1) % home.count], "⌃Tab steps Home's tabs")
-    all.cycleTab(forward: false)
-    check(all.homeTab == "Morning triage", "and ⌃⇧Tab steps back")
-    all.nextPane(); check(all.activePane == .middle, "next pane: the map")
+    check(all.homeTab == "Morning triage", "⌃Tab at All projects steps nothing")
     all.nextPane(); check(all.activePane == .right, "next pane: the action column")
-    all.cycleTab(forward: true); check(all.homeTab == "Morning triage", "the map and column have no tabs")
-    all.leftCollapsed = true
-    check(all.visiblePanes() == [.middle, .right], "Home hidden at All projects is out of the order")
+    all.nextPane(); check(all.activePane == .middle, "next pane wraps to the map")
     all.activate(.left, focus: false)
-    check(all.activePane == .middle, "a hidden Home falls back to the map")
+    check(all.activePane == .middle, "the left pane at All projects falls back to the map")
+    check(!DuoCommand.toggleSidebar.isEnabled(in: all) && DuoCommand.toggleSidebar.isEnabled(in: m), "Toggle Sidebar is disabled at All projects, enabled in a project")
     check(m.activePane == .left && all.activePane == .middle, "each altitude keeps its own active pane")
 
     check(parityGaps().isEmpty, "every command and verb has its pair: \(parityGaps().prefix(3))")

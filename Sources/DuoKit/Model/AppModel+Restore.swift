@@ -12,16 +12,10 @@ public struct RestoreState: Codable, Equatable, Sendable {
     public var root: String?
     /// The project on screen, by folder; nil at All projects.
     public var project: String?
-    public var leftCollapsedAllProjects = false
     public var leftCollapsedProject = false
-    /// Whether the person has ever opened or closed All projects' left sidebar themselves (DL-315); absent in
-    /// files from before it, where a saved "collapsed" can only have been their doing and a saved "open" might be the old default.
+    /// Old files carry All projects' sidebar state; All projects has no sidebar now (DL-336), so they decode and are ignored.
+    public var leftCollapsedAllProjects: Bool? = nil
     public var leftTouchedAllProjects: Bool? = nil
-    /// All projects' sidebar on restore: as they left it if they touched it, closed if they never did.
-    public var leftAllProjectsOnRestore: (collapsed: Bool, touched: Bool) {
-        let touched = leftTouchedAllProjects ?? leftCollapsedAllProjects
-        return (touched ? leftCollapsedAllProjects : true, touched)
-    }
     /// The right pane hidden (DL-129); absent in files from before it.
     public var rightCollapsedAllProjects: Bool? = nil
     public var rightCollapsedProject: Bool? = nil
@@ -71,9 +65,7 @@ extension AppModel {
     public func currentRestoreState() -> RestoreState {
         var s = RestoreState()
         s.root = liveRoot?.path
-        s.leftCollapsedAllProjects = leftCollapsedAllProjects
         s.leftCollapsedProject = leftCollapsedProject
-        s.leftTouchedAllProjects = leftTouchedAllProjects
         s.rightCollapsedAllProjects = rightCollapsedAllProjects
         s.rightCollapsedProject = rightCollapsedProject
         s.homeTab = homeTab
@@ -159,7 +151,6 @@ extension AppModel {
             }
         }
         if let h = s.homeTab, let home = fixture.home?.name, fixture.sessions(inProject: home).contains(where: { $0.tabKey == h }) { homeTab = h }
-        (leftCollapsedAllProjects, leftTouchedAllProjects) = s.leftAllProjectsOnRestore
         leftCollapsedProject = s.leftCollapsedProject
         rightCollapsedAllProjects = s.rightCollapsedAllProjects ?? false
         rightCollapsedProject = s.rightCollapsedProject ?? false

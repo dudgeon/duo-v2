@@ -18,9 +18,9 @@ import Foundation
     check(DuoAction.resolve(["session", "new"]) != nil && DuoAction.resolve(["shell", "new"]) != nil, "both verbs exist (DL-71)")
     check(ActionID.sessionNew.action.ui.contains("New session pill, robot half") && ActionID.shellNew.action.ui.contains("New session pill, shell half"), "Actions.swift names both halves")
 
-    // The chevron and its menu are gone; the pill ends the strip, or starts Home's empty one.
+    // The chevron and its menu are gone; the pill ends the strip (Home's page is a project's, DL-336).
     check(!strip.contains("PopUp.show") && !strip.contains("Chevron(direction: .down, color: dim)"), "the ⌄ menu is gone from the console strip")
-    check(strip.contains("plus: { if isHome && tabs.isEmpty { newSessionPill } }") && strip.contains("edge: { if !(isHome && tabs.isEmpty) { newSessionPill } }"), "the pill ends the strip, and starts Home's empty one")
+    check(strip.contains("edge: { newSessionPill }") && !strip.contains("isHome"), "the pill ends the strip, and the strip has no Home branch (DL-336)")
 
     // The toggle moved onto the tab: no longer the strip's edge, shown only on the selected Claude tab with a chat.
     check(!strip.contains("ChatToggle(key: key, light: light).padding"), "the toggle is no longer at the strip's edge")

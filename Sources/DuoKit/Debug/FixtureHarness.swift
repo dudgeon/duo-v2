@@ -257,8 +257,6 @@ public enum FixtureHarness {
         case "window-run":    // window-run:<n>:<action>: any harness action on window n's model (new, type:…, enter, …)
             let sub = parts.count > 1 ? parts[1].split(separator: ":", maxSplits: 1).map(String.init) : []
             if sub.count == 2, let m = model.core.model(named: sub[0]) { perform(sub[1], on: m) }
-        case "window-home":   // window-home:<n>: Show Here in window n (Home's pane, Q-431)
-            if parts.count > 1, let m = model.core.model(named: parts[1]) { model.core.showHome(in: m) }
         case "window-popover": // window-popover:<n>: the swatch's popover open in window n
             if parts.count > 1, let m = model.core.model(named: parts[1]) { m.colourPopoverOpen = true }
         case "voice-log":     // voice-log: the dictation's state and target, and the composer's text, to stderr

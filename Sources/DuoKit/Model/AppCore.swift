@@ -80,8 +80,6 @@ public final class AppCore {
     @ObservationIgnored var opened: [AppModel] = []
     /// Windows the user closed while they were the last (they only hid), by model (Q-460).
     @ObservationIgnored var hiddenWindows: Set<ObjectIdentifier> = []
-    /// Home's window (Q-431), by number; nil is the primary.
-    public internal(set) var homeOwnerNumber: Int?
     var colourNewWindowsSetting = DuoState.load().colourNewWindows
     /// Classic is on (DL-252): window colours are off (DL-312). Kept in step with `DuoScheme.classicActive`.
     public internal(set) var classicOn = DuoScheme.classicActive

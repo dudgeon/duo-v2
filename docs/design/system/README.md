@@ -24,8 +24,8 @@ Duo is SwiftUI, not a web app. There's no component library to mount, and `windo
 
 - **Two altitudes, one window.** *All projects* shows everything in flight. *Inside a project* is a three-pane workspace. The user zooms between them (⌘↑ out, a click or Return in).
 - **The dark pane is whoever you're talking to.**
-  - At All projects it's Home's terminal, on the left.
-  - Inside a project it's the session console, in the middle.
+  - At All projects there is no dark pane now: Home's column is gone (DL-336).
+  - Inside a project it's the session console, in the middle (Home's page is a project's).
 
   Everything else is light chrome on `pane` and `ground`.
 - **The terminal is Claude Code's own TUI, untouched.** Duo draws nothing inside it. Every Duo affordance lives in the chrome around it.

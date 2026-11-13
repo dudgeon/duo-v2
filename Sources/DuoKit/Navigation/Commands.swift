@@ -221,7 +221,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .allProjects: !model.altitude.isAllProjects
         case .togglePeek: !model.altitude.isAllProjects && !model.needsYouElsewhere.isEmpty
         case .jumpToPeekSelection: model.peekOpen
-        case .goHome, .toggleSidebar, .closeWindow: true
+        case .toggleSidebar: !model.altitude.isAllProjects   // All projects has no sidebar (DL-336)
+        case .goHome, .closeWindow: true
         case .closeSession: model.keyboardInRightPane ? model.closableRightTab != nil : model.visibleTerminal != nil
         case .previewInSplitView: model.canTogglePreviewInSplitView
         case .previousSplitSide, .nextSplitSide: model.showingSplit != nil
