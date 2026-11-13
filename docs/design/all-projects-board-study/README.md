@@ -1,6 +1,6 @@
 # Duo: organising All projects' Board — design study
 
-Status: **study, waiting on Geoff** (Q-539 to Q-547). Nothing is built.
+Status: **study, waiting on Geoff** (Q-539 to Q-545); the List grouped by project is decided (DL-341). Nothing is built.
 
 Geoff, 2026-11-13, from a photo of his own Board (not reproduced; sample data here): space goes unused (a tall stack under Home, white space to the right); many users don't use a Home folder as their main way of organising; the one New session control is in a random place and doesn't say which project it starts in. He asked for directions that rely less on Home, a subtle but visible New session button on every project tile, and a broad look at other ways to organise the view.
 
@@ -33,10 +33,13 @@ Each with the study page https://claude.ai/artifact/KssyGmv9iLu75RAtsAnkHV and t
 6. **Q-544 · Folders with no project file, Outside Home, Archived?** Boards B1, T. **In the same sections, marked, with Make a Project; no Outside Home part (recommended)** · keep today's Outside Home part.
 7. **Q-545 · How many across?** Boards A, B2. **As many as fit at 220 (recommended)** · three at most.
 
-8. **Q-546 · List grouped by project: where is each project's New session?** Boards L1, L2. **At the right end of the project's header (recommended)** · a last row in each project.
-9. **Q-547 · Its order.** Board L1. **Projects by newest activity, sessions newest first, five then "n more", quiet projects folded, the dashed row kept (recommended)** · projects by name · nothing folded.
+## Decided: the List grouped by project (DL-341)
 
-The List grouped by project (boards L1, L2) is Geoff's second ask, 2026-11-13: "in the all projects >> list view, add an option to group by project and when list is grouped by projects, there should be a new session button per project". It's independent of Q-539: it can be built whichever direction the Board takes.
+Geoff's second ask, 2026-11-13: "in the all projects >> list view, add an option to group by project and when list is grouped by projects, there should be a new session button per project". Boards L1, L2. Answered in chat the same day:
+- **Q-546:** the header's right end, a **+ only**; "New session" appears on hover ("button could be more subtle; + button or other new session icon, and words 'new session' on mouseover").
+- **Q-547:** as recommended: projects by newest activity, sessions newest first, five then "n more", quiet projects folded, DL-262's dashed row kept.
+
+It's independent of Q-539 and can be built now. Next steps: load L1 and L2 onto the canvas, export them to `docs/design/list-by-project-handoff/screens/`, and write the build brief (`AllProjects/SessionList.swift` grouping, `SessionListView.swift` header rows, `duo2 view list group`, and a Parity entry).
 
 After the answers: load and finish the chosen boards on the canvas, export them to `docs/design/all-projects-board-handoff/screens/`, and write the build brief. Changes DL-83, DL-104 and DL-111 if B or C is chosen.
 
