@@ -3145,7 +3145,7 @@ func repoFixture() throws -> Fixture {
 }
 
 do { try MainActor.assumeIsolated { try run(); if ProcessInfo.processInfo.environment["DUO_CHECKS"] == nil { try remoteControlChecks(); try projectInterviewChecks(); try parkChecks(); try directorChecks(); try directorDutyChecks(); try installerLockChecks(); try directorInstallChecks(); try launchShellChecks(); try launchHangChecks(); try terminalKeyChecks(); try terminalSlotChecks(); try returnChordChecks(); try promptKeyChecks(); try voiceChecks(); try ambiguousNameChecks(); try revealTreeChecks(); try controlPlaneChecks(); try isolationChecks(); try chatChecks() } } } catch { print("✘ setup: \(error)"); failures += 1 }
-print("\(passes) passed, \(failures) failed")
+print("\(passes) passed, \(failures) failed" + (FSEventsCanary.skipped > 0 ? ", \(FSEventsCanary.skipped) skipped (FSEvents not delivering, F-670)" : ""))
 exit(Int32(failures))
 
 

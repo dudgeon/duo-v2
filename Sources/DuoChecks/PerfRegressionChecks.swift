@@ -172,8 +172,10 @@ import DuoSearch
     try "x".write(to: other.appending(path: "noise.txt"), atomically: true, encoding: .utf8)
     RunLoop.main.run(until: Date().addingTimeInterval(1.2))
     check(seen.isEmpty, "a change outside the watched folders doesn't count (Duo's own logs and index)")
+    if FSEventsCanary.available("the folder watch seeing a change inside a watched folder") {
     try "x".write(to: watched.appending(path: "beacon.json"), atomically: true, encoding: .utf8)
     let until = Date().addingTimeInterval(3)
     while !seen.contains(where: { $0.contains("/watched/") }), Date() < until { RunLoop.main.run(until: Date().addingTimeInterval(0.05)) }
     check(seen.contains { $0.contains("/watched/") }, "a change inside one does, with its path (\(seen.prefix(2)))")
+    }
 }
