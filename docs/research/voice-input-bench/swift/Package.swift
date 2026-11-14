@@ -5,9 +5,9 @@ let package = Package(
     name: "asrbench",
     platforms: [.macOS(.v26)],
     dependencies: [
-        // Newest FluidAudio main at the time of writing (has Unified/Nemotron/EOU streaming and CustomVocabulary).
+        // FluidAudio v0.18.3 (2026-11-07).
         .package(url: "https://github.com/FluidInference/FluidAudio.git",
-                 revision: "e560c6445ffdc42e60c7b282d162aae271f18e2a", traits: []),
+                 exact: "0.18.3", traits: []),
         .package(url: "https://github.com/argmaxinc/WhisperKit.git", exact: "1.1.1"),
     ],
     targets: [

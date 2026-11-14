@@ -4,11 +4,43 @@
 usage: score.py --manifest M.jsonl [--set NAME] [--summary-dir DIR] [--models-dir DIR]
                 RESULTS.jsonl [name=RESULTS2.jsonl ...]
 Each results file is one engine+mode run; the engine name is the file stem unless
-given as name=path. Reads <results>.time (from run.sh) for peak RSS if present.
+given as name=path. Reads <results>.time (from run.sh) for peak RSS and peak memory footprint if present.
+Also reports a clip-bootstrap 95 % CI (2000 resamples, seed 1) and plain/technical WER* on the synthetic set.
 Only summaries are written (never per-clip detail), so it is safe on the takes set.
 Model size on disk: du of <models-dir>/<name>, dropping trailing '.tag' parts until a folder exists.
 """
-import argparse, json, os, re, statistics, subprocess
+import argparse, json, os, random, re, statistics, subprocess
+
+BENCH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Plain vs technical utterances (synthetic set): technical = has a distinct written form, except u17 ("Shell")
+# and u32 ("composer"), whose terms are ordinary words. This reproduces the split behind the October table
+# (17 plain / 23 technical utterances); it was not recorded in code then, so it was recovered by search.
+PLAIN_EXTRA = {"u17", "u32"}
+
+
+def technical_ids():
+    p = os.path.join(BENCH, "utterances.jsonl")
+    if not os.path.exists(p):
+        return set()
+    return {u["id"] for u in map(json.loads, open(p)) if "written" in u and u["id"] not in PLAIN_EXTRA}
+
+
+def bootstrap_ci(pairs, reps=2000, seed=1):
+    """95 % CI of sum(edits)/sum(words) resampling clips with replacement. pairs = [(edits, words)]."""
+    if not pairs:
+        return None
+    rnd = random.Random(seed)
+    n = len(pairs)
+    vals = []
+    for _ in range(reps):
+        e = w = 0
+        for _ in range(n):
+            a, b = pairs[rnd.randrange(n)]
+            e += a
+            w += b
+        vals.append(e / w if w else 0.0)
+    vals.sort()
+    return [vals[int(0.025 * reps)], vals[int(0.975 * reps) - 1]]
 
 KEEP = set(".-/_@")
 
@@ -73,6 +105,9 @@ def parse_time(path):
     m = re.search(r"(\d+)\s+maximum resident set size", txt)
     if m:
         info["peak_rss_mb"] = round(int(m.group(1)) / 1048576, 1)
+    m = re.search(r"(\d+)\s+peak memory footprint", txt)
+    if m:
+        info["peak_footprint_mb"] = round(int(m.group(1)) / 1048576, 1)
     m = re.search(r"([\d.]+)\s+real", txt)
     if m:
         info["wall_s"] = float(m.group(1))
@@ -96,6 +131,9 @@ def score(manifest, results, path):
     proc = aud = 0.0
     load_ms = None
     n = 0
+    tech = technical_ids()
+    pairs, pairs_sp = [], []
+    grp = {"plain": [0, 0], "technical": [0, 0]}
     for r in results:
         if r.get("load_ms") is not None and load_ms is None:
             load_ms = r["load_ms"]
@@ -112,6 +150,11 @@ def score(manifest, results, path):
         # Best-form: per clip, the fewer edits against either the spoken or the written form, so a
         # model is penalised neither for writing "Package.swift" nor for "package dot swift".
         bed += min(e_sp, e_wr)
+        pairs.append((min(e_sp, e_wr), len(ref)))
+        pairs_sp.append((e_sp, len(ref)))
+        g = grp["technical" if m["id"].split("_")[0] in tech else "plain"]
+        g[0] += min(e_sp, e_wr)
+        g[1] += len(ref)
         ch, sh = compact(r.get("hyp", "")), strict(r.get("hyp", ""))
         for t in m.get("terms") or []:
             tn += 1
@@ -128,6 +171,10 @@ def score(manifest, results, path):
         "wer": ed / rw if rw else None,
         "written_wer": wed / wrw if wrw else None,
         "best_wer": bed / rw if rw else None,
+        "best_wer_ci95": bootstrap_ci(pairs),
+        "wer_ci95": bootstrap_ci(pairs_sp),
+        "wer_plain": grp["plain"][0] / grp["plain"][1] if grp["plain"][1] and tech else None,
+        "wer_technical": grp["technical"][0] / grp["technical"][1] if grp["technical"][1] and tech else None,
         "ref_words": rw,
         "n_terms": tn,
         "term_hit_lenient": th_l / tn if tn else None,
@@ -179,7 +226,9 @@ def main():
     def fmt(v, k):
         if v is None:
             return "-"
-        if k in ("wer", "best_wer", "written_wer", "term_hit_lenient", "term_hit_strict"):
+        if k in ("best_wer_ci95", "wer_ci95"):
+            return f"{v[0]*100:.1f}-{v[1]*100:.1f}"
+        if k in ("wer", "best_wer", "written_wer", "term_hit_lenient", "term_hit_strict", "wer_plain", "wer_technical"):
             return f"{v*100:.1f}%"
         if k == "rtf":
             return f"{v:.3f}"
@@ -187,10 +236,11 @@ def main():
             return f"{v:.0f}" if abs(v) >= 100 else f"{v:.1f}"
         return str(v)
 
-    cols = [("n_clips", "n"), ("best_wer", "WER*"), ("wer", "WER"), ("written_wer", "wWER"), ("term_hit_lenient", "term len"),
+    cols = [("n_clips", "n"), ("best_wer", "WER*"), ("best_wer_ci95", "95% CI"), ("wer_plain", "plain"),
+            ("wer_technical", "tech"), ("wer", "WER"), ("written_wer", "wWER"), ("term_hit_lenient", "term len"),
             ("term_hit_strict", "term strict"), ("final_ms_median", "final med ms"), ("final_ms_p90", "final p90 ms"),
             ("first_partial_ms_median", "1st partial ms"), ("rtf", "RTF"), ("load_ms", "load ms"),
-            ("peak_rss_mb", "RSS MB"), ("model_size_mb", "disk MB")]
+            ("peak_rss_mb", "RSS MB"), ("peak_footprint_mb", "footprint MB"), ("model_size_mb", "disk MB")]
     print(f"Set: {setname}\n")
     print("| engine | " + " | ".join(c[1] for c in cols) + " |")
     print("|" + "---|" * (len(cols) + 1))

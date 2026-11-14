@@ -1,0 +1,75 @@
+{
+  "note": "first_load_s = load_ms of a 1-clip run right after --download-only (download excluded). Sub-second values (ultra, bark) mean the Core ML cache was already warm for those weights, not a cold compile. Engines without a firstload entry were already compiled in October (and again unmeasured).",
+  "engines": {
+    "fluid-bark-3.batch": {
+      "first_load_s": 0.2,
+      "warm_load_ms_pass2": 175.233167
+    },
+    "fluid-nemotron-unified-stream.stream": {
+      "first_load_s": 37.6,
+      "warm_load_ms_pass2": 634.031917
+    },
+    "fluid-nemotron-unified.batch": {
+      "first_load_s": 191.8,
+      "warm_load_ms_pass2": 381.545917
+    },
+    "fluid-parakeet-ultra.batch": {
+      "first_load_s": 0.4,
+      "warm_load_ms_pass2": 369.587125
+    },
+    "fluid-phonon-2.batch": {
+      "first_load_s": 245.0,
+      "warm_load_ms_pass2": 742.080792
+    },
+    "fluid-speech-pro.batch": {
+      "first_load_s": 97.1,
+      "warm_load_ms_pass2": 374.6805
+    },
+    "whisperkit-base-en.batch": {
+      "first_load_s": 40.9,
+      "warm_load_ms_pass2": 1109.164541
+    },
+    "whisperkit-distil-594.batch": {
+      "first_load_s": 79.4,
+      "warm_load_ms_pass2": 2321.646291
+    },
+    "whisperkit-small-en-217.batch": {
+      "first_load_s": 60.2,
+      "warm_load_ms_pass2": 1900.938708
+    },
+    "whisperkit-turbo-632.batch": {
+      "first_load_s": 716.0,
+      "warm_load_ms_pass2": 3998.1065
+    },
+    "apple-speechtranscriber-progressive.stream": {
+      "warm_load_ms_pass2": 69.051292
+    },
+    "apple-speechtranscriber.batch": {
+      "warm_load_ms_pass2": 100.24025
+    },
+    "apple-speechtranscriber.stream": {
+      "warm_load_ms_pass2": 79.141542
+    },
+    "fluid-nemotron-stream.stream": {
+      "warm_load_ms_pass2": 1340.460125
+    },
+    "fluid-parakeet-redux.batch": {
+      "warm_load_ms_pass2": 773.20175
+    },
+    "fluid-parakeet-stream-7-1.stream": {
+      "warm_load_ms_pass2": 461.848792
+    },
+    "fluid-parakeet-unified.batch": {
+      "warm_load_ms_pass2": 518.175625
+    },
+    "fluid-parakeet-v2.batch": {
+      "warm_load_ms_pass2": 492.75875
+    },
+    "fluid-parakeet-v3.batch": {
+      "warm_load_ms_pass2": 392.222417
+    },
+    "whisperkit-turbo.batch": {
+      "warm_load_ms_pass2": 3494.374834
+    }
+  }
+}

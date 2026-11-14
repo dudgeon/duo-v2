@@ -13,7 +13,7 @@ Command Line Tools only (Swift 6.4, macOS 27 SDK). The package is `swift-tools-v
 
 Dependencies:
 
-- FluidAudio, revision `e560c6445ffdc42e60c7b282d162aae271f18e2a` (newest `main` on 2026-10-12), `traits: []`. The mini-meeting-minutes pin (`20d4f0bd...`) was NOT used because the lead asked for Unified, Nemotron and CustomVocabulary, which are on current main; `AsrModelVersion.redux` and `AsrModels.loadLocal(from:version:encoderComputeUnits:)` are still there, so Redux loads exactly as in `ModelLoader.swift`.
+- FluidAudio `0.18.3` (tag `v0.18.3`, commit `c8b41f98eae668794dd0083bbe028fe7e6585051`, 2026-11-07), `traits: []`. It replaced the October pin `e560c6445ffdc42e60c7b282d162aae271f18e2a` with no source changes needed in the existing engines; `AsrModelVersion.redux` and `AsrModels.loadLocal(from:version:encoderComputeUnits:)` are still there, so Redux loads exactly as in `ModelLoader.swift`. The October WER numbers for v3, v2, redux, unified and Apple reproduce to the digit on the new pin.
 - WhisperKit `1.1.1` (latest tag).
 
 ## Run
@@ -44,8 +44,23 @@ Batch timing: `proc_ms` = `final_ms` = wall time for the whole clip from audio i
 | `fluid-parakeet-stream-7-1` | streaming encoder 70_7_1 (chunk 560 ms + 80 ms right, 0.64 s) | stream | not supported |
 | `fluid-parakeet-stream-2-2` | streaming encoder 70_2_2 (chunk 160 ms + 160 ms right, 0.32 s) | stream | not supported |
 | `fluid-nemotron-stream` | `FluidInference/nemotron-speech-streaming-en-0.6b-coreml`, 560 ms | stream (batch too) | not wired (`setCustomVocabulary` exists, takes CustomVocabularyTerm) |
+| `fluid-parakeet-ultra` | `FluidInference/parakeet-ultra-coreml` (`AsrModelVersion.ultra`, int8 v3 post-training, 25 languages) | batch | CTC 110M rescoring (our own folder) |
+| `fluid-speech-pro` | `FluidVoice-Labs/fluid-speech-pro-coreml` (Parakeet v3 architecture, int8, 25 languages), files fetched by curl into `models/fluid-speech-pro/`, loaded with `AsrModels.loadLocal(version: .v3)`; its `JointDecision.mlmodelc` is linked as `JointDecisionv3.mlmodelc` | batch | same |
+| `fluid-phonon-2` | `FluidInference/phonon-2-coreml` (`.phonon2`, English, default sparse multifunction encoder) | batch | not run |
+| `fluid-bark-3` | `FluidInference/bark-3.0-coreml/bark-3.0-clean` (`.bark3Clean`, English, drops fillers and repeats) | batch | not run |
+| `fluid-nemotron-unified` | `FluidInference/nemotron-labs-unified-asr-0.6b-coreml/coreml`, offline int8 encoder, language `en` (`UnifiedModelFamily.nemotronMultilingual(.en)`) | batch | not wired |
+| `fluid-nemotron-unified-stream` | same repo, streaming encoder `70_2_5` int8 (chunk 160 ms + right 400 ms, 0.56 s tier) | stream (batch too) | not supported |
+| `apple-speechtranscriber-progressive` | `SpeechTranscriber` with the `.progressiveTranscription` preset (the October stream setup: adds `fastResults`) | batch, stream | as `apple-speechtranscriber` |
 | `whisperkit-turbo` | `argmaxinc/whisperkit-coreml` `openai_whisper-large-v3-v20240930_turbo` | batch | `DecodingOptions.promptTokens` |
 | `whisperkit-small-en` | `openai_whisper-small.en` | batch | same |
+| `whisperkit-turbo-632` | `openai_whisper-large-v3-v20240930_turbo_632MB` | batch | same |
+| `whisperkit-distil-594` | `distil-whisper_distil-large-v3_594MB` | batch | same |
+| `whisperkit-small-en-217` | `openai_whisper-small.en_217MB` | batch | same |
+| `whisperkit-base-en` | `openai_whisper-base.en` | batch | same |
+
+Since November `apple-speechtranscriber` is built the way Duo builds it: `SpeechTranscriber(locale:, transcriptionOptions: [], reportingOptions: [.volatileResults] (stream only), attributeOptions: [])`. The October stream numbers used the `.progressiveTranscription` preset, now `apple-speechtranscriber-progressive`. Batch is unchanged (`.transcription` preset is the same empty options).
+
+`--download-only 1` (with any manifest and out path) fetches an engine's files without loading them, so the next run's `load_ms` is the first load (Core ML compile) without the download. Fetched by hand where FluidAudio has no repo for it: `fluid-speech-pro`. `../runnov.sh <label> <phase> <engines>` drives the November pass.
 
 Models live in `~/Library/Caches/duo-voice-input/models/` (FluidAudio picks its own folder names under the base we give it): `parakeet-tdt-0.6b-v3/`, `parakeet-tdt-0.6b-v2/`, `fluid/{parakeet-unified-en-0.6b, nemotron-streaming/560ms, parakeet-ctc-110m-coreml}/`, `whisperkit/`.
 
