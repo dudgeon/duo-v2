@@ -11,6 +11,7 @@
 # CLAUDE_CONFIG_DIR, so sessions start signed out and spend nothing. BEFORE_EACH="<command>" runs
 # before each of the two runs (to put a workspace's files back). FILM=filmw takes the toolbar too.
 set -euo pipefail
+export DUO_ISOLATED=1   # every duo2 here reaches only the test instance; refuses, never the user's Duo (F-529)
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
 [ $# -ge 4 ] || { sed -n 2,10p "$0"; exit 2; }

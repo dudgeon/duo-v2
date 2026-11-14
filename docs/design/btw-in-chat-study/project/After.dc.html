@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>After it closes, and the composer</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.cap{font-size:12px;line-height:17px;color:#5B636D}
+.cap b{color:#1F2328;font-weight:600}
+.lab{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.mono{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:11px}
+</style>
+</helmet>
+<div style="width: 1640px; height: 1000px; box-sizing: border-box; background: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; color: #1F2328; padding: 40px; display: flex; flex-direction: column; gap: 22px">
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <div style="font-size: 18px; line-height: 24px; font-weight: 600">Q-551 · What stays once it closes · Q-552 · The composer while it’s up [P]</div>
+    <div class="cap" style="font-size: 13px; line-height: 19px; max-width: 1500px">Claude Code writes nothing of a side question to the transcript, so whatever chat keeps, Duo keeps. Claude Code itself keeps this session’s side questions in its panel’s history until the session ends or <span class="mono">x</span> clears it.</div>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-start">
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">Q-551 A (recommended) · a quiet line that reopens it</div>
+      <dc-import name="Chat" chat="{{lineA}}" hint-size="480px,330px"></dc-import>
+      <div class="cap">Where you asked, a quiet line: “Side question: What does ‘idempotent’ mean… · Show”. Show reopens the card on that answer, from Duo’s memory, without asking Claude again. Kept while Duo runs; a restart or reload drops the lines, as Claude Code drops its history.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">Q-551 B · nothing, as Claude Code</div>
+      <dc-import name="Chat" chat="{{lineB}}" hint-size="480px,330px"></dc-import>
+      <div class="cap">The feed carries no trace. Asking <span class="mono">/btw</span> again at the prompt shows Claude Code’s history (board 2, state 4). Simplest, and matches the transcript; you lose sight of an answer you may want again.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">Q-551 C · kept across restarts</div>
+      <dc-import name="Chat" chat="{{lineC}}" hint-size="480px,330px"></dc-import>
+      <div class="cap">As A, but Duo writes each exchange to its support folder by session, so the lines come back after a restart and search can find them (ENH-353). More to keep, and a second record of the session next to Claude’s.</div>
+    </div>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-start">
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">Q-552 A (recommended) · typing closes the card</div>
+      <dc-import name="Chat" chat="{{typeA}}" hint-size="480px,330px"></dc-import>
+      <div class="cap">With the card up, you start typing: chat closes Claude’s panel (Esc, the key you’d press anyway), the composer comes back with your keystrokes in it, and the quiet line stays (Q-551 A). Nothing typed is lost; nothing is sent.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">Q-552 B · Duo closes the panel once answered</div>
+      <dc-import name="Chat" chat="{{typeB}}" hint-size="480px,330px"></dc-import>
+      <div class="cap">The answer lands, chat sends Esc at once and shows the answer as an aside (board 1, B). The composer is never away. Duo presses a key nobody pressed, and a slow reader loses the card under a streaming reply.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">Q-552 C · a draft held by Duo</div>
+      <dc-import name="Chat" chat="{{typeC}}" hint-size="480px,330px"></dc-import>
+      <div class="cap">The card stays up and what you type collects as a draft under it, going into Claude’s prompt when the card closes. Two places to type at once; the hardest to make honest.</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1640,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const q = 'What does “idempotent” mean for a refund?';
+    const feed = [
+      { you: true, meta: 'You · 9:52', text: 'Compare the two refund flows in a table, with a short recommendation.' },
+      { claude: true, meta: 'Claude · 9:52', lines: [ 'Both flows are in docs/refunds/flows.md. The main difference is who confirms the refund.' ] }
+    ];
+    const work = { working: true, text: 'Writing · 41s' };
+    const line = { note: true, text: 'Side question: What does “idempotent” mean…', link: 'Show' };
+    const base = (over) => Object.assign({ w: 480, h: 330, busy: true }, over);
+    return {
+      lineA: base({ items: [ feed[0], feed[1], line, work ] }),
+      lineB: base({ items: [ feed[0], feed[1], work ] }),
+      lineC: base({ items: [ feed[0], feed[1], { note: true, text: 'Side question, yesterday 4:10 PM: What does “idem…', link: 'Show' }, work ] }),
+      typeA: base({ items: [ feed[0], feed[1], line, work ], composer: 'Also check the Android numbers', composerFilled: true }),
+      typeB: base({ items: [ feed[1], { aside: true, meta: 'Side question · 9:53', q, lines: [ 'A refund request that can be sent again safely.' ] }, work ] }),
+      typeC: base({ items: [ feed[1], work ], dock: { q, lines: [ 'A refund request that can be sent again safely.' ], btns: [ { label: 'Copy', key: 'c' }, { label: 'Close', key: 'esc' } ], why: 'Draft: “Also check the Andr…”' } })
+    };
+  }
+}
+</script>
+</body>
+</html>

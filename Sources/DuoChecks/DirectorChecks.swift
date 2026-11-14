@@ -198,6 +198,7 @@ import Foundation
               "resume arguments carry no flag besides --resume and end with -- <message> (F-422)")
         check(VersionOrder.atLeast("2.1.284", "2.1.284") && !VersionOrder.atLeast("2.1.283", "2.1.284"), "2.1.284 is where background resume starts")
         check(Director.workerPrompt(note: "/n.md", director: "director-p").contains("SendMessage(to: \"director-p\")"), "a worker's brief asks it to send its report to the director by name")
+        check(Director.workerPrompt(note: "/n.md", director: "director-p").contains("on the line right before the question and inside the question text"), "a worker's brief makes its questions carry the link to what they're about (F-528)")
     }
 
     print("director: a recorded 2.1.284 beacon and its transcript (the work Mac)")
@@ -683,6 +684,9 @@ import Foundation
     let filing = TaskNotes.parse(note("tasks/file-notes-from-the-pricing-sync.md"), path: "x")
     check(r.ok && filing.status == "in-progress" && filing.sessionIds.isEmpty && note("tasks/file-notes-from-the-pricing-sync.md").contains("itself (organising work)"),
           "--no-worker: organising work the director does itself, with no worker (DL-208)")
+
+    // DL-319: check, start --next, `_` notes and status's red lines (DirectorDutyChecks.swift).
+    try directorCheckVerbChecks(proj: proj, director: "director-dirproj", session: D, other: D2) { verb, args, session, name in run(verb, args, as: session, name: name) }
 
     // The user's own tasks and sessions are never a director's without the user's yes, and Duo asks
     // for it itself (DL-200): the director's word is never the yes.

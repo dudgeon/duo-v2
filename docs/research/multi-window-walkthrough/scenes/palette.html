@@ -1,0 +1,46 @@
+<style>
+#pw { left: 24px; top: 44px; width: 420px; height: 300px; }
+#pw .lp { width: 30%; } #pw .rp { width: 34%; }
+#pw-doc { background: #ffffff; border: 1px solid #c9cdd3; border-radius: 4px; flex: 1; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+#pw-doc .b { height: 5px; }
+[data-state~="sky"] #pw { --wg: #DDE8F6; --wp: #F2F7FC; --ws: #7FA6D9; }
+[data-state~="sage"] #pw { --wg: #DDEEE2; --wp: #F2F8F4; --ws: #7DB38E; }
+[data-state~="lilac"] #pw { --wg: #E8E1F3; --wp: #F7F4FB; --ws: #A88FD0; }
+[data-state~="sand"] #pw { --wg: #F1EBDC; --wp: #FAF7F0; --ws: #C9AE6E; }
+[data-state~="dark"] #pw { --wg: #131518; --wp: #181a1e; --wc: #0c0d10; --wt: #e6e8eb; --wr: #2b2f36; border-color: #2b2f36; }
+[data-state~="dark"][data-state~="sky"] #pw { --wg: #111A27; --wp: #162131; --ws: #5C86C0; }
+[data-state~="dark"][data-state~="sage"] #pw { --wg: #111D17; --wp: #16241D; --ws: #5E9A72; }
+[data-state~="dark"][data-state~="lilac"] #pw { --wg: #191528; --wp: #1F1A31; --ws: #8C73BA; }
+[data-state~="dark"][data-state~="sand"] #pw { --wg: #1D1910; --wp: #241F15; --ws: #A88F55; }
+[data-state~="dark"] #pw .ny { background: #f97316; color: #0c0d10; border-color: #f97316; }
+[data-state~="dark"] #pw .row.sel { background: rgba(230,232,235,.1); }
+#sw { left: 466px; top: 44px; width: 150px; display: flex; flex-direction: column; gap: 8px; }
+#sw button { all: unset; cursor: pointer; display: flex; align-items: center; gap: 10px; height: 34px; padding: 0 8px; border-radius: 7px; border: 1px solid #c9cdd3; font-size: 15px; background: #ffffff; }
+#sw button i { width: 18px; height: 18px; border-radius: 5px; border: 1px solid rgba(31,35,40,.2); }
+#sw .mode { justify-content: center; margin-top: 6px; }
+[data-state~="sky"] #sw-sky, [data-state~="sage"] #sw-sage, [data-state~="lilac"] #sw-lilac, [data-state~="sand"] #sw-sand, [data-state=""] #sw-none, [data-state="dark"] #sw-none { border: 1.5px solid #1f2328; background: #e9ecef; }
+#more { left: 466px; top: 290px; width: 150px; height: 34px; border: 1.5px dashed #8b939c; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #5b636d; }
+#ctr { left: 24px; top: 354px; width: 420px; display: flex; gap: 8px; }
+#ctr .chip { font-size: 13px; height: 28px; }
+#credit { left: 466px; top: 350px; }
+#credit.stamp { font-size: 13px; padding: 4px 10px; }
+</style>
+<div class="win c-none" id="pw" data-f>
+  <div class="tb" id="pw-tb" data-f>refunds <span class="sw"></span><span class="ny" id="pw-chip" data-f>NEEDS YOU · 2</span></div>
+  <div class="bd">
+    <div class="lp" id="pw-lp" data-f><span class="row sel">Refund flow</span><span class="row">Ledger check</span><span class="row">Payout notes</span></div>
+    <div class="cn" id="pw-cn" data-f><span class="b" style="width:80%"></span><span class="b" style="width:55%"></span><span class="b lit" style="width:35%"></span></div>
+    <div class="rp" id="pw-rp" data-f><div id="pw-doc" data-f><span class="b" style="width:60%;background:#1f2328"></span><span class="b" style="width:90%"></span><span class="b" style="width:80%"></span><span class="b" style="width:85%"></span></div></div>
+  </div>
+</div>
+<div id="sw" data-f>
+  <button type="button" id="sw-none" data-tap="none"><i style="background:#ffffff"></i>None</button>
+  <button type="button" id="sw-sky" data-tap="sky"><i style="background:#7FA6D9"></i>Sky</button>
+  <button type="button" id="sw-sage" data-tap="sage"><i style="background:#7DB38E"></i>Sage</button>
+  <button type="button" id="sw-lilac" data-tap="lilac"><i style="background:#A88FD0"></i>Lilac</button>
+  <button type="button" id="sw-sand" data-tap="sand"><i style="background:#C9AE6E"></i>Sand</button>
+  <button type="button" class="mode" id="sw-mode" data-tap="mode">Light / Dark</button>
+</div>
+<div id="more" data-in="scale" data-f>+ more?</div>
+<div id="ctr" data-in="up"><span class="chip">text 12.4:1 or better</span><span class="chip">text2 5.59:1 light · 6.18:1 dark</span></div>
+<div class="stamp" id="credit" data-in="up">Your idea · ENH-319</div>

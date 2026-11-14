@@ -53,9 +53,20 @@ public enum SessionArchive {
         chmod(manifestURL.path, 0o600)
     }
 
+    /// The manifest, decoded again only when the file's size or date changed (F-598: it was decoded on every refresh).
     public static func manifest() -> Manifest {
-        (try? Data(contentsOf: manifestURL)).flatMap { try? JSONDecoder().decode(Manifest.self, from: $0) } ?? Manifest()
+        let a = try? FileManager.default.attributesOfItem(atPath: manifestURL.path)
+        let key = "\(manifestURL.path)|\((a?[.size] as? NSNumber)?.intValue ?? -1)|\((a?[.modificationDate] as? Date)?.timeIntervalSince1970 ?? 0)"
+        manifestCache.lock.lock()
+        if manifestCache.key == key, let m = manifestCache.value { manifestCache.lock.unlock(); return m }
+        manifestCache.lock.unlock()
+        Work.count(.manifestDecode)
+        let m = (try? Data(contentsOf: manifestURL)).flatMap { try? JSONDecoder().decode(Manifest.self, from: $0) } ?? Manifest()
+        manifestCache.lock.lock(); manifestCache.key = key; manifestCache.value = m; manifestCache.lock.unlock()
+        return m
     }
+    private final class ManifestCache: @unchecked Sendable { let lock = NSLock(); var key = ""; var value: Manifest? }
+    private static let manifestCache = ManifestCache()
 
     /// Copies each listed session's transcript if it's new or changed. Returns how many were copied.
     @discardableResult
@@ -65,8 +76,10 @@ public enum SessionArchive {
         var m = manifest()
         var copied = 0
         for (id, url) in sessions {
-            guard let v = try? url.resourceValues(forKeys: [.fileSizeKey, .contentModificationDateKey]),
-                  let size = v.fileSize, let mod = v.contentModificationDate?.timeIntervalSince1970 else { continue }
+            // The refresh's listing has the size and date (F-599); a stat only for a file it didn't list.
+            let stamp = ClaudeStorage.stampOrStat(url)
+            guard stamp.mtime != .distantPast else { continue }
+            let size = Int(stamp.size), mod = stamp.mtime.timeIntervalSince1970
             // Sidecars (tool outputs, subagent transcripts) beside the transcript (DL-48).
             let sidecar = url.deletingPathExtension()
             let print = fingerprint(sidecar)
@@ -116,8 +129,11 @@ public enum SessionArchive {
 
     /// Archived sessions whose transcript Claude no longer has: search indexes these copies (DL-49).
     public static func purged() -> [(id: String, copy: URL, cwd: String)] {
-        manifest().sessions.values.compactMap { e in
-            guard ClaudeStorage.transcript(sessionId: e.sessionId, cwd: e.cwd) == nil,
+        // Claude still has it if the refresh's listing does (F-598); asked by path only before any listing.
+        let listing = ClaudeStorage.hasListing
+        return manifest().sessions.values.compactMap { e in
+            let present = listing ? ClaudeStorage.listed(sessionId: e.sessionId) != nil : ClaudeStorage.transcript(sessionId: e.sessionId, cwd: e.cwd) != nil
+            guard !present,
                   FileManager.default.fileExists(atPath: copyURL(e.sessionId).path) else { return nil }
             return (e.sessionId, copyURL(e.sessionId), e.cwd)
         }
@@ -142,14 +158,20 @@ public enum SessionArchive {
     /// period gets its modification time set to *half the period ago*, not now, so it stays out
     /// of the sweep without jumping to the top of recency lists. Its sidecar folder (tool outputs,
     /// subagents) is treated the same. Returns how many items were refreshed.
+    ///
+    /// Only items older than half the period plus `hysteresis` are moved (F-597). Moving everything older than half the
+    /// period moved the same files again a minute later (the boundary had moved on a minute), so every listed session
+    /// over 15 days old was rewritten every minute, copied to the archive again and indexed again: a 6,150-session
+    /// Home spent its whole idle time in search passes. Now each one moves about once every two days.
     @discardableResult
     public static func keepAlive(_ transcripts: [URL], periodDays: Int, now: Date = Date()) -> Int {
         let half = Double(periodDays) * 86_400 / 2
         let stamp = now.addingTimeInterval(-half)
+        let due = stamp.addingTimeInterval(-min(2 * 86_400, half / 4))
         let fm = FileManager.default
         var refreshed = 0
         func refresh(_ url: URL) {
-            guard let mod = (try? fm.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date, mod < stamp else { return }
+            guard let mod = (try? fm.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date, mod < due else { return }
             if (try? fm.setAttributes([.modificationDate: stamp], ofItemAtPath: url.path)) != nil { refreshed += 1 }
         }
         for t in transcripts {

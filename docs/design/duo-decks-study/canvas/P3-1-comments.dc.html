@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Comments on slides</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.light{--ground:#F3F4F6;--pane:#FFFFFF;--text:#1F2328;--text2:#5B636D;--rule:#C9CDD3;--controlEdge:#8B939C;--selected:#E9ECEF;--console:#15171B;--consoleText:#E6E8EB;--consoleText2:#9AA1AB;--consoleRule:#2B2F36;--paneFocus:#1F2328;--needsYou:#C2410C}
+.win{position:relative;width:1440px;height:900px;display:flex;flex-direction:column;background:var(--ground);color:var(--text);font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.tb{height:40px;flex:none;background:var(--ground);border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:12px;padding:0 16px;color:var(--text2)}
+.dots{display:flex;gap:8px}.dots i{width:12px;height:12px;border-radius:6px;background:var(--rule);display:block}
+.cols{flex:1;display:flex;min-height:0}
+.side{background:var(--pane);border-right:1px solid var(--rule);padding:16px;box-sizing:border-box;display:flex;flex-direction:column;gap:6px;flex:none}
+.con{background:var(--console);color:var(--consoleText);display:flex;flex-direction:column;border-right:1px solid var(--rule);flex:none}
+.cstrip{height:36px;border-bottom:1px solid var(--consoleRule);display:flex;align-items:center;gap:18px;padding:0 14px;font:12px/19px 'SF Mono',Menlo,monospace;color:var(--consoleText2)}
+.term{padding:14px;font:12px/19px 'SF Mono',Menlo,monospace;color:var(--consoleText2);display:flex;flex-direction:column;gap:2px}
+.right{background:var(--pane);display:flex;flex-direction:column;min-width:0;flex:1}
+.strip{position:relative;height:36px;flex:none;border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:24px;padding:0 16px;color:var(--text2);white-space:nowrap}
+.rulef{position:absolute;top:0;height:2px;background:var(--paneFocus)}
+.split{display:flex;align-items:center;gap:6px;color:var(--text2)}
+.split b{color:var(--text);font-weight:600}
+.smark{display:inline-block;width:11px;height:9px;border:1.2px solid var(--text2);border-radius:2px;position:relative;box-sizing:border-box}
+.smark:after{content:"";position:absolute;left:3.5px;top:-1px;bottom:-1px;width:1.2px;background:var(--text2)}
+.sides{flex:1;display:flex;min-height:0}
+.dv{width:1px;background:var(--rule);flex:none}
+.ed{position:relative;background:var(--pane);box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column}
+.fbar{height:24px;flex:none;display:flex;align-items:center;gap:4px;padding:0 10px;color:var(--text2);font:12px/16px -apple-system,system-ui,sans-serif;border-bottom:1px solid var(--rule)}
+.fbar span{min-width:20px;text-align:center}
+.doc{padding:16px 22px;display:flex;flex-direction:column;gap:2px;font:14px/22px -apple-system,system-ui,sans-serif}
+.mk{color:var(--text2);font:12px/22px 'SF Mono',Menlo,monospace}
+.h1{font:600 20px/28px -apple-system,system-ui,sans-serif}
+.h2{font:600 15px/24px -apple-system,system-ui,sans-serif}
+.cur{position:absolute;left:8px;width:2px;background:var(--controlEdge);border-radius:1px}
+.deckbar{height:44px;flex:none;border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:6px;padding:0 14px;box-sizing:border-box}
+.btn{height:26px;box-sizing:border-box;padding:4px 10px;border:1px solid var(--controlEdge);border-radius:6px;background:var(--pane);font:12px/16px -apple-system,system-ui,sans-serif;color:var(--text);white-space:nowrap}
+.slides{flex:1;background:var(--ground);padding:14px 16px;display:flex;flex-direction:column;gap:6px;overflow:hidden}
+.num{font:11px/16px -apple-system,system-ui,sans-serif;color:var(--text2)}
+.slide{aspect-ratio:16/9;background:#FFFFFF;border:1px solid var(--rule);box-sizing:border-box;padding:14px 16px;display:flex;flex-direction:column;gap:4px;color:#1F2328;flex:none}
+.badge{position:absolute;width:26px;height:26px;border-radius:13px;background:#1F2328;color:#FFFFFF;font:600 13px/26px -apple-system,system-ui,sans-serif;text-align:center}
+.notes{display:flex;flex-direction:column;gap:10px}
+.n{display:grid;grid-template-columns:26px minmax(0,1fr);gap:10px;align-items:start}
+.n i{width:22px;height:22px;border-radius:11px;background:#1F2328;color:#FFFFFF;font:600 12px/22px -apple-system,system-ui,sans-serif;text-align:center;font-style:normal;display:block}
+.t2{color:#5B636D}
+.h{font:600 15px/20px -apple-system,system-ui,sans-serif}
+
+.pin{position:absolute;display:flex;align-items:center;gap:2px;height:18px;padding:0 5px;border:1px solid var(--controlEdge);border-radius:9px;background:var(--pane);font:600 10px/16px -apple-system,system-ui,sans-serif;color:var(--text);box-sizing:border-box}
+.dash{position:absolute;border:1px dashed var(--text);box-sizing:border-box}
+.solid{position:absolute;border:1.5px solid var(--text);box-sizing:border-box}
+.tag{position:absolute;background:var(--text);color:var(--pane);font:11px/18px -apple-system,system-ui,sans-serif;padding:0 6px;border-radius:3px;white-space:nowrap}
+.pop{position:absolute;background:var(--pane);border:1px solid var(--rule);border-radius:10px;box-shadow:0 8px 24px rgba(31,35,40,.16);padding:6px;box-sizing:border-box;font:13px/20px -apple-system,system-ui,sans-serif}
+.mi{height:26px;display:flex;align-items:center;gap:8px;padding:0 10px;border-radius:5px;white-space:nowrap}
+.sel{background:var(--selected)}
+.chip{display:flex;align-items:center;gap:6px;height:22px;margin:4px 0 2px;padding:0 8px;border-top:1px solid var(--rule);font:11px/20px -apple-system,system-ui,sans-serif;color:var(--text2)}
+.chip b{color:var(--text);font-weight:600}
+.card{background:var(--pane);border:1px solid var(--rule);border-radius:6px;padding:8px 10px;font:12px/17px -apple-system,system-ui,sans-serif;display:flex;flex-direction:column;gap:3px}
+.act{border:1.5px solid var(--text)}
+.pbar{background:var(--ground);border-top:1px solid var(--rule);padding:8px 14px;display:flex;flex-wrap:wrap;align-items:center;gap:6px;font:12px/18px -apple-system,system-ui,sans-serif}
+.def{background:var(--text);color:var(--pane);border-color:var(--text)}
+.strp{background:var(--pane);border:1px solid var(--rule);border-radius:6px;padding:8px 10px;display:flex;flex-direction:column;gap:6px;font:12px/17px -apple-system,system-ui,sans-serif}
+.thumb img{width:100%;display:block;border:1px solid var(--rule)}
+.thumb{display:flex;flex-direction:column;gap:2px;font:11px/14px -apple-system,system-ui,sans-serif}
+.sheet{position:absolute;background:var(--pane);border:1px solid var(--rule);border-radius:10px;box-shadow:0 8px 24px rgba(31,35,40,.16);padding:20px;box-sizing:border-box;display:flex;flex-direction:column;gap:12px;font:13px/20px -apple-system,system-ui,sans-serif}
+.row{display:flex;align-items:center;gap:10px}
+.lab{width:110px;color:var(--text2);text-align:right;flex:none}
+.field{flex:1;height:26px;border:1px solid var(--rule);border-radius:6px;padding:3px 8px;box-sizing:border-box;background:var(--pane)}
+</style>
+</helmet>
+<div style="width:1900px;height:1000px;box-sizing:border-box;padding:28px 36px;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;display:flex;gap:28px">
+  <div style="zoom:.78;flex:none"><div class="win light">
+      <div class="tb"><div class="dots"><i></i><i></i><i></i></div><span style="margin-left:60px">All projects › work ›</span><b style="color:var(--text)">orchard-robotics</b><span style="margin-left:auto;border:1px solid var(--rule);border-radius:6px;padding:2px 10px;width:300px;background:var(--pane)">Search all projects ⇧⌘A</span></div>
+      <div class="cols">
+        <div style="width:16px;flex:none;background:var(--pane);border-right:1px solid var(--rule)"></div>
+        <div class="con" style="width:480px">
+          <div class="cstrip"><span style="color:var(--consoleText);font-weight:500">○ Field trial deck</span><span>+</span></div>
+          <div class="term"><span style="color:var(--consoleText)">&gt; …</span></div>
+        </div>
+        <div class="right">
+          <div class="strip"><div class="rulef" style="left:471px;width:471px"></div><span>Project</span><span class="split"><span>field-trial-review.md</span><span class="smark"></span><b>Slides</b></span><span style="margin-left:auto">+</span></div>
+          <div class="sides" style="position:relative"><div class="ed" style="width:470px;flex:none">
+  <div style="display:flex;flex:1;min-height:0">
+    <div class="doc" style="width:262px;flex:none;padding:16px 12px 16px 22px">
+      <div class="chip"><b>Slide 3</b>· kpi ⌄</div>
+      <span class="h1">Unattended rows</span>
+      <span class="h2">value</span>
+      <span><span style="background:#FBE7A1">88%</span></span>
+      <span class="mk" style="font-size:11px;line-height:16px">{&gt;&gt;@sam 2026-11-01 #c3: Rounded from 87.6?&lt;&lt;}</span>
+      <span class="h2">label</span>
+      <span>of rows finished with no one stepping in</span>
+      <span class="h2">context</span>
+      <span>Up from 61% in the spring trial…</span>
+    </div>
+    <div style="flex:1;border-left:1px solid var(--rule);padding:56px 8px 8px;box-sizing:border-box;background:var(--pane)">
+      <div class="card act"><b>sam</b><span class="t2" style="font-size:11px">Today 9:12</span><span>Rounded from 87.6?</span><span class="t2">Reply…</span></div>
+    </div>
+  </div>
+</div>
+<div class="dv"></div>
+<div style="flex:1;display:flex;flex-direction:column;min-width:0;position:relative">
+  <div class="deckbar"><span class="btn">‹</span><span class="btn">›</span><span style="margin-left:4px">3/10</span><span style="margin-left:auto" class="btn">Select Shape</span><span class="btn">Export ⌄</span></div>
+  <div class="slides">
+    <span class="num" style="color:var(--text);font-weight:600">3 · kpi</span>
+    <div style="position:relative"><img src="/_blob/de5093a4e51b746f5758d0e83e034110" alt="slide 3" style="width:100%;display:block;border:1px solid var(--rule)">
+      <span class="pin" style="left:302px;top:36px" title="1 comment on value"><svg width="11" height="10" viewBox="0 0 11 10" aria-hidden="true"><path d="M1.5 1.5h8v5h-4l-2.5 2v-2h-1.5z" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/></svg>1</span>
+      <div class="solid" style="left:140px;top:36px;width:160px;height:66px"></div><span class="tag" style="left:140px;top:16px">value</span>
+    </div>
+    <span class="num">4 · two-column</span>
+    <div style="position:relative"><img src="/_blob/b483f9c8d2a80b1440c6fc4a99b49a66" alt="slide 4" style="width:100%;display:block;border:1px solid var(--rule)"><span class="pin" style="left:405px;top:6px" title="2 comments on the slide"><svg width="11" height="10" viewBox="0 0 11 10" aria-hidden="true"><path d="M1.5 1.5h8v5h-4l-2.5 2v-2h-1.5z" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/></svg>2</span></div>
+  </div>
+  <div class="pbar"><span><b>value</b> on slide 3 · “88%”</span><span style="flex:1"></span><span class="btn def">Add Comment</span><span class="btn">Send to Claude</span><span class="btn">Send To ⌄</span><span class="btn">Pick Another</span><span class="btn">Cancel</span></div>
+</div></div>
+        </div>
+      </div><span class="badge" style="left:1180px;top:150px">1</span><span class="badge" style="left:905px;top:150px">2</span><span class="badge" style="left:1020px;top:860px">3</span><span class="badge" style="left:640px;top:175px">4</span>
+    </div></div>
+  <div class="notes" style="flex:1;min-width:0">
+    <div><span class="h" style="font-size:20px;line-height:28px">P3 · 1 · Comments on slides (Q-395, Q-396)</span><br><span class="t2">For approval. DL-284: comments are Review in Markdown's, in the deck's source. This board decides how slides show them and how you add one from a slide. Every mark [P]; no new colour or token.</span></div>
+    <div class="n"><i>1</i><span><b>A pin where a comment is.</b> A comment on a slot (written on its own line in that slot, DL-284) puts a pin at the slot box's top right: an 18-high capsule on <code>pane</code>, a 1 pt <code>controlEdge</code> edge, a stroke speech mark and the count in <code>text</code> 10/16 semibold. A slide comment puts it at the slide's top right. Hovering a pin outlines its slot as Select Shape does (1 pt dashed <code>text</code>, with the name tag).</span></div><div class="n"><i>2</i><span><b>Click a pin and the thread opens in the source's margin</b> (R11), scrolled to and made active, as DL-237 draws it, and the slides keep the keyboard. Folded to the slides, it opens as DL-237's narrow 280 popover over the slides instead.</span></div><div class="n"><i>3</i><span><b>Add Comment from a slide</b> (R12): Select Shape, pick a slot, and the picked bar (DL-125 C) gains <b>Add Comment</b> first. It opens the margin's composer on that slot's lines without taking the keyboard from the slides. Duo writes the signed comment on its own line at the end of the slot. A slide's blank area picks the whole slide. ⌥⌘M does the same on a picked shape.</span></div><div class="n"><i>4</i><span><b>The source shows the comment as it does in any Markdown file</b>: highlighted text, the card in the margin. The signature line is drawn by Review in Markdown, not by Duo Decks. Closed comments leave no pin (DL-237).</span></div><div style="border-top:1px solid #C9CDD3;padding-top:10px;display:flex;flex-direction:column;gap:6px"><span><b>Rejected:</b> a comment rail beside the slides (it duplicates the margin in a 470 side); a count by the slide number only (it doesn't say which element).</span><span><b>Verbs:</b> <code>duo2 deck comments</code> (threads by slide and slot), <code>duo2 deck comment &lt;slide&gt;[/&lt;slot&gt;] "text"</code>; pins are drawn from the provider's <code>comments(rev)</code> event.</span></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1900,"height":1000}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

@@ -11,6 +11,7 @@
 # signed, and again from the mounted DMG. Signing material lives in ~/.duo-signing (its README.md says
 # what each file is); DUO_SIGNING_DIR overrides it. Takes 10–20 minutes, most of it Apple's notary service.
 set -euo pipefail
+export DUO_ISOLATED=1   # every duo2 here reaches only the test instance; refuses, never the user's Duo (F-529)
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
 
@@ -143,6 +144,10 @@ codesign --verify --deep --strict "$app" || die "the signed app doesn't verify"
 codesign -d --entitlements - --xml "$app" 2>/dev/null | grep -q get-task-allow && die "the app carries get-task-allow"
 echo "signed and verified"
 launch_check "$app" signed
+# Launched the way Finder does, in the conditions a user's Mac can have and this one doesn't (F-580: 0.2.23 bounced in
+# the Dock for good when the user's login shell waited, and every launch here found claude without asking it).
+"$work/src/scripts/check-launch-matrix.sh" "$app" || die "the launch matrix failed (F-580): a launch didn't finish; see above"
+"$lsregister" -u "$app" >/dev/null 2>&1 || true
 
 step "Notarize and staple the app"
 ditto -c -k --keepParent "$app" "$work/Duo.zip"

@@ -1,15 +1,11 @@
 import {createElement, Fragment, type ComponentType} from 'react';
-import {AbsoluteFill, Audio, interpolate, Sequence, useVideoConfig} from 'remotion';
+import {AbsoluteFill, interpolate} from 'remotion';
 import {AppScene, type AppData} from '../App';
 import {smootherstep} from '../../lib/camera';
 import tokens from '../../../style/tokens.json';
 import type {SceneProps} from '../registry';
 import classicIcon from './classic-icon.png';
-import chatClip from '../../../fixture/dictation/chat.wav';
-import terminalClip from '../../../fixture/dictation/terminal.wav';
-
-/** The 0.2.22 film's dictation clips (fixture/make-dictation.py), heard as the mic hears them. */
-const CLIPS: Record<string, string> = {chat: chatClip, terminal: terminalClip};
+import {DictationAudio} from '../../lib/Dictation';
 
 // The 0.2.21 film's app scenes (`rel-app`): the intro's AppScene as it is (the real window on the desk, cursor, camera,
 // outline traces), planned by plan.mjs exactly as an `app` scene. Captions (Q-297) never sit on the picture's subject:
@@ -64,7 +60,6 @@ type Scene = SceneProps['scene'] & {app?: AppData & Extra; transitionIn?: {name:
 
 export const ReleaseApp = ({t, scene}: SceneProps) => {
   const s = scene as Scene;
-  const {fps} = useVideoConfig();
   // The first app scene opens on the title card's last picture, which has no band: it rises there.
   // A shot can drop it again (`band: 'down'`), where the Dock would be under it.
   const down = s.app?.bandDown !== undefined ? ramp(t, s.app.bandDown, s.app.bandDown + 0.4) : 0;
@@ -74,9 +69,7 @@ export const ReleaseApp = ({t, scene}: SceneProps) => {
   return (
     <>
       {s.app ? <AppScene t={t} data={s.app} dockIcon={dock} /> : null}
-      {(s.app?.audio ?? []).map((a, i) => (
-        <Sequence key={i} from={Math.round(a.at * fps)}><Audio src={CLIPS[a.clip]} startFrom={Math.round((a.from ?? 0) * fps)} /></Sequence>
-      ))}
+      <DictationAudio audio={s.app?.audio} />
       <CaptionBand t={t} lines={scene.lines ?? []} u={u} />
     </>
   );

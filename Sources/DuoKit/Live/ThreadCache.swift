@@ -50,9 +50,7 @@ public final class ThreadCache: @unchecked Sendable {
         return out
     }
 
-    private func size(_ url: URL) -> UInt64 {
-        ((try? FileManager.default.attributesOfItem(atPath: url.path))?[.size] as? NSNumber)?.uint64Value ?? 0
-    }
+    private func size(_ url: URL) -> UInt64 { ClaudeStorage.stampOrStat(url).size }   // the refresh's listing, else a stat (F-595)
 
     /// The first user message's uuid and the first timestamp, from the start of the file.
     private func head(_ url: URL) -> Head {

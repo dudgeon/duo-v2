@@ -1,0 +1,23 @@
+<style>
+#pane { left: 24px; top: 30px; width: 360px; height: 300px; }
+#pg { left: 70px; top: 18px; width: 220px; height: 210px; }
+#ql { position: absolute; right: 10px; bottom: 8px; }
+#blind { left: 24px; top: 344px; width: 360px; }
+#q1 { left: 412px; top: 70px; } #q2 { left: 412px; top: 140px; } #q3 { left: 412px; top: 210px; }
+.qn { width: 204px; justify-content: flex-start; gap: 8px; }
+.qn b { display: inline-flex; width: 20px; height: 20px; border-radius: 50%; background: #1f2328; color: #fff; font-size: 12px; align-items: center; justify-content: center; }
+#qlabel { left: 412px; top: 36px; }
+</style>
+<div class="pane" id="pane" data-f>
+  <div class="tabs"><span class="tab">notes.md</span><span class="tab on">paper.pdf</span></div>
+  <div class="strip" id="strip" data-f>PDF · read only <span style="margin-left:auto">Open With ⌄</span><span>Show in Finder</span></div>
+  <div class="body">
+    <div class="page" id="pg" style="position:absolute"><div class="ph"></div><span class="b"></span><span class="b" style="width:90%"></span><span class="b"></span><span class="b" style="width:70%"></span><span class="b"></span><span class="b" style="width:80%"></span><span class="b"></span></div>
+    <span class="lab" id="ql">Quick Look</span>
+  </div>
+</div>
+<div class="s" id="blind" data-in="up" data-f>It draws the page, but can't tell Duo which page or what's selected.</div>
+<div class="lab" id="qlabel" data-in="fade">Three questions</div>
+<div class="chip qn" id="q1" data-in="left" data-f><b>1</b>Where it opens</div>
+<div class="chip qn" id="q2" data-in="left" data-f><b>2</b>Claude reads all of it</div>
+<div class="chip qn" id="q3" data-in="left" data-f><b>3</b>Comments that travel</div>

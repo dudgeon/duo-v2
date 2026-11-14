@@ -7,8 +7,11 @@ import Foundation
 /// fixtures by hand. The steps come only from `~/DuoAcceptance/walk-setups.json`, written by
 /// `scripts/acceptance/build-page.py`; a link can name a test, never supply steps.
 extension AppModel {
+    /// An isolated instance reads its own copy (`<support>/Duo/walk-setups.json`): the real file's
+    /// steps name the user's fixture workspace and repo (F-588).
     public static var walkSetupsFile: URL {
-        FileManager.default.homeDirectoryForCurrentUser.appending(path: "DuoAcceptance/walk-setups.json")
+        if SupportFolder.isIsolated { return SupportFolder.duo.appending(path: "walk-setups.json") }
+        return FileManager.default.homeDirectoryForCurrentUser.appending(path: "DuoAcceptance/walk-setups.json")
     }
 
     struct WalkSetups: Decodable {
@@ -25,7 +28,7 @@ extension AppModel {
         guard let steps = file.setups[id] else { return done(.fail("no setup for test '\(id)'")) }
         let ws = URL(fileURLWithPath: (file.workspace as NSString).expandingTildeInPath)
         DuoFocus.take()
-        NSApp.windows.first { $0.title == "Duo" }?.makeKeyAndOrderFront(nil)
+        window?.makeKeyAndOrderFront(nil)
         var log: [String] = []
         let start: @MainActor () -> Void = { [weak self] in
             self?.runSteps(steps[...], repo: file.repo, log: log) { lines in
@@ -61,7 +64,7 @@ extension AppModel {
             // once its prompt is ready.
             guard let project = words.dropFirst().first, fixture.projects.contains(where: { $0.name == project }) else { return next("✘ no project for \(step)") }
             open(project: project)
-            if let t = terminals.all.first(where: { t in t.isLiveClaude && fixture.sessions.first { $0.tabKey == t.key }?.project == project }) {
+            if let t = terminals.all.first(where: { t in t.isLiveClaude && session(tabKey: t.key)?.project == project }) {
                 openConsoleTab(t.key)
                 return next("· showing a running session in \(project)")
             }

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="design-size" content="640x800">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-337">
+<!--
+S2 · PowerPoint: the active card, closed threads
+APPROVED BOARD. Geoff, 2026-11-11 (DL-337). Exported from the Design canvas https://claude.ai/artifact/8EpSVPXmKFyayEbBFZU2e3 (board Slides-thread.dc.html, v9),
+rendered to static markup. It is a picture written in HTML: match what it draws, do not port its markup. Names and documents are illustrative.
+-->
+
+<title>PowerPoint: the active card and its anchor</title>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+:root{--ground:#f3f4f6;--pane:#ffffff;--rule:#c9cdd3;--controlEdge:#8b939c;--text:#1f2328;--text2:#5b636d;--selected:#e9ecef;--reviewAuthor1:#b0244f;--reviewAuthor2:#1d5fa8;--reviewAuthor3:#2e7a3a;--commentHighlight:#fbe7a1;--commentHighlightActive:#f5d565}
+.ui{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;color:var(--text);font-size:13px;line-height:20px}
+.btn{display:inline-flex;align-items:center;height:26px;box-sizing:border-box;padding:4px 10px;border:1px solid var(--controlEdge);border-radius:6px;background:var(--pane);font:12px/16px -apple-system,system-ui,sans-serif;color:var(--text)}
+.slide{position:absolute;left:16px;width:420px;height:236px;background:var(--pane);border:1px solid var(--rule);box-sizing:border-box;overflow:hidden}
+.card{position:absolute;left:444px;width:180px;box-sizing:border-box;border:1px solid var(--rule);border-radius:6px;background:var(--pane);padding:8px 10px}
+.num{position:absolute;left:16px;font:11px/16px -apple-system,system-ui,sans-serif;color:var(--text2)}
+.who{font-weight:600}.dim{color:var(--text2)}
+.abs{position:absolute}
+.p{display:inline-block;margin-left:6px;padding:0 5px;border:1px dashed var(--controlEdge);border-radius:6px;font:11px/16px -apple-system,system-ui,sans-serif;color:var(--text2)}
+.chg{display:inline-block;padding:0 6px;border-radius:6px;background:#1f2328;color:#fff;font:600 11px/16px -apple-system,system-ui,sans-serif}
+</style>
+</helmet>
+<div class="ui" style="width:640px;height:860px;box-sizing:border-box;background:var(--ground);border:1px solid var(--rule);position:relative;overflow:hidden">
+  <div style="height:44px;box-sizing:border-box;padding:0 6px 0 16px;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--rule);background:var(--pane)">
+    <span class="btn">‹</span><span class="btn">›</span><span style="color:var(--text2);font-size:12px">Slide 5 of 8</span><span style="flex:1"></span><span class="btn">Select Shape</span><span class="btn">Open With ⌄</span>
+  </div>
+  <div class="num" style="top:56px">5</div>
+  <div class="slide" style="top:74px">
+    <div class="abs" style="left:20px;top:20px;font:600 24px/30px -apple-system,system-ui,sans-serif">Farm results</div>
+    <div class="abs" style="left:20px;top:70px;width:200px;height:120px;box-sizing:border-box;border:2px solid var(--commentHighlightActive);background:#e9ecef;color:var(--text2);font-size:13px;padding:50px 0 0 40px">Chart: yield by farm</div>
+    <div class="abs" style="left:240px;top:80px;color:var(--text2);font-size:14px;line-height:22px">Footnote: figures as <span style="border-bottom:1.5px dotted var(--controlEdge)">reported by growers</span>.</div>
+  </div>
+  <div style="position:absolute;left:440px;top:70px;width:192px;box-sizing:border-box;border:1.5px solid var(--text);border-radius:6px;padding:10px;background:var(--pane)">
+    <span class="who" style="color:var(--reviewAuthor1)">Priya Shah</span> <span class="dim">· 21 Oct · on Chart</span><br>Is the footnote needed on every slide?
+    <div style="margin:6px 0 0 12px"><span class="who" style="color:var(--reviewAuthor2)">Sam Rivera</span> <span class="dim">· 22 Oct</span><br>Only here; the others cite it above.</div>
+    <div style="margin:6px 0 0 12px"><span class="who" style="color:var(--reviewAuthor3)">Claude</span> <span class="dim">· 14:03</span><br>Agreed: cut it from slides 3 to 8.</div>
+    <div style="border:1px solid var(--rule);border-radius:6px;padding:4px 8px;color:var(--text2);margin-top:8px">Reply…</div>
+    <div style="display:flex;gap:6px;margin-top:8px"><span class="btn">Close and Keep</span><span class="btn">Delete</span></div>
+  </div>
+  <div class="card" style="top:300px;color:var(--text2)">› Closed · Sam: Say “reported” not “returned”.</div>
+  <div style="position:absolute;left:444px;top:352px;color:var(--text2);font-size:12px">1 closed · <u>Hide</u></div>
+
+  <div class="abs" style="left:16px;top:340px;width:400px;font:12px/16px -apple-system,system-ui,sans-serif;color:var(--text2);border-top:1px dashed var(--controlEdge);padding-top:12px">
+    <span class="chg">changed</span> the active card's anchor is drawn in commentHighlightActive: here the Chart's outline (a shape comment). Hover a card and its anchor takes the same fill; a click on the Chart activates this card; ‹ › and J K step, R replies, ⌘Return posts, Esc returns to the slides. <span class="p">P</span><br><br>
+    The closed thread (shown because Show Closed Comments is on; the Review ⌄ menu has it, as Markdown's does) is a dotted controlEdge underline on its text, no fill: “reported by growers”. A closed whole-slide thread has only its folded card; a closed shape thread has a dotted outline. <span class="p">P</span><br><br>
+    Legacy PowerPoint comments (a point on the slide) are cards with no highlight, no reply field and no Close or Delete.
+  </div>
+</div>
+</x-dc>
+
+</body>
+</html>

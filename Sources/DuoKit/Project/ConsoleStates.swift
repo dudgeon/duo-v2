@@ -15,7 +15,7 @@ public enum ConsoleEmpty: Equatable, Sendable {
     case elsewhere(session: String, sessionId: String, app: String, since: String?)
     /// The session's folder is gone (LR-18).
     case folderMissing(path: String, nearest: String)
-    /// The Home pane with no session (DL-54: only after the last Home tab closes).
+    /// Home's page with no session: its first state, since nothing starts at launch (DL-336).
     case homeNone
     /// No Home folder chosen yet (DL-84): sessions are all listed on the map; Home waits.
     case noHome
@@ -70,12 +70,14 @@ extension AppModel {
         if let last = past.first {
             return .noneOpen(project: project, last: last.name, lastKey: last.tabKey)
         }
+        if project == fixture.home?.name { return .homeNone }   // Home's page before its first session (DL-336)
         return .never(project: project, isFolder: fixture.projects.first { $0.name == project }?.isFolderOnly == true)
     }
 
     /// Resume as a Fork (DB-3): a new session with the same history, here, under a Duo-minted id.
-    public func resumeAsFork(_ sessionId: String, in project: String) {
-        guard let folder = liveFolders[project] else { return }
+    @discardableResult
+    public func resumeAsFork(_ sessionId: String, in project: String) -> String? {
+        guard let folder = liveFolders[project] else { return nil }
         let new = UUID().uuidString.lowercased()
         var index = SessionIndex.load(project: folder)
         index.sessions.append(.init(sessionId: new, provenance: "forked-from:\(sessionId)"))
@@ -83,6 +85,7 @@ extension AppModel {
         _ = terminals.session(new, command: .forkClaude(from: sessionId, sessionID: new), cwd: folder.path)
         consoleTab = new
         refreshLive()
+        return new
     }
 
     /// The ended bar's Resume: the same tab, the session resumed (DB-3).
@@ -183,7 +186,7 @@ struct ConsoleMessage: View {
         case .never(let project, _):
             Button("Start Claude here") { model.open(project: project); model.newSession() }.keyboardShortcut(.defaultAction)
         case .notFound:
-            Button("Open Settings…") { model.info("Settings isn't built yet: it's waiting on its design (DB-10). Install Claude Code, then Look Again.") }
+            Button("Open Settings…") { WindowColourMenu.openSettings() }
             Button("Look Again") { ClaudeLocator.forget(); model.refreshLive(); model.endedRevision += 1 }.keyboardShortcut(.defaultAction)
         case .elsewhere(_, let id, _, _):
             Button("Look Again") { model.refreshLive() }.keyboardShortcut(.defaultAction)
@@ -195,7 +198,7 @@ struct ConsoleMessage: View {
             Button("Choose Home Folder…") { model.chooseHomeFolder() }.keyboardShortcut(.defaultAction)
             Button("Not Now") { model.dismissHomePrompt() }
         case .homeNone:
-            Button("Start Claude in Home") { if let h = model.fixture.home?.name { model.homeTab = model.newSession(in: h) } }
+            Button("Start Claude in Home") { if let h = model.fixture.home?.name { model.open(project: h); model.newSession() } }
                 .keyboardShortcut(.defaultAction)
         }
     }
@@ -243,6 +246,6 @@ struct ConsoleEndedBar: View {
 extension AppModel {
     /// A console tab's title: the session's name, or a shell's command (DB-4).
     public func consoleTitle(_ key: String) -> String {
-        fixture.sessions.first { $0.tabKey == key }?.name ?? shellTitles[key] ?? "zsh"
+        session(tabKey: key)?.name ?? shellTitles[key] ?? "zsh"
     }
 }

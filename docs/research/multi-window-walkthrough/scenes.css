@@ -1,0 +1,53 @@
+/* Scenes for the multi-window walkthrough. The world is 640x400. Colours are Duo's light tokens, the window
+   colours are board 4a's (multi-window canvas, F-542), Classic is DL-252's paper. */
+.cam { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif; color: #1f2328; }
+.cam > * { position: absolute; }
+.h { font-size: 26px; line-height: 32px; font-weight: 600; }
+.t { font-size: 18px; line-height: 25px; }
+.s { font-size: 15px; line-height: 21px; color: #5b636d; }
+.lab { font-size: 13px; line-height: 18px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: #5b636d; }
+.stamp { background: #1f2328; color: #ffffff; padding: 7px 13px; border-radius: 7px; font-size: 16px; line-height: 22px; font-weight: 600; white-space: nowrap; }
+.chip { display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border: 1px solid #8b939c; border-radius: 7px; background: #ffffff; font-size: 15px; white-space: nowrap; }
+.key { font: 600 20px/28px ui-monospace, "SF Mono", Menlo, monospace; border: 1.5px solid #8b939c; border-bottom-width: 3px; border-radius: 7px; padding: 4px 12px; background: #ffffff; }
+
+/* A Duo window. --wg is the toolbar ground, --wp the side panes. */
+.win { --wg: #f3f4f6; --wp: #ffffff; --wc: #15171b; --wt: #1f2328; --wr: #c9cdd3; border: 1px solid #c9cdd3; border-radius: 9px; background: var(--wp); overflow: hidden; box-shadow: 0 10px 28px rgba(31,35,40,.16); }
+.win .tb { position: absolute; left: 0; right: 0; top: 0; height: 28px; background: var(--wg); border-bottom: 1px solid var(--wr); display: flex; align-items: center; gap: 6px; padding: 0 10px; font-size: 13px; font-weight: 600; color: var(--wt); white-space: nowrap; transition: background-color .7s, color .7s, border-color .7s; }
+.win .tb::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #c9cdd3; box-shadow: 12px 0 #c9cdd3, 24px 0 #c9cdd3; margin-right: 28px; flex: none; }
+.win .sw { width: 11px; height: 11px; border-radius: 3px; background: var(--ws, transparent); border: 1px solid rgba(31,35,40,.18); transition: background-color .7s, opacity .4s; }
+.win .bd { position: absolute; left: 0; right: 0; top: 29px; bottom: 0; display: flex; }
+.win img.cap { width: 100%; height: 100%; object-fit: cover; object-position: top left; display: block; }
+.win .lp, .win .rp { background: var(--wp); padding: 10px 8px; display: flex; flex-direction: column; gap: 7px; transition: background-color .7s; position: relative; }
+.win .lp { width: 30%; border-right: 1px solid var(--wr); }
+.win .rp { width: 32%; border-left: 1px solid var(--wr); }
+.win .cn { flex: 1; background: var(--wc); padding: 12px 10px; display: flex; flex-direction: column; gap: 7px; transition: background-color .7s; position: relative; }
+.win .b { display: block; height: 7px; border-radius: 4px; background: #d5d9de; }
+.win .cn .b { background: #2b2f36; height: 6px; }
+.win .cn .b.lit { background: #9aa1ab; }
+.win .row { font-size: 12px; line-height: 16px; color: var(--wt); white-space: nowrap; transition: color .7s; }
+.win .row.sel { background: rgba(31,35,40,.08); border-radius: 4px; padding: 2px 4px; margin: 0 -4px; }
+.win .ny { display: inline-flex; align-items: center; height: 18px; padding: 0 7px; border-radius: 9px; font-size: 11px; font-weight: 600; background: #ffffff; color: #c2410c; border: 1.5px solid #c2410c; margin-left: auto; transition: background-color .7s, color .7s; }
+.win .tile { border: 1px solid #c9cdd3; border-radius: 6px; background: #ffffff; padding: 6px 8px; font-size: 12px; line-height: 16px; font-weight: 600; }
+.win .tile i { display: block; height: 5px; border-radius: 3px; background: #d5d9de; margin-top: 6px; width: 70%; }
+.win .map { flex: 1; background: var(--wp); padding: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-content: start; transition: background-color .7s; }
+
+/* Window colours, light (board 4a): ground, pane, swatch. */
+.c-sky   { --wg: #DDE8F6; --wp: #F2F7FC; --ws: #7FA6D9; }
+.c-sage  { --wg: #DDEEE2; --wp: #F2F8F4; --ws: #7DB38E; }
+.c-lilac { --wg: #E8E1F3; --wp: #F7F4FB; --ws: #A88FD0; }
+.c-sand  { --wg: #F1EBDC; --wp: #FAF7F0; --ws: #C9AE6E; }
+.c-none  { --wg: #f3f4f6; --wp: #ffffff; --ws: transparent; }
+
+.mlabel { font-size: 13px; line-height: 18px; color: #5b636d; text-align: center; }
+.menu { background: #ffffff; border: 1px solid #c9cdd3; border-radius: 9px; box-shadow: 0 8px 24px rgba(31,35,40,.18); padding: 5px; display: flex; flex-direction: column; z-index: 10; }
+.menu .mi { font-size: 14px; line-height: 20px; padding: 4px 10px; border-radius: 5px; display: flex; gap: 18px; white-space: nowrap; }
+.menu .mi span { margin-left: auto; color: #5b636d; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; }
+.menu .mi.hl { background: #1f2328; color: #ffffff; }
+.menu .mi.hl span { color: #c9cdd3; }
+.menu .mi.dim { color: #8b939c; }
+.menu hr { border: none; border-top: 1px solid #e3e6ea; margin: 4px 6px; }
+
+.ans-row { display: flex; gap: 12px; align-items: baseline; padding: 6px 0; border-bottom: 1px solid #e3e6ea; font-size: 16px; line-height: 22px; }
+.ans-row .q { width: 170px; flex: none; font-weight: 600; }
+.ans-row .a { color: #5b636d; }
+.ans-row.done .a { color: #1f2328; }

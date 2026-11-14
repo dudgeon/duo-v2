@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Slim bar with review</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+button{font:inherit;border:0;background:none;padding:0;margin:0;color:inherit;cursor:default}
+.bd{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;color:#1f2328;background:#eceef1}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.66px;text-transform:uppercase;color:#5b636d;display:flex;gap:8px;align-items:center}
+.P{font:10px/14px ui-monospace,'SF Mono',Menlo,monospace;color:#5b636d;border:1px dashed #8b939c;border-radius:3px;padding:0 3px;letter-spacing:0;text-transform:none;font-weight:400}
+.light{--ground:#f3f4f6;--pane:#ffffff;--sel:#e9ecef;--text:#1f2328;--text2:#5b636d;--rule:#c9cdd3;--edge:#8b939c;--a1:#b0244f;--a2:#1d5fa8;--hl:#fbe7a1;--doc:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;--ds:13px;--dl:20px;--h1:18px;--h1l:24px;--h2:14px;--h2l:20px}
+.dark{--ground:#131518;--pane:#181a1e;--sel:#262a30;--text:#e6e8eb;--text2:#9aa1ab;--rule:#2b2f36;--edge:#6e7681;--a1:#f38ba8;--a2:#7fb0ee;--hl:#4f4112;--doc:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;--ds:13px;--dl:20px;--h1:18px;--h1l:24px;--h2:14px;--h2l:20px}
+.classic{--ground:#f0e9d6;--pane:#fbf8ee;--sel:#f2d9b8;--text:#1a1410;--text2:#7b6f58;--rule:#d4c8a6;--edge:#b8ab8e;--a1:#b0244f;--a2:#1d5fa8;--hl:#fbe7a1;--focus:#c66a2e;--doc:'New York',ui-serif,Georgia,serif;--ds:16px;--dl:27px;--h1:22px;--h1l:30px;--h2:17px;--h2l:27px}
+.pane{box-sizing:border-box;background:var(--pane);color:var(--text);border:1px solid var(--rule);display:flex;flex-direction:column;overflow:hidden;font-size:13px;line-height:20px;position:relative}
+.tabs{flex:none;height:36px;box-sizing:border-box;display:flex;align-items:center;gap:24px;padding:0 16px;border-bottom:1px solid var(--rule);color:var(--text2)}
+.tabs b{color:var(--text);font-weight:600}
+.tabs.focus{box-shadow:inset 0 2px 0 var(--focus,var(--text))}
+.body{flex:1;position:relative;overflow:hidden}
+.doc{padding:24px 28px 22px;font-family:var(--doc);font-size:var(--ds);line-height:var(--dl)}
+.doc h1{font-size:var(--h1);line-height:var(--h1l);font-weight:600;margin:4px 0 12px}
+.doc h2{font-size:var(--h2);line-height:var(--h2l);font-weight:600;margin:14px 0 8px}
+.doc p{margin:0 0 10px}
+.doc table{border-collapse:collapse;width:100%;margin:0 0 10px}
+.doc th,.doc td{padding:4px 8px;border:1px solid var(--rule);text-align:left;white-space:nowrap}
+.doc th{background:var(--ground);font-weight:600}
+.src{white-space:pre;margin:0}
+.caret{display:inline-block;width:1.5px;height:1.05em;background:var(--text);vertical-align:-0.15em;margin:0 -0.75px}
+.vol{color:var(--text2)}
+.ins{color:var(--a2);text-decoration:underline;text-underline-offset:3px}
+.del{color:var(--a1);text-decoration:line-through}
+.anchor{background:var(--hl)}
+.card{position:absolute;box-sizing:border-box;width:180px;background:var(--pane);border:1px solid var(--rule);border-radius:6px;padding:8px 10px;font:12px/16px -apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:var(--text)}
+.card b{color:var(--a2);font-weight:600}
+.card i{font-style:normal;color:var(--text2)}
+.strip{position:absolute;top:0;left:0;right:0;height:24px;box-sizing:border-box;display:flex;align-items:center;gap:2px;padding:0 10px 0 22px;background:var(--pane);border-bottom:1px solid var(--rule);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif}
+.g{flex:none;width:24px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:13px;font-weight:600}
+.g.on{background:var(--sel);color:var(--text)}
+.pop{flex:none;height:20px;border-radius:5px;display:flex;align-items:center;gap:3px;padding:0 5px 0 6px;font-size:12px;line-height:16px;color:var(--text)}
+.pop.on{background:var(--sel)}
+.tb{flex:none;height:20px;border-radius:5px;display:flex;align-items:center;gap:3px;padding:0 6px;font-size:12px;line-height:16px;color:var(--text)}
+.tg{flex:none;height:20px;border-radius:5px;display:flex;align-items:center;gap:5px;padding:0 6px;font-size:12px;line-height:16px;color:var(--text)}
+.tg.on{background:var(--sel)}
+.dot{width:7px;height:7px;border-radius:4px;box-sizing:border-box;border:1.5px solid var(--edge);flex:none}
+.dot.on{background:var(--text);border-color:var(--text)}
+.mode{flex:none;height:20px;border-radius:5px;display:flex;align-items:center;gap:4px;padding:0 5px 0 6px;font-size:12px;line-height:16px;color:var(--text);margin-right:4px}
+.mode.on{background:var(--sel)}
+.mode svg:first-child{color:var(--text2)}
+.mode.on svg:first-child{color:var(--text)}
+.sep{flex:none;width:1px;height:12px;background:var(--rule);margin:0 5px}
+.sp{flex:1}
+.mic{flex:none;width:20px;height:20px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--text2)}
+.mic.lis{background:var(--text);color:var(--pane)}
+.mic.off{color:var(--edge)}
+.hint{display:flex;align-items:center;gap:6px;font-size:12px;line-height:16px;color:var(--text2);white-space:nowrap}
+.hint b{color:var(--text);font-weight:400}
+.meter{display:flex;align-items:flex-end;gap:1.5px;height:11px}
+.meter i{display:block;width:2px;background:var(--text);border-radius:1px}
+.ch{color:var(--text2);display:flex}
+.tip{position:absolute;font-size:11px;line-height:14px;padding:3px 7px;background:var(--pane);color:var(--text);border:1px solid var(--rule);border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.18);white-space:nowrap;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;z-index:3}
+.menu{position:absolute;width:236px;box-sizing:border-box;padding:5px;background:var(--pane);border:1px solid var(--rule);border-radius:10px;box-shadow:0 12px 32px rgba(31,35,40,.22);font-size:13px;line-height:20px;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;z-index:3}
+.mi{display:flex;padding:2px 8px;border-radius:6px;color:var(--text)}
+.mi span:first-child{width:16px;flex:none}
+.mi.sel{background:var(--sel)}
+.mi .k{margin-left:auto;color:var(--text2)}
+.mdiv{height:1px;background:var(--rule);margin:5px 8px}
+.spec{font-size:12px;line-height:18px;color:#1f2328}
+.spec p{margin:0 0 9px}
+.cap{font-size:12px;line-height:18px;color:#5b636d}
+.mono{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px}
+.issue{border:1px solid #c9cdd3;border-radius:6px;background:#fff;padding:10px 12px;font-size:12px;line-height:18px}
+</style>
+</helmet>
+<div class="bd" style="width:1560px;height:1720px;box-sizing:border-box;padding:48px;display:flex;flex-direction:column;gap:26px">
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <div class="lbl">Revisiting DL-266 · for DL-317 · one option</div>
+    <h1 style="margin:0;font-size:24px;line-height:30px;font-weight:600">One slim bar for writing and review: the mode menu at the right <span class="P">[P]</span></h1>
+    <p style="margin:0;font-size:13px;line-height:20px;color:#5b636d;max-width:1340px">Geoff: “I like the slimmed down nature of a, but it should really include review controls and adding a comment.” Then: “aren't suggest and review mutually exclusive options of the same dropdown? suggest control should be right justified”. DL-266's 24-high bar keeps its writing controls, gains a <b style="color:#1f2328">Comment</b> button, and ends with one <b style="color:#1f2328">mode menu, Editing ⌄ / Suggesting ⌄</b>, that also holds the review commands, as Google Docs, Word and Notion do. The 44-high review bar goes. It answers issue #16 (Pete Tanski: Add Comment needs ⌥⌘M, Suggest Edits needs the Edit menu) and #17 (Geoff: “some presence in the markdown editing bar … they certainly don't need their own bar”).</p>
+  </div>
+
+  <div style="display:grid;grid-template-columns:460px 460px 460px;gap:40px">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="lbl">Light · 460 · editing, nothing to review</div>
+      <div class="pane light" style="width:460px;height:400px">
+        <div class="tabs focus"><span>Project</span><b>offline.md</b><span>+</span></div>
+        <div class="body"><div class="doc">
+          <h1>Offline mode</h1>
+          <p>The sync engine retries every 30 seconds.</p>
+          <p>We store nothing in the cloud except <span style="background:var(--sel)">crash reports</span><span class="caret"></span>.</p>
+        </div>
+        <div class="strip">
+          <button class="pop">Body<span class="ch"><svg width="7" height="7" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 3l2.5 2.5L6.5 3"/></svg></span></button>
+          <div class="sep"></div>
+          <button class="g" aria-label="Bold" style="font-weight:700">B</button>
+          <button class="g" aria-label="Italic" style="font-style:italic;font-weight:500">I</button>
+          <button class="g" aria-label="Link"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.6 9.4l2.8-2.8"/><path d="M7.2 4.6l1.1-1.1a2.6 2.6 0 013.7 3.7l-1.1 1.1"/><path d="M8.8 11.4l-1.1 1.1a2.6 2.6 0 01-3.7-3.7l1.1-1.1"/></svg></button>
+          <button class="g" aria-label="Insert Table"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M2 6.5h12M2 9.75h12M6 6.5v6.5M10 6.5v6.5"/></svg></button>
+          <button class="g" aria-label="More"><svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3.5" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="12.5" cy="8" r="1.3"/></svg></button>
+          <div class="sep"></div>
+          <button class="g on" aria-label="Add Comment"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.2 3h9.6a1.2 1.2 0 011.2 1.2v5.6a1.2 1.2 0 01-1.2 1.2H7.2L4.4 13.4V11H3.2A1.2 1.2 0 012 9.8V4.2A1.2 1.2 0 013.2 3z"/><path d="M8 5.2v3.6M6.2 7h3.6"/></svg></button>
+          <div class="sp"></div>
+          <button class="mode" aria-label="Editing, change mode"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.6 2.6l2.8 2.8L6 12.8 2.6 13.4l.6-3.4z"/><path d="M9.2 4l2.8 2.8"/></svg><span>Editing</span><span class="ch"><svg width="7" height="7" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 3l2.5 2.5L6.5 3"/></svg></span></button>
+          <button class="mic" aria-label="Start Voice Input"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="5.6" y="1.8" width="4.8" height="8" rx="2.4"/><path d="M3.4 7.6a4.6 4.6 0 009.2 0M8 12.2v2"/></svg></button>
+        </div>
+        <div class="tip" style="left:178px;top:28px">Add Comment  ⌥⌘M</div>
+        </div>
+      </div>
+      <div class="cap">Comment sits after the writing marks, behind a separator; with nothing selected it takes the word at the caret, as ⌥⌘M does. The mode menu is at the right, before the mic, and names the mode: Editing.</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="lbl">Light · 460 · not editing, the document has marks</div>
+      <div class="pane light" style="width:460px;height:400px">
+        <div class="tabs"><span>Project</span><b>offline.md</b><span>+</span></div>
+        <div class="body"><div class="doc" style="padding-right:212px">
+          <h1>Offline mode</h1>
+          <p>The sync engine retries every <span class="del">30</span><span class="ins">10</span> seconds<span class="ins">, and gives up after an hour</span>.</p>
+          <p>We store nothing in the cloud except <span class="anchor">crash reports</span>.</p>
+        </div>
+        <div class="card" style="left:258px;top:142px"><b>Sam</b> <i>· 27 Oct</i><br>Is this true for crash reports?</div>
+        <div class="strip">
+          <button class="pop">Body<span class="ch"><svg width="7" height="7" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 3l2.5 2.5L6.5 3"/></svg></span></button>
+          <div class="sep"></div>
+          <button class="g" aria-label="Bold" style="font-weight:700">B</button>
+          <button class="g" aria-label="Italic" style="font-style:italic;font-weight:500">I</button>
+          <button class="g" aria-label="Link"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.6 9.4l2.8-2.8"/><path d="M7.2 4.6l1.1-1.1a2.6 2.6 0 013.7 3.7l-1.1 1.1"/><path d="M8.8 11.4l-1.1 1.1a2.6 2.6 0 01-3.7-3.7l1.1-1.1"/></svg></button>
+          <button class="g" aria-label="More"><svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3.5" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="12.5" cy="8" r="1.3"/></svg></button>
+          <div class="sep"></div>
+          <button class="g" aria-label="Add Comment"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.2 3h9.6a1.2 1.2 0 011.2 1.2v5.6a1.2 1.2 0 01-1.2 1.2H7.2L4.4 13.4V11H3.2A1.2 1.2 0 012 9.8V4.2A1.2 1.2 0 013.2 3z"/><path d="M8 5.2v3.6M6.2 7h3.6"/></svg></button>
+          <div class="sp"></div>
+          <button class="mode" aria-label="Editing, change mode"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.6 2.6l2.8 2.8L6 12.8 2.6 13.4l.6-3.4z"/><path d="M9.2 4l2.8 2.8"/></svg><span>Editing</span><span class="ch"><svg width="7" height="7" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 3l2.5 2.5L6.5 3"/></svg></span></button>
+          <button class="mic" aria-label="Start Voice Input"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="5.6" y="1.8" width="4.8" height="8" rx="2.4"/><path d="M3.4 7.6a4.6 4.6 0 009.2 0M8 12.2v2"/></svg></button>
+        </div></div>
+      </div>
+      <div class="cap">A document with suggestions or comments keeps the bar even when you're not in it, as the review bar does today (Q-265), so pending review is never hidden. Accept, reject and step are in the mode menu, and on each mark's own popover (DL-237).</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="lbl">Light · 360 · editing, marks, Suggesting</div>
+      <div class="pane light" style="width:360px;height:400px">
+        <div class="tabs focus"><span>Project</span><b>offline.md</b><span>+</span></div>
+        <div class="body"><div class="doc">
+          <h1>Offline mode</h1>
+          <p>The sync engine retries every <span class="del">30</span><span class="ins">10</span> seconds<span class="ins">, and gives up after an hour</span><span class="caret"></span>.</p>
+          <p>We store nothing in the cloud except <span class="anchor">crash reports</span>.</p>
+        </div>
+        <div class="strip" style="padding:0 8px 0 18px">
+          <button class="pop">Body<span class="ch"><svg width="7" height="7" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 3l2.5 2.5L6.5 3"/></svg></span></button>
+          <div class="sep"></div>
+          <button class="g" aria-label="Bold" style="font-weight:700">B</button>
+          <button class="g" aria-label="Italic" style="font-style:italic;font-weight:500">I</button>
+          <button class="g" aria-label="Link"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.6 9.4l2.8-2.8"/><path d="M7.2 4.6l1.1-1.1a2.6 2.6 0 013.7 3.7l-1.1 1.1"/><path d="M8.8 11.4l-1.1 1.1a2.6 2.6 0 01-3.7-3.7l1.1-1.1"/></svg></button>
+          <button class="g" aria-label="More"><svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3.5" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="12.5" cy="8" r="1.3"/></svg></button>
+          <div class="sep"></div>
+          <button class="g" aria-label="Add Comment"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.2 3h9.6a1.2 1.2 0 011.2 1.2v5.6a1.2 1.2 0 01-1.2 1.2H7.2L4.4 13.4V11H3.2A1.2 1.2 0 012 9.8V4.2A1.2 1.2 0 013.2 3z"/><path d="M8 5.2v3.6M6.2 7h3.6"/></svg></button>
+          <div class="sp"></div>
+          <button class="mode on" aria-label="Suggesting, change mode"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.6 2.6l2.8 2.8L6 12.8 2.6 13.4l.6-3.4z"/><path d="M9.2 4l2.8 2.8"/><path d="M9 14h5" stroke-dasharray="1.5 1.6"/></svg><span>Suggesting</span><span class="ch"><svg width="7" height="7" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 3l2.5 2.5L6.5 3"/></svg></span></button>
+          <button class="mic" aria-label="Start Voice Input"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="5.6" y="1.8" width="4.8" height="8" rx="2.4"/><path d="M3.4 7.6a4.6 4.6 0 009.2 0M8 12.2v2"/></svg></button>
+        </div></div>
+        
+      </div>
+      <div class="cap">Suggesting: the menu on <span class="mono">selected</span>, its pen in <span class="mono">text</span> with a dotted line under it, and the word “Suggesting”; never the accent. At 360 it all fits with Insert Table in ⋯; the margin folds to its gutter (DL-237).</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:460px 460px 460px;gap:40px">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="lbl">Light · 460 · caret in a table</div>
+      <div class="pane light" style="width:460px;height:360px">
+        <div class="tabs focus"><span>Project</span><b>refunds-api.md</b><span>+</span></div>
+        <div class="body"><div class="doc">
+          <h2 style="margin-top:4px">Thresholds</h2>
+          <p>Limits per path, as finance confirmed on Oct 3.</p>
+          <p class="src">| Path  | Limit | Approvers |</p>
+          <p class="src">| ----- | ----- | --------: |</p>
+          <p class="src">| Card  | $500  |         2 |</p>
+          <p class="src">| Async | $25<span class="caret"></span>0  |         1 |</p>
+        </div>
+        <div class="strip">
+          <button class="g" aria-label="Bold" style="font-weight:700">B</button>
+          <button class="g" aria-label="Italic" style="font-style:italic;font-weight:500">I</button>
+          <button class="g" aria-label="Link"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.6 9.4l2.8-2.8"/><path d="M7.2 4.6l1.1-1.1a2.6 2.6 0 013.7 3.7l-1.1 1.1"/><path d="M8.8 11.4l-1.1 1.1a2.6 2.6 0 01-3.7-3.7l1.1-1.1"/></svg></button>
+          <div class="sep"></div>
+          <button class="tb">+ Row</button>
+          <button class="tb">+ Column</button>
+          <button class="tb">Align<span class="ch"><svg width="7" height="7" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 3l2.5 2.5L6.5 3"/></svg></span></button>
+          <button class="tb">Delete<span class="ch"><svg width="7" height="7" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 3l2.5 2.5L6.5 3"/></svg></span></button>
+          <div class="sep"></div>
+          <button class="g" aria-label="Add Comment"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.2 3h9.6a1.2 1.2 0 011.2 1.2v5.6a1.2 1.2 0 01-1.2 1.2H7.2L4.4 13.4V11H3.2A1.2 1.2 0 012 9.8V4.2A1.2 1.2 0 013.2 3z"/><path d="M8 5.2v3.6M6.2 7h3.6"/></svg></button>
+          <div class="sp"></div>
+          <button class="mode" aria-label="Editing, change mode"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.6 2.6l2.8 2.8L6 12.8 2.6 13.4l.6-3.4z"/><path d="M9.2 4l2.8 2.8"/></svg><span class="ch"><svg width="7" height="7" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 3l2.5 2.5L6.5 3"/></svg></span></button>
+          <button class="mic" aria-label="Start Voice Input"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="5.6" y="1.8" width="4.8" height="8" rx="2.4"/><path d="M3.4 7.6a4.6 4.6 0 009.2 0M8 12.2v2"/></svg></button>
+        </div></div>
+      </div>
+      <div class="cap">The table controls take Style's place, as built (DL-301). Comment stays; the mode menu shows only its pen and ⌄, with the mode in its tooltip. Under 420 Align and Delete fold into ⋯ as now.</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="lbl">Dark · 460 · listening, Suggesting</div>
+      <div class="pane dark" style="width:460px;height:360px">
+        <div class="tabs focus"><span>Project</span><b>offline.md</b><span>+</span></div>
+        <div class="body"><div class="doc">
+          <h1>Offline mode</h1>
+          <p>The sync engine retries every 10 seconds.</p>
+          <p>We store nothing in the cloud except crash reports.<span class="ins"> Logs stay on the</span><span class="vol"> device</span><span class="caret"></span></p>
+        </div>
+        <div class="strip">
+          <div class="hint"><span class="meter"><i style="height:4px"></i><i style="height:8px"></i><i style="height:11px"></i><i style="height:6px"></i></span><b>Listening</b><span>· ⇧⌘D or the mic finishes · esc ends</span></div>
+          <div class="sp"></div>
+          <button class="mode on" aria-label="Suggesting, change mode"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.6 2.6l2.8 2.8L6 12.8 2.6 13.4l.6-3.4z"/><path d="M9.2 4l2.8 2.8"/><path d="M9 14h5" stroke-dasharray="1.5 1.6"/></svg><span>Suggesting</span><span class="ch"><svg width="7" height="7" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 3l2.5 2.5L6.5 3"/></svg></span></button>
+          <button class="mic lis" aria-label="Stop Voice Input"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="5.6" y="1.8" width="4.8" height="8" rx="2.4"/><path d="M3.4 7.6a4.6 4.6 0 009.2 0M8 12.2v2"/></svg></button>
+        </div></div>
+      </div>
+      <div class="cap">Listening, the controls give way to the hint row, but the mode menu stays beside the mic: it says whether the words are landing as suggestions (signed, in your colour).</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="lbl">Classic · 460 · the mode menu open, no microphone</div>
+      <div class="pane classic" style="width:460px;height:360px">
+        <div class="tabs focus"><span>Project</span><b>offline.md</b><span>+</span></div>
+        <div class="body"><div class="doc">
+          <h1>Offline mode</h1>
+          <p>The sync engine retries every <span class="del">30</span><span class="ins">10</span> sec<span class="caret"></span>onds.</p>
+        </div>
+        <div class="strip">
+          <button class="pop">Body<span class="ch"><svg width="7" height="7" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 3l2.5 2.5L6.5 3"/></svg></span></button>
+          <div class="sep"></div>
+          <button class="g" aria-label="Bold" style="font-weight:700">B</button>
+          <button class="g" aria-label="Italic" style="font-style:italic;font-weight:500">I</button>
+          <button class="g" aria-label="Link"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.6 9.4l2.8-2.8"/><path d="M7.2 4.6l1.1-1.1a2.6 2.6 0 013.7 3.7l-1.1 1.1"/><path d="M8.8 11.4l-1.1 1.1a2.6 2.6 0 01-3.7-3.7l1.1-1.1"/></svg></button>
+          <button class="g" aria-label="More"><svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3.5" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="12.5" cy="8" r="1.3"/></svg></button>
+          <div class="sep"></div>
+          <button class="g" aria-label="Add Comment"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.2 3h9.6a1.2 1.2 0 011.2 1.2v5.6a1.2 1.2 0 01-1.2 1.2H7.2L4.4 13.4V11H3.2A1.2 1.2 0 012 9.8V4.2A1.2 1.2 0 013.2 3z"/><path d="M8 5.2v3.6M6.2 7h3.6"/></svg></button>
+          <div class="sp"></div>
+          <button class="mode on" aria-label="Suggesting, change mode"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.6 2.6l2.8 2.8L6 12.8 2.6 13.4l.6-3.4z"/><path d="M9.2 4l2.8 2.8"/><path d="M9 14h5" stroke-dasharray="1.5 1.6"/></svg><span>Suggesting</span><span class="ch"><svg width="7" height="7" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 3l2.5 2.5L6.5 3"/></svg></span></button>
+          <button class="mic off" aria-label="No mic detected"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="5.6" y="1.8" width="4.8" height="8" rx="2.4"/><path d="M3.4 7.6a4.6 4.6 0 009.2 0M8 12.2v2"/><path d="M2.6 2.2l10.8 11.6"/></svg></button>
+        </div>
+        <div class="menu" style="right:30px;top:26px">
+          <div class="mi"><span></span><span>Editing</span><span class="k">edits change the text</span></div>
+          <div class="mi sel"><span>✓</span><span>Suggesting</span><span class="k">⇧⌘E</span></div>
+          <div class="mdiv"></div>
+          <div class="mi"><span></span><span>Next Change</span></div>
+          <div class="mi"><span></span><span>Previous Change</span></div>
+          <div class="mi"><span></span><span>Accept All</span></div>
+          <div class="mi"><span></span><span>Reject All</span></div>
+          <div class="mdiv"></div>
+          <div class="mi"><span></span><span>Markup</span><span class="k">All ›</span></div>
+          <div class="mi"><span></span><span>Show Closed Comments</span><span class="k">2</span></div>
+          <div class="mdiv"></div>
+          <div class="mi" style="color:var(--text2)"><span></span><span>2 suggestions · 1 comment</span></div>
+        </div></div>
+      </div>
+      <div class="cap">The mode menu holds Editing and Suggesting, then what the review bar's Markup ⌄, ‹ › and Review All ⌄ hold today, so nothing is lost with the 44 bar. No microphone: DL-265's faint struck mic.</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);gap:36px">
+    <div class="spec">
+      <div class="lbl" style="margin-bottom:8px">What changes from DL-266 / DL-301 <span class="P">[P]</span></div>
+      <p><b>Added:</b> Comment (⌥⌘M), after the writing marks. At the right, before the mic, the <b>mode menu</b>, labelled with the mode: Editing ⌄ or Suggesting ⌄ (Word says Reviewing; Google Docs and Notion say Suggesting).</p>
+      <p><b>The menu:</b> Editing (edits change the text) or Suggesting (⇧⌘E; everyone's edits become suggestions, DL-237), checked. Then Next Change, Previous Change, Accept All, Reject All (and per person), Markup ▸ (All, Simple, None, Original), Show Closed Comments with its count, then the counts.</p>
+      <p><b>Retired:</b> the 44-high review bar (<span class="mono">MarkdownReviewBar</span>) and its ‹ ›: amends DL-237's bar and Q-265. Every menu item and chord stays. <b>Reverses</b> DL-237's “not chosen: 2B/2C, an Editing/Suggesting/Viewing chip”: now it's a menu in the bar, without Viewing (a Duo document has no view-only mode).</p>
+    </div>
+    <div class="spec">
+      <div class="lbl" style="margin-bottom:8px">How others do it</div>
+      <p><b>Google Docs:</b> a mode menu at the top right, Editing / Suggesting / Viewing, labelled with the mode; Add comment in the toolbar.</p>
+      <p><b>Word for the web:</b> Editing / Reviewing / Viewing at the top right beside Share; turning tracking on switches it to Reviewing.</p>
+      <p><b>Notion:</b> ••• › Suggest edits; a “Suggesting” label then sits at the top until you stop it; Comment on the selection.</p>
+      <div class="lbl" style="margin:14px 0 8px">When it shows</div>
+      <p>While the document has the keyboard (DL-266), and whenever it has suggestions or comments or is Suggesting, so a tracked document never edits silently. Laid over the editor as built: 24, top padding 24, a 24 scroll margin.</p>
+    </div>
+    <div class="spec">
+      <div class="lbl" style="margin-bottom:8px">Issues</div>
+      <div class="issue" style="margin-bottom:8px"><b>#16</b> · Pete Tanski · “Hard to find Markdown Comments and Suggest Edits”: Add Comment needs a key combination; Suggest Edits needs the Edit menu.</div>
+      <div class="issue" style="margin-bottom:10px"><b>#17</b> · Geoff · “some presence in the markdown editing bar — they certainly don't need their own bar”.</div>
+      <p>Comment gets a button, and Suggesting a labelled menu, in the bar you already see while writing; the separate bar goes.</p>
+      <div class="lbl" style="margin:14px 0 8px">duo2 and cost</div>
+      <p>No new verbs: <span class="mono">comment add</span>, <span class="mono">doc review on|off|next|previous</span>, <span class="mono">doc markup</span> and <span class="mono">suggestion accept|reject</span> exist. About 2 days: Comment and the mode menu in <span class="mono">MarkdownFormatBar</span>, the shows-when rule, retiring the review bar and moving its menus into the mode menu, then captures and checks.</p>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1560,"height":1720}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

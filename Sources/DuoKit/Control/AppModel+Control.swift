@@ -11,8 +11,9 @@ extension AppModel {
         public var ok: Bool
         public var text: String
         public var json: Any?
+        public var code: Int32?
         public static func ok(_ text: String, _ json: Any? = nil) -> Reply { Reply(ok: true, text: text, json: json) }
-        public static func fail(_ text: String) -> Reply { Reply(ok: false, text: text, json: nil) }
+        public static func fail(_ text: String, code: Int32? = nil) -> Reply { Reply(ok: false, text: text, json: nil, code: code) }
     }
 
     /// Verbs the app answers (everything not `local`); for the check.
@@ -28,7 +29,7 @@ extension AppModel {
                let data = try? JSONSerialization.data(withJSONObject: j is String ? ["result": j] : j, options: [.prettyPrinted, .sortedKeys, .fragmentsAllowed]) {
                 done(.init(ok: true, output: String(decoding: data, as: UTF8.self)))
             } else {
-                done(.init(ok: r.ok, output: r.text))
+                done(.init(ok: r.ok, output: r.text, code: r.ok ? nil : r.code))
             }
         }
     }
@@ -36,6 +37,10 @@ extension AppModel {
     // swiftlint:disable:next cyclomatic_complexity function_body_length
     func perform(_ id: ActionID, _ inv: Invocation, _ req: ControlRequest, _ done: @escaping @MainActor (Reply) -> Void) {
         switch id {
+        // MARK: Windows (multi-window slice 1)
+        case .windowList, .windowNew, .windowFocus, .windowClose, .windowColour:
+            windowVerb(id, inv, done)
+
         // MARK: Duo
         case .ping:
             done(.ok("Duo \(getpid()), \(terminalsMode == .live ? "live" : "fixture"), \(fixture.projects.count) projects"))
@@ -46,25 +51,26 @@ extension AppModel {
             let lines = list.map { s in "\(s.project) / \(s.name)" + (s.wait.map { " · \($0)" } ?? "") + (s.question.map { "\n  \($0)" } ?? "") }
             done(.ok(lines.isEmpty ? "Nothing needs you." : lines.joined(separator: "\n"), list.map { sessionJSON($0) }))
         case .undo:
-            guard let m = NSApp.windows.first(where: { $0.title == "Duo" })?.undoManager, m.canUndo else { return done(.fail("nothing to undo")) }
+            guard let m = window?.undoManager, m.canUndo else { return done(.fail("nothing to undo")) }
             let name = m.undoActionName
             m.undo()
             done(.ok("Undid \(name.isEmpty ? "the last change" : name)."))
 
         // MARK: What's on screen
         case .goAll: zoomOut(); done(.ok("Showing All projects."))
-        case .goHome: goHome(); done(.ok("Showing Home."))
+        case .goHome: guard fixture.home != nil else { return done(.fail("No Home folder is set.")) }; goHome(); done(.ok("Showing Home's page."))
         case .open:
             guard let name = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
             guard let p = project(named: name) else { return done(noProject(name)) }
             var session: String?
             if let s = inv[1] { guard let found = findSession(s, in: p.name) else { return done(.fail("no session '\(s)' in \(p.name)")) }; session = found.name }
-            open(project: p.name, session: session)
+            let m = open(project: p.name, session: session)   // another window may show it (DL-308)
             if let f = inv.flags["file"] {
                 guard let rel = relativePath(f, project: p.name, cwd: req.cwd) else { return done(.fail("'\(f)' isn't in \(p.name)")) }
-                openDocument(rel)
+                m.openDocument(rel)
             }
-            done(.ok("Opened \(p.name)."))
+            // A project lives in one window (DL-308): say so when its window came forward instead (F-582).
+            done(.ok(m === self ? "Opened \(p.name)." : "\(p.name) is in window \(m.windowNumber); brought it forward."))
         case .peek:
             let want = inv[0].map { $0 == "open" } ?? !peekOpen
             if want != peekOpen { togglePeek() }
@@ -73,6 +79,7 @@ extension AppModel {
             guard peekOpen else { return done(.fail("the peek isn't open")) }
             jumpToPeekSelection(); done(.ok("Jumped."))
         case .viewSidebar:
+            guard !altitude.isAllProjects else { return done(.fail("All projects has no sidebar", code: 64)) }   // DL-336
             if inv[0] == "peek" {
                 guard splits.sidebarFolded else { return done(.fail("the sidebar isn't folded by a split view; use show, hide or toggle")) }
                 splits.peek.toggle()
@@ -165,6 +172,13 @@ extension AppModel {
                 listShowsArchived = a == "on"
             }
             done(.ok("All projects shows the \(homeView.title)\(homeView == .list && !listShowsArchived ? ", archived sessions hidden" : "")."))
+        case .viewList:
+            guard inv[0] == "group", let g = inv[1].flatMap(ListGroup.init(rawValue:)) else { return done(.fail("usage: \(id.action.usage)")) }
+            setListGroup(g)
+            done(.ok("The List is grouped by \(g.rawValue)."))
+        case .viewFormatBar:
+            switch inv[0] { case "show": setFormatBarHidden(false); case "hide": setFormatBarHidden(true); default: setFormatBarHidden(!formatBarHidden) }
+            done(.ok(formatBarHidden ? "Formatting bar hidden." : "Formatting bar on (it shows while a Markdown document has the keyboard)."))
         case .viewHidden:
             switch inv[0] { case "on": setShowHiddenFiles(true); case "off": setShowHiddenFiles(false); default: setShowHiddenFiles(!showHiddenFiles) }
             done(.ok(showHiddenFiles ? "Hidden files showing." : "Hidden files hidden."))
@@ -173,6 +187,10 @@ extension AppModel {
             let path = f.hasSuffix("/") ? String(f.dropLast()) : f
             if (inv[1] == "open") != isFolderOpen(path) { toggleFolder(path) }
             done(.ok("\(path)/ \(isFolderOpen(path) ? "open" : "closed")."))
+        case .viewFiles:
+            guard terminalsMode == .live, currentProject != nil else { return done(.fail("no project is open")) }
+            switch inv[0] { case "expand": setFilesFolded(false); case "collapse": setFilesFolded(true); default: return done(.fail("usage: \(id.action.usage)")) }
+            done(.ok("Files \(isFilesFolded ? "folded" : "showing")."))
         case .viewPane:
             guard let arg = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
             switch arg {
@@ -351,10 +369,10 @@ extension AppModel {
             done(.ok(text, j))
         case .sessionOpen:
             guard let k = inv[0], let s = findSession(k, in: nil) else { return done(.fail("no session '\(inv[0] ?? "")'")) }
-            if s.project == fixture.home?.name, altitude.isAllProjects { homeTab = s.tabKey } else { open(project: s.project); openConsoleTab(s.tabKey) }
+            open(project: s.project).openConsoleTab(s.tabKey)   // a Home session opens Home's page, as any project's session (DL-336)
             done(.ok("Showing \(s.name)."))
         case .sessionClose:
-            guard let k = inv[0] ?? visibleSessionId, let s = findSession(k, in: nil) ?? fixture.sessions.first(where: { $0.tabKey == k }) else { return done(.fail("no session to close")) }
+            guard let k = inv[0] ?? visibleSessionId, let s = findSession(k, in: nil) ?? session(tabKey: k) else { return done(.fail("no session to close")) }
             if parkedTabs.contains(s.tabKey), terminals.existing(s.tabKey) == nil {
                 closeSession(s.tabKey)
                 return done(.ok("Closed \(s.name)'s tab; it hadn't resumed since launch. It stays listed and resumable."))
@@ -391,7 +409,7 @@ extension AppModel {
                 if !missing.isEmpty { msg += " " + Self.noSessions(missing) }
                 return done(parked > 0 ? .ok(msg, ["parked": found.map { $0.sessionId ?? $0.tabKey }]) : .fail(msg))
             }
-            guard let k = inv[0], let s = findSession(k, in: nil) ?? fixture.sessions.first(where: { $0.tabKey == k }) else {
+            guard let k = inv[0], let s = findSession(k, in: nil) ?? session(tabKey: k) else {
                 return done(.fail(inv[0].map { "no session '\($0)'" } ?? "usage: \(id.action.usage)"))
             }
             if let why = park(s.tabKey) {
@@ -400,7 +418,7 @@ extension AppModel {
             }
             done(.ok("Parked \(s.name). Its tab stays; it picks up where it left off when shown (duo2 session open \(s.sessionId ?? s.tabKey)).", ["parked": s.sessionId ?? s.tabKey]))
         case .sessionKeepRunning:
-            guard let k = inv[0], let s = findSession(k, in: nil) ?? fixture.sessions.first(where: { $0.tabKey == k }), !isShell(s.tabKey) else {
+            guard let k = inv[0], let s = findSession(k, in: nil) ?? session(tabKey: k), !isShell(s.tabKey) else {
                 return done(.fail(inv[0].map { "no session '\($0)'" } ?? "usage: \(id.action.usage)"))
             }
             switch inv[1]?.lowercased() {
@@ -437,7 +455,7 @@ extension AppModel {
             func add() { done(.ok(AllowedSites.add(host) ? "\(host) is allowed: its pages open in Duo." : "\(host) was already allowed.")) }
             // A session can't widen the list unasked (DL-178): the user answers on a Duo sheet.
             if Env.autoconfirm || AllowedSites.load().contains(host) { return add() }
-            SheetCenter.shared.ask(DuoQuestion(
+            SheetCenter.shared.ask(from: self, DuoQuestion(
                 title: "Allow \(host) in Duo’s browser?",
                 paragraphs: ["A Claude session asked to let pages from `\(host)` and its subdomains open in Duo’s browser tabs. They stay signed in there, and their pages can be sent to Claude."],
                 note: "The list is a plain file you can edit: \(Self.short(AllowedSites.file.path)).",
@@ -457,7 +475,7 @@ extension AppModel {
             issueVerb(id, inv, req, done)
         case .taskBoard, .taskColumn, .taskReference, .taskBase:
             boardVerb(id, inv, req, done)
-        case .directorStatus, .directorStart, .directorSend, .directorRetire, .directorGuide, .directorWatch:
+        case .directorStatus, .directorStart, .directorSend, .directorCheck, .directorRetire, .directorGuide, .directorWatch:
             directorVerb(id, inv, req, done)
         case .sessionTask:
             sessionTaskVerb(inv, req, done)
@@ -486,6 +504,7 @@ extension AppModel {
                         "notify: \(DuoState.load().notifyNeedsYou ? "on" : "off")",
                         "dock-badge: \(DuoState.load().dockBadge ? "on" : "off") (showing \(NSApp.dockTile.badgeLabel ?? "nothing"))",
                         "appearance: \(AppearanceSetting.current.rawValue)",
+                        "model: \(ModelSetting.saved ?? "default") (sessions Duo starts or resumes use \(ModelSetting.saved.map { "ANTHROPIC_MODEL=\($0)" } ?? "Claude's own default"))",
                         "explanations dismissed: \(DuoState.load().dismissedExplainers.isEmpty ? "none" : DuoState.load().dismissedExplainers.joined(separator: ", "))",
                         "home: \(liveRoot.map { Self.short($0.path) } ?? "none")"].joined(separator: "\n")
             }
@@ -511,10 +530,14 @@ extension AppModel {
                 guard let a = AppearanceSetting(rawValue: value) else { return done(.fail("usage: \(id.action.usage)")) }
                 do { try AppearanceSetting.set(a) } catch { return done(.fail((error as? DuoState.WriteError)?.reason ?? error.localizedDescription)) }
                 SettingsInfo.shared.revision += 1
+            case "model":
+                guard value == "default" || ModelSetting.aliases.contains(value) else { return done(.fail("usage: \(id.action.usage)")) }
+                DuoState.update { $0.sessionModel = value == "default" ? nil : value }
+                SettingsInfo.shared.revision += 1
             case "explainers":
                 guard value == "reset" else { return done(.fail("usage: \(id.action.usage)")) }
                 explainer.resetDismissed()
-            default: return done(.fail("no setting '\(key)'. Settings: claude-path, notify, dock-badge, appearance, explainers"))
+            default: return done(.fail("no setting '\(key)'. Settings: claude-path, notify, dock-badge, appearance, model, explainers"))
             }
             reply()
         case .projectReconnect:
@@ -614,10 +637,19 @@ extension AppModel {
                 }.joined(separator: "\n")
             }.joined(separator: "\n")
             done(.ok(text, b.map { ["label": $0.label, "sessions": $0.rows.map { ["id": $0.id, "title": $0.name, "project": $0.project ?? "", "age": $0.age] }] as [String: Any] }))
+        case .sessionTurns, .sessionCopyTurn, .sessionRewind:
+            chatTurnVerb(id, inv, done)
         case .sessionFork:
             guard let k = inv[0], let s = findSession(k, in: nil), let sid = s.sessionId else { return done(.fail("usage: \(id.action.usage)")) }
-            open(project: s.project)
-            resumeAsFork(sid, in: s.project)
+            if let at = inv.flags["at"] {
+                guard let chat = chat(for: s.tabKey) else { return done(.fail("\(s.name) has no chat yet: open it in Duo first")) }
+                guard let turn = chat.turnID(for: at) else { return done(.fail("no turn '\(at)' in \(s.name): `duo2 session turns \(k)` lists them")) }
+                guard chat.forkPlan(turn) != nil else { return done(.fail("that turn can't be forked from yet: the transcript doesn't have the next message's id")) }
+                guard chat.screen.kind != .busy else { return done(.fail("Claude is working in \(s.name); fork from a turn when it finishes")) }
+                guard forkFromTurn(sessionKey: s.tabKey, turnId: turn) else { return done(.fail("couldn't fork \(s.name) there")) }
+                return done(.ok("Forked \(s.name) in \(s.project) at turn \(at); the copy rewinds to that point once Claude Code is up in it (the tab shows the terminal if it can't)."))
+            }
+            open(project: s.project).resumeAsFork(sid, in: s.project)
             done(.ok("Forked \(s.name) in \(s.project) as a new session with the same history."))
         case .sessionTrustFolder:
             guard let k = inv[0], let s = findSession(k, in: nil) else { return done(.fail("usage: \(id.action.usage)")) }
@@ -754,6 +786,11 @@ extension AppModel {
                 if editorIfLoaded?.url?.standardizedFileURL == url.standardizedFileURL {
                     editor.run("return duo.text()") { v in done(.ok(v as? String ?? "")) }
                 } else {
+                    // A PDF (DL-334): its text by page, then the pages to look at as images.
+                    if url.pathExtension.lowercased() == "pdf" {
+                        do { let r = try PdfRead.read(url); return done(.ok(r.text, ["pages": r.pages, "look": r.look.map { ["page": $0.page, "reason": $0.reason] as [String: Any] }])) }
+                        catch { return done(.fail("\(error)")) }
+                    }
                     // A deck or any other file that isn't text: say so, never its bytes (C-26).
                     if FileKind.isBinary(url) {
                         return done(.fail("\(rel) isn't text" + (Self.isDeck(rel) ? ": `duo2 slide shapes \(SendFormat.quoted(rel))` reads its slides" : "")))
@@ -765,6 +802,7 @@ extension AppModel {
                 e.run("return duo.text()") { v in done(.ok(v as? String ?? "")) }
             } else { done(.fail(inv[0] == nil ? "no document is open in the editor" : "'\(inv[0]!)' isn't a file in a project Duo knows")) }
         case .docSelection:
+            if let p = pdfSelectionPayload(), webFocus == .pdf { return done(.ok(p)) }
             documentSelectionPayload { p in done(p.map { .ok($0) } ?? .fail("nothing is selected in the editor")) }
         case .docSelect:
             guard let a = inv[0].flatMap(Int.init), editorIfLoaded?.url != nil else { return done(.fail("usage: \(id.action.usage) (with a document showing)")) }
@@ -892,7 +930,7 @@ extension AppModel {
         // MARK: HTML pages
         case .slide, .slideGo, .slideShapes, .slideNotes, .slidePick, .slideElement:
             slideVerb(id, inv, req, done)
-        case .commentAdd, .commentList, .commentReply, .commentSend, .commentClose, .commentDelete, .commentReopen, .commentStatus,
+        case .commentAdd, .commentList, .commentReply, .commentSend, .commentClose, .commentDelete, .commentReopen, .commentStatus, .commentUndo,
              .suggestionList, .suggestionAccept, .suggestionReject:
             reviewVerb(id, inv, req, done)
         case .docReview:
@@ -903,6 +941,8 @@ extension AppModel {
         case .docScreenshot: docScreenshotVerb(inv, req, done)
         case .docMarkup, .docComments, .docOutline, .docPick, .docElement:
             docxVerb(id, inv, req, done)
+        case .pdfRender: pdfRenderVerb(inv, req, done)
+        case .pdfPage, .pdfZoom, .pdfFind, .pdfSelection, .pdfCommentsPanel: pdfViewVerb(id, inv, done)
         case .htmlReload:
             guard let v = visiblePage, v.pageURL != nil else { return done(.fail("no web page is showing")) }
             v.reload(); done(.ok("Reloaded."))
@@ -936,6 +976,7 @@ extension AppModel {
             let group = DispatchGroup()
             group.enter(); documentSelectionPayload { if let p = $0 { parts.append(p) }; group.leave() }
             group.enter(); htmlSelectionPayload { if let p = $0 { parts.append(p) }; group.leave() }
+            if let p = pdfSelectionPayload() { parts.append(p) }
             group.notify(queue: .main) { [weak self] in
                 MainActor.assumeIsolated {
                     guard let self else { return }
@@ -958,8 +999,12 @@ extension AppModel {
              .deckTemplates, .deckCheck, .deckExport, .deckInsert, .deckNew, .deckChange, .deckRender,
              .deckTemplateInventory, .deckTemplateBuild, .deckTemplateSpecimen, .deckImport, .deckMigrate:
             done(.fail("`duo2 \(id.rawValue)` runs in the CLI, not the app"))
+        case .deckShowing, .deckGo, .deckPick:
+            deckPreviewVerb(id, inv, done)
+        case .deckProblems, .deckComments, .deckComment, .deckExportAgain, .deckExportShow:
+            deckP3bVerb(id, inv, req, done)
         case .deckTemplatePick, .deckTemplatePicked:
-            done(.fail("`duo2 \(id.rawValue)` needs the deck viewer (the Slides view), which isn't built yet; template picking arrives with it"))
+            deckTemplateVerb(id, inv, done)
         }
     }
 
@@ -1190,7 +1235,7 @@ extension AppModel {
         let toNew = inv.has("new")
         var key: String?
         if let to = inv.flags["to"] {
-            guard let s = findSession(to, in: nil) ?? fixture.sessions.first(where: { $0.tabKey == to }) else { return done(.fail("no session '\(to)'")) }
+            guard let s = findSession(to, in: nil) ?? session(tabKey: to) else { return done(.fail("no session '\(to)'")) }
             key = s.tabKey
         } else if !toNew {
             switch sendTarget {
@@ -1206,12 +1251,12 @@ extension AppModel {
             if toNew { self.sendToNewSession(text); return done(.ok("Starting a new session; the context goes into its prompt when it's ready.")) }
             // A tab parked since launch (DL-156) resumes now; Claude takes a moment to be ready.
             if let key, self.wakeParked(key) {
-                return done(.fail("\(self.fixture.sessions.first { $0.tabKey == key }?.name ?? key) hadn't resumed since launch; it's resuming now. Send again once it's at its prompt."))
+                return done(.fail("\(self.session(tabKey: key)?.name ?? key) hadn't resumed since launch; it's resuming now. Send again once it's at its prompt."))
             }
             guard let key, self.send(text, to: key) else {
                 return done(.fail(key.flatMap { self.terminals.existing($0)?.notReadyReason } ?? "that session isn't running in Duo"))
             }
-            done(.ok("In the prompt of \(self.fixture.sessions.first { $0.tabKey == key }?.name ?? key), not sent: the user adds the request."))
+            done(.ok("In the prompt of \(self.session(tabKey: key)?.name ?? key), not sent: the user adds the request."))
         }
         switch id {
         case .sendFile:
@@ -1226,6 +1271,7 @@ extension AppModel {
             guard let n = inv[0], let p = project(named: n) else { return done(noProject(inv[0] ?? "")) }
             deliver(projectPayload(p.name))
         case .sendSelection:
+            if let p = pdfSelectionPayload() { return deliver(p) }
             documentSelectionPayload { [weak self] p in
                 if let p { deliver(p) } else { self?.htmlSelectionPayload(deliver) }
             }
@@ -1318,7 +1364,7 @@ extension AppModel {
     func sessionsNamed(_ words: [String]) -> (found: [Fixture.Session], missing: [String]) {
         var found: [Fixture.Session] = [], missing: [String] = []
         for w in words {
-            if let s = findSession(w, in: nil) ?? fixture.sessions.first(where: { $0.tabKey == w }) {
+            if let s = findSession(w, in: nil) ?? session(tabKey: w) {
                 if !found.contains(where: { $0.tabKey == s.tabKey }) { found.append(s) }
             } else { missing.append(w) }
         }
@@ -1465,12 +1511,12 @@ extension AppModel {
         switch altitude {
         case .allProjects:
             j["view"] = "all-projects"
-            let home = homeTab.flatMap { k in fixture.sessions.first { $0.tabKey == k } }
+            let home = homeTab.flatMap { k in session(tabKey: k) }
             lines.append("All projects" + (home.map { ", Home on \($0.name)" } ?? ""))
             if let h = home { j["session"] = sessionJSON(h) }
         case .project(let p):
             j["view"] = "project"; j["project"] = p
-            let s = consoleTab.flatMap { k in fixture.sessions.first { $0.tabKey == k } }
+            let s = consoleTab.flatMap { k in session(tabKey: k) }
             lines.append("Project \(p)" + (s.map { ", console on \($0.name)" } ?? ""))
             if let s { j["session"] = sessionJSON(s) }
             let tab = rightTab ?? "Project"
@@ -1484,6 +1530,11 @@ extension AppModel {
         let c = fixture.counts
         j["counts"] = ["needsYou": c.needsYou, "review": c.readyForReview, "working": c.working, "idle": c.idle]
         lines.append("\(c.needsYou) need you · \(c.readyForReview) to review · \(c.working) working · \(c.idle) idle")
+        if core.models.count > 1 {   // the windows (DL-311): this reply describes window \(windowNumber)
+            j["window"] = windowNumber
+            j["windows"] = core.models.map(\.windowJSON)
+            lines.append("window \(windowNumber) of \(core.models.count): " + core.models.map(\.windowLine).joined(separator: "; "))
+        }
         return .ok(lines.joined(separator: "\n"), j)
     }
 
@@ -1492,14 +1543,14 @@ extension AppModel {
     @discardableResult
     public func wakeParked(_ key: String) -> Bool {
         guard parkedTabs.contains(key), terminals.existing(key) == nil,
-              let s = fixture.sessions.first(where: { $0.tabKey == key }) else { return false }
+              let s = session(tabKey: key) else { return false }
         return terminal(project: s.project, session: key) != nil
     }
 
     public func closeSession(_ key: String) {
         let parked = parkedTabs.remove(key) != nil
         guard terminals.existing(key) != nil || parked else { return }
-        let s = fixture.sessions.first { $0.tabKey == key }
+        let s = session(tabKey: key)
         let next = s.flatMap { TabOrder.neighbour(closing: key, in: consoleTabKeys(inProject: $0.project)) }
         if terminals.existing(key) != nil { terminals.close(key) }
         if s?.fork == ForkSource.Kind.fork.rawValue, s?.liveProcess == true { detachedForks.insert(key) }   // detach: the fork runs on (DL-227)

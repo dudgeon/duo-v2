@@ -1,0 +1,31 @@
+<style>
+#hd { left: 24px; top: 28px; }
+.rung { left: 24px; width: 330px; box-sizing: border-box; transition: top .6s, opacity .5s, border-color .4s; }
+.rung em { font-style: normal; float: right; font-weight: 600; }
+#r-env { top: 66px; opacity: 0; border-color: #1a7f37; }
+#r-man { top: 66px; }
+#r-user { top: 124px; }
+[data-state~="env"] #r-env { opacity: 1; }
+[data-state~="env"] #r-man { top: 124px; }
+[data-state~="env"] #r-user { top: 182px; }
+#wins { left: 24px; top: 250px; }
+#res { left: 380px; top: 66px; width: 236px; box-sizing: border-box; }
+#res .n { font-size: 30px; line-height: 38px; font-weight: 600; display: block; }
+#son { display: inline; } #opu { display: none; color: #1a7f37; }
+[data-state~="env"] #son { display: none; } [data-state~="env"] #opu { display: inline; }
+#line { left: 380px; top: 176px; width: 236px; box-sizing: border-box; }
+#duo { left: 380px; top: 250px; width: 236px; box-sizing: border-box; }
+#shell { left: 380px; top: 250px; width: 236px; box-sizing: border-box; }
+[data-state~="env"] #line, [data-state~="setting"] #duo, [data-state~="shell"] #shell { --o: 1; }
+#none { left: 24px; top: 330px; }
+</style>
+<div class="h" id="hd" data-in="up">Who picks the model</div>
+<div class="card rung" id="r-env" data-f>A variable in his settings <em>Opus</em></div>
+<div class="card rung" id="r-man" data-in="left" data-f>The managed default <em>Sonnet</em></div>
+<div class="card rung" id="r-user" data-in="left" data-f>His "Set as Default" <em>Opus</em></div>
+<div class="s" id="wins" data-in="up">The top one wins.</div>
+<div class="card" id="res" data-in="right" data-f>A new session starts on<span class="n"><span id="son">Sonnet</span><span id="opu">Opus</span></span></div>
+<div class="card fade" id="line"><span class="mono">"env": { "ANTHROPIC_MODEL": "opus" }</span><span class="s">in ~/.claude/settings.json</span></div>
+<div class="sheet fade" id="duo"><b>Duo Settings</b>New sessions start on: Opus ⌄</div>
+<div class="card fade" id="shell"><b>Read ~/.zshrc at launch</b><span class="s">so Duo's sessions match Terminal's</span></div>
+<div class="stamp" id="none" data-in="up" data-f>Duo never picks the model · DL-153</div>

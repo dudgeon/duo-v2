@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Why /btw falls back</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.cap{font-size:13px;line-height:19px;color:#5B636D}
+.cap b{color:#1F2328;font-weight:600}
+.lab{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.mono{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:12px}
+.tui{background:#15171B;border-radius:6px;padding:12px 14px;font:400 12px/18px 'SF Mono',ui-monospace,Menlo,monospace;color:#E6E8EB;white-space:pre;overflow:hidden}
+.tui .d{color:#9AA1AB}
+.box{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.q{display:flex;gap:10px;align-items:baseline}
+.q .n{font:600 12px/18px 'SF Mono',ui-monospace,Menlo,monospace;color:#1F2328;flex:none;width:52px}
+</style>
+</helmet>
+<div style="width: 1400px; height: 1100px; box-sizing: border-box; background: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; color: #1F2328; padding: 40px; display: flex; flex-direction: column; gap: 22px">
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <div style="font-size: 20px; line-height: 26px; font-weight: 600">/btw in chat: what Claude Code does, why chat falls back to the terminal, and the questions</div>
+    <div class="cap" style="max-width: 1300px">Run headless on 2.1.284 (the work Mac’s pin) and 2.1.323 (newest here), on the chat spike’s mock API with a scratch config; no login, no tokens, nothing on screen. Research: <span class="mono">docs/research/btw-in-chat.md</span>. Records F-688 to F-690, Q-550 to Q-554, C-185, ENH-353.</div>
+  </div>
+  <div style="display: flex; gap: 32px; align-items: flex-start">
+    <div style="width: 600px; display: flex; flex-direction: column; gap: 12px">
+      <div class="lab">What /btw draws · the same on both versions</div>
+      <div class="tui"><span class="d">  Step 7 of a slow answer that takes a while.
+  Step 8 of a slow answer that takes a while.
+▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔ ◐ medium · /effort ▔</span>
+    /btw what is two plus two
+      · Answering…
+    <span class="d">Esc to close</span></div>
+      <div class="tui"><span class="d">  Step 14 of a slow answer that takes a while.
+▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔ ● high · /effort ▔</span>
+    /btw what is two plus two
+      The answer, as plain text (Markdown’s marks dropped),
+      wrapped to the pane.
+    <span class="d">↑/↓ to scroll · c to copy · f to fork · Esc to close</span></div>
+      <div class="cap"><b>It runs at once, even while Claude works</b>: it never queues. The panel takes the input box’s place and the footer’s: there is no prompt to type into until Esc. Claude’s turn keeps streaming above it. At the prompt, the panel lists earlier side questions: <span class="mono">⇧←/→ to browse · c to copy · f to fork · x to clear history · Esc to close</span>. Bare <span class="mono">/btw</span> prints <span class="mono">Usage: /btw &lt;your question&gt;</span>.</div>
+      <div class="lab" style="margin-top: 6px">What it leaves for Duo to read</div>
+      <div class="box">
+        <div class="cap"><b>Transcript:</b> nothing. Not the question, not the answer, on either version.</div>
+        <div class="cap"><b>Hooks:</b> no UserPromptSubmit. One <span class="mono">SubagentStop</span> when the answer lands, with <span class="mono">agent_type: ""</span>, an <span class="mono">agent_id</span>, the answer as Markdown in <span class="mono">last_assistant_message</span>, and an <span class="mono">agent_transcript_path</span> that is never written. No SubagentStart before it.</div>
+        <div class="cap"><b>Screen:</b> the question, Answering…, the answer’s text and the footer’s keys.</div>
+        <div class="cap"><b>Prompt history</b> (<span class="mono">history.jsonl</span>): the typed <span class="mono">/btw …</span> line.</div>
+      </div>
+    </div>
+    <div style="width: 680px; display: flex; flex-direction: column; gap: 12px">
+      <div class="lab">Why chat falls back</div>
+      <div class="box">
+        <div class="cap"><b>1.</b> The screen reader finds no input box under the panel (its top is a <span class="mono">▔</span> rule, and the footer is gone), so it reads <span class="mono">unknown</span>: <span class="mono">ChatScreen.swift:454</span>.</div>
+        <div class="cap"><b>2.</b> Unknown for 0.5 s (<span class="mono">ChatSession.swift:272</span>) falls back, and because /btw was just sent from chat the bar is named: “/btw opens in Claude Code’s own screen. Esc closes it and brings chat back.” (<span class="mono">ChatSession.swift:434</span>).</div>
+        <div class="cap"><b>3.</b> That’s by design today: <span class="mono">/btw</span> is on chat’s list of commands with their own screen (<span class="mono">ChatScreen.swift:87</span>, F-173), and the / menu labels it “Opens in the terminal” (<span class="mono">ChatComposerView.swift:159</span>).</div>
+      </div>
+      <div class="lab" style="margin-top: 6px">Two more faults on the way</div>
+      <div class="box">
+        <div class="cap"><b>A queued bubble that never clears.</b> Sent while Claude works, the /btw is shown as your message, “Queued · Claude reads it when it’s ready” (<span class="mono">ChatSend.swift:49</span>). Claude’s turn never reads it, and nothing echoes it, so it stays queued; a reload drops it.</div>
+        <div class="cap"><b>The side answer finishes an agent’s card.</b> With an Agent step running, /btw’s SubagentStop (no start) marks that card done with the side answer as its result (<span class="mono">ChatLog.swift:527–533</span>).</div>
+        <div class="cap"><b>Reproduced by</b> <span class="mono">DUO_CHECKS=btw swift run DuoChecks</span>: 11 checks fail, as they should until the fix.</div>
+      </div>
+      <div class="lab" style="margin-top: 6px">The decisions · recommendation first</div>
+      <div class="box">
+        <div class="q"><span class="n">Q-550</span><span class="cap"><b>Where the side answer shows.</b> A docked side card in the composer’s place · B an aside in the feed · C a popover over the composer. Board 1.</span></div>
+        <div class="q"><span class="n">Q-551</span><span class="cap"><b>What stays after it closes.</b> A a quiet line that reopens it · B nothing, as Claude Code · C kept across restarts. Board 3.</span></div>
+        <div class="q"><span class="n">Q-552</span><span class="cap"><b>The composer meanwhile.</b> A the card holds its place; typing closes the card and keeps your words · B Duo closes Claude’s panel once the answer is in · C a draft held by Duo. Board 3.</span></div>
+        <div class="q"><span class="n">Q-553</span><span class="cap"><b>Fork from a side answer.</b> A a Fork button, after a run checks what f does · B leave f to the terminal · C later. Board 4.</span></div>
+        <div class="q"><span class="n">Q-554</span><span class="cap"><b>How you ask.</b> A <span class="mono">/btw</span> in the composer, its menu row reading “Ask a side question” · B also a button while Claude works · C typed only. Board 4.</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1400,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The side card's states</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.cap{font-size:12px;line-height:17px;color:#5B636D}
+.cap b{color:#1F2328;font-weight:600}
+.lab{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.mono{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:11px}
+</style>
+</helmet>
+<div style="width: 1640px; height: 1000px; box-sizing: border-box; background: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; color: #1F2328; padding: 40px; display: flex; flex-direction: column; gap: 22px">
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <div style="font-size: 18px; line-height: 24px; font-weight: 600">The side card (A), state by state [P]</div>
+    <div class="cap" style="font-size: 13px; line-height: 19px; max-width: 1500px">Each state is one Claude Code shows in its panel, read from the screen; the card never says more than the panel does. The answer’s words come from the hook when it has them, else from the screen.</div>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-start">
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">1 · Answering</div>
+      <dc-import name="Chat" chat="{{answering}}" hint-size="480px,360px"></dc-import>
+      <div class="cap">The panel’s “Answering…” as the working glyph (a still ring, never a spinner) and “Answering · 3s”. Only Close: Copy and Fork wait for an answer, as Claude Code’s footer has only “Esc to close” here. Esc cancels the question.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">2 · Answered, a long answer</div>
+      <dc-import name="Chat" chat="{{long}}" hint-size="480px,360px"></dc-import>
+      <div class="cap">Markdown as chat draws it (the hook’s text keeps it). Past half the pane the card scrolls inside; ↑/↓ scroll it with focus on the card, as in the panel.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">3 · No answer</div>
+      <dc-import name="Chat" chat="{{err}}" hint-size="480px,360px"></dc-import>
+      <div class="cap">Claude Code’s own words when the side query fails or times out: “No answer available for this side question. Try again, or ask in the main conversation.” Plain <span class="mono">text2</span>, no alarm colour. Close only.</div>
+    </div>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-start">
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">4 · At the prompt, with earlier side questions</div>
+      <dc-import name="Chat" chat="{{history}}" hint-size="480px,360px"></dc-import>
+      <div class="cap">At the prompt the panel keeps this session’s earlier side questions: <span class="mono">⇧←/→ to browse · x to clear history</span>. The card shows “2 of 2” with ‹ › (⇧← ⇧→) and a Clear history <span class="mono">x</span> button. Asked while Claude works, the panel shows only the one question, and so does the card.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">5 · Over a running agent</div>
+      <dc-import name="Chat" chat="{{agent}}" hint-size="480px,360px"></dc-import>
+      <div class="cap">The Agent step keeps running and finishes with its own result. Today the side answer is filed as the agent’s result (F-689); the fix keeps a SubagentStop with an empty <span class="mono">agent_type</span> and no start out of the agent cards.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 12px; padding-top: 26px">
+      <div class="cap"><b>Copy</b> puts the answer’s Markdown on the clipboard (the hook’s text), not the wrapped screen text; the button turns to a check and “Copied” for 1.5 s, as chat’s other Copy does.</div>
+      <div class="cap"><b>Bare /btw</b> (no question) doesn’t open the card: Claude Code prints “Usage: /btw &lt;your question&gt;”, which chat shows as its quiet line under the command, the same as other one-line outputs (F-174).</div>
+      <div class="cap"><b>VoiceOver:</b> the card is announced “Side question”, then the question, then the answer when it lands; its buttons read their names and keys.</div>
+      <div class="cap"><b>Dark and Classic:</b> the card takes <span class="mono">pane</span>, <span class="mono">controlEdge</span>, <span class="mono">text</span> and <span class="mono">text2</span>, so both come free.</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1640,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const q = 'What does “idempotent” mean for a refund?';
+    const feed = [
+      { you: true, meta: 'You · 9:52', text: 'Compare the two refund flows in a table, with a short recommendation.' },
+      { claude: true, meta: 'Claude · 9:52', lines: [ 'Both flows are in docs/refunds/flows.md. The main difference is who confirms the refund.' ] },
+      { working: true, text: 'Writing · 32s' }
+    ];
+    const done = [
+      { you: true, meta: 'You · 9:52', text: 'Compare the two refund flows in a table, with a short recommendation.' },
+      { claude: true, meta: 'Claude · 9:54', lines: [ 'Keep self-serve as the default; route orders over $500 to assisted.' ] }
+    ];
+    const keys = [ { label: 'Copy', key: 'c' }, { label: 'Fork…', key: 'f' }, { label: 'Close', key: 'esc' } ];
+    const base = (over) => Object.assign({ w: 480, h: 360, busy: true, items: feed }, over);
+    return {
+      answering: base({ dock: { q, busy: true, busyText: 'Answering · 3s', btns: [ { label: 'Close', key: 'esc' } ], why: 'Claude keeps working above' } }),
+      long: base({ items: [ feed[2] ], dock: { q: 'Which of the two flows handles partial refunds?', lines: [ 'Only the assisted flow. Self-serve refunds the whole order:', '• assisted: any amount, with a reason', '• self-serve: whole orders, within 30 days', 'A partial self-serve refund would need a new screen.' ], btns: keys, why: 'Claude keeps working above' } }),
+      err: base({ dock: { q, err: 'No answer available for this side question. Try again, or ask in the main conversation.', btns: [ { label: 'Close', key: 'esc' } ], why: 'Claude keeps working above' } }),
+      history: base({ busy: false, items: done, dock: { q: 'And how long do refunds take to land?', pager: '2 of 2', lines: [ 'Three to five working days for cards; same day for wallet refunds.' ], btns: [ { label: 'Copy', key: 'c' }, { label: 'Fork…', key: 'f' }, { label: 'Clear history', key: 'x' }, { label: 'Close', key: 'esc' } ], why: '' } }),
+      agent: base({ items: [ feed[0], { claude: true, meta: 'Claude · 9:52', lines: [ 'Agent  Look around the refund docs' ] }, { working: true, text: 'Agent running · 12s' } ], dock: { q: 'Is the agent reading the old flows too?', lines: [ 'That can’t be checked from a side question; ask in the main conversation.' ], btns: keys, why: 'Claude keeps working above' } })
+    };
+  }
+}
+</script>
+</body>
+</html>

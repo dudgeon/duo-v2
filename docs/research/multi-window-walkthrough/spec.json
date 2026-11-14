@@ -1,0 +1,249 @@
+{
+  "id": "multi-window-2026-11",
+  "title": "Multi-window, round 3",
+  "subtitle": "Decision walkthrough · 2 Nov 2026 · narrated by Duo's house voice",
+  "posterLine": "What the research found, then six decisions. Tap play and listen; it stops when it needs you.",
+  "footer": "Built with the decision-walkthrough skill from docs/research/multi-window-walkthrough/spec.json. Answers are saved in this page and sent to director-duo-v2.",
+  "source": { "label": "multi-window-2026-11.md", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/multi-window-2026-11.md" },
+  "director": "director-duo-v2",
+  "sendPrefix": "Multi-window walkthrough",
+  "voice": "house",
+  "styles": "scenes.css",
+  "out": "page",
+  "assets": { "project": "assets/project-sample.jpg", "allprojects": "assets/all-projects-sample.jpg" },
+  "said": {
+    "DL-141": "D L one forty one", "DL-308": "D L three oh eight", "Q-99": "Q ninety nine",
+    "Q-426": "Q four twenty six", "Q-427": "Q four twenty seven", "v1": "vee one", "⌥⌘N": "option command N", "⌘`": "command backtick"
+  },
+  "chapters": [
+    {
+      "id": "why", "title": "Why now", "short": "Why now", "sceneFile": "scenes/why.html",
+      "lines": [
+        { "text": "This is the multi-window research, round three, and it ends in six decisions.",
+          "cues": [ { "on": "multi-window", "do": "camera", "x": 224, "y": 120, "z": 1.35 } ] },
+        { "text": "A power user on v1 works in several windows, one per project, and switches between them all day.",
+          "cues": [ { "at": 0, "do": "camera" }, { "on": "several", "do": "show", "sel": "#w2" },
+                    { "on": "switches", "do": "tap", "sel": "#w1-tb" }, { "on": "switches", "delay": 0.75, "do": "state", "value": "w1front" },
+                    { "on": "all day", "do": "tap", "sel": "#w2-tb" }, { "on": "all day", "delay": 0.75, "do": "state", "value": "" } ] },
+        { "text": "Back in October you chose independent windows, in DL-141.",
+          "cues": [ { "at": 0, "do": "cursor-off" }, { "on": "DL-141", "do": "show", "sel": "#dl141" }, { "on": "DL-141", "do": "focus", "sel": "#dl141", "soft": true } ] },
+        { "text": "Nothing else has been decided since, so this round reads today's code and asks how to build it small.",
+          "cues": [ { "at": 0.1, "do": "unfocus" }, { "on": "today's code", "do": "show", "sel": "#ask" } ] }
+      ]
+    },
+    {
+      "id": "core", "title": "One core, a model per window", "short": "The cut", "sceneFile": "scenes/core.html",
+      "lines": [
+        { "text": "The good news is in the code. Duo's main model already describes itself as one instance per window.",
+          "cues": [ { "on": "one instance", "do": "focus", "sel": "#model" } ] },
+        { "text": "Its state comes in three kinds.",
+          "cues": [ { "at": 0, "do": "unfocus" }, { "on": "three", "do": "show", "sel": ".chip" } ] },
+        { "text": "App-wide things, like sessions, terminals and search, move into a new core that exists once.",
+          "cues": [ { "at": 0, "do": "show", "sel": "#band-app" }, { "on": "move", "do": "state+", "value": "app" } ] },
+        { "text": "Per-project memory, like tabs and shells, lives in the core too, keyed by project, so it follows the project to any window.",
+          "cues": [ { "at": 0, "do": "show", "sel": "#band-proj" }, { "on": "lives", "do": "state+", "value": "proj" } ] },
+        { "text": "Per-window things, like the view, the split and the editors, stay on the model.",
+          "cues": [ { "at": 0.15, "do": "state+", "value": "win" } ] },
+        { "text": "So a second window is just a second model over the same core.",
+          "cues": [ { "on": "second model", "do": "show", "sel": "#win2" }, { "on": "same core", "do": "focus", "sel": "#win2, #band-app, #band-proj" } ] }
+      ]
+    },
+    {
+      "id": "plan", "title": "A plan in small slices", "short": "Slices", "sceneFile": "scenes/plan.html",
+      "lines": [
+        { "text": "That gives a plan in small slices.", "cues": [] },
+        { "text": "Slice zero makes the cut with nothing visible changing, in about two build sessions.",
+          "cues": [ { "at": 0, "do": "show", "sel": "#s0" } ] },
+        { "text": "Slice one is what the power user needs. New Window, Open in New Window, and each window titled with its project, in one or two sessions.",
+          "cues": [ { "at": 0, "do": "show", "sel": "#s1" }, { "at": 0, "do": "focus", "sel": "#s1" } ] },
+        { "text": "Slice two brings the window set back after a relaunch. Your window colours get a slice of their own, and pins wait for later.",
+          "cues": [ { "at": 0, "do": "unfocus" }, { "at": 0, "do": "show", "sel": "#s2" }, { "on": "colours", "do": "show", "sel": "#sc" }, { "on": "pins", "do": "show", "sel": "#s3" } ] },
+        { "text": "v1 spent thirteen to seventeen engineer-weeks on this. Slices zero and one here are three or four sessions, because of one rule.",
+          "cues": [ { "at": 0, "do": "show", "sel": "#cmp-v1" }, { "at": 0, "do": "focus", "sel": "#cmp-v1" }, { "on": "Slices zero", "do": "show", "sel": "#cmp-v2" },
+                    { "on": "Slices zero", "do": "focus", "sel": "#cmp-v1, #cmp-v2" }, { "on": "one rule", "do": "show", "sel": "#rule" }, { "on": "one rule", "do": "focus", "sel": "#cmp-v1, #cmp-v2, #rule", "soft": true } ] }
+      ]
+    },
+    {
+      "id": "settled", "title": "Settled: a project lives in one window", "short": "Settled", "sceneFile": "scenes/settled.html",
+      "lines": [
+        { "text": "That rule is the one you settled earlier today, in DL-308.",
+          "cues": [ { "on": "DL-308", "do": "show", "sel": "#dl308" } ] },
+        { "text": "If a project is already open in another window, opening it again brings that window forward, the way Xcode and Zed do it.",
+          "cues": [ { "on": "opening", "do": "tap", "sel": "#tile-ref" }, { "on": "brings", "do": "state", "value": "front" }, { "on": "brings", "do": "focus", "sel": "#wb", "soft": true } ] },
+        { "text": "So a session's terminal only ever has one window to be in, which keeps the first slices simple.",
+          "cues": [ { "at": 0, "do": "cursor-off" }, { "on": "terminal", "do": "focus", "sel": "#wb-cn" } ] }
+      ]
+    },
+    {
+      "id": "q99-when", "kind": "decision", "q": "Q-99", "title": "When to build", "short": "When",
+      "ask": "When should multi-window be built?",
+      "why": "The build plan (§3a) puts multi-window after v1. Building now logs the power user as the reason.",
+      "look": [ { "label": "The plan, §3 of the research", "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/research/multi-window-2026-11.md#3-build-plan-option-1" } ],
+      "sceneFile": "scenes/q99.html",
+      "setup": [ { "do": "state", "value": "o4" } ],
+      "lines": [
+        { "text": "First decision. When to build it.",
+          "cues": [ { "at": 0, "do": "show", "sel": "#b0, #b1, #b2, #b3" } ] },
+        { "text": "The build plan puts multi-window after v1, so building it now means logging why, and the reason is the power user.",
+          "cues": [ { "on": "after v1", "do": "focus", "sel": "#v1mark, #v1lab" }, { "on": "building it now", "do": "unfocus" } ] },
+        { "text": "I recommend slices zero and one now, then slice two.",
+          "cues": [ { "on": "slices zero", "do": "state", "value": "o1" }, { "on": "slices zero", "do": "show", "sel": "#cost" } ] }
+      ],
+      "options": [
+        { "id": "now-0-1", "label": "Slices 0 and 1 now, then slice 2", "desc": "Logged past §3a for the power user. Restore and needs-you follow.", "recommended": true,
+          "lines": [ { "text": "Option one. Slices zero and one now, three or four sessions, then restore and needs-you follow.",
+                       "cues": [ { "at": 0, "do": "state", "value": "o1" }, { "at": 0.1, "do": "focus", "sel": "#b0, #b1" }, { "on": "then restore", "do": "focus", "sel": "#b2" } ] } ] },
+        { "id": "now-0-2", "label": "Slices 0, 1 and 2 now", "desc": "The window set survives relaunch from the start. About one more session.",
+          "lines": [ { "text": "Option two adds slice two up front, so the window set survives a relaunch from the start. About one more session.",
+                       "cues": [ { "at": 0, "do": "state", "value": "o2" }, { "at": 0.15, "do": "focus", "sel": "#b2" } ] } ] },
+        { "id": "slice0", "label": "Slice 0 only for now", "desc": "The plumbing, with no visible change. Windows wait.",
+          "lines": [ { "text": "Option three builds only the core. Nothing changes on screen, and windows wait.",
+                       "cues": [ { "at": 0, "do": "state", "value": "o3" }, { "at": 0.1, "do": "focus", "sel": "#b0" } ] } ] },
+        { "id": "after-v1", "label": "Nothing until after v1", "desc": "As §3a says today.",
+          "lines": [ { "text": "Option four leaves it all until after v1, as the plan says today.",
+                       "cues": [ { "at": 0, "do": "state", "value": "o4" }, { "at": 0.1, "do": "focus", "sel": "#v1mark, #b0, #b1, #b2" } ] } ] }
+      ]
+    },
+    {
+      "id": "q429-scope", "kind": "decision", "q": "Q-429", "title": "What slice 1 includes", "short": "Scope",
+      "ask": "What goes in slice 1?",
+      "why": "The smallest thing that lets the power user switch projects in two windows.",
+      "look": [ { "label": "Board 1 · How a new window opens", "url": "https://claude.ai/artifact/46yWPpDZn16Qtfrfhbuaw1" }, { "label": "Board 2 · Pinning", "url": "https://claude.ai/artifact/46yWPpDZn16Qtfrfhbuaw1" } ],
+      "sceneFile": "scenes/q429.html",
+      "lines": [
+        { "text": "Next, what slice one includes.", "cues": [] },
+        { "text": "I'd keep it to windows. New Window on ⌥⌘N, and Open in New Window on a project's right-click menu.",
+          "cues": [ { "on": "New Window on", "do": "show", "sel": "#m-file" }, { "on": "New Window on", "do": "focus", "sel": "#mi-new" },
+                    { "on": "and Open", "do": "hide", "sel": "#m-file" }, { "on": "and Open", "do": "unfocus" }, { "on": "and Open", "do": "show", "sel": "#m-ctx" },
+                    { "on": "right-click", "do": "tap", "sel": "#mi-open" }, { "on": "menu.", "do": "show", "sel": "#w2" }, { "on": "menu.", "do": "hide", "sel": "#m-ctx" } ] },
+        { "text": "Each window is titled with its project, and the system's Window menu and ⌘` move between them.",
+          "cues": [ { "at": 0, "do": "cursor-off" }, { "at": 0, "do": "focus", "sel": "#w1-tb, #w2-tb", "soft": true }, { "on": "Window menu", "do": "unfocus" }, { "on": "Window menu", "do": "show", "sel": "#m-win" } ] }
+      ],
+      "options": [
+        { "id": "windows", "label": "New Window, Open in New Window, titles, the system Window menu", "desc": "Board 1's option A. No pin, no colour.", "recommended": true,
+          "lines": [ { "text": "Option one is just that, board one's option A. No pin, and no colour.", "cues": [ { "at": 0, "do": "hide", "sel": "#m-win" }, { "at": 0.1, "do": "focus", "sel": "#w1, #w2", "soft": true } ] } ] },
+        { "id": "plus-pin", "label": "Also Pin (board 2)", "desc": "Needs Q-95's D2 and D3 answered first.",
+          "lines": [ { "text": "Option two adds Pin, from board two. It needs the pinning questions answered first.", "cues": [ { "at": 0, "do": "hide", "sel": "#m-win" }, { "on": "Pin", "do": "show", "sel": "#pin" }, { "on": "Pin", "do": "focus", "sel": "#w2-tb" } ] } ] },
+        { "id": "plus-colour", "label": "Also window colours (boards 4a to 4c)", "desc": "Needs Q-435 first. About one more session.",
+          "lines": [ { "text": "Option three adds window colours, about one more session, once the colour questions are settled.", "cues": [ { "at": 0, "do": "hide", "sel": "#m-win" }, { "on": "window colours", "do": "state", "value": "colour" } ] } ] }
+      ]
+    },
+    {
+      "id": "q431-home", "kind": "decision", "q": "Q-431", "title": "Home with several windows", "short": "Home",
+      "ask": "What does a second window show in Home's pane?",
+      "why": "Home has one terminal, and it can be live in only one window.",
+      "look": [ { "label": "Board 10 · What happens to Home", "url": "https://claude.ai/artifact/46yWPpDZn16Qtfrfhbuaw1" } ],
+      "sceneFile": "scenes/q431.html", "hint": "Tap Show Here",
+      "actions": { "showhere": [ { "do": "state+", "value": "swap" } ], "showback": [ { "do": "state-", "value": "swap" } ] },
+      "lines": [
+        { "text": "Home has one terminal, and a terminal can only be live in one window.",
+          "cues": [ { "on": "one terminal", "do": "focus", "sel": "#home1" }, { "on": "one terminal", "do": "show", "sel": "#cap1" } ] },
+        { "text": "So what does a second window show in Home's pane?",
+          "cues": [ { "on": "second window", "do": "show", "sel": "#h2" }, { "on": "Home's pane", "do": "focus", "sel": "#home2" } ] }
+      ],
+      "options": [
+        { "id": "standin", "label": "All projects in every window; Home live in one, Show Here in the others", "desc": "Board 10's stand-in. Chat there can come later with Q-98's D10.", "recommended": true,
+          "lines": [ { "text": "I recommend every window keeps All projects. Home is live in the window that last had it, and the others say so, with a Show Here button.",
+                       "cues": [ { "at": 0, "do": "unfocus" }, { "on": "the others", "do": "focus", "sel": "#home2", "soft": true }, { "on": "Show Here", "do": "tap", "sel": "#showhere" },
+                                 { "on": "Show Here", "delay": 0.8, "do": "state+", "value": "swap" }, { "on": "Show Here", "delay": 0.8, "do": "show", "sel": "#cap2" } ] } ] },
+        { "id": "first-only", "label": "All projects only in the first window", "desc": "Other windows hold one project each.",
+          "lines": [ { "text": "Or only the first window gets All projects, and every other window holds one project.",
+                       "cues": [ { "at": 0, "do": "unfocus" }, { "on": "every other", "do": "state", "value": "first" }, { "on": "every other", "do": "focus", "sel": "#h2", "soft": true } ] } ] },
+        { "id": "chat-now", "label": "Home's chat in every window now", "desc": "Board 10's chat option, with a composer focus check per window. About half a slice more.",
+          "lines": [ { "text": "Or every window gets Home's chat now, which is about half a slice more.",
+                       "cues": [ { "at": 0, "do": "unfocus" }, { "on": "Home's chat", "do": "state", "value": "chat" } ] } ] }
+      ]
+    },
+    {
+      "id": "q435-palette", "kind": "decision", "q": "Q-435", "title": "Window colours: the palette", "short": "Palette",
+      "ask": "Is that the palette?",
+      "why": "Your idea, from your note on Q-99 (ENH-319). Board 4a has every value, light and dark.",
+      "look": [ { "label": "Board 4a · A base colour for each window, light and dark", "url": "https://claude.ai/artifact/46yWPpDZn16Qtfrfhbuaw1" } ],
+      "sceneFile": "scenes/palette.html", "hint": "Tap a swatch, or Light / Dark",
+      "setup": [ { "do": "state", "value": "" } ],
+      "actions": {
+        "none": [ { "do": "state-", "value": "sky sage lilac sand" } ],
+        "sky": [ { "do": "state-", "value": "sage lilac sand" }, { "do": "state+", "value": "sky" } ],
+        "sage": [ { "do": "state-", "value": "sky lilac sand" }, { "do": "state+", "value": "sage" } ],
+        "lilac": [ { "do": "state-", "value": "sky sage sand" }, { "do": "state+", "value": "lilac" } ],
+        "sand": [ { "do": "state-", "value": "sky sage lilac" }, { "do": "state+", "value": "sand" } ],
+        "mode": [ { "do": "state~", "value": "dark" } ]
+      },
+      "lines": [
+        { "text": "Now the window colours. This one's your idea, from your note on Q-99, a base colour for each window to help you switch context.",
+          "cues": [ { "on": "your idea", "do": "show", "sel": "#credit" } ] },
+        { "text": "The toolbar takes the colour, and the side panes a lighter shade.",
+          "cues": [ { "on": "toolbar", "do": "tap", "sel": "#sw-sky" }, { "on": "toolbar", "delay": 0.7, "do": "state", "value": "sky" }, { "on": "takes", "do": "focus", "sel": "#pw-tb" },
+                    { "on": "side panes", "do": "focus", "sel": "#pw-lp, #pw-rp" } ] },
+        { "text": "The console, the text, the document and the needs-you orange never change.",
+          "cues": [ { "at": 0, "do": "cursor-off" }, { "on": "console", "do": "focus", "sel": "#pw-cn" }, { "on": "document", "do": "focus", "sel": "#pw-cn, #pw-doc" }, { "on": "orange", "do": "focus", "sel": "#pw-cn, #pw-doc, #pw-chip" } ] },
+        { "text": "It works in dark too, and every text colour still passes four and a half to one.",
+          "cues": [ { "at": 0, "do": "unfocus" }, { "on": "dark", "do": "state", "value": "sky dark" }, { "on": "passes", "do": "show", "sel": "#ctr" } ] }
+      ],
+      "options": [
+        { "id": "as-drawn", "label": "Sky, Sage, Lilac, Sand and None, as drawn", "desc": "Light and dark values with their contrast on board 4a.", "recommended": true,
+          "lines": [ { "text": "Option one is the palette as drawn. Sky, Sage, Lilac, Sand, and None.",
+                       "cues": [ { "on": "Sky", "do": "state", "value": "sky" }, { "on": "Sage", "do": "state", "value": "sage" }, { "on": "Lilac", "do": "state", "value": "lilac" },
+                                 { "on": "Sand", "do": "state", "value": "sand" }, { "on": "None", "do": "state", "value": "" } ] } ] },
+        { "id": "more", "label": "More colours", "desc": "Say which in the comment. None may be orange or red.",
+          "lines": [ { "text": "Option two asks for more colours. Say which in the comment, as long as none is orange or red.",
+                       "cues": [ { "at": 0, "do": "show", "sel": "#more" }, { "at": 0, "do": "focus", "sel": "#more", "soft": true }, { "on": "orange", "do": "focus", "sel": "#pw-chip" } ] } ] },
+        { "id": "redraw", "label": "Redraw them", "desc": "Say what's off in the comment.",
+          "lines": [ { "text": "Option three is a redraw, if these feel off. Say what's off in the comment.",
+                       "cues": [ { "at": 0, "do": "state", "value": "lilac" }, { "at": 0.1, "do": "focus", "sel": "#sw, #pw", "soft": true } ] } ] }
+      ]
+    },
+    {
+      "id": "q435-new", "kind": "decision", "q": "Q-435", "title": "Window colours: a new window's colour", "short": "New colour",
+      "ask": "What colour does a new window get?",
+      "why": "To change any window's colour: the swatch after the project's name, Window › Window Colour, or duo2 window colour.",
+      "look": [ { "label": "Board 4b · A new window's colour, and changing it", "url": "https://claude.ai/artifact/46yWPpDZn16Qtfrfhbuaw1" } ],
+      "sceneFile": "scenes/newcolour.html",
+      "lines": [
+        { "text": "What colour does a new window get?", "cues": [ { "at": 0.2, "do": "show", "sel": "#key" } ] },
+        { "text": "Your first window stays None, so Duo looks as it does today until you open a second.",
+          "cues": [ { "on": "first window", "do": "show", "sel": "#n1, #l1" }, { "on": "stays None", "do": "focus", "sel": "#n1", "soft": true }, { "on": "a second", "do": "unfocus" } ] }
+      ],
+      "options": [
+        { "id": "auto", "label": "The next colour no open window has", "desc": "Sky, Sage, Lilac, Sand, then round again. A switch in the swatch's menu turns it off.", "recommended": true,
+          "lines": [ { "text": "I recommend each new window takes the next colour no open window has. Sky, Sage, Lilac, Sand, then round again. A switch turns it off.",
+                       "cues": [ { "on": "new window", "do": "focus", "sel": "#key", "soft": true }, { "on": "Sky", "do": "show", "sel": "#n2, #l2" }, { "on": "Sage", "do": "show", "sel": "#n3, #l3" },
+                                 { "on": "Lilac", "do": "show", "sel": "#n4, #l4" }, { "on": "Sand", "do": "show", "sel": "#n5, #l5" }, { "on": "round again", "do": "show", "sel": "#again, #again-l" },
+                                 { "on": "switch", "do": "unfocus" }, { "on": "switch", "do": "show", "sel": "#switch" } ] } ] },
+        { "id": "plain", "label": "New windows open plain; you pick", "desc": "Nothing changes unless you ask.",
+          "lines": [ { "text": "Or new windows open plain, and you pick a colour from the swatch after the project's name.",
+                       "cues": [ { "at": 0, "do": "state", "value": "plain" }, { "at": 0, "do": "show", "sel": "#n2, #n3, #n4, #n5" }, { "on": "swatch", "do": "tap", "sel": "#n2-sw" },
+                                 { "on": "swatch", "delay": 0.7, "do": "show", "sel": "#menu" } ] } ] }
+      ]
+    },
+    {
+      "id": "q435-classic", "kind": "decision", "q": "Q-435", "title": "Window colours and Classic", "short": "Classic",
+      "ask": "Which one gives way?",
+      "why": "Classic (DL-252) repaints the same grounds for the whole app, so the two can't be on together.",
+      "look": [ { "label": "Board 4c · Window colours and Classic", "url": "https://claude.ai/artifact/46yWPpDZn16Qtfrfhbuaw1" } ],
+      "sceneFile": "scenes/classic.html",
+      "lines": [
+        { "text": "Last one. Classic repaints the same grounds for the whole app, so it can't be on alongside window colours.",
+          "cues": [ { "on": "Classic", "do": "point", "sel": "#seg-classic" }, { "on": "Classic", "do": "focus", "sel": "#seg-classic" }, { "on": "window colours", "do": "focus", "sel": "#k1, #k2" } ] },
+        { "text": "One of them has to give way.", "cues": [ { "at": 0, "do": "unfocus" }, { "at": 0, "do": "cursor-off" } ] }
+      ],
+      "options": [
+        { "id": "classic-wins", "label": "Classic turns window colours off", "desc": "Every window goes Classic; each gets its colour back when you leave Classic.", "recommended": true,
+          "lines": [ { "text": "I recommend Classic takes over. Every window turns Classic, and each one gets its colour back when you leave it.",
+                       "cues": [ { "at": 0, "do": "tap", "sel": "#seg-classic" }, { "on": "takes over", "do": "state", "value": "classic" }, { "on": "Every window", "do": "show", "sel": "#wc, #wc-why" },
+                                 { "on": "when you leave", "do": "tap", "sel": "#seg-light" }, { "on": "when you leave", "delay": 0.7, "do": "state", "value": "" } ] } ] },
+        { "id": "colours-win", "label": "Window colours make Classic unavailable", "desc": "Classic is dimmed until every window is None.",
+          "lines": [ { "text": "Or window colours win, and Classic stays dimmed in Settings until every window is None.",
+                       "cues": [ { "on": "Classic stays", "do": "state", "value": "blocked" }, { "on": "Classic stays", "do": "show", "sel": "#seg-why" }, { "on": "None", "do": "focus", "sel": "#k1, #k2", "soft": true } ] } ] }
+      ]
+    },
+    {
+      "id": "wrap", "title": "That's all six", "short": "Done", "final": true, "sceneFile": "scenes/wrap.html",
+      "lines": [
+        { "text": "That's all six.", "cues": [ { "at": 0, "do": "show", "sel": "#done, #list" } ] },
+        { "text": "Each answer went to the director as you saved it, and Copy decisions puts them all on the clipboard, for any Claude.", "cues": [ { "at": 0, "do": "focus", "sel": "#list", "soft": true } ] },
+        { "text": "Q-426 and Q-427, from the power-user audit, stay on the old review page.", "cues": [ { "at": 0, "do": "show", "sel": "#old" }, { "at": 0, "do": "unfocus" } ] }
+      ]
+    }
+  ]
+}

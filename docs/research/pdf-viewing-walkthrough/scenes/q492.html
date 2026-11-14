@@ -1,0 +1,27 @@
+<style>
+#term { left: 24px; top: 30px; width: 400px; height: 300px; background: #15171b; border-radius: 9px; padding: 12px 14px; font: 13px/19px ui-monospace, "SF Mono", Menlo, monospace; color: #d5d9de; box-shadow: 0 10px 28px rgba(31,35,40,.16); }
+#term .p { color: #9aa1ab; }
+#term .g { color: #7DB38E; }
+#term > div { opacity: 0; transition: opacity .4s; }
+[data-state~="cmd"] #t1, [data-state~="text"] #t2, [data-state~="text"] #t3, [data-state~="eyes"] #t4, [data-state~="eyes"] #t5, [data-state~="read"] #t6 { opacity: 1; }
+#t1 { opacity: 1; }
+#side { left: 446px; top: 40px; width: 170px; }
+#side .bar { margin-top: 8px; }
+#s1 { width: 60px; } #s2 { width: 100px; } #s3 { width: 170px; }
+#rec { left: 446px; top: 268px; font-size: 14px; }
+</style>
+<div id="term" data-f>
+  <div id="t1"><span class="p">$</span> duo2 doc read paper.pdf</div>
+  <div id="t2">--- page 1 ---<br>Chapter 1 · Section 1<br>Signal engine lane pier…</div>
+  <div id="t3">--- page 2 ---  …  --- page 120 ---</div>
+  <div id="t4"><br><span class="g">Pages to look at as images:</span></div>
+  <div id="t5">4, 14, 24 … 114 (charts) · 88 (no text: a scan)</div>
+  <div id="t6"><br><span class="p">Claude:</span> Read paper.pdf, pages 88</div>
+</div>
+<div id="side">
+  <div class="lab">Tokens, 120 pages</div>
+  <div class="bar light" id="s1" data-in="grow" data-f>33k</div>
+  <div class="bar green" id="s2" data-in="grow" data-f>54k</div>
+  <div class="bar" id="s3" data-in="grow" data-f>180k–360k</div>
+</div>
+<div class="stamp" id="rec" data-in="up">Recommended · text</div>

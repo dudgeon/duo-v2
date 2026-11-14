@@ -4,10 +4,17 @@
 import { PptxViewer, RECOMMENDED_ZIP_LIMITS } from './pptx-renderer.js';
 
 const post = (m) => { try { webkit.messageHandlers.duoDeck.postMessage(m); } catch (_) {} };
-const host = document.getElementById('host');
+let host = document.getElementById('host');
+let spare = document.getElementById('spare');   // a redraw is made here, out of sight, then swapped in
 const outline = document.getElementById('outline');
 const tag = document.getElementById('tag');
 let viewer = null, title = '', current = 0, picking = false, hovered = null, frozen = null, hidden = false;
+// What Duo draws around the slides (P3b): cards under a slide, comment pins on a slot or slide, each slide's
+// template beside its number, and tick boxes while slides are being picked (Make Templates, DL-291).
+let overlay = { cards: [], pins: [], templates: [], shapes: {} };
+let slidePicking = false, slidePicks = new Set();
+// How many redraws were asked for and finished, for `deck-probe` (checks and the harness).
+const stats = { opens: 0, refreshes: 0, refreshed: 0, inFlight: 0, waiting: 0 };
 
 const items = () => [...host.querySelectorAll('[data-slide-index]')];
 const count = () => viewer ? viewer.slideCount : 0;
@@ -17,11 +24,13 @@ function decorate(item) {
   if (!item || item.querySelector(':scope > .deck-number')) return;
   const n = document.createElement('div');
   n.className = 'deck-number';
-  n.textContent = String(+item.dataset.slideIndex + 1);
+  n.textContent = numberLabel(+item.dataset.slideIndex + 1);
   item.prepend(n);
   item.querySelector(':scope > div:not(.deck-number)')?.classList.add('deck-slide');
   if (+item.dataset.slideIndex === current - 1) n.classList.add('current');
 }
+
+const numberLabel = (k) => overlay.templates[k - 1] ? `${k} · ${overlay.templates[k - 1]}` : String(k);
 
 // The slide on screen is the one filling most of the pane.
 function track() {
@@ -99,6 +108,15 @@ document.addEventListener('mousemove', (e) => {
   if (el !== hovered) { hovered = el; place(el); }
 }, true);
 document.addEventListener('click', (e) => {
+  if (slidePicking) {
+    const item = e.target.closest?.('[data-slide-index]');
+    if (!item) return;
+    e.preventDefault(); e.stopPropagation();
+    const k = +item.dataset.slideIndex + 1;
+    if (slidePicks.has(k)) slidePicks.delete(k); else slidePicks.add(k);
+    markPicks(); post({ kind: 'slidePicks', slides: [...slidePicks].sort((a, b) => a - b) });
+    return;
+  }
   if (!picking) return;
   e.preventDefault(); e.stopPropagation();
   if (frozen) return;
@@ -108,6 +126,7 @@ document.addEventListener('click', (e) => {
   post({ kind: 'picked', element: describe(el) });
 }, true);
 document.addEventListener('keydown', (e) => {
+  if (slidePicking && e.key === 'Escape') { e.preventDefault(); setSlidePicking(false); post({ kind: 'slidePickEnded' }); return; }
   if (picking && e.key === 'Escape') { e.preventDefault(); stop(); post({ kind: 'pickEnded' }); return; }
   if (picking) return;
   if (e.key === 'PageDown' || e.key === 'ArrowRight') { e.preventDefault(); go(current + 1); }
@@ -140,11 +159,126 @@ function go(n, instant) {
 }
 let glideFrame = 0, glideSafety = 0;
 
-window.__duo = {
+// ---- Duo's marks round the slides -----------------------------------------------------------------
+const SPEECH = '<svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round"><path d="M1.5 1.5h8v5.5H5.5L3 9.2V7H1.5z"/></svg>';
+const el_ = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+
+function applyOverlay() {
+  host.querySelectorAll('.deck-card, .deck-pin, .deck-tick').forEach((e) => e.remove());
+  for (const item of items()) {
+    const k = +item.dataset.slideIndex + 1;
+    const num = item.querySelector(':scope > .deck-number');
+    if (num) num.textContent = numberLabel(k);
+    const wrap = item.querySelector(':scope > .deck-slide') || item;
+    item.style.position = 'relative';
+    // Cards go under the slide, in the order given.
+    overlay.cards.forEach((c, idx) => {
+      if (c.slide !== k) return;
+      const card = el_('div', 'deck-card ' + c.kind);
+      card.dataset.card = String(idx);
+      const msg = el_('div', 'deck-card-msg');
+      if (c.slot) msg.append(el_('b', null, c.slot), document.createTextNode(' ' + c.message));
+      else msg.textContent = c.message;
+      const row = el_('div', 'deck-card-buttons');
+      for (const b of c.buttons) {
+        const btn = el_('button', null, b.label);
+        btn.addEventListener('click', (ev) => { ev.stopPropagation(); post({ kind: 'card', index: idx, button: b.id }); });
+        row.append(btn);
+      }
+      card.append(msg, row);
+      item.append(card);
+    });
+    // Pins: at a slot box's top right, or the slide's.
+    const ir = item.getBoundingClientRect();
+    for (const p of overlay.pins) {
+      if (p.slide !== k) continue;
+      let el = null;
+      const id = p.slot && overlay.shapes[k] ? overlay.shapes[k][p.slot] : null;
+      if (id != null) el = shapeAt(k, id);
+      const pin = el_('button', 'deck-pin');
+      pin.innerHTML = SPEECH;
+      pin.append(el_('span', null, String(p.count)));
+      pin.title = p.slot ? `Comment on ${p.slot}` : 'Comment on this slide';
+      const wr = wrap.getBoundingClientRect();
+      if (el) {
+        const r = el.getBoundingClientRect();
+        pin.style.left = `${Math.round(r.right - ir.left + 4)}px`;
+        pin.style.top = `${Math.round(r.top - ir.top - 2)}px`;
+      } else {
+        pin.style.right = `${Math.round(ir.right - wr.right + 8)}px`;
+        pin.style.top = `${Math.round(wr.top - ir.top + 8)}px`;
+      }
+      pin.addEventListener('mouseenter', () => { if (el && !picking) { hovered = el; place(el); } });
+      pin.addEventListener('mouseleave', () => { if (!picking) place(null); });
+      pin.addEventListener('click', (ev) => { ev.preventDefault(); ev.stopPropagation(); post({ kind: 'pin', thread: p.thread }); });
+      item.append(pin);
+      if (el) {   // a box that reaches the slide's edge keeps its pin inside the slide
+        const lim = wr.right - ir.left - pin.offsetWidth - 4;
+        if (parseFloat(pin.style.left) > lim) pin.style.left = `${Math.round(lim)}px`;
+      }
+    }
+    if (slidePicking) {
+      const t = el_('div', 'deck-tick'); t.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.4l2.4 2.4 4.6-5"/></svg>';
+      t.style.top = `${Math.round(wrap.getBoundingClientRect().top - ir.top + 10)}px`;
+      item.append(t);
+    }
+  }
+  markPicks();
+}
+function markPicks() {
+  for (const item of items()) {
+    const k = +item.dataset.slideIndex + 1, on = slidePicking && slidePicks.has(k);
+    item.classList.toggle('slide-picked', on);
+    item.classList.toggle('slide-picking', slidePicking);
+  }
+}
+// While picking slides they lie in a grid (board 9A): 2 columns under 640 pt of pane, 3 from there. The renderer
+// sizes a slide to the host's width times its zoom, so the zoom is the column's share of the width; leaving puts
+// it back to 1 and returns to the slide that was on screen.
+const GRID_GAP = 16;
+const gridCols = () => window.innerWidth < 640 ? 2 : 3;
+async function fitGrid(on) {
+  if (!viewer) return;
+  const w = host.clientWidth || 1;
+  const cols = on ? gridCols() : 1;
+  host.style.gridTemplateColumns = on ? `repeat(${cols}, minmax(0, 1fr))` : '';
+  const z = on ? ((w - (cols - 1) * GRID_GAP) / cols) / w : 1;
+  await viewer.setZoom(Math.max(10, z * 100));
+  items().forEach(decorate);
+  applyOverlay();
+}
+async function setSlidePicking(on) {
+  const keep = current;
+  slidePicking = on;
+  if (!on) slidePicks = new Set();
+  document.body.classList.toggle('slide-picking', on);
+  host.classList.toggle('grid', on);
+  await fitGrid(on);
+  // The slides settle (the renderer mounts them as it lays out) before the page scrolls to the slide kept.
+  for (let i = 0; i < 3; i++) { await new Promise((r) => setTimeout(r, 60)); if (keep > 0) go(keep, true); }
+  if (keep > 0) { current = keep; post({ kind: 'slide', slide: current, count: count() }); for (const it of items()) it.querySelector(':scope > .deck-number')?.classList.toggle('current', +it.dataset.slideIndex === keep - 1); }
+}
+window.addEventListener('resize', () => { if (slidePicking) fitGrid(true); });
+
+
+// One drawing at a time (open and refresh share `#host`/`#spare`): two edits in quick succession would
+// otherwise draw into the same spare and swap each other's slides away. A request that a newer one
+// superseded while it waited is skipped; the newest always draws.
+let queue = Promise.resolve(), asked = 0;
+function serial(fn) {
+  const mine = ++asked;
+  stats.waiting++;
+  const run = queue.then(() => mine === asked ? fn() : { superseded: true }).finally(() => { stats.waiting--; });
+  queue = run.catch(() => {});
+  return run;
+}
+
+const draw = {
   // Opens the deck DeckViewer serves at deck.pptx (`v` defeats caching); shows `slide` (from 1).
   async open(name, slide, v) {
     title = name;
     stop();
+    stats.opens++;
     viewer?.destroy(); viewer = null; current = 0; host.innerHTML = '';
     try {
       const res = await fetch(`deck.pptx?v=${v}`);
@@ -155,7 +289,9 @@ window.__duo = {
         onSlideRendered: (_, el) => decorate(el.closest?.('[data-slide-index]') || el),
       });
       items().forEach(decorate);
+      applyOverlay();
       if (slide > 1) go(slide, true); else track();   // opening lands on the slide, no scroll
+      applyMarginAnchors();
       post({ kind: 'ready', count: count(), slide: current, width: viewer.slideWidth, height: viewer.slideHeight });
       return { count: count() };
     } catch (err) {
@@ -163,6 +299,138 @@ window.__duo = {
       return { error: String(err && err.message || err) };
     }
   },
+  // Draws the deck again (an edit in the split view's source, DL-275): the new drawing is made out of
+  // sight and swapped in, so the slides don't blink and the pane keeps its scroll and its slide.
+  async refresh(name, slide, v) {
+    if (!viewer) return draw.open(name, slide, v);
+    title = name;
+    stop();
+    const y = scrollY, keep = current;
+    stats.refreshes++; stats.inFlight++;
+    try {
+      const res = await fetch(`deck.pptx?v=${v}`);
+      if (!res.ok) throw new Error(`deck.pptx: ${res.status}`);
+      const bytes = new Uint8Array(await res.arrayBuffer());
+      spare.innerHTML = '';
+      const next = await PptxViewer.open(bytes, spare, {
+        zipLimits: RECOMMENDED_ZIP_LIMITS, fitMode: 'contain', pdfjs: false,
+        onSlideRendered: (_, el) => decorate(el.closest?.('[data-slide-index]') || el),
+      });
+      const old = viewer, oldHost = host;
+      viewer = next; host = spare; spare = oldHost;
+      // The ids follow the roles: the stylesheet's #host rules (slide spacing, rule, grid) are the visible drawing's.
+      spare.id = ''; host.id = 'host'; spare.id = 'spare';
+      host.classList.remove('staged'); spare.classList.add('staged');
+      old.destroy(); spare.innerHTML = '';
+      current = Math.min(keep, count()) || 1;
+      items().forEach(decorate);
+      if (slidePicking) { host.classList.add('grid'); await fitGrid(true); }
+      applyOverlay();
+      scrollTo(0, y); track();
+      applyMarginAnchors();
+      post({ kind: 'ready', count: count(), slide: current, width: viewer.slideWidth, height: viewer.slideHeight });
+      return { count: count() };
+    } catch (err) {
+      post({ kind: 'failed', reason: String(err && err.message || err) });
+      return { error: String(err && err.message || err) };
+    } finally { stats.inFlight--; stats.refreshed++; }
+  },
+};
+
+// ---- the comment margin (DL-337) ----------------------------------------------------------------------
+// Comments in a .pptx are Duo's margin beside this page (Vendor/codemirror side-margin.js): it draws the cards; this page draws what
+// each comment is on, as Markdown does: a run of text takes commentHighlight (commentHighlightActive for the active card's), a shape an
+// outline in the same tokens, the whole slide its number marker boxed. Swift sends the threads' anchors (`marginSet`); the page says
+// where they are (`anchors`), lights the active one (`setActive`), says what is selected (`selection`) and reports scrolling, layout
+// changes and clicks on an anchor.
+let marginThreads = [];
+const tellMargin = (m) => post({ kind: 'margin', ...m });
+function clearMarginAnchors() {
+  for (const m of host.querySelectorAll('mark.duo-comment')) { const p = m.parentNode; while (m.firstChild) p.insertBefore(m.firstChild, m); m.remove(); p.normalize(); }
+  for (const e of host.querySelectorAll('.duo-anchor, .duo-anchor-slide')) { e.classList.remove('duo-anchor', 'duo-anchor-slide', 'duo-active', 'duo-closed'); delete e.dataset.thread; }
+}
+// The characters cp..cp+len of a shape's text, as a range over its text nodes (a paragraph break counts one character).
+function rangeIn(el, cp, len) {
+  const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  let pos = 0, start = null, end = null, lastPara = null;
+  for (let n; (n = w.nextNode());) {
+    const para = n.parentElement.closest('p, [data-para], div') ;
+    if (lastPara && para !== lastPara && pos > 0) pos += 1;
+    lastPara = para;
+    const l = n.data.length;
+    if (!start && cp < pos + l) start = [n, cp - pos];
+    if (start && !end && cp + len <= pos + l) { end = [n, cp + len - pos]; break; }
+    pos += l;
+  }
+  if (!start || !end) return null;
+  const r = document.createRange(); r.setStart(...start); r.setEnd(...end);
+  return r;
+}
+function applyMarginAnchors() {
+  clearMarginAnchors();
+  for (const t of marginThreads) {
+    const item = host.querySelector(`[data-slide-index="${t.slide - 1}"]`);
+    if (!item) continue;
+    let el = null;
+    if (t.shape != null && t.kind !== 'slide') el = shapeAt(t.slide, t.shape);
+    if (t.kind === 'text' && el && t.cp != null && t.len) {
+      const r = rangeIn(el, t.cp, t.len);
+      if (r) {
+        const mk = document.createElement('mark'); mk.className = 'duo-comment'; mk.dataset.thread = t.id;
+        if (t.closed) mk.classList.add('duo-closed');
+        try { r.surroundContents(mk); continue; } catch (_) { /* a range across elements: the shape's outline instead */ }
+      }
+    }
+    if (el) { el.classList.add('duo-anchor'); el.dataset.thread = t.id; if (t.closed) el.classList.add('duo-closed'); continue; }
+    // The whole slide, or an anchor that can't be found: the slide's number marker.
+    const num = item.querySelector(':scope > .deck-number');
+    if (num) { num.classList.add('duo-anchor-slide'); num.dataset.thread = t.id; if (t.closed) num.classList.add('duo-closed'); }
+  }
+}
+const anchorEls = (id) => [...host.querySelectorAll('[data-thread]')].filter((e) => e.dataset.thread === id);
+function marginAnchors() {
+  const out = [];
+  for (const t of marginThreads) {
+    const e = anchorEls(t.id)[0] || host.querySelector(`[data-slide-index="${t.slide - 1}"]`);
+    out.push({ id: t.id, y: e ? e.getBoundingClientRect().top + scrollY : 0, found: !!anchorEls(t.id).length });
+  }
+  return out;
+}
+// What Add Comment is on: selected text in a shape, else the picked shape, else the whole slide on screen.
+function marginSelection() {
+  const sel = getSelection();
+  if (sel && !sel.isCollapsed && sel.rangeCount) {
+    const r = sel.getRangeAt(0);
+    const a = r.commonAncestorContainer.nodeType === 1 ? r.commonAncestorContainer : r.commonAncestorContainer.parentElement;
+    const shape = a?.closest?.('[data-duo-shape-id]');
+    if (shape && host.contains(shape)) {
+      const d = describe(shape).shape, text = sel.toString().trim();
+      return { at: text ? `${d.slide}/${d.id}/${text}` : `${d.slide}/${d.id}`, y: r.getBoundingClientRect().top + scrollY, text };
+    }
+  }
+  if (frozen) { const d = describe(frozen).shape; return { at: `${d.slide}/${d.id}`, y: frozen.getBoundingClientRect().top + scrollY, text: d.name }; }
+  const item = host.querySelector(`[data-slide-index="${current - 1}"]`);
+  return item ? { at: String(current), y: item.getBoundingClientRect().top + scrollY, text: '' } : null;
+}
+{
+  let queued = false;
+  addEventListener('scroll', () => { if (queued) return; queued = true; setTimeout(() => { queued = false; tellMargin({ op: 'scroll', y: scrollY }); }, 16); }, { passive: true });
+  addEventListener('resize', () => tellMargin({ op: 'layout' }));
+  document.addEventListener('click', (e) => {
+    if (picking || !document.body.classList.contains('margin')) return;
+    const a = e.target.closest?.('[data-thread]');
+    if (a) tellMargin({ op: 'anchor', id: a.dataset.thread });
+  });
+}
+
+window.__duo = {
+  open: (name, slide, v) => serial(() => draw.open(name, slide, v)),
+  refresh: (name, slide, v) => serial(() => draw.refresh(name, slide, v)),
+  // Duo's marks: { cards, pins, templates, shapes } (see DeckViewer.setOverlay); drawn now, and after each redraw.
+  overlay(o) { overlay = Object.assign({ cards: [], pins: [], templates: [], shapes: {} }, o); applyOverlay(); return true; },
+  slidePicking: async (on) => { await setSlidePicking(!!on); return true; },
+  setSlidePicks: (list) => { slidePicks = new Set(list); markPicks(); return true; },
+  overlayState: () => ({ cards: host.querySelectorAll('.deck-card').length, pins: host.querySelectorAll('.deck-pin').length, ticks: host.querySelectorAll('.deck-tick').length }),
   go, current: () => current, count,
   start, stop, unfreeze: () => { frozen = null; place(null); },
   freeze: (sel) => { const [s, id] = String(sel).split('/'); const el = shapeAt(+s, id); if (el) { picking = true; frozen = el; go(+s, true); place(el); post({ kind: 'picked', element: describe(el) }); } return !!el; },
@@ -172,7 +440,22 @@ window.__duo = {
   hover: (sel) => { const [s, id] = String(sel).split('/'); const el = shapeAt(+s, id); if (el && picking && !frozen) { hovered = el; place(el); } return !!el; },
   hideOutline: () => { hidden = true; place(null); },
   showOutline: () => { hidden = false; place(frozen); },
-  selection: () => null,
+  selection: marginSelection,
+  margin(on, showClosed) { document.body.classList.toggle('margin', !!on); document.body.classList.toggle('show-closed', !!showClosed); return true; },
+  marginSet(list) { marginThreads = list || []; applyMarginAnchors(); return true; },
+  anchors: marginAnchors,
+  setHover(id) { for (const e of host.querySelectorAll('[data-thread]')) e.classList.toggle('duo-hot', !!id && e.dataset.thread === id); return true; },
+  setActive(id) { for (const e of host.querySelectorAll('[data-thread]')) e.classList.toggle('duo-active', !!id && e.dataset.thread === id); return true; },
+  // What is on screen, from the DOM (redraw-blank.md): the visible container, its slides and their sizes.
+  probe: (find) => {
+    const cs = getComputedStyle(host), its = items();
+    return { count: count(), current, host: host.id, hostClass: host.className, spare: spare.id, spareClass: spare.className,
+      items: its.length, spareItems: spare.querySelectorAll('[data-slide-index]').length,
+      sizes: its.slice(0, 3).map((it) => { const r = it.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height), Math.round(r.top)]; }),
+      shapes: host.querySelectorAll('[data-duo-shape-id]').length, found: find ? (host.textContent || '').includes(find) : null,
+      visibility: cs.visibility, display: cs.display, position: cs.position,
+      scrollY: Math.round(scrollY), bodyHeight: document.body.scrollHeight, ...stats };
+  },
 };
 // Anything the page's policy blocks is reported, so a renderer change that needs more shows up.
 document.addEventListener('securitypolicyviolation', (e) => post({ kind: 'blocked', what: `${e.violatedDirective} ${e.blockedURI}` }));

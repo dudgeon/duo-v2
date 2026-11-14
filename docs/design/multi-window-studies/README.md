@@ -9,6 +9,7 @@ Geoff's direction (DL-141, 2026-10-07): independent windows, each optionally pin
   - Boards 1 to 10 are decisions, each with 2–3 options and one marked recommended.
   - `Win.dc.html` is the mini window the boards share.
   - `canvas/` is a copy of the canvas's files as of this commit.
+  - Board **4a′ · Twelve window colours** (`ColourTwelve.dc.html`, component `WinColour12.dc.html`) supersedes 4a's four colours (Q-441, F-547). It draws direction C of board **4a″ · Telling windows apart** (`ColourApart.dc.html`), which Geoff chose. Its values come from `palette/window_palette.py` (`palette.json`); re-run that script to check contrast after any change. Rendered proofs: `palette/board-4a-prime.png`, `palette/board-4a-double-prime.png`.
 - **Spec:** https://claude.ai/artifact/GaK5hPxTAxphXEZJSoXaYA (`spec.html`). It covers what changes, the tradeoffs, the size in slices, and twelve decisions, D1 to D12.
   - Geoff picks an option on each decision and presses Send to Claude.
   - Picks are kept in the page's store, in the `picks` and `submissions` collections, which a session reads with `ArtifactData`.
@@ -32,3 +33,16 @@ Once Geoff decides:
 - export the chosen boards to `screens/`, rendered to static markup, with a `manifest.json`, as in the other handoffs;
 - add the tints as `windowTint*` tokens in `build-handoff/tokens.json`;
 - record the choices in DL-141's follow-up.
+
+## Slice 1's stand-ins, drawn (2026-11-02; Q-444 to Q-447)
+
+Multi-window slice 1 found four things no board drew. Each is a board on the canvas, with the stand-in as built and one or two alternatives, the recommendation first:
+
+| Q | Board | Recommended |
+|---|---|---|
+| Q-444 | 4b′ · Choosing from twelve (`ColourChoose.dc.html`) | A: hue columns named once, Light and Deep rows; the menu in 4a′'s hue order (the stand-in is B) |
+| Q-445 | 4b″ · The swatch at All projects (`ColourAllProjects.dc.html`) | A: after the last crumb, as built |
+| Q-446 | 4c′ · Window Colour under Classic (`ColourClassicMenu.dc.html`) | A: the submenu opens with the line, the colours dimmed with the window's own ticked, and Appearance Settings… (the stand-in is B) |
+| Q-447 | 10′ · Naming the window Home is in (`HomeNamed.dc.html`) | A: "Home is showing in the Blue window", on a chip of that colour, with Go There beside Show Here (the stand-in is B) |
+
+`standins/gen_boards.py` writes the four boards from `palette/palette.json`; `standins/*.png` are their renders (headless Chromium via `expand2.py` and `shot.mjs`, as for 4a′).

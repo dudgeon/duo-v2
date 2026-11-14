@@ -1,4 +1,5 @@
 import AppKit
+import DuoControl
 import Foundation
 
 /// The chat-mode-handoff boards as window states (`--state chat-<board>`), each drawn from a
@@ -31,7 +32,9 @@ public enum ChatTargets {
                                             "md-composer", "md-composer-wrap", "md-composer-fence",
                                             // voice-input-handoff (DL-261): the mic and its states, drawn without a microphone.
                                             "voice-rest", "voice-hover", "voice-listening", "voice-holding", "voice-finishing", "voice-done", "voice-download",
-                                            "voice-denied", "voice-restricted", "voice-nomic", "voice-nolang", "voice-stopped", "voice-lost"]
+                                            "voice-denied", "voice-restricted", "voice-nomic", "voice-nolang", "voice-stopped", "voice-lost",
+                                            // F-656: a transcript after /rewind (Fixtures/rewind): chat shows the live branch. No design: a capture to look at.
+                                            "rewind-after"]
     nonisolated public static let screens = boards.map { "chat-" + $0 }
 
     public static func folder(_ board: String) -> URL? {
@@ -39,7 +42,7 @@ public enum ChatTargets {
         var dir = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
         let handoff = board.hasPrefix("polish-") ? "chat-polish-handoff" : board.hasPrefix("slash-") ? "chat-slash-handoff" : board.hasPrefix("paste-") ? "chat-paste-handoff" : board.hasPrefix("chip-") ? "chat-model-chip-handoff" : board.hasPrefix("md-") ? "chat-markdown-handoff" : board.hasPrefix("voice-") ? "voice-input-handoff" : "chat-mode-handoff"
         for _ in 0..<6 {
-            let c = dir.appending(path: "docs/design/\(handoff)/fixture-chat/\(board)")
+            let c = board.hasPrefix("rewind-") ? dir.appending(path: "Fixtures/rewind/fixture-chat/\(board)") : dir.appending(path: "docs/design/\(handoff)/fixture-chat/\(board)")
             if FileManager.default.fileExists(atPath: c.path) { return c }
             dir.deleteLastPathComponent()
         }
@@ -138,7 +141,8 @@ public enum ChatRecording {
         if let now, let d = ChatIngest.iso.date(from: now) ?? ISO8601DateFormatter().date(from: now) { chat.fixedNow = d }
         chat.log.cwd = "/Users/pm/work/payments/checkout-redesign"
         // Both sources, in the order things happened (a transcript line before a hook at the same moment).
-        let t = (try? Data(contentsOf: dir.appending(path: "transcript.jsonl"))).map(ChatIngest.lines) ?? []
+        // The live branch, as the feed reads it (F-656).
+        let t = (try? Data(contentsOf: dir.appending(path: "transcript.jsonl"))).map { LiveBranch.filter(ChatIngest.lines($0)) } ?? []
         let e = (try? Data(contentsOf: dir.appending(path: "events.jsonl"))).map(ChatIngest.lines) ?? []
         var all: [(at: Double, n: Int, hook: Bool, obj: ChatJSON)] = []
         for (n, r) in t.enumerated() {

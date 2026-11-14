@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mini window with a base colour</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 520px; height: 325px; box-sizing: border-box; display: flex; flex-direction: column; border: 1px solid {{edgeLine}}; border-radius: 8px; overflow: hidden; background: {{pane}}; color: {{text}}; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 10px; line-height: 14px; white-space: nowrap">
+<div style="display: flex; align-items: center; gap: 6px; height: 24px; flex: none; padding: 0 8px; border-bottom: 1px solid {{rule}}; background: {{ground}}">
+<span style="display: flex; gap: 4px; margin-right: 4px"><span style="width: 7px; height: 7px; border-radius: 50%; background: {{l1}}"></span><span style="width: 7px; height: 7px; border-radius: 50%; background: {{l2}}"></span><span style="width: 7px; height: 7px; border-radius: 50%; background: {{l3}}"></span></span>
+<span style="color: {{text2}}">All projects</span>
+<svg width="5" height="7" viewBox="0 0 8 10" aria-hidden="true"><path d="M2 1.5 6 5 2 8.5" fill="none" stroke="{{text2}}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span style="font-weight: 600">{{project}}</span>
+<sc-if value="{{showSwatch}}" hint-placeholder-val="{{ true }}"><span style="display: flex; align-items: center; gap: 2px; padding: 1px 3px; border: 1px solid {{swatchRing}}; border-radius: 4px; background: {{swatchBtnBg}}"><span style="width: 8px; height: 8px; border-radius: 50%; border: 1px solid {{controlEdge}}; background: {{swatch}}"></span><svg width="5" height="4" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="{{text2}}" stroke-width="1.5" stroke-linecap="round"></path></svg></span></sc-if>
+<span style="display: flex; align-items: center; gap: 4px; margin-left: 4px; padding: 0 5px; border: 1.5px solid {{needs}}; border-radius: 5px; background: {{chipBg}}; font-size: 9px; font-weight: 600; color: {{needs}}"><svg width="6" height="6" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="{{needs}}"></circle></svg>1 needs you</span>
+<span style="display: flex; align-items: center; gap: 4px; width: 112px; height: 15px; box-sizing: border-box; margin-left: auto; padding: 0 5px; border: 1px solid {{rule}}; border-radius: 4px; background: {{field}}; color: {{text2}}; font-size: 8px">Search all projects<span style="margin-left: auto">⇧⌘A</span></span>
+</div>
+<div style="display: flex; flex: 1; min-height: 0">
+<div style="width: 112px; flex: none; display: flex; flex-direction: column; gap: 2px; padding: 8px 6px; box-sizing: border-box; border-right: 1px solid {{rule}}; background: {{side}}">
+<span style="font-weight: 600; padding: 0 4px">{{project}}</span>
+<span style="padding: 4px 4px 0; font-size: 7px; font-weight: 600; letter-spacing: 0.06em; color: {{needs}}">NEEDS YOU · 1</span>
+<span style="display: flex; align-items: center; gap: 4px; height: 16px; padding: 0 4px; border-radius: 4px; background: {{selected}}"><svg width="6" height="6" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="{{needs}}"></circle></svg>{{s1}}</span>
+<span style="padding: 4px 4px 0; font-size: 7px; font-weight: 600; letter-spacing: 0.06em; color: {{text2}}">WORKING · 1</span>
+<span style="display: flex; align-items: center; gap: 4px; height: 16px; padding: 0 4px; border-radius: 4px; background: {{activeTint}}"><svg width="6" height="6" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="none" stroke="{{text}}" stroke-width="1.5"></circle></svg>{{s2}}</span>
+<span style="padding: 4px 4px 0; font-size: 7px; font-weight: 600; letter-spacing: 0.06em; color: {{text2}}">IDLE · 1</span>
+<span style="display: flex; align-items: center; gap: 4px; height: 16px; padding: 0 4px; color: {{text2}}"><svg width="6" height="6" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5h6" stroke="{{text2}}" stroke-width="1.6" stroke-linecap="round"></path></svg>{{s3}}</span>
+<span style="margin-top: auto; border-top: 2px solid {{rule}}; padding: 4px 4px 0; font-size: 7px; font-weight: 600; letter-spacing: 0.06em; color: {{text2}}">FILES</span>
+<span style="height: 5px; width: 70px; margin: 3px 4px; border-radius: 2px; background: {{placeholder}}"></span>
+<span style="height: 5px; width: 54px; margin: 3px 4px; border-radius: 2px; background: {{placeholder}}"></span>
+</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; background: {{console}}; color: #E6E8EB">
+<div style="display: flex; align-items: center; gap: 8px; height: 18px; flex: none; padding: 0 8px; border-bottom: 1px solid {{consoleRule}}; font-family: 'SF Mono', ui-monospace, monospace; font-size: 8px">
+<span style="font-weight: 500; color: {{consoleText}}">{{s1}}</span><span style="color: {{consoleText2}}">{{s2}}</span><span style="color: {{consoleText2}}">+</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 10px">
+<span style="height: 5px; width: 160px; border-radius: 2px; background: {{consoleBar}}"></span>
+<span style="height: 5px; width: 120px; border-radius: 2px; background: {{consoleBar}}"></span>
+<span style="height: 5px; width: 140px; border-radius: 2px; background: {{consoleBar}}"></span>
+<span style="height: 5px; width: 90px; border-radius: 2px; background: {{consoleBar}}"></span>
+</div>
+</div>
+<div style="width: 150px; flex: none; display: flex; flex-direction: column; border-left: 1px solid {{rule}}; background: {{side}}">
+<div style="display: flex; align-items: center; gap: 8px; height: 18px; flex: none; padding: 0 8px; border-bottom: 1px solid {{rule}}; font-size: 8px"><span style="font-weight: 600">{{doc}}</span><span style="color: {{text2}}">Browser</span></div>
+<div style="flex: 1; display: flex; flex-direction: column; gap: 6px; margin: 6px; padding: 8px; border: 1px solid {{rule}}; border-radius: 4px; background: {{page}}">
+<span style="font-weight: 600">{{doc}}</span>
+<span style="height: 5px; width: 110px; border-radius: 2px; background: {{placeholder}}"></span>
+<span style="height: 5px; width: 92px; border-radius: 2px; background: {{placeholder}}"></span>
+<span style="height: 5px; width: 104px; border-radius: 2px; background: {{placeholder}}"></span>
+<span style="height: 5px; width: 64px; border-radius: 2px; background: {{placeholder}}"></span>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"mode":{"editor":"enum","options":["light","dark","classic"],"default":"light"},"colour":{"editor":"enum","options":["none","sky","sage","lilac","sand"],"default":"none"},"swatchBtn":{"editor":"enum","options":["on","open","off"],"default":"on"},"key":{"editor":"enum","options":["yes","no"],"default":"yes"},"project":{"editor":"text","default":"refunds"},"s1":{"editor":null},"s2":{"editor":null},"s3":{"editor":null},"doc":{"editor":null},"$preview":{"width":520,"height":325}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const p = this.props;
+    const base = {
+      light: { ground: '#F3F4F6', pane: '#FFFFFF', selected: '#E9ECEF', rule: '#C9CDD3', controlEdge: '#8B939C', text: '#1F2328', text2: '#5B636D', needs: '#C2410C', placeholder: '#D5D9DE', activeTint: '#E8F0FA', console: '#15171B', consoleRule: '#2B2F36', consoleText: '#E6E8EB', consoleText2: '#9AA1AB', consoleBar: '#2F333A' },
+      dark: { ground: '#131518', pane: '#181A1E', selected: '#262A30', rule: '#2B2F36', controlEdge: '#6E7681', text: '#E6E8EB', text2: '#9AA1AB', needs: '#F97316', placeholder: '#2B2F36', activeTint: '#18222E', console: '#0C0D10', consoleRule: '#24272D', consoleText: '#E6E8EB', consoleText2: '#9AA1AB', consoleBar: '#24272D' },
+      classic: { ground: '#F0E9D6', pane: '#FBF8EE', selected: '#F2D9B8', rule: '#D4C8A6', controlEdge: '#B8AB8E', text: '#1A1410', text2: '#7B6F58', needs: '#B91C1C', placeholder: '#E5DCC1', activeTint: '#F0E9D6', console: '#1A1410', consoleRule: '#352D23', consoleText: '#F0E9D6', consoleText2: '#8A7E66', consoleBar: '#352D23' }
+    };
+    const colours = {
+      light: { sky: ['#DDE8F6', '#F2F7FC', '#7FA6D9'], sage: ['#DDEEE2', '#F2F8F4', '#7DB38E'], lilac: ['#E8E1F3', '#F7F4FB', '#A88FD0'], sand: ['#F1EBDC', '#FAF7F0', '#C9AE6E'] },
+      dark: { sky: ['#111A27', '#162131', '#5C86C0'], sage: ['#111D17', '#16241D', '#5E9A72'], lilac: ['#191528', '#1F1A31', '#8C73BA'], sand: ['#1D1910', '#241F15', '#A88F55'] }
+    };
+    const mode = p.mode ?? 'light';
+    const b = base[mode] ?? base.light;
+    const name = mode === 'classic' ? 'none' : (p.colour ?? 'none');
+    const c = name !== 'none' ? colours[mode][name] : null;
+    const key = (p.key ?? 'yes') !== 'no';
+    const btn = p.swatchBtn ?? 'on';
+    return {
+      ground: c ? c[0] : b.ground,
+      side: c ? c[1] : b.pane,
+      pane: c ? c[1] : b.pane,
+      page: b.pane,
+      field: b.pane,
+      swatch: c ? c[2] : b.pane,
+      showSwatch: btn !== 'off' && mode !== 'classic',
+      swatchRing: btn === 'open' ? b.text : 'transparent',
+      swatchBtnBg: btn === 'open' ? b.pane : 'transparent',
+      chipBg: c && mode === 'light' ? b.pane : 'transparent',
+      edgeLine: b.controlEdge,
+      selected: b.selected, rule: b.rule, controlEdge: b.controlEdge, text: b.text, text2: b.text2, needs: b.needs,
+      placeholder: b.placeholder, activeTint: b.activeTint,
+      console: b.console, consoleRule: b.consoleRule, consoleText: b.consoleText, consoleText2: b.consoleText2, consoleBar: b.consoleBar,
+      l1: key ? '#FF5F57' : b.rule, l2: key ? '#FEBC2E' : b.rule, l3: key ? '#28C840' : b.rule,
+      project: p.project ?? 'refunds',
+      s1: p.s1 ?? 'Refund rules', s2: p.s2 ?? 'Policy diff', s3: p.s3 ?? 'Ops notes', doc: p.doc ?? 'rules.md'
+    };
+  }
+}
+</script>
+</body>
+</html>

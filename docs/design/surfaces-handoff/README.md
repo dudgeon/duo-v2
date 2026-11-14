@@ -1,5 +1,7 @@
 # Duo surfaces — design handoff
 
+> **Superseded in part by DL-336 (2026-11-11):** `home-none` drew Home's pane with no session; Home's first state is now the console message on Home's page ("Start Claude in Home"). Its screens are a snapshot and stay as drawn; see `../home-agent-panel-handoff/`.
+
 Status: slice 1 of several · 2026-10-04 · Owner: Geoff · Answers `docs/design/design-brief-2026-10-04.md`. Written by the design session (Claude).
 
 > **Since this handoff (2026-10-05):**

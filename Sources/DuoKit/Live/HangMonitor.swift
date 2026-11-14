@@ -8,8 +8,27 @@ import DuoControl
 /// walks its frame pointers into a buffer allocated beforehand (nothing that could take a lock the
 /// main thread holds), then resumes it. When the main thread answers, the stall, the screen and
 /// the samples go to `HangLog` (up to 30 samples, 1.5 s of a long stall, 64 frames each). With no stall, its cost is one wakeup and one empty block every 50 ms.
+///
+/// A launch that never finishes is logged too (F-573): until `launchFinished()` is called, a launch still going
+/// after `launchLimit` writes its main-thread samples (screen `launching: …`), and again every 10 s. The pings alone
+/// miss it: 0.2.23 sat in `Process.waitUntilExit()` inside `DuoApp.init`, a nested run loop that kept answering them,
+/// so a launch stuck for good left no line in hangs.jsonl.
 public final class HangMonitor: @unchecked Sendable {
     public static let shared = HangMonitor()
+
+    /// Where records go, and how long a launch may take before it is logged. DuoChecks makes its own.
+    let log: URL?
+    let launchLimit: TimeInterval
+    public init(log: URL? = nil, launchLimit: TimeInterval = 10) { self.log = log; self.launchLimit = launchLimit }
+    private var launchDone = false
+    private var startedAt = Date()
+    /// The app finished launching (`didFinishLaunching`): from here only stalls are logged.
+    public func launchFinished() { lock.lock(); launchDone = true; lock.unlock() }
+    private var launching: Bool { lock.lock(); defer { lock.unlock() }; return !launchDone }
+    private func append(_ r: HangLog.Record) {
+        let to = log
+        DispatchQueue.global(qos: .utility).async { if let to { HangLog.append(r, to: to) } else { HangLog.append(r) } }
+    }
 
     private let lock = NSLock()
     private var running = false
@@ -34,6 +53,7 @@ public final class HangMonitor: @unchecked Sendable {
         lock.lock(); defer { lock.unlock() }
         guard !running else { return }
         running = true
+        startedAt = Date()
         self.screen = screen
         mainThread = mach_thread_self()
         let me = pthread_self()
@@ -51,7 +71,29 @@ public final class HangMonitor: @unchecked Sendable {
 
     private func watch() {
         let answered = DispatchSemaphore(value: 0)
+        var launchSamples: [[String]] = [], launchWritten: Date?
         while isRunning {
+            // A launch that hasn't finished: sampled once a second past the limit, written every 10 s (F-573).
+            if launching, Date().timeIntervalSince(startedAt) >= launchLimit {
+                if launchSamples.count < Self.maxSamples, let s = sampleMain() { launchSamples.append(s) }
+                let now = Date()
+                if launchWritten.map({ now.timeIntervalSince($0) >= 10 }) ?? true {
+                    launchWritten = now
+                    let secs = Int(now.timeIntervalSince(startedAt))
+                    append(HangLog.Record(at: startedAt, ms: secs * 1000, screen: "launching: not finished after \(secs) s", version: Self.version,
+                                          samples: launchSamples.isEmpty ? nil : launchSamples, binary: launchSamples.isEmpty ? nil : Self.binary, ongoing: true))
+                }
+                Thread.sleep(forTimeInterval: 1)
+                continue
+            }
+            // It finished after all: the whole launch replaces the ongoing line.
+            if launchWritten != nil, !launching {
+                launchWritten = nil
+                let ms = Int(Date().timeIntervalSince(startedAt) * 1000)
+                append(HangLog.Record(at: startedAt, ms: ms, screen: "launching: finished after \(ms / 1000) s", version: Self.version,
+                                      samples: launchSamples.isEmpty ? nil : launchSamples, binary: launchSamples.isEmpty ? nil : Self.binary))
+                launchSamples = []
+            }
             let sent = Date()
             pings += 1
             // What's on screen, every 2 s while the main thread answers: a stall still going can't ask.
@@ -76,7 +118,7 @@ public final class HangMonitor: @unchecked Sendable {
                     written = now
                     let r = HangLog.Record(at: sent, ms: Int(stuck * 1000), screen: lastScreen, version: Self.version,
                                            samples: samples.isEmpty ? nil : samples, binary: samples.isEmpty ? nil : Self.binary, ongoing: true)
-                    DispatchQueue.global(qos: .utility).async { HangLog.append(r) }
+                    append(r)
                 }
             }
             let ms = Int(Date().timeIntervalSince(sent) * 1000)
@@ -85,7 +127,7 @@ public final class HangMonitor: @unchecked Sendable {
             DispatchQueue.main.async { [self] in
                 let r = HangLog.Record(at: sent, ms: ms, screen: screen(), version: Self.version,
                                        samples: kept.isEmpty ? nil : kept, binary: kept.isEmpty ? nil : Self.binary)
-                DispatchQueue.global(qos: .utility).async { HangLog.append(r) }
+                append(r)
             }
         }
     }

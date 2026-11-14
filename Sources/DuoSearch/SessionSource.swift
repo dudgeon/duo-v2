@@ -59,8 +59,10 @@ public enum SessionSource {
             turns.append(Turn(index: turns.count + 1, text: "You: \(p)" + (reply.isEmpty ? "" : "\n\nClaude: \(reply)")))
             prompt = nil; replies = []
         }
-        for line in data.split(separator: UInt8(ascii: "\n")) {
-            guard let r = try? JSONSerialization.jsonObject(with: Data(line)) as? [String: Any], let type = r["type"] as? String else { continue }
+        // Turns /rewind removed stay in the file as a dead branch: index the live one (F-656).
+        let records = LiveBranch.filter(data.split(separator: UInt8(ascii: "\n")).compactMap { try? JSONSerialization.jsonObject(with: Data($0)) as? [String: Any] })
+        for r in records {
+            guard let type = r["type"] as? String else { continue }
             if cwd == nil, let c = r["cwd"] as? String { cwd = c }
             switch type {
             case "custom-title": custom = r["customTitle"] as? String ?? custom
@@ -68,6 +70,11 @@ public enum SessionSource {
             case "relocated": relocated = r["relocatedCwd"] as? String ?? relocated
             case "user":
                 guard r["isMeta"] as? Bool != true, r["isSidechain"] as? Bool != true, let text = promptText(r) else { continue }
+                close()
+                prompt = text
+            case "attachment":
+                // A message typed while a turn ran (C-173, F-638).
+                guard r["isSidechain"] as? Bool != true, let text = MidTurnPrompt.text(r) else { continue }
                 close()
                 prompt = text
             case "assistant":
@@ -136,7 +143,7 @@ extension SearchIndex {
             }
             let (turns, title, cwd) = SessionSource.read(t.path)
             guard !turns.isEmpty else { continue }
-            let tokenizer = try embedder.get().tokenizer
+            let tokenizer = try embedder.tokenizer()
             let chunks = turns.flatMap { turn -> [Chunk] in
                 let text = Secrets.redact(turn.text)
                 let pieces = Chunker.chunks(path: "turn.txt", text: text, tokenizer: tokenizer)
@@ -154,7 +161,7 @@ extension SearchIndex {
             if let k = known[key], k.modified == mod, k.size == (v?.fileSize ?? 0) { continue }
             let (turns, title, _) = SessionSource.read(a.copy.path)
             guard !turns.isEmpty else { continue }
-            let tokenizer = try embedder.get().tokenizer
+            let tokenizer = try embedder.tokenizer()
             let chunks = turns.flatMap { turn -> [Chunk] in
                 Chunker.chunks(path: "turn.txt", text: Secrets.redact(turn.text), tokenizer: tokenizer)
                     .map { Chunk(text: $0.text, startLine: turn.index, endLine: turn.index) }
@@ -171,7 +178,7 @@ extension SearchIndex {
             guard let raw = FileSource.read(m.path) else { continue }
             // The bucket folder's sessions tell us its cwd.
             let cwd = transcripts.first { $0.path.hasPrefix(m.bucket + "/") }.flatMap { SessionSource.read($0.path).cwd }
-            let chunks = Chunker.chunks(path: m.path, text: Secrets.redact(raw), tokenizer: try embedder.get().tokenizer)
+            let chunks = Chunker.chunks(path: m.path, text: Secrets.redact(raw), tokenizer: try embedder.tokenizer())
             try store(key: key, kind: "memory", project: owner(cwd), title: "Memory: " + (m.path as NSString).lastPathComponent,
                       modified: mod, size: v?.fileSize ?? 0, chunks: chunks, replacing: known[key]?.id, embedder: embedder, stats: &stats)
         }

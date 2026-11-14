@@ -87,7 +87,7 @@ extension AppModel {
         splits.revision += 1
         splits.dropPolicy(project, path)
         if htmlViewerIfLoaded?.bufferText != nil { htmlViewerIfLoaded?.endBuffer() }
-        if !splits.any { giveBackRoom() }
+        if splitTabs.isEmpty { giveBackRoom() }   // the room is the window's: a split left in another project doesn't hold it
     }
 
     // MARK: - Previewing (the provider interface)
@@ -98,7 +98,10 @@ extension AppModel {
         guard let project = currentProject?.name, let t = splitTabs[path] else { return }
         let policy = splits.policy(project, path)
         policy.onRequest = { [weak self, weak policy] e in if let policy { self?.previewRequest(e, policy) } }   // R11, R12
-        if t.kind == .markdown { splits.markdown.emit = { [weak policy] e in policy?.accept(e) } }
+        if let p = splits.provider(t.kind) {
+            if let file = liveFile(path) { p.bind(path: path, file: file, model: self) }   // which split it previews now
+            p.emit = { [weak policy] e in policy?.accept(e) }   // maps, problems, comments, current
+        }
         let render: @MainActor (Int) -> Void = { [weak self] rev in self?.renderPreview(path, rev: rev) }
         editor(.main).onBufferChange = { [weak policy] in policy?.bufferChanged(render: render) }
         // The editor opens the file after this view appears: render once it has, and again a moment later.
@@ -112,11 +115,11 @@ extension AppModel {
         editor(.main).currentText { [weak self] text in
             guard let self, let text, self.splitTabs[path] != nil else { return }
             switch t.kind {
-            case .markdown: self.splits.markdown.render(text: text, rev: rev)
             case .html:
                 let root = Self.isOutsideFile(path) ? file.deletingLastPathComponent() : (self.projectFolder ?? file.deletingLastPathComponent())
                 self.htmlViewer.renderBuffer(text, file: file, root: root)
-            case .deck, .document: break   // Duo Decks' provider (preview-provider)
+            case .deck: self.splits.provider(.deck)?.render(text: text, rev: rev)   // Duo Decks' provider, when registered
+            case .document, .markdown: break
             }
         }
     }
@@ -180,10 +183,10 @@ extension AppModel {
 
     func previewWebView(for t: SplitTab) -> NSView? {
         switch t.kind {
-        case .markdown: splits.markdown.webView
         case .html: htmlViewerIfLoaded?.webView
         case .document: editorIfLoaded(.second)?.webView
-        case .deck: nil
+        case .deck: splits.provider(.deck)?.view
+        case .markdown: nil
         }
     }
 
@@ -196,10 +199,12 @@ extension AppModel {
 
     /// `duo2 split` with nothing else: the sides, active side, ratio, folded, and the sidebar.
     public func splitReport() -> String {
-        guard let t = showingSplit else { return "no split view showing" }
+        // A hidden pane reads 0: a collapsed NSSplitView pane keeps its old frame (F-9), which made a folded
+        // sidebar look shown in this report (F-531).
+        let panes = splits.paneHost.map { h in h.arrangedSubviews.indices.map { h.isHidden(paneAt: $0) ? 0 : Int(h.arrangedSubviews[$0].frame.width) } } ?? []
+        guard let t = showingSplit else { return "no split view showing\npanes: \(panes)\nsidebar hidden: \(leftCollapsedProject)\nroom taken: \(splits.taken != nil)" }
         let name = { (r: SplitRole) in r == .source ? t.source : (t.with ?? t.kind.sideName) }
         let left = name(t.role(at: .left)), right = name(t.role(at: .right))
-        let panes = splits.paneHost.map { $0.arrangedSubviews.map { Int($0.frame.width) } } ?? []
         return "panes: \(panes)\nleft: \(left)\nright: \(right)\nactive: \(t.activeSide.rawValue)\nratio: \(String(format: "%.3f", t.ratio))\nfolded: \(t.folded)\nsidebar folded by the split: \(splits.sidebarFolded)"
     }
 
@@ -219,16 +224,44 @@ extension AppModel {
         }
     }
 
+    /// The window resized while a split holds the room (DL-276): the sidebar folds only while the window is too
+    /// narrow for it, the console's 480 and two sides, and comes back when it's wide enough again. Only a
+    /// sidebar the user had showing is moved; settled a moment after the resize stops (Geoff, 2026-11-01).
+    func splitWindowResized(_ width: CGFloat) {
+        splits.resizeSettle?.cancel()
+        let work = DispatchWorkItem { [weak self] in self?.settleSidebarForWidth(Double(width)) }
+        splits.resizeSettle = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: work)
+    }
+
+    func settleSidebarForWidth(_ width: Double) {
+        guard var taken = splits.taken, taken.sidebarWasShown, !altitude.isAllProjects, !splitTabs.isEmpty else { return }
+        let fits = width >= SplitRoom.foldSidebarBelow
+        if taken.foldedSidebar, fits {
+            taken.foldedSidebar = false
+            splits.taken = taken
+            splits.peek = false
+            leftCollapsedProject = false
+        } else if !taken.foldedSidebar, !fits, !leftCollapsedProject {
+            taken.foldedSidebar = true
+            splits.taken = taken
+            leftCollapsedProject = true
+        }
+    }
+
     /// Closing the last split gives back exactly what it took.
     func giveBackRoom() {
         guard let taken = splits.taken else { return }
         splits.taken = nil
         splits.peek = false
+        // The right pane first: while the console is squeezed to its 480 the sidebar can't open (the console's
+        // minimum clamps it back to nothing, F-527). Then the sidebar, once the console has the room.
+        splits.paneHost?.setLastPaneWidth(CGFloat(taken.rightWidth))
         if taken.foldedSidebar, taken.sidebarWasShown {
-            leftCollapsedProject = false
-            splits.applyRightWidthSoon(taken.rightWidth, after: 0.35)   // after the sidebar's slide, which would undo it
-        } else {
-            splits.paneHost?.setLastPaneWidth(CGFloat(taken.rightWidth))
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.splits.taken == nil else { return }
+                self.leftCollapsedProject = false
+            }
         }
     }
 
@@ -286,12 +319,31 @@ extension AppModel {
         if !out.isEmpty { splits.tabs[project] = out }
     }
 
+    /// A restored split's room is re-decided for the window it comes back in, once the layout has a width:
+    /// what was folded at 1440 isn't folded at 1810 (F-531). Only what to give back is kept from the file.
     func restoreRoom(_ taken: SplitRoom.Taken?) {
         guard splits.any, let taken else { return }
         splits.taken = taken
-        if taken.foldedSidebar { leftCollapsedProject = true }
-        let width = splits.paneHost.map { Double($0.bounds.width) } ?? 0
-        let right = SplitRoom.plan(window: width, sidebarShown: taken.sidebarWasShown).rightWidth
-        if width > 0 { splits.applyRightWidthSoon(right) } else { splits.pendingRightWidth = right }
+        splits.needsReconcile = true
+        DispatchQueue.main.async { [weak self] in self?.reconcileRoom() }   // after the restore opens its project
+    }
+
+    /// Makes the room match the split on screen, for this window: the sidebar folds only if it can't fit beside
+    /// the console's 480 and two sides, and the right pane widens so the console is at 480. Run once after a
+    /// restore, as soon as the layout has a width (a split never comes back folded with room to spare, F-531).
+    func reconcileRoom() {
+        guard splits.needsReconcile, !altitude.isAllProjects, let host = splits.paneHost, host.bounds.width > 0 else { return }
+        if splitTabs.isEmpty { splits.needsReconcile = false; giveBackRoom(); return }
+        guard showingSplit != nil else { return }   // when one shows (SplitBody asks again)
+        splits.needsReconcile = false
+        guard splits.taken != nil else { takeRoomIfNeeded(); return }
+        let width = Double(host.bounds.width)
+        let wasHidden = leftCollapsedProject
+        settleSidebarForWidth(width)
+        let sidebar = leftCollapsedProject ? (splits.sidebarFolded ? SplitRoom.railWidth : 0) : SplitRoom.sidebarWidth
+        let right = max(0, width - sidebar - SplitRoom.consoleMin - 2)
+        guard Double(host.lastPaneWidth) < right - 1 else { return }
+        if wasHidden != leftCollapsedProject { splits.applyRightWidthSoon(right, after: 0.35) }   // after the sidebar's slide
+        else { host.setLastPaneWidth(CGFloat(right)) }
     }
 }

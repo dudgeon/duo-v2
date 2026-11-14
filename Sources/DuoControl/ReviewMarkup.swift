@@ -145,6 +145,20 @@ public enum Review {
     }
 
     /// The signature at the front of a comment: `@name 2026-10-28 #id` then `: text`, or ` closed`.
+    /// Why a review verb refuses a file that isn't Markdown (F-642). A Word or PowerPoint file is shown read-only and Duo never
+    /// writes it (DL-162, DL-125), so a comment can't be added to it; the verb names the way that does work.
+    public static func notMarkdownMessage(_ fileName: String) -> String {
+        let ext = (fileName as NSString).pathExtension.lowercased()
+        switch ext {
+        case "docx", "dotx", "docm":
+            return "\(fileName) is a Word document: Duo shows it read-only and never writes it, so comments and @claude can't be added there. Make its Markdown copy with `duo2 file convert \"\(fileName)\"` (the Convert to Markdown… button; its comments come over as threads), then use the comment verbs on the copy."
+        case "pptx", "potx", "pptm":
+            return "\(fileName) is a PowerPoint file: Duo shows it read-only and never writes it, so comments and @claude can't be added there. Turn it into a Duo deck with `duo2 deck import \"\(fileName)\"` (the Convert to Duo Deck… button; its comments come over as Review marks), then use the comment verbs on the deck."
+        default:
+            return "\(fileName) isn't a Markdown document"
+        }
+    }
+
     public static func parseComment(_ body: String, range: NSRange = NSRange(location: 0, length: 0)) -> Comment {
         let s = body.trimmingCharacters(in: .whitespaces)
         let sig = try? NSRegularExpression(pattern: #"^@([^\s:]+)(?:\s+(\d{4}-\d{2}-\d{2}))?(?:\s+#([\w.]+))?"#)
@@ -496,4 +510,15 @@ public enum Review {
     public static let convention = """
     Duo reviews: review marks in Markdown use CriticMarkup with a signature: {++added++}, {--deleted--}, {~~old~>new~~}, {==highlight==}, each followed by {>>@author date #id: note<<}. Marks are suggestions awaiting a person's decision: never accept or reject one, and never close a thread, unless asked in so many words; "deal with the review" means answering what is addressed to you, not resolving it. If the file's frontmatter has `suggest-edits: true`, write every change as a mark signed @claude; otherwise edit directly as usual, and use a mark only when you're asked to propose a change. Reply to a comment by adding {>>@claude date #id.n: reply<<} right after it (`duo2 comment reply <id> <text>` does it in Duo's editor if the file is open); don't delete or rewrite anyone's comment. To close a thread, add {>>@claude date #id.n closed<<} after its last comment; never delete someone's comment. A comment that names @claude is addressed to you.
     """
+}
+
+extension Review.Comment {
+    /// A comment read from somewhere other than Markdown (a Word or PowerPoint file, DL-331).
+    /// The closing line of a resolved thread read from a Word or PowerPoint file.
+    public static var closingMark: Review.Comment { Review.Comment(author: nil, date: nil, id: nil, text: "", closing: true, range: NSRange(location: 0, length: 0)) }
+    public init(author: String?, date: String?, id: String?, text: String) { self.init(author: author, date: date, id: id, text: text, closing: false, range: NSRange(location: 0, length: 0)) }
+}
+
+extension Review.Thread {
+    public init(id: String, anchor: String?, comments: [Review.Comment]) { self.init(id: id, anchor: anchor, anchorRange: nil, pieces: [], comments: comments, range: NSRange(location: 0, length: 0)) }
 }

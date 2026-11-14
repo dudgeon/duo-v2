@@ -1,0 +1,26 @@
+<style>
+#seg { left: 24px; top: 26px; display: flex; align-items: center; gap: 12px; font-size: 15px; }
+#seg .grp { display: flex; border: 1px solid #8b939c; border-radius: 7px; overflow: hidden; }
+#seg .grp span { padding: 5px 12px; font-size: 14px; border-left: 1px solid #c9cdd3; transition: background-color .4s, color .4s, opacity .4s; }
+#seg .grp span:first-child { border-left: none; }
+#seg-light { background: #1f2328; color: #ffffff; }
+[data-state~="classic"] #seg-light { background: #ffffff; color: #1f2328; }
+[data-state~="classic"] #seg-classic { background: #c66a2e; color: #ffffff; }
+[data-state~="blocked"] #seg-classic { opacity: .35; }
+#seg-why { left: 24px; top: 66px; color: #c2410c; }
+.cw { top: 110px; width: 188px; height: 150px; }
+#k1 { left: 24px; } #k2 { left: 226px; } #k3 { left: 428px; }
+[data-state~="classic"] .cw { --wg: #f0e9d6; --wp: #fbf8ee; --wc: #1a1410; --wr: #d4c8a6; --ws: transparent; border-color: #d4c8a6; }
+[data-state~="classic"] .cw .sw { opacity: 0; }
+#wc { left: 24px; top: 286px; width: 330px; }
+#wc .mi.dim span { font-family: inherit; }
+[data-state~="classic"] #wc-item { color: #8b939c; }
+#wc-why { left: 370px; top: 300px; width: 246px; }
+</style>
+<div id="seg" data-f><span>Appearance</span><span class="grp"><span>Match System</span><span id="seg-light">Light</span><span>Dark</span><span id="seg-classic" data-f>Classic</span></span></div>
+<div class="s" id="seg-why" data-in="up">Set every window to None first</div>
+<div class="win cw c-sky" id="k1" data-f><div class="tb">refunds <span class="sw"></span></div><div class="bd"><div class="lp"><span class="b" style="width:70%"></span></div><div class="cn"><span class="b" style="width:70%"></span></div><div class="rp"><span class="b" style="width:60%"></span></div></div></div>
+<div class="win cw c-sage" id="k2" data-f><div class="tb">pricing <span class="sw"></span></div><div class="bd"><div class="lp"><span class="b" style="width:70%"></span></div><div class="cn"><span class="b" style="width:70%"></span></div><div class="rp"><span class="b" style="width:60%"></span></div></div></div>
+<div class="win cw c-none" id="k3" data-f><div class="tb">payments</div><div class="bd"><div class="lp"><span class="b" style="width:70%"></span></div><div class="cn"><span class="b" style="width:70%"></span></div><div class="rp"><span class="b" style="width:60%"></span></div></div></div>
+<div class="menu" id="wc" data-in="up" data-f><div class="mi" id="wc-item">Window Colour <span>▸</span></div></div>
+<div class="s" id="wc-why" data-in="left">Dimmed while Classic is on. Each window gets its colour back after.</div>

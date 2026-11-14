@@ -1,4 +1,5 @@
 import AppKit
+import DuoControl
 import DuoSearch
 import Foundation
 
@@ -17,7 +18,7 @@ extension AppModel {
         }
         s.reset()
         s.openedIn = altitude.isAllProjects ? nil : currentProject?.name
-        s.sendTargetName = (try? sendTarget.get()).flatMap { t in fixture.sessions.first { $0.tabKey == t.key }?.name }
+        s.sendTargetName = (try? sendTarget.get()).flatMap { t in session(tabKey: t.key)?.name }
         s.recents = SearchRecents.load().map { ($0.query, SearchRecents.age($0.at)) }
         s.coverage = liveSearchCoverage()
         s.isOpen = true
@@ -366,7 +367,7 @@ extension AppModel {
     }
 
     public func findSimilar(session key: String) {
-        guard let s = fixture.sessions.first(where: { $0.tabKey == key }), let id = s.sessionId,
+        guard let s = session(tabKey: key), let id = s.sessionId,
               let folder = liveFolders[s.project], let t = ClaudeStorage.transcript(sessionId: id, cwd: folder.path) else { return }
         var item = SearchItem(id: "similar:\(id)", kind: .session, project: s.project, title: s.name)
         item.path = t.path; item.sessionId = id
@@ -400,7 +401,7 @@ extension AppModel {
     public func showSearchIndexDetails() {
         if case .unreadable(let e) = search.phase {
             let a = NSAlert(); a.messageText = "Search can’t read its index"; a.informativeText = "\(SearchPaths.index.path)\n\n\(e)"
-            DuoAlert.present(a)
+            DuoAlert.present(a, from: self)
         }
     }
 
@@ -539,15 +540,20 @@ enum SearchRecents {
     struct Entry: Codable { var query: String; var at: Date }
     static let key = "searchRecents"
 
+    /// An isolated instance keeps them in its own folder: the defaults domain is the user's (F-587).
+    static var isolatedFile: URL? { SupportFolder.isIsolated ? SupportFolder.duo.appending(path: "search-recents.json") : nil }
+
     static func load() -> [Entry] {
-        guard let d = UserDefaults.standard.data(forKey: key), let e = try? JSONDecoder().decode([Entry].self, from: d) else { return [] }
+        let d = isolatedFile.map { try? Data(contentsOf: $0) } ?? UserDefaults.standard.data(forKey: key)
+        guard let d, let e = try? JSONDecoder().decode([Entry].self, from: d) else { return [] }
         return e
     }
 
     static func add(_ q: String) {
         var e = load().filter { $0.query.caseInsensitiveCompare(q) != .orderedSame }
         e.insert(Entry(query: q, at: Date()), at: 0)
-        if let d = try? JSONEncoder().encode(Array(e.prefix(8))) { UserDefaults.standard.set(d, forKey: key) }
+        guard let d = try? JSONEncoder().encode(Array(e.prefix(8))) else { return }
+        if let f = isolatedFile { try? d.write(to: f, options: .atomic) } else { UserDefaults.standard.set(d, forKey: key) }
     }
 
     /// `4m`, `2d`, `3w`, `today`, `yesterday`, as the design writes ages.

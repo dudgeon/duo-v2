@@ -1,0 +1,30 @@
+[38;5;173m ▐▛███▜▌[0m   [1mClaude Code[0m v2.1.291
+[38;5;173m▝▜█████▛▘[0m  Opus 5.5 · Claude Max
+[38;5;173m  ▘▘ ▝▝[0m    ~/work/little-shared-library/neighborhood-map
+
+[90m❯[0m Tighten the freshness badge spec: three states, what each pin looks like, and when a box goes stale.
+
+[38;5;173m⏺[0m [1mRead[0m(specs/freshness.md)
+  [90m⎿[0m  Read 31 lines
+
+[38;5;173m⏺[0m [1mRead[0m(notes/map-tile-costs.md)
+  [90m⎿[0m  Read 18 lines
+
+[38;5;173m⏺[0m The states read well. Two gaps: nothing says what happens when a box has never been scanned,
+  and "Getting old" and "Stale" overlap at exactly 7 days.
+
+[38;5;173m⏺[0m [1mUpdate[0m(specs/freshness.md)
+  [90m⎿[0m  Updated with 4 additions and 1 removal
+
+      [2m 12[0m [31m- | Getting old | 2–7 days | outlined |[0m
+      [2m 12[0m [32m+ | Getting old | 2–6 days | outlined |[0m
+      [2m 14[0m [32m+ | Never scanned | — | grey, no badge |[0m
+
+[38;5;173m⏺[0m Updated: Getting old ends at 6 days, and never-scanned boxes get a grey pin with no badge.
+  Want me to add the map legend copy next?
+
+
+[90m──────────────────────────────────────────────────────────────────────────────────────────────[0m
+[90m❯[0m 
+[90m──────────────────────────────────────────────────────────────────────────────────────────────[0m
+  [2m⏵⏵ accept edits on (shift+tab to cycle)[0m

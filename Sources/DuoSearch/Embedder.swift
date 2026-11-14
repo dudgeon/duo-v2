@@ -33,6 +33,19 @@ public final class Embedder: @unchecked Sendable {
     public let tokenizer: WordPiece
     private let model: MLModel
     public static let maxTokens = 512
+    /// Indexing runs every batch at one of a few fixed shapes, each on a model of its own that never sees another shape
+    /// (C-161, F-586, F-593, F-594). A loaded Core ML model on the GPU keeps memory each time its input shape changes
+    /// between predictions: two shapes alternating with the same content grew 1.7 MB a call, and a busy indexer
+    /// switching among shapes held 51 GB after three days; one shape held steady through 300 calls of varied text.
+    /// A batch takes the cheapest shape that fits (2 × 128 at 4.5 ms a call, 32 × 512 at 81 ms), so small files stay
+    /// cheap. Padded positions are masked, so the vectors are the same.
+    public static let batchRows = 32
+    public static let shapes: [(rows: Int, length: Int)] = [(2, 128), (2, 512), (8, 512), (32, 512)]
+    public var fixedShapes: Bool
+    private let url: URL
+    private let config: MLModelConfiguration
+    private var shapeModels: [Int: MLModel] = [:]
+    private let lock = NSLock()   // one batch at a time per Embedder; shape models made under it
 
     /// Queries run on the CPU: no accelerator caches, nothing written, exact numerics inside
     /// Claude's sandbox (F-35). Indexing runs on the GPU. Never `.all` (MPS cache writes, F-35).
@@ -41,7 +54,16 @@ public final class Embedder: @unchecked Sendable {
         let config = MLModelConfiguration()
         config.computeUnits = use == .query ? .cpuOnly : .cpuAndGPU
         model = try MLModel(contentsOf: url, configuration: config)
+        self.url = url
+        self.config = config
+        fixedShapes = use == .indexing
+        if fixedShapes, let big = Self.shapes.last { shapeModels[Self.key(big.rows, big.length)] = model }
     }
+
+    /// How many models this embedder has loaded (one per shape it has run, for DuoChecks).
+    public var modelCount: Int { lock.withLock { max(shapeModels.count, 1) } }
+
+    static func key(_ rows: Int, _ length: Int) -> Int { rows << 16 | length }
 
     /// Compiles the shipped `.mlpackage` into Duo's folder (app only: it writes to the temp
     /// folder, which the sandboxed CLI can't). Returns the compiled model's location.
@@ -65,15 +87,32 @@ public final class Embedder: @unchecked Sendable {
         // Similar lengths together, so each batch pads little (as the POC does).
         let order = ids.indices.sorted { ids[$0].count > ids[$1].count }
         var out = [[Float]](repeating: [], count: texts.count)
-        for start in stride(from: 0, to: order.count, by: 32) {
-            let slice = Array(order[start..<min(start + 32, order.count)])
+        for start in stride(from: 0, to: order.count, by: Self.batchRows) {
+            let slice = Array(order[start..<min(start + Self.batchRows, order.count)])
             for (i, v) in zip(slice, try embed(slice.map { ids[$0] })) { out[i] = v }
         }
         return out
     }
 
-    private func embed(_ batch: [[Int32]]) throws -> [[Float]] {
-        let n = batch.count, len = batch.map(\.count).max() ?? 1
+    /// The (rows, length) a batch is run at: its own with `fixedShapes` off, else the cheapest fixed shape that fits.
+    static func shape(rows: Int, longest: Int, fixed: Bool) -> (rows: Int, length: Int) {
+        guard fixed else { return (rows, max(longest, 1)) }
+        return shapes.first { $0.rows >= rows && $0.length >= longest } ?? (max(rows, batchRows), max(longest, maxTokens))
+    }
+
+    private func embed(_ texts: [[Int32]]) throws -> [[Float]] {
+        guard let first = texts.first else { return [] }
+        let (n, len) = Self.shape(rows: texts.count, longest: texts.map(\.count).max() ?? 1, fixed: fixedShapes)
+        // Extra rows repeat the first text (a row with no unmasked token isn't a valid input); their vectors are dropped.
+        let batch = texts + Array(repeating: first, count: n - texts.count)
+        lock.lock(); defer { lock.unlock() }
+        let runner: MLModel
+        if fixedShapes {
+            if let m = shapeModels[Self.key(n, len)] { runner = m } else {
+                runner = try MLModel(contentsOf: url, configuration: config)
+                shapeModels[Self.key(n, len)] = runner
+            }
+        } else { runner = model }
         let shape = [NSNumber(value: n), NSNumber(value: len)]
         let ids = try MLMultiArray(shape: shape, dataType: .int32)
         let mask = try MLMultiArray(shape: shape, dataType: .int32)
@@ -85,11 +124,11 @@ public final class Embedder: @unchecked Sendable {
                 mp[i * len + j] = j < row.count ? 1 : 0
             }
         }
-        let out = try model.prediction(from: MLDictionaryFeatureProvider(dictionary: ["input_ids": ids, "attention_mask": mask]))
+        let out = try runner.prediction(from: MLDictionaryFeatureProvider(dictionary: ["input_ids": ids, "attention_mask": mask]))
         guard let e = out.featureValue(for: "embedding")?.multiArrayValue else { throw SearchError("model gave no embedding") }
         let d = identity.dimensions
         // The output may be fp32 with strides; read through the shaped API for safety.
-        return (0..<n).map { i in (0..<d).map { j in e[[NSNumber(value: i), NSNumber(value: j)]].floatValue } }
+        return (0..<texts.count).map { i in (0..<d).map { j in e[[NSNumber(value: i), NSNumber(value: j)]].floatValue } }
     }
 }
 
@@ -103,8 +142,40 @@ public final class EmbedderSource: @unchecked Sendable {
     private var used = Date.distantPast
     /// How many times the model was loaded (for DuoChecks).
     public private(set) var loads = 0
+    /// How much the process's footprint may grow while one model is loaded before it's let go and loaded afresh
+    /// (F-593, F-594). Core ML's GPU memory for a loaded model grows with every prediction, and only releasing the model
+    /// returns it. Counting calls (F-593's `maxUses`) reloaded hundreds of times in a bulk pass of small batches; a
+    /// budget on the growth itself reloads only when memory has actually piled up. nil: never.
+    public var memoryBudget: UInt64?
+    private var baseline: UInt64 = 0
+
+    /// This process's physical footprint (what Activity Monitor's Memory and footprint(1) report, GPU memory included).
+    public static func footprint() -> UInt64 {
+        var info = task_vm_info_data_t()
+        var count = mach_msg_type_number_t(MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<natural_t>.size)
+        let kr = withUnsafeMutablePointer(to: &info) {
+            $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) { task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), $0, &count) }
+        }
+        return kr == KERN_SUCCESS ? info.phys_footprint : 0
+    }
 
     public init(load: @escaping () throws -> Embedder) { make = load }
+
+    /// Loads the tokenizer by itself (the vocabulary file), so chunking a file that needs no new vectors doesn't load the
+    /// Core ML model (F-599: an idle pass that re-read one changed transcript loaded the model just to tokenize it).
+    public var tokenizerLoad: (() throws -> WordPiece)?
+    private var tokenizerKept: WordPiece?
+    public func tokenizer() throws -> WordPiece {
+        lock.lock()
+        if let c = current { lock.unlock(); return c.tokenizer }
+        if let t = tokenizerKept { lock.unlock(); return t }
+        let load = tokenizerLoad
+        lock.unlock()
+        guard let load else { return try get().tokenizer }
+        let t = try load()
+        lock.lock(); tokenizerKept = t; lock.unlock()
+        return t
+    }
     /// A fixed embedder, never released.
     public init(_ fixed: Embedder) { current = fixed; make = { fixed } }
 
@@ -113,9 +184,11 @@ public final class EmbedderSource: @unchecked Sendable {
     public func get() throws -> Embedder {
         lock.lock(); defer { lock.unlock() }
         used = Date()
+        if current != nil, let budget = memoryBudget, Self.footprint() > baseline + budget { current = nil }
         if let current { return current }
         let e = try make()
         current = e; loads += 1
+        baseline = Self.footprint()
         return e
     }
 

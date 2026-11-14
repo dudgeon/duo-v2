@@ -14,6 +14,12 @@ public enum SendFormat {
         return finish("From \(line(path)), \(lines):\n" + quote(text))
     }
 
+    /// A selection in a PDF (DL-332): `From docs/paper.pdf, page 3:` (or `pages 3–4`) and the text, quoted.
+    public static func pdfSelection(_ text: String, path: String, from: Int, to: Int) -> String {
+        let pages = from == to ? "page \(from)" : "pages \(from)–\(to)"
+        return finish("From \(line(path)), \(pages):\n" + quote(text))
+    }
+
     /// A file or folder: an @-reference Claude Code resolves (relative inside the session's folder).
     public static func file(_ path: String) -> String {
         let p = line(path)

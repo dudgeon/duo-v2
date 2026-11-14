@@ -19,12 +19,14 @@
   - how to prove it (DuoChecks, `scripts/bundle.sh`, `NO_BUILD=1 scripts/check-ui.sh`, captures against the boards, the relevant check scripts) and which CLAUDE.md rules matter most for the job (never invent a design; build to the screens and prove it; the DL-71 duo2 verb; Xcode-free; generated tokens);
   - which model the job runs on, and which parts go to Sonnet and Haiku subagents;
   - for design work: a Design canvas with the Duo design system, every mark [P], one AskUserQuestion round, and a handoff exported to `docs/design/<x>-handoff/`;
+  - for a film (an update, a release film, new scenes): "write the script on the Doc and build the film; Geoff reviews the film". Never a script review round, and no questions about order, length or wording: the worker decides those (product-video skill, step 10). Geoff, 2026-11-05: "make the video and I will provide feedback only if needed";
   - "Report by SendMessage to director-duo-v2, by that name, and end your turn with the same report as your last message (branch, full shas, records, checks), plus a dated line in your task note's `## Progress`." For big jobs, ask for it in slices, so each merge is small.
 
 **No stranded workers** (Geoff, 2026-10-30: "we CANNOT have stranded workers"). Four workers once finished or waited for hours unseen: the director ran in Bypass, so their reports were held and expired, and its watchers named specific ids. So:
 - the director runs in **Auto**, the workers' mode, so SendMessage reports arrive;
 - it keeps `docs/director/skills/director-console/watch-workers.sh` (its local copy in `~/.claude/skills/director-console/`) running in the background, which wakes it when any duo-v2 worker stops, including workers started later; it re-arms the watcher on every wake;
-- on every wake, `worker-links.py` lists every worker's state, and a stopped worker with no console row or task-note line gets read and acted on at once.
+- on every wake, `duo2 director status` comes first, and its red lines say which worker stopped unread, which `check_by` has passed and which scheduled run is stuck. `worker-links.py` then catches any worker the registry doesn't know. What you find gets read and acted on at once, and `duo2 director check` records it.
+- `duo2 director start` sets `check_by` to two hours. Pass `--next <when>` for a job you know is longer, so the next look is real rather than a date you'll wave away.
 - Then subscribe: `SendMessage(to: "<name>", notify_when_idle: true)`. Its report and the idle notice wake you. Both sessions must be in the same permission class (Auto; DL-257); across classes messages are held and expire in about 16 minutes (F-421).
 - **A worker's SendMessage address is the name `ListAgents` shows.** For `claude --bg -n <name>` that's its `-n` name. A session started in Duo may show a peer name (`duo-v2-xx`) instead, so look it up. If it isn't listed, it has stopped: `duo2 director send` resumes it.
 - **Nothing relies on `bypassPermissions`** (the work Mac disables it). Workers run in `auto`; run the director in Auto too, never the workers in bypass.

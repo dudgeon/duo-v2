@@ -26,7 +26,9 @@ extension AppModel {
         // The badge is allowed at the moment Duo would first notify, even with notifications off (DL-138).
         if DuoState.load().dockBadge { Notifier.shared.authorize { _ in } }
         guard DuoState.load().notifyNeedsYou else { return }
-        for (id, s) in waiting where !notified.contains(id) && id != visibleSessionId {
+        // Never for a session on screen in any window (C-150), not only the first.
+        let onScreen = core.visibleSessionIds
+        for (id, s) in waiting where !notified.contains(id) && !onScreen.contains(id) {
             notified.insert(id)
             Notifier.shared.post(id: id, title: s.name, subtitle: s.project + (s.reason.map { " · \($0)" } ?? ""), body: s.question ?? "Needs you", project: s.project)
         }
@@ -52,8 +54,11 @@ extension AppModel {
 
     func openWaiting(_ s: Fixture.Session) {
         DuoFocus.take()
-        selectedActionSession = s.id
-        open(project: s.project)
+        // The window showing the project, else the key window (C-150), not the window that made the menu.
+        let m = core.model(forProject: s.project) ?? self
+        m.selectedActionSession = s.id
+        m.open(project: s.project)
+        core.bringForward(m)
     }
 
     /// Settings › Notifications › Open Notification Settings… (Q-93, DL-144): System Settings at Duo.
@@ -63,10 +68,13 @@ extension AppModel {
     }
 
     /// A notification was clicked: the project, with its card selected.
-    func openFromNotification(sessionId: String, project: String) {
+    public func openFromNotification(sessionId: String, project: String) {
         DuoFocus.take()
-        if let s = fixture.sessions.first(where: { $0.sessionId == sessionId }) { selectedActionSession = s.id }
-        open(project: project)
+        // The project's window, else the key window (C-150): Notifier holds the primary's model.
+        let m = core.model(forProject: project) ?? self
+        if let s = fixture.sessions.first(where: { $0.sessionId == sessionId }) { m.selectedActionSession = s.id }
+        m.open(project: project)
+        core.bringForward(m)
     }
 }
 

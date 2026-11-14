@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Asking, fork, keys and duo2</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.cap{font-size:12px;line-height:17px;color:#5B636D}
+.cap b{color:#1F2328;font-weight:600}
+.lab{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.mono{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:11px}
+.box{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+</style>
+</helmet>
+<div style="width: 1640px; height: 1000px; box-sizing: border-box; background: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; color: #1F2328; padding: 40px; display: flex; flex-direction: column; gap: 22px">
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <div style="font-size: 18px; line-height: 24px; font-weight: 600">Q-554 · How you ask · Q-553 · Fork from a side answer · keys and duo2 [P]</div>
+    <div class="cap" style="font-size: 13px; line-height: 19px; max-width: 1500px">Asking is Claude Code’s own <span class="mono">/btw</span>, typed into the composer and sent with ⏎, at the prompt or while Claude works. No new chord: the map is locked (DL-34).</div>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-start">
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">Q-554 A (recommended) · /btw, its menu row says what it does</div>
+      <dc-import name="Chat" chat="{{menuA}}" hint-size="480px,380px"></dc-import>
+      <div class="cap">The / menu stops calling <span class="mono">/btw</span> “Opens in the terminal” and drops the <span class="mono">&gt;_</span> mark: its row reads Claude Code’s own description, “Ask a quick side question without interrupting the main conversation”. ⏎ sends it at once, even while Claude works: no Queued bubble.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">Q-554 B · also a button while Claude works</div>
+      <dc-import name="Chat" chat="{{menuB}}" hint-size="480px,380px"></dc-import>
+      <div class="cap">As A, plus an “Ask aside” control at the end of the hint line while a turn runs: it puts <span class="mono">/btw </span> in the composer, ready for the question. Easier to find; one more control in a strip the handoff keeps bare.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">Q-553 A (recommended, after a run) · Fork… opens a new session</div>
+      <dc-import name="Chat" chat="{{fork}}" hint-size="480px,380px"></dc-import>
+      <div class="cap"><b>Claude Code’s <span class="mono">f</span> wasn’t run here.</b> Its code has two paths: a fork into a background agent (“forked ‹name›”), or a branch of this session titled “btw: ‹question›” with the side exchange added. Before Fork… is built, one mock run per version checks which, and chat treats a branch as it treats <span class="mono">/branch</span> (the tab re-keys, F-29) or a new session as Fork does (DL-338). B: leave <span class="mono">f</span> to the terminal (the card hands over). C: no Fork for now.</div>
+    </div>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-start">
+    <div style="width: 740px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">Keys · while the side card has focus</div>
+      <div class="box">
+        <div class="cap"><span class="mono">c</span> Copy · <span class="mono">f</span> Fork… · <span class="mono">esc</span> Close · <span class="mono">↑ ↓</span> scroll the answer · at the prompt <span class="mono">⇧← ⇧→</span> earlier side questions and <span class="mono">x</span> clear them. Each is Claude Code’s own key for its panel, sent as typed, as the review cards’ number keys are (DL-119).</div>
+        <div class="cap">The card takes focus when it opens, so <span class="mono">esc</span> closes it straight away, and focus goes back to the composer when it closes. Typing any other letter closes the card and starts your message (Q-552 A).</div>
+        <div class="cap">Menus: Chat › Ask a Side Question… (puts <span class="mono">/btw </span> in the composer) and, while the card is up, Copy Side Answer and Close Side Question. No chord.</div>
+      </div>
+    </div>
+    <div style="width: 740px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">duo2 · every action has a verb (DL-71)</div>
+      <div class="box">
+        <div class="cap"><span class="mono">duo2 session btw &lt;id&gt; "&lt;question&gt;"</span> asks through the session’s own Claude Code, shows the card if the session is open in chat, waits for the answer and prints its Markdown (<span class="mono">--json</span>: question, answer, synthetic). Exit 3 with Claude Code’s words when it can’t answer.</div>
+        <div class="cap"><span class="mono">duo2 session btw &lt;id&gt; --close</span> · <span class="mono">--copy</span> · <span class="mono">--fork</span> act on the card that is up. <span class="mono">duo2 session btws &lt;id&gt;</span> lists the side questions Duo kept this run (Q-551 A).</div>
+        <div class="cap"><span class="mono">duo2 session chat-state</span> gains <span class="mono">side</span>: the question, its state (answering, answered, none) and the answer.</div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1640,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const feed = [
+      { you: true, meta: 'You · 9:52', text: 'Compare the two refund flows in a table, with a short recommendation.' },
+      { claude: true, meta: 'Claude · 9:52', lines: [ 'Both flows are in docs/refunds/flows.md. The main difference is who confirms the refund.' ] },
+      { working: true, text: 'Writing · 32s' }
+    ];
+    const base = (over) => Object.assign({ w: 480, h: 380, busy: true, items: feed }, over);
+    return {
+      menuA: base({ composer: '/bt', composerFilled: true, menu: [ { n: '/btw', d: 'Ask a quick side question without interrupting…', sel: true } ] }),
+      menuB: base({ composer: 'Reply to Claude', hint: '⏎ send · ⇧⏎ new line · / commands · Ask aside', menu: null }),
+      fork: base({ dock: { q: 'What does “idempotent” mean for a refund?', lines: [ 'A refund request that can be sent again safely: a second copy refunds nothing more.' ], btns: [ { label: 'Copy', key: 'c' }, { label: 'Fork…', key: 'f' }, { label: 'Close', key: 'esc' } ], why: 'Fork: a new session from here, with this exchange' } })
+    };
+  }
+}
+</script>
+</body>
+</html>

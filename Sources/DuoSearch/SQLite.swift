@@ -25,14 +25,14 @@ public final class SQLiteDB: @unchecked Sendable {
         if sqlite3_exec(handle, sql, nil, nil, &err) != SQLITE_OK {
             let m = err.map { String(cString: $0) } ?? "error"
             sqlite3_free(err)
-            throw SearchError("sql: \(m)")
+            throw SearchError("sql: \(m)\(SQLiteDB.code(handle))")
         }
     }
 
     public func prepare(_ sql: String) throws -> Statement {
         var s: OpaquePointer?
         guard sqlite3_prepare_v2(handle, sql, -1, &s, nil) == SQLITE_OK, let s else {
-            throw SearchError("sql: \(String(cString: sqlite3_errmsg(handle))) in \(sql.prefix(80))")
+            throw SearchError("sql: \(String(cString: sqlite3_errmsg(handle)))\(SQLiteDB.code(handle)) in \(sql.prefix(80))")
         }
         return Statement(s, db: handle)
     }
@@ -43,6 +43,13 @@ public final class SQLiteDB: @unchecked Sendable {
     }
 
     public var lastRowID: Int64 { sqlite3_last_insert_rowid(handle) }
+
+    /// " (code 522, errno 1)": SQLite's extended result code and the OS error behind it, so "disk I/O error" says which
+    /// (IOERR_READ 266, SHORT_READ 522, ACCESS 3338, a hot journal it can't roll back, …).
+    static func code(_ h: OpaquePointer) -> String {
+        let ext = sqlite3_extended_errcode(h), errno = sqlite3_system_errno(h)
+        return ext == sqlite3_errcode(h) && errno == 0 ? "" : " (code \(ext)\(errno != 0 ? ", errno \(errno)" : ""))"
+    }
 }
 
 public final class Statement {
@@ -77,7 +84,7 @@ public final class Statement {
         let rc = sqlite3_step(s)
         if rc == SQLITE_ROW { return true }
         if rc == SQLITE_DONE { return false }
-        throw SearchError("sql: \(String(cString: sqlite3_errmsg(db)))")
+        throw SearchError("sql: \(String(cString: sqlite3_errmsg(db)))\(SQLiteDB.code(db))")
     }
 
     public func run(_ values: [Any?] = []) throws { bind(values); while try step() {} }

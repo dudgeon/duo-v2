@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="design-size" content="460x800">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-337">
+<!--
+W1 · Word: the margin
+APPROVED BOARD. Geoff, 2026-11-11 (DL-337). Exported from the Design canvas https://claude.ai/artifact/8EpSVPXmKFyayEbBFZU2e3 (board Main.dc.html, v9),
+rendered to static markup. It is a picture written in HTML: match what it draws, do not port its markup. Names and documents are illustrative.
+-->
+
+<title>Word: the margin</title>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+:root{--pane:#ffffff;--rule:#c9cdd3;--controlEdge:#8b939c;--text:#1f2328;--text2:#5b636d;--selected:#e9ecef;--reviewAuthor1:#b0244f;--reviewAuthor2:#1d5fa8;--reviewAuthor3:#2e7a3a;--commentHighlight:#fbe7a1;--commentHighlightActive:#f5d565}
+.ui{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;color:var(--text);font-size:13px;line-height:20px}
+.btn{display:inline-flex;align-items:center;height:26px;box-sizing:border-box;padding:4px 10px;border:1px solid var(--controlEdge);border-radius:6px;background:var(--pane);font:12px/16px -apple-system,system-ui,sans-serif;color:var(--text)}
+.p{display:inline-block;margin-left:6px;padding:0 5px;border:1px dashed var(--controlEdge);border-radius:6px;font:11px/16px -apple-system,system-ui,sans-serif;color:var(--text2)}
+.chg{display:inline-block;padding:0 6px;border-radius:6px;background:#1f2328;color:#fff;font:600 11px/16px -apple-system,system-ui,sans-serif}
+.card{position:absolute;left:264px;width:180px;box-sizing:border-box;border:1px solid var(--rule);border-radius:6px;background:var(--pane);padding:8px 10px}
+.doc{font:15px/24px Georgia,serif;position:absolute;left:16px;width:228px}
+.who{font-weight:600}.dim{color:var(--text2)}
+</style>
+</helmet>
+<div class="ui" style="width:460px;height:800px;box-sizing:border-box;background:var(--pane);border:1px solid var(--rule);position:relative;overflow:hidden">
+  <div style="height:44px;box-sizing:border-box;padding:0 6px 0 16px;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--rule)">
+    <span class="btn">Markup ⌄</span><span class="btn">Select Text</span><span style="flex:1"></span><span class="btn">‹</span><span class="btn">›</span><span class="btn">⋯ ⌄</span>
+  </div>
+  <div class="doc" style="top:60px;font-size:26px;line-height:34px">Garden plan</div>
+  <div class="doc" style="top:106px;font:600 17px/24px -apple-system,system-ui,sans-serif;color:#2c4e99">Beds and crops</div>
+  <div class="doc" style="top:142px">The volunteers planted <span style="background:var(--commentHighlight)">forty</span> rows of beans in April.</div>
+  <div class="doc" style="top:230px">Casey added <span style="background:var(--commentHighlightActive)">a third author</span>, and Blake replaced four words.</div>
+  <div class="doc" style="top:302px">A closed thread leaves nothing in the text.</div>
+
+  <div class="card" style="top:140px"><span class="who" style="color:var(--reviewAuthor1)">Dana Writer</span> <span class="dim">· 1 Sep · from the file</span><br><span style="color:var(--reviewAuthor3);font-weight:600">@claude</span> is “forty” right? The sheet says…<div class="dim" style="font-size:12px">Not sent</div></div>
+  <div style="position:absolute;left:260px;top:222px;width:192px;box-sizing:border-box;border:1.5px solid var(--text);border-radius:6px;padding:10px;background:var(--pane)"><span class="who" style="color:var(--reviewAuthor2)">Morgan Editor</span> <span class="dim">· 4 Sep</span><br>Who is the third author here?<div style="border:1px solid var(--rule);border-radius:6px;padding:4px 8px;color:var(--text2);margin-top:8px">Reply…</div><div style="display:flex;gap:6px;margin-top:8px"><span class="btn">Close and Keep</span><span class="btn">Delete</span></div></div>
+  <div style="position:absolute;left:264px;top:396px;color:var(--text2);font-size:12px">2 closed · <u>Show</u></div>
+
+  <div style="position:absolute;left:16px;right:16px;top:440px;font:12px/16px -apple-system,system-ui,sans-serif;color:var(--text2);border-top:1px dashed var(--controlEdge);padding-top:12px">
+    <span class="chg">changed</span> exactly the Markdown margin (DL-236, DL-237, margin-thread, margin-claude): comments always in view, text 228 and margin 180 at 460, two lines at rest, the active card steps out 12 with a 1.5 border and holds the reply field and <b>Close and Keep</b> and <b>Delete</b>. <b>Closed threads are not drawn</b>; the foot says “2 closed · Show”, and Markup › Show Closed Comments does the same (W4). <span class="p">P</span><br><br>
+    Colours are the design system's tokens: reviewAuthor1/2 for people, <b>reviewAuthor3 for Claude</b>, commentHighlight and commentHighlightActive for anchors. Keys with the focus in the margin: J and K, R, ⌘Return, Esc; ‹ › in the bar step through comments. Add Comment is ⌥⌘M. The bar's Convert to Markdown… and Open With fold into ⋯ to make room for ‹ ›, as the Decks bar folds (DL-305).
+  </div>
+</div>
+</x-dc>
+
+</body>
+</html>

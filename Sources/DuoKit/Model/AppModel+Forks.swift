@@ -60,7 +60,7 @@ extension AppModel {
             guard let fid = job.sessionId, !seen.contains(fid) else { continue }
             seen.insert(fid)
             guard terminals.existing(job.parent) != nil,
-                  let parent = snapshot.sessions.first(where: { $0.tabKey == job.parent }) ?? fixture.sessions.first(where: { $0.tabKey == job.parent }),
+                  let parent = snapshot.sessions.first(where: { $0.tabKey == job.parent }) ?? session(tabKey: job.parent),
                   let folder = liveFolders[parent.project], ForkSource.classify(source: "fork", ownsPid: false, parentIsDuoTab: true) == .fork else { continue }
             let order = consoleTabKeys(inProject: parent.project)
             var index = SessionIndex.load(project: folder)
@@ -84,7 +84,7 @@ extension AppModel {
 
     /// A fork's tab, the all-tabs row and the chat strip carry the fork mark (DL-228 B): the session's parent, if it is one.
     public func forkParentName(of key: String) -> String? {
-        guard let s = fixture.sessions.first(where: { $0.tabKey == key }), s.forkParent != nil || s.forkOf != nil else { return nil }
-        return s.forkOf ?? s.forkParent.flatMap { p in fixture.sessions.first { $0.tabKey == p }?.name }
+        guard let s = session(tabKey: key), s.forkParent != nil || s.forkOf != nil else { return nil }
+        return s.forkOf ?? s.forkParent.flatMap { p in session(tabKey: p)?.name }
     }
 }

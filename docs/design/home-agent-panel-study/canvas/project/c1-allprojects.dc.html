@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>C1 All projects without Home's column</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.tb{height:38px;display:flex;align-items:center;gap:18px;padding:0 14px;background:#f3f4f6;border-bottom:1px solid #c9cdd3;font-size:13px;white-space:nowrap}
+.dots{display:flex;gap:8px;margin-right:6px}
+.dots i{width:12px;height:12px;border-radius:50%;background:#c9cdd3;display:block}
+.lab{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5b636d}
+.ny{color:#c2410c}
+.r{display:grid;grid-template-columns:22px minmax(0,1fr) 190px 190px 80px;align-items:center;height:26px;font-size:13px}
+.r .w{text-align:right;color:#5b636d}
+.r .p{color:#5b636d}
+.g{width:12px;height:12px;display:inline-block;box-sizing:border-box}
+.g.o{border:1.5px solid #1f2328;border-radius:50%}
+.g.i{border-top:1.5px solid #5b636d;height:1px;margin-top:6px}
+.g.n{background:#c2410c;border-radius:50%}
+.card{background:#ffffff;border:1px solid #c9cdd3;border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;font-size:13px;line-height:20px}
+.btn{align-self:flex-start;border:1px solid #8b939c;border-radius:6px;padding:2px 10px;font-size:12px;line-height:18px;background:#ffffff;font-family:inherit;color:#1f2328}
+.q{border:1.5px solid #c2410c;border-radius:6px;padding:6px 10px}
+.pm{display:inline-block;font-size:11px;line-height:15px;font-weight:600;color:#ffffff;background:#1f2328;border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:middle}
+.ann{position:absolute;font-size:12px;line-height:17px;color:#1f2328;background:#fff7d6;border:1px solid #d9c36a;border-radius:6px;padding:6px 9px;max-width:260px}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;position:relative;background:#ffffff;color:#1f2328;font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;display:flex;flex-direction:column;overflow:hidden">
+<div class="tb">
+<div class="dots"><i></i><i></i><i></i></div>
+<strong>All projects</strong>
+<span class="ny"><span class="g n"></span> 3 need you</span>
+<span>◆ 2 to review</span><span>○ 3 working</span><span style="color:#5b636d">– 14 idle</span>
+<span style="margin-left:auto;border:1px solid #c9cdd3;border-radius:6px;background:#ffffff;width:290px;padding:3px 10px;color:#5b636d">Search all projects</span>
+<span style="color:#5b636d">▯▯</span>
+</div>
+<div style="flex:1;display:flex;min-height:0">
+<div style="flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-width:0">
+<div style="display:flex;gap:10px;align-items:center">
+<span style="border:1px solid #8b939c;border-radius:6px;font-size:12px;display:flex"><span style="padding:2px 10px">Board</span><span style="padding:2px 10px;background:#e9ecef;font-weight:600">List</span></span>
+<span style="border:1px solid #c9cdd3;border-radius:6px;padding:2px 10px;width:250px;font-size:12px;color:#5b636d">Filter sessions</span>
+<span style="margin-left:auto;font-size:12px;color:#5b636d">Group</span><span style="border:1px solid #8b939c;border-radius:6px;padding:2px 10px;font-size:12px">Recent ⌃</span>
+</div>
+<div style="border:1px dashed #8b939c;border-radius:6px;height:28px;display:flex;align-items:center;gap:8px;padding:0 10px;font-size:13px"><strong>New session</strong> in <span style="border:1px solid #c9cdd3;border-radius:5px;padding:0 6px">★ home ⌄</span><span style="margin-left:auto;color:#5b636d">⌘T</span></div>
+<div style="border:1px solid #c2410c;border-radius:6px;height:28px;display:flex;align-items:center;gap:8px;padding:0 10px;font-size:13px"><span class="g n"></span><strong class="ny">3 need you</strong><span style="margin-left:auto;color:#5b636d">in the column ›</span></div>
+<div class="lab" style="margin-top:6px">Open · 5</div>
+<div class="r"><span class="g o"></span><span>Teardown research</span><span class="p">checkout-redesign</span><span class="p">▢ Exec review prep</span><span class="w">working</span></div>
+<div class="r"><span class="g o"></span><span>Edge-case matrix</span><span class="p">refunds-api-spec</span><span></span><span class="w">working</span></div>
+<div class="r"><span class="g o"></span><span>Rule audit</span><span class="p">fraud-rules-review</span><span class="p">▢ Simplify rules</span><span class="w">working</span></div>
+<div class="r"><span class="g i"></span><span>Weekly status draft</span><span class="p">★ home</span><span></span><span class="w">at prompt</span></div>
+<div class="r"><span class="g i"></span><span>Fix footer links</span><span class="p">~/repos/site</span><span></span><span class="w">at prompt</span></div>
+<div class="lab" style="margin-top:6px">Today</div>
+<div class="r"><span>◆</span><span>Results readout</span><span class="p">pricing-experiment-q4</span><span class="p">▢ Q4 readout</span><span class="w">25m</span></div>
+<div class="r"><span>◆</span><span>Funnel SQL</span><span class="p">onboarding-v3</span><span></span><span class="w">40m</span></div>
+<div class="r"><span class="g i"></span><span>Buyer synthesis</span><span class="p">buyer-interviews</span><span class="p">▢ Synthesis memo</span><span class="w">2h</span></div>
+<div class="r"><span class="g i"></span><span>Q4 plan outline</span><span class="p">q4-planning</span><span class="p">▢ Draft plan</span><span class="w">3h</span></div>
+<div class="lab" style="margin-top:6px">This week</div>
+<div class="r"><span class="g i"></span><span>Checkout copy audit</span><span class="p">checkout-redesign</span><span></span><span class="w">2d</span></div>
+<div class="r"><span class="g i"></span><span>Deprecation email</span><span class="p">api-deprecations</span><span class="p">▢ Sunset comms</span><span class="w">3d</span></div>
+<div class="r" style="color:#5b636d"><span>›</span><span>Earlier · 9</span><span></span><span></span><span></span></div>
+</div>
+<div style="width:340px;flex:none;border-left:1px solid #c9cdd3;background:#ffffff;padding:14px 12px;display:flex;flex-direction:column;gap:10px">
+<div class="lab ny">Needs you · 3</div>
+<div class="card" style="border-color:#1f2328">
+<div style="display:flex;gap:8px;align-items:center"><span class="g n"></span><strong>Morning triage</strong><span style="color:#5b636d">★ home</span><span style="margin-left:auto;color:#5b636d">1h</span></div>
+<span style="color:#5b636d">★ home · question</span>
+<span class="q">Route the three to their projects as tasks?</span>
+<button type="button" class="btn">Open Home</button>
+</div>
+<div class="card">
+<div style="display:flex;gap:8px;align-items:center"><span class="g n"></span><strong>Copy review pass 2</strong><span style="margin-left:auto;color:#5b636d">12m</span></div>
+<span style="color:#5b636d">onboarding-v3 · permission</span>
+<span class="q">Approve these 6 string changes?</span>
+<button type="button" class="btn">Open project</button>
+</div>
+<div class="card">
+<div style="display:flex;gap:8px;align-items:center"><span class="g n"></span><strong>PRD v2 edits</strong><span style="margin-left:auto;color:#5b636d">4m</span></div>
+<span style="color:#5b636d">checkout-redesign · question</span>
+<span>Move saved cards into scope, or keep it out and log an open question?</span>
+<button type="button" class="btn">Open project</button>
+</div>
+<div class="lab" style="margin-top:6px">Ready for review · 2</div>
+<div class="card"><strong>◆ Results readout</strong><span style="color:#5b636d">pricing-experiment-q4</span></div>
+</div>
+</div>
+<div class="ann" style="left:14px;top:46px;max-width:230px"><span class="pm">P</span> No sidebar button at All projects (Q-501): the toolbar starts with the traffic lights and “All projects”.</div>
+<div class="ann" style="left:470px;top:600px;max-width:360px"><span class="pm">P</span> No Home column. The middle takes the 340 it had (DL-129's widths become 0 | 1100 | 340). The List and Board are unchanged; ★ home rows open Home's page (board C2).</div>
+<div class="ann" style="left:1104px;top:330px;max-width:320px"><span class="pm">P</span> A Home session that needs you gets a full card, like every project's, with Open Home. The “← Waiting in the Home terminal” pointer card goes.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

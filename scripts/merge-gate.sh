@@ -8,7 +8,7 @@
 # gate failed. The timing checks (check-chat-perf, check-scale), the baseline comparison of the captures
 # (samepng.py against the main without the merge) and check-launch-services.sh stay by hand.
 # Gates: records, hygiene (warnings only: check-hygiene.py --summary, ENH-281 to ENH-285), bundle, DuoChecks,
-# ui + chat + composer focus with the front-app check (check-background.sh), editor and deck checks (SKIP when
+# the director's harness (check-director.sh), ui + chat + composer focus with the front-app check (check-background.sh), editor and deck checks (SKIP when
 # playwright-core isn't at $PWC, default /tmp/pwc), the stand-in claude check (check-context.sh), and, only with
 # MERGE_GATE_IDLE=1, the idle fitness function (check-scale.sh on the gate's own bundle, under the EXCLUSIVE lock,
 # when the branch changes Sources/; ENH-286, opt-in until its budget is calibrated on debug builds).
@@ -17,6 +17,7 @@
 # merge-gate.tsv: time, sha, gate, ok|FAIL|FLAKY|SKIP, seconds), which the weekly tidy-up reads (ENH-284).
 # MERGE_GATE_ONLY=<gate,gate> runs just those gates (scripts/test-merge-gate.sh uses it).
 set -uo pipefail
+export DUO_ISOLATED=1   # every duo2 here reaches only the test instance; refuses, never the user's Duo (F-529)
 ref="${1:?usage: GPU_LOCK=<lock dir> scripts/merge-gate.sh <sha|branch>}"
 : "${GPU_LOCK:?set GPU_LOCK to the lock folder of this machine (machine-local; the director gives it in each brief)}"
 here="$(cd "$(dirname "$0")/.." && pwd)"
@@ -67,6 +68,8 @@ fi
 [ "${MERGE_GATE_SELFTEST:-}" = 1 ] && gate selftest-flaky bash -c 'f="$1/selftest-flaky.mark"; [ -f "$f" ] && exit 0; touch "$f"; exit 1' _ "$log"
 gate bundle scripts/bundle.sh
 gate duochecks swift run DuoChecks
+# The director's own harness, no model and no Duo. It sat broken for four days with nothing running it (F-619).
+gate director bash -c 'swift build --product duo2 >/dev/null && scripts/check-director.sh'
 gate ui-chat-background env NO_BUILD=1 scripts/check-background.sh
 if [ -f "$pwc/node_modules/playwright-core/package.json" ]; then
   gate editor env NO_BUILD=1 NODE_PATH="$pwc/node_modules" bash -c 'for c in scripts/check-editor-selection.mjs scripts/check-editor-motion.mjs scripts/check-deck-motion.mjs; do node "$c" || exit 1; done'

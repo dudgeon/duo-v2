@@ -1,6 +1,7 @@
 #!/bin/zsh
 # Usage: vi-run.sh <support dir> <then-actions...>  : an isolated background Duo that feeds recorded screens to a shell tab.
 set -u
+export DUO_ISOLATED=1   # every duo2 here reaches only the test instance; refuses, never the user's Duo (F-529)
 sup=$1; shift
 then=${(j:,:)@}
 rm -f /tmp/vi-t/done.png

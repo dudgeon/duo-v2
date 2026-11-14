@@ -1,0 +1,47 @@
+/* Scenes for the PDF viewing walkthrough. The world is 640x400. Colours are Duo's light tokens
+   (as in the multi-window walkthrough); a PDF page is white paper on the pane. */
+.cam { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif; color: #1f2328; }
+.cam > * { position: absolute; }
+.h { font-size: 26px; line-height: 32px; font-weight: 600; }
+.t { font-size: 18px; line-height: 25px; }
+.s { font-size: 15px; line-height: 21px; color: #5b636d; }
+.lab { font-size: 13px; line-height: 18px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: #5b636d; }
+.stamp { background: #1f2328; color: #ffffff; padding: 7px 13px; border-radius: 7px; font-size: 16px; line-height: 22px; font-weight: 600; white-space: nowrap; }
+.chip { display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border: 1px solid #8b939c; border-radius: 7px; background: #ffffff; font-size: 15px; white-space: nowrap; }
+.mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+
+/* A Duo pane with a tab strip. */
+.pane { border: 1px solid #c9cdd3; border-radius: 9px; background: #f3f4f6; overflow: hidden; box-shadow: 0 10px 28px rgba(31,35,40,.14); }
+.pane .tabs { position: absolute; left: 0; right: 0; top: 0; height: 28px; background: #ffffff; border-bottom: 1px solid #c9cdd3; display: flex; align-items: center; gap: 8px; padding: 0 10px; font-size: 13px; white-space: nowrap; }
+.pane .tab { padding: 3px 8px; border-radius: 5px; }
+.pane .tab.on { background: #e3e6ea; font-weight: 600; }
+.pane .strip { position: absolute; left: 0; right: 0; top: 29px; height: 26px; background: #f3f4f6; border-bottom: 1px solid #c9cdd3; display: flex; align-items: center; gap: 12px; padding: 0 10px; font-size: 13px; color: #5b636d; white-space: nowrap; }
+.pane .body { position: absolute; left: 0; right: 0; top: 56px; bottom: 0; }
+
+/* A PDF page. */
+.page { background: #ffffff; border: 1px solid #d5d9de; box-shadow: 0 2px 8px rgba(31,35,40,.10); padding: 12px; }
+.page .ph { height: 9px; width: 55%; border-radius: 3px; background: #1f2328; margin-bottom: 10px; }
+.page .b { display: block; height: 6px; border-radius: 3px; background: #c9cdd3; margin: 6px 0; }
+.page .hl { background: #f6d860; }
+.note { width: 18px; height: 18px; border-radius: 3px; background: #f6d860; border: 1px solid #b9971f; }
+
+/* Bars for numbers. */
+.bar { height: 30px; border-radius: 6px; background: #1f2328; color: #ffffff; font-size: 14px; line-height: 30px; padding: 0 10px; white-space: nowrap; transform-origin: left center; }
+.bar.light { background: #7fa6d9; }
+.bar.green { background: #2f8f5b; }
+
+/* A comment card. */
+.card { background: #ffffff; border: 1px solid #c9cdd3; border-radius: 8px; padding: 8px 10px; font-size: 13px; line-height: 18px; box-shadow: 0 4px 12px rgba(31,35,40,.08); }
+.card .who { font-weight: 600; }
+.card .who.claude { color: #2f8f5b; }
+.card .k { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; color: #5b636d; }
+
+.ok { color: #2f8f5b; font-weight: 700; }
+.no { color: #c2410c; font-weight: 700; }
+.opt { display: flex; flex-direction: column; align-items: stretch; border: 1.5px solid #c9cdd3; border-radius: 10px; background: #ffffff; padding: 10px 12px; transition: border-color .4s, box-shadow .4s, opacity .4s; }
+.opt .t { font-weight: 600; }
+
+.ans-row { display: flex; gap: 12px; align-items: baseline; padding: 6px 0; border-bottom: 1px solid #e3e6ea; font-size: 16px; line-height: 22px; }
+.ans-row .q { width: 170px; flex: none; font-weight: 600; }
+.ans-row .a { color: #5b636d; }
+.ans-row.done .a { color: #1f2328; }

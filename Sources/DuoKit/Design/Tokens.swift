@@ -67,6 +67,8 @@ public enum DuoColor {
     public static let commentHighlight = Color(nsColor: NSColor.duoDynamic(light: 0xFBE7A1, dark: 0x4F4112, classic: 0xFBE7A1, name: "commentHighlight"))
     /// A comment's range while its card is hovered or active (markdown-review-handoff, DL-237). Light value provisional (Q-265); the dark one is a stand-in.
     public static let commentHighlightActive = Color(nsColor: NSColor.duoDynamic(light: 0xF5D565, dark: 0x6B5A1A, classic: 0xF0CB6A, name: "commentHighlightActive"))
+    /// The Word viewer's sheet, white in every appearance as in Word and Google Docs: a document keeps its own colours (Q-239, DL-340). The pane around it, and the comment cards, follow the appearance.
+    public static let docxPage = Color(nsColor: NSColor.duoDynamic(light: 0xFFFFFF, dark: 0xFFFFFF, classic: 0xFFFFFF, name: "docxPage"))
 
     // Console chrome: light values here, and in dark the console sinks (DL-224).
     /// Console pane, console tab strips, terminal background
@@ -123,6 +125,7 @@ public enum DuoNSColor {
     public static let reviewAuthor5 = NSColor.duoDynamic(light: 0x9A5A00, dark: 0xE0A64A, classic: 0x9A5A00, name: "reviewAuthor5")
     public static let commentHighlight = NSColor.duoDynamic(light: 0xFBE7A1, dark: 0x4F4112, classic: 0xFBE7A1, name: "commentHighlight")
     public static let commentHighlightActive = NSColor.duoDynamic(light: 0xF5D565, dark: 0x6B5A1A, classic: 0xF0CB6A, name: "commentHighlightActive")
+    public static let docxPage = NSColor.duoDynamic(light: 0xFFFFFF, dark: 0xFFFFFF, classic: 0xFFFFFF, name: "docxPage")
     public static let console = NSColor.duoDynamic(light: 0x15171B, dark: 0x0C0D10, classic: 0x1A1410, name: "console")
     public static let consoleRule = NSColor.duoDynamic(light: 0x2B2F36, dark: 0x24272D, classic: 0x352D23, name: "consoleRule")
     public static let consoleMenuTarget = NSColor.duoDynamic(light: 0x2D3138, dark: 0x262A30, classic: 0x352D23, name: "consoleMenuTarget")
@@ -162,7 +165,8 @@ public enum DuoMetric {
     public static let toolbarHeight: CGFloat = 38.0
     public static let tabStripHeight: CGFloat = 36.0
     public static let chatStripHeight: CGFloat = 28.0
-    public static let splitSideMin: CGFloat = 340.0
+    public static let splitSideMin: CGFloat = 300.0
+    public static let splitConsoleMin: CGFloat = 400.0
     public static let sidebarRail: CGFloat = 16.0
     public static let splitMarkWidth: CGFloat = 11.0
     public static let splitMarkHeight: CGFloat = 9.0
@@ -173,11 +177,11 @@ public enum DuoMetric {
     public static let tabEdgeScroll: CGFloat = 32.0
     public static let tabNeedsYouDot: CGFloat = 6.0
     public static let deckBarHeight: CGFloat = 44.0
+    public static let formatBarHeight: CGFloat = 24.0
     public static let docxMenuWidth: CGFloat = 246.0
     public static let docxMenuTop: CGFloat = 39.0
     public static let docxBarTrailing: CGFloat = 6.0
     public static let docxMenuRowPaddingX: CGFloat = 8.0
-    public static let homeSessionTabsHeight: CGFloat = 32.0
     public static let overviewFooterHeight: CGFloat = 34.0
     public static let rowFile: CGFloat = 24.0
     public static let rowTileSession: CGFloat = 24.0
@@ -188,11 +192,9 @@ public enum DuoMetric {
     public static let jumpFieldHeight: CGFloat = 24.0
     public static let newProjectTileHeight: CGFloat = 38.0
     public static let glyph: CGFloat = 9.0
-    public static let paneOverviewHome: CGFloat = 340.0
     public static let paneOverviewActionColumn: CGFloat = 340.0
     public static let paneProjectLeft: CGFloat = 300.0
     public static let paneProjectRight: CGFloat = 460.0
-    public static let paneMinHome: CGFloat = 280.0
     public static let paneMinActionColumn: CGFloat = 300.0
     public static let paneMinSessionsAndFiles: CGFloat = 240.0
     public static let paneMinRight: CGFloat = 360.0
@@ -256,6 +258,9 @@ public enum DuoMetric {
     public static let sessionListRowInset: CGFloat = 8.0
     public static let sessionListToggleSegmentPadding: CGFloat = 10.0
     public static let sessionListToggleIconGap: CGFloat = 5.0
+    public static let sessionListProjectHeaderHeight: CGFloat = 30.0
+    public static let sessionListProjectPlusSize: CGFloat = 22.0
+    public static let sessionListProjectPlusRadius: CGFloat = 5.0
     public static let rowActionSize: CGFloat = 18.0
     public static let rowActionRadius: CGFloat = 4.0
     public static let rowActionGlyph: CGFloat = 14.0
@@ -339,7 +344,7 @@ public enum DuoSpace {
     public static let questionBoxPadding = EdgeInsets(top: 8.0, leading: 10.0, bottom: 8.0, trailing: 10.0)
     public static let buttonPadding = EdgeInsets(top: 4.0, leading: 10.0, bottom: 4.0, trailing: 10.0)
     public static let popoverPadding = EdgeInsets(top: 14.0, leading: 16.0, bottom: 16.0, trailing: 16.0)
-    public static let documentPadding = EdgeInsets(top: 22.0, leading: 28.0, bottom: 22.0, trailing: 28.0)
+    public static let documentPadding = EdgeInsets(top: 24.0, leading: 28.0, bottom: 24.0, trailing: 28.0)
     public static let gapTileRows: CGFloat = 2.0
     public static let gapGlyphToLabel: CGFloat = 6.0
     public static let gapButtonToButton: CGFloat = 6.0
@@ -542,6 +547,7 @@ public enum DuoSymbolSize {
     public static let barIcon: CGFloat = 12.0
     public static let toolbarIcon: CGFloat = 14.0
     public static let badgeNumber: CGFloat = 10.0
+    public static let swatchChevron: CGFloat = 7.0
 }
 
 /// State strengths (style-audit fix list 7): the one place an opacity is a convention.
@@ -619,6 +625,7 @@ public enum DuoWebTokens {
         ("review-5", DuoNSColor.reviewAuthor5),
         ("comment-highlight", DuoNSColor.commentHighlight),
         ("comment-highlight-active", DuoNSColor.commentHighlightActive),
+        ("docx-page", DuoNSColor.docxPage),
         ("console", DuoNSColor.console),
         ("console-rule", DuoNSColor.consoleRule),
         ("console-menu-target", DuoNSColor.consoleMenuTarget),
@@ -687,6 +694,32 @@ public enum DuoWebTokens {
         ("chat-plan-heading", 15.0, 22.0),
         ("card-title", 13.0, 18.0),
     ]
-    public static let documentPaddingY: CGFloat = 22.0
+    public static let documentPaddingY: CGFloat = 24.0
     public static let documentPaddingX: CGFloat = 28.0
+}
+
+/// Window colours (DL-313, board 4a′): each overrides `ground`, `pane`, `chatGround` and `toolOutputFill` in its window
+/// only; `swatch` is the toolbar's swatch. `all` is in the order new windows take them (DL-312). Classic turns them off.
+public enum DuoWindowColour {
+    public struct Values: Sendable, Equatable {
+        public let ground: UInt32; public let pane: UInt32; public let chatGround: UInt32; public let toolOutputFill: UInt32; public let swatch: UInt32
+    }
+    public struct Colour: Sendable, Equatable, Identifiable {
+        public let id: String; public let name: String; public let hue: Int; public let deep: Bool
+        public let light: Values; public let dark: Values
+    }
+    public static let all: [Colour] = [
+        Colour(id: "blue", name: "Blue", hue: 250, deep: false, light: Values(ground: 0xB2D5FA, pane: 0xECF4FD, chatGround: 0xE1EFFD, toolOutputFill: 0xF1F8FE, swatch: 0xB2D5FA), dark: Values(ground: 0x2266A4, pane: 0x161F28, chatGround: 0x0C1218, toolOutputFill: 0x121A22, swatch: 0x2266A4)),
+        Colour(id: "ochre", name: "Ochre", hue: 75, deep: false, light: Values(ground: 0xF8C885, pane: 0xFBF2E6, chatGround: 0xF7EBDA, toolOutputFill: 0xFCF6EE, swatch: 0xF8C885), dark: Values(ground: 0x835A17, pane: 0x241D12, chatGround: 0x16110A, toolOutputFill: 0x1F180F, swatch: 0x835A17)),
+        Colour(id: "purple", name: "Purple", hue: 315, deep: false, light: Values(ground: 0xE8BFFB, pane: 0xF8F0FC, chatGround: 0xF4E8F9, toolOutputFill: 0xFAF4FC, swatch: 0xE8BFFB), dark: Values(ground: 0x7D4B92, pane: 0x221B25, chatGround: 0x140F17, toolOutputFill: 0x1D1720, swatch: 0x7D4B92)),
+        Colour(id: "green", name: "Green", hue: 135, deep: false, light: Values(ground: 0xB5E09E, pane: 0xEEF6EA, chatGround: 0xE6F1E0, toolOutputFill: 0xF3F9F1, swatch: 0xB5E09E), dark: Values(ground: 0x437224, pane: 0x1A2016, chatGround: 0x0F130C, toolOutputFill: 0x151C12, swatch: 0x437224)),
+        Colour(id: "coral", name: "Coral", hue: 20, deep: false, light: Values(ground: 0xFBC0BF, pane: 0xFDF0EF, chatGround: 0xFDE7E6, toolOutputFill: 0xFEF4F4, swatch: 0xFBC0BF), dark: Values(ground: 0x9C4246, pane: 0x281A1A, chatGround: 0x180F0F, toolOutputFill: 0x221616, swatch: 0x9C4246)),
+        Colour(id: "teal", name: "Teal", hue: 185, deep: false, light: Values(ground: 0x7EE7D9, pane: 0xE7F8F5, chatGround: 0xDBF3EF, toolOutputFill: 0xEEFAF8, swatch: 0x7EE7D9), dark: Values(ground: 0x197269, pane: 0x12221F, chatGround: 0x091412, toolOutputFill: 0x0E1D1B, swatch: 0x197269)),
+        Colour(id: "deep-blue", name: "Deep blue", hue: 250, deep: true, light: Values(ground: 0x5BAAF7, pane: 0xECF4FD, chatGround: 0xE1EFFD, toolOutputFill: 0xF1F8FE, swatch: 0x5BAAF7), dark: Values(ground: 0x0A3F6C, pane: 0x161F28, chatGround: 0x0C1218, toolOutputFill: 0x121A22, swatch: 0x0A3F6C)),
+        Colour(id: "deep-ochre", name: "Deep ochre", hue: 75, deep: true, light: Values(ground: 0xD6962C, pane: 0xFBF2E6, chatGround: 0xF7EBDA, toolOutputFill: 0xFCF6EE, swatch: 0xD6962C), dark: Values(ground: 0x523709, pane: 0x241D12, chatGround: 0x16110A, toolOutputFill: 0x1F180F, swatch: 0x523709)),
+        Colour(id: "deep-purple", name: "Deep purple", hue: 315, deep: true, light: Values(ground: 0xC588E0, pane: 0xF8F0FC, chatGround: 0xF4E8F9, toolOutputFill: 0xFAF4FC, swatch: 0xC588E0), dark: Values(ground: 0x542467, pane: 0x221B25, chatGround: 0x140F17, toolOutputFill: 0x1D1720, swatch: 0x542467)),
+        Colour(id: "deep-green", name: "Deep green", hue: 135, deep: true, light: Values(ground: 0x7DB85A, pane: 0xEEF6EA, chatGround: 0xE6F1E0, toolOutputFill: 0xF3F9F1, swatch: 0x7DB85A), dark: Values(ground: 0x25470A, pane: 0x1A2016, chatGround: 0x0F130C, toolOutputFill: 0x151C12, swatch: 0x25470A)),
+        Colour(id: "deep-coral", name: "Deep coral", hue: 20, deep: true, light: Values(ground: 0xEF7E80, pane: 0xFDF0EF, chatGround: 0xFDE7E6, toolOutputFill: 0xFEF4F4, swatch: 0xEF7E80), dark: Values(ground: 0x6F1821, pane: 0x281A1A, chatGround: 0x180F0F, toolOutputFill: 0x221616, swatch: 0x6F1821)),
+        Colour(id: "deep-teal", name: "Deep teal", hue: 185, deep: true, light: Values(ground: 0x31BCAE, pane: 0xE7F8F5, chatGround: 0xDBF3EF, toolOutputFill: 0xEEFAF8, swatch: 0x31BCAE), dark: Values(ground: 0x0E4741, pane: 0x12221F, chatGround: 0x091412, toolOutputFill: 0x0E1D1B, swatch: 0x0E4741)),
+    ]
 }

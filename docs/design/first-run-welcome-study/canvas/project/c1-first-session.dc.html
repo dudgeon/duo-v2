@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>C1 Explainers that open themselves</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.lab{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5B636D}
+.fr{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;height:300px;position:relative;overflow:hidden}
+.pop{position:absolute;width:220px;background:#FFFFFF;border:1px solid #C9CDD3;border-radius:10px;box-shadow:0 12px 32px rgba(31,35,40,.22);padding:10px 12px;display:flex;flex-direction:column;gap:6px;box-sizing:border-box}
+.ph{font-size:13px;line-height:18px;font-weight:600}
+.pl{font-size:12px;line-height:16px;color:#5B636D}
+.ill{height:46px;background:#F3F4F6;border-radius:5px}
+.ln{height:6px;border-radius:3px;background:#E9ECEF}
+.cap{font-size:13px;line-height:19px}
+.t2{color:#5B636D}
+.pm{display:inline-block;font-size:11px;line-height:15px;font-weight:600;color:#FFFFFF;background:#1F2328;border-radius:4px;padding:1px 6px;margin-right:4px;vertical-align:middle}
+.ann{font-size:12px;line-height:17px;color:#1F2328;background:#FFF7D6;border:1px solid #D9C36A;border-radius:6px;padding:8px 10px}
+.strip{height:24px;background:#F3F4F6;border-bottom:1px solid #C9CDD3;display:flex;align-items:center;gap:8px;padding:0 10px;font-size:11px}
+.pill{display:inline-flex;border:1px solid #8B939C;border-radius:5px;height:14px;width:36px;outline:2px solid #1F2328;outline-offset:1px}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;box-sizing:border-box;padding:40px 48px;background:#F3F4F6;color:#1F2328;font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;flex-direction:column;gap:4px">
+<div class="lab">C · no welcome · the first time each idea is on screen, its explainer opens once by itself</div>
+<span style="font-size:14px;line-height:21px;color:#5B636D;max-width:1200px">Same component, same words as built (DL-172, ENH-345). The only change: the first meeting opens it without the long hover. After that, long hover and Help › Explain as today.</span>
+</div>
+<div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:20px">
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div class="lab">1 · First All projects</div>
+<div class="fr">
+<div class="strip"><strong>All projects</strong></div>
+<div style="padding:10px;display:flex;flex-direction:column;gap:7px">
+<div style="border:1px solid #1F2328;border-radius:5px;padding:4px 6px;font-size:11px;font-weight:600;width:120px">★ home</div>
+<div class="ln" style="width:80%"></div><div class="ln" style="width:70%"></div><div class="ln" style="width:75%"></div>
+</div>
+<div class="pop" style="left:20px;top:70px"><span class="ph">Home</span><span class="pl">The folder that holds the projects you track.</span><div class="ill"></div><div class="ln"></div><div class="ln" style="width:80%"></div></div>
+</div>
+<span class="cap">On ★ home, the first time All projects shows with a Home. <span class="t2">With no Home yet: nothing opens.</span></span>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div class="lab">2 · First project</div>
+<div class="fr">
+<div class="strip"><span class="t2">All projects ›</span><strong style="outline:2px solid #1F2328;outline-offset:1px;border-radius:3px">q4-plan</strong></div>
+<div style="display:flex;height:276px"><div style="width:90px;border-right:1px solid #C9CDD3;padding:8px;display:flex;flex-direction:column;gap:6px"><div class="ln"></div><div class="ln"></div><div class="ln" style="width:70%"></div></div><div style="flex:1;background:#F3F4F6"></div></div>
+<div class="pop" style="left:60px;top:34px;border-style:dashed"><span class="ph">Projects</span><span class="pl">Drawn by the left-nav round (ENH-347).</span><div class="ill"></div><div class="ln"></div></div>
+</div>
+<span class="cap">On the project's name in the toolbar. <span class="t2">The left-nav round owns this explainer; dashed here.</span></span>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div class="lab">3 · First Claude tab</div>
+<div class="fr">
+<div class="strip">Outline the Q4 plan <span class="pill"></span></div>
+<div style="padding:12px;display:flex;flex-direction:column;gap:8px;background:#F3F4F6;height:276px;box-sizing:border-box"><div style="align-self:flex-end;background:#DCE6F7;border-radius:8px;height:22px;width:120px"></div><div style="background:#FFFFFF;border-radius:8px;height:40px;width:170px"></div></div>
+<div class="pop" style="left:40px;top:38px"><span class="ph">Chat and Terminal</span><span class="pl">Two views of the same Claude session.</span><div class="ill"></div><div class="ln"></div><div class="ln" style="width:85%"></div><div class="ln" style="width:70%"></div></div>
+</div>
+<span class="cap">On the pill, the first time a Claude tab is selected. <span class="t2">Also on a first fallback, under its bar.</span></span>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div class="lab">4 · First task section</div>
+<div class="fr">
+<div style="padding:10px;display:flex;flex-direction:column;gap:7px">
+<span class="lab">Tasks</span>
+<span style="font-size:11px;color:#5B636D;outline:2px solid #1F2328;outline-offset:1px;border-radius:3px;width:70px">+ New task</span>
+</div>
+<div class="pop" style="left:20px;top:70px"><span class="ph">Tasks</span><span class="pl">Track the work in this project.</span><div class="ill"></div><div class="ln"></div><div class="ln" style="width:85%"></div></div>
+</div>
+<span class="cap">On + New task, the first time a project with sessions is open for a minute. <span class="t2">The built one.</span></span>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:20px;margin-top:8px">
+<div class="ann"><span class="pm">P</span> One at a time, never while a sheet, menu or question is up, never over a terminal that is working. If two are due, the second waits for the next quiet moment.</div>
+<div class="ann"><span class="pm">P</span> Each opens itself once per install (Duo's state). Esc, a click anywhere or Don't show again closes it; nothing is lost if it is ignored.</div>
+<div class="ann"><span class="pm">P</span> The director has no first meeting: a new user has no director. Its hint is C2. Help › Explain lists all five (X1).</div>
+</div>
+<div class="ann" style="max-width:900px">Against it: DL-172 chose a long hover so an explainer never interrupts and is never something you must read to get on. C reverses that for four first moments. Cheapest to build: the component and words exist; only the trigger is new.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

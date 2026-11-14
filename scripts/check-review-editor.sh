@@ -7,6 +7,7 @@
 # Suggest Edits on (the frontmatter line, a person's typing and Claude's `doc replace` as signed marks);
 # Accept All; a capture of the marks drawn (track-a, margin-suggest).
 set -u
+export DUO_ISOLATED=1   # every duo2 here reaches only the test instance; refuses, never the user's Duo (F-529)
 cd "${0:A:h}/.."
 out=${1:-build/review-editor}; mkdir -p "$out"; out=${out:A}
 root=${DUO_HOST_ROOT:-/private/tmp/pcf-review-1}
@@ -165,7 +166,7 @@ run at-look "${open}$A,wait:3,review-at:early~November=>Please~@cl=>"
 expect "@ menu: on a clean margin too" $out/at-look.log has "menu=claude"
 fresh_c at-tab
 run at-tab "${open}$A,wait:3,review-at:planned~for~early~November=>Please~@=>down+tab"
-expect "@ menu: Tab inserts @claude" $out/at-tab.log has 'field="Please @claude " menu=closed'
+expect "@ menu: down then Tab inserts the first person (Claude is row one, DL-251 stage 2)" $out/at-tab.log has 'field="Please @geoff " menu=closed'
 fresh_c at-esc
 run at-esc "${open}$A,wait:3,review-at:planned~for~early~November=>Please~@c=>esc"
 expect "@ menu: Esc closes it and leaves the text" $out/at-esc.log has 'field="Please @c" menu=closed'

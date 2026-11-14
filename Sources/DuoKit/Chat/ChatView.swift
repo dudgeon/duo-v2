@@ -19,6 +19,12 @@ public final class ChatUIState {
     /// Your long messages shown in full.
     public var fullYou: Set<String> = []
     public var thinkingOpen: Set<String> = []
+    /// The turn under the pointer (its row shows), and the turn whose Copy just ran (DL-338).
+    public var hoverTurn: String?
+    /// The message ⌥⌘↑/↓ selected: it gets a ring and shows its row (board 4).
+    public var selectedTurn: String?
+    public var copiedTurn: String?
+    var copiedAt: Date?
     /// Plan option 3's feedback, the free-text answers by question, a preview's notes.
     public var planFeedback = ""
     public var other: [Int: String] = [:]
@@ -115,8 +121,11 @@ struct ChatPane: View {
                     ChatPerf.note("geo y \(Int(g[0])) h \(Int(g[2])) follows \(chat.followsBottom)")
                     if old.count == 3, old[2] != g[2] || old[1] != g[1] {
                         // Grown or the pane resized while following: back to the end, once, by us
-                        // (what the size-change anchor did). Otherwise you've left the end.
-                        if chat.followsBottom, !atBottom { follow(proxy) } else if !atBottom { chat.followsBottom = false }
+                        // (what the size-change anchor did). Otherwise you've left the end. Following
+                        // goes to the very end: the working line (32 pt) is less than the 60 pt that
+                        // says you're still there, and was left half under the composer (F-540).
+                        let atEnd = g[0] + g[1] >= g[2] - 1
+                        if chat.followsBottom, !atEnd { follow(proxy) } else if !atBottom { chat.followsBottom = false }
                         return
                     }
                     if old.count == 3, old[0] != g[0] { chat.followsBottom = atBottom }
@@ -157,7 +166,7 @@ struct ChatPane: View {
         }
         .animation((chat.cardUp ? DuoMotionToken.cardIn : .cardOut).animation, value: chat.cardUp)
         .animation((chat.pickerUp ? DuoMotionToken.cardIn : .cardOut).animation, value: chat.pickerUp)
-        .background(DuoColor.chatGround)
+        .background(WindowTint.chatGround)
         .tint(DuoColor.text)
         .onAppear { model.installChatKeys() }
         .environment(\.openURL, OpenURLAction { url in
@@ -284,13 +293,19 @@ struct ChatYouBubble: View {
                 .padding(EdgeInsets(top: 9, leading: 14, bottom: 9, trailing: 14))
                 .background(UnevenRoundedRectangle(cornerRadii: DuoMetric.radiusChatBubble).fill(DuoColor.chatYou))
             }
+            .overlay {
+                // ⌥⌘↑/↓ selected it: a 2 pt ring in `text` (board 4).
+                if chat.ui.selectedTurn == you.id { UnevenRoundedRectangle(cornerRadii: DuoMetric.radiusChatBubble).strokeBorder(DuoColor.text, lineWidth: 2) }
+            }
             .videoAnchor(chat.youIdentifier(you.id), group: true)
             .opacity(you.queued ? 0.6 : 1)
             if you.queued { Text("Queued · Claude reads it when it’s ready").duoText(.chatMeta).foregroundStyle(DuoColor.text2) }
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
+        .turnRow(id: you.id, chat: chat, trailing: true)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("You: \(you.text)\(you.images.isEmpty ? "" : ", \(you.images.count) picture\(you.images.count == 1 ? "" : "s")")")
+        .turnAccessibility(id: you.id, chat: chat)
     }
 }
 
@@ -435,15 +450,22 @@ struct ChatWorkingLine: View {
         }
     }
 
-    var currentText: String? {
-        let s = chat.screen
+    var currentText: String? { chat.workingLine }
+}
+
+extension ChatSession {
+    /// The line under the feed while Claude works (chat-polish `mixed`: `Working · 9s · Esc to interrupt`;
+    /// chat-mode `text`: `Writing · 14s · …`), or nil at the prompt. Shown for as long as the screen
+    /// reads busy, the silent stretches of a long tool or thinking included (F-539).
+    public var workingLine: String? {
+        let s = screen
         if let status = s.status, s.kind == .busy, status.contains("Retrying") {
             return status.replacingOccurrences(of: #"^[✻✽✶✳✢·*]\s*"#, with: "", options: .regularExpression)
                 .replacingOccurrences(of: " (mock)", with: "")
         }
-        guard s.kind == .busy || chat.log.writing else { return nil }
-        let secs = chat.log.turnStarted.map { max(0, Int(chat.now.timeIntervalSince($0))) }
-        let verb = chat.log.writing ? "Writing" : "Working"
+        guard s.kind == .busy || log.writing else { return nil }
+        let secs = log.turnStarted.map { max(0, Int(now.timeIntervalSince($0))) }
+        let verb = log.writing ? "Writing" : "Working"
         return [verb, secs.map { "\($0)s" }, "Esc to interrupt"].compactMap { $0 }.joined(separator: " · ")
     }
 }
@@ -482,6 +504,8 @@ struct ChatClaudeCard: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(UnevenRoundedRectangle(cornerRadii: DuoMetric.radiusChatCard).fill(DuoColor.pane))
         }
+        .turnRow(id: turn.id, chat: chat, trailing: false)
+        .turnAccessibility(id: turn.id, chat: chat)
         .padding(.trailing, DuoSpace.chatCardTrailing)
     }
 

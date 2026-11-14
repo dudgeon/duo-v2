@@ -1,6 +1,6 @@
 # Duo: the Markdown formatting bar, with the mic — design handoff
 
-Status: approved by Geoff, 2026-10-31 (DL-266). Build after 0.2.22.
+Status: approved by Geoff, 2026-10-31 (DL-266). Built after 0.2.22 on `build/md-format-bar` (DL-301): where the build departs from the screen or leaves a question, Q-411 to Q-413 and C-143 say so.
 
 The boards were drawn on the Design canvas https://claude.ai/artifact/2DqVdN1cA1P6Hv1MW5T8Sb with the Duo design system; every new mark is a [P]. Geoff chose option A, "but much slimmer; only while editing/carat is in the editor", then said yes to the redrawn board. They're exported here as static HTML (`screens/`, listed in `screens/manifest.json`), with PNGs at 2x in `screens/png/`.
 
@@ -79,3 +79,23 @@ Before building, read the research: `docs/design/markdown-toolbar-study/README.m
 - The bar on a document in Home's pane, which works as in the right pane.
 - The "No microphone found." notice, which is the hint row's words in the bar.
 - The first-press sheet, which is chat's (DL-260).
+
+## Review in the bar (DL-317, `review-in-bar`)
+
+Geoff, 2026-11-03: review goes into this bar, and the 44-high review bar goes. `review-in-bar` is the target. Where it differs from `bar`, it wins.
+
+- **Comment** (⌥⌘M): a glyph button (a speech bubble with +) after ⋯, behind a separator. With nothing selected it takes the word at the caret.
+- **The mode menu**, right-justified before the mic. It reads **Editing ⌄** or **Suggesting ⌄**: a pen in `text2` and the word in `text`. Suggesting gets the `selected` fill, a `text` pen and a dotted line under the pen.
+  - It holds Editing (edits change the text) and Suggesting (⇧⌘E), checked.
+  - Then Next Change, Previous Change, Accept All, Reject All (and per person when there's more than one).
+  - Then Markup ▸ (All, Simple, None, Original) and Show Closed Comments with its count.
+  - Then the counts.
+  - In a table it shows only the pen and ⌄, with the mode in its tooltip.
+  - While listening it stays beside the mic.
+- **When the bar shows:** as `bar`, and also whenever the document has suggestions or comments or is Suggesting, even without the keyboard.
+- **Retire** `MarkdownReviewBar` and its slot. Its menus move into the mode menu. Every menu item, chord and duo2 verb stays.
+- **Fit:**
+  - At 460 everything fits.
+  - With review on a not-editing document, Insert Table goes into ⋯.
+  - At 360, Insert Table goes into ⋯.
+

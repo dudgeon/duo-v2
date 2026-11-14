@@ -6,7 +6,7 @@ import DuoControl
 public enum ClaudeTrust {
     /// The config folder: `CLAUDE_CONFIG_DIR`, else the user's home (where `~/.claude.json` lives).
     public static func configFile(configDir: String? = Env.value("CLAUDE_CONFIG_DIR")) -> URL {
-        if let dir = configDir { return URL(fileURLWithPath: dir).appending(path: ".claude.json") }
+        if let dir = configDir, !ClaudeStorage.isDefaultFolder(dir) { return URL(fileURLWithPath: dir).appending(path: ".claude.json") }
         return FileManager.default.homeDirectoryForCurrentUser.appending(path: ".claude.json")
     }
 

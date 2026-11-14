@@ -1,5 +1,7 @@
 # Duo: Home's evolution — design handoff
 
+> **Superseded in part by DL-336 (2026-11-11):** `list-1440`, `list-1280`, `board-1440` and `home-chat` draw Home's column on the left of All projects; there is none now, and the middle and the Needs you column are all there is. Its screens are a snapshot and stay as drawn; see `../home-agent-panel-handoff/`.
+
 Status: approved by Geoff, 2026-10-07 (DL-142), by buttons one at a time (his canvas comments failed). Not built: the build is a separate job.
 
 Geoff asked for one list of every active and recent session, with its project and task, like the Claude app's left bar; for Needs you to stay; and for Home to open in chat. The study drew four placements (A to D), three groupings, three ways for Needs you to sit with the list, filtering, what a click does, and Home in chat, on the Design canvas https://claude.ai/artifact/UmuuYZdzroUbBDmY2UYRBY with the Duo design system. All 18 boards are in `canvas/` (`make.py` draws them, `render.sh` renders them, `to-canvas.py` writes them as canvas artboards). The approved ones are exported to `screens/` (listed in `screens/manifest.json`, PNGs in `screens/png/`).

@@ -8,7 +8,7 @@ import Foundation
     print("split view: the active side, one document per file, narrow widths, swaps (DL-275 to DL-278)")
 
     // Tokens agree with the geometry.
-    check(SplitGeometry.sideMin == Double(DuoMetric.splitSideMin), "splitSideMin is the token's 340")
+    check(SplitGeometry.sideMin == Double(DuoMetric.splitSideMin), "splitSideMin is the token's 300")
     check(SplitRoom.railWidth == Double(DuoMetric.sidebarRail), "the sidebar rail is the token's 16")
 
     // --- Narrow widths (legacy: sides squeezed to nothing)
@@ -18,14 +18,14 @@ import Foundation
             if SplitGeometry.folded(width: width) {
                 check(w.left == width && w.right == width, "folded \(Int(width)): each side gets the whole pane")
             } else {
-                check(w.left >= 340 && w.right >= 340 && abs(w.left + w.right + 1 - width) < 0.01, "width \(Int(width)) ratio \(ratio): sides \(w.left) + \(w.right), neither under 340, nothing lost")
+                check(w.left >= 300 && w.right >= 300 && abs(w.left + w.right + 1 - width) < 0.01, "width \(Int(width)) ratio \(ratio): sides \(w.left) + \(w.right), neither under 300, nothing lost")
             }
         }
     }
-    check(!SplitGeometry.folded(width: 681) && SplitGeometry.folded(width: 680), "a pane folds under 2 × 340 + 1")
+    check(!SplitGeometry.folded(width: 601) && SplitGeometry.folded(width: 600), "a pane folds under 2 × 300 + 1")
     check(SplitGeometry.clampedRatio(0.05) == 0.2 && SplitGeometry.clampedRatio(0.95) == 0.8 && SplitGeometry.clampedRatio(.nan) == 0.5, "the ratio clamps to 0.2–0.8")
     let dragged = SplitGeometry.ratio(left: 100, width: 1000)
-    check(SplitGeometry.widths(width: 1000, ratio: dragged).left == 340, "a drag past the minimum stops at 340")
+    check(SplitGeometry.widths(width: 1000, ratio: dragged).left == 300, "a drag past the minimum stops at 300")
     // Restore reproduces what was saved (rule 5).
     for r in [0.25, 0.4, 0.5, 0.63, 0.75] {
         let saved = SplitGeometry.widths(width: 960, ratio: r).left
@@ -33,17 +33,31 @@ import Foundation
         check(abs(saved - again) <= 1, "ratio \(r): the divider comes back where it was saved")
     }
 
-    // --- Making room (DL-276): the numbers in the handoff
+    // --- Making room (DL-276, with DL-306's "Squeeze others first"): the console to 400 and the sides to 300
+    // before the sidebar is touched, so it folds only under 1,303 (about 1,300).
+    check(SplitRoom.consoleMin == Double(DuoMetric.splitConsoleMin), "the console's split minimum is the token's 400")
     let r1440 = SplitRoom.plan(window: 1440, sidebarShown: true)
-    check(r1440.foldsSidebar && r1440.rightWidth == 944, "1440: the sidebar folds to its rail, the console is at 480")
-    check(SplitGeometry.widths(width: r1440.rightWidth - 1, ratio: 0.5).left == 471 || SplitGeometry.widths(width: r1440.rightWidth - 1, ratio: 0.5).left == 472, "1440: sides of about 470")
+    check(!r1440.foldsSidebar && r1440.rightWidth == 1440 - 300 - 400 - 2, "1440: all three panes stay, the console is at 400 and the right pane takes the rest")
+    check(abs(SplitGeometry.widths(width: r1440.rightWidth - 1, ratio: 0.5).left - 368) <= 1 && !SplitGeometry.folded(width: r1440.rightWidth - 1), "1440: two sides of about 368")
     let r1280 = SplitRoom.plan(window: 1280, sidebarShown: true)
-    check(r1280.foldsSidebar && r1280.rightWidth == 784, "1280: the sidebar folds, the right pane takes the rest")
-    check(abs(SplitGeometry.widths(width: r1280.rightWidth - 1, ratio: 0.5).left - 391) <= 1, "1280: sides of about 391")
+    check(r1280.foldsSidebar && r1280.rightWidth == 1280 - 16 - 400 - 2, "1280: under 1,303 the sidebar folds to its rail, the right pane takes the rest")
+    check(abs(SplitGeometry.widths(width: r1280.rightWidth - 1, ratio: 0.5).left - 430) <= 1, "1280: sides of about 430 beside the rail")
+    // F-531, DL-306: the sidebar folds only when sidebar 300 + console 400 + two 300 sides don't fit.
+    let r1810 = SplitRoom.plan(window: 1810, sidebarShown: true)
+    check(!r1810.foldsSidebar && r1810.rightWidth == 1810 - 300 - 400 - 2, "1810: the sidebar stays; the console narrows to 400 and the right pane takes the rest")
+    check(!SplitGeometry.folded(width: r1810.rightWidth - 1), "1810: two sides fit")
+    check(!SplitRoom.plan(window: 1303, sidebarShown: true).foldsSidebar && SplitRoom.plan(window: 1302, sidebarShown: true).foldsSidebar,
+          "the sidebar folds under 1,303 and not at it (300 + 400 + two 300 sides and their dividers)")
+    check(SplitRoom.plan(window: 1303, sidebarShown: true).rightWidth == 601 && !SplitGeometry.folded(width: 601) && SplitGeometry.folded(width: 600),
+          "at the edge the right pane is exactly two 300 sides and their divider, and one less folds the split")
+    check(!SplitRoom.plan(window: 1300, sidebarShown: true).foldsSidebar == false && SplitRoom.plan(window: 1300, sidebarShown: true).foldsSidebar,
+          "about 1,300 and under, it folds")
+    // The split folds to one side only when even the sidebar's rail leaves too little (never at the 1280 minimum window).
+    check(!SplitGeometry.folded(width: SplitRoom.plan(window: 1280, sidebarShown: true).rightWidth - 1), "at the 1280 window minimum two sides still fit with the sidebar folded")
     let wide = SplitRoom.plan(window: 1700, sidebarShown: true)
-    check(!wide.foldsSidebar && wide.rightWidth == 1700 - 300 - 480, "a wide window keeps the sidebar")
-    check(SplitRoom.plan(window: 1700, sidebarShown: false).rightWidth == 1700 - 480 && !SplitRoom.plan(window: 1000, sidebarShown: false).foldsSidebar, "a hidden sidebar is left alone")
-    check(abs(SplitRoom.foldSidebarBelow - 1464) <= 1, "the sidebar folds under about 1,464")
+    check(!wide.foldsSidebar && wide.rightWidth == 1700 - 300 - 400 - 2, "a wide window keeps the sidebar")
+    check(SplitRoom.plan(window: 1700, sidebarShown: false).rightWidth == 1700 - 400 - 2 && !SplitRoom.plan(window: 1000, sidebarShown: false).foldsSidebar, "a hidden sidebar is left alone")
+    check(abs(SplitRoom.foldSidebarBelow - 1303) <= 1, "the sidebar folds under about 1,300 (1,303 with the dividers)")
 
     // --- The routing table: every command × side (legacy: the active side was inferred)
     for command in SplitCommand.allCases {
@@ -67,7 +81,7 @@ import Foundation
     let m = AppModel(fixture: f)
     TargetState.project.apply(to: m)
     let project = m.currentProject!.name
-    func makeSplit(_ path: String = "docs/prd-v2.md", kind: PreviewKind = .markdown) {
+    func makeSplit(_ path: String = "pages/report.html", kind: PreviewKind = .html) {
         if !m.openDocuments.contains(path) { m.openDocuments.append(path) }
         m.rightTab = path; m.selectedFile = path
         m.splitTabs[path] = SplitTab(source: path, kind: kind)
@@ -75,9 +89,9 @@ import Foundation
     let console = m.consoleTab
 
     makeSplit()
-    check(m.showingSplit?.source == "docs/prd-v2.md" && m.showingSplit?.activeSide == .left, "a split is made: the source on the left, active")
-    check(m.openDocuments.filter { $0 == "docs/prd-v2.md" }.count == 1, "one tab for the file: the split adds no second document")
-    check(m.rightTabKeys().filter { $0 == "docs/prd-v2.md" }.count == 1, "the strip lists the split once")
+    check(m.showingSplit?.source == "pages/report.html" && m.showingSplit?.activeSide == .left, "a split is made: the source on the left, active")
+    check(m.openDocuments.filter { $0 == "pages/report.html" }.count == 1, "one tab for the file: the split adds no second document")
+    check(m.rightTabKeys().filter { $0 == "pages/report.html" }.count == 1, "the strip lists the split once")
 
     // The active side is model state, not DOM focus.
     m.webFocus = .editor
@@ -94,23 +108,23 @@ import Foundation
     m.activate(.right, focus: false)
     check(m.splitHasKeys && DuoCommand.closeSession.isEnabled(in: m), "⌘W is enabled with the right pane active on a split")
     DuoCommand.closeSession.perform(in: m)
-    check(m.showingSplit == nil && m.openDocuments.contains("docs/prd-v2.md") && m.rightTab == "docs/prd-v2.md", "⌘W on the preview side closes the preview and leaves the source tab")
+    check(m.showingSplit == nil && m.openDocuments.contains("pages/report.html") && m.rightTab == "pages/report.html", "⌘W on the preview side closes the preview and leaves the source tab")
     check(m.consoleTab == console, "and leaves the console's session alone")
 
     // ⌘W on the source closes the whole split with its tab
     makeSplit(); m.setActiveRole(.source); m.activate(.right, focus: false)
     DuoCommand.closeSession.perform(in: m)
-    check(m.showingSplit == nil && !m.openDocuments.contains("docs/prd-v2.md"), "⌘W on the source side closes the split with its tab")
+    check(m.showingSplit == nil && !m.openDocuments.contains("pages/report.html"), "⌘W on the source side closes the split with its tab")
     check(m.consoleTab == console, "and the console's session is still alone")
 
     // The × of each side; Close Split View
     makeSplit(); m.closeSplitSide(.right)
-    check(m.splitTab("docs/prd-v2.md") == nil && m.openDocuments.contains("docs/prd-v2.md"), "close the preview side: the source stays an ordinary tab")
+    check(m.splitTab("pages/report.html") == nil && m.openDocuments.contains("pages/report.html"), "close the preview side: the source stays an ordinary tab")
     makeSplit(); m.closeSplitSide(.left)
-    check(m.splitTab("docs/prd-v2.md") == nil && !m.openDocuments.contains("docs/prd-v2.md"), "close the source side: the split goes with its tab")
-    makeSplit(); m.closeSplitView("docs/prd-v2.md")
-    check(m.splitTab("docs/prd-v2.md") == nil && m.openDocuments.contains("docs/prd-v2.md"), "Close Split View keeps the source as a tab")
-    m.closeDocument("docs/prd-v2.md")
+    check(m.splitTab("pages/report.html") == nil && !m.openDocuments.contains("pages/report.html"), "close the source side: the split goes with its tab")
+    makeSplit(); m.closeSplitView("pages/report.html")
+    check(m.splitTab("pages/report.html") == nil && m.openDocuments.contains("pages/report.html"), "Close Split View keeps the source as a tab")
+    m.closeDocument("pages/report.html")
 
     // A swap can't crash, however it's used (legacy: a swap crashed)
     m.swapSplitSides(); m.evenSplit(); m.stepSplitSide(); m.setSplitRatio(0.3); m.closeSplitSide(.left)
@@ -126,27 +140,27 @@ import Foundation
     m.swapSplitSides()
     check(m.showingSplit!.place(of: .source) == .right && m.showingSplit!.role(at: .left) == .preview, "swapped, the source is on the right")
     check(m.showingSplit!.activeSide == m.showingSplit!.place(of: m.showingSplit!.active), "the active side follows its role through a swap")
-    m.closeSplitView("docs/prd-v2.md"); m.closeDocument("docs/prd-v2.md")
+    m.closeSplitView("pages/report.html"); m.closeDocument("pages/report.html")
 
     // Folding is a model change too
     makeSplit()
-    m.splitFolded(true, for: "docs/prd-v2.md")
+    m.splitFolded(true, for: "pages/report.html")
     check(m.showingSplit?.folded == true, "fold is recorded")
-    m.splitFolded(false, for: "docs/prd-v2.md")
+    m.splitFolded(false, for: "pages/report.html")
     check(m.showingSplit?.folded == false, "unfold is recorded")
     m.splitFolded(true, for: "docs/nothing.md")   // a split that isn't there: nothing happens
-    m.closeSplitView("docs/prd-v2.md"); m.closeDocument("docs/prd-v2.md")
+    m.closeSplitView("pages/report.html"); m.closeDocument("pages/report.html")
 
     // One document per file across kinds and two tabs
-    makeSplit("docs/prd-v2.md"); makeSplit("pages/report.html", kind: .html)
-    check(m.splitTabs.count == 2 && m.openDocuments.filter { $0 == "pages/report.html" }.count == 1, "two files, two splits, one tab each")
-    m.splits.tabs[project]?["docs/prd-v2.md"]?.ratio = 0.35
+    makeSplit("pages/report.html"); makeSplit("pages/other.html", kind: .html)
+    check(m.splitTabs.count == 2 && m.openDocuments.filter { $0 == "pages/other.html" }.count == 1, "two files, two splits, one tab each")
+    m.splits.tabs[project]?["pages/report.html"]?.ratio = 0.35
     let saved = m.splitsForRestore(project) ?? []
     check(saved.count == 2, "both splits are saved with the restore state")
 
     // Persistence round trip, and the fields are optional (older files decode)
     var state = RestoreState()
-    state.projects = [.init(folder: "/x", sessions: [], consoleTab: nil, documents: ["docs/prd-v2.md"], rightTab: nil)]
+    state.projects = [.init(folder: "/x", sessions: [], consoleTab: nil, documents: ["pages/report.html"], rightTab: nil)]
     state.projects[0].splits = saved
     state.splitRoom = SplitRoom.Taken(rightWidth: 460, sidebarWasShown: true, foldedSidebar: true)
     let data = try JSONEncoder().encode(state)
@@ -155,17 +169,26 @@ import Foundation
     let old = try JSONDecoder().decode(RestoreState.self, from: Data(#"{"version":1,"leftCollapsedAllProjects":false,"leftCollapsedProject":false,"projects":[]}"#.utf8))
     check(old.splitRoom == nil, "a restore file from before split view still reads")
 
+    // DL-336: All projects has no sidebar; old files that carry its state still read, and the state is ignored
+    let fresh = AppModel(fixture: f)
+    check(fresh.leftCollapsed && !fresh.leftCollapsedProject, "All projects has no sidebar; a project's starts open")
+    fresh.altitude = .allProjects; fresh.leftCollapsed = false
+    check(fresh.leftCollapsed, "the sidebar can't be opened at All projects")
+    let oldTrue = try JSONDecoder().decode(RestoreState.self, from: Data(#"{"version":1,"leftCollapsedAllProjects":true,"leftTouchedAllProjects":true,"leftCollapsedProject":false,"projects":[]}"#.utf8))
+    check(!oldTrue.leftCollapsedProject, "an old file with All projects' sidebar state still reads")
+    check(!String(decoding: try JSONEncoder().encode(fresh.currentRestoreState()), as: UTF8.self).contains("leftTouchedAllProjects"), "and a new save no longer writes it")
+
     // Restore validates: a split whose source is no longer a document is dropped; a wild ratio is clamped
     let m2 = AppModel(fixture: f)
     TargetState.project.apply(to: m2)
     let p2 = m2.currentProject!.name
-    m2.restoreSplits([SplitTab(source: "docs/prd-v2.md", kind: .markdown, ratio: 9), SplitTab(source: "gone.md", kind: .markdown)], project: p2, documents: ["docs/prd-v2.md"])
-    check(m2.splits.tabs[p2]?.count == 1 && m2.splits.tabs[p2]?["docs/prd-v2.md"]?.ratio == 0.8, "restore drops a missing source and clamps the ratio")
+    m2.restoreSplits([SplitTab(source: "pages/report.html", kind: .html, ratio: 9), SplitTab(source: "gone.md", kind: .html)], project: p2, documents: ["pages/report.html"])
+    check(m2.splits.tabs[p2]?.count == 1 && m2.splits.tabs[p2]?["pages/report.html"]?.ratio == 0.8, "restore drops a missing source and clamps the ratio")
 
     // A rename follows
-    makeSplit("docs/prd-v2.md")
-    m.splitMoved("docs/prd-v2.md", to: "docs/prd-v3.md")
-    check(m.splitTab("docs/prd-v3.md")?.source == "docs/prd-v3.md" && m.splitTab("docs/prd-v2.md") == nil, "a renamed file keeps its split")
+    makeSplit("pages/report.html")
+    m.splitMoved("pages/report.html", to: "pages/report3.html")
+    check(m.splitTab("pages/report3.html")?.source == "pages/report3.html" && m.splitTab("pages/report.html") == nil, "a renamed file keeps its split")
 
     // --- The provider interface: revisions, stale events, echo suppression, nested anchors
     var gate = RevisionGate()
@@ -183,33 +206,7 @@ import Foundation
     check(policy.anchorToReveal(forLine: 40) == nil, "with caret-follow off nothing is revealed")
     policy.cancel()
 
-    // The Markdown preview: anchors by heading, outside code
-    let md = "---\ntitle: x\n---\n# One\ntext\n```\n# not a heading\n```\n## Two\nmore\n"
-    let map = MarkdownPreviewHTML.anchorMap(md)
-    check(map.map(\.anchor) == ["h:1", "h:2"] && map[0].firstLine == 4 && map[0].lastLine == 8 && map[1].firstLine == 9, "headings are anchors, and a hash in a code block isn't one")
-    let page = MarkdownPreviewHTML.page(md, colors: ("#fff", "#000", "#555", "#ccc"))
-    check(page.contains("<h1>One</h1>") && page.contains("<h2>Two</h2>") && !page.contains("title: x"), "the preview renders the body, not the frontmatter")
-    check(MarkdownPreviewHTML.page("<script>x</script>", colors: ("#fff", "#000", "#555", "#ccc")).contains("&lt;script&gt;"), "text in a preview is escaped")
-
     // Which files preview
-    check(PreviewProviders.kind(forFile: "a.md") == .markdown && PreviewProviders.kind(forFile: "a.html") == .html && PreviewProviders.kind(forFile: "a.png") == nil, "Markdown and HTML preview; a picture doesn't")
+    check(PreviewProviders.kind(forFile: "a.md") == nil && PreviewProviders.kind(forFile: "a.html") == .html && PreviewProviders.kind(forFile: "a.png") == nil, "HTML previews; Markdown (live in the editor) and a picture don't")
     check(PreviewProviders.kind(forFile: "a.pptx") == nil, "a deck has no preview until Duo Decks registers its provider")
-}
-
-/// C-136: what a Markdown preview render costs, timed under the exclusive lock (`DUO_CHECKS=split-perf`).
-@MainActor func splitViewPerf() {
-    print("split view: preview render time (C-136)")
-    for lines in [200, 2000, 20000] {
-        var md = "# Title\n\n"
-        for i in 0..<lines / 4 { md += "## Section \(i)\n\nA paragraph with **bold**, `code` and a [link](https://x.y/\(i)).\n\n- one\n- two\n\n" }
-        var best = Double.infinity
-        for _ in 0..<5 {
-            let t0 = DispatchTime.now().uptimeNanoseconds
-            let page = MarkdownPreviewHTML.page(md, colors: ("#fff", "#000", "#555", "#ccc"))
-            let map = MarkdownPreviewHTML.anchorMap(md)
-            best = min(best, Double(DispatchTime.now().uptimeNanoseconds - t0) / 1e6)
-            check(!page.isEmpty && !map.isEmpty, "rendered \(lines) lines")
-        }
-        print("  \(lines) lines (\(md.utf8.count / 1024) KB): \(String(format: "%.1f", best)) ms to HTML and anchor map")
-    }
 }

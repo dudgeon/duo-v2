@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Leaving a pinned window's project</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1720px; height: 640px; box-sizing: border-box; padding: 40px 48px; display: flex; flex-direction: column; gap: 24px; background: #F3F4F6; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 13px; line-height: 20px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; color: #5B636D">DECISION 3</span>
+<span style="font-size: 22px; line-height: 28px; font-weight: 600">Leaving a pinned window's project</span>
+<span style="color: #5B636D">You're in the window pinned to refunds and ask for checkout-redesign: from search, the peek's ⌘↩, a notification, ⌘↑, or a session that runs duo2 open.</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px">
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<span style="display: flex; gap: 8px; align-items: center"><span style="font-weight: 600">A · It opens in a window that isn't pinned</span><span style="padding: 0 7px; border: 1px solid #8B939C; border-radius: 9px; font-size: 11px; line-height: 16px; background: #FFFFFF">recommended</span></span>
+<div style="position: relative; width: 494px; height: 309px">
+<div style="position: absolute; left: 0; top: 0; width: 416px; height: 260px"><div style="transform: scale(0.8); transform-origin: top left; width: 520px; height: 325px"><dc-import name="Win" altitude="project" project="refunds" pin="on" tint="sage" key="no" s1="Refund rules" s2="Policy diff" s3="Ops notes" doc="rules.md" hint-size="520px,325px"></dc-import></div></div>
+<div style="position: absolute; left: 78px; top: 49px; width: 416px; height: 260px"><div style="transform: scale(0.8); transform-origin: top left; width: 520px; height: 325px"><dc-import name="Win" altitude="project" project="checkout-redesign" pin="off" hint-size="520px,325px"></dc-import></div></div>
+</div>
+<span style="color: #5B636D; white-space: normal">The most recent window that isn't pinned comes forward, showing it. If every window is pinned, a new one opens. A pinned window never changes under you.</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<span style="font-weight: 600">B · Ask where</span>
+<div style="position: relative; width: 494px; height: 309px">
+<div style="transform: scale(0.95); transform-origin: top left; width: 520px; height: 325px"><dc-import name="Win" altitude="project" project="refunds" pin="on" tint="sage" s1="Refund rules" s2="Policy diff" s3="Ops notes" doc="rules.md" hint-size="520px,325px"></dc-import></div>
+<div style="position: absolute; left: 97px; top: 23px; width: 300px; display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border: 1px solid #C9CDD3; border-radius: 0 0 8px 8px; background: #F3F4F6; box-shadow: 0 12px 32px rgba(31,35,40,0.22); font-size: 12px; line-height: 16px; white-space: normal">
+<span style="font-weight: 600">This window is pinned to refunds</span>
+<span style="color: #5B636D">Where should checkout-redesign open?</span>
+<span style="display: flex; gap: 6px; justify-content: flex-end"><span style="padding: 2px 8px; border: 1px solid #8B939C; border-radius: 6px; background: #FFFFFF">Unpin, Open Here</span><span style="padding: 2px 8px; border: 1.5px solid #1F2328; border-radius: 6px; background: #FFFFFF; font-weight: 600">Other Window</span></span>
+</div>
+</div>
+<span style="color: #5B636D; white-space: normal">You choose each time, in a Duo sheet. Clear, but a question every time you jump, and a scripted duo2 open can't answer it.</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<span style="font-weight: 600">C · It opens here and unpins the window</span>
+<div style="width: 494px; height: 309px"><div style="transform: scale(0.95); transform-origin: top left; width: 520px; height: 325px"><dc-import name="Win" altitude="project" project="checkout-redesign" pin="off" tint="sage" hint-size="520px,325px"></dc-import></div></div>
+<span style="color: #5B636D; white-space: normal">The jump always lands where you are. But the pin breaks the first time you search, and the window keeps refunds' tint on another project.</span>
+</div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1720,"height":640}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

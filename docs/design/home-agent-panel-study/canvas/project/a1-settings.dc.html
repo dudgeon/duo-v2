@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A Settings switch</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.grp{font-size:13px;line-height:20px;font-weight:600;margin-top:6px}
+.row{display:grid;grid-template-columns:150px minmax(0,1fr);gap:14px;font-size:13px;line-height:20px;align-items:start}
+.row .k{text-align:right;color:#1f2328}
+.sub{font-size:12px;line-height:17px;color:#5b636d}
+.pop{border:1px solid #8b939c;border-radius:5px;padding:0 8px;background:#ffffff;display:inline-block}
+.pm{display:inline-block;font-size:11px;line-height:15px;font-weight:600;color:#ffffff;background:#1f2328;border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:middle}
+.ann{position:absolute;font-size:12px;line-height:17px;color:#1f2328;background:#fff7d6;border:1px solid #d9c36a;border-radius:6px;padding:6px 9px}
+</style>
+</helmet>
+<div style="width:760px;height:560px;position:relative;background:#f3f4f6;color:#1f2328;font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;display:flex;align-items:flex-start;justify-content:center;padding-top:28px;box-sizing:border-box">
+<div style="width:560px;background:#ffffff;border:1px solid #c9cdd3;border-radius:10px;box-shadow:0 10px 28px rgba(31,35,40,.16);padding:16px 24px 22px;display:flex;flex-direction:column;gap:10px">
+<div style="text-align:center;font-size:13px;font-weight:600;color:#5b636d">Settings</div>
+<div class="grp">Home</div>
+<div class="row"><span class="k">Home folder</span><span>~/work/home <span class="pop">Change…</span></span></div>
+<div class="row" style="background:#fff7d6;border-radius:6px;padding:6px 0"><span class="k">Home's agent</span><span style="display:flex;flex-direction:column;gap:3px"><label style="display:flex;gap:8px;align-items:center"><input type="checkbox"> Show Home's agent at All projects</label><span class="sub">A Claude session in your Home folder, beside the map. Off: Home's sessions open on Home's page, and none starts when Duo opens.</span></span></div>
+<div class="row"><span class="k">Home opens in</span><span><span class="pop">Chat ⌄</span><br><span class="sub">New Home sessions. Each keeps its own once switched.</span></span></div>
+<div class="grp">Notifications</div>
+<div class="row"><span class="k"></span><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" checked> Notify when a session needs you</label></div>
+<div class="row"><span class="k"></span><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" checked> Show a badge on the Dock icon</label></div>
+</div>
+<div class="ann" style="left:20px;top:440px;width:700px"><span class="pm">P</span> Option A: one checkbox in Settings › Home, off for new installs; on for installs whose column was opened and left open (DL-315's touched flag). duo2 settings home-agent on|off. On, everything about today's column stays, its workarounds too. “Home opens in” is Q-109's built stand-in, unchanged.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":760,"height":560}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

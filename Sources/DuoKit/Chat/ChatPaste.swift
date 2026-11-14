@@ -130,7 +130,7 @@ public enum ChatPaste {
 extension ChatSession {
     /// Whether Ctrl+V is still Claude Code's image paste (`chat:imagePaste`).
     static var ctrlVIsImagePaste: Bool {
-        let file = FileManager.default.homeDirectoryForCurrentUser.appending(path: ".claude/keybindings.json")
+        let file = ClaudeStorage.root.appending(path: "keybindings.json")  // CLAUDE_CONFIG_DIR first (F-588)
         guard let data = try? Data(contentsOf: file), let text = String(data: data, encoding: .utf8), text.contains("chat:imagePaste") else { return true }
         return text.range(of: #""ctrl\+v"\s*:\s*"chat:imagePaste""#, options: .regularExpression) != nil
     }

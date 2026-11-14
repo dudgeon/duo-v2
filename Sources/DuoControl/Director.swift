@@ -22,6 +22,7 @@ public enum Director {
         tag(director) + """
         You're the worker on the task whose note is \(note), directed by \(director). Read its ## Request and done_when: first; \
         don't decide anything the Request says you mustn't, and ask in this session if something only the user can answer comes up. \
+        When your question needs the user to look at something (a canvas or board, a page, a document, a file, a capture, a session), put its link (a URL, a duo2:// link or a file path they can open) on the line right before the question and inside the question text, naming the board or section. \
         As you go, append dated one-line updates under the note's ## Progress; if you can't write to the note, put those lines in your report. \
         When you're done or stuck, end your turn with your report as your last message: what you did, what you checked and how, \
         and any other work you noticed (as suggestions, not done). \
@@ -114,7 +115,7 @@ public enum DirectorSkill {
     public static let format = 1
     /// Bump when the skill starts needing a `duo2 director` verb or behaviour an older Duo lacks
     /// (F-341): `status` compares the installed skill's revision with the running Duo's.
-    public static let revision = 3
+    public static let revision = 6
     public static func text(name: String = "director") -> String {
         let t = source.replacingOccurrences(of: "{{FORMAT}}", with: "\(format)").replacingOccurrences(of: "{{REVISION}}", with: "\(revision)")
         return name == "director" ? t : t.replacingOccurrences(of: "name: director\n", with: "name: \(name)\n")
@@ -255,7 +256,7 @@ public struct DirectorRegistry: Codable, Equatable, Sendable {
         let url = Self.file(project: project)
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         let enc = JSONEncoder(); enc.outputFormatting = [.prettyPrinted, .sortedKeys]
-        try enc.encode(self).write(to: url, options: .atomic)
+        try DirectorOffline.write(enc.encode(self), to: url)
     }
 
     public enum Role: Equatable, Sendable {
@@ -312,16 +313,20 @@ public struct DirectorRegistry: Codable, Equatable, Sendable {
 public struct DirectorEvent: Codable, Equatable, Sendable {
     public var at: String
     public var director: String?
-    /// `status`, `start`, `refused`, `send`, `delivered`, `retire`, `takeover`, `standdown`.
+    /// `status`, `start`, `refused`, `send`, `handed`, `delivered`, `check`, `retire`, `takeover`, `standdown`.
     public var event: String
+    /// A task path, or `job:<id>` for a check on a scheduled job.
     public var task: String?
     public var worker: String?
     /// For `send` and `delivered`: the ladder rung taken (`SendRung`).
     public var rung: String?
     public var detail: String?
+    /// For `check`: the director said nothing new was found, so the user needn't hear of it (R4).
+    /// Absent on older lines, which still decode.
+    public var routine: Bool?
 
-    public init(at: String, director: String?, event: String, task: String? = nil, worker: String? = nil, rung: String? = nil, detail: String? = nil) {
-        self.at = at; self.director = director; self.event = event; self.task = task; self.worker = worker; self.rung = rung; self.detail = detail
+    public init(at: String, director: String?, event: String, task: String? = nil, worker: String? = nil, rung: String? = nil, detail: String? = nil, routine: Bool? = nil) {
+        self.at = at; self.director = director; self.event = event; self.task = task; self.worker = worker; self.rung = rung; self.detail = detail; self.routine = routine
     }
 }
 
@@ -339,12 +344,25 @@ public enum DirectorLog {
             _ = try? h.seekToEnd()
             try? h.write(contentsOf: line)
         } else {
-            try? line.write(to: url, options: .atomic)
+            try? DirectorOffline.write(line, to: url)
         }
     }
 
-    public static func read(project: URL) -> [DirectorEvent] {
-        guard let text = try? String(contentsOf: file(project: project), encoding: .utf8) else { return [] }
+    /// Every event, oldest first. `lastBytes` reads only the end of a long log (status appends a line each
+    /// run, so it grows): the red lines look back a week, which a few MB cover many times over.
+    public static func read(project: URL, lastBytes: Int? = nil) -> [DirectorEvent] {
+        var text: String
+        if let lastBytes, let h = try? FileHandle(forReadingFrom: file(project: project)) {
+            defer { try? h.close() }
+            let size = (try? h.seekToEnd()) ?? 0
+            let from = size > UInt64(lastBytes) ? size - UInt64(lastBytes) : 0
+            try? h.seek(toOffset: from)
+            text = String(decoding: (try? h.readToEnd()) ?? Data(), as: UTF8.self)
+            if from > 0, let nl = text.firstIndex(of: "\n") { text = String(text[text.index(after: nl)...]) }   // a partial line
+        } else {
+            guard let all = try? String(contentsOf: file(project: project), encoding: .utf8) else { return [] }
+            text = all
+        }
         return text.split(separator: "\n").compactMap { try? JSONDecoder().decode(DirectorEvent.self, from: Data($0.utf8)) }
     }
 
@@ -461,8 +479,12 @@ public enum DirectorTranscript {
         if from > 0, !lines.isEmpty { lines.removeFirst() }   // a partial line
         var lastUser: Date?
         for line in lines {
-            guard line.contains("\"user\""), let e = (try? JSONSerialization.jsonObject(with: Data(line.utf8))) as? [String: Any],
-                  e["type"] as? String == "user", let kind = turnKind(e, tag: tag) else { continue }
+            guard line.contains("\"user\"") || line.contains("\"queued_command\""), let e = (try? JSONSerialization.jsonObject(with: Data(line.utf8))) as? [String: Any] else { continue }
+            if MidTurnPrompt.text(e) != nil {   // typed while a turn ran (C-173, F-638)
+                lastUser = (e["timestamp"] as? String).flatMap(parseDate) ?? Date.distantPast
+                continue
+            }
+            guard e["type"] as? String == "user", let kind = turnKind(e, tag: tag) else { continue }
             switch kind {
             case .director: lastUser = nil
             case .user: lastUser = (e["timestamp"] as? String).flatMap(parseDate) ?? Date.distantPast
@@ -657,6 +679,10 @@ public struct ClientCaps: Codable, Equatable, Sendable {
     /// `claude auth status` from the caller's environment: `loggedIn` in its JSON. Unknown when
     /// `claude` isn't found, takes longer than `timeout`, or says something else.
     public static func cliLogin(env: [String: String], timeout: TimeInterval = 10) -> Tri {
+        // A stand-in environment says nothing about this Mac's login, so it's unknown, never "logged out": a scratch
+        // home (the skill's evals), or a test context, whose Claude config `confineProcess` has pointed at a stand-in
+        // folder (F-620). A harness whose `claude` is itself a stand-in opts in with DUO_TEST_LOGIN_PROBE=1.
+        if Isolation.scratchHome(env) || (Isolation.isStrict(env) && env[Isolation.loginProbeVariable] != "1") { return .unknown }
         let p = Process()
         p.executableURL = URL(fileURLWithPath: "/usr/bin/env")
         p.arguments = ["claude", "auth", "status"]

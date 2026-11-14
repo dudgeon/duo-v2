@@ -32,6 +32,12 @@ import Foundation
     check(p.thread("c2")?.anchor == nil, "a comment with no highlight is a thread with no anchor")
     check(Review.nextID("c", in: doc) == "c10" && Review.nextID("s", in: doc) == "s4", "the next ids come after every id in the file, code included")
 
+    // F-642: a Word or PowerPoint file can't take a comment; the refusal names the route that works
+    let wordMsg = Review.notMarkdownMessage("Plan.docx"), deckMsg = Review.notMarkdownMessage("Pitch.PPTX")
+    check(wordMsg.contains("duo2 file convert") && wordMsg.contains("read-only"), "a comment verb on a .docx names Convert to Markdown (F-642)")
+    check(deckMsg.contains("duo2 deck import") && deckMsg.contains("read-only"), "a comment verb on a .pptx names Convert to Duo Deck (F-642)")
+    check(Review.notMarkdownMessage("a.txt") == "a.txt isn't a Markdown document", "another file keeps the plain refusal")
+
     // Writing
     let added = try Review.addComment(to: doc, at: "6", author: "Geoff Q", date: "2026-10-28", body: "why")
     check(added.text.contains("{==# Offline==}") || added.text.contains("{==The price"), "comment --at <line> highlights the line's text")
@@ -136,7 +142,7 @@ import Foundation
         check(c.contains(must), "the convention paragraph says “\(must)”")
     }
     check(c.count < 1400, "the paragraph stays short (\(c.count))")
-    let verbs: [ActionID] = [.commentAdd, .commentList, .commentReply, .commentSend, .commentClose, .commentDelete, .commentReopen, .commentStatus, .suggestionList, .suggestionAccept, .suggestionReject, .docReview]
+    let verbs: [ActionID] = [.commentAdd, .commentList, .commentReply, .commentSend, .commentClose, .commentDelete, .commentReopen, .commentStatus, .commentUndo, .suggestionList, .suggestionAccept, .suggestionReject, .docReview]
     for id in verbs {
         check(DuoAction.all.contains { $0.id == id } && !id.action.summary.isEmpty, "duo2 \(id.rawValue) is registered with help")
     }

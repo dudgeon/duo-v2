@@ -59,6 +59,8 @@ struct ChatToggle: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Show session as")
+        .help("Chat shows replies formatted, with file names as links. Terminal is Claude Code’s own screen. Switch any time; nothing is sent.")   // DL-339 (Q-510)
+        .explainerTrigger(.modes, key: "modes.pill")
         .accessibilityIdentifier("video.chat.toggle")   // anchors: the video cursor's target
     }
 }
@@ -142,10 +144,10 @@ extension AppModel {
             ]))
     }
 
-    /// A chat on screen (ENH-45): Home's tab at All projects, or the console's tab in a project
-    /// that isn't showing its task board (DL-148: the board covers the console).
+    /// A chat on screen (ENH-45): the console's tab in a project that isn't showing its task board (DL-148: the board
+    /// covers the console). All projects shows none (DL-336).
     func chatIsShown(_ key: String) -> Bool {
-        altitude.isAllProjects ? homeTab == key : consoleTab == key && !boardShown
+        !altitude.isAllProjects && consoleTab == key && !boardShown
     }
 
     /// The chat for a Claude terminal: made on first use, reading that terminal's screen.
@@ -157,6 +159,7 @@ extension AppModel {
         }
         let c = chats.session(t.key, home: isHomeTerminal(t))
         c.isShown = { [weak self, key = t.key] in self?.chatIsShown(key) ?? true }
+        c.onFork = { [weak self, key = t.key] turn in self?.forkFromTurn(sessionKey: key, turnId: turn) ?? false }
         // Claude Code's folder trust question at the start: Duo's sheet, then your answer on its screen (F-444).
         c.onTrustQuestion = { [weak self, weak c, cwd = t.cwd] path in
             guard let self, let c else { return false }
@@ -197,7 +200,6 @@ struct ConsoleChatBody: View {
     @Environment(AppModel.self) private var model
     let chat: ChatSession
     let terminal: TerminalSession?
-
     var body: some View {
         if chat.showsChat {
             ChatPane(chat: chat)
@@ -210,7 +212,7 @@ struct ConsoleChatBody: View {
         } else {
             VStack(spacing: 0) {
                 if chat.mode == .chat, let f = chat.fallback { ChatFallbackBar(chat: chat, message: f.message, command: f.command) }
-                if let terminal { TerminalSlot(session: terminal) } else { ChatTerminalStandIn(chat: chat) }
+                if let terminal { TerminalSlot(session: terminal, shown: !model.altitude.isAllProjects, place: "console") } else { ChatTerminalStandIn(chat: chat) }
             }
         }
     }

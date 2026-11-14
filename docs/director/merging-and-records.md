@@ -17,6 +17,7 @@ For each branch:
    - `scripts/check-hygiene.py --summary`: warnings only, never a failure (records whose text holds the answer, old stand-ins, stale task notes, design README against `surfaces.md`, the feature catalogue; ENH-281 to ENH-285). Every gate's result goes to a machine-local run log, and a gate that passes only on retry prints FLAKY (ENH-284). `MERGE_GATE_IDLE=1` adds the idle fitness function under the exclusive lock (ENH-286, opt-in);
    - `scripts/bundle.sh`;
    - `swift run DuoChecks` (and `DUO_CHECKS=chat` when chat is touched);
+   - `scripts/check-director.sh`, the director's harness with no model and no Duo (F-619);
    - `NO_BUILD=1 scripts/check-ui.sh`, then `python3 scripts/samepng.py /tmp/dir-base/<s>.png build/ui/<s>.png` for the six states. A difference must be explained (an intended change) or it's a regression; check main without the merge before blaming the branch. Run the checks inside `scripts/check-background.sh -- …` (or plain `scripts/check-background.sh` for check-ui, check-chat and check-composer-focus together): it fails if a test Duo came to the front, ran as a Dock app or captured while active (F-227). With the screen locked it says the front-app part proves nothing.
    - `scripts/check-launch-services.sh` after every merge (and `--clean` if it fails): only main's build may be registered as Duo (DL-151). Branches made before 76fb3e6 must merge main before their next bundle.sh (C-55).
    - The editor and deck checks when relevant: `NODE_PATH=/tmp/pwc/node_modules node scripts/check-editor-selection.mjs` (also check-editor-motion and check-deck-motion). playwright-core lives in /tmp/pwc; `npm i playwright-core` there if it's missing.
@@ -30,3 +31,12 @@ For each branch:
 ## 3. Records
 
 Record numbers are shared across sessions and collide easily. Before reserving numbers, `git fetch --all` and take the max over main and every branch. Give each parallel session its own range. If a session takes a number you'd given someone else, move the other session to the next free one at once. After every merge, `scripts/check-records.sh`.
+
+## When a push hangs
+
+A push that sits for minutes with GitHub reachable is the keychain, not the network (F-628): `ps -axo pid=,etime=,command= | grep git-credential-osxkeychain` shows the helper waiting on a locked login keychain. Kill your own hung `git push`, then push with gh's token and no helper, which changes no config:
+
+```bash
+printf '#!/bin/sh\ncase "$1" in *sername*) echo dudgeon;; *) gh auth token;; esac\n' > "$TMPDIR/askpass.sh" && chmod 700 "$TMPDIR/askpass.sh"
+GIT_ASKPASS="$TMPDIR/askpass.sh" GIT_TERMINAL_PROMPT=0 git -c credential.helper= push -q origin <sha>:refs/heads/main
+```

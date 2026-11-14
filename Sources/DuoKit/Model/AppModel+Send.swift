@@ -18,7 +18,7 @@ extension AppModel {
     public var sendTargets: [SendTarget] {
         let visible = visibleSessionId
         return terminals.all.filter { $0.isLiveClaude && $0.notReadyReason == nil }.map { t in
-            let s = fixture.sessions.first { $0.tabKey == t.key }
+            let s = session(tabKey: t.key)
             return SendTarget(key: t.key, title: s?.name ?? "Session", project: s?.project ?? "")
         }.sorted { a, b in
             if (a.key == visible) != (b.key == visible) { return a.key == visible }
@@ -31,7 +31,7 @@ extension AppModel {
     public var sendTarget: Result<SendTarget, SendUnavailable> {
         // An intro video state: its chat can take a send, though no process runs behind a fixture.
         if videoDemoFolder != nil, let key = visibleSessionId, fixtureChats[key] != nil {
-            let s = fixture.sessions.first { $0.tabKey == key }
+            let s = session(tabKey: key)
             return .success(SendTarget(key: key, title: s?.name ?? "Session", project: s?.project ?? ""))
         }
         guard let key = visibleSessionId else { return .failure(.init(reason: "No session is showing")) }
@@ -39,7 +39,7 @@ extension AppModel {
         guard t.isClaude else { return .failure(.init(reason: "The tab showing is a shell, not Claude")) }
         guard t.isLiveClaude else { return .failure(.init(reason: "The session showing has ended")) }
         if let why = t.notReadyReason { return .failure(.init(reason: why)) }
-        let s = fixture.sessions.first { $0.tabKey == key }
+        let s = session(tabKey: key)
         return .success(SendTarget(key: key, title: s?.name ?? "Session", project: s?.project ?? ""))
     }
 
@@ -67,14 +67,15 @@ extension AppModel {
     public func sendToNewSession(_ text: String) {
         let project = altitude.isAllProjects ? fixture.home?.name : currentProject?.name
         guard let project, let id = newSession(in: project) else { return }
-        if altitude.isAllProjects { homeTab = id } else { consoleTab = id }
+        if altitude.isAllProjects { open(project: project) }   // Home's page (DL-336)
+        consoleTab = id
         guard let t = terminals.existing(id) else { return }
         whenPromptReady(t) { [weak self] in self?.send(text, to: id) }
     }
 
     /// Shows a session's terminal: switching project, or to Home, if it lives elsewhere.
     func reveal(sessionKey key: String) {
-        guard visibleSessionId != key, let s = fixture.sessions.first(where: { $0.tabKey == key }) else { return }
+        guard visibleSessionId != key, let s = session(tabKey: key) else { return }
         if s.project == fixture.home?.name, altitude.isAllProjects {
             homeTab = key
         } else {
@@ -125,7 +126,7 @@ extension AppModel {
     }
 
     public func sessionPayload(_ sessionKey: String) -> String? {
-        guard let s = fixture.sessions.first(where: { $0.tabKey == sessionKey }), let id = s.sessionId else { return nil }
+        guard let s = session(tabKey: sessionKey), let id = s.sessionId else { return nil }
         let folder = liveFolders[s.project]
         let transcript = folder.flatMap { ClaudeStorage.transcript(sessionId: id, cwd: $0.path) }?.path
         let entry = folder.map { SessionIndex.load(project: $0) }?.sessions.first { $0.sessionId == id }
@@ -286,6 +287,7 @@ extension AppModel {
 
     /// A deck in the right pane: changes redraw the bars; right-click offers Select Shape.
     func wireDeckViewer(_ v: DeckViewer) {
+        wireOfficeMargin(v.office, reload: { [weak v] in v?.reload() }, focus: { [weak v] in v?.webView.window?.makeFirstResponder(v?.webView) })
         v.onChange = { [weak self] in self?.pickerRevision += 1 }
         v.webView.extraMenuItems = { [weak self] _, _ in
             guard let self, self.terminalsMode == .live, v.state == .ready else { return [] }
@@ -296,6 +298,7 @@ extension AppModel {
     /// A Word document in the right pane: changes redraw the bar and the menu.
     func wireDocxViewer(_ v: DocxViewer) {
         v.onChange = { [weak self] in self?.pickerRevision += 1 }
+        wireOfficeMargin(v.office, reload: { [weak v] in v?.reload() }, focus: { [weak v] in v?.webView.window?.makeFirstResponder(v?.webView) })
     }
 
     /// Word documents open in the Word viewer (DL-162); the old .doc format opens it too, to say why it can't draw.
@@ -349,11 +352,14 @@ extension AppModel {
             guard let self, let text else { return }
             if let key { self.send(text, to: key) } else { self.send(text) }
         }
+        // A PDF's selection (DL-332): the viewer has the keyboard, or is the active side of a split.
+        if webFocus == .pdf || (splitHasKeys && showingSplit.map { $0.with.map(Self.isPdfViewable) == true && $0.active == .preview } == true) {
+            if let p = pdfSelectionPayload() { deliver(p) }
+            return
+        }
         // A split routes by its active side, model state (routing-verbs): the preview's selection, or the source's.
         if splitHasKeys, let t = showingSplit, t.active == .preview {
             if t.kind == .html { htmlSelectionPayload(deliver) }
-            else if t.kind == .markdown { splits.markdown.webView.evaluateJavaScript("String(getSelection())") { v, _ in
-                MainActor.assumeIsolated { if let text = v as? String, !text.isEmpty { deliver(text) } } } }
             return
         }
         if webFocus == .editor || editorIfLoaded?.hasFocus == true { documentSelectionPayload(deliver) }

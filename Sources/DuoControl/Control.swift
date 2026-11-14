@@ -31,6 +31,8 @@ public struct ControlEndpoint: Codable, Sendable, Equatable {
     public static var privateFile: URL { support.appending(path: "endpoint-\(getpid()).json") }
 
     /// The environment first (Duo's own terminals), then the file. Nil if Duo isn't running.
+    /// The app's own lookup; duo2 goes through `Isolation.resolve`, which refuses in a test
+    /// context instead of falling back to the default Duo (F-529).
     public static func discover(environment: [String: String] = ProcessInfo.processInfo.environment) -> (ControlEndpoint, source: String)? {
         if let s = environment[socketVariable], let t = environment[tokenVariable], !s.isEmpty, !t.isEmpty {
             return (ControlEndpoint(socket: s, token: t, pid: 0), "environment")
@@ -77,8 +79,10 @@ public struct ControlResponse: Codable, Sendable, Equatable {
     public var ok: Bool
     /// Human-readable output, printed as is.
     public var output: String
+    /// The exit status for a refusal that is a usage error (64) rather than a failure (1); nil in older Duos.
+    public var code: Int32?
 
-    public init(ok: Bool, output: String) { self.ok = ok; self.output = output }
+    public init(ok: Bool, output: String, code: Int32? = nil) { self.ok = ok; self.output = output; self.code = code }
 }
 
 /// A blocking client: connect, send one line, read one line. Plain sockets keep the CLI small.
@@ -96,6 +100,8 @@ public enum ControlClient {
     /// Sends through a discovered endpoint. An endpoint from the environment can outlive its Duo
     /// (a Remote Control or `--bg` session across a Duo restart: dead socket, or a new token), so
     /// on a connect failure or "wrong token" it retries the endpoint file's current Duo (C-80).
+    /// Only for source "environment": an isolated target (`Isolation.isolatedSource`) never retries,
+    /// and the retry stays in the env socket's own folder, so it can't reach another Duo (F-529).
     public static func send(_ request: ControlRequest, via endpoint: ControlEndpoint, source: String, file: URL = ControlEndpoint.file, timeout: Int = 10) throws -> ControlResponse {
         var first = request; first.token = endpoint.token
         let outcome = Result { try send(first, socket: endpoint.socket, timeout: timeout) }
@@ -104,7 +110,9 @@ public enum ControlClient {
         case .failure(let e): if case Failure.connect = e { stale = true } else { stale = false }
         case .success(let r): stale = !r.ok && r.output == "wrong token"
         }
-        if stale, source == "environment", let (current, _) = ControlEndpoint.fileEndpoint(file), current.socket != endpoint.socket || current.token != endpoint.token {
+        if stale, source == "environment", Isolation.inside(file.path, URL(fileURLWithPath: endpoint.socket).deletingLastPathComponent().path),
+           let (current, _) = ControlEndpoint.fileEndpoint(file), current.socket != endpoint.socket || current.token != endpoint.token,
+           Isolation.inside(current.socket, file.deletingLastPathComponent().path) {
             var retry = request; retry.token = current.token
             return try send(retry, socket: current.socket, timeout: timeout)
         }

@@ -5,8 +5,8 @@ import Foundation
 /// `--fixture video/fixture/fixture.json`).
 ///
 /// Scene 9, Duo Projects: All projects as a Board and as a List, then the project view as scene 7 left it (`video-s9-project`
-/// is `video-s7-pptx-after` with the file tree's research/ folder closed, as a live project's folders start; `video-s9-files-open`
-/// is `video-s7-pptx-after` itself, research/ open).
+/// is `video-s7-html-after` with the file tree's research/ folder closed, as a live project's folders start; `video-s9-files-open`
+/// is `video-s7-html-after` itself, research/ open).
 ///
 /// Scene 10, Tasks: the same project view with tasks. The task notes are the fixture's own (`docs/tasks/*.md`, Duo's format), the
 /// sessions they link are told by id (`videoS10.sessionIds`: set on the model here, only for these states, since the other scenes
@@ -22,9 +22,9 @@ extension VideoTargets {
                                          "video-s10-collapsed", "video-s10-workstreams", "video-s10-task-menu-target", "video-s10-archive-ask", "video-s10-archived"]
     nonisolated static var s9s10Screens: [String] { s9Screens + s10Screens }
 
-    /// The scene 7 state a scene 9 or 10 project state stands on: the project as scene 7 ended, the deck's slide 3 after the edit.
+    /// The scene 7 state a scene 9 or 10 project state stands on: the project as scene 7 ends (v12), the prototype after Claude's change.
     nonisolated static func s9s10Base(_ screen: String) -> String {
-        screen.hasPrefix("video-s9-") || screen.hasPrefix("video-s10-") ? "video-s7-pptx-after" : screen
+        screen.hasPrefix("video-s9-") || screen.hasPrefix("video-s10-") ? "video-s7-html-after" : screen
     }
 
     nonisolated static let newTaskTitle = "Warn about glare before the photo"
@@ -246,7 +246,7 @@ extension VideoTargets {
     /// The `--then` actions a scene 9 or 10 state needs once its window exists: scene 7's deck measure where the deck is on the right,
     /// the task note's properties and text frames where a note is.
     nonisolated static func s9s10Actions(_ screen: String, dir: URL) -> [String] {
-        let deck = s7Actions("video-s7-pptx-after", dir: dir)
+        let deck = s7Actions("video-s7-html-after", dir: dir)
         if screen.hasPrefix("video-s9-") { return ["video-s9-board", "video-s9-list", "video-s9-beta"].contains(screen) ? [] : deck }
         let name = s10Base(String(screen.dropFirst("video-s10-".count)))
         switch name {

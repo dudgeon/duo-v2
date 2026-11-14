@@ -40,6 +40,8 @@ public enum ChatItem: Identifiable, Equatable, Sendable {
 
 public struct ChatYou: Equatable, Sendable {
     public var id: String
+    /// The transcript record's `uuid` (F-656): what Claude Code names this prompt by. Nil until the transcript has it.
+    public var uuid: String?
     public var text: String
     public var time: Date?
     /// Sent while Claude works: the TUI holds it until it's ready (composer board).
@@ -77,6 +79,8 @@ public struct ChatNote: Equatable, Sendable {
 /// Claude's turn: what it did and said, in order.
 public struct ChatTurn: Equatable, Sendable {
     public var id: String
+    /// The `uuid` of the reply's last assistant record in the transcript (F-656).
+    public var uuid: String?
     public var time: Date?
     public var segments: [ChatSegment] = []
 }
@@ -214,6 +218,10 @@ public final class ChatLog: @unchecked Sendable {
     public internal(set) var earlierHidden = false
     @ObservationIgnored private var nextID = 0
     @ObservationIgnored private var agentsStarted: [String: String] = [:]
+    /// SubagentStops whose agent never had a SubagentStart: Claude's own side agents, /btw's answer among them
+    /// (agent_type empty, F-689, F-691). Not an Agent card's result, so no card uses them; kept for a later /btw design.
+    public struct SideStop: Sendable { public var agentId: String?; public var agentType: String?; public var message: String?; public var time: Date? }
+    public private(set) var sideStops: [SideStop] = []
     @ObservationIgnored private var askedIDs: Set<String> = []
     /// Tool calls the transcript has reached: a hook can show one before the text that preceded it.
     @ObservationIgnored var transcriptTools: Set<String> = []
@@ -222,6 +230,18 @@ public final class ChatLog: @unchecked Sendable {
     private static let hole = ChatItem.note(ChatNote(id: "", text: ""))
 
     public init() {}
+
+    /// Drops the item `id` and everything after it (a rewind: Claude Code writes nothing to the transcript until the next
+    /// prompt, so Duo cuts what it shows, DL-338).
+    func cut(from id: String) {
+        guard let i = items.firstIndex(where: { $0.id == id }) else { return }
+        items.removeSubrange(i...)
+        stepItem = stepItem.filter { $0.value < i }
+        turnStarted = nil
+    }
+
+    /// A quiet line at the end of the log.
+    func append(note text: String, id: String) { items.append(.note(ChatNote(id: id, text: text, time: nil))) }
 
     /// Empties the log (before a history replay).
     func reset() {
@@ -232,7 +252,7 @@ public final class ChatLog: @unchecked Sendable {
 
     /// Takes over a log built elsewhere (a replay): everything it holds, in one change.
     func adopt(_ o: ChatLog) {
-        nextID = o.nextID; agentsStarted = o.agentsStarted; askedIDs = o.askedIDs
+        nextID = o.nextID; agentsStarted = o.agentsStarted; sideStops = o.sideStops; askedIDs = o.askedIDs
         transcriptTools = o.transcriptTools; stepItem = o.stepItem
         if o.model != nil { model = o.model }
         if o.streams { streams = true }
@@ -332,6 +352,21 @@ public final class ChatLog: @unchecked Sendable {
         if fromHook { y.fromHook = true } else { y.fromTranscript = true }
         items.append(.you(y))
         turnStarted = time ?? Date()
+    }
+
+    /// The transcript's `uuid` for your latest message (F-656).
+    public func stampYou(_ uuid: String) {
+        guard let i = items.indices.reversed().prefix(12).first(where: { if case .you = items[$0] { return true } else { return false } }),
+              case .you(var y) = items[i], y.uuid == nil else { return }
+        y.uuid = uuid
+        items[i] = .you(y)
+    }
+
+    /// The transcript's `uuid` for the reply in progress: the last assistant record names it (F-656).
+    public func stampTurn(_ uuid: String) {
+        guard let i = openTurnIndex, case .claude(var t) = items[i], t.uuid != uuid else { return }
+        t.uuid = uuid
+        items[i] = .claude(t)
     }
 
     /// A picture of your latest message (from its transcript record: they replace the composer's).
@@ -492,9 +527,14 @@ public final class ChatLog: @unchecked Sendable {
     public func agentStarted(id: String, agentType: String?) { agentsStarted[id] = agentType ?? "agent" }
 
     public func agentFinished(agentType: String?, message: String?, time: Date?, agentId: String? = nil) {
-        // Claude's own side agents stop without a start: not shown (F-103).
-        if let agentId, agentsStarted[agentId] == nil, !steps.contains(where: { $0.agent?.finished == false }) { return }
-        if steps.last(where: { $0.agent != nil && $0.agent?.finished == false }) == nil, let agentId, let name = agentsStarted[agentId] {
+        // A stop with no matching start is Claude's own side agent (/btw's answer, F-103, F-689): never an Agent
+        // card's result, so it finishes and fills no card. Its text is kept in `sideStops` (F-691).
+        guard let agentId, agentsStarted[agentId] != nil else {
+            sideStops.append(SideStop(agentId: agentId, agentType: agentType, message: message, time: time))
+            if sideStops.count > 20 { sideStops.removeFirst(sideStops.count - 20) }
+            return
+        }
+        if steps.last(where: { $0.agent != nil && $0.agent?.finished == false }) == nil, let name = agentsStarted[agentId] {
             items.append(.note(ChatNote(id: newID("note"), text: "Background agent finished: \(name)", time: time)))
             return
         }

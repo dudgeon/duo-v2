@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The row on hover</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.cap{font-size:12px;line-height:17px;color:#5B636D}
+.cap b{color:#1F2328;font-weight:600}
+.lab{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.mono{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:11px}
+</style>
+</helmet>
+<div style="width: 1560px; height: 1100px; box-sizing: border-box; background: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; color: #1F2328; padding: 40px; display: flex; flex-direction: column; gap: 22px">
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <div style="font-size: 18px; line-height: 24px; font-weight: 600">Q-505 · The row on hover: Copy, Rewind, Fork under your message; Copy, Fork under Claude’s [P]</div>
+    <div class="cap" style="font-size: 13px; line-height: 19px; max-width: 1400px">The pointer anywhere on a turn shows a row of quiet buttons under it, drawn as the code block’s hover Copy is (DL-220): 22 high, radius 6, a 1 <span class="mono">controlEdge</span> edge on <span class="mono">pane</span>, a 12 icon in <span class="mono">text2</span>, the label in <span class="mono">control</span> 12/16. It sits in the 12 between turns, so nothing moves when it appears; it fades in with <span class="mono">motionMessageIn</span> and goes at once. Under your bubble it lines up with the bubble’s right edge; under Claude’s card, with its left edge.</div>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-start">
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">A (recommended) · on your message</div>
+      <dc-import name="Chat" chat="{{you}}" hint-size="480px,500px"></dc-import>
+      <div class="cap"><b>Copy</b> your words as typed. <b>Rewind</b> takes this message and everything after it out, and puts it back in the composer (board 2). <b>Fork</b> starts a new session from just before it, with it in that composer (board 3).</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">A · on Claude’s reply</div>
+      <dc-import name="Chat" chat="{{claude}}" hint-size="480px,500px"></dc-import>
+      <div class="cap"><b>Copy</b> the reply’s words as Markdown (Q-509). <b>Fork</b> starts a new session that keeps everything up to and including this reply. No Rewind here: Claude rewinds to before one of your prompts, so “rewind to this reply” is Rewind on your next message.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">A · while Claude works</div>
+      <dc-import name="Chat" chat="{{busy}}" hint-size="480px,500px"></dc-import>
+      <div class="cap"><b>Copy works; Rewind and Fork wait.</b> They dim (<span class="mono">text2</span>, a <span class="mono">rule</span> edge) and say “When Claude finishes” on hover. The turn still being written shows no row until it ends.</div>
+    </div>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-start">
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">B · Retry and Edit as their own buttons</div>
+      <dc-import name="Chat" chat="{{more}}" hint-size="480px,250px"></dc-import>
+      <div class="cap">Edit is Rewind with the message open to change, and Retry is Rewind then send, so they repeat Rewind. Five buttons crowd a short message.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">C · Copy now, Rewind and Fork later</div>
+      <dc-import name="Chat" chat="{{only}}" hint-size="480px,250px"></dc-import>
+      <div class="cap">Builds in a day with no Claude involved. Leaves the two things asked for.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 12px; padding-top: 26px">
+      <div class="cap"><b>Not in the row:</b> thumbs (Claude Code has nowhere to send them), Show in Terminal, Quote, Send to a document, a link to the turn. Later ideas go in ENH-342.</div>
+      <div class="cap"><b>The meta line stays</b> (“You · 9:52”). Desktop folds the time into its row; Duo keeps chat-mode’s look.</div>
+      <div class="cap"><b>Narrow chat (under about 420):</b> the labels drop and the buttons go to icons with their names as help tags and VoiceOver labels.</div>
+      <div class="cap"><b>Touch and VoiceOver:</b> the row is also on the turn’s accessibility actions (Copy, Rewind…, Fork…), so it’s reachable without hover.</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1560,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const tabs = [ { t: 'Refund flows', on: true }, { t: 'Teardown research' } ];
+    const yRow = [ { icon: 'copy', label: 'Copy' }, { icon: 'rewind', label: 'Rewind' }, { icon: 'fork', label: 'Fork' } ];
+    const cRow = [ { icon: 'copy', label: 'Copy' }, { icon: 'fork', label: 'Fork' } ];
+    const ask = 'Compare the two refund flows in a table, with a short recommendation.';
+    const reply = [ 'Both flows are in docs/refunds/flows.md. The main difference is who confirms the refund.', 'Keep self-serve as the default, and route orders over $500 to assisted.' ];
+    const base = (over) => Object.assign({ w: 480, h: 500, tabs, composer: 'Reply to Claude' }, over);
+    return {
+      you: base({ items: [ { bars: true }, { you: true, meta: 'You · 9:52', text: ask, row: yRow }, { claude: true, meta: 'Claude · 9:52', lines: reply } ] }),
+      claude: base({ items: [ { you: true, meta: 'You · 9:52', text: ask }, { claude: true, meta: 'Claude · 9:52', lines: reply, row: cRow } ] }),
+      busy: base({ items: [ { you: true, meta: 'You · 9:52', text: ask, row: [ { icon: 'copy', label: 'Copy' }, { icon: 'rewind', label: 'Rewind', dim: true }, { icon: 'fork', label: 'Fork', dim: true } ], tip: 'When Claude finishes' }, { claude: true, meta: 'Claude · 9:53', lines: [ 'Checking the assisted flow’s limits now…' ] }, { working: true, text: 'Reading · 6s · Esc to interrupt' } ] }),
+      more: base({ h: 250, items: [ { you: true, meta: 'You · 9:52', text: 'Make it shorter.', row: [ { icon: 'copy', label: 'Copy' }, { icon: 'rewind', label: 'Edit' }, { icon: 'rewind', label: 'Retry' }, { icon: 'rewind', label: 'Rewind' }, { icon: 'fork', label: 'Fork' } ] } ] }),
+      only: base({ h: 250, items: [ { you: true, meta: 'You · 9:52', text: 'Make it shorter.', row: [ { icon: 'copy', label: 'Copy' } ] } ] })
+    };
+  }
+}
+</script>
+</body>
+</html>

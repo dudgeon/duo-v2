@@ -29,8 +29,18 @@ public struct ChatPrefs: Codable, Sendable, Equatable {
 
     public static var url: URL { DuoPaths.support.appending(path: "chat.json") }
 
-    public static func load(_ url: URL = ChatPrefs.url) -> ChatPrefs {
-        (try? Data(contentsOf: url)).flatMap { try? JSONDecoder().decode(ChatPrefs.self, from: $0) } ?? ChatPrefs()
+    public static func load(_ url: URL = ChatPrefs.url, state: URL? = nil) -> ChatPrefs {
+        if let p = (try? Data(contentsOf: url)).flatMap({ try? JSONDecoder().decode(ChatPrefs.self, from: $0) }) { return p }
+        var p = ChatPrefs()
+        // DL-339 (Q-510): a new install's project sessions open in chat. A new install is a support
+        // folder with neither chat.json nor Duo's state.json; anyone who has run Duo has the latter, so
+        // existing users keep the terminal until they switch. Saved at once, so it stays the choice.
+        let stateFile = state ?? url.deletingLastPathComponent().appending(path: "state.json")
+        if !FileManager.default.fileExists(atPath: url.path), !FileManager.default.fileExists(atPath: stateFile.path) {
+            p.last = .chat
+            p.save(url)
+        }
+        return p
     }
 
     public func save(_ url: URL = ChatPrefs.url) {
@@ -487,6 +497,8 @@ public final class ChatSession {
         if s.kind != .trust { trustAsked = nil }
     }
 
+    /// Set by the app, which owns the tabs: forks this session from a chat turn (DL-338). Says whether it did.
+    @ObservationIgnored public var onFork: (@MainActor (String) -> Bool)?
     /// Set by the app: shows the trust sheet for the folder Claude Code named, and says whether it did (it is the session's).
     @ObservationIgnored public var onTrustQuestion: (@MainActor (String) -> Bool)?
     /// The trust question already put to you, so a repaint doesn't ask again.
@@ -718,12 +730,12 @@ final class LiveChatTerminal: ChatTerminal {
 
     func screenLines() -> [String] {
         guard let v = view else { return [] }
-        let d = v.terminalStateSnapshot().dimensions
+        let d = v.terminalDimensions   // not a whole state snapshot just for the size (F-531)
         // SwiftTerm keeps a row's cells past the width when the terminal narrows, and returns the whole row:
         // only what fits is on screen (F-449).
         return v.visibleRowsText(0..<d.rows).map { ChatScreenReader.clip($0, cols: d.cols) }
     }
-    var columns: Int { view?.terminalStateSnapshot().dimensions.cols ?? 80 }
+    var columns: Int { view?.terminalDimensions.cols ?? 80 }
     func sendKeys(_ text: String) { view?.send(txt: text) }
     func onOutput(_ f: @escaping @MainActor () -> Void) {
         view?.setProcessOutputHandler {

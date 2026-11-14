@@ -283,12 +283,24 @@ public struct DuoState: Codable, Sendable, Equatable {
     public var mapSort: String?
     /// All projects' middle (DL-142): "board" or "list"; nil until the user chooses (a new user sees List).
     public var homeView: String?
+    /// The List's grouping (DL-341): "recent" (the default) or "project".
+    public var listGroup: String?
     /// View › Show Hidden Files (DL-105).
     public var showHiddenFiles = false
+    /// View › Hide Formatting Bar (DL-266): the Markdown bar over the editor is turned off.
+    public var formatBarHidden = false
     /// Explainers the user said Don't show again to (DL-172), by id; Settings › General brings them back.
     public var dismissedExplainers: [String] = []
     /// Sessions set to Keep Running (DL-192): never parked, and started at launch instead of when shown. By session id.
     public var keepRunning: [String] = []
+    /// Window › Window Colour's "Colour new windows automatically" (DL-312): a new window takes the next free colour.
+    public var colourNewWindows = true
+    /// Settings › Claude Code › Model for sessions (DL-339, Q-516): "opus", "sonnet" or "haiku"; nil is Claude's default.
+    public var sessionModel: String?
+    /// The folders open in each project's file tree, by project name (DL-339, ENH-344); remembered over a relaunch.
+    public var expandedFolders: [String: [String]] = [:]
+    /// Projects whose Files section is folded away (DL-339, ENH-344).
+    public var filesFolded: [String] = []
 
     public init() {}
     public init(from decoder: Decoder) throws {
@@ -316,10 +328,16 @@ public struct DuoState: Codable, Sendable, Equatable {
         mapSort = try c.decodeIfPresent(String.self, forKey: .mapSort)
         appearance = try c.decodeIfPresent(String.self, forKey: .appearance)   // C-122: the one field this init forgot
         homeView = try c.decodeIfPresent(String.self, forKey: .homeView)
+        listGroup = try c.decodeIfPresent(String.self, forKey: .listGroup)
         showHiddenFiles = try c.decodeIfPresent(Bool.self, forKey: .showHiddenFiles) ?? false
         dismissedExplainers = try c.decodeIfPresent([String].self, forKey: .dismissedExplainers) ?? []
         keepRunning = try c.decodeIfPresent([String].self, forKey: .keepRunning) ?? []
         startFolders = try c.decodeIfPresent([String].self, forKey: .startFolders) ?? []
+        formatBarHidden = try c.decodeIfPresent(Bool.self, forKey: .formatBarHidden) ?? false
+        colourNewWindows = try c.decodeIfPresent(Bool.self, forKey: .colourNewWindows) ?? true
+        sessionModel = try c.decodeIfPresent(String.self, forKey: .sessionModel)
+        expandedFolders = try c.decodeIfPresent([String: [String]].self, forKey: .expandedFolders) ?? [:]
+        filesFolded = try c.decodeIfPresent([String].self, forKey: .filesFolded) ?? []
     }
 
     public static func load(_ url: URL = DuoPaths.state) -> DuoState {

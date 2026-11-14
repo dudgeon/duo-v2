@@ -1,0 +1,42 @@
+desktop after play: {"cur":0,"t":5.989456,"mode":"intro","cap":"A power user on v1 works in several windows, one per project, and switches between them all day."}
+desktop option playing: {"mode":"option","t":2.42071}
+desktop saved: Saved on this page. Copy decisions sends it by hand.
+desktop after save, chapter 5
+desktop copy button: Copied
+desktop clipboard:
+Multi-window walkthrough · all decisions (multi-window-2026-11)
+For director-duo-v2. Saved in this page's db under answers/<id>.
+
+Q-99 (q99-when) When to build: Slices 0 and 1 now, then slice 2 [now-0-1] (recommended)
+  Comment: check run: a comment
+Q-429 (q429-scope) What slice 1 includes: not answered
+Q-431 (q431-home) Home with several windows: not answered
+Q-435 (q435-palette) Window colours: the palette: not answered
+Q-435 (q435-new) Window colours: a new window's colour: not answered
+Q-435 (q435-classic) Window colours and Classic: not answered
+
+Research: https://github.com/dudgeon/duo-v2/blob/main/docs/research/multi-window-2026-11.md
+desktop horizontal overflow px: 0
+desktop targets under 40px: ["● Home 34x44","● New colour 35x44"]
+desktop errors: []
+phone after play: {"cur":0,"t":5.969213,"mode":"intro","cap":"A power user on v1 works in several windows, one per project, and switches between them all day."}
+phone option playing: {"mode":"option","t":2.427187}
+phone saved: Saved on this page. Copy decisions sends it by hand.
+phone after save, chapter 5
+phone copy button: Copied
+phone clipboard:
+Multi-window walkthrough · all decisions (multi-window-2026-11)
+For director-duo-v2. Saved in this page's db under answers/<id>.
+
+Q-99 (q99-when) When to build: Slices 0 and 1 now, then slice 2 [now-0-1] (recommended)
+  Comment: check run: a comment
+Q-429 (q429-scope) What slice 1 includes: not answered
+Q-431 (q431-home) Home with several windows: not answered
+Q-435 (q435-palette) Window colours: the palette: not answered
+Q-435 (q435-new) Window colours: a new window's colour: not answered
+Q-435 (q435-classic) Window colours and Classic: not answered
+
+Research: https://github.com/dudgeon/duo-v2/blob/main/docs/research/multi-window-2026-11.md
+phone horizontal overflow px: 0
+phone targets under 40px: ["Why now 34x30","The cut 51x30","Slices 49x30","Settled 26x30","● When 22x30","● Scope 25x30","● Home 13x30","● Palette 33x30","● New colour 13x30","● Classic 15x30","Done 23x30"]
+phone errors: []

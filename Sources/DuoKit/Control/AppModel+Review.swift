@@ -20,7 +20,7 @@ extension AppModel {
     }
 
     /// Who signs: `--as`, else Claude when a Claude session runs the verb, else the user's Mac account (DL-236 11).
-    private func reviewAuthor(_ inv: Invocation, _ req: ControlRequest) -> String {
+    func reviewAuthor(_ inv: Invocation, _ req: ControlRequest) -> String {
         if let name = inv.flags["as"], !name.isEmpty { return name }
         return req.session != nil ? "claude" : NSUserName()
     }
@@ -31,6 +31,7 @@ extension AppModel {
 
     /// The text as the editor has it (unsaved edits included), or the file's.
     func reviewText(_ url: URL, _ done: @escaping @MainActor (String?) -> Void) {
+        if Self.isOffice(url) || Self.isPdf(url) { return done("") }   // a Word or PowerPoint file's threads come from its comment parts (DL-331)
         if let e = isOpenInEditor(url) { e.currentText { done($0) } }
         else if FileKind.isBinary(url) { done(nil) }
         else { done(FileManager.default.contents(atPath: url.path).map { String(decoding: $0, as: UTF8.self) }) }
@@ -77,10 +78,16 @@ extension AppModel {
         guard let url = reviewFile(inv, req, path: path) else {
             return done(.fail(path == nil && inv.flags["file"] == nil ? "no document is showing: name one with --file <file>" : "no file '\(path ?? inv.flags["file"] ?? "")' here (a path from the project's folder, or absolute)"))
         }
-        guard Self.markdownExtensions.contains(url.pathExtension.lowercased()) else { return done(.fail("\(url.lastPathComponent) isn't a Markdown document")) }
+        let args = takesPath.contains(id) ? Array(inv.positional.dropFirst()) : inv.positional
+        if Self.isOffice(url), id != .suggestionList, id != .suggestionAccept, id != .suggestionReject {   // DL-331: a Word or PowerPoint file's comment parts
+            return officeReviewVerb(id, inv, author: reviewAuthor(inv, req), url: url, args: args, done)
+        }
+        if Self.isPdf(url), id != .suggestionList, id != .suggestionAccept, id != .suggestionReject {   // DL-335: a PDF's annotations
+            return pdfReviewVerb(id, inv, author: reviewAuthor(inv, req), url: url, args: args, done)
+        }
+        guard Self.markdownExtensions.contains(url.pathExtension.lowercased()) else { return done(.fail(Review.notMarkdownMessage(url.lastPathComponent))) }
         let name = displayPath(url)
         // The id verbs take it first; `comment add` takes its text after the path.
-        let args = takesPath.contains(id) ? Array(inv.positional.dropFirst()) : inv.positional
         let author = reviewAuthor(inv, req), today = Review.isoDay()
         reviewText(url) { [self] text in
             guard let text else { return done(.fail("can't read \(name)")) }
@@ -179,6 +186,10 @@ extension AppModel {
 
     /// `duo2 doc review [on|off]`: the Suggest Edits switch of the document showing.
     func docReviewVerb(_ inv: Invocation, _ req: ControlRequest, _ done: @escaping @MainActor (Reply) -> Void) {
+        // A Word document or deck showing: next and previous step through its comments, the margin's J and K (DL-337).
+        if let w = inv[0], w == "next" || w == "previous", let o = visibleOfficeMargins.first {
+            return done(.ok(o.step(w == "next" ? 1 : -1) ?? "Nothing to review in this file."))
+        }
         guard let url = reviewFile(inv, req, path: nil), Self.markdownExtensions.contains(url.pathExtension.lowercased()) else {
             return done(.fail("no Markdown document is showing"))
         }

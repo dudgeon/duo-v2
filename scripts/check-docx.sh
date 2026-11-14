@@ -8,6 +8,7 @@
 #
 # Writes build/docx/<name>.png (the window), <name>-pane.png and <name>-compare.png (TARGET | BUILD | DIFFERENCE).
 set -euo pipefail
+export DUO_ISOLATED=1   # every duo2 here reaches only the test instance; refuses, never the user's Duo (F-529)
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
 [ -n "${NO_BUILD:-}" ] || scripts/bundle.sh >/dev/null

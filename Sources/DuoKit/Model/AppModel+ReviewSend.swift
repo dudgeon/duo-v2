@@ -21,7 +21,7 @@ public struct ReviewDelivery: Equatable, Sendable, Codable {
 }
 
 extension AppModel {
-    static func reviewKey(_ url: URL, _ thread: String) -> String { url.resolvingSymlinksInPath().standardizedFileURL.path + "#" + thread }
+    public static func reviewKey(_ url: URL, _ thread: String) -> String { url.resolvingSymlinksInPath().standardizedFileURL.path + "#" + thread }
 
     // MARK: Which session
 
@@ -58,18 +58,25 @@ extension AppModel {
         return Review.turn(path: displayPath(url), line: line, thread: t)
     }
 
+    /// A thread of a document: Markdown's from its text, a Word or PowerPoint file's from its comment parts (DL-331).
+    func reviewThread(_ url: URL, _ id: String, _ text: String) -> Review.Thread? {
+        if Self.isOffice(url) { return (try? Self.officeReviewThreads(url))?.first { $0.id == id } }
+        if Self.isPdf(url) { return (try? Self.pdfReviewThreads(url))?.first { $0.id == id } }
+        return Review.parse(text).thread(id)
+    }
+
     // MARK: Sending
 
     /// Sends a thread's comment to `target` (or the first guess). `done` says what happened, for the verb.
     func sendReviewComment(_ url: URL, thread id: String, to chosen: Fixture.Session? = nil, done: @escaping @MainActor (Reply) -> Void) {
         reviewText(url) { [self] text in
-            guard let text, let t = Review.parse(text).thread(id) else { return done(.fail("no thread #\(id) in \(displayPath(url))")) }
+            guard let text, let t = reviewThread(url, id, text) else { return done(.fail("no thread #\(id) in \(displayPath(url))")) }
             guard t.comments.contains(where: \.mentionsClaude) else { return done(.fail("#\(id) doesn't name @claude: nothing to send")) }
             guard let s = chosen ?? reviewTarget(url, thread: id) else {
                 return done(.fail("no session to send it to: pick one with --to <session>, or start a session in the project"))
             }
             let key = Self.reviewKey(url, id)
-            let turn = reviewTurn(url: url, thread: t, text: text)
+            let turn = Self.isOffice(url) ? (officeTurn(url: url, thread: id) ?? "") : Self.isPdf(url) ? (pdfTurn(url: url, thread: id) ?? "") : reviewTurn(url: url, thread: t, text: text)
             let before = t.comments.filter { $0.author == "claude" }.count
             bindReviewSession(url, to: s)
             attemptReviewSend(key: key, url: url, session: s, turn: turn, claudeBefore: before, done: done)
@@ -135,7 +142,7 @@ extension AppModel {
     public func deliverReviewComments() {
         guard !reviewDeliveries.isEmpty else { return }
         for (key, d) in reviewDeliveries {
-            guard let s = fixture.sessions.first(where: { $0.tabKey == d.session }) else { continue }
+            guard let s = session(tabKey: d.session) else { continue }
             let parts = key.components(separatedBy: "#")
             guard parts.count == 2 else { continue }
             let url = URL(fileURLWithPath: parts[0]), thread = parts[1]
@@ -148,7 +155,7 @@ extension AppModel {
                 reviewSending.remove(key)
             case .sent, .replying:
                 reviewText(url) { [weak self] text in
-                    guard let self, let text, let t = Review.parse(text).thread(thread) else { return }
+                    guard let self, let text, let t = self.reviewThread(url, thread, text) else { return }
                     let claude = t.comments.filter { $0.author == "claude" }.count
                     var next = d
                     if claude > d.claudeBefore { next.state = .replied }
@@ -164,11 +171,13 @@ extension AppModel {
 
     /// The deliveries of the document showing, and each @claude thread's pill, pushed into the page.
     func pushReviewState() {
+        pushPdfReviewState()   // a PDF showing has the same margin (Q-496)
+        pushOfficeReviewState()   // and a Word document or deck (DL-337)
         guard let e = editorIfLoaded, let url = e.url, showingMarkdownDocument else { return }
         let prefix = url.resolvingSymlinksInPath().standardizedFileURL.path + "#"
         var map: [String: Any] = [:]
         for (k, d) in reviewDeliveries where k.hasPrefix(prefix) {
-            let s = fixture.sessions.first { $0.tabKey == d.session }
+            let s = session(tabKey: d.session)
             map[String(k.dropFirst(prefix.count))] = ["state": d.state.rawValue, "name": d.sessionName, "status": s.map(reviewSessionStatus) ?? "not running",
                                                      "at": Self.clock(d.at), "why": d.why as Any, "session": d.session]
         }

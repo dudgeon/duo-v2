@@ -113,7 +113,8 @@ public enum DirectorOffline {
                              claudeDir: URL = LegacyDuo.claudeDir, now: Date = Date()) -> [Task] {
         let files = (try? FileManager.default.contentsOfDirectory(at: project.appending(path: "tasks"), includingPropertiesForKeys: [.contentModificationDateKey])) ?? []
         let iso = ISO8601DateFormatter()
-        return files.filter { $0.pathExtension.lowercased() == "md" }.sorted { $0.path < $1.path }.compactMap { url in
+        // A note whose file name starts with `_` is a record, not a task (`_record-reservations.md`).
+        return files.filter { $0.pathExtension.lowercased() == "md" && !$0.lastPathComponent.hasPrefix("_") }.sorted { $0.path < $1.path }.compactMap { url in
             guard let text = try? String(contentsOf: url, encoding: .utf8), Director.frontmatter("directed_by", in: text) == director,
                   Director.frontmatter("archived", in: text)?.lowercased() != "true" else { return nil }
             let path = "tasks/" + url.lastPathComponent
@@ -161,6 +162,26 @@ public enum DirectorOffline {
         return stem
     }
 
+    // MARK: Writing
+
+    /// Replaces `url` with `data` in one step, with a temporary file beside it and a rename. Foundation's
+    /// `.atomic` stages its copy in the system's temporary items folder, which Claude's shell sandbox
+    /// denies, so every director write failed with "You don't have permission" there (F-621).
+    public static func write(_ data: Data, to url: URL) throws {
+        let fm = FileManager.default
+        let temp = url.deletingLastPathComponent().appending(path: ".\(url.lastPathComponent).\(UUID().uuidString.prefix(8)).tmp")
+        try data.write(to: temp, options: .withoutOverwriting)
+        do {
+            if let mode = (try? fm.attributesOfItem(atPath: url.path))?[.posixPermissions] as? NSNumber {
+                try fm.setAttributes([.posixPermissions: mode], ofItemAtPath: temp.path)
+            }
+            guard rename(temp.path, url.path) == 0 else { throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO) }
+        } catch {
+            try? fm.removeItem(at: temp)
+            throw error
+        }
+    }
+
     // MARK: Note edits
 
     /// The note with `- yyyy-MM-dd HH:mm <line>` after the last non-blank line of its `## Progress`
@@ -197,6 +218,15 @@ public enum DirectorOffline {
             return (["---", "\(key): \(value)", "---"] + lines).joined(separator: nl)
         }
         if let i = lines[1..<close].firstIndex(where: { $0.hasPrefix(key + ":") }) { lines[i] = "\(key): \(value)" } else { lines.insert("\(key): \(value)", at: close) }
+        return lines.joined(separator: nl)
+    }
+
+    /// The note without one scalar frontmatter key (the same note if it has none), touching nothing else.
+    public static func removing(_ key: String, in text: String) -> String {
+        let nl = text.contains("\r\n") ? "\r\n" : "\n"
+        var lines = text.components(separatedBy: nl)
+        guard lines.first == "---", let close = lines.dropFirst().firstIndex(of: "---"), let i = lines[1..<close].firstIndex(where: { $0.hasPrefix(key + ":") }) else { return text }
+        lines.remove(at: i)
         return lines.joined(separator: nl)
     }
 

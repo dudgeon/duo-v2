@@ -1,4 +1,5 @@
 import AppKit
+import PDFKit
 import WebKit
 
 /// Captures the window for the comparison loop (handoff §0.2).
@@ -42,6 +43,19 @@ public enum WindowCapture {
             body()
             overlays.forEach { $0.removeFromSuperview() }
         }
+        // A PDF's pages are PDFKit's own tiles, blank to a window capture: draw its document view into an image laid over it.
+        if let root = window.contentView?.superview {
+            for pdf in pdfViews(under: root) {
+                for page in pdf.visiblePages {
+                    let r = pdf.convert(page.bounds(for: .cropBox), from: page)
+                    let overlay = NSImageView(frame: r)
+                    overlay.image = page.thumbnail(of: NSSize(width: r.width * 2, height: r.height * 2), for: .cropBox)
+                    overlay.imageScaling = .scaleAxesIndependently
+                    pdf.addSubview(overlay)
+                    overlays.append(overlay)
+                }
+            }
+        }
         guard waiting > 0 else { return finish() }
         for web in webViews {
             // WKWebView's visibleRect reaches under the toolbar (its obscured inset); keep to its bounds.
@@ -73,6 +87,11 @@ public enum WindowCapture {
                 finish()
             }
         }
+    }
+
+    static func pdfViews(under view: NSView) -> [PDFView] {
+        if let pdf = view as? PDFView { return pdf.isHiddenOrHasHiddenAncestor ? [] : [pdf] }
+        return view.subviews.flatMap(pdfViews(under:))
     }
 
     /// Web views showing in the window: in it, not hidden, with some of them in view.

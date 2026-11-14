@@ -6,6 +6,26 @@ import SwiftUI
 
 // Plain assertions, run with `swift run DuoChecks`. Exit status is the number of failures.
 
+// First, before anything reads Duo's folder: the run's own temporary support folder, whatever the
+// environment (a given isolated one is kept). Fail closed: no folder, no run (F-588).
+let checksSupportDir: String = {
+    if let given = Isolation.checksSupport(ProcessInfo.processInfo.environment) { return given }
+    var template = Array("/tmp/duochk-XXXXXX".utf8CString)
+    guard template.withUnsafeMutableBufferPointer({ mkdtemp($0.baseAddress!) }) != nil else {
+        FileHandle.standardError.write(Data("DuoChecks: couldn't make a temporary support folder (errno \(errno)); not running against the real one.\n".utf8))
+        exit(73)
+    }
+    let path = String(decoding: template.prefix { $0 != 0 }.map { UInt8(bitPattern: $0) }, as: UTF8.self)
+    setenv(SupportFolder.variable, path, 1)
+    return path
+}()
+guard SupportFolder.isIsolated, Isolation.inside(SupportFolder.duo.path, checksSupportDir) else {
+    FileHandle.standardError.write(Data("DuoChecks: the support folder isn't the run's own (\(SupportFolder.duo.path)); stopping.\n".utf8))
+    exit(73)
+}
+/// A line only this run writes, through Duo's own log: it must land in the run's folder, never the real one.
+let checksCanary = "duochecks canary \(getpid()) \(UUID().uuidString)"
+
 nonisolated(unsafe) var failures = 0
 nonisolated(unsafe) var passes = 0
 
@@ -34,6 +54,12 @@ func repoFixture() throws -> Fixture {
         print(DuoAction.primer(sessionID: id, cli: "/Applications/Duo.app/Contents/Helpers/duo2"), terminator: ""); exit(0)
     }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "chat" { return try chatChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "midturn" { return try midTurnChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "rewind" { return try rewindChecks() }
+    // `DUO_CHECKS=btw`: /btw from chat (BtwChecks.swift, F-688 to F-690). Fails until fixed; not in the default run.
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "btw" { return try btwChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "office-comments" { try officeCommentChecks(); try officeMarginChecks(); return }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "pdf" { return try pdfChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "chat-live" { return try chatLiveChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "task-send" { return try chatTaskSendChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "chat-real"{ return try chatRealChecks() }
@@ -41,26 +67,44 @@ func repoFixture() throws -> Fixture {
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "remote-control" { return try remoteControlChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "project-interview" { return try projectInterviewChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "installer-lock" { return try installerLockChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "director-install" { return try directorInstallChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "launch-shell" { return try launchShellChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "launch-hang" { return try launchHangChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "voice" { return try voiceChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "terminal-keys" { return try terminalKeyChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "terminal-slot" { return try terminalSlotChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "return-chords" { return try returnChordChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "prompt-keys" { return try promptKeyChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "refresh-cost" { return try refreshCostChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "vacuum" { return try vacuumChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "embedder-gpu" { return try embedderGPUBench() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "ambiguous-name" { return try ambiguousNameChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "reveal-tree" { return try revealTreeChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "park" { return try parkChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "director" { return try directorChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "director-duties" { return try directorDutyChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "control" { return try controlPlaneChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "isolation" { return try isolationChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "git" { return try gitChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "duo-files" { return try duoFilesMoveChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "pane" { return try paneFocusChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "editors" { return try editorSetChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "editorwrap" { return try editorWrapChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "pair" { return try splitDocsChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "formatbar" { return try formatBarChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "deckeditor" { return try deckEditorChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "editorperf" { return try editorPerfChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "split" { return try splitViewChecks() }
-    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "split-perf" { return splitViewPerf() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "docxlook" { return try docxLookChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "deck" { return try deckChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "deckpreview" { return try deckP3aChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "deckviewer" { return try deckP3bChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "deckhidden" { return try deckHiddenChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "tabs" { return try tabOrderChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "core" { return try appCoreChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "backoff" { return try backoffChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "perf" { return try perfRegressionChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "windows" { return try multiWindowChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "newsession" { return try newSessionChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "newsessionrow" { return try newSessionRowChecks() }
     let f = try repoFixture()
@@ -85,6 +129,7 @@ func repoFixture() throws -> Fixture {
     }
     homeListChecks(f)
     firstRunProjectChecks(f)
+    teachingLayerChecks()
     sessionRowChecks(f)
     sessionGlyphChecks(f)
     sidebarHierarchyChecks(f)
@@ -510,7 +555,7 @@ func repoFixture() throws -> Fixture {
     check(nav.altitude == .allProjects && nav.selectedActionSession == "onboarding-v3/Copy review pass 2", "zooming out selects the session last in (flow-zoom-4)")
     nav.open(project: "checkout-redesign")
     nav.goHome()
-    check(nav.altitude == .allProjects && nav.homeTab == "Morning triage" && nav.focusHomeRequest == 1, "shift-cmd-H: All projects, Home terminal focused")
+    check(nav.altitude == .project(nav.fixture.home?.name ?? "") && nav.consoleTab == "Morning triage", "shift-cmd-H: Home's page, on the session that needs you (DL-336)")
     let tiles = AppModel(fixture: f)
     tiles.moveTileFocus(dx: 0, dy: 0)
     check(tiles.focusedTile == "home", "first arrow focuses the first tile: Home's, in a column of its own (DL-104)")
@@ -794,14 +839,24 @@ func repoFixture() throws -> Fixture {
     try noteEditChecks()
     try editorChordChecks()
     try docSafetyChecks()
+    try htmlViewerBlankChecks()
     try reviewChecks()
+    try officeCommentChecks()
+    try officeMarginChecks()
+    try pdfChecks()
     taskPaneKeyChecks()
     dockBadgeChecks()
     try paneFocusChecks()
     try editorSetChecks()
+    try editorWrapChecks()
     try splitDocsChecks()
+    try formatBarChecks()
+    try deckEditorChecks()
     try splitViewChecks()
     try tabOrderChecks()
+    try appCoreChecks()
+    try perfRegressionChecks()
+    try multiWindowChecks()
     try newSessionChecks()
     try newSessionRowChecks()
     tabScrollChecks()
@@ -1108,6 +1163,34 @@ func repoFixture() throws -> Fixture {
     let freshMod = try FileManager.default.attributesOfItem(atPath: freshT.path)[.modificationDate] as! Date
     check(refreshed == 4 && abs(oldMod.timeIntervalSince(keepNow.addingTimeInterval(-15 * 86_400))) < 2 && keepNow.timeIntervalSince(freshMod) < 60,
           "keep-alive moves a quiet session to half the period ago (with its sidecars), leaves fresh ones alone")
+    // F-597: a minute later (and a day later) nothing moves again: the same files were rewritten every minute before.
+    check(SessionArchive.keepAlive([oldT, freshT], periodDays: 30, now: keepNow.addingTimeInterval(60)) == 0
+          && SessionArchive.keepAlive([oldT, freshT], periodDays: 30, now: keepNow.addingTimeInterval(86_400)) == 0,
+          "keep-alive leaves a session it just moved alone a minute and a day later (F-597)")
+    check(SessionArchive.keepAlive([oldT], periodDays: 30, now: keepNow.addingTimeInterval(3 * 86_400)) >= 1,
+          "and moves it again once it is two more days past half the period")
+    // F-597: run hourly for 40 days on a session that goes quiet now: it never gets older than half the period plus the
+    // margin (plus the hour between runs), so Claude Code's cleanup (older than the period) never reaches it, and it moves
+    // about once per margin, not every run. Periods of 30, 7 and 4 days (margin 2 days, 21 h, 12 h).
+    for period in [30, 7, 4] {
+        let f = bucketDir.appending(path: "s-window-\(period).jsonl")
+        try "{}".write(to: f, atomically: true, encoding: .utf8)
+        let start = Date()
+        try FileManager.default.setAttributes([.modificationDate: start], ofItemAtPath: f.path)
+        let half = Double(period) * 86_400 / 2, margin = min(2 * 86_400, half / 4)
+        var oldest = 0.0, moves = 0
+        for hour in stride(from: 0.0, through: 40 * 24, by: 1) {
+            let now = start.addingTimeInterval(hour * 3600)
+            moves += SessionArchive.keepAlive([f], periodDays: period, now: now)
+            let mod = try FileManager.default.attributesOfItem(atPath: f.path)[.modificationDate] as! Date
+            oldest = max(oldest, now.timeIntervalSince(mod))
+        }
+        let expected = (40 * 86_400 - half) / margin
+        check(oldest <= half + margin + 3600 && oldest < Double(period) * 86_400,
+              "keep-alive, \(period)-day period: a listed session is never older than half the period + margin (oldest \(Int(oldest / 3600)) h; cleanup at \(period * 24) h)")
+        check(Double(moves) <= expected + 2 && moves >= 1, "and moves about once per margin over 40 days (\(moves) moves, not one an hour)")
+        try? FileManager.default.removeItem(at: f)
+    }
     check(SessionArchive.carryOnPrompt("s-old")?.contains(SessionArchive.copyURL("s-old").path) == true, "carry-on prompt points at the archived transcript")
     check(FileManager.default.fileExists(atPath: SessionArchive.sidecarURL("s-old").appending(path: "tool-results/r1.txt").path),
           "the sidecar folder is archived too (DL-48)")
@@ -1532,7 +1615,7 @@ func repoFixture() throws -> Fixture {
     print("tokens")
     check(DuoTextStyle.body.spec.size == 13 && DuoTextStyle.body.spec.lineHeight == 20, "body 13/20")
     check(DuoTextStyle.sectionLabel.spec.uppercase && DuoTextStyle.sectionLabel.spec.tracking == 0.66, "section label caps +0.66")
-    check(DuoMetric.paneOverviewHome == 340 && DuoMetric.paneProjectRight == 460, "pane widths")
+    check(DuoMetric.paneOverviewActionColumn == 340 && DuoMetric.paneProjectRight == 460, "pane widths")
     // C-22: the editor's H2 and smaller sit 4 lower, from the token the app hands the page.
     let editorSource = (try? String(contentsOf: repoRoot().appending(path: "Vendor/codemirror/src/duo-editor.js"), encoding: .utf8)) ?? ""
     check(EditorController.tokenCSS().contains("--duo-heading-above: \(Int(DuoSpace.gapAboveDocumentHeading))px")
@@ -1933,6 +2016,8 @@ func repoFixture() throws -> Fixture {
           "walks never enter Music, Photos, Documents… unless the project lives inside them")
     check(FileSource.files(in: URL(fileURLWithPath: "/")).isEmpty && FileSource.files(in: home.deletingLastPathComponent()).isEmpty,
           "folders above home are never walked for files (a session started in / or /Users)")
+    try midTurnChecks()  // MidTurnChecks.swift: messages typed mid-turn (C-173, F-638)
+    try rewindChecks()  // RewindChecks.swift: a rewound transcript's live branch (F-656)
     walkGuardChecks()  // WalkGuardChecks.swift: every walk goes through ProtectedFolders (F-302)
 
     print("Claude folders (DL-103)")
@@ -2143,6 +2228,7 @@ func repoFixture() throws -> Fixture {
     print("the window's root reads no session's state (F-208, ENH-46)")
     do {
         freezeGuardChecks()  // FreezeGuardChecks.swift: F-208 and F-225 scans, by declaration (C-84)
+        searchScrimToolbarChecks()  // F-522
         // F-226: a chat the size of the one that froze (24 items, 86 steps) has no lazy stack at all.
         check(!ChatFeedShape.isLazy(items: 24, steps: 86) && !ChatFeedShape.isLazy(items: 48, steps: 250)
               && ChatFeedShape.isLazy(items: 49, steps: 10) && ChatFeedShape.isLazy(items: 10, steps: 251) && ChatFeedShape.isLazy(items: 100, steps: 1945),
@@ -2469,6 +2555,9 @@ func repoFixture() throws -> Fixture {
 
     try docxLookChecks()
     try deckChecks()
+    try deckP3aChecks()
+    try deckP3bChecks()
+    try deckHiddenChecks()
 
     print("a Word document as Markdown (ENH-14, DL-123)")
     let wordDocs = repoRoot().appending(path: "Spikes/DocxToMarkdown/docs")
@@ -2870,7 +2959,17 @@ func repoFixture() throws -> Fixture {
         }
         let naming = appSources.filter { ((try? String(contentsOf: $0, encoding: .utf8)) ?? "").contains("\"--model\"") }.map(\.lastPathComponent)
         check(!args.contains("--model") && !appSources.isEmpty && naming.isEmpty,
-              "Duo never picks a model: no --model in claude's arguments, even in a test instance with DUO_MODEL set, and no app source passes one (DL-153; got \(args.filter { $0.hasPrefix("--") }), sources \(naming))")
+              "Duo never passes --model: not in claude's arguments, even in a test instance with DUO_MODEL set, and no app source names the flag. The user's own choice reaches Claude only as ANTHROPIC_MODEL from Settings (DL-339 supersedes DL-153 for that; got \(args.filter { $0.hasPrefix("--") }), sources \(naming))")
+        // DL-339 (Q-516): the Settings model goes into ANTHROPIC_MODEL for every session Duo starts (new, resume, fork all go through
+        // ChildEnvironment); unset it adds nothing, and a scripted run keeps the model its driver set.
+        let baseEnv = ["PATH": "/usr/bin", "ANTHROPIC_MODEL": "claude-haiku-5-5"]
+        func modelVar(_ e: [String]) -> String? { e.first { $0.hasPrefix("ANTHROPIC_MODEL=") }.map { String($0.dropFirst(16)) } }
+        check(modelVar(ChildEnvironment.make(sessionID: "s", base: baseEnv, model: "opus", isolated: false)) == "opus", "a chosen model reaches a session as ANTHROPIC_MODEL")
+        check(modelVar(ChildEnvironment.make(sessionID: "s", base: baseEnv, model: nil, isolated: false)) == "claude-haiku-5-5", "no choice leaves the environment as it was")
+        check(modelVar(ChildEnvironment.make(sessionID: "s", base: ["PATH": "/usr/bin"], model: nil, isolated: false)) == nil, "no choice and none inherited sets nothing: Claude's default")
+        check(modelVar(ChildEnvironment.make(sessionID: "s", base: baseEnv, model: "opus", isolated: true)) == "claude-haiku-5-5", "a scripted, isolated run keeps its Haiku whatever the setting")
+        check(modelVar(ChildEnvironment.make(sessionID: nil, base: baseEnv, model: "opus", isolated: false)) == "claude-haiku-5-5", "a plain shell is left alone")
+        check(ModelSetting.aliases == ["opus", "sonnet", "haiku"], "the aliases are opus, sonnet, haiku")
         check(m.lastDrafted?.key == id && m.lastDrafted?.text == "@tasks/exec-review-prep.md ", "once Claude's prompt is up, Duo drafts @tasks/exec-review-prep.md into it")
         check(typed == "\u{1b}[200~@tasks/exec-review-prep.md \u{1b}[201~", "the terminal received exactly the bracketed draft (\(typed.debugDescription))")
         check(!got.contains(13) && !got.contains(10), "no Return was sent: the draft waits for the user")
@@ -3045,8 +3144,8 @@ func repoFixture() throws -> Fixture {
     }
 }
 
-do { try MainActor.assumeIsolated { try run(); if ProcessInfo.processInfo.environment["DUO_CHECKS"] == nil { try remoteControlChecks(); try projectInterviewChecks(); try parkChecks(); try directorChecks(); try installerLockChecks(); try terminalKeyChecks(); try returnChordChecks(); try promptKeyChecks(); try voiceChecks(); try ambiguousNameChecks(); try revealTreeChecks(); try controlPlaneChecks(); try chatChecks() } } } catch { print("✘ setup: \(error)"); failures += 1 }
-print("\(passes) passed, \(failures) failed")
+do { try MainActor.assumeIsolated { try run(); if ProcessInfo.processInfo.environment["DUO_CHECKS"] == nil { try remoteControlChecks(); try projectInterviewChecks(); try parkChecks(); try directorChecks(); try directorDutyChecks(); try installerLockChecks(); try directorInstallChecks(); try launchShellChecks(); try launchHangChecks(); try terminalKeyChecks(); try terminalSlotChecks(); try returnChordChecks(); try promptKeyChecks(); try voiceChecks(); try ambiguousNameChecks(); try revealTreeChecks(); try controlPlaneChecks(); try isolationChecks(); try chatChecks() } } } catch { print("✘ setup: \(error)"); failures += 1 }
+print("\(passes) passed, \(failures) failed" + (FSEventsCanary.skipped > 0 ? ", \(FSEventsCanary.skipped) skipped (FSEvents not delivering, F-670)" : ""))
 exit(Int32(failures))
 
 

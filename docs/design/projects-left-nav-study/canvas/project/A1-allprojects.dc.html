@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A1 All projects with the Projects pane</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.tb{height:40px;display:flex;align-items:center;gap:16px;padding:0 14px;background:#F3F4F6;border-bottom:1px solid #C9CDD3;font-size:13px;white-space:nowrap;flex:none}
+.dots{display:flex;gap:8px;margin-right:4px}
+.dots i{width:12px;height:12px;border-radius:50%;background:#C9CDD3;display:block}
+.ib{font-family:inherit;width:26px;height:24px;border:0;border-radius:6px;background:none;display:inline-flex;align-items:center;justify-content:center;color:#5B636D}
+.lab{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.ny{color:#C2410C}
+.r{display:grid;grid-template-columns:22px minmax(0,1fr) 170px 150px 70px;align-items:center;height:26px;font-size:13px}
+.r .w{text-align:right;color:#5B636D}
+.r .p{color:#5B636D;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pr{display:flex;align-items:center;gap:6px;height:26px;padding:0 8px 0 6px;margin:0 8px;border-radius:6px;font-size:13px;white-space:nowrap}
+.pr .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.pr .tm{color:#5B636D;flex:none;font-size:13px}
+.pr.hov{background:#E9ECEF}
+.ch{width:12px;flex:none;display:inline-flex;justify-content:center}
+.kid{display:flex;align-items:center;gap:6px;height:24px;padding:0 8px 0 0;margin-left:27px;padding-left:10px;border-left:1.5px solid #C9CDD3;font-size:13px;white-space:nowrap;margin-right:16px}
+.kid .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.kid .tm{color:#5B636D;flex:none}
+.sl{padding:12px 16px 4px}
+.card{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;font-size:13px;line-height:20px}
+.btn{font-family:inherit;align-self:flex-start;display:inline-flex;align-items:center;height:26px;border:1px solid #8B939C;border-radius:6px;padding:0 10px;font-size:12px;line-height:16px;background:#FFFFFF;color:#1F2328;white-space:nowrap}
+.q{border:1.5px solid #C2410C;border-radius:6px;padding:6px 10px}
+.pm{display:inline-block;font-size:11px;line-height:15px;font-weight:600;color:#FFFFFF;background:#1F2328;border-radius:4px;padding:1px 6px;margin-right:4px;vertical-align:1px}
+.ann{position:absolute;font-size:12px;line-height:17px;color:#1F2328;background:#FFF7D6;border:1px solid #D9C36A;border-radius:6px;padding:6px 9px;z-index:3}
+.mono{font-family:ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;position:relative;background:#FFFFFF;color:#1F2328;font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;font-size:13px;line-height:20px;display:flex;flex-direction:column;overflow:hidden">
+
+<div class="tb">
+<div class="dots"><i></i><i></i><i></i></div>
+<button type="button" class="ib" aria-label="Hide Projects ⌃⌘S" style="background:#E9ECEF;color:#1F2328"><svg width="16" height="14" viewBox="0 0 16 14" aria-hidden="true"><rect x="1" y="1" width="14" height="12" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.3"></rect><path d="M6 1.5v11" stroke="currentColor" stroke-width="1.3"></path></svg></button>
+<strong>All projects</strong>
+<span class="ny"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.5" fill="#C2410C"></circle></svg> 3 need you</span>
+<span>◆ 2 to review</span><span>○ 3 working</span><span style="color:#5B636D">– 14 idle</span>
+<span style="margin-left:auto;border:1px solid #C9CDD3;border-radius:6px;background:#FFFFFF;width:290px;padding:2px 10px;color:#5B636D">Search all projects ⇧⌘A</span>
+<button type="button" class="ib" aria-label="Hide Right Pane ⌥⌘0"><svg width="16" height="14" viewBox="0 0 16 14" aria-hidden="true"><rect x="1" y="1" width="14" height="12" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.3"></rect><path d="M10 1.5v11" stroke="currentColor" stroke-width="1.3"></path></svg></button>
+</div>
+
+<div style="flex:1;display:flex;min-height:0">
+
+<nav aria-label="Projects" style="width:260px;flex:none;border-right:1px solid #C9CDD3;background:#FFFFFF;display:flex;flex-direction:column;min-height:0">
+<div style="padding:12px 16px 6px"><div style="border:1px solid #C9CDD3;border-radius:6px;height:24px;display:flex;align-items:center;padding:0 8px;gap:6px;color:#5B636D;font-size:12px"><svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true"><circle cx="5" cy="5" r="3.8" fill="none" stroke="#5B636D" stroke-width="1.3"></circle><path d="M8 8l2.8 2.8" stroke="#5B636D" stroke-width="1.3" stroke-linecap="round"></path></svg>Go to project<span style="margin-left:auto">⇧⌘O</span></div></div>
+
+<div class="pr" style="margin-top:4px"><span class="ch"></span><span class="nm">★ home</span><span class="ny" style="display:inline-flex;align-items:center;gap:4px"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.5" fill="#C2410C"></circle></svg>1</span></div>
+
+<div class="lab sl">payments /</div>
+<div class="pr"><span class="ch"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M3.5 2l3 3-3 3" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class="nm">checkout-redesign</span><span class="ny" style="display:inline-flex;align-items:center;gap:4px"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.5" fill="#C2410C"></circle></svg>1</span></div>
+<div class="pr"><span class="ch"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class="nm" style="font-weight:600">refunds-api-spec</span><span class="tm"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.8" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg></span></div>
+<div class="kid mono" style="font-size:11px;color:#5B636D;border-left-color:transparent">~/work/payments/refunds-api-spec</div>
+<div class="kid"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.8" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg><span class="nm">Edge-case matrix</span><span class="tm">working</span></div>
+<div class="kid" style="background:#E8F0FA;border-radius:0 6px 6px 0"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5h7" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg><span class="nm">Webhook retry rules</span><span class="tm">at prompt</span></div>
+<div class="kid"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 .8L9.2 5 5 9.2.8 5z" fill="#1F2328"></path></svg><span class="nm">Status codes table</span><span class="tm"></span></div>
+<div class="kid" style="color:#5B636D;font-size:12px"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5v7M1.5 5h7" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round"></path></svg><span class="nm">New session</span><span class="tm" style="font-size:12px">⌘T</span></div>
+<div class="pr hov"><span class="ch"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M3.5 2l3 3-3 3" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class="nm">fraud-rules-review</span><span class="tm" style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:4px;background:#D8DCE1;color:#1F2328" aria-label="New session in fraud-rules-review"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5v7M1.5 5h7" stroke="#1F2328" stroke-width="1.4" stroke-linecap="round"></path></svg></span></div>
+
+<div class="lab sl">growth /</div>
+<div class="pr"><span class="ch"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M3.5 2l3 3-3 3" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class="nm">onboarding-v3</span><span style="width:10px;height:10px;border-radius:3px;background:#2B8A8A;flex:none" aria-label="In window 2"></span><span class="ny" style="display:inline-flex;align-items:center;gap:4px"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.5" fill="#C2410C"></circle></svg>1</span></div>
+<div class="pr"><span class="ch"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M3.5 2l3 3-3 3" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class="nm">pricing-experiment-q4</span><span class="tm"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 .8L9.2 5 5 9.2.8 5z" fill="#1F2328"></path></svg></span></div>
+
+<div class="lab sl">research /</div>
+<div class="pr"><span class="ch"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M3.5 2l3 3-3 3" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class="nm">buyer-interviews</span><span class="tm">2h</span></div>
+<div class="pr"><span class="ch"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M3.5 2l3 3-3 3" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class="nm">q4-planning</span><span class="tm">3h</span></div>
+
+<div class="lab sl">Folders, no project file</div>
+<div class="pr"><span class="ch"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M3.5 2l3 3-3 3" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class="nm mono" style="font-size:12px;color:#5B636D">~/repos/site</span><span class="tm">at prompt</span></div>
+
+<div class="pr" style="margin-top:6px;color:#5B636D"><span class="ch"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M3.5 2l3 3-3 3" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class="nm lab" style="font-size:11px">Archived · 3</span></div>
+
+<div style="margin-top:auto;border-top:1px solid #C9CDD3;padding:12px 16px"><button type="button" class="btn">+ New project</button></div>
+</nav>
+
+<div style="flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-width:0">
+<div style="display:flex;gap:10px;align-items:center">
+<span style="border:1px solid #8B939C;border-radius:6px;font-size:12px;display:flex"><span style="padding:2px 10px">Board</span><span style="padding:2px 10px;background:#E9ECEF;font-weight:600">List</span></span>
+<span style="border:1px solid #C9CDD3;border-radius:6px;padding:2px 10px;width:220px;font-size:12px;color:#5B636D">Filter sessions</span>
+<span style="margin-left:auto;font-size:12px;color:#5B636D">Group</span><span style="border:1px solid #8B939C;border-radius:6px;padding:2px 10px;font-size:12px">Recent ⌃</span>
+</div>
+<div style="border:1px dashed #8B939C;border-radius:6px;height:28px;display:flex;align-items:center;gap:8px;padding:0 10px;font-size:13px"><strong>New session</strong> in <span style="border:1px solid #C9CDD3;border-radius:5px;padding:0 6px">★ home ⌄</span><span style="margin-left:auto;color:#5B636D">⌘T</span></div>
+<div class="lab" style="margin-top:6px">Open · 5</div>
+<div class="r"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.8" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg><span>Teardown research</span><span class="p">checkout-redesign</span><span class="p">▢ Exec review prep</span><span class="w">working</span></div>
+<div class="r"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.8" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg><span>Edge-case matrix</span><span class="p">refunds-api-spec</span><span></span><span class="w">working</span></div>
+<div class="r"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.8" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg><span>Rule audit</span><span class="p">fraud-rules-review</span><span class="p">▢ Simplify rules</span><span class="w">working</span></div>
+<div class="r"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5h7" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg><span>Webhook retry rules</span><span class="p">refunds-api-spec</span><span></span><span class="w">at prompt</span></div>
+<div class="r"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5h7" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg><span>Fix footer links</span><span class="p">~/repos/site</span><span></span><span class="w">at prompt</span></div>
+<div class="lab" style="margin-top:6px">Today</div>
+<div class="r"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 .8L9.2 5 5 9.2.8 5z" fill="#1F2328"></path></svg><span>Results readout</span><span class="p">pricing-experiment-q4</span><span class="p">▢ Q4 readout</span><span class="w"></span></div>
+<div class="r"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 .8L9.2 5 5 9.2.8 5z" fill="#1F2328"></path></svg><span>Status codes table</span><span class="p">refunds-api-spec</span><span></span><span class="w"></span></div>
+<div class="r"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5h7" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg><span>Buyer synthesis</span><span class="p">buyer-interviews</span><span class="p">▢ Synthesis memo</span><span class="w">2h</span></div>
+<div class="r"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5h7" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg><span>Q4 plan outline</span><span class="p">q4-planning</span><span class="p">▢ Draft plan</span><span class="w">3h</span></div>
+<div class="lab" style="margin-top:6px">This week</div>
+<div class="r"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5h7" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg><span>Checkout copy audit</span><span class="p">checkout-redesign</span><span></span><span class="w">2d</span></div>
+<div class="r" style="color:#5B636D"><span>›</span><span>Earlier · 9</span><span></span><span></span><span></span></div>
+</div>
+
+<div style="width:340px;flex:none;border-left:1px solid #C9CDD3;background:#FFFFFF;padding:14px 12px;display:flex;flex-direction:column;gap:10px">
+<div class="lab ny">Needs you · 3</div>
+<div class="card">
+<div style="display:flex;gap:8px;align-items:center"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.5" fill="#C2410C"></circle></svg><strong>Morning triage</strong><span style="margin-left:auto;color:#5B636D">1h</span></div>
+<span style="color:#5B636D">★ home · question</span>
+<span class="q">Route the three to their projects as tasks?</span>
+<button type="button" class="btn">Open Home</button>
+</div>
+<div class="card">
+<div style="display:flex;gap:8px;align-items:center"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.5" fill="#C2410C"></circle></svg><strong>Copy review pass 2</strong><span style="margin-left:auto;color:#5B636D">12m</span></div>
+<span style="color:#5B636D">onboarding-v3 · permission</span>
+<span class="q">Approve these 6 string changes?</span>
+<button type="button" class="btn">Go There</button>
+</div>
+<div class="card">
+<div style="display:flex;gap:8px;align-items:center"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.5" fill="#C2410C"></circle></svg><strong>PRD v2 edits</strong><span style="margin-left:auto;color:#5B636D">4m</span></div>
+<span style="color:#5B636D">checkout-redesign · question</span>
+<span>Move saved cards into scope, or keep it out and log an open question?</span>
+<button type="button" class="btn">Open project</button>
+</div>
+</div>
+</div>
+
+<div class="ann" style="left:56px;top:46px;max-width:300px"><span class="pm">P</span>The sidebar button and ⌃⌘S come back at All projects and show or hide <b>Projects</b> (amends DL-336 (4); Q-528).</div>
+<div class="ann" style="left:268px;top:150px;max-width:300px"><span class="pm">P</span><b>Projects</b>, 260 (drag 220 to 340): ★ home first, then the map's topics in the map's order (Sort Projects By). Each row: the state of its most urgent session (needs you shows its count), else its last activity.</div>
+<div class="ann" style="left:268px;top:268px;max-width:300px"><span class="pm">P</span>Expanded: the folder, then what matters now, five at most: needs you, open, then today (Q-529); <b>+ New session</b> starts in that folder. A click on the name opens the project; the chevron, → and ← expand and fold. Expansion is remembered per window.</div>
+<div class="ann" style="left:268px;top:408px;max-width:290px"><span class="pm">P</span>Hover: a + where the state sits starts a session in that project, as a task row's + does (DL-112). Right-click: the project menu, as on its tile.</div>
+<div class="ann" style="left:268px;top:494px;max-width:290px"><span class="pm">P</span>Open in another window (DL-308): that window's colour as a swatch; a click goes there, as Go There does.</div>
+<div class="ann" style="left:268px;top:640px;max-width:290px"><span class="pm">P</span>A folder with sessions and no project file shows as on the map (DL-63); Make a Project on hover. <b>+ New project</b> opens the New project sheet (DL-147), at the pane's foot as New session is in a project's.</div>
+<div class="ann" style="left:700px;top:560px;max-width:330px"><span class="pm">P</span>The middle is 840 at 1440 and 680 at 1280 (F-679), and the List keeps every column. The Board packs two topic columns at 840. Needs you is unchanged (DL-336's cards).</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>B1 Getting started on a new install</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.tb{height:38px;display:flex;align-items:center;gap:18px;padding:0 14px;background:#F3F4F6;border-bottom:1px solid #C9CDD3;font-size:13px;white-space:nowrap}
+.dots{display:flex;gap:8px;margin-right:6px}
+.dots i{width:12px;height:12px;border-radius:50%;background:#C9CDD3;display:block}
+.lab{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5B636D}
+.r{display:grid;grid-template-columns:22px minmax(0,1fr) 220px 80px;align-items:center;height:26px;font-size:13px}
+.r .w{text-align:right;color:#5B636D}
+.r .p{color:#5B636D}
+.g{width:12px;height:12px;display:inline-block;box-sizing:border-box}
+.g.i{border-top:1.5px solid #5B636D;height:1px;margin-top:6px}
+.btn{border:1px solid #8B939C;border-radius:6px;padding:4px 10px;font-size:12px;line-height:16px;background:#FFFFFF;font-family:inherit;color:#1F2328;white-space:nowrap}
+.btn.def{background:#1F2328;color:#FFFFFF;border-color:#1F2328}
+.gs{border:1px solid #C9CDD3;border-radius:8px;background:#FFFFFF;display:flex;gap:20px;padding:14px 16px}
+.st{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:0 8px;align-items:start;padding:7px 0;border-top:1px solid #E9ECEF}
+.box{width:14px;height:14px;border:1.5px solid #8B939C;border-radius:3px;box-sizing:border-box;margin-top:3px}
+.nm{font-size:13px;line-height:20px;font-weight:600}
+.ln{font-size:13px;line-height:20px;color:#5B636D}
+.acts{display:flex;gap:6px;align-items:center;padding-top:1px}
+.pm{display:inline-block;font-size:11px;line-height:15px;font-weight:600;color:#FFFFFF;background:#1F2328;border-radius:4px;padding:1px 6px;margin-right:4px;vertical-align:middle}
+.ann{position:absolute;font-size:12px;line-height:17px;color:#1F2328;background:#FFF7D6;border:1px solid #D9C36A;border-radius:6px;padding:6px 9px;max-width:260px}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;position:relative;background:#FFFFFF;color:#1F2328;font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;display:flex;flex-direction:column;overflow:hidden">
+<div class="tb">
+<div class="dots"><i></i><i></i><i></i></div>
+<strong>All projects</strong>
+<span style="color:#5B636D">– 11 idle</span>
+<span style="margin-left:auto;border:1px solid #C9CDD3;border-radius:6px;background:#FFFFFF;width:290px;padding:3px 10px;color:#5B636D">Search all projects ⇧⌘A</span>
+<span style="color:#5B636D">▯▯</span>
+</div>
+<div style="flex:1;display:flex;min-height:0">
+<div style="flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-width:0">
+<div style="display:flex;gap:10px;align-items:center">
+<span style="border:1px solid #8B939C;border-radius:6px;font-size:12px;display:flex"><span style="padding:2px 10px">Board</span><span style="padding:2px 10px;background:#E9ECEF;font-weight:600">List</span></span>
+<span style="border:1px solid #C9CDD3;border-radius:6px;padding:2px 10px;width:250px;font-size:12px;color:#5B636D">Filter sessions</span>
+<span style="margin-left:auto;border:1px dashed #8B939C;border-radius:6px;padding:2px 10px;font-size:12px">+ New project</span><span style="font-size:12px;color:#5B636D">Group</span><span style="border:1px solid #8B939C;border-radius:6px;padding:2px 10px;font-size:12px">Recent ⌃</span>
+</div>
+
+<section class="gs" aria-label="Getting started with Duo">
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:10px;padding-bottom:6px">
+<span style="font-size:14px;line-height:20px;font-weight:600">Getting started with Duo</span>
+<span style="font-size:12px;color:#5B636D">0 of 3 · all optional</span>
+<button type="button" class="btn" style="margin-left:auto">Hide</button>
+</div>
+<div class="ln" style="padding-bottom:8px">Duo keeps your Claude Code sessions in projects, beside the files they work on. Every session already on this Mac is listed below.</div>
+<div class="st"><span class="box"></span><div><div class="nm">Open a project, or make one</div><div class="ln">A project is a folder with a _PROJECT.md. Sessions started in it belong to it.</div></div><div class="acts"><button type="button" class="btn">Make a project…</button><button type="button" class="btn">Show me</button></div></div>
+<div class="st"><span class="box"></span><div><div class="nm">Start a session</div><div class="ln">One conversation with Claude. It shows as Chat or as Terminal; switch on its tab.</div></div><div class="acts"><button type="button" class="btn">New session</button><button type="button" class="btn">Show me</button></div></div>
+<div class="st"><span class="box"></span><div><div class="nm">Make a task</div><div class="ln">A note for one piece of work. It gathers the sessions working on it.</div></div><div class="acts"><button type="button" class="btn">Show me</button></div></div>
+<div class="st" style="grid-template-columns:22px minmax(0,1fr) auto"><span style="font-size:13px;color:#5B636D;line-height:20px">○</span><div><div class="nm" style="font-weight:400"><strong>Later, a director.</strong> When you run several sessions at once, one session can hand out the work, start the others and check what comes back. Ask any session to “be the director”.</div></div><div class="acts"><button type="button" class="btn">Watch the director film</button><button type="button" class="btn">Explain</button></div></div>
+</div>
+<div style="width:232px;flex:none;display:flex;flex-direction:column;gap:6px">
+<a href="#" style="text-decoration:none;color:#E6E8EB;width:232px;height:130px;border-radius:6px;background:#15171B;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px">
+<svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="16" fill="none" stroke="#E6E8EB" stroke-width="1.5"></circle><path d="M14 11 L24 17 L14 23 Z" fill="#E6E8EB"></path></svg>
+<span style="font-size:12px;line-height:16px">Watch the intro film</span>
+</a>
+<span style="font-size:12px;line-height:16px;color:#5B636D">9 min 34 s · what Duo is for</span>
+<span style="font-size:12px;line-height:16px;color:#5B636D">Help › Getting Started brings this back.</span>
+</div>
+</section>
+
+<div style="border:1px dashed #8B939C;border-radius:6px;height:28px;display:flex;align-items:center;gap:8px;padding:0 10px;font-size:13px"><strong>New session</strong> in <span style="border:1px solid #C9CDD3;border-radius:5px;padding:0 6px">~/Documents ⌄</span><span style="margin-left:auto;color:#5B636D">⌘T</span></div>
+<div class="lab" style="margin-top:4px">This week</div>
+<div class="r"><span class="g i"></span><span>Plan the side-project landing page</span><span class="p">~/Desktop</span><span class="w">2d</span></div>
+<div class="r"><span class="g i"></span><span>Quick question about refund SLAs</span><span class="p">~/Downloads</span><span class="w">5d</span></div>
+<div class="r"><span class="g i"></span><span>Draft a post about pricing</span><span class="p">~</span><span class="w">6d</span></div>
+<div class="r"><span class="g i"></span><span>Fix footer links</span><span class="p">~/repos/site</span><span class="w">6d</span></div>
+<div class="lab" style="margin-top:4px">Earlier</div>
+<div class="r"><span class="g i"></span><span>Summarise the six buyer interviews</span><span class="p">~/work/research</span><span class="w">2w</span></div>
+<div class="r"><span class="g i"></span><span>Migration script for the old CMS</span><span class="p">~/repos/site</span><span class="w">3w</span></div>
+<div class="r" style="color:#5B636D"><span>›</span><span>Earlier · 5</span><span></span><span></span></div>
+</div>
+<div style="width:340px;flex:none;border-left:1px solid #C9CDD3;background:#FFFFFF;padding:14px 12px;display:flex;flex-direction:column;gap:10px">
+<div class="lab">Needs you</div>
+<span style="font-size:13px;color:#5B636D">Nothing needs you.</span>
+</div>
+</div>
+<div class="ann" style="left:520px;top:6px;max-width:330px"><span class="pm">P</span> The card sits at the top of the middle, under the List | Board header, on a new install only (Q-533). Board view: the same card above the map.</div>
+<div class="ann" style="left:1104px;top:150px;max-width:320px"><span class="pm">P</span> Each step ticks on the real action, wherever it's done: Duo's buttons, ⌘T, duo2, Claude. Show me opens that step's explainer on the real control (B3). Hide ends it; Help › Getting Started brings it back.</div>
+<div class="ann" style="left:1104px;top:310px;max-width:320px"><span class="pm">P</span> The director is a line to know about (○, no box, no count): what it is, how to ask for one, its film. It never ticks and never nags (Q-534; Geoff on Q-512).</div>
+<div class="ann" style="left:1104px;top:470px;max-width:320px"><span class="pm">P</span> The install question (“Let Claude sessions outside Duo use it?”) still comes first as a sheet; the card waits under it and needs no answer.</div>
+<div class="ann" style="left:16px;top:812px;max-width:560px"><span class="pm">P</span> Show me on step 1 opens the Projects explainer, which the left-nav round (design-projects-left-nav, ENH-347) draws. Not redrawn here.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

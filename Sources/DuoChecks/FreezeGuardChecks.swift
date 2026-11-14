@@ -118,3 +118,13 @@ func sizeChangesFindings(index: SourceIndex) -> [String] {
     check(pane.contains("ChatFeedShape.isLazy(items: chat.log.items.count, steps: chat.log.steps.count)") && pane.contains("VStack(alignment: .leading, spacing: 16) { rows }"),
           "and ChatPane chooses its stack by that rule")
 }
+
+/// F-522: the toolbar's items are hosted above the content, so the search scrim only reaches them
+/// when each one is wrapped in `dimmedUnderSearch()`.
+@MainActor func searchScrimToolbarChecks() {
+    let src = (try? String(contentsOf: repoRoot().appending(path: "Sources/DuoKit/Shell/DuoToolbar.swift"), encoding: .utf8)) ?? ""
+    let body = src.components(separatedBy: "struct DuoToolbar: ToolbarContent").dropFirst().first?.components(separatedBy: "\n}\n").first ?? ""
+    let items = body.components(separatedBy: "ToolbarItem(placement").count - 1
+    let calls = body.components(separatedBy: ".dimmedUnderSearch()").count - 1
+    check(items > 0 && calls >= items, "every toolbar item is dimmed under the search scrim (\(calls) of \(items))")
+}

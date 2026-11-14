@@ -77,11 +77,15 @@ struct Bordered: ViewModifier {
     var width: CGFloat = DuoMetric.borderHairline
     var dashed = false
     var radius: CGFloat = DuoMetric.radiusCard
+    /// A card keeps the plain pane on a window colour's tint (DL-313: cards never change); with no colour it's
+    /// clear, as before, over the plain pane.
+    @Environment(\.windowColour) private var windowColour
 
     func body(content: Content) -> some View {
         content
             .padding(EdgeInsets(top: padding.top + width, leading: padding.leading + width,
                                 bottom: padding.bottom + width, trailing: padding.trailing + width))
+            .background { if windowColour != nil, !dashed { RoundedRectangle(cornerRadius: radius).fill(DuoColor.pane) } }
             .overlay(
                 RoundedRectangle(cornerRadius: radius)
                     .strokeBorder(color, style: StrokeStyle(lineWidth: width, dash: dashed ? DuoShadow.dashPattern : []))

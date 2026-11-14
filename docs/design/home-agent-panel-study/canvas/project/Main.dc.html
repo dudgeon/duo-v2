@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Home agent panel study</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.lab{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5b636d}
+.card{background:#ffffff;border:1px solid #c9cdd3;border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.rec{border:2px solid #1f2328}
+.row{display:flex;gap:10px;font-size:13px;line-height:20px}
+.row b{width:64px;flex:none}
+.p{font-size:11px;line-height:16px;color:#5b636d;font-weight:600}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;box-sizing:border-box;padding:48px 56px;background:#f3f4f6;color:#1f2328;font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;display:flex;flex-direction:column;gap:24px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<div class="lab">Study · not built · every mark [P]</div>
+<h1 style="margin:0;font-size:28px;line-height:34px;font-weight:600">Home's agent panel: gate it, make it opt-in, or move it</h1>
+<p style="margin:0;font-size:14px;line-height:21px;color:#5b636d;max-width:1100px">Geoff, 2026-11-10: “maybe gate it in system prefs or require a more proactive user intervention to create a left pane home agent.” Before that, 2026-11-03 (ENH-322): “I'm not sure most users will use it and we are doing a lot of strange workarounds … to accommodate it.” Research: docs/research/home-agent-panel.md.</p>
+</div>
+<div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:24px">
+<div class="card">
+<div class="lab">What the column costs</div>
+<div class="row"><b>Narrow</b><span>Questions drawn at 38–43 columns: chat refuses 2–4 of 17 shapes and drops to the terminal (C-178, Q-488). Held at 43, shown at 38, so each switch redraws (F-641).</span></div>
+<div class="row"><b>Two places</b><span>One terminal, two slots in one window: the black terminal Oliver saw (F-640); two composers (C-47); 87↔42 redraws (F-456); Show Here and Go There per window (DL-314).</span></div>
+<div class="row"><b>Unseen</b><span>Closed by default since DL-315, yet Duo starts Home's claude at every launch (DL-54). Checked: a fresh isolated Duo started it with the column closed, and listed a session nobody started (F-648).</span></div>
+</div>
+<div class="card rec">
+<div class="lab" style="color:#1f2328">Recommendation</div>
+<div class="row"><b>Q-498</b><span><strong>C:</strong> Home's agent lives on Home's page only. All projects is the List or Board plus Needs you. The deliberate action already exists: New session in ★ home.</span></div>
+<div class="row"><b>Q-499</b><span>Start Home's session on first use, not at launch (reverses DL-54).</span></div>
+<div class="row"><b>Q-500</b><span>A release note, no in-app note.</span></div>
+<div class="row"><b>Q-501</b><span>No sidebar button or ⌃⌘S at All projects.</span></div>
+<div class="row"><b>Q-488</b><span>(a) Hold the hidden terminal at 60 columns or more while chat shows, and take off F-641's margin.</span></div>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(5, minmax(0, 1fr));gap:16px">
+<div class="card"><div class="lab">A · Settings switch</div><span style="font-size:13px;line-height:19px">Off by default. Fixes it for people who leave it off; keeps every workaround in the code for those who turn it on. ~1 session.</span><span class="p">Geoff's idea · board A</span></div>
+<div class="card"><div class="lab">B · Start on request</div><span style="font-size:13px;line-height:19px">Opening the column shows a start card; nothing runs until Start. Fixes the unseen session only. ~1 session.</span><span class="p">Geoff's idea · board B</span></div>
+<div class="card rec"><div class="lab" style="color:#1f2328">C · Home's page only</div><span style="font-size:13px;line-height:19px">No left column at All projects. One place per session: all ten problems go at the root. ~2 sessions, mostly removal.</span><span class="p">Recommended · boards C1, C2</span></div>
+<div class="card"><div class="lab">D · Make it fit</div><span style="font-size:13px;line-height:19px">D1 a 60-column floor (Q-488 a), D2 a 480 column, D3 a sheet. Fixes narrow questions; the rest stays.</span><span class="p">Board D2</span></div>
+<div class="card"><div class="lab">E · Sessions view</div><span style="font-size:13px;line-height:19px">ENH-28: any session's chat in the middle of All projects, Home pinned first. The long-term shape; a design round, waits on Q-98. C clears the way.</span><span class="p">Later</span></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

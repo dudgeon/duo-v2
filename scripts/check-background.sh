@@ -12,6 +12,7 @@
 # are isolated, and it only reads which app is in front (lsappinfo, no permission needed).
 # Exit status: 0 when Duo never came forward, 1 otherwise.
 set -uo pipefail
+export DUO_ISOLATED=1   # every duo2 here reaches only the test instance; refuses, never the user's Duo (F-529)
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
 [ -x build/Duo.app/Contents/MacOS/Duo ] || { echo "run scripts/bundle.sh first"; exit 2; }

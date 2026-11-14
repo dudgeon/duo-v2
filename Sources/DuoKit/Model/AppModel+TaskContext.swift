@@ -28,7 +28,10 @@ extension AppModel {
         let brief = ProjectContext.folder(project: findSession(key, in: nil)?.project, cwd: req.cwd, folders: liveFolders)
             .flatMap { ProjectContext.brief(name: $0.name, folder: $0.folder) }
         // Review marks (DL-236 7): every session is told how to read and write them, once at start (its own section).
-        let text = ProjectContext.joined(ProjectContext.hook(event, sessionId: sid, now: brief), task, event == "start" ? Review.convention : "")
+        // Which view the user is in, only when it differs from what the session was last told (DL-339 Q-513).
+        let shown: ViewConvention.View? = chat(for: sid).map { $0.showsChat ? .chat : .terminal }
+        let view = ViewConvention.hook(event, sessionId: sid, view: shown)
+        let text = ProjectContext.joined(ProjectContext.hook(event, sessionId: sid, now: brief), task, view, event == "start" ? Review.convention : "")
         // At start, a project in a git repository is told its repo, branch and access too (DL-149 board 11, DL-157).
         let place = ProjectContext.folder(project: findSession(key, in: nil)?.project, cwd: req.cwd, folders: liveFolders)
         guard event == "start", let place else {

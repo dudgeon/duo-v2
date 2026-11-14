@@ -1,0 +1,513 @@
+{
+  "sprint": "2026-11-01-duo-decks-viewer",
+  "title": "Duo acceptance: Duo Decks, the deck viewer (P3)",
+  "intro": "Duo Decks' viewer, end to end: a Markdown deck opens beside its slides, the slides redraw as you type, templates are picked with ⌃⌘N or a chip, problems and exports live in the deck's bar, comments pin to slides, and a plain PowerPoint can become templates or a Duo deck. Everything here was approved on the [Duo Decks canvas](https://claude.ai/artifact/Sk28K1tkHgwk6gHs7RFGqQ) (boards 9A and 10 to 13) and split view's [split-deck screen](https://github.com/dudgeon/duo-v2/blob/main/docs/design/split-view-handoff/screens/split-deck.html). The sample deck, its Northwind pack and the plain pptx are synthetic, in the checkout project.",
+  "setup": [
+    "A window about 1440 wide, so the deck's split has room for both sides."
+  ],
+  "groupNotes": {
+    "In checkout: a Duo deck beside its slides": "The checkout project with decks/field-trial-review.md and its pack in templates/decks/northwind (the fixtures). The first card opens the deck; the rest of the group carries on from it.",
+    "In checkout: problems, export and comments": "Carries on from the deck left open above.",
+    "In checkout: starting from a PowerPoint": "docs/grower-update.pptx, a plain synthetic deck.",
+    "The command line": "duo2 against the acceptance Duo, with the deck open."
+  },
+  "features": [
+    {
+      "id": "deck-split-open",
+      "group": "In checkout: a Duo deck beside its slides",
+      "title": "A deck opens beside its slides",
+      "what": "A Markdown file with `type: deck` opens as one split tab: its source on the left, its slides on the right, drawn from the deck exported in memory (DL-269).",
+      "steps": [
+        "Open `decks/field-trial-review.md` in `checkout`."
+      ],
+      "expect": "One tab reads `field-trial-review.md ⫼ Slides`. The left side is the Markdown; the right side is the deck's slides at the side's width with the deck bar on top (‹ › n/N, Select Shape, Export ⌄). The slides look like the Northwind pack (teal and orange, the logo and footer). If the window is narrow the split folds to one side with a rail at the far right; click it to unfold.",
+      "ref": "DL-269, DL-275, F-523",
+      "commit": "8697b3f9bbdc40f1e256b3600223accb802e17ee",
+      "alsoCommits": [
+        "30ee8fc131f4f124c86770ac21468516bf6f3960",
+        "f133cd78b64919cf7c0d5cfd14e72724777fd722",
+        "9078b4877a560357b806d97d70d2b8002fcd690e"
+      ],
+      "workMac": "small",
+      "workMacWhy": "Needs a deck and a template pack in a project; copy the fixture's decks/ and templates/decks/ folders",
+      "links": [
+        {
+          "label": "split-deck screen",
+          "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/split-view-handoff/screens/split-deck.html"
+        },
+        {
+          "label": "Duo Decks canvas",
+          "url": "https://claude.ai/artifact/Sk28K1tkHgwk6gHs7RFGqQ"
+        }
+      ],
+      "setup": [
+        "open checkout",
+        "doc open decks/field-trial-review.md"
+      ],
+      "claude": {
+        "result": "passed",
+        "did": [
+          "Opened decks/field-trial-review.md in a scratch workspace (isolated Duo, 1440 wide) as a split and captured the window.",
+          "The tab reads field-trial-review.md, a split icon and Slides; Markdown on the left; the right side shows the Northwind slides (teal/orange bar, logo, footer) with the bar on top: back and forward arrows, 'Slide 1 of 9', Select Shape, Export with a chevron.",
+          "`duo2 deck` reported the deck on screen as slide 1 of 9."
+        ],
+        "didnt": [
+          "Did not try a narrow window to see the split fold to one side with the rail."
+        ],
+        "human": [
+          "Narrow the window and click the rail to unfold. The bar says 'Slide 1 of 9' (and '1/9' once it has a problem), not 'n/N' literally."
+        ],
+        "at": "2026-11-01"
+      }
+    },
+    {
+      "id": "deck-live-redraw",
+      "group": "In checkout: a Duo deck beside its slides",
+      "title": "The slides redraw as you type, and follow the caret",
+      "what": "Edit the source and the slides redraw about a quarter of a second after you stop, without saving or flashing. The caret's slide becomes the current one, and a 2 pt mark in the left margin shows which lines belong to it.",
+      "steps": [
+        "In slide 3 (Unattended rows) change `86%` to `88%`, and stop typing.",
+        "Click into slide 6's lines, then slide 2's."
+      ],
+      "expect": "Slide 3 shows 88% without a save and keeps its scroll position. As the caret moves, the slides scroll to the caret's slide and the bar's count follows; a thin grey bar in the source's left margin spans the current slide's lines. Nothing is written to disk until you save.",
+      "ref": "DL-269, F-523, F-526",
+      "commit": "8697b3f9bbdc40f1e256b3600223accb802e17ee",
+      "alsoCommits": [
+        "362feef00129c7dfca8071f5d5b56ce2ed9b76c0",
+        "2c96dae7a7dfa68e07c3b1737750d2fb5d94817b"
+      ],
+      "workMac": "small",
+      "workMacWhy": "Any deck in a project",
+      "links": [
+        {
+          "label": "split-deck screen",
+          "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/split-view-handoff/screens/split-deck.html"
+        }
+      ],
+      "setup": [
+        "open checkout",
+        "doc open decks/field-trial-review.md"
+      ],
+      "claude": {
+        "result": "partial",
+        "did": [
+          "Re-ran on a build of 0a7e52a2 (includes the F-530 redraw fix 2c96dae7): changed 86% to 88% in the editor (scripted user-type). After about a second the slides pane shows the slides from the top (slide 1 first, slide 3 reads 88%), not blank; the source also reads 88%.",
+          "deck-probe after the edit: visible container is #host, 9 slides at tops 16, 296, 576 (same as before the edit), page height 2519 unchanged, one refresh done, none in flight. Probed again 1 s later: unchanged.",
+          "Moved the caret to slide 6 (`duo2 deck go 6`, reporting lines 66-74): the bar read 'Slide 6 of 9', the probe's current slide went 1 to 6, and the slides scrolled to slide 6 (table), after the 88% edit."
+        ],
+        "didnt": [
+          "The harness's bar-select does not move the preview (current stayed 1), so I moved the caret with duo2 deck go instead of a click; a real click in the source was not tried.",
+          "Did not see the 2 pt margin mark: the source pane stayed scrolled to the top, so slide 6's lines were off screen in the capture. Did not check that the scroll position is kept across the redraw (both probes ran at the top)."
+        ],
+        "human": [
+          "Click into slide 6's lines in the source and look for the thin grey mark in the left margin spanning that slide's lines; check the slides follow.",
+          "Type in slide 3 while scrolled partway down the slides and check the pane keeps its place."
+        ],
+        "at": "2026-11-01"
+      }
+    },
+    {
+      "id": "deck-slide-chip",
+      "group": "In checkout: a Duo deck beside its slides",
+      "title": "Slide chips instead of markup, and changing a slide's template",
+      "what": "Each `<!-- slide: … -->` line shows as a chip, \"Slide n · template ⌄\". Clicking it lists the pack's templates; choosing one changes the slide's template, carrying content over by Duo's rules and moving what doesn't fit to the slide's speaker notes (DL-285, DL-281, DL-296).",
+      "steps": [
+        "Look at the source: no `<!-- slide: … -->` text.",
+        "Click slide 2's chip (`bullets`) and choose `two-column`."
+      ],
+      "expect": "Chips read \"Slide 2 · bullets ⌄\" and so on, with a thin rule above. After the change slide 2 is two-column with empty columns; its four points are in its speaker notes under \"Not placed after changing to two-column: body\", and a card under the slide says the points moved, with Move to left, Move to right, Split with Claude and Undo Change. One ⌘Z undoes the change. The file on disk still holds the comment markers (Obsidian and GitHub hide them too).",
+      "ref": "DL-281, DL-285, DL-296, DL-303, F-526",
+      "commit": "362feef00129c7dfca8071f5d5b56ce2ed9b76c0",
+      "alsoCommits": [
+        "592067b2a2b3e2c206fab8f8cc1425a14f398a1f",
+        "2c96dae7a7dfa68e07c3b1737750d2fb5d94817b"
+      ],
+      "workMac": "small",
+      "workMacWhy": "Any deck in a project",
+      "links": [
+        {
+          "label": "P3-2 picker board",
+          "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/duo-decks-handoff/screens/P3-2-picker.html"
+        },
+        {
+          "label": "P3-3 cards board",
+          "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/duo-decks-handoff/screens/P3-3-problems.html"
+        }
+      ],
+      "setup": [
+        "open checkout",
+        "doc open decks/field-trial-review.md"
+      ],
+      "claude": {
+        "result": "partial",
+        "did": [
+          "Re-ran on a build of 0a7e52a2 (includes the F-530 fix). Changed slide 2 to two-column with `duo2 deck change` on the open deck (a change on disk, in an isolated instance). Slide 2 became two-column: the chip reads 'Slide 2 · two-column', the source shows empty left and right, and the slides pane drew slide 2 as two-column with an empty body and the title only.",
+          "The speaker notes (the note quote) hold 'Not placed after changing to two-column: body' and the four points.",
+          "The slides pane drew fine after the change, with the card under slide 2: '4 points moved to the notes when this became two-column.' and four buttons, Move to left, Move to right, Split with Claude and Undo Change."
+        ],
+        "didnt": [
+          "The change came through the CLI on disk, not by clicking the chip and choosing from the picker, so the picker path was not re-run (it was seen in the earlier run).",
+          "Did not press the card's buttons, press Cmd-Z, or check that the comment markers are still on disk."
+        ],
+        "human": [
+          "Click the chip, choose two-column, and press Cmd-Z once: the change should undo in one step.",
+          "Try Move to left on the card."
+        ],
+        "at": "2026-11-01"
+      }
+    },
+    {
+      "id": "deck-new-slide",
+      "group": "In checkout: a Duo deck beside its slides",
+      "title": "⌃⌘N adds a slide from a template",
+      "what": "⌃⌘N (Format › New Slide, only in a deck) adds a chip under the caret's slide with the pack's templates listed; typing filters; Return inserts the template's skeleton (DL-295).",
+      "steps": [
+        "Put the caret in slide 3.",
+        "Press ⌃⌘N, type `k`, press Return.",
+        "Type a title."
+      ],
+      "expect": "A list at the caret shows each template with a small picture, its name and its purpose; `k` leaves kpi. Return inserts a kpi slide after slide 3: a title line with the caret in it and headings value, label, context. The new slide appears on the right as you type. The pictures in the list are stand-ins drawn from each template's slots, not real slide thumbnails yet (Q-415). New Slide… isn't in the editor's right-click menu (Q-416).",
+      "ref": "DL-295, DL-303, F-526, Q-415, Q-416",
+      "commit": "362feef00129c7dfca8071f5d5b56ce2ed9b76c0",
+      "alsoCommits": [
+        "acef4a344a29fbcb50d1ce64bb503bb5c353e1f3"
+      ],
+      "workMac": "small",
+      "workMacWhy": "Any deck in a project",
+      "links": [
+        {
+          "label": "P3-2 picker board",
+          "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/duo-decks-handoff/screens/P3-2-picker.html"
+        }
+      ],
+      "setup": [
+        "open checkout",
+        "doc open decks/field-trial-review.md"
+      ],
+      "claude": {
+        "result": "partial",
+        "did": [
+          "Put the caret in slide 3, opened New Slide and typed k (scripted through the editor): a list at the caret showed kpi alone with its small picture, name and purpose and 'insert · esc cancel · type to filter 8 templates', and the new chip read 'Slide 4 · k' under slide 3."
+        ],
+        "didnt": [
+          "Did not press Return or type a title (no key injection without a visible window), so I did not see the kpi skeleton inserted.",
+          "Did not press the shortcut through the menu or check that New Slide is absent from the right-click menu."
+        ],
+        "human": [
+          "Press the shortcut in slide 3, type k, Return, type a title; check the new slide appears on the right as you type and that New Slide isn't in the right-click menu."
+        ],
+        "at": "2026-11-01"
+      }
+    },
+    {
+      "id": "deck-problems-bar",
+      "group": "In checkout: problems, export and comments",
+      "title": "Problems in the deck's bar and under the slide",
+      "what": "When the deck breaks its templates, the bar shows Problems ⌄ and the slide gets a card saying what and offering a fix (DL-304, DL-298).",
+      "steps": [
+        "In slide 3 change the value to `86 percent of rows`.",
+        "Open Problems ⌄ and choose the problem.",
+        "Change the first slide's chip to an unknown name by editing the file in another editor, or type a slide marker by hand with `kip`, if you want to see a one-answer fix."
+      ],
+      "expect": "\"⚠ 1 problem ⌄\" appears after the slide count; its menu lists the problem and choosing it shows slide 3 and the source line. Under slide 3 a card says the value is too long for kpi, with Go to Line and Send to Claude. An unknown template with one near match offers \"Use kpi\". The menus are drawn in the page and don't take arrow keys yet (C-144).",
+      "ref": "DL-304, DL-298, C-144",
+      "commit": "592067b2a2b3e2c206fab8f8cc1425a14f398a1f",
+      "alsoCommits": [
+        "4f70e8e4f5d9e142c25ff81dd1b80c36084b609d",
+        "f4f77c2fff5b1a9c484bccfab4e05cc2e9765dc8"
+      ],
+      "workMac": "small",
+      "workMacWhy": "Any deck in a project",
+      "links": [
+        {
+          "label": "P3-3 board",
+          "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/duo-decks-handoff/screens/P3-3-problems.html"
+        }
+      ],
+      "setup": [
+        "open checkout",
+        "doc open decks/field-trial-review.md"
+      ],
+      "claude": {
+        "result": "partial",
+        "did": [
+          "Changed the value to '86 percent' (and '86 percent of rows' through duo2): the bar read '1/9 1 problem' with a chevron and the menu listed '3 · value: is 10 characters; the template allo...  line 31'.",
+          "`duo2 deck problems` said slide 3 (kpi) value is 18 characters and the template allows 7, with the line.",
+          "A hand-typed unknown marker 'kip' gave a problem: no template kip in northwind.md, listing the real ones."
+        ],
+        "didnt": [
+          "Did not see the card under slide 3 with Go to Line and Send to Claude (it needs the slides pane drawn after the edit).",
+          "The unknown-template check lists the alternatives; I did not see a one-click 'Use kpi' in the UI.",
+          "Menus not tested for arrow keys."
+        ],
+        "human": [
+          "Look for the card under slide 3 (Go to Line, Send to Claude) and for 'Use kpi' on a mistyped marker."
+        ],
+        "at": "2026-11-01"
+      }
+    },
+    {
+      "id": "deck-export",
+      "group": "In checkout: problems, export and comments",
+      "title": "Export ⌄: a dated PowerPoint, and the export state",
+      "what": "Export ⌄ writes `<deck> YYYY-MM-DD HHmm.pptx` beside the deck, replacing the previous export (DL-282, DL-286); the bar says whether the export is current.",
+      "steps": [
+        "Undo the long value from the last card.",
+        "Export ⌄ › Export as PowerPoint….",
+        "Edit a word in the deck.",
+        "Export ⌄ › Export Again, then Show Export in Finder."
+      ],
+      "expect": "A notice says \"Exported field-trial-review 2026-11-… .pptx · 9 slides\" with Show in Finder and Open With ⌄. The bar then reads \"Exported now\" (or a few minutes ago); after your edit it reads \"Changed since export\". Export Again names the file it replaces and leaves only the newest one in decks/. Upload to Google Slides… is dimmed (later, ENH-307). Opening the exported file shows the same slides in the PowerPoint viewer.",
+      "ref": "DL-282, DL-286, DL-304",
+      "commit": "592067b2a2b3e2c206fab8f8cc1425a14f398a1f",
+      "alsoCommits": [
+        "21127fd18c1b460f107cf5125aea4f482e921a31"
+      ],
+      "workMac": "small",
+      "workMacWhy": "Any deck in a project; writes a pptx beside it",
+      "links": [
+        {
+          "label": "P3-3 board",
+          "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/duo-decks-handoff/screens/P3-3-problems.html"
+        }
+      ],
+      "setup": [
+        "open checkout",
+        "doc open decks/field-trial-review.md"
+      ],
+      "claude": {
+        "result": "partial",
+        "did": [
+          "Export through duo2 wrote 'field-trial-review 2026-11-01 1724.pptx' (9 slides) beside the deck; a second Export Again replaced it, leaving one pptx in decks/.",
+          "In a captured run the notice read 'Exported field-trial-review 2026-11-01 1725.pptx · 9 slides' with Show in Finder, Open With and OK, and the bar read 'Exported just now'.",
+          "The Export menu showed Export as PowerPoint..., Export Again (replaces 2026-11-01 1725), Show Export in Finder and a dimmed 'Upload to Google Slides... later'."
+        ],
+        "didnt": [
+          "Did not see 'Changed since export' after an edit or open the pptx in a viewer.",
+          "`duo2 deck export decks/field-trial-review.md` with a relative path failed ('no such file') while Export Again worked.",
+          "Running `deck export show` revealed the file in Finder on this Mac, a slip on my part in an unattended run; nothing else was affected."
+        ],
+        "human": [
+          "Edit a word after exporting and check the bar changes to 'Changed since export'; open the pptx in PowerPoint or Keynote."
+        ],
+        "at": "2026-11-01"
+      }
+    },
+    {
+      "id": "deck-comment-pins",
+      "group": "In checkout: problems, export and comments",
+      "title": "Comment on a slide, and see the pin",
+      "what": "Select Shape, pick a slot, Add Comment: the comment is written into the Markdown on its own line in that slot (Review in Markdown's convention), and a pin appears at the slot's corner; clicking the pin opens the thread in the source's margin (DL-284, DL-302).",
+      "steps": [
+        "Select Shape, click slide 3's big number.",
+        "In the bar at the foot, press Add Comment and write `Rounded from 87.6?`.",
+        "Click the pin that appears on slide 3."
+      ],
+      "expect": "The foot bar reads \"value on slide 3 · '86%'\" with Add Comment first. The margin composer opens on the value's lines without taking the keyboard from the slides; posting writes a signed comment line into the value slot. A small capsule with a speech mark and 1 appears at the value's top right; clicking it opens the thread in the source's margin. The comment never appears on the slide or in an export.",
+      "ref": "DL-284, DL-302, DL-290",
+      "commit": "592067b2a2b3e2c206fab8f8cc1425a14f398a1f",
+      "alsoCommits": [
+        "4f70e8e4f5d9e142c25ff81dd1b80c36084b609d"
+      ],
+      "workMac": "small",
+      "workMacWhy": "Any deck in a project",
+      "links": [
+        {
+          "label": "P3-1 board",
+          "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/duo-decks-handoff/screens/P3-1-comments.html"
+        }
+      ],
+      "setup": [
+        "open checkout",
+        "doc open decks/field-trial-review.md"
+      ],
+      "claude": {
+        "result": "partial",
+        "did": [
+          "`duo2 deck comment 3/value` wrote a signed comment line under the value slot in the Markdown (and slide-level ones under slides 2 and 3).",
+          "In a captured run the slides show small capsules with a speech mark and 1 at each commented slot's top right (slides 2 and 3, and the value's corner); the margin shows the threads as cards beside the source.",
+          "The comment text isn't drawn on the slides."
+        ],
+        "didnt": [
+          "Did not click Select Shape and pick the value, press Add Comment in the foot bar or click a pin (needs a mouse)."
+        ],
+        "human": [
+          "Select Shape, click the big number, Add Comment, write 'Rounded from 87.6?', and click the pin; check the foot bar reads \"value on slide 3 · '86%'\"."
+        ],
+        "at": "2026-11-01"
+      }
+    },
+    {
+      "id": "pptx-make-templates",
+      "group": "In checkout: starting from a PowerPoint",
+      "title": "Make Templates… on a PowerPoint",
+      "what": "On a plain pptx the bar's Make Templates… turns the slides into a grid with tick boxes; Make Templates with Claude pastes the pick and the inventory line into Claude's prompt without Return (DL-291).",
+      "steps": [
+        "Open `docs/grower-update.pptx`.",
+        "Press Make Templates…, tick slides 3 and 7.",
+        "Press Make Templates with Claude (a Claude session in checkout, or Send To)."
+      ],
+      "expect": "The slides lie in a grid (two columns in a narrow pane, three when wider) with tick boxes; Make Templates… shows pressed. The foot bar reads \"2 slides picked\" with Cancel, Add to Pack ⌄ and Make Templates with Claude. Claude's prompt gets the request and `duo2 deck template inventory … --slides 3,7`, not sent. Leaving the mode returns to the same slide.",
+      "ref": "DL-291",
+      "commit": "592067b2a2b3e2c206fab8f8cc1425a14f398a1f",
+      "alsoCommits": [
+        "66ac7273bda4d4e422d5e86763036e1664958dd8",
+        "ef43ca789c429d8f7d10af1ba4cc675588d509b8",
+        "7b40a2de05060ec913364a20f263c95a942964ef"
+      ],
+      "workMac": "as-is",
+      "workMacWhy": "Any .pptx of his own",
+      "links": [
+        {
+          "label": "board 9A (make-templates)",
+          "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/duo-decks-handoff/screens/make-templates.html"
+        }
+      ],
+      "setup": [
+        "open checkout",
+        "doc open docs/grower-update.pptx"
+      ],
+      "claude": {
+        "result": "partial",
+        "did": [
+          "Opened docs/grower-update.pptx: Make Templates... turned the slides into a grid (three columns at this width) with tick boxes and showed pressed.",
+          "With slide 3 ticked the foot bar read '1 slide picked · click slides to pick them; Esc to stop' with Cancel, Add to Pack and Make Templates with Claude."
+        ],
+        "didnt": [
+          "Ticked one slide, not two (the harness takes one slide in its argument), and did not press Make Templates with Claude, so what it pastes into Claude's prompt is untested.",
+          "Did not leave the mode to see it return to the same slide."
+        ],
+        "human": [
+          "Tick slides 3 and 7, press Make Templates with Claude in a Claude session and check the prompt gets the request and the `duo2 deck template inventory ... --slides 3,7` line, unsent."
+        ],
+        "at": "2026-11-01"
+      }
+    },
+    {
+      "id": "pptx-convert-sheet",
+      "group": "In checkout: starting from a PowerPoint",
+      "title": "Convert to Duo Deck…",
+      "what": "Convert to Duo Deck… opens a Duo sheet (pack, Into); Convert with Claude hands the conversion to the session with the `duo2 deck import` line (DL-294, DL-305).",
+      "steps": [
+        "With `docs/grower-update.pptx` open, press Convert to Duo Deck….",
+        "Press Convert with Claude."
+      ],
+      "expect": "A sheet hangs from the toolbar: \"Convert grower-update.pptx to a Duo deck\", Template pack northwind · this project, Into decks/grower-update.md, Cancel and Convert with Claude. Convert pastes the request and the import line into Claude's prompt without Return; the plan, Claude's questions about merging look-alike layouts and the report happen in the session. The pptx isn't changed.",
+      "ref": "DL-294, DL-305",
+      "commit": "9c6f1df4b3dd445ed566171027d6102b2cce52b3",
+      "alsoCommits": [],
+      "workMac": "as-is",
+      "workMacWhy": "Any .pptx of his own",
+      "links": [
+        {
+          "label": "P3-4 board",
+          "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/duo-decks-handoff/screens/P3-4-sheets.html"
+        }
+      ],
+      "setup": [
+        "open checkout",
+        "doc open docs/grower-update.pptx"
+      ],
+      "claude": {
+        "result": "partial",
+        "did": [
+          "Convert to Duo Deck... opened a sheet hanging from the toolbar: 'Convert grower-update.pptx to a Duo deck', the explanation, Template pack 'northwind · this project', Into 'decks/grower-update.md', Cancel and Convert with Claude."
+        ],
+        "didnt": [
+          "Did not press Convert with Claude (no live Claude session here), so the pasted request and import line are untested."
+        ],
+        "human": [
+          "Press Convert with Claude in a project with a Claude session and check the prompt is filled, not sent, and the pptx is unchanged."
+        ],
+        "at": "2026-11-01"
+      }
+    },
+    {
+      "id": "deck-new-sheet",
+      "group": "In checkout: starting from a PowerPoint",
+      "title": "File › New › New Deck…",
+      "what": "New Deck… (File › New and Files' + menu) opens a sheet with a name, a folder, the template pack and what to start with; Create writes the deck and opens it in its split tab (DL-297, DL-305).",
+      "steps": [
+        "File › New › New Deck….",
+        "Name it `autumn-trial`, keep northwind and A title slide, press Create."
+      ],
+      "expect": "The sheet lists northwind (this project, 8 templates) above Duo Plain (built in), with a strip of template tiles. Create makes `decks/autumn-trial.md` with one title slide and opens it beside its slide. The tiles are wireframes until real thumbnails exist (Q-415). No shortcut.",
+      "ref": "DL-297, DL-305, Q-415",
+      "commit": "9c6f1df4b3dd445ed566171027d6102b2cce52b3",
+      "alsoCommits": [
+        "1c7f791da12673374436e7257bfaca3fa89dcc90"
+      ],
+      "workMac": "as-is",
+      "workMacWhy": "Uses the built-in pack if a project has none",
+      "links": [
+        {
+          "label": "P3-4 board",
+          "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/design/duo-decks-handoff/screens/P3-4-sheets.html"
+        }
+      ],
+      "setup": [
+        "open checkout"
+      ],
+      "claude": {
+        "result": "partial",
+        "did": [
+          "The New Deck sheet opened with Name autumn-trial, Folder decks/, Template pack 'northwind this project · 8 templates', a strip of eight wireframe template tiles, and 'Start with' A title slide / One slide of each template, with Cancel and Create.",
+          "`duo2 deck new decks/autumn-trial.md --template northwind` made a deck with type: deck, template northwind and one title slide."
+        ],
+        "didnt": [
+          "Could not press Create from a script, so I did not see the deck open in its split tab.",
+          "Did not open the pack list to check Duo Plain (built in) sits below northwind, or File > New > New Deck... through the menu."
+        ],
+        "human": [
+          "File > New > New Deck..., name it autumn-trial, press Create; check it opens beside its slide and the pack list shows Duo Plain."
+        ],
+        "at": "2026-11-01"
+      }
+    },
+    {
+      "id": "deck-cli-verbs",
+      "group": "The command line",
+      "title": "duo2 deck: the slide on screen, going to a slide, problems and comments",
+      "what": "`duo2 deck`, `deck go`, `deck pick`, `deck problems`, `deck comments` and `deck comment` let Claude see and move the deck viewer and comment on slides (DL-71).",
+      "steps": [
+        "With the deck open, run `duo2 deck`, then `duo2 deck go 4`.",
+        "Run `duo2 deck problems`, `duo2 deck comments`.",
+        "Run `duo2 deck comment 2 \"Too many words\"`."
+      ],
+      "expect": "`duo2 deck` names the deck, the slide on screen and the lines the caret is in; `deck go 4` moves both sides to slide 4. `deck problems` lists errors and notices with lines; `deck comments` lists threads by slide and slot. `deck comment` writes a signed comment under slide 2's marker and a pin appears on slide 2.",
+      "ref": "DL-71, F-523",
+      "commit": "64491b417805f23dffc88149535046da433c2899",
+      "alsoCommits": [
+        "aaf07964b02b79d832482c468202ddb8e05673f7",
+        "938483b780b72e1a00e8589d2a7e9e6c9c908144",
+        "592067b2a2b3e2c206fab8f8cc1425a14f398a1f"
+      ],
+      "workMac": "as-is",
+      "workMacWhy": "duo2 ships in the app; reads, plus one comment in his own deck",
+      "links": [
+        {
+          "label": "duo2 reference",
+          "url": "https://github.com/dudgeon/duo-v2/blob/main/docs/cli/duo2.md"
+        }
+      ],
+      "setup": [
+        "open checkout",
+        "doc open decks/field-trial-review.md"
+      ],
+      "claude": {
+        "result": "passed",
+        "did": [
+          "`duo2 deck` named the deck, slide and caret lines; `deck go 4` moved to slide 4 (lines 42-53) and `deck go 3` to slide 3.",
+          "`deck problems` listed the error with its line (and '0 problems' when clean); `deck comments` listed threads by slide and slot.",
+          "`deck comment 2 \"Too many words\"` wrote a signed comment under slide 2's heading and a pin appeared on slide 2; `deck comment 3/value` did the same for a slot.",
+          "`deck pick` turned the picker on."
+        ],
+        "didnt": [
+          "`deck export <relative path>` failed with 'no such file' (see the export card); `deck render` says it isn't built yet."
+        ],
+        "human": [],
+        "at": "2026-11-01"
+      }
+    }
+  ]
+}

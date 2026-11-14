@@ -8,7 +8,7 @@ extension AppModel {
 
     /// The session id a tab key stands for: the key itself when it is one.
     func sessionID(forTab key: String) -> String? {
-        fixture.sessions.first { $0.tabKey == key }?.sessionId ?? (isShell(key) ? nil : key)
+        session(tabKey: key)?.sessionId ?? (isShell(key) ? nil : key)
     }
 
     public func isKeepRunning(_ key: String) -> Bool {
@@ -39,7 +39,7 @@ extension AppModel {
         i.hasTerminal = t.map { !$0.exited } ?? false
         i.parked = parkedTabs.contains(key)
         i.keepRunning = isKeepRunning(key)
-        i.state = fixture.sessions.first { $0.tabKey == key }?.state
+        i.state = session(tabKey: key)?.state
         // Home's tab and a project's console tab count as on screen: their panes stay alive and
         // would start a parked one again at once (the live run parked Home's and it came back).
         i.onScreen = visibleSessionId == key || homeTab == key || consoleTab == key
@@ -69,7 +69,7 @@ extension AppModel {
     @discardableResult
     public func park(_ key: String) -> ParkBlock? {
         if let why = parkBlock(key) { return why }
-        let s = fixture.sessions.first { $0.tabKey == key }
+        let s = session(tabKey: key)
         if visibleSessionId == key || homeTab == key || consoleTab == key {
             guard let s, let next = consoleTabKeys(inProject: s.project).first(where: { $0 != key }) else { return .onScreen }
             if homeTab == key { homeTab = next }

@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>L2 · The header&#x27;s +: its states [P]</title>
+
+</head>
+<body>
+
+
+<style>
+body{margin:0}
+.root{position:relative;background:#FFFFFF;color:#1F2328;font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;font-size:13px;line-height:18px;overflow:hidden;display:flex;flex-direction:column}
+.tb{height:38px;flex:none;display:flex;align-items:center;gap:16px;padding:0 14px;background:#F3F4F6;border-bottom:1px solid #C9CDD3;white-space:nowrap}
+.dots{display:flex;gap:8px;margin-right:4px}
+.dots i{width:12px;height:12px;border-radius:50%;background:#C9CDD3;display:block}
+.cnt{color:#5B636D}
+.cnt.ny{color:#C2410C;font-weight:600}
+.srch{margin-left:auto;border:1px solid #C9CDD3;border-radius:6px;background:#FFFFFF;width:290px;padding:3px 10px;color:#5B636D}
+.body{flex:1;display:flex;min-height:0}
+.mid{flex:1;min-width:0;padding:14px 16px;display:flex;flex-direction:column;gap:10px;overflow:hidden;background:#FFFFFF}
+.right{width:340px;flex:none;border-left:1px solid #C9CDD3;padding:14px 12px;display:flex;flex-direction:column;gap:10px;background:#FFFFFF}
+.hdr{display:flex;gap:10px;align-items:center;font-size:12px}
+.seg{border:1px solid #8B939C;border-radius:6px;display:flex}
+.seg span{padding:2px 10px}
+.seg .on{background:#E9ECEF;font-weight:600}
+.flt{border:1px solid #C9CDD3;border-radius:6px;padding:2px 10px;width:230px;color:#5B636D}
+.pop{border:1px solid #8B939C;border-radius:6px;padding:2px 10px}
+.newp{border:1px dashed #8B939C;border-radius:6px;padding:2px 10px}
+.lab{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5B636D;display:flex;align-items:center;gap:8px}
+.lab .rl{flex:1;height:1px;background:#C9CDD3}
+.grid{display:grid;gap:12px;align-items:start}
+.tile{box-sizing:border-box;border:1px solid #C9CDD3;border-radius:8px;background:#FFFFFF;padding:11px 12px 6px;display:flex;flex-direction:column;min-width:0}
+.tile.home{border-color:#1F2328}
+.tile.foc{box-shadow:0 0 0 2px #1F2328}
+.tn{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tp{font-family:'SF Mono', ui-monospace, Menlo, monospace;font-size:11px;line-height:16px;color:#5B636D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tg{margin-top:2px}
+.th{color:#5B636D}
+.ss{margin-top:6px;display:flex;flex-direction:column}
+.sr{display:grid;grid-template-columns:16px minmax(0,1fr) auto;align-items:center;height:24px;gap:4px}
+.sr span:nth-child(2){white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sr .w{color:#5B636D;font-size:12px}
+.sr.open{background:#E8F0FA;margin:0 -6px;padding:0 6px;border-radius:4px}
+.more{color:#5B636D;height:22px;display:flex;align-items:center}
+.quiet{color:#5B636D;margin-top:6px;height:22px;display:flex;align-items:center}
+.ns{margin:4px -6px 0;padding:0 6px;height:24px;border-top:1px solid #E9ECEF;display:grid;grid-template-columns:16px minmax(0,1fr) auto;gap:4px;align-items:center;color:#5B636D;font-size:12px;background:none;border-left:0;border-right:0;border-bottom:0;font-family:inherit;text-align:left;width:calc(100% + 12px);cursor:default}
+.ns b{font-weight:400;font-size:14px;line-height:14px}
+.ns.hov{background:#E9ECEF;color:#1F2328;border-radius:0 0 7px 7px}
+.ns .k{font-size:11px;color:#5B636D}
+.g{width:16px;height:16px;display:flex;align-items:center;justify-content:center}
+.g i{display:block}
+.g .dot{width:8px;height:8px;border-radius:50%;background:#C2410C}
+.g .ring{width:8px;height:8px;border-radius:50%;border:1.5px solid #1F2328;box-sizing:border-box}
+.g .dash{width:9px;height:1.5px;background:#5B636D}
+.g .dia{width:7px;height:7px;background:#1F2328;transform:rotate(45deg)}
+.btn{border:1px solid #8B939C;border-radius:6px;padding:2px 9px;font-size:12px;line-height:16px;background:#FFFFFF;font-family:inherit;color:#1F2328;white-space:nowrap}
+.row{display:grid;grid-template-columns:minmax(0,1fr) 220px 80px;align-items:center;height:24px;color:#1F2328}
+.row .p{color:#5B636D}
+.row .w{text-align:right;color:#5B636D}
+.card{border:1px solid #C9CDD3;border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.q{border:1px solid #C2410C;border-radius:6px;padding:6px 10px}
+.ann{position:absolute;font-size:12px;line-height:17px;color:#1F2328;background:#FFF7D6;border:1px solid #D9C36A;border-radius:6px;padding:6px 9px;max-width:280px;z-index:5}
+.pm{display:inline-block;font-size:11px;line-height:15px;font-weight:600;color:#FFFFFF;background:#1F2328;border-radius:4px;padding:1px 6px;margin-right:4px;vertical-align:middle}
+.tip{position:absolute;background:#1F2328;color:#FFFFFF;font-size:11px;line-height:15px;border-radius:5px;padding:4px 8px;white-space:nowrap;z-index:4}
+.h1{font-size:28px;line-height:34px;font-weight:700}
+.h2{font-size:17px;line-height:24px;font-weight:600}
+.txt{font-size:14px;line-height:21px}
+.mut{color:#5B636D}
+.nsf{display:flex;align-items:center;margin:4px -6px 0;border-top:1px solid #E9ECEF}
+.nsf .ns{margin:0;border-top:0;flex:1;width:auto}
+.mk{border:0;background:none;font-family:inherit;font-size:12px;color:#1F2328;text-decoration:underline;text-underline-offset:2px;padding:0 6px;white-space:nowrap}
+.prow{display:grid;grid-template-columns:16px 190px minmax(0,1fr) 230px 56px 120px;gap:8px;align-items:center;height:28px;border-bottom:1px solid #E9ECEF}
+.prow .pp{font-family:'SF Mono', ui-monospace, Menlo, monospace;font-size:11px;color:#5B636D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .w{color:#5B636D;text-align:right;font-size:12px}
+.plus{border:0;background:none;font-family:inherit;font-size:12px;color:#5B636D;text-align:right;padding:0}
+.chip{border:1px solid #C9CDD3;border-radius:11px;padding:1px 9px;font-size:12px;color:#1F2328;white-space:nowrap}
+.chip.on{background:#1F2328;color:#FFFFFF;border-color:#1F2328}
+.th2{font-size:11px;font-weight:600;letter-spacing:.04em;color:#5B636D;text-transform:uppercase}
+.g .bub{width:10px;height:8px;border:1.3px solid #5B636D;border-radius:3px;box-sizing:border-box}
+
+</style>
+
+<div class="root" style="width:1440px;height:900px">
+
+<div style="padding:28px 32px;display:flex;flex-direction:column;gap:18px;height:100%;box-sizing:border-box">
+<div class="h2">L2 · The project header's +: its states (DL-341: a + at rest, "New session" on hover)</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:22px 32px">
+<div style="display:flex;flex-direction:column;gap:6px;min-width:0"><span class="lab">Rest: a + only</span><div style="display:flex;align-items:center;gap:8px;height:30px;border-top:1px solid #E9ECEF;margin-top:4px;padding:0 6px;border-radius:5px"><span class="mut" style="width:12px">⌄</span><strong style="white-space:nowrap">checkout-redesign</strong><span class="tp" style="max-width:300px">~/work/home/payments/checkout-redesign</span><span class="mut" style="font-size:12px">3</span><button type="button" style="margin-left:auto;border:0;border-radius:5px;height:22px;min-width:22px;font-family:inherit;font-size:12px;background:none;color:#5B636D;padding:0 4px;white-space:nowrap;display:flex;align-items:center;gap:4px;justify-content:center" aria-label="New session in checkout-redesign" title="New session in checkout-redesign · ~/work/home/payments/checkout-redesign"><span style="font-size:14px;line-height:14px">+</span></button></div><div style="display:grid;grid-template-columns:22px minmax(0,1fr) 220px 80px;align-items:center;height:24px;padding-left:22px"><span class="g"><i class="dot"></i></span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600">PRD v2 edits</span><span class="mut" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">▢ Exec review prep</span><span class="mut" style="text-align:right;font-size:12px">4m</span></div><div style="display:grid;grid-template-columns:22px minmax(0,1fr) 220px 80px;align-items:center;height:24px;padding-left:22px"><span class="g"><i class="bub"></i></span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:400">Teardown research</span><span class="mut" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">▢ Exec review prep</span><span class="mut" style="text-align:right;font-size:12px">working</span></div><div style="display:grid;grid-template-columns:22px minmax(0,1fr) 220px 80px;align-items:center;height:24px;padding-left:22px"><span class="g"><i class="bub"></i></span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:400">Checkout copy audit</span><span class="mut" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span><span class="mut" style="text-align:right;font-size:12px">2d</span></div></div>
+<div style="display:flex;flex-direction:column;gap:6px;min-width:0"><span class="lab">Pointer on the +: it opens to "+ New session"</span><div style="display:flex;align-items:center;gap:8px;height:30px;border-top:1px solid #E9ECEF;margin-top:4px;padding:0 6px;border-radius:5px"><span class="mut" style="width:12px">⌄</span><strong style="white-space:nowrap">onboarding-v3</strong><span class="tp" style="max-width:300px">~/work/home/growth/onboarding-v3</span><span class="mut" style="font-size:12px">2</span><button type="button" style="margin-left:auto;border:0;border-radius:5px;height:22px;min-width:22px;font-family:inherit;font-size:12px;background:#E9ECEF;color:#1F2328;padding:0 8px 0 6px;white-space:nowrap;display:flex;align-items:center;gap:4px;justify-content:center" aria-label="New session in onboarding-v3" title="New session in onboarding-v3 · ~/work/home/growth/onboarding-v3"><span style="font-size:14px;line-height:14px">+</span> New session</button></div><div style="display:grid;grid-template-columns:22px minmax(0,1fr) 220px 80px;align-items:center;height:24px;padding-left:22px"><span class="g"><i class="dot"></i></span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600">Copy review pass 2</span><span class="mut" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">▢ Launch copy</span><span class="mut" style="text-align:right;font-size:12px">12m</span></div><div style="display:grid;grid-template-columns:22px minmax(0,1fr) 220px 80px;align-items:center;height:24px;padding-left:22px"><span class="g"><i class="dia"></i></span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:400">Funnel SQL</span><span class="mut" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span><span class="mut" style="text-align:right;font-size:12px">40m</span></div></div>
+<div style="display:flex;flex-direction:column;gap:6px;min-width:0"><span class="lab">Pointer elsewhere on the header: the + stays a +</span><div style="display:flex;align-items:center;gap:8px;height:30px;border-top:1px solid #E9ECEF;margin-top:4px;padding:0 6px;background:#F3F4F6;border-radius:5px"><span class="mut" style="width:12px">⌄</span><strong style="white-space:nowrap">q4-planning</strong><span class="tp" style="max-width:300px">~/work/home/q4-planning</span><span class="mut" style="font-size:12px">2</span><button type="button" style="margin-left:auto;border:0;border-radius:5px;height:22px;min-width:22px;font-family:inherit;font-size:12px;background:none;color:#5B636D;padding:0 4px;white-space:nowrap;display:flex;align-items:center;gap:4px;justify-content:center" aria-label="New session in q4-planning" title="New session in q4-planning · ~/work/home/q4-planning"><span style="font-size:14px;line-height:14px">+</span></button></div></div>
+<div style="display:flex;flex-direction:column;gap:6px;min-width:0"><span class="lab">A project's header or row selected: + ⌘T</span><div style="display:flex;align-items:center;gap:8px;height:30px;border-top:1px solid #E9ECEF;margin-top:4px;padding:0 6px;border-radius:5px"><span class="mut" style="width:12px">⌄</span><strong style="white-space:nowrap">q4-planning</strong><span class="tp" style="max-width:300px">~/work/home/q4-planning</span><span class="mut" style="font-size:12px">2</span><button type="button" style="margin-left:auto;border:0;border-radius:5px;height:22px;min-width:22px;font-family:inherit;font-size:12px;background:none;color:#5B636D;padding:0 4px;white-space:nowrap;display:flex;align-items:center;gap:4px;justify-content:center" aria-label="New session in q4-planning" title="New session in q4-planning · ~/work/home/q4-planning"><span style="font-size:14px;line-height:14px">+</span> <span class="mut" style="font-size:11px">⌘T</span></button></div></div>
+<div style="display:flex;flex-direction:column;gap:6px;min-width:0"><span class="lab">L1 · a folder with no project file</span><div style="display:flex;align-items:center;gap:8px;height:30px;border-top:1px solid #E9ECEF;margin-top:4px;padding:0 6px;border-radius:5px"><span class="mut" style="width:12px">⌄</span><strong style="white-space:nowrap">board-deck</strong><span class="tp" style="max-width:300px">~/Desktop/board-deck</span><span class="mut" style="font-size:12px">1</span><button type="button" style="margin-left:auto;border:0;border-radius:5px;height:22px;min-width:22px;font-family:inherit;font-size:12px;background:none;color:#5B636D;padding:0 4px;white-space:nowrap;display:flex;align-items:center;gap:4px;justify-content:center" aria-label="New session in board-deck" title="New session in board-deck · ~/Desktop/board-deck"><span style="font-size:14px;line-height:14px">+</span></button></div><div style="display:grid;grid-template-columns:22px minmax(0,1fr) 220px 80px;align-items:center;height:24px;padding-left:22px"><span class="g"><i class="dot"></i></span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600">Slide 7 numbers</span><span class="mut" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span><span class="mut" style="text-align:right;font-size:12px">9m</span></div><span class="mut" style="font-size:12px">It starts in the folder, and Claude asks its own trust question.</span></div>
+<div style="display:flex;flex-direction:column;gap:6px;min-width:0"><span class="lab">L1 · folded</span><div style="display:flex;align-items:center;gap:8px;height:30px;border-top:1px solid #E9ECEF;margin-top:4px;padding:0 6px;border-radius:5px"><span class="mut" style="width:12px">›</span><strong style="white-space:nowrap">pricing-experiment-q4</strong><span class="tp" style="max-width:300px">~/work/home/growth/pricing-experiment-q4</span><span class="mut" style="font-size:12px">1</span><button type="button" style="margin-left:auto;border:0;border-radius:5px;height:22px;min-width:22px;font-family:inherit;font-size:12px;background:none;color:#5B636D;padding:0 4px;white-space:nowrap;display:flex;align-items:center;gap:4px;justify-content:center" aria-label="New session in pricing-experiment-q4" title="New session in pricing-experiment-q4 · ~/work/home/growth/pricing-experiment-q4"><span style="font-size:14px;line-height:14px">+</span></button></div><span class="mut" style="font-size:12px">A folded project keeps its button.</span></div>
+</div>
+<div class="txt" style="max-width:1300px"><strong>Geoff, 2026-11-13 (DL-341):</strong> "header right end; button could be more subtle; + button or other new session icon, and words 'new session' on mouseover". So at rest the header shows only a + in text2, at the same 22-point target. Hovering the + widens it to "+ New session" on a <code>selected</code> pill, growing leftward, and the tooltip adds the project and its folder. Its accessibility label is always "New session in ‹project›". The verb is <code>duo2 session new --project &lt;p&gt;</code> (or <code>--folder</code>), and the button opens the project's page on the new session, as the tile's does. With a project's header or one of its rows selected, ⌘T starts the session in that project, and the + shows ⌘T beside it; otherwise ⌘T starts where the dashed row says. The last-row alternative is set aside.</div>
+</div>
+</div>
+
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

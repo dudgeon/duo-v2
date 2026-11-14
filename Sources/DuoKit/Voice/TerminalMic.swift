@@ -45,6 +45,11 @@ final class TerminalMicView: NSView {
     private var lastRows: [String] = []
     private var bottomRow = 0
     private var lastDims = ""
+    /// What the last full tick saw (DL-318, F-531): output count, size, layout, input and voice state. While none of it
+    /// changes and no dictation runs, the 20 Hz tick skips its screen read (a whole state snapshot and every row's text).
+    private var lastSeen = ""
+    /// Bumped by the app's input monitor on every key, click and scroll (a scrolled-back view changes nothing else we see).
+    nonisolated(unsafe) static var inputGeneration = 0
     private var lastAnchor: VoiceMicAnchor?
     private var notice: NSHostingView<VoiceNoticeBox>?
     /// Where the mic last was in the slot, for the notice.
@@ -90,11 +95,18 @@ final class TerminalMicView: NSView {
     }
 
     func tick() {
-        guard let s = session, let sv = superview, s.isClaude || Self.onShellForProofs, !s.exited, s.view.superview === sv, !s.view.isHidden else { return hide() }
+        // A view that isn't there to read forgets what it saw: shown again, it reads the screen even if nothing else changed.
+        // (A screen with no input box on it keeps its key: re-reading an unchanged screen finds no box again, F-599.)
+        guard let s = session, let sv = superview, s.isClaude || Self.onShellForProofs, !s.exited, s.view.superview === sv, !s.view.isHidden else { lastSeen = ""; return hide() }
+        let d = s.view.terminalDimensions
+        let seen = "\(s.view.diagnostics.bytesFed)|\(d.cols)x\(d.rows)|\(Self.inputGeneration)|\(state)|\(VoiceMicStyle.current)|\(s.view.frame)|\(sv.bounds.size)|\(hovering)|\(String(describing: voice?.microphoneAvailable))|\(voice?.notice?.text ?? "")"
+        if seen == lastSeen && !state.isActive { return }
+        Work.count(.micScreenRead)
+        lastSeen = seen
         let snap = s.view.terminalStateSnapshot()
         let rows = s.view.visibleRowsText(0..<snap.dimensions.rows)
         let cell = s.cellSize
-        guard cell.width > 0, cell.height > 0 else { return hide() }
+        guard cell.width > 0, cell.height > 0 else { lastSeen = ""; return hide() }
         let style = VoiceMicStyle.current
         cellH = cell.height
         // B's chip is as wide as its words; A's and the old patch are fixed. A and B keep 6 pt clear each side of the chip.

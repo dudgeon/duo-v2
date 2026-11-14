@@ -8,6 +8,8 @@ extension AppModel {
     /// The session showing, as chat (its composer) or as a terminal; nil when there is none to speak to.
     public var voiceFocusTarget: VoiceTarget? {
         if let t = voice.target, voice.state.isActive { return t }
+        // A Markdown document with the keyboard takes the words, ahead of the session showing (DL-266). Read-only: none.
+        if webFocus == .editor, let e = editorIfLoaded, showingMarkdownDocument, let u = e.url { return e.canDictate ? .document(u.path) : nil }
         guard let key = visibleSessionId else { return nil }
         if let c = chats.existing(key) ?? fixtureChats[key], c.showsChat { return .chat(key) }
         if terminals.existing(key) != nil { return .terminal(key) }
@@ -17,7 +19,14 @@ extension AppModel {
     /// The mic, ⇧⌘D's menu item and `duo2 voice start|stop`: starts a dictation, or finishes the running one.
     public func toggleVoice(_ target: VoiceTarget? = nil) {
         guard let target = target ?? voiceFocusTarget else { return }
+        core.voiceWindow = self   // the window dictating (C-150): the host below reaches its composer and editor
         voice.toggle(target)
+    }
+
+    /// The editor holding the document a `.document` target names.
+    func dictationEditor(_ target: VoiceTarget) -> EditorController? {
+        guard case .document(let path) = target else { return nil }
+        return loadedEditors.first { $0.url?.path == path }
     }
 
     /// The terminal's visible rows, as chat mode reads them.
@@ -49,22 +58,40 @@ extension AppModel {
 
     func wireVoice(_ v: VoiceInput) {
         VoiceInput.current = v
+        // One microphone for the app; each callback goes to the window that started the dictation (C-150).
         v.host = VoiceInput.Host(
             update: { [weak self] target, transcript, final in
-                guard let self, let chat = self.chats.existing(target.key) ?? self.fixtureChats[target.key] else { return }
+                guard let h = self?.voiceHost, let chat = h.chats.existing(target.key) ?? h.fixtureChats[target.key] else { return }
                 if let field = chat.composerView { field.dictate(transcript, final: final) }
                 else if final, !transcript.settledText.isEmpty { chat.ui.composer += (chat.ui.composer.isEmpty ? "" : " ") + transcript.settledText }
             },
-            paste: { [weak self] target, phrase, first in self?.voicePaste(target, phrase, first: first) ?? .blocked("Duo isn't ready") },
+            paste: { [weak self] target, phrase, first in self?.voiceHost.voicePaste(target, phrase, first: first) ?? .blocked("Duo isn't ready") },
             ended: { [weak self] target, kept in
-                guard let self, let chat = self.chats.existing(target.key) ?? self.fixtureChats[target.key] else { return }
+                if case .document = target { self?.voiceHost.dictationEditor(target)?.dictationEnd(); return }
+                guard let h = self?.voiceHost, let chat = h.chats.existing(target.key) ?? h.fixtureChats[target.key] else { return }
                 chat.composerView?.endDictation(keep: kept)
             })
+        v.host?.document = { [weak self] target, step in
+            guard let h = self?.voiceHost, let e = h.dictationEditor(target) else { return false }
+            switch step {
+            case .begin:
+                guard e.canDictate else { return false }
+                e.onDictationBreak = { [weak h] in h?.voice.finishWhenDone { _ in } }
+                e.dictationBegin()
+            case .phrase(let text): e.dictationPhrase(text)
+            case .tail(let text): e.dictationTail(text)
+            case .end: e.dictationEnd()
+            }
+            return true
+        }
         installVoiceKeys()
     }
 
     /// ⇧⌘D: key down starts or finishes, key up ends a hold. A local monitor, since a menu's key equivalent
     /// has no key-up.
+    /// The window dictating (C-150), else this one.
+    var voiceHost: AppModel { core.voiceWindow ?? self }
+
     func installVoiceKeys() {
         guard VoiceKeys.monitors.isEmpty else { return }
         let chord: NSEvent.ModifierFlags = [.command, .shift]
@@ -73,10 +100,14 @@ extension AppModel {
             let (isRepeat, flags) = (e.isARepeat, e.modifierFlags)
             _ = flags
             let took = MainActor.assumeIsolated { () -> Bool in
-                guard let self, let target = self.voiceFocusTarget else { return false }
+                // The key window's model (C-150): ⇧⌘D dictates into the window in front, not the first one.
+                guard let first = self else { return false }
+                let m = first.core.keyModel ?? first
+                guard let target = m.voiceFocusTarget else { return false }
                 if !isRepeat {
-                    self.voice.keyDown(target)
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.31) { MainActor.assumeIsolated { self.voice.noteHolding() } }
+                    m.core.voiceWindow = m
+                    m.voice.keyDown(target)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.31) { MainActor.assumeIsolated { m.voice.noteHolding() } }
                 }
                 return true
             }
@@ -103,6 +134,11 @@ extension AppModel {
         if e.keyCode == 53 {
             if case .chat(let key) = target, let field = (chats.existing(key) ?? fixtureChats[key])?.composerView, responder === field { return false }
             voice.finishWhenDone { _ in }
+            return true
+        }
+        // Return in a document (Q-346): finish, let the last phrase land, then the editor's own Return. Never sends.
+        if e.keyCode == 36 || e.keyCode == 76, case .document = target, let ed = dictationEditor(target), ed.hasFocus {
+            voice.finishWhenDone { _ in ed.dictationEnd { ed.dictationNewline() } }
             return true
         }
         guard e.keyCode == 36 || e.keyCode == 76, case .terminal(let key) = target,
@@ -150,6 +186,7 @@ extension AppModel {
     /// `duo2 voice start|stop|status [id]` and `duo2 voice file <audio> [id]` (DL-71): what the mic does, and its
     /// scripted twin that feeds a file through the same path.
     func voiceVerb(_ id: ActionID, _ inv: Invocation, _ req: ControlRequest, _ done: @escaping @MainActor (Reply) -> Void) {
+        if voiceVerbWantsDocument(id, inv) { return documentVoiceVerb(id, inv, done) }
         let idWord = id == .voiceFile ? (inv.positional.count > 1 ? inv.positional[1] : nil) : inv.positional.first
         var key = visibleSessionId
         if idWord == "shell" {
@@ -179,6 +216,7 @@ extension AppModel {
             guard voice.state.isActive else { return done(.ok("Voice input wasn't on.")) }
             voice.finishWhenDone { state in done(.ok("Stopped. \(self.voice.transcript.settledText.isEmpty ? "Nothing was heard." : "Said: \(self.voice.transcript.settledText)")", ["state": String(describing: state)])) }
         case .voiceStart:
+            core.voiceWindow = self
             voice.start(target)
             switch voice.state {
             case .unavailable, .denied, .restricted, .failed: done(.fail(VoiceCopy.line(voice.state)))
@@ -189,6 +227,7 @@ extension AppModel {
             let url = URL(fileURLWithPath: (path as NSString).expandingTildeInPath)
             guard FileManager.default.fileExists(atPath: url.path) else { return done(.fail("no audio file at \(url.path) (give an absolute path)")) }
             guard !voice.state.isActive else { return done(.fail("voice input is already on; stop it first")) }
+            core.voiceWindow = self
             voice.start(target, source: .file(url)) { state in
                 switch state {
                 case .idle where self.voice.notice != nil: done(.fail("\(self.voice.notice?.text ?? "") (\(name))"))

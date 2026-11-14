@@ -13,8 +13,8 @@ Duo follows the same rule, so nothing surprises you. Start Claude inside a proje
 Started somewhere else? The session shows under that folder on the map. Drag it onto the right project, or right-click it and choose **Move to Project…**. Duo files it there straight away, and Claude's own copy follows the next time you open the session.
 
 ```
-payments/checkout/            ← a project (it has a PROJECT.md)
-├── PROJECT.md
+payments/checkout/            ← a project (it has a _PROJECT.md)
+├── _PROJECT.md
 ├── "PRD v2 edits"            started in checkout/            → checkout's
 └── research/
     └── "Teardown research"   started in checkout/research/   → checkout's too

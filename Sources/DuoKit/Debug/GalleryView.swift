@@ -78,7 +78,7 @@ public struct GalleryView: View {
                         NeedsYouCard(session: prd, selected: false)
                     }.frame(width: 307)
                     VStack(spacing: 10) {
-                        HomePointerCard(session: triage)
+                        NeedsYouCard(session: triage)
                         ReviewCard(session: readout)
                         NewProjectTile()
                     }.frame(width: 307)

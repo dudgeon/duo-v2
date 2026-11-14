@@ -103,6 +103,17 @@ screens["beta-digest.ans"] = (header(BETA)
   + [""] + say("First draft is in digests/2026-10-16.md. Next I'll pick the two quotes and write the asks.", "Sam still needs to decide on auto-add before the Oct 15 review.")
   + [f"{orange}\u2736{rst} Drafting the asks\u2026 {dim}(42s \u00b7 \u2193 1.8k tokens \u00b7 esc to interrupt){rst}"] + footer())
 
+# S14: neighborhood-map's "Freshness badge spec", in the third window (multi-window), between turns.
+MAP = "~/work/little-shared-library/neighborhood-map"
+screens["freshness.ans"] = (header(MAP)
+  + you("Tighten the freshness badge spec: three states, what each pin looks like, and when a box goes stale.")
+  + tool("Read", "specs/freshness.md", "Read 31 lines") + tool("Read", "notes/map-tile-costs.md", "Read 18 lines")
+  + say("The states read well. Two gaps: nothing says what happens when a box has never been scanned,", "and \"Getting old\" and \"Stale\" overlap at exactly 7 days.")
+  + tool("Update", "specs/freshness.md", "Updated with 4 additions and 1 removal") + diff(
+      ("-", 12, "| Getting old | 2\u20137 days | outlined |"), ("+", 12, "| Getting old | 2\u20136 days | outlined |"),
+      ("+", 14, "| Never scanned | \u2014 | grey, no badge |"))
+  + [""] + say("Updated: Getting old ends at 6 days, and never-scanned boxes get a grey pin with no badge.", "Want me to add the map legend copy next?") + footer())
+
 here = pathlib.Path(__file__).parent
 for name, lines in screens.items():
     (here / name).write_text("\n".join(lines) + "\n")

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Chat turn actions: why and the questions</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.cap{font-size:13px;line-height:19px;color:#5B636D}
+.cap b{color:#1F2328;font-weight:600}
+.lab{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.mono{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:12px}
+.q{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.q .t{font-size:13px;line-height:20px;font-weight:600;color:#1F2328}
+</style>
+</helmet>
+<div style="width: 1400px; height: 1000px; box-sizing: border-box; background: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; color: #1F2328; padding: 40px; display: flex; flex-direction: column; gap: 24px">
+  <div style="display: flex; flex-direction: column; gap: 6px">
+    <div style="font-size: 22px; line-height: 28px; font-weight: 600">Actions on a chat turn: Copy, Rewind, Fork</div>
+    <div class="cap" style="max-width: 1240px">Geoff, 2026-11-11: “in chat mode I want hover ui for rewind and fork; rewind has a button in claude desktop, but fork feels like a good fit too; … copy (which would copy the agent turn or user turn as raw markdown)”. Research: <span class="mono">docs/research/chat-hover-actions.md</span>. Every mark on boards 1 to 4 is a proposal [P]; nothing is built.</div>
+  </div>
+  <div style="display: flex; gap: 32px; align-items: flex-start">
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">What Claude Code does (2.1.284 and 2.1.316, tried on a mock API)</div>
+      <div class="cap"><b>Rewind is Claude's own menu</b> (<span class="mono">/rewind</span>, or Esc Esc with an empty prompt): pick an earlier prompt, then Restore code and conversation · Restore conversation · Restore code · Summarize from here · Summarize up to here · Never mind.</div>
+      <div class="cap"><b>Restore conversation</b> removes that prompt and everything after it and puts the prompt back in the input. Same session, same file: the removed turns stay in the JSONL as a dead branch.</div>
+      <div class="cap"><b>Restore code</b> puts back what Claude’s Write and Edit changed from that turn on. Never Bash’s changes, never other apps’. 2.1.316 warns it loses “later changes by anyone”.</div>
+      <div class="cap"><b>Fork</b>: <span class="mono">--resume X --fork-session --session-id N</span> copies the whole session (Duo’s Resume as a Fork). Forking at an earlier turn has only a print-mode flag, so Duo forks whole, then rewinds the copy’s conversation.</div>
+      <div class="cap"><b>The two versions differ only in words</b>: 2.1.284 says “The conversation will be forked.”, 2.1.316 “This message and everything after it will be removed.”</div>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">What Duo has today</div>
+      <div class="cap"><b>No per-turn actions.</b> The code block’s Copy is the only button in the feed.</div>
+      <div class="cap"><b>Chat keeps no transcript ids</b> and follows file order, so after any rewind (even one typed in the terminal) it still shows the removed turns. Any build starts by keeping each turn’s uuid and following the live chain.</div>
+      <div class="cap"><b>Claude desktop</b> has Rewind and Fork from here on hover, a dry run listing files, and an Undo rewind (its bundle). Reports say Rewind there has no confirmation and gets clicked by accident.</div>
+      <div class="cap"><b>claude.ai</b>: Copy, Retry and thumbs under a reply; Edit on yours, which branches the chat.</div>
+    </div>
+  </div>
+  <div class="lab">The questions (recommendation first)</div>
+  <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px">
+    <div class="q"><div class="t">Q-505 · Which actions, where</div><div class="cap">A: a row on hover. Copy, Rewind, Fork on yours; Copy, Fork on Claude’s. B: Retry and Edit too. C: Copy now, the rest later.</div></div>
+    <div class="q"><div class="t">Q-506 · What Rewind restores</div><div class="cap">A: Duo’s sheet asks, conversation only by default, code too when that turn changed files. B: conversation only. C: Claude’s whole menu.</div></div>
+    <div class="q"><div class="t">Q-507 · How Duo rewinds</div><div class="cap">A: Duo drives Claude’s menu after its sheet, checking each screen. B: Duo opens Claude’s menu in the terminal for you.</div></div>
+    <div class="q"><div class="t">Q-508 · Fork from a turn</div><div class="cap">A: fork, then rewind the copy; a new tab after this one, focused. B: the same, opened behind. C: only from the last reply.</div></div>
+    <div class="q"><div class="t">Q-509 · What Copy copies</div><div class="cap">A: the words as Markdown, no thinking or tools. B: with one line per tool call. C: A, and ⌥-click for B.</div></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1400,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

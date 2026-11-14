@@ -346,7 +346,7 @@ extension AppModel {
                 },
             ])
         if Env.autoconfirm { FileHandle.standardError.write(Data("question: \(q.title) [\(q.choices.map(\.label).joined(separator: " | "))] → \(fallback)\n".utf8)) }
-        SheetCenter.shared.ask(q)
+        SheetCenter.shared.ask(from: self, q)
     }
 
     /// Removes a column, its tasks moving to `target` first.

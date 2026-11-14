@@ -52,11 +52,12 @@ cp -R "$root/docs/design/chat-slash-handoff/fixture-chat/." "$app/Contents/Resou
 cp -R "$root/docs/design/chat-paste-handoff/fixture-chat/." "$app/Contents/Resources/chat-fixtures"   # and chat paste's (paste-<board>, DL-161)
 cp -R "$root/docs/design/chat-markdown-handoff/fixture-chat/." "$app/Contents/Resources/chat-fixtures"   # and your Markdown's (md-<board>, DL-188)
 cp -R "$root/docs/design/voice-input-handoff/fixture-chat/." "$app/Contents/Resources/chat-fixtures"   # and voice input's (voice-<board>, DL-261)
+cp -R "$root/Fixtures/rewind/fixture-chat/." "$app/Contents/Resources/chat-fixtures"   # and the rewound transcript's (rewind-<board>, F-656)
 # The document editor: vendored CodeMirror bundle and its page (F-34).
 rm -rf "$app/Contents/Resources/mods"; mkdir -p "$app/Contents/Resources/mods"
 cp -R "$root/Mods/duo-signal" "$app/Contents/Resources/mods/duo-signal"   # the sensor mod, used only with DUO_SIGNAL=1 (ENH-70 spike)
 mkdir -p "$app/Contents/Resources/editor"
-cp "$root/Vendor/codemirror/dist/cm6.js" "$root/Vendor/codemirror/dist/editor.html" "$app/Contents/Resources/editor/"
+cp "$root/Vendor/codemirror/dist/cm6.js" "$root/Vendor/codemirror/dist/editor.html" "$root/Vendor/codemirror/dist/side-margin.js" "$root/Vendor/codemirror/dist/side-margin.html" "$app/Contents/Resources/editor/"   # and the side margin's page (the Markdown margin's cards, beside a PDF)
 # The PowerPoint viewer (DL-125): the vendored renderer and Duo's page around it.
 mkdir -p "$app/Contents/Resources/deck"
 cp "$root/Vendor/pptx-renderer/deck.html" "$root/Vendor/pptx-renderer/deck.js" "$root/Vendor/pptx-renderer/pptx-renderer.js" "$app/Contents/Resources/deck/"

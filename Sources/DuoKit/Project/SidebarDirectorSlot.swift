@@ -31,7 +31,7 @@ struct PinnedHeader: View {
                 .accessibilityLabel("Keep Running")
             }
             .padding(EdgeInsets(top: 12, leading: DuoSpace.panePadding, bottom: 4, trailing: DuoSpace.panePadding))
-            .background(DuoColor.pane)
+            .background(WindowTint.pane)
             .contentShape(Rectangle())
             .onHover { inside in
                 if inside { model.hoveredTaskRow = "\(project)/pinned-head" } else if model.hoveredTaskRow == "\(project)/pinned-head" { model.hoveredTaskRow = nil }
@@ -70,7 +70,7 @@ struct LaterFoldRow: View {
         }
         .padding(.horizontal, 8 + DuoSpace.selectionInset)
         .frame(height: DuoMetric.rowGroup)
-        .background(DuoColor.pane)
+        .background(WindowTint.pane)
         .contentShape(Rectangle())
         .onActivate { withDuoAnimation(.fold) { model.toggleTimeGroup(project: project, "later") } }  // action: view group
         .accessibilityLabel("Later, \(section.rows.count) tasks, \(folded ? "folded" : "open")")
@@ -122,7 +122,7 @@ struct DirectorSlotRow: View {
             else { RoundedRectangle(cornerRadius: DuoMetric.radiusSelection).fill(open ? DuoColor.activeTint : Color.clear) }
         }
         .padding(.horizontal, DuoSpace.selectionInset)
-        .background(DuoColor.pane)
+        .background(WindowTint.pane)
         .contentShape(Rectangle())
         .onActivate { model.sessionRowClicked(key, list: model.projectSelectionList) { model.openConsoleTab(key) } }  // action: session open, view select
         .modifier(SessionOrganizeMenu(sessionKey: key))

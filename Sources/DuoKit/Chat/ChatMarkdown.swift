@@ -139,7 +139,44 @@ public enum ChatMarkdown {
                                                            failurePolicy: .returnPartiallyParsedIfPossible)
         var a = (try? AttributedString(markdown: text, options: opts)) ?? AttributedString(text)
         linkify(&a)
+        linkCodeSpans(&a)
         return a
+    }
+
+    /// Extension-less names a code span may name (`Makefile`).
+    static let bareFileNames: Set<String> = ["Makefile", "Dockerfile", "Gemfile", "Podfile", "Rakefile", "Procfile", "Brewfile", "Package.swift",
+                                             "LICENSE", "README", "CHANGELOG", "CONTRIBUTING", "CODEOWNERS", ".gitignore", ".env", "CLAUDE.md"]
+
+    /// Whether a whole code span names a file (ENH-343 1): a path with a slash or a name with a known
+    /// extension or a known bare name, spaces allowed, optionally `:line`. Whether it exists is the click's to say.
+    public static func isFileSpan(_ text: String) -> Bool {
+        let t = text.trimmingCharacters(in: .whitespaces)
+        guard !t.isEmpty, t.count < 300, t.chatIs(#"^(?:~|\.{1,2})?/?[\w@.\-]+(?:[ /][\w@.\-]+)*(?::\d+)?$"#),
+              !t.hasPrefix("www."), !t.chatIs(#"^\d+(\.\d+)*(:\d+)?$"#) else { return false }
+        let file = t.replacingOccurrences(of: #":\d+$"#, with: "", options: .regularExpression)
+        let last = (file as NSString).lastPathComponent
+        if bareFileNames.contains(last) { return true }
+        let ext = (last as NSString).pathExtension.lowercased()
+        if file.contains(" ") && !file.contains("/") { return false }   // two words are prose, not a name
+        return fileExtensions.contains(ext)
+    }
+
+    /// A code span that names a file is a link, whole (a path with a space, `Makefile`); the pieces
+    /// `linkify` made inside it give way.
+    static func linkCodeSpans(_ a: inout AttributedString) {
+        // Adjacent code runs are one span (linkify split it where it linked a piece).
+        var merged: [Range<AttributedString.Index>] = []
+        for run in a.runs {
+            guard let intent = run.inlinePresentationIntent, intent.contains(.code) else { continue }
+            if let last = merged.last, last.upperBound == run.range.lowerBound { merged[merged.count - 1] = last.lowerBound..<run.range.upperBound }
+            else { merged.append(run.range) }
+        }
+        var spans: [(Range<AttributedString.Index>, URL)] = []
+        for r in merged {
+            let text = String(a[r].characters)
+            if isFileSpan(text), let u = fileURL(text.trimmingCharacters(in: .whitespaces)) { spans.append((r, u)) }
+        }
+        for (r, u) in spans { a[r].link = u }
     }
 
     /// Path-looking tokens: something/with/slashes.ext, or name.ext, optionally :line.

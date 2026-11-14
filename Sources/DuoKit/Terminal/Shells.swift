@@ -18,14 +18,13 @@ extension AppModel {
 
     /// ⇧⌘T or the chevron's New Shell: a login shell in the project's folder (Home's at All projects).
     public func newShell() {
-        let project = altitude.isAllProjects ? fixture.home?.name : currentProject?.name
-        guard let project else { return }
+        guard let project = currentProject?.name else { return }
         let folder = liveFolders[project]?.path ?? FileManager.default.homeDirectoryForCurrentUser.path
         let key = Self.shellPrefix + UUID().uuidString.lowercased()
         _ = terminals.session(key, command: .shell, cwd: folder)
         shellTabs[project, default: []].append(key)
         shellTitles[key] = ((ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh") as NSString).lastPathComponent
-        if altitude.isAllProjects { homeTab = key } else { consoleTab = key }
+        consoleTab = key
     }
 
     /// The shells open in a project, in the order they were opened.
@@ -63,9 +62,11 @@ extension AppModel {
         shellTabs[project]?.removeAll { $0 == key }
         shellTitles[key] = nil
         terminals.rekey(key, to: sessionId)
-        if consoleTab == key { consoleTab = sessionId }
-        if homeTab == key { homeTab = sessionId }
-        NSAccessibility.post(element: NSApp.mainWindow as Any, notification: .announcementRequested,
+        for m in core.models {   // every window showing it
+            if m.consoleTab == key { m.consoleTab = sessionId }
+            if m.homeTab == key { m.homeTab = sessionId }
+        }
+        NSAccessibility.post(element: (window ?? NSApp.mainWindow) as Any, notification: .announcementRequested,
                              userInfo: [.announcement: "Now a Claude session", .priority: NSAccessibilityPriorityLevel.medium.rawValue])
         refreshLive()
     }
@@ -83,8 +84,10 @@ extension AppModel {
         chats.forget(key)
         for p in shellTabs.keys { shellTabs[p]?.removeAll { $0 == key } }
         shellTitles[key] = nil
-        if consoleTab == key { consoleTab = next }
-        if homeTab == key { homeTab = next }
+        for m in core.models {   // every window showing it
+            if m.consoleTab == key { m.consoleTab = next }
+            if m.homeTab == key { m.homeTab = next }
+        }
     }
 }
 

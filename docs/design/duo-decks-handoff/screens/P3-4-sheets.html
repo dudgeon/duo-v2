@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="design-size" content="1900x1000">
+<title>New Deck and Convert sheets</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.light{--ground:#F3F4F6;--pane:#FFFFFF;--text:#1F2328;--text2:#5B636D;--rule:#C9CDD3;--controlEdge:#8B939C;--selected:#E9ECEF;--console:#15171B;--consoleText:#E6E8EB;--consoleText2:#9AA1AB;--consoleRule:#2B2F36;--paneFocus:#1F2328;--needsYou:#C2410C}
+.win{position:relative;width:1440px;height:900px;display:flex;flex-direction:column;background:var(--ground);color:var(--text);font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.tb{height:40px;flex:none;background:var(--ground);border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:12px;padding:0 16px;color:var(--text2)}
+.dots{display:flex;gap:8px}.dots i{width:12px;height:12px;border-radius:6px;background:var(--rule);display:block}
+.cols{flex:1;display:flex;min-height:0}
+.side{background:var(--pane);border-right:1px solid var(--rule);padding:16px;box-sizing:border-box;display:flex;flex-direction:column;gap:6px;flex:none}
+.con{background:var(--console);color:var(--consoleText);display:flex;flex-direction:column;border-right:1px solid var(--rule);flex:none}
+.cstrip{height:36px;border-bottom:1px solid var(--consoleRule);display:flex;align-items:center;gap:18px;padding:0 14px;font:12px/19px 'SF Mono',Menlo,monospace;color:var(--consoleText2)}
+.term{padding:14px;font:12px/19px 'SF Mono',Menlo,monospace;color:var(--consoleText2);display:flex;flex-direction:column;gap:2px}
+.right{background:var(--pane);display:flex;flex-direction:column;min-width:0;flex:1}
+.strip{position:relative;height:36px;flex:none;border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:24px;padding:0 16px;color:var(--text2);white-space:nowrap}
+.rulef{position:absolute;top:0;height:2px;background:var(--paneFocus)}
+.split{display:flex;align-items:center;gap:6px;color:var(--text2)}
+.split b{color:var(--text);font-weight:600}
+.smark{display:inline-block;width:11px;height:9px;border:1.2px solid var(--text2);border-radius:2px;position:relative;box-sizing:border-box}
+.smark:after{content:"";position:absolute;left:3.5px;top:-1px;bottom:-1px;width:1.2px;background:var(--text2)}
+.sides{flex:1;display:flex;min-height:0}
+.dv{width:1px;background:var(--rule);flex:none}
+.ed{position:relative;background:var(--pane);box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column}
+.fbar{height:24px;flex:none;display:flex;align-items:center;gap:4px;padding:0 10px;color:var(--text2);font:12px/16px -apple-system,system-ui,sans-serif;border-bottom:1px solid var(--rule)}
+.fbar span{min-width:20px;text-align:center}
+.doc{padding:16px 22px;display:flex;flex-direction:column;gap:2px;font:14px/22px -apple-system,system-ui,sans-serif}
+.mk{color:var(--text2);font:12px/22px 'SF Mono',Menlo,monospace}
+.h1{font:600 20px/28px -apple-system,system-ui,sans-serif}
+.h2{font:600 15px/24px -apple-system,system-ui,sans-serif}
+.cur{position:absolute;left:8px;width:2px;background:var(--controlEdge);border-radius:1px}
+.deckbar{height:44px;flex:none;border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:6px;padding:0 14px;box-sizing:border-box}
+.btn{height:26px;box-sizing:border-box;padding:4px 10px;border:1px solid var(--controlEdge);border-radius:6px;background:var(--pane);font:12px/16px -apple-system,system-ui,sans-serif;color:var(--text);white-space:nowrap}
+.slides{flex:1;background:var(--ground);padding:14px 16px;display:flex;flex-direction:column;gap:6px;overflow:hidden}
+.num{font:11px/16px -apple-system,system-ui,sans-serif;color:var(--text2)}
+.slide{aspect-ratio:16/9;background:#FFFFFF;border:1px solid var(--rule);box-sizing:border-box;padding:14px 16px;display:flex;flex-direction:column;gap:4px;color:#1F2328;flex:none}
+.badge{position:absolute;width:26px;height:26px;border-radius:13px;background:#1F2328;color:#FFFFFF;font:600 13px/26px -apple-system,system-ui,sans-serif;text-align:center}
+.notes{display:flex;flex-direction:column;gap:10px}
+.n{display:grid;grid-template-columns:26px minmax(0,1fr);gap:10px;align-items:start}
+.n i{width:22px;height:22px;border-radius:11px;background:#1F2328;color:#FFFFFF;font:600 12px/22px -apple-system,system-ui,sans-serif;text-align:center;font-style:normal;display:block}
+.t2{color:#5B636D}
+.h{font:600 15px/20px -apple-system,system-ui,sans-serif}
+
+.pin{position:absolute;display:flex;align-items:center;gap:2px;height:18px;padding:0 5px;border:1px solid var(--controlEdge);border-radius:9px;background:var(--pane);font:600 10px/16px -apple-system,system-ui,sans-serif;color:var(--text);box-sizing:border-box}
+.dash{position:absolute;border:1px dashed var(--text);box-sizing:border-box}
+.solid{position:absolute;border:1.5px solid var(--text);box-sizing:border-box}
+.tag{position:absolute;background:var(--text);color:var(--pane);font:11px/18px -apple-system,system-ui,sans-serif;padding:0 6px;border-radius:3px;white-space:nowrap}
+.pop{position:absolute;background:var(--pane);border:1px solid var(--rule);border-radius:10px;box-shadow:0 8px 24px rgba(31,35,40,.16);padding:6px;box-sizing:border-box;font:13px/20px -apple-system,system-ui,sans-serif}
+.mi{height:26px;display:flex;align-items:center;gap:8px;padding:0 10px;border-radius:5px;white-space:nowrap}
+.sel{background:var(--selected)}
+.chip{display:flex;align-items:center;gap:6px;height:22px;margin:4px 0 2px;padding:0 8px;border-top:1px solid var(--rule);font:11px/20px -apple-system,system-ui,sans-serif;color:var(--text2)}
+.chip b{color:var(--text);font-weight:600}
+.card{background:var(--pane);border:1px solid var(--rule);border-radius:6px;padding:8px 10px;font:12px/17px -apple-system,system-ui,sans-serif;display:flex;flex-direction:column;gap:3px}
+.act{border:1.5px solid var(--text)}
+.pbar{background:var(--ground);border-top:1px solid var(--rule);padding:8px 14px;display:flex;flex-wrap:wrap;align-items:center;gap:6px;font:12px/18px -apple-system,system-ui,sans-serif}
+.def{background:var(--text);color:var(--pane);border-color:var(--text)}
+.strp{background:var(--pane);border:1px solid var(--rule);border-radius:6px;padding:8px 10px;display:flex;flex-direction:column;gap:6px;font:12px/17px -apple-system,system-ui,sans-serif}
+.thumb img{width:100%;display:block;border:1px solid var(--rule)}
+.thumb{display:flex;flex-direction:column;gap:2px;font:11px/14px -apple-system,system-ui,sans-serif}
+.sheet{position:absolute;background:var(--pane);border:1px solid var(--rule);border-radius:10px;box-shadow:0 8px 24px rgba(31,35,40,.16);padding:20px;box-sizing:border-box;display:flex;flex-direction:column;gap:12px;font:13px/20px -apple-system,system-ui,sans-serif}
+.row{display:flex;align-items:center;gap:10px}
+.lab{width:110px;color:var(--text2);text-align:right;flex:none}
+.field{flex:1;height:26px;border:1px solid var(--rule);border-radius:6px;padding:3px 8px;box-sizing:border-box;background:var(--pane)}
+</style>
+</helmet>
+<div style="width:1900px;height:1000px;box-sizing:border-box;padding:28px 36px;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;display:flex;gap:28px">
+  <div style="zoom:.78;flex:none"><div class="win light">
+      <div class="tb"><div class="dots"><i></i><i></i><i></i></div><span style="margin-left:60px">All projects › work ›</span><b style="color:var(--text)">orchard-robotics</b><span style="margin-left:auto;border:1px solid var(--rule);border-radius:6px;padding:2px 10px;width:300px;background:var(--pane)">Search all projects ⇧⌘A</span></div>
+      <div class="cols">
+        <div style="width:16px;flex:none;background:var(--pane);border-right:1px solid var(--rule)"></div>
+        <div class="con" style="width:480px">
+          <div class="cstrip"><span style="color:var(--consoleText);font-weight:500">○ Field trial deck</span><span>+</span></div>
+          <div class="term"><span style="color:var(--consoleText)">&gt; …</span></div>
+        </div>
+        <div class="right">
+          <div class="strip"><div class="rulef" style="left:471px;width:471px"></div><span>Project</span><span class="split"><span>field-trial-review.md</span><span class="smark"></span><b>Slides</b></span><span style="margin-left:auto">+</span></div>
+          <div class="sides" style="position:relative"><div class="ed" style="width:470px;flex:none"><div class="doc"><span class="t2">…</span></div></div><div class="dv"></div>
+<div style="flex:1;display:flex;flex-direction:column;min-width:0"><div class="deckbar"><span class="btn">‹</span><span class="btn">›</span><span style="margin-left:4px">3/10</span><span style="margin-left:auto" class="btn">Select Shape</span><span class="btn">Export ⌄</span></div><div class="slides"></div></div></div>
+        </div>
+      </div>
+<div class="sheet" style="left:300px;top:40px;width:560px">
+  <b style="font-size:15px">New Deck</b>
+  <div class="row"><span class="lab">Name</span><span class="field">autumn-trial</span></div>
+  <div class="row"><span class="lab">Folder</span><span class="field">decks/ ⌄</span></div>
+  <div class="row" style="align-items:flex-start"><span class="lab" style="padding-top:4px">Template pack</span><div style="flex:1;display:flex;flex-direction:column;gap:6px">
+    <span class="field" style="display:flex;justify-content:space-between">northwind <span class="t2">this project · 8 templates ⌄</span></span>
+    <div style="display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px"><img src="img/5ffd0cc6da6d1cfaf973c3c84325d8f3.jpg" alt="" style="width:100%;border:1px solid var(--rule)"><img src="img/414829d99da25c76ec6da48fda940cc9.jpg" alt="" style="width:100%;border:1px solid var(--rule)"><img src="img/6efe542afd1ac269ac055eb0cdc50034.jpg" alt="" style="width:100%;border:1px solid var(--rule)"><img src="img/b483f9c8d2a80b1440c6fc4a99b49a66.jpg" alt="" style="width:100%;border:1px solid var(--rule)"><img src="img/de5093a4e51b746f5758d0e83e034110.jpg" alt="" style="width:100%;border:1px solid var(--rule)"><img src="img/5fdd134cd41712ecf577a8d525304a74.jpg" alt="" style="width:100%;border:1px solid var(--rule)"><img src="img/78424957935e5da232361333568d6c74.jpg" alt="" style="width:100%;border:1px solid var(--rule)"><img src="img/06e6d8d69b57ed9960bd30054e705295.jpg" alt="" style="width:100%;border:1px solid var(--rule)"></div></div></div>
+  <div class="row"><span class="lab">Start with</span><span>◉ A title slide &#160;&#160; ○ One slide of each template</span></div>
+  <div class="row" style="justify-content:flex-end"><span class="btn">Cancel</span><span class="btn def">Create</span></div>
+</div>
+<div class="sheet" style="left:300px;top:390px;width:560px">
+  <b style="font-size:15px">Convert grower-update-sept.pptx to a Duo deck</b>
+  <span class="t2">Claude groups the slides, proposes which template each becomes, and asks before merging look-alike layouts. The pptx isn't changed.</span>
+  <div class="row"><span class="lab">Template pack</span><span class="field">northwind · this project ⌄</span></div>
+  <div class="row"><span class="lab"></span><span class="t2" style="font-size:12px">Also: another pack, or a new pack from this deck</span></div>
+  <div class="row"><span class="lab">Into</span><span class="field">decks/grower-update-sept.md</span></div>
+  <div class="row" style="justify-content:flex-end"><span class="btn">Cancel</span><span class="btn def">Convert with Claude</span></div>
+</div><span class="badge" style="left:290px;top:30px">1</span><span class="badge" style="left:290px;top:380px">2</span>
+    </div></div>
+  <div class="notes" style="flex:1;min-width:0">
+    <div><span class="h" style="font-size:20px;line-height:28px">P3 · 4 · New Deck… and Convert to Duo Deck… (DL-297, DL-294)</span><br><span class="t2">For approval of the look. Duo sheets (SheetCenter, hanging from the toolbar, DL-130); no system alert. Make Templates (DL-291) is board 9A as approved. Every mark [P].</span></div>
+    <div class="n"><i>1</i><span><b>New Deck</b> (DL-297), from File › New › New Deck… and Files' + menu: Name, Folder, Template pack (the project's packs, then Home's, then Duo Plain, each with "this project", "Home" or "built in" and its count) with a strip of its templates' thumbnails, and Start with: a title slide (default) or one slide of each template. Create writes the deck and opens it in its split tab. Verb: <code>duo2 deck new</code>.</span></div><div class="n"><i>2</i><span><b>Convert to Duo Deck</b> (DL-294), from the deck viewer's bar beside Make Templates… and Files' right-click: Template pack (or another, or a new pack from this deck) and Into. <b>Convert with Claude</b> pastes the request and the <code>duo2 deck import</code> line into Claude's prompt without Return, as Make Templates does; the plan, the merge questions and the report happen in the session (M3b). Verb: <code>duo2 deck import</code>.</span></div><div style="border-top:1px solid #C9CDD3;padding-top:10px"><span class="t2">The deck viewer's bar on a plain .pptx then reads: ‹ › n of N · Select Shape · Make Templates… · Convert to Duo Deck… · Open With ⌄ (under 460, Make Templates and Convert fold into a ⋯ menu).</span></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1900,"height":1000}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

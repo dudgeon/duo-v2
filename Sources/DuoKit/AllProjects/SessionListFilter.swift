@@ -138,7 +138,7 @@ extension AppModel {
 
     /// ⌘F in the List: its filter takes the keyboard. SwiftUI's field is an NSTextField underneath.
     public func focusListFilter() {
-        guard let w = NSApp.keyWindow ?? NSApp.windows.first(where: { $0.title == "Duo" }), let root = w.contentView else { return }
+        guard let w = window ?? NSApp.keyWindow, let root = w.contentView else { return }
         func find(_ v: NSView) -> NSTextField? {
             if let t = v as? NSTextField, t.placeholderString == "Filter sessions" { return t }
             for s in v.subviews { if let t = find(s) { return t } }

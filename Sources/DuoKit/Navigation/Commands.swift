@@ -1,4 +1,5 @@
 import AppKit
+import DuoControl
 import SwiftUI
 
 /// Every Duo chord in one table (LR-60). Menus are generated from it, so a chord is changed in
@@ -19,6 +20,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case previousTab        // ⌃⇧Tab
     case newMarkdown        // ⌘N: a new Markdown file in the project, named inline (DL-61, DL-62)
     case newFolder          // ⇧⌘N
+    case newDeck            // File › New › New Deck…: the New Deck sheet (P3-4; action: deck new; no shortcut, DL-297)
     case save               // ⌘S saves the open document now (it also autosaves)
     case bold               // ⌘B, only while the editor has focus (stack rec #9)
     case italic             // ⌘I, likewise
@@ -44,6 +46,9 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case link               // ⌘K: Format › Link…, free since DL-80
     case heading1, heading2, heading3  // Format › Heading ▸
     case task               // Format › Task: a `- [ ]` line
+    case body, quote, bullet, numbered, codeBlock   // Format › the paragraph styles the formatting bar's Style ⌄ offers (DL-266)
+    case newSlide           // ⌃⌘N: Format › New Slide, in a deck: a new chip under the caret's slide, the template picker open (DL-295)
+    case toggleFormatBar    // View › Hide / Show Formatting Bar (DL-266)
     case addProperties      // Format › Add Properties (frontmatter-handoff's frontmatter-none)
     // Format › Table ▸ (DL-113, tables-handoff): Markdown commands; no chords (DL-34)
     case tableInsert, tableRowAbove, tableRowBelow, tableColumnBefore, tableColumnAfter
@@ -52,9 +57,13 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case whatsNew           // Help: this version's release notes
     case reportIssue        // Help: a new GitHub issue with the version and macOS filled in
     case explainTasks       // Help: Explain Tasks, the Explainer at its trigger (DL-172)
+    case explainModes       // Help: Explain Chat and Terminal, the Explainer on the mode pill (DL-339)
+    case duoGuide           // Help: the user guide on GitHub (DL-339, ENH-345)
+    case watchIntroFilm     // Help: the intro film (DL-339)
+    case watchDirectorFilm  // Help: the director film (DL-339)
     // Browser tabs (DL-124): print and page zoom, as in Safari
     case printPage          // ⌘P: File › Print…, the browser tab on screen
-    case zoomIn             // ⌘+ (⌘= too): View › Zoom In, while a browser tab has the keyboard
+    case zoomIn             // ⌘+ (⌘= too): View › Zoom In, while a browser tab or the PDF viewer has the keyboard
     case zoomOut            // ⌘-
     case actualSize         // ⌘0
     // All projects' middle (DL-142): no chords until Q-100 is decided
@@ -78,6 +87,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .previousTab: "Show Previous Tab"
         case .newMarkdown: "New Markdown File"
         case .newFolder: "New Folder"
+        case .newDeck: "New Deck…"
         case .save: "Save"
         case .bold: "Bold"
         case .italic: "Italic"
@@ -104,6 +114,13 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .heading2: "Heading 2"
         case .heading3: "Heading 3"
         case .task: "Task"
+        case .body: "Body"
+        case .quote: "Quote"
+        case .bullet: "Bulleted List"
+        case .numbered: "Numbered List"
+        case .codeBlock: "Code Block"
+        case .toggleFormatBar: "Formatting Bar"
+        case .newSlide: "New Slide"
         case .addProperties: "Add Properties"
         case .tableInsert: "Insert Table"
         case .tableRowAbove: "Add Row Above"
@@ -119,6 +136,10 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .whatsNew: "What’s New in This Version"
         case .reportIssue: "Report an Issue…"
         case .explainTasks: "Explain Tasks"
+        case .explainModes: "Explain Chat and Terminal"
+        case .duoGuide: "Duo Guide"
+        case .watchIntroFilm: "Watch the Intro Film"
+        case .watchDirectorFilm: "Watch the Director Film"
         case .printPage: "Print…"
         case .zoomIn: "Zoom In"
         case .zoomOut: "Zoom Out"
@@ -159,8 +180,9 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .sendSelection: KeyboardShortcut("d", modifiers: .command)
         case .voiceInput: KeyboardShortcut("d", modifiers: [.command, .shift])
         case .link: KeyboardShortcut("k", modifiers: .command)  // DL-108
-        case .revertChange, .revertAllChanges, .chooseHome, .newTask, .newProject, .newProjectFromGitHub, .code, .heading1, .heading2, .heading3,
-             .task, .addProperties, .duo2Reference, .whatsNew, .reportIssue, .explainTasks, .tableInsert, .tableRowAbove, .tableRowBelow,
+        case .newSlide: KeyboardShortcut("n", modifiers: [.command, .control])  // DL-295: adds to DL-34's map; only in a deck
+        case .revertChange, .revertAllChanges, .chooseHome, .newTask, .newDeck, .newProject, .newProjectFromGitHub, .code, .heading1, .heading2, .heading3,
+             .task, .body, .quote, .bullet, .numbered, .codeBlock, .toggleFormatBar, .addProperties, .duo2Reference, .whatsNew, .reportIssue, .explainTasks, .explainModes, .duoGuide, .watchIntroFilm, .watchDirectorFilm, .tableInsert, .tableRowAbove, .tableRowBelow,
              .tableColumnBefore, .tableColumnAfter, .tableDeleteRow, .tableDeleteColumn, .tableAlignLeft, .tableAlignCenter,
              .tableAlignRight, .showBoard, .showList: nil  // Show Board / Show List: Q-100
         case .nextPane, .previousPane: nil  // ⌥⌘→ / ⌥⌘← freed (DL-289)
@@ -176,6 +198,19 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         }
     }
 
+    /// The PDF the zoom commands act on: the one showing, unless a browser tab or the editor has the keyboard.
+    @MainActor func pdfZoomTarget(_ model: AppModel) -> PdfViewer? {
+        guard model.webFocus != .html, model.webFocus != .editor, let v = model.visiblePdf, v.state == .ready else { return nil }
+        return v
+    }
+
+    /// The PDF that Add Comment (⌘⌥M) acts on: the one showing, with text selected and the editor not holding the keyboard.
+    @MainActor func pdfCommentTarget(_ model: AppModel) -> PdfViewer? {
+        guard model.terminalsMode == .live, model.webFocus != .editor, model.webFocus != .html,
+              let v = model.visiblePdf, v.state == .ready, v.selectionQuads() != nil else { return nil }
+        return v
+    }
+
     @MainActor
     public func isEnabled(in model: AppModel) -> Bool {
         switch self {
@@ -186,18 +221,23 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .allProjects: !model.altitude.isAllProjects
         case .togglePeek: !model.altitude.isAllProjects && !model.needsYouElsewhere.isEmpty
         case .jumpToPeekSelection: model.peekOpen
-        case .goHome, .toggleSidebar, .closeWindow: true
+        case .toggleSidebar: !model.altitude.isAllProjects   // All projects has no sidebar (DL-336)
+        case .goHome, .closeWindow: true
         case .closeSession: model.keyboardInRightPane ? model.closableRightTab != nil : model.visibleTerminal != nil
         case .previewInSplitView: model.canTogglePreviewInSplitView
         case .previousSplitSide, .nextSplitSide: model.showingSplit != nil
+        case .newDeck: DeckFeature.enabled && model.terminalsMode == .live && model.projectFolder != nil
         case .newMarkdown, .newFolder: model.terminalsMode == .live && model.projectFolder != nil
         case .save: model.terminalsMode == .live && model.editorOpened && model.editorIfLoaded?.url != nil
-        case .bold, .italic, .strikethrough, .code, .link, .heading1, .heading2, .heading3, .task, .addProperties, .tableInsert: model.webFocus == .editor
+        case .bold, .italic, .strikethrough, .code, .link, .heading1, .heading2, .heading3, .task, .body, .quote, .bullet, .numbered, .codeBlock, .addProperties, .tableInsert: model.webFocus == .editor
+        case .toggleFormatBar: true
+        case .newSlide: DeckFeature.enabled && model.webFocus == .editor && (model.editorIfLoaded?.isDeck ?? false)
         case .tableRowAbove, .tableRowBelow, .tableColumnBefore, .tableColumnAfter, .tableDeleteRow, .tableDeleteColumn,
              .tableAlignLeft, .tableAlignCenter, .tableAlignRight: model.webFocus == .editor && (model.editorIfLoaded?.inTable ?? false)
         case .newTask: model.terminalsMode == .live && model.currentProject.map { !$0.isFolderOnly } == true
         case .newProject, .newProjectFromGitHub: model.terminalsMode == .live && model.liveRoot != nil
-        case .duo2Reference, .whatsNew, .reportIssue: true
+        case .duo2Reference, .whatsNew, .reportIssue, .duoGuide, .watchIntroFilm, .watchDirectorFilm: true
+        case .explainModes: model.terminalsMode == .live && model.explainer.frames["modes.pill"] != nil
         case .explainTasks: model.terminalsMode == .live && model.currentProject.map { !$0.isFolderOnly } == true
         case .sendSelection: model.canSendSelection
         case .newClaudeSession, .newShell: model.terminalsMode == .live
@@ -207,9 +247,11 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .openFile: model.terminalsMode == .live && model.projectFolder != nil
         case .revertChange: model.webFocus == .editor && (model.editorIfLoaded?.atClaudeChange ?? false)
         case .revertAllChanges: (model.editorIfLoaded?.claudeChanges ?? 0) > 0
-        case .suggestEdits, .addComment: model.terminalsMode == .live && model.showingMarkdownDocument
+        case .suggestEdits: model.terminalsMode == .live && model.showingMarkdownDocument
+        case .addComment: pdfCommentTarget(model) != nil || (model.terminalsMode == .live && model.showingMarkdownDocument)
         case .printPage: model.visibleWebTab.map { $0.blocked == nil } ?? false
-        case .zoomIn, .zoomOut, .actualSize: model.webFocus == .html && model.visibleWebTab.map { $0.blocked == nil } == true
+        case .zoomIn, .zoomOut, .actualSize:
+            (model.webFocus == .html && model.visibleWebTab.map { $0.blocked == nil } == true) || pdfZoomTarget(model) != nil
         case .showBoard: !(model.altitude.isAllProjects && model.homeView == .board)
         case .showList: !(model.altitude.isAllProjects && model.homeView == .list)
         case .voiceInput: model.voiceFocusTarget != nil && !model.voiceBlockedByNoMic
@@ -228,6 +270,11 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .heading2: "heading2"
         case .heading3: "heading3"
         case .task: "task"
+        case .body: "body"
+        case .quote: "quote"
+        case .bullet: "bullet"
+        case .numbered: "numbered"
+        case .codeBlock: "codeblock"
         case .addProperties: "properties"
         default: nil
         }
@@ -266,9 +313,12 @@ public enum DuoCommand: String, CaseIterable, Sendable {
             else if model.keyboardInRightPane { if let doc = model.closableRightTab { model.closeDocument(doc) } }
             else { model.closeVisibleSession() }
         case .newMarkdown: model.newMarkdownFile(near: model.selectedFile)
+        case .newDeck: model.showNewDeck()
         case .newFolder: model.newFolder(near: model.selectedFile)
         case .save: model.editor.saveNow()
-        case .bold, .italic, .strikethrough, .code, .link, .heading1, .heading2, .heading3, .task, .addProperties, .tableInsert, .tableRowAbove,
+        case .toggleFormatBar: model.setFormatBarHidden(!model.formatBarHidden)
+        case .newSlide: model.editor.newSlide()
+        case .bold, .italic, .strikethrough, .code, .link, .heading1, .heading2, .heading3, .task, .body, .quote, .bullet, .numbered, .codeBlock, .addProperties, .tableInsert, .tableRowAbove,
              .tableRowBelow, .tableColumnBefore, .tableColumnAfter, .tableDeleteRow, .tableDeleteColumn, .tableAlignLeft,
              .tableAlignCenter, .tableAlignRight:
             model.editor.run("duo.exec(f); return 1", ["f": (formatName ?? tableName)!]) { _ in }
@@ -279,13 +329,21 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .whatsNew: NSWorkspace.shared.open(DuoLinks.releaseNotes)
         case .reportIssue: NSWorkspace.shared.open(DuoLinks.newIssue)
         case .explainTasks: model.explainTasks()
-        case .closeWindow: NSApp.keyWindow?.performClose(nil)
+        case .explainModes: model.explainModes()
+        case .duoGuide: NSWorkspace.shared.open(DuoLinks.guide)
+        case .watchIntroFilm: NSWorkspace.shared.open(DuoLinks.introFilm)
+        case .watchDirectorFilm: NSWorkspace.shared.open(DuoLinks.directorFilm)
+        case .closeWindow:
+            // A Duo window closes through the core (DL-311): a second one goes, the last only hides. Settings and
+            // other windows close as AppKit closes them.
+            if let w = NSApp.keyWindow, model.core.model(for: w) == nil { w.performClose(nil) }
+            else { model.core.closeWindow(model) }   // action: window close
         case .sendSelection: model.sendSelection()
         case .newClaudeSession: model.newSession()
         case .revertChange: model.editor.revertAtCaret()
         case .revertAllChanges: model.editor.revertAll()
         case .suggestEdits: model.toggleSuggestEdits()
-        case .addComment: model.editor.reviewAddComment()
+        case .addComment: if let v = pdfCommentTarget(model) { model.composePdfComment(v) } else if model.webFocus != .editor, model.composeOfficeComment() { } else { model.editor.reviewAddComment() }
         case .newShell: model.newShell()
         case .chooseHome: model.chooseHomeFolder()
         case .newBrowserTab: model.newBrowserTab()
@@ -298,9 +356,10 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .nextTab: model.cycleTab(forward: true)
         case .previousTab: model.cycleTab(forward: false)
         case .printPage: model.visibleWebTab?.printPage()
-        case .zoomIn: if let t = model.visibleWebTab { t.zoom(ZoomStore.zoomIn(t.zoom)) }
-        case .zoomOut: if let t = model.visibleWebTab { t.zoom(ZoomStore.zoomOut(t.zoom)) }
-        case .actualSize: model.visibleWebTab?.zoom(1.0)
+        // The PDF viewer when it has the keyboard (DL-332: `pdf zoom in|out|100`), else the browser tab.
+        case .zoomIn: if let v = pdfZoomTarget(model) { v.zoomIn() } else if let t = model.visibleWebTab { t.zoom(ZoomStore.zoomIn(t.zoom)) }
+        case .zoomOut: if let v = pdfZoomTarget(model) { v.zoomOut() } else if let t = model.visibleWebTab { t.zoom(ZoomStore.zoomOut(t.zoom)) }
+        case .actualSize: if let v = pdfZoomTarget(model) { v.setScale(1) } else { model.visibleWebTab?.zoom(1.0) }
         case .voiceInput: model.toggleVoice()  // action: voice start
         case .showBoard, .showList:
             model.setHomeView(self == .showBoard ? .board : .list)
@@ -311,9 +370,12 @@ public enum DuoCommand: String, CaseIterable, Sendable {
 
 /// The Go menu and the sidebar item in View, generated from `DuoCommand`.
 public struct DuoCommands: Commands {
-    let model: AppModel
+    /// The model the app made the menus with; they act on the key window's (multi-window slice 0).
+    let primary: AppModel
+    /// The key window's model, else the primary's.
+    var model: AppModel { primary.core.keyModel ?? primary }
 
-    public init(model: AppModel) { self.model = model }
+    public init(model: AppModel) { self.primary = model }
 
     public var body: some Commands {
         // The standard About panel, with the third-party notices as its credits (DL-176, C-82).
@@ -326,11 +388,16 @@ public struct DuoCommands: Commands {
         }
         // File (DL-108, m2): new things, then opening, then saving and closing, then Home.
         CommandGroup(replacing: .newItem) {
+            // Multi-window (DL-141, DL-311, board 1 A): at All projects, in a window of its own.
+            Button("New Window") { model.core.openWindow() }   // action: window new
+                .keyboardShortcut("n", modifiers: [.command, .option])
+            Divider()
             item(.newClaudeSession)
             item(.newShell)
             item(.newBrowserTab)
             Divider()
             item(.newMarkdown)
+            if DeckFeature.enabled { item(.newDeck) }   // Duo Decks off: absent (DL-307)
             item(.newFolder)
             item(.newTask)
             item(.newProject)
@@ -356,12 +423,20 @@ public struct DuoCommands: Commands {
             item(.code)
             item(.link)
             Divider()
+            // The paragraph styles the formatting bar's Style ⌄ offers (DL-266).
+            item(.body)
             Menu("Heading") {
                 item(.heading1)
                 item(.heading2)
                 item(.heading3)
             }
+            item(.quote)
+            item(.bullet)
+            item(.numbered)
             item(.task)
+            item(.codeBlock)
+            Divider()
+            if DeckFeature.enabled { item(.newSlide) }   // enabled only in a deck (DL-295); absent with Decks off (DL-307)
             // Tables (DL-113): edited as Markdown; the bar over a table has the same items.
             Menu("Table") {
                 item(.tableInsert)
@@ -402,10 +477,13 @@ public struct DuoCommands: Commands {
             item(.suggestEdits)
             item(.addComment)
         }
-        // View (DL-108, m2): the items that aren't built (the right pane's toggle, moving between
+        // View (DL-108, m2): the items that aren't built (moving between
         // panes) are left out until they work; Enter Full Screen is the system's.
         CommandGroup(after: .sidebar) {
             item(.toggleSidebar)
+            // The right pane's toggle (DL-339, ENH-344): it has worked since DL-129 and the menu never got it.
+            Button(model.rightCollapsed ? "Show Right Pane" : "Hide Right Pane") { DuoCommand.toggleRightPane.perform(in: model) }  // action: view right
+                .keyboardShortcut(DuoCommand.toggleRightPane.shortcut)
             // Split view (DL-277): the showing file's preview beside its source.
             Button(model.showingSplit != nil ? "Close Split View" : DuoCommand.previewInSplitView.title) { DuoCommand.previewInSplitView.perform(in: model) }  // action: split
                 .keyboardShortcut(DuoCommand.previewInSplitView.shortcut)
@@ -425,6 +503,8 @@ public struct DuoCommands: Commands {
             // Dotfiles in the project's tree (DL-105).
             Toggle("Show Hidden Files", isOn: Binding(get: { model.showHiddenFiles }, set: { model.setShowHiddenFiles($0) }))
             // The document's own mode (DL-167): its text as typed, the live preview off. Remembered per document.
+            // The Markdown formatting bar over the editor (DL-266).
+            Button(model.formatBarHidden ? "Show Formatting Bar" : "Hide Formatting Bar") { DuoCommand.toggleFormatBar.perform(in: model) }  // action: view format-bar
             Toggle("Source Mode", isOn: Binding(get: { model.showingSourceMode }, set: { model.setSourceMode($0) }))
                 .disabled(model.terminalsMode != .live || model.editorIfLoaded?.url == nil)
             // The map's order (DL-104), the same choice as its Sort popup.
@@ -432,16 +512,22 @@ public struct DuoCommands: Commands {
                 Text("Recent Activity").tag(MapSort.recent)
                 Text("Name").tag(MapSort.name)
             }
+            // The List's grouping (DL-341), the same choice as its Group popup.
+            Picker("Group Sessions By", selection: Binding(get: { model.listGroup }, set: { model.setListGroup($0) })) {  // action: view list
+                Text("Recent").tag(ListGroup.recent)
+                Text("Project").tag(ListGroup.project)
+            }
             Divider()
             // The system's item, made here: AppKit's own isn't added to a SwiftUI View menu.
             Button(model.fullScreen ? "Exit Full Screen" : "Enter Full Screen") {
-                (NSApp.windows.first { $0.title == "Duo" } ?? NSApp.keyWindow)?.toggleFullScreen(nil)
+                (model.window ?? NSApp.keyWindow)?.toggleFullScreen(nil)
             }
             .keyboardShortcut("f", modifiers: [.command, .control])
         }
         // What's in front of you (DL-108, m1).
         CommandMenu("Project") { ProjectMenuItems(model: model) }
         CommandMenu("Session") { SessionMenuItems(model: model) }
+        CommandMenu("Chat") { ChatMenuItems(model: model) }
         CommandMenu("Go") {
             item(.search)
             Divider()
@@ -460,11 +546,21 @@ public struct DuoCommands: Commands {
             item(.previousTab)
             item(.nextTab)
         }
+        // The window's colour (DL-312, board 4b), above macOS's list of windows (board 9 C, DL-311).
+        CommandGroup(before: .windowList) {
+            WindowColourMenu(model: model)
+            Divider()
+        }
         // Help (DL-108, m4); the system adds its search field.
         CommandGroup(replacing: .help) {
+            item(.duoGuide)
+            item(.watchIntroFilm)
+            item(.watchDirectorFilm)
+            Divider()
             item(.duo2Reference)
             item(.whatsNew)
             item(.explainTasks)
+            item(.explainModes)
             Divider()
             item(.reportIssue)
         }

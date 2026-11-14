@@ -31,8 +31,16 @@ public final class SearchService {
     final class Engine: @unchecked Sendable {
         let embedder = EmbedderSource { try Embedder(use: .indexing) }
         let index: SearchIndex
-        init() throws { index = try SearchIndex(readOnly: false) }
+        init() throws {
+            index = try SearchIndex(readOnly: false)
+            embedder.memoryBudget = SearchService.modelMemoryBudget
+            embedder.tokenizerLoad = { try WordPiece(vocabFile: SearchPaths.vocab) }   // chunking without the model (F-599)
+        }
     }
+    /// The indexing model goes once the footprint has grown this much since it loaded (F-594). A model per fixed shape
+    /// (Embedder.shapes) slows Core ML's growth about 17 times but doesn't stop it (the shape models share one GPU); this
+    /// budget bounds the rest. A bulk pass of 3,000 small files stays under it (one load); a reload costs ~350 ms.
+    nonisolated static let modelMemoryBudget: UInt64 = 512 << 20
     nonisolated static let idleRelease: TimeInterval = 180
     /// A file already in the index is re-indexed once it has been quiet this long (seconds).
     nonisolated static let quietPeriod: TimeInterval = 180

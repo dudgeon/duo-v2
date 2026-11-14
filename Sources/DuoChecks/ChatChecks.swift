@@ -32,7 +32,7 @@ func spikeScreen(_ name: String) -> String {
 @MainActor func spin(_ s: TimeInterval) { RunLoop.main.run(until: Date().addingTimeInterval(s)) }
 
 @MainActor func chatChecks() throws {
-    defer { try? askqFallbackChecks() }
+    defer { try? askqFallbackChecks(); try? sideStopChecks() }
     print("chat mode: reading the TUI screen (2.1.291, F-104, F-105, F-106)")
     do {
         let idle = ChatScreenReader.read(spikeScreen("tour-2.1.291/01-markdown.txt"))
@@ -98,6 +98,52 @@ func spikeScreen(_ name: String) -> String {
         check(broken.isEmpty, "and every dialog reads whole, so chat answers it (\(broken))")
         check(read[1].2.options.map(\.label) == ["Yes", "Yes, and always allow access to ws/ from this project", "No"]
               && read[8].2.options.count == 3 && read[7].2.mode == .plan, "2.1.219's own words: a Bash permission's options, plan approval, plan mode")
+    }
+
+    print("chat mode: working while the spinner is up, at any width (F-539)")
+    do {
+        // Real turns on Haiku 5.5 (a 45 s foreground python sleep, and the thinking before it) on 2.1.284, the work
+        // Mac's pin, and 2.1.316, at 48, 60 and 100 columns. Under ~58 the footer reads `· esc …`.
+        let fixtures: [(String, Int, ChatScreen.Kind)] = [
+            ("2.1.284/busy-start-48", 48, .busy), ("2.1.284/busy-tool-48", 48, .busy), ("2.1.284/busy-tool-late-48", 48, .busy),
+            ("2.1.284/busy-tool-60", 60, .busy), ("2.1.284/busy-tool-100", 100, .busy), ("2.1.284/done-60", 60, .idle), ("2.1.284/done-100", 100, .idle),
+            ("2.1.316/busy-thinking-48", 48, .busy), ("2.1.316/busy-tool-48", 48, .busy), ("2.1.316/busy-tool-60", 60, .busy),
+            ("2.1.316/busy-tool-100", 100, .busy), ("2.1.316/busy-thinking-100", 100, .busy), ("2.1.316/done-48", 48, .idle), ("2.1.316/done-100", 100, .idle),
+        ]
+        let texts = fixtures.map { spikeScreen("working-\($0.0).txt") }
+        check(texts.allSatisfy { !$0.isEmpty }, "the working fixtures are there (Spikes/chat-mode/screens/working-*)")
+        let narrow = zip(fixtures, texts).filter { $0.0.1 == 48 && $0.0.2 == .busy }
+        check(narrow.allSatisfy { !$0.1.contains("esc to interrupt") },
+              "at 48 columns the busy footer is cut to `esc …` on both versions (what hid it, F-539)")
+        let wrong = zip(fixtures, texts).compactMap { f, t -> String? in
+            let r = ChatScreenReader.read(t, cols: f.1)
+            return r.kind == f.2 ? nil : "\(f.0): \(r.kind.rawValue)"
+        }
+        check(wrong.isEmpty, "each working screen reads busy and each finished one idle, at 48, 60 and 100 columns (\(wrong))")
+        // Chat itself: the session that reads the narrow screen draws the working line for the whole silent tool run.
+        let tui = FakeTUI(spikeScreen("working-2.1.284/busy-start-48.txt")); tui.cols = 48
+        let c = ChatSession(key: "w1", mode: .chat)
+        c.attach(tui)
+        var lines: [String?] = [c.workingLine]
+        for n in ["busy-tool-48", "busy-tool-late-48"] { tui.show(spikeScreen("working-2.1.284/\(n).txt")); spin(0.15); lines.append(c.workingLine) }
+        check(lines.allSatisfy { $0?.hasPrefix("Working") == true && $0?.hasSuffix("Esc to interrupt") == true },
+              "a 48-column 2.1.284 chat shows `Working · … · Esc to interrupt` from the start of the turn to the end of a 45 s tool (\(lines))")
+        tui.show(spikeScreen("working-2.1.284/done-60.txt")); spin(0.15)
+        check(c.workingLine == nil && c.screen.kind == .idle, "and drops it when the turn is done")
+        // The rule for every captured screen: chat never reads idle while the CLI's spinner is going.
+        let root = repoRoot().appending(path: "Spikes/chat-mode/screens")
+        let all = (FileManager.default.enumerator(atPath: root.path(percentEncoded: false))?.allObjects as? [String] ?? []).filter { $0.hasSuffix(".txt") }
+        let sig = ChatSignatures.v2_1_291
+        let idleSpinning = all.sorted().filter { name in
+            let r = ChatScreenReader.read(spikeScreen(name))
+            return r.kind == .idle && r.status?.range(of: sig.spinnerActive, options: .regularExpression) != nil
+        }
+        check(all.count > 100 && idleSpinning.isEmpty, "no captured screen (\(all.count)) reads idle with the spinner going (\(idleSpinning))")
+        let finished = ["✻ Cooked for 48s · done 8:49 AM", "✻ Sautéed for 6s · done 8:44 AM · 1 shell still running", "✻ Crunched for 48s"]
+        let going = ["✻ Moseying… (12s · esc to interrupt)", "· Leavening… (1s · thinking)", "✶ Razzmatazzing…", "✻ 529 Overloaded · Retrying in 4s… (mock)"]
+        check(finished.allSatisfy { $0.range(of: sig.spinnerActive, options: .regularExpression) == nil }
+              && going.allSatisfy { $0.range(of: sig.spinnerActive, options: .regularExpression) != nil },
+              "a spinner is going while its verb ends in `…` (2.1.219's `Moseying… (12s · esc to interrupt)` too) or it's retrying; `Cooked for 48s` is done")
     }
 
     print("chat mode: falling back to the terminal (spike's fallback rules, DL-118 §3)")
@@ -483,6 +529,27 @@ func spikeScreen(_ name: String) -> String {
         check(links.contains { $0.scheme == "duo-file" && $0.path == "notes.md" }, "a bare file name with a known extension is a link")
         check(links.contains { $0.absoluteString == "https://stripe.com/docs/refunds" }, "a bare URL is a link, without its full stop")
         check(ChatMarkdown.inline("Version 2.1.291 is e.g. fine").runs.compactMap(\.link).isEmpty, "version numbers and e.g. aren't files")
+        // A code span that names a file is one link, whole (ENH-343 1, DL-339).
+        func spanLink(_ s: String) -> URL? { ChatMarkdown.inline(s).runs.compactMap(\.link).first }
+        check(spanLink("see `Meeting Notes/2026-11-02 kickoff.md`")?.path == "Meeting Notes/2026-11-02 kickoff.md", "a code span with a space in the path links whole")
+        check(ChatMarkdown.inline("see `Meeting Notes/2026-11-02 kickoff.md`").runs.compactMap(\.link).count == 1, "…as one link, not pieces")
+        check(spanLink("run `Makefile`")?.path == "Makefile", "a code span with a bare known name (Makefile) links")
+        check(spanLink("at `src/app.py:42`")?.query == "line=42" && spanLink("at `src/app.py:42`")?.path == "src/app.py", "a code span with :line links at the line")
+        check(!ChatMarkdown.isFileSpan("make build") && !ChatMarkdown.isFileSpan("and/or") && !ChatMarkdown.isFileSpan("2.1.291") && !ChatMarkdown.isFileSpan("two words.md"),
+              "commands, prose slashes, versions and two bare words aren't files")
+        check(ViewConvention.hook("start", sessionId: "s", view: nil, in: URL(fileURLWithPath: "/nonexistent")) == "", "view unknown: says nothing")
+        let vcDir = FileManager.default.temporaryDirectory.appending(path: "vc-\(UUID().uuidString)")
+        let vc1 = ViewConvention.hook("start", sessionId: "s", view: .chat, in: vcDir)
+        check(vc1.hasPrefix("Duo: ") && vc1.contains("chat view") && vc1.contains("backticks"), "start: told the chat convention")
+        check(ViewConvention.hook("prompt", sessionId: "s", view: .chat, in: vcDir) == "", "same view at the next prompt: nothing")
+        let vc2 = ViewConvention.hook("prompt", sessionId: "s", view: .terminal, in: vcDir)
+        check(vc2.contains("terminal view") && vc2.contains("⌘-click"), "view changed: told once")
+        check(ViewConvention.hook("prompt", sessionId: "s", view: .terminal, in: vcDir) == "" && !ViewConvention.hook("start", sessionId: "s", view: .terminal, in: vcDir).isEmpty,
+              "…then nothing; a resume (start) tells again")
+        check(ViewConvention.text(.chat).count < 420 && ViewConvention.text(.terminal).count < 320, "each per-mode text stays short")
+        try? FileManager.default.removeItem(at: vcDir)
+        check(DuoAction.primer().contains("duo2 doc open <path>") && DuoAction.primer().contains("links the user can click") && DuoAction.primer().contains("CLAUDE.md and instructions win"),
+              "the primer says file names are links, to open a finished document, and that the user's CLAUDE.md wins")
         // Task items (F-305, Q-194): the box is read from the item's start only.
         check(ChatMarkdown.task([.paragraph("[ ] check the numbers")]) == (false, [.paragraph("check the numbers")]), "an open task item")
         check(ChatMarkdown.task([.paragraph("[x] name the owner")]) == (true, [.paragraph("name the owner")]), "a done task item")
@@ -1136,6 +1203,8 @@ func spikeScreen(_ name: String) -> String {
 
     chatChipChecks()
     chatFooterChecks()
+    chatTurnActionChecks()
+    chatRewindChecks()
     chatFallbackReportChecks()
     try chatRequestChecks()
     try trustStartChecks()

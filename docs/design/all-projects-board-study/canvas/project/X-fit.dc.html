@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>X · Fit with the Projects pane and Getting started; keys; not drawn</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.root{position:relative;background:#FFFFFF;color:#1F2328;font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;font-size:13px;line-height:18px;overflow:hidden;display:flex;flex-direction:column}
+.tb{height:38px;flex:none;display:flex;align-items:center;gap:16px;padding:0 14px;background:#F3F4F6;border-bottom:1px solid #C9CDD3;white-space:nowrap}
+.dots{display:flex;gap:8px;margin-right:4px}
+.dots i{width:12px;height:12px;border-radius:50%;background:#C9CDD3;display:block}
+.cnt{color:#5B636D}
+.cnt.ny{color:#C2410C;font-weight:600}
+.srch{margin-left:auto;border:1px solid #C9CDD3;border-radius:6px;background:#FFFFFF;width:290px;padding:3px 10px;color:#5B636D}
+.body{flex:1;display:flex;min-height:0}
+.mid{flex:1;min-width:0;padding:14px 16px;display:flex;flex-direction:column;gap:10px;overflow:hidden;background:#FFFFFF}
+.right{width:340px;flex:none;border-left:1px solid #C9CDD3;padding:14px 12px;display:flex;flex-direction:column;gap:10px;background:#FFFFFF}
+.hdr{display:flex;gap:10px;align-items:center;font-size:12px}
+.seg{border:1px solid #8B939C;border-radius:6px;display:flex}
+.seg span{padding:2px 10px}
+.seg .on{background:#E9ECEF;font-weight:600}
+.flt{border:1px solid #C9CDD3;border-radius:6px;padding:2px 10px;width:230px;color:#5B636D}
+.pop{border:1px solid #8B939C;border-radius:6px;padding:2px 10px}
+.newp{border:1px dashed #8B939C;border-radius:6px;padding:2px 10px}
+.lab{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5B636D;display:flex;align-items:center;gap:8px}
+.lab .rl{flex:1;height:1px;background:#C9CDD3}
+.grid{display:grid;gap:12px;align-items:start}
+.tile{box-sizing:border-box;border:1px solid #C9CDD3;border-radius:8px;background:#FFFFFF;padding:11px 12px 6px;display:flex;flex-direction:column;min-width:0}
+.tile.home{border-color:#1F2328}
+.tile.foc{box-shadow:0 0 0 2px #1F2328}
+.tn{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tp{font-family:'SF Mono', ui-monospace, Menlo, monospace;font-size:11px;line-height:16px;color:#5B636D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tg{margin-top:2px}
+.th{color:#5B636D}
+.ss{margin-top:6px;display:flex;flex-direction:column}
+.sr{display:grid;grid-template-columns:16px minmax(0,1fr) auto;align-items:center;height:24px;gap:4px}
+.sr span:nth-child(2){white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sr .w{color:#5B636D;font-size:12px}
+.sr.open{background:#E8F0FA;margin:0 -6px;padding:0 6px;border-radius:4px}
+.more{color:#5B636D;height:22px;display:flex;align-items:center}
+.quiet{color:#5B636D;margin-top:6px;height:22px;display:flex;align-items:center}
+.ns{margin:4px -6px 0;padding:0 6px;height:24px;border-top:1px solid #E9ECEF;display:grid;grid-template-columns:16px minmax(0,1fr) auto;gap:4px;align-items:center;color:#5B636D;font-size:12px;background:none;border-left:0;border-right:0;border-bottom:0;font-family:inherit;text-align:left;width:calc(100% + 12px);cursor:default}
+.ns b{font-weight:400;font-size:14px;line-height:14px}
+.ns.hov{background:#E9ECEF;color:#1F2328;border-radius:0 0 7px 7px}
+.ns .k{font-size:11px;color:#5B636D}
+.g{width:16px;height:16px;display:flex;align-items:center;justify-content:center}
+.g i{display:block}
+.g .dot{width:8px;height:8px;border-radius:50%;background:#C2410C}
+.g .ring{width:8px;height:8px;border-radius:50%;border:1.5px solid #1F2328;box-sizing:border-box}
+.g .dash{width:9px;height:1.5px;background:#5B636D}
+.g .dia{width:7px;height:7px;background:#1F2328;transform:rotate(45deg)}
+.btn{border:1px solid #8B939C;border-radius:6px;padding:2px 9px;font-size:12px;line-height:16px;background:#FFFFFF;font-family:inherit;color:#1F2328;white-space:nowrap}
+.row{display:grid;grid-template-columns:minmax(0,1fr) 220px 80px;align-items:center;height:24px;color:#1F2328}
+.row .p{color:#5B636D}
+.row .w{text-align:right;color:#5B636D}
+.card{border:1px solid #C9CDD3;border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.q{border:1px solid #C2410C;border-radius:6px;padding:6px 10px}
+.ann{position:absolute;font-size:12px;line-height:17px;color:#1F2328;background:#FFF7D6;border:1px solid #D9C36A;border-radius:6px;padding:6px 9px;max-width:280px;z-index:5}
+.pm{display:inline-block;font-size:11px;line-height:15px;font-weight:600;color:#FFFFFF;background:#1F2328;border-radius:4px;padding:1px 6px;margin-right:4px;vertical-align:middle}
+.tip{position:absolute;background:#1F2328;color:#FFFFFF;font-size:11px;line-height:15px;border-radius:5px;padding:4px 8px;white-space:nowrap;z-index:4}
+.h1{font-size:28px;line-height:34px;font-weight:700}
+.h2{font-size:17px;line-height:24px;font-weight:600}
+.txt{font-size:14px;line-height:21px}
+.mut{color:#5B636D}
+.nsf{display:flex;align-items:center;margin:4px -6px 0;border-top:1px solid #E9ECEF}
+.nsf .ns{margin:0;border-top:0;flex:1;width:auto}
+.mk{border:0;background:none;font-family:inherit;font-size:12px;color:#1F2328;text-decoration:underline;text-underline-offset:2px;padding:0 6px;white-space:nowrap}
+.prow{display:grid;grid-template-columns:16px 190px minmax(0,1fr) 230px 56px 120px;gap:8px;align-items:center;height:28px;border-bottom:1px solid #E9ECEF}
+.prow .pp{font-family:'SF Mono', ui-monospace, Menlo, monospace;font-size:11px;color:#5B636D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .w{color:#5B636D;text-align:right;font-size:12px}
+.plus{border:0;background:none;font-family:inherit;font-size:12px;color:#5B636D;text-align:right;padding:0}
+.chip{border:1px solid #C9CDD3;border-radius:11px;padding:1px 9px;font-size:12px;color:#1F2328;white-space:nowrap}
+.chip.on{background:#1F2328;color:#FFFFFF;border-color:#1F2328}
+.th2{font-size:11px;font-weight:600;letter-spacing:.04em;color:#5B636D;text-transform:uppercase}
+.g .bub{width:10px;height:8px;border:1.3px solid #5B636D;border-radius:3px;box-sizing:border-box}
+
+</style>
+</helmet>
+<div class="root" style="width:1440px;height:900px">
+
+<div style="padding:32px 40px;display:grid;grid-template-columns:1fr 1fr;gap:28px;height:100%;box-sizing:border-box" class="txt">
+<div style="display:flex;flex-direction:column;gap:12px">
+<div class="h2">X · How each direction fits the other two studies</div>
+<div><strong>Projects pane</strong> (https://claude.ai/artifact/MMAaxkzezLUu8LEBGUpbpQ, Q-527 to Q-531). Its A puts a 260 list of projects at All projects' left, "in the map's order". Whatever Q-539 picks sets that order: with B, the pane reads Pinned, Now, Today, then the rest; with A, folders. With the pane, the middle is 840 at 1440, three across at 220. The pane's "+ New session" row and the tile's last row use the same words and verb. Q-531's "+ New session in ‹project›" is for the sidebar; a tile already names its project, so its row reads "+ New session" and the tooltip names the project. If Q-527 picks C, the switcher lists projects by B's sections.</div>
+<div><strong>Getting started</strong> (https://claude.ai/artifact/1a6Lfh9dNwco7X5ksruKhJ, Q-532 to Q-536). The card sits above the Board or List in every direction. On a new install, B's Board shows only Today and This week (nothing pinned, no Home), so the card and a few tiles fit with no scrolling. Step 2's Show me points at a tile's + New session row on the Board and at the List's New session row on the List. The Home explainer's anchor (Q-536) moves to ★ home's tile, which is in Pinned under B.</div>
+<div><strong>DL-336</strong> stands: no Home column. B makes Home one pinned tile, so a user with no Home folder sees the same Board, just without it.</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div class="h2">Keys, menus, duo2 (DL-71)</div>
+<div style="font-size:13px;line-height:20px">
+Tile's + New session, tile menu › New Session · <code>duo2 session new --project &lt;p&gt;</code> or <code>--folder &lt;path&gt;</code> (exists)<br>
+⌘T on the Board: the focused tile, else Home, else ~/Documents · the same verb<br>
+Group ⌄: Activity, Folder, None; View › Group Projects By · <code>duo2 view group activity|folder|none</code> (new; <code>duo2 view sort</code> stays for C and D)<br>
+Pin to Top, Unpin (tile menu, project menu) · <code>duo2 project pin &lt;p&gt; [on|off]</code> (new)<br>
+Folder chips (C) · <code>duo2 view filter --folder &lt;path&gt;</code> (new, C only)<br>
+Projects | Sessions (D) · <code>duo2 view home projects|list</code> (D only)</div>
+<div class="h2">Considered, not drawn</div>
+<div style="font-size:13px;line-height:20px"><strong>A timeline</strong> (projects as lanes over days): the List and B's sections already show recency; a timeline needs more width than All projects has. <strong>Tags or people</strong> (group by a <code>tags:</code> or <code>owner:</code> in _PROJECT.md): no project has them today, so it would start empty. It could be a fourth Group option later (ENH-352). <strong>Tasks first</strong> (every open task across projects): the action column's Open tasks covers it, and each project's task board (DL-148) is where tasks are worked.</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

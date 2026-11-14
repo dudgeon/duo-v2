@@ -1,0 +1,36 @@
+<style>
+#typed { left: 24px; top: 30px; width: 290px; background: #15171b; color: #e6e8eb; border-color: #15171b; }
+#typed .mono { color: #e6e8eb; }
+#pm { left: 24px; top: 120px; width: 250px; }
+#side { left: 350px; top: 30px; width: 260px; height: 300px; }
+#side .lp { width: 100%; border: none; }
+.slot { border: 1px solid #c9cdd3; border-radius: 6px; padding: 5px 7px; font-size: 13px; line-height: 17px; display: none; }
+.slot i { font-style: normal; color: #5b636d; display: block; }
+#empty { border-style: dashed; color: #5b636d; }
+[data-state~="menu"] #pm, [data-state~="slot"] #pm { --o: 1; }
+[data-state~="slot"] #full { display: block; }
+[data-state~="empty"] #empty { display: block; }
+[data-state~="empty"] #pm { --o: 1; }
+#guide { left: 24px; top: 120px; width: 290px; }
+[data-state~="teach"] #guide { --o: 1; }
+</style>
+<div class="card" id="typed" data-in="up" data-f><span class="mono">› be the director▍</span></div>
+<div class="menu fade" id="pm" data-f>
+  <div class="mt">Project</div>
+  <div class="mi">New Session</div>
+  <div class="mi">New Task</div>
+  <hr>
+  <div class="mi new" id="mi-dir">Start Director</div>
+</div>
+<div class="card fade" id="guide" data-f><b>Guide · The director</b><span class="s">"Open a session and type: be the director."</span></div>
+<div class="win" id="side" data-in="right" data-f>
+  <div class="tb">notes-app</div>
+  <div class="bd"><div class="lp">
+    <span class="lab">Pinned</span>
+    <div class="slot" id="full" data-f>director-notes-app<i>Director · 2 workers</i></div>
+    <div class="slot" id="empty" data-f>No director · Start one</div>
+    <span class="lab" style="margin-top:6px">Today</span>
+    <span class="row sel">Fix the importer</span><span class="row">Write the guide</span>
+    <span class="lab" style="margin-top:6px">Files</span><span class="row">docs</span><span class="row">src</span>
+  </div></div>
+</div>

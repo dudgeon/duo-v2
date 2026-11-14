@@ -1,0 +1,41 @@
+{
+ "note": "Publish with the Artifact tool: file_path = <this folder>/index.html, root = this folder, files = the map below, capabilities as below, icon 'play'. The director publishes the final page (DL-166).",
+ "file_path": "index.html",
+ "root": ".",
+ "files": {
+  "audio/why.mp3": "audio/why.mp3",
+  "audio/core.mp3": "audio/core.mp3",
+  "audio/plan.mp3": "audio/plan.mp3",
+  "audio/settled.mp3": "audio/settled.mp3",
+  "audio/q99-when.mp3": "audio/q99-when.mp3",
+  "audio/q99-when--now-0-1.mp3": "audio/q99-when--now-0-1.mp3",
+  "audio/q99-when--now-0-2.mp3": "audio/q99-when--now-0-2.mp3",
+  "audio/q99-when--slice0.mp3": "audio/q99-when--slice0.mp3",
+  "audio/q99-when--after-v1.mp3": "audio/q99-when--after-v1.mp3",
+  "audio/q429-scope.mp3": "audio/q429-scope.mp3",
+  "audio/q429-scope--windows.mp3": "audio/q429-scope--windows.mp3",
+  "audio/q429-scope--plus-pin.mp3": "audio/q429-scope--plus-pin.mp3",
+  "audio/q429-scope--plus-colour.mp3": "audio/q429-scope--plus-colour.mp3",
+  "audio/q431-home.mp3": "audio/q431-home.mp3",
+  "audio/q431-home--standin.mp3": "audio/q431-home--standin.mp3",
+  "audio/q431-home--first-only.mp3": "audio/q431-home--first-only.mp3",
+  "audio/q431-home--chat-now.mp3": "audio/q431-home--chat-now.mp3",
+  "audio/q435-palette.mp3": "audio/q435-palette.mp3",
+  "audio/q435-palette--as-drawn.mp3": "audio/q435-palette--as-drawn.mp3",
+  "audio/q435-palette--more.mp3": "audio/q435-palette--more.mp3",
+  "audio/q435-palette--redraw.mp3": "audio/q435-palette--redraw.mp3",
+  "audio/q435-new.mp3": "audio/q435-new.mp3",
+  "audio/q435-new--auto.mp3": "audio/q435-new--auto.mp3",
+  "audio/q435-new--plain.mp3": "audio/q435-new--plain.mp3",
+  "audio/q435-classic.mp3": "audio/q435-classic.mp3",
+  "audio/q435-classic--classic-wins.mp3": "audio/q435-classic--classic-wins.mp3",
+  "audio/q435-classic--colours-win.mp3": "audio/q435-classic--colours-win.mp3",
+  "audio/wrap.mp3": "audio/wrap.mp3",
+  "assets/project-sample.jpg": "assets/project-sample.jpg",
+  "assets/all-projects-sample.jpg": "assets/all-projects-sample.jpg"
+ },
+ "capabilities": {
+  "db": {},
+  "comments": {}
+ }
+}

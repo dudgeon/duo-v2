@@ -1,0 +1,30 @@
+{
+ "note": "Publish with the Artifact tool: file_path = <this folder>/index.html, root = this folder, files = the map below, capabilities as below, icon 'play'. The director publishes the final page (DL-166).",
+ "file_path": "index.html",
+ "root": ".",
+ "files": {
+  "audio/why.mp3": "audio/why.mp3",
+  "audio/reading.mp3": "audio/reading.mp3",
+  "audio/comments.mp3": "audio/comments.mp3",
+  "audio/q490-viewer.mp3": "audio/q490-viewer.mp3",
+  "audio/q490-viewer--pdfkit.mp3": "audio/q490-viewer--pdfkit.mp3",
+  "audio/q490-viewer--pdfjs.mp3": "audio/q490-viewer--pdfjs.mp3",
+  "audio/q490-viewer--quicklook.mp3": "audio/q490-viewer--quicklook.mp3",
+  "audio/q491-split.mp3": "audio/q491-split.mp3",
+  "audio/q491-split--beside-text.mp3": "audio/q491-split--beside-text.mp3",
+  "audio/q491-split--text-only.mp3": "audio/q491-split--text-only.mp3",
+  "audio/q492-read.mp3": "audio/q492-read.mp3",
+  "audio/q492-read--text-pages.mp3": "audio/q492-read--text-pages.mp3",
+  "audio/q492-read--path-only.mp3": "audio/q492-read--path-only.mp3",
+  "audio/q492-read--markdown.mp3": "audio/q492-read--markdown.mp3",
+  "audio/q493-comments.mp3": "audio/q493-comments.mp3",
+  "audio/q493-comments--in-pdf.mp3": "audio/q493-comments--in-pdf.mp3",
+  "audio/q493-comments--xfdf.mp3": "audio/q493-comments--xfdf.mp3",
+  "audio/q493-comments--pdfkit-save.mp3": "audio/q493-comments--pdfkit-save.mp3",
+  "audio/wrap.mp3": "audio/wrap.mp3"
+ },
+ "capabilities": {
+  "db": {},
+  "comments": {}
+ }
+}

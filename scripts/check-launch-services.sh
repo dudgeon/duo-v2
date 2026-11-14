@@ -9,6 +9,7 @@
 # Allowed for com.dudgeon.duo: <main checkout>/build/Duo.app and anything under /Applications or
 # ~/Applications. Release outputs (build/release/<v>/Duo.app) stay unregistered. Nothing is launched or deleted.
 set -euo pipefail
+export DUO_ISOLATED=1   # every duo2 here reaches only the test instance; refuses, never the user's Duo (F-529)
 root="$(cd "$(dirname "$0")/.." && pwd -P)"
 lsregister=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
 mode="${1:-}"

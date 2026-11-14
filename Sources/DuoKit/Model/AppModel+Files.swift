@@ -33,6 +33,13 @@ extension AppModel {
         set { if let p = currentProject?.name { openDocumentsByProject[p] = newValue } }
     }
 
+    /// View › Hide Formatting Bar (DL-266).
+    public func setFormatBarHidden(_ hidden: Bool) {
+        formatBarHidden = hidden
+        DuoState.update { $0.formatBarHidden = hidden }
+        editorRevision += 1
+    }
+
     /// View › Show Hidden Files (DL-105): dotfiles in every project's tree, remembered.
     public func setShowHiddenFiles(_ on: Bool) {
         showHiddenFiles = on
@@ -46,6 +53,14 @@ extension AppModel {
         if videoClosedFolders.contains(path) { return false }   // the intro video's scene 9 (VideoTargets+S9S10)
         guard terminalsMode == .live, let p = currentProject?.name else { return true }
         return expandedFolders[p]?.contains(path) ?? false
+    }
+
+    /// Whether the current project's Files section is folded to its header (DL-339, ENH-344).
+    public var isFilesFolded: Bool { terminalsMode == .live && currentProject.map { filesFolded.contains($0.name) } == true }
+
+    public func setFilesFolded(_ folded: Bool) {
+        guard terminalsMode == .live, let p = currentProject?.name else { return }
+        if folded { filesFolded.insert(p) } else { filesFolded.remove(p) }
     }
 
     public func toggleFolder(_ path: String) {
@@ -294,7 +309,7 @@ extension AppModel {
     /// Runs a verb, reporting a failure the way macOS does.
     func run(_ body: () throws -> Void) {
         do { try body() } catch {
-            DuoAlert.present(NSAlert(error: error))
+            DuoAlert.present(NSAlert(error: error), from: self)
         }
     }
 

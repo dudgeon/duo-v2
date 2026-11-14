@@ -15,13 +15,17 @@ public enum SessionKind {
 extension AppModel {
     /// The kind a session row's glyph draws. Fixture sessions take their recording's mode from the fixture's own chats.
     public func sessionKind(key: String, project: String) -> ChatViewMode {
-        let s = fixture.sessions.first { $0.tabKey == key }
+        let s = core.session(tabKey: key)   // indexed, not a scan per row (F-598)
         let outside = s?.liveProcess == true && !hasOpenTerminal(key)
         return SessionKind.resolve(prefs: chats.prefs, key: key, home: project == fixture.home?.name,
                                    chatMode: chat(for: key)?.mode, outsideDuo: outside)
     }
 
     public func sessionKind(_ s: Fixture.Session) -> ChatViewMode { sessionKind(key: s.tabKey, project: s.project) }
+
+    /// The first session with this tab key, as `fixture.sessions.first { $0.tabKey == key }` gives it, from the core's index
+    /// (F-600: views asked this once per row per render, a scan of every session each time).
+    public func session(tabKey key: String) -> Fixture.Session? { core.session(tabKey: key) }
 
     /// "chat session" / "terminal session", for a row's accessibility label.
     public func spokenKind(key: String, project: String) -> String { SessionGlyph.spokenKind(sessionKind(key: key, project: project)) }

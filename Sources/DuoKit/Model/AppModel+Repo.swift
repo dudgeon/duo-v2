@@ -109,7 +109,7 @@ extension AppModel {
         let file = v.status.conflicts.first?.path ?? "a file"
         let w = GitFailure(kind: .conflict, details: "").words(repo: v.status.origin?.slug ?? "", branch: v.status.branch ?? "", login: v.access?.login, file: file)
         if Env.autoconfirm { FileHandle.standardError.write(Data("question: \(w.title)\n".utf8)); return }
-        SheetCenter.shared.ask(DuoQuestion(title: w.title, paragraphs: [w.body, "Claude can combine the two versions and tell you what it chose, or you can put things back as they were before Get Latest."], choices: [
+        SheetCenter.shared.ask(from: self, DuoQuestion(title: w.title, paragraphs: [w.body, "Claude can combine the two versions and tell you what it chose, or you can put things back as they were before Get Latest."], choices: [
             .init(label: "Show the File") { self.openDocument(String(file.dropFirst(v.projectPrefix.count))) },
             .init(label: "Put Back", isCancel: true) { self.putBack() },
             .init(label: "Ask Claude to Combine", isDefault: true) { self.askClaudeToCombine() },
@@ -195,7 +195,7 @@ extension AppModel {
         let w = GitFailure(kind: .protected, details: "").words(repo: v.status.origin?.slug ?? "", branch: b, login: v.access?.login, ahead: max(1, v.status.ahead))
         let field = DuoQuestion.Field(label: "New branch", text: suggestion)
         if Env.autoconfirm { FileHandle.standardError.write(Data("question: \(w.title)\n".utf8)); return }
-        SheetCenter.shared.ask(DuoQuestion(title: w.title, paragraphs: [w.body], field: field, choices: [
+        SheetCenter.shared.ask(from: self, DuoQuestion(title: w.title, paragraphs: [w.body], field: field, choices: [
             .init(label: "Cancel", isCancel: true) {},
             .init(label: "Move to a Branch and Push", isDefault: true) { self.moveToBranch(field.text, thenPush: true) },
         ]))
@@ -255,7 +255,7 @@ extension AppModel {
         case .conflict: return askAboutConflict()
         case .noTools, .unknown: choices = [.init(label: "OK", isDefault: true, isCancel: true) {}]
         }
-        SheetCenter.shared.ask(DuoQuestion(title: w.title, paragraphs: [w.body], note: f.details.isEmpty ? nil : "Details: " + f.details, choices: choices))
+        SheetCenter.shared.ask(from: self, DuoQuestion(title: w.title, paragraphs: [w.body], note: f.details.isEmpty ? nil : "Details: " + f.details, choices: choices))
     }
 }
 

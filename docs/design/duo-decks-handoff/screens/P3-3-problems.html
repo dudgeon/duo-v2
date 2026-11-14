@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="design-size" content="1900x1000">
+<title>Problems and export in the deck bar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.light{--ground:#F3F4F6;--pane:#FFFFFF;--text:#1F2328;--text2:#5B636D;--rule:#C9CDD3;--controlEdge:#8B939C;--selected:#E9ECEF;--console:#15171B;--consoleText:#E6E8EB;--consoleText2:#9AA1AB;--consoleRule:#2B2F36;--paneFocus:#1F2328;--needsYou:#C2410C}
+.win{position:relative;width:1440px;height:900px;display:flex;flex-direction:column;background:var(--ground);color:var(--text);font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.tb{height:40px;flex:none;background:var(--ground);border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:12px;padding:0 16px;color:var(--text2)}
+.dots{display:flex;gap:8px}.dots i{width:12px;height:12px;border-radius:6px;background:var(--rule);display:block}
+.cols{flex:1;display:flex;min-height:0}
+.side{background:var(--pane);border-right:1px solid var(--rule);padding:16px;box-sizing:border-box;display:flex;flex-direction:column;gap:6px;flex:none}
+.con{background:var(--console);color:var(--consoleText);display:flex;flex-direction:column;border-right:1px solid var(--rule);flex:none}
+.cstrip{height:36px;border-bottom:1px solid var(--consoleRule);display:flex;align-items:center;gap:18px;padding:0 14px;font:12px/19px 'SF Mono',Menlo,monospace;color:var(--consoleText2)}
+.term{padding:14px;font:12px/19px 'SF Mono',Menlo,monospace;color:var(--consoleText2);display:flex;flex-direction:column;gap:2px}
+.right{background:var(--pane);display:flex;flex-direction:column;min-width:0;flex:1}
+.strip{position:relative;height:36px;flex:none;border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:24px;padding:0 16px;color:var(--text2);white-space:nowrap}
+.rulef{position:absolute;top:0;height:2px;background:var(--paneFocus)}
+.split{display:flex;align-items:center;gap:6px;color:var(--text2)}
+.split b{color:var(--text);font-weight:600}
+.smark{display:inline-block;width:11px;height:9px;border:1.2px solid var(--text2);border-radius:2px;position:relative;box-sizing:border-box}
+.smark:after{content:"";position:absolute;left:3.5px;top:-1px;bottom:-1px;width:1.2px;background:var(--text2)}
+.sides{flex:1;display:flex;min-height:0}
+.dv{width:1px;background:var(--rule);flex:none}
+.ed{position:relative;background:var(--pane);box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column}
+.fbar{height:24px;flex:none;display:flex;align-items:center;gap:4px;padding:0 10px;color:var(--text2);font:12px/16px -apple-system,system-ui,sans-serif;border-bottom:1px solid var(--rule)}
+.fbar span{min-width:20px;text-align:center}
+.doc{padding:16px 22px;display:flex;flex-direction:column;gap:2px;font:14px/22px -apple-system,system-ui,sans-serif}
+.mk{color:var(--text2);font:12px/22px 'SF Mono',Menlo,monospace}
+.h1{font:600 20px/28px -apple-system,system-ui,sans-serif}
+.h2{font:600 15px/24px -apple-system,system-ui,sans-serif}
+.cur{position:absolute;left:8px;width:2px;background:var(--controlEdge);border-radius:1px}
+.deckbar{height:44px;flex:none;border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:6px;padding:0 14px;box-sizing:border-box}
+.btn{height:26px;box-sizing:border-box;padding:4px 10px;border:1px solid var(--controlEdge);border-radius:6px;background:var(--pane);font:12px/16px -apple-system,system-ui,sans-serif;color:var(--text);white-space:nowrap}
+.slides{flex:1;background:var(--ground);padding:14px 16px;display:flex;flex-direction:column;gap:6px;overflow:hidden}
+.num{font:11px/16px -apple-system,system-ui,sans-serif;color:var(--text2)}
+.slide{aspect-ratio:16/9;background:#FFFFFF;border:1px solid var(--rule);box-sizing:border-box;padding:14px 16px;display:flex;flex-direction:column;gap:4px;color:#1F2328;flex:none}
+.badge{position:absolute;width:26px;height:26px;border-radius:13px;background:#1F2328;color:#FFFFFF;font:600 13px/26px -apple-system,system-ui,sans-serif;text-align:center}
+.notes{display:flex;flex-direction:column;gap:10px}
+.n{display:grid;grid-template-columns:26px minmax(0,1fr);gap:10px;align-items:start}
+.n i{width:22px;height:22px;border-radius:11px;background:#1F2328;color:#FFFFFF;font:600 12px/22px -apple-system,system-ui,sans-serif;text-align:center;font-style:normal;display:block}
+.t2{color:#5B636D}
+.h{font:600 15px/20px -apple-system,system-ui,sans-serif}
+
+.pin{position:absolute;display:flex;align-items:center;gap:2px;height:18px;padding:0 5px;border:1px solid var(--controlEdge);border-radius:9px;background:var(--pane);font:600 10px/16px -apple-system,system-ui,sans-serif;color:var(--text);box-sizing:border-box}
+.dash{position:absolute;border:1px dashed var(--text);box-sizing:border-box}
+.solid{position:absolute;border:1.5px solid var(--text);box-sizing:border-box}
+.tag{position:absolute;background:var(--text);color:var(--pane);font:11px/18px -apple-system,system-ui,sans-serif;padding:0 6px;border-radius:3px;white-space:nowrap}
+.pop{position:absolute;background:var(--pane);border:1px solid var(--rule);border-radius:10px;box-shadow:0 8px 24px rgba(31,35,40,.16);padding:6px;box-sizing:border-box;font:13px/20px -apple-system,system-ui,sans-serif}
+.mi{height:26px;display:flex;align-items:center;gap:8px;padding:0 10px;border-radius:5px;white-space:nowrap}
+.sel{background:var(--selected)}
+.chip{display:flex;align-items:center;gap:6px;height:22px;margin:4px 0 2px;padding:0 8px;border-top:1px solid var(--rule);font:11px/20px -apple-system,system-ui,sans-serif;color:var(--text2)}
+.chip b{color:var(--text);font-weight:600}
+.card{background:var(--pane);border:1px solid var(--rule);border-radius:6px;padding:8px 10px;font:12px/17px -apple-system,system-ui,sans-serif;display:flex;flex-direction:column;gap:3px}
+.act{border:1.5px solid var(--text)}
+.pbar{background:var(--ground);border-top:1px solid var(--rule);padding:8px 14px;display:flex;flex-wrap:wrap;align-items:center;gap:6px;font:12px/18px -apple-system,system-ui,sans-serif}
+.def{background:var(--text);color:var(--pane);border-color:var(--text)}
+.strp{background:var(--pane);border:1px solid var(--rule);border-radius:6px;padding:8px 10px;display:flex;flex-direction:column;gap:6px;font:12px/17px -apple-system,system-ui,sans-serif}
+.thumb img{width:100%;display:block;border:1px solid var(--rule)}
+.thumb{display:flex;flex-direction:column;gap:2px;font:11px/14px -apple-system,system-ui,sans-serif}
+.sheet{position:absolute;background:var(--pane);border:1px solid var(--rule);border-radius:10px;box-shadow:0 8px 24px rgba(31,35,40,.16);padding:20px;box-sizing:border-box;display:flex;flex-direction:column;gap:12px;font:13px/20px -apple-system,system-ui,sans-serif}
+.row{display:flex;align-items:center;gap:10px}
+.lab{width:110px;color:var(--text2);text-align:right;flex:none}
+.field{flex:1;height:26px;border:1px solid var(--rule);border-radius:6px;padding:3px 8px;box-sizing:border-box;background:var(--pane)}
+</style>
+</helmet>
+<div style="width:1900px;height:1000px;box-sizing:border-box;padding:28px 36px;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,'SF Pro Text',system-ui,sans-serif;display:flex;gap:28px">
+  <div style="zoom:.78;flex:none"><div class="win light">
+      <div class="tb"><div class="dots"><i></i><i></i><i></i></div><span style="margin-left:60px">All projects › work ›</span><b style="color:var(--text)">orchard-robotics</b><span style="margin-left:auto;border:1px solid var(--rule);border-radius:6px;padding:2px 10px;width:300px;background:var(--pane)">Search all projects ⇧⌘A</span></div>
+      <div class="cols">
+        <div style="width:16px;flex:none;background:var(--pane);border-right:1px solid var(--rule)"></div>
+        <div class="con" style="width:480px">
+          <div class="cstrip"><span style="color:var(--consoleText);font-weight:500">○ Field trial deck</span><span>+</span></div>
+          <div class="term"><span style="color:var(--consoleText)">&gt; …</span></div>
+        </div>
+        <div class="right">
+          <div class="strip"><div class="rulef" style="left:471px;width:471px"></div><span>Project</span><span class="split"><span>field-trial-review.md</span><span class="smark"></span><b>Slides</b></span><span style="margin-left:auto">+</span></div>
+          <div class="sides" style="position:relative"><div class="ed" style="width:470px;flex:none">
+  <div class="doc">
+    <div class="chip"><b>Slide 3</b>· kpi ⌄</div>
+    <span class="h1">Unattended rows</span>
+    <span class="h2">value</span>
+    <span style="background:#FDECEA">86 percent</span>
+    <span style="color:#B42318;font-size:11px;line-height:16px">10 characters; kpi's value takes 7</span>
+    <span class="h2">label</span><span>of rows finished with no one stepping in</span>
+    <div class="chip"><b>Slide 4</b>· two-column ⌄</div>
+    <span class="h1">Spring and autumn</span>
+    <span class="h2">left</span><span class="t2">(empty)</span>
+  </div>
+</div>
+<div class="dv"></div>
+<div style="flex:1;display:flex;flex-direction:column;min-width:0;position:relative">
+  <div class="deckbar"><span class="btn">‹</span><span class="btn">›</span><span style="margin-left:4px">3/10</span><span style="margin-left:8px;display:flex;align-items:center;gap:4px;font-weight:600"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1.5 11 10.5H1Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M6 5v2.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>1 problem ⌄</span><span style="margin-left:auto" class="t2">Changed since export</span><span class="btn">Select Shape</span><span class="btn" style="background:var(--selected)">Export ⌄</span></div>
+  <div class="slides">
+    <span class="num" style="color:var(--text);font-weight:600">3 · kpi</span>
+    <img src="img/de5093a4e51b746f5758d0e83e034110.jpg" alt="slide 3" style="width:100%;display:block;border:1px solid var(--rule)">
+    <div class="strp"><span><b>value</b> is 10 characters; kpi takes 7. Shorten it, or split the slide.</span><span style="display:flex;gap:6px"><span class="btn">Go to Line</span><span class="btn">Send to Claude</span></span></div>
+    <span class="num">4 · two-column</span>
+    <div class="strp"><span>5 points moved to the notes when this became two-column.</span><span style="display:flex;gap:6px;flex-wrap:wrap"><span class="btn">Move to left</span><span class="btn">Move to right</span><span class="btn">Split with Claude</span><span class="btn">Undo Change</span></span></div>
+  </div>
+  <div class="pop" style="right:8px;top:40px;width:330px">
+    <div class="mi sel">Export as PowerPoint…</div>
+    <div class="mi">Export Again <span class="t2" style="margin-left:auto;font-size:11px">replaces 2026-11-01 0912</span></div>
+    <div class="mi">Show Export in Finder</div>
+    <div style="height:1px;background:var(--rule);margin:5px 8px"></div>
+    <div class="mi t2">Upload to Google Slides… <span style="margin-left:auto;font-size:11px">later</span></div>
+  </div>
+</div></div>
+        </div>
+      </div><span class="badge" style="left:995px;top:98px">1</span><span class="badge" style="left:1240px;top:98px">2</span><span class="badge" style="left:1265px;top:160px">3</span><span class="badge" style="left:1000px;top:520px">4</span><span class="badge" style="left:1000px;top:640px">5</span>
+    </div></div>
+  <div class="notes" style="flex:1;min-width:0">
+    <div><span class="h" style="font-size:20px;line-height:28px">P3 · 3 · Problems, notes moves and Export in the deck bar</span><br><span class="t2">For approval of the look. split-deck already places "problems" and Export ⌄ in the deck's 44 bar (R5, R6); this draws them. Every mark [P]; no new colour.</span></div>
+    <div class="n"><i>1</i><span><b>Problems ⌄</b> after the slide count, only when there are any: a warning triangle in <code>text</code> and "1 problem" semibold. Its menu lists each problem (slide, slot, message); choosing one reveals both sides. Notices (an empty slot) are counted in the menu, not in the bar.</span></div><div class="n"><i>2</i><span><b>Export state</b> to the left of Select Shape in <code>text2</code>: "Changed since export", "Exported 5 m ago" (the time as the console writes it), nothing if never exported.</span></div><div class="n"><i>3</i><span><b>Export ⌄</b>: Export as PowerPoint… (writes <code>&lt;deck&gt; YYYY-MM-DD HHmm.pptx</code>, DL-282, removing the previous one, DL-286), Export Again (named the file it replaces), Show Export in Finder; Upload to Google Slides… dimmed until Duo's Google sign-in (ENH-307). After an export, the DL-132 notice: "Exported field-trial-review 2026-11-01 0915.pptx · 10 slides · Show in Finder · Open With ⌄".</span></div><div class="n"><i>4</i><span><b>A problem under its slide</b>: a card on <code>pane</code> with the message (slot name semibold) and buttons. A fix with one right answer is a button ("Use kpi" for a typo, DL-298); otherwise Go to Line and Send to Claude. The source line gets <code>diffDelFill</code> and the message under it in <code>diffDelText</code> 11/16, the editor's existing problem colours.</span></div><div class="n"><i>5</i><span><b>Content moved to the notes</b> (DL-281) gets the same card under its slide: what moved and why, then Move to left / Move to right (one-answer fixes, DL-298), Split with Claude, Undo Change. It goes when the notes line is gone.</span></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1900,"height":1000}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

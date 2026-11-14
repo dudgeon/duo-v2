@@ -18,3 +18,5 @@ Every session shares one Mac mini (32 GB, 12 cores). Heavy jobs coordinate throu
 - **Every brief** names the lock line, with the job's kind, and says to release right after each batch.
 - **Merge checks:** run the build-and-check part shared, and the timing part (`check-chat-perf`, `check-scale`, the visible gate) exclusive.
 - **Watch memory, too:** `sysctl vm.swapusage`, plus the idle Claude sessions in memory. Ask Geoff before stopping his own sessions.
+
+**Reading `--status` (F-658).** An `exclusive holder` line with a `shared holder` line beside it is normal while the exclusive job says "waiting for shared jobs to finish": it has the lock directory and is waiting for the shared jobs already running, and nothing new starts. Only "running, alone" means its command has begun. `scripts/check-gpu-lock-race.sh [rounds]` is the repro.

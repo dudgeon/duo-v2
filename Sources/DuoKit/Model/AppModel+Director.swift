@@ -64,7 +64,7 @@ extension AppModel {
 
         switch id {
         case .directorStatus:
-            done(directorStatus(p, folder: folder, reg: reg, role: role, director: mine, caps: caps))
+            done(directorStatus(p, folder: folder, reg: reg, role: role, director: mine, caps: caps, inv: inv, log: log))
 
         case .directorStart:
             if caps.projects { return done(.fail("This is a Claude Code Projects session: the Duo director starts nothing here (DL-203).")) }
@@ -105,6 +105,12 @@ extension AppModel {
             if let r = standDown() { return done(r) }
             guard role == .current else { return done(.fail("You're not \(p.name)'s director\(reg.current.map { " (\($0.name) is)" } ?? ""): `duo2 director start` makes you its director.")) }
             directorSend(p, folder: folder, inv: inv, director: mine, caps: caps, log: log, done: done)
+
+        case .directorCheck:
+            if let r = standDown() { return done(r) }
+            // Whoever status gives red lines to can clear them: a look records nothing about who directs.
+            guard DirectorFactsReader.applies(role: role, callerName: caps.name) else { return done(.fail("You're not \(p.name)'s director\(reg.current.map { " (\($0.name) is)" } ?? ""): `duo2 director start` makes you its director.")) }
+            done(directorCheck(p, folder: folder, inv: inv, director: mine, log: log))
 
         case .directorRetire:
             if let r = standDown() { return done(r) }
@@ -151,7 +157,8 @@ extension AppModel {
         let reg = DirectorRegistry.load(project: folder)
         let dir = folder.appending(path: "tasks")
         let files = (try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.contentModificationDateKey])) ?? []
-        return files.filter { $0.pathExtension.lowercased() == "md" }.sorted { $0.path < $1.path }.compactMap { url in
+        // A note whose file name starts with `_` is a record, not a task.
+        return files.filter { $0.pathExtension.lowercased() == "md" && !$0.lastPathComponent.hasPrefix("_") }.sorted { $0.path < $1.path }.compactMap { url in
             guard let text = try? String(contentsOf: url, encoding: .utf8), DirectorNotes.directedBy(text) == director else { return nil }
             let note = TaskNotes.parse(text, path: "tasks/" + url.lastPathComponent)
             guard !note.archived else { return nil }
@@ -198,9 +205,22 @@ extension AppModel {
         return WorkerFacts(place: place, run: run, peerName: beacon?.peerName, userTyping: paused, permissionClass: PermissionClass.of(mode: mode))
     }
 
-    func directorStatus(_ p: Fixture.Project, folder: URL, reg: DirectorRegistry, role: DirectorRegistry.Role, director: String, caps: ClientCaps) -> Reply {
+    func directorStatus(_ p: Fixture.Project, folder: URL, reg: DirectorRegistry, role: DirectorRegistry.Role, director: String, caps: ClientCaps,
+                        inv: Invocation, log: (String, String?, String?, String?, String?) -> Void) -> Reply {
         var lines: [String] = []
         var j: [String: Any] = ["project": p.name, "folder": folder.path, "director": director]
+        // Red lines first (DL-319): the duties this director is neglecting right now. The same report `duo2`
+        // gives with Duo closed. Polling (`watch`) asks for none.
+        if !inv.has("no-red-lines") {
+            var red: [RedLine] = []
+            if DirectorFactsReader.applies(role: role, callerName: caps.name) {
+                red = DirectorFactsReader.report(project: folder, director: reg.current?.name ?? director, reg: reg, beacons: DirectorOffline.beacons(), caps: caps,
+                                                 skillNote: DirectorFactsReader.skillNote(), duo: DuoHealthReader.reachable(), all: inv.has("all"))
+                lines += DirectorRedLines.block(red)
+                if role == .current, !inv.json { log("status", nil, nil, nil, "\(red.count) red lines") }
+            }
+            j["redLines"] = red.map { ["duty": $0.duty.rawValue, "subject": $0.subject, "what": $0.what, "todo": $0.todo] }
+        }
         lines.append("Project: \(p.name) (\(folder.path)).")
         // The skill and the app it drives are released separately (F-341): say when they differ.
         let installed = (try? String(contentsOf: Installer.directorSkillFile, encoding: .utf8)) ?? (try? String(contentsOf: Installer.directorAliasFile, encoding: .utf8))
@@ -226,7 +246,10 @@ extension AppModel {
         let tasks = directedTasks(p.name, folder: folder, director: reg.current?.name ?? director)
         let active = tasks.filter(\.running)
         lines.append("Workers: \(active.count) running.")
-        for t in tasks {
+        // The list is the running workers, those waiting for the user and those the user is typing in;
+        // --all lists every task (the JSON always has them all).
+        let listed = inv.has("all") ? tasks : tasks.filter { $0.running || $0.stateWord == "needs-you" || ($0.facts?.userTyping ?? false) || $0.note.status == DirectorNotes.suggested }
+        for t in listed {
             var l = "  \(t.note.path)  \(t.note.title) (\(t.note.status ?? "open"))  "
             if let w = t.worker, let f = t.facts {
                 l += "\(t.stateWord), \(f.place.rawValue), session \(w.sessionId?.prefix(8) ?? "?")"
@@ -239,6 +262,7 @@ extension AppModel {
             else { l += "no worker" }
             lines.append(l)
         }
+        if listed.count < tasks.count { lines.append(DirectorRedLines.otherTasks(tasks.count - listed.count)) }
         lines.append("Hearing back: SendMessage a live worker (notify_when_idle: true); its reply or the idle notice wakes you. Where messaging can't carry (a class mismatch above, or no messaging), run `duo2 director watch` under Monitor as the fallback.")
         let pending = reg.pending   // retired by DL-257; an older file may still hold some
         j["workers"] = tasks.map { t -> [String: Any] in
@@ -278,6 +302,46 @@ extension AppModel {
         return .ok(lines.joined(separator: "\n"), j)
     }
 
+    // MARK: check
+
+    /// `duo2 director check` (DL-319): a look recorded as a `Checked:` Progress line, check_by set to when
+    /// the director will look next, and a `check` line in the log. Both writes go through the note's editor
+    /// when it's open, like every director edit. `job:<id>` records a look at a scheduled job in the log alone.
+    func directorCheck(_ p: Fixture.Project, folder: URL, inv: Invocation, director: String,
+                       log: (String, String?, String?, String?, String?) -> Void) -> Reply {
+        guard let target = inv[0] else { return .fail("usage: \(ActionID.directorCheck.action.usage)") }
+        let evidence = inv.positional.dropFirst().joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !evidence.isEmpty else { return .fail(DirectorCheck.emptyRefusal) }
+        let now = Date()
+        var next: CheckBy.NextLook?
+        if let n = inv.flags["next"] {
+            do { next = try CheckBy.parseNext(n, now: now) } catch { return .fail("\(error)") }
+        }
+        let routine: Bool? = inv.has("routine") ? true : nil
+        func record(_ task: String) {
+            DirectorLog.append(DirectorEvent(at: Self.isoNow(), director: director, event: "check", task: task, detail: DirectorCheck.logDetail(evidence), routine: routine), project: folder)
+        }
+        if let job = DirectorCheck.jobID(target) {
+            guard !job.isEmpty else { return .fail("usage: \(ActionID.directorCheck.action.usage)") }
+            record("job:\(job)")
+            return .ok(DirectorCheck.output("job:\(job)", nextLook: nil) + (next == nil ? "" : " (--next doesn't apply to a job: its schedule is its next look.)"), ["task": "job:\(job)"])
+        }
+        guard let hit = findTask(target, project: p.name) else { return .fail("no task '\(target)' in \(p.name)") }
+        let text = (try? String(contentsOf: folder.appending(path: hit.path), encoding: .utf8)) ?? ""
+        let by = DirectorNotes.directedBy(text)
+        guard by == director else {
+            log("refused", hit.path, nil, nil, by.map { "directed by another director (\($0))" } ?? "not a directed task")
+            return .fail(by.map { "\(hit.title) is directed by \($0), not you." } ?? "\(hit.title) has no directed_by:, so it's the user's: you can't record a check on it (DL-200).")
+        }
+        let checkBy = DirectorCheck.checkBy(next: next, status: TaskNotes.parse(text, path: hit.path).status, now: now)
+        _ = editTaskNote(p.name, hit.path, .appendLine(section: "Progress", line: DirectorNotes.progressLine(DirectorCheck.progressText(evidence: evidence, routine: routine == true), date: now)))
+        _ = editTaskNote(p.name, hit.path, .setKey("check_by", checkBy.map(CheckBy.format)))
+        record(hit.path)
+        var json: [String: Any] = ["task": hit.path]
+        if let checkBy { json["checkBy"] = CheckBy.format(checkBy) }
+        return .ok(DirectorCheck.output(hit.path, nextLook: checkBy), json)
+    }
+
     // MARK: start
 
     /// `adoptAllowed`: the user said yes in Duo to what `adoptQuestion` asked.
@@ -286,6 +350,10 @@ extension AppModel {
         let fm = FileManager.default
         let theirs = "Ask them; with --adopt, Duo asks them itself and goes ahead only if they allow it."
         // Refusals that write nothing come first.
+        var next: CheckBy.NextLook?
+        if let n = inv.flags["next"] {
+            do { next = try CheckBy.parseNext(n, now: Date()) } catch { return .fail("\(error)") }
+        }
         if let w = inv.flags["worker"] {
             if w == caps.sessionId { return .fail("that's you: a director isn't its own worker") }
             guard let s = findSession(w, in: nil), let id = s.sessionId else { return .fail("no session '\(w)'") }
@@ -335,12 +403,18 @@ extension AppModel {
             if let d = inv.flags["done-when"] { _ = editTaskNote(p.name, path, .setKey("done_when", TaskNotes.quoted(d))) }
         }
         refreshLive()
+        /// check_by for a task just started: --next, else two hours on (`--next none` sets none). Says what it set.
+        func setCheckBy() -> String {
+            let by = DirectorCheck.startCheckBy(next: next, now: Date())
+            _ = editTaskNote(p.name, path, .setKey("check_by", by.map(CheckBy.format)))
+            return by.map { "check_by is \(CheckBy.display($0)): look by then (`duo2 director check`)." } ?? "No check_by set."
+        }
         if inv.has("no-worker"), !inv.has("suggest") {
             // Organising work the director does itself (DL-208): a task, no worker, no slot.
             if !made { _ = editTaskNote(p.name, path, .setKey("status", "in-progress")) }
             _ = editTaskNote(p.name, path, .appendLine(section: "Progress", line: DirectorNotes.progressLine("Taken by \(director) itself (organising work).")))
             log("start", path, nil, nil, "no worker")
-            return .ok("\(path) is yours to do yourself (no worker), directed by \(director). Propose the plan, then act on the user's yes.", ["task": path])
+            return .ok("\(path) is yours to do yourself (no worker), directed by \(director). Propose the plan, then act on the user's yes. \(setCheckBy())", ["task": path])
         }
         if inv.has("suggest") {
             log("start", path, nil, nil, "suggested")
@@ -374,7 +448,7 @@ extension AppModel {
             inProgress()
             _ = editTaskNote(p.name, path, .appendLine(section: "Progress", line: DirectorNotes.progressLine("Worker \(name) to start in the background.")))
             log("start", path, nil, nil, "background, as \(name)")
-            return .ok("Run this; Duo links the worker by its name, \(name), as soon as it starts (no link step):\n  \(cmd)",
+            return .ok("Run this; Duo links the worker by its name, \(name), as soon as it starts (no link step):\n  \(cmd)\n\(setCheckBy())",
                        ["task": path, "command": cmd, "name": name])
         } else {
             guard let id = newSession(in: p.name, prompt: Director.workerPrompt(note: folder.appending(path: path).path, director: director), provenance: "directed-by:\(director)") else {
@@ -385,8 +459,9 @@ extension AppModel {
         recordWorker(sid, task: path, project: p.name, folder: folder, adopted: adopted, how: how)
         inProgress()
         log("start", path, sid, nil, how)
+        let checkBy = setCheckBy()
         refreshLive()
-        return .ok("\(path): worker \(sid) \(how), directed by \(director). Hear back by SendMessage and idle notices (`duo2 director watch` under Monitor where messaging can't carry).",
+        return .ok("\(path): worker \(sid) \(how), directed by \(director). Hear back by SendMessage and idle notices (`duo2 director watch` under Monitor where messaging can't carry). \(checkBy)",
                    ["task": path, "worker": sid, "director": director])
     }
 

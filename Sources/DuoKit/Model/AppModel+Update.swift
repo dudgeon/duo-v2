@@ -279,6 +279,6 @@ extension AppModel {
             FileHandle.standardError.write(Data("question: \(q.title) | \(q.paragraphs.joined(separator: " / ")) | \(buttons)\n".utf8))
             return
         }
-        SheetCenter.shared.ask(q)
+        SheetCenter.shared.ask(from: self, q)
     }
 }

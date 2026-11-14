@@ -1,0 +1,40 @@
+
+
+⏺ Hello from the mock.
+
+✻ Baked for 0s · done 6:14 PM
+
+❯ write A
+
+⏺ Write(a.txt)
+  ⎿  Wrote 1 line to a.txt
+      1 A
+
+⏺ Done.
+
+✻ Worked for 0s · done 6:15 PM
+
+❯ write B
+
+⏺ Write(b.txt)
+  ⎿  Wrote 1 line to b.txt
+      1 B
+
+⏺ Done.
+
+✻ Brewed for 0s · done 6:15 PM
+▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔ ● high · /effort ▔
+   Rewind
+
+   Restore the code and/or conversation to the point before…
+
+     ↑ 1 more above
+     write A
+     a.txt +2
+
+   ❯ write B
+     b.txt +2
+
+     ↓ 1 more below
+
+   Enter to continue · Esc to cancel

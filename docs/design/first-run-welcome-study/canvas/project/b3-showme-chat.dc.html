@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>B3 Show me on the mode pill</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.tb{height:38px;display:flex;align-items:center;gap:14px;padding:0 14px;background:#F3F4F6;border-bottom:1px solid #C9CDD3;font-size:13px;white-space:nowrap;flex:none}
+.dots{display:flex;gap:8px;margin-right:6px}
+.dots i{width:12px;height:12px;border-radius:50%;background:#C9CDD3;display:block}
+.lab{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5B636D}
+.row{display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;margin:0 8px;border-radius:6px;font-size:13px;white-space:nowrap}
+.btn{border:1px solid #8B939C;border-radius:6px;padding:4px 10px;font-size:12px;line-height:16px;background:#FFFFFF;font-family:inherit;color:#1F2328;white-space:nowrap}
+.strip{display:flex;align-items:stretch;gap:16px;height:30px;flex:none;padding:0 10px 0 16px;background:#F3F4F6;border-bottom:1px solid #C9CDD3;font-size:12px;line-height:16px;white-space:nowrap}
+.tab{display:flex;align-items:center;gap:8px;color:#5B636D}
+.tab.on{color:#1F2328;font-weight:600;box-shadow:inset 0 -2px 0 #1F2328}
+.pill{display:flex;border:1px solid #8B939C;border-radius:6px;overflow:hidden;background:#FFFFFF;outline:2px solid #C9CDD3}
+.pill span{width:24px;height:18px;display:flex;align-items:center;justify-content:center;color:#5B636D}
+.pill .on{background:#E9ECEF;color:#1F2328}
+.you{background:#DCE6F7;border-radius:14px 14px 3px 14px;padding:8px 14px;align-self:flex-end;max-width:440px;font-size:14px;line-height:22px}
+.cc{background:#FFFFFF;border-radius:14px 14px 14px 3px;padding:12px 16px 14px;max-width:560px;font-size:14px;line-height:22px}
+.who{font-size:12px;line-height:16px;color:#5B636D}
+.pop{position:absolute;z-index:5;width:300px;background:#FFFFFF;border:1px solid #C9CDD3;border-radius:10px;box-shadow:0 12px 32px rgba(31,35,40,.22);padding:14px 16px 12px;display:flex;flex-direction:column;gap:10px;box-sizing:border-box}
+.arrow{position:absolute;width:12px;height:12px;background:#FFFFFF;border-left:1px solid #C9CDD3;border-top:1px solid #C9CDD3;transform:rotate(45deg)}
+.ph{font-size:14px;line-height:20px;font-weight:600;margin:0}
+.pl{margin:-8px 0 0;font-size:13px;line-height:20px}
+.ill{background:#F3F4F6;border-radius:6px;padding:10px;display:flex;align-items:center;gap:8px}
+.pts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+.pts li{display:flex;gap:9px;align-items:flex-start;font-size:12px;line-height:17px;color:#5B636D}
+.pts b{color:#1F2328;font-weight:600}
+.n{flex:none;width:14px;height:14px;border-radius:7px;background:#1F2328;color:#FFFFFF;font-size:9px;line-height:14px;font-weight:600;text-align:center;margin-top:1px}
+.pf{border-top:1px solid #C9CDD3;margin:2px -16px 0;padding:9px 16px 0;display:flex;justify-content:space-between;font-size:12px;line-height:16px}
+.pm{display:inline-block;font-size:11px;line-height:15px;font-weight:600;color:#FFFFFF;background:#1F2328;border-radius:4px;padding:1px 6px;margin-right:4px;vertical-align:middle}
+.ann{position:absolute;font-size:12px;line-height:17px;color:#1F2328;background:#FFF7D6;border:1px solid #D9C36A;border-radius:6px;padding:6px 9px;max-width:280px;z-index:7}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;position:relative;background:#FFFFFF;color:#1F2328;font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;display:flex;flex-direction:column;overflow:hidden">
+<div class="tb">
+<div class="dots"><i></i><i></i><i></i></div>
+<span style="color:#5B636D">▯</span>
+<span style="color:#5B636D">All projects ›</span><strong>q4-plan</strong>
+<span style="margin-left:auto;border:1px solid #C9CDD3;border-radius:6px;background:#FFFFFF;width:290px;padding:3px 10px;color:#5B636D">Search all projects ⇧⌘A</span>
+<span style="color:#5B636D">▯▯</span>
+</div>
+<div style="flex:1;display:flex;min-height:0">
+<div style="width:300px;flex:none;border-right:1px solid #C9CDD3;display:flex;flex-direction:column">
+<div style="padding:12px 16px 6px;font-size:14px;line-height:20px;font-weight:600">q4-plan</div>
+<div class="lab" style="padding:8px 16px 4px">Open · 1</div>
+<div class="row" style="background:#E9ECEF"><svg width="12" height="12" viewBox="0 0 14 12" aria-hidden="true"><path d="M2.5 2h9a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H6l-2.5 2V9h-1a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" fill="none" stroke="#1F2328" stroke-width="1.2" stroke-linejoin="round"></path></svg><span style="flex:1">Outline the Q4 plan</span><span style="color:#5B636D">at prompt</span></div>
+<div class="lab" style="padding:12px 16px 4px">Tasks</div>
+<div class="row" style="color:#5B636D">+ New task</div>
+<div style="padding:12px 16px"><button type="button" class="btn">+ New Claude Code session</button></div>
+<div style="margin-top:auto;border-top:2px solid #C9CDD3;padding:6px 16px 10px;display:flex;flex-direction:column;gap:2px;font-size:13px">
+<div class="lab">Files</div>
+<span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;color:#5B636D">~/work/q4-plan</span>
+<span>_PROJECT.md</span><span>plan-outline.md</span>
+</div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;background:#F3F4F6;min-width:0;position:relative">
+<div class="strip">
+<span class="tab on">Outline the Q4 plan <span class="pill"><span><svg width="14" height="12" viewBox="0 0 14 12" aria-hidden="true"><path d="M2 3l3 3-3 3M7 9.5h5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class="on"><svg width="14" height="12" viewBox="0 0 14 12" aria-hidden="true"><path d="M2.5 2h9a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H6l-2.5 2V9h-1a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"></path></svg></span></span></span>
+<span class="tab">+</span>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;padding:18px 24px">
+<div class="who" style="align-self:flex-end">You · 10:12</div>
+<div class="you">Outline the Q4 plan from last year’s.</div>
+<div class="who">Claude · 10:13</div>
+<div class="cc">Saved an outline to <span style="text-decoration:underline">plan-outline.md</span>. Six sections, the same order as last year, with the new hiring section after budget.</div>
+</div>
+<div style="margin:0 24px 18px;background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;height:56px;padding:10px 12px;font-size:14px;color:#5B636D;box-sizing:border-box">Reply to Claude</div>
+
+<div class="pop" style="left:20px;top:40px" role="dialog" aria-label="Chat and Terminal">
+<h2 class="ph">Chat and Terminal</h2>
+<p class="pl">Two views of the same Claude session.</p>
+<div class="ill" aria-hidden="true">
+<div style="flex:1;height:70px;background:#15171B;border-radius:5px;padding:7px 8px;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:8.5px;line-height:12px;color:#9AA1AB;white-space:pre;overflow:hidden;position:relative">&gt; Outline the Q4…
+⏺ Saved an outline
+  to plan-outline.md
+<span style="color:#E6E8EB">&gt;</span><span class="n" style="position:absolute;right:4px;top:4px">2</span></div>
+<svg width="18" height="14" viewBox="0 0 18 14" aria-hidden="true"><path d="M2 4.5h13l-3-3M16 9.5H3l3 3" fill="none" stroke="#5B636D" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<div style="flex:1;height:70px;background:#F3F4F6;border:1px solid #C9CDD3;border-radius:5px;padding:6px;display:flex;flex-direction:column;gap:4px;overflow:hidden;position:relative;box-sizing:border-box">
+<div style="align-self:flex-end;background:#DCE6F7;border-radius:7px 7px 2px 7px;font-size:8.5px;line-height:11px;padding:3px 6px">Outline the Q4…</div>
+<div style="background:#FFFFFF;border-radius:7px 7px 7px 2px;font-size:8.5px;line-height:11px;padding:3px 6px">Saved an outline to <span style="text-decoration:underline">plan-outline.md</span>.</div>
+<span class="n" style="position:absolute;left:4px;bottom:4px">1</span>
+</div>
+</div>
+<ul class="pts">
+<li><span class="n">1</span><span><b>Chat</b> shows replies formatted, and file names as links that open on the right.</span></li>
+<li><span class="n">2</span><span><b>Terminal</b> is Claude Code’s own screen, for anything chat can’t show.</span></li>
+<li><span class="n">3</span><span><b>Switch any time.</b> Nothing is sent to the session; Duo falls back to Terminal when chat can’t read the screen, and says why.</span></li>
+</ul>
+<div class="pf"><span>Learn more</span><span style="color:#5B636D">Don’t show again · esc</span></div>
+<div class="arrow" style="left:150px;top:-7px"></div>
+</div>
+</div>
+<div style="width:460px;flex:none;border-left:1px solid #C9CDD3;display:flex;flex-direction:column">
+<div class="strip" style="background:#FFFFFF"><span class="tab on">Project</span><span class="tab">plan-outline.md</span></div>
+<div style="padding:16px;display:flex;flex-direction:column;gap:8px;font-size:13px">
+<div style="font-size:20px;line-height:28px;font-weight:600">Q4 plan</div>
+<span style="color:#5B636D">goal: Q4 plan signed off by staff</span>
+</div>
+</div>
+</div>
+<div class="ann" style="left:640px;top:120px"><span class="pm">P</span> Show me on the card's step 2 takes you into the project you last used, selects a Claude tab, and opens the built Chat and Terminal explainer on its pill (as Help › Explain Chat and Terminal does). With no session yet, it starts one first.</div>
+<div class="ann" style="left:640px;top:250px"><span class="pm">P</span> The picture (Q-523, Q-536): DL-172's chat study picture, a dark terminal and the same turn as chat bubbles, with numbered marks 1 and 2 tied to the first two points. Words are the built ones, unchanged.</div>
+<div class="ann" style="left:640px;top:370px"><span class="pm">P</span> Show me never moves anything the user didn't ask for: from All projects it is the same as a click into the project, then the explainer. Esc returns to where you were.</div>
+<div class="ann" style="left:16px;top:780px;max-width:560px">Context, not new: the project window, the light strip's tab with the Terminal | Chat pill (DL-253), the sidebar (DL-217), the right pane, as built.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

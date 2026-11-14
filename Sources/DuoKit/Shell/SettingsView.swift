@@ -85,7 +85,7 @@ public struct SettingsView: View {
                     row("Appearance", value: Picker("", selection: Binding(get: { AppearanceSetting.current },
                                                                            set: { do { try AppearanceSetting.set($0) } catch { AppearanceSetting.report(error) }; info.revision += 1 })) {
                         ForEach(AppearanceSetting.allCases, id: \.self) { Text($0.label).tag($0) }
-                    }.labelsHidden().fixedSize(), sub: AppearanceSetting.current == .classic ? "Classic: legacy Duo's warm paper look. Always light." : "Light or dark, as macOS is set. Light and Dark keep Duo one way whatever macOS does.") { EmptyView() }
+                    }.labelsHidden().fixedSize(), sub: AppearanceSetting.current == .classic ? "Classic: legacy Duo's warm paper look. Always light. Window colours are off while Classic is on. Each window gets its own back when you choose another appearance." : "Light or dark, as macOS is set. Light and Dark keep Duo one way whatever macOS does.") { EmptyView() }
                     ruleLine
                     row("Explanations", value: Text(state.dismissedExplainers.isEmpty ? "None dismissed" : "\(state.dismissedExplainers.count) dismissed"),
                         sub: "Short pictures that explain a feature after a long hover. Don’t show again hides one.") {
@@ -93,7 +93,16 @@ public struct SettingsView: View {
                             .disabled(state.dismissedExplainers.isEmpty)
                     }
                 }
-                group("Claude Code") { claudeRow(state) }
+                group("Claude Code") {
+                    claudeRow(state)
+                    ruleLine
+                    // DL-339 (Q-516): a stand-in row, not drawn (Q-524). `duo2 settings model`.
+                    row("Model for sessions", value: Picker("", selection: Binding(get: { ModelSetting.saved ?? "default" },
+                                                                                  set: { v in DuoState.update { $0.sessionModel = v == "default" ? nil : v }; info.revision += 1 })) {
+                        Text("Claude’s default").tag("default")
+                        ForEach(ModelSetting.aliases, id: \.self) { Text(ModelSetting.label($0)).tag($0) }
+                    }.labelsHidden().fixedSize(), sub: ModelSetting.help) { EmptyView() }
+                }
                 group("Home") {
                     if let root = model.liveRoot {
                         let ps = model.fixture.projects.filter { !$0.isFolderOnly && model.isInHome($0.name) && $0.isHome != true }
@@ -117,6 +126,15 @@ public struct SettingsView: View {
                         Text("Terminal").tag(HomeChatDefault.terminal)
                         Text("The mode used last").tag(HomeChatDefault.last)
                     }.labelsHidden().fixedSize(), sub: "New Home sessions, the one Duo starts at launch too. Each keeps its own once switched.") { EmptyView() }
+                    // DL-339 (Q-510): the same for project sessions; a stand-in row beside Home's (Q-522).
+                    // `duo2 session chat --default`.
+                    DuoColor.rule.frame(height: DuoMetric.borderHairline)
+                    row("New sessions open in", value: Picker("", selection: Binding(get: { model.chats.prefs.fixedDefault },
+                                                                                      set: { model.chats.setDefault($0) })) {
+                        Text("Chat").tag(ChatViewMode?.some(.chat))
+                        Text("Terminal").tag(ChatViewMode?.some(.terminal))
+                        Text("The mode used last").tag(ChatViewMode?.none)
+                    }.labelsHidden().fixedSize(), sub: "Project sessions. Chat shows replies formatted, with file names as links; Terminal is Claude Code's own screen. Each session keeps its own once switched.") { EmptyView() }
                 }
                 // DL-146 (templates-handoff A4, 1): the templates new projects and tasks are made from.
                 if model.homeFolder != nil {

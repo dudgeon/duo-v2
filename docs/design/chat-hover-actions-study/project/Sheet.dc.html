@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Duo sheet</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.sh{box-sizing:border-box;background:#F3F4F6;border:1px solid #C9CDD3;border-radius:10px;box-shadow:0 8px 24px rgba(31,35,40,.18);padding:18px 20px 16px;display:flex;flex-direction:column;gap:10px;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;color:#1F2328}
+.sh .ti{font-size:14px;line-height:20px;font-weight:600}
+.sh .tx{font-size:13px;line-height:20px}
+.sh .qt{background:#DCE6F7;border-radius:10px 10px 3px 10px;padding:6px 12px;font-size:13px;line-height:20px;align-self:flex-start;max-width:100%}
+.sh .op{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:20px}
+.sh .op .rd{flex:none;width:14px;height:14px;box-sizing:border-box;border:1px solid #8B939C;border-radius:7px;background:#FFFFFF;margin-top:3px;display:flex;align-items:center;justify-content:center}
+.sh .op .rd.on{border:4px solid #1F2328}
+.sh .op .sub{color:#5B636D;font-size:12px;line-height:16px}
+.sh .box{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:6px 10px;font:400 12px/19px 'SF Mono',ui-monospace,Menlo,monospace;color:#1F2328}
+.sh .nt{font-size:12px;line-height:16px;color:#5B636D}
+.sh .bt{display:flex;justify-content:flex-end;gap:6px;margin-top:4px}
+.sh .bt button{font:400 12px/16px -apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:#1F2328;background:#FFFFFF;border:1px solid #8B939C;border-radius:6px;height:26px;padding:0 12px;white-space:nowrap}
+.sh .bt button.def{border-color:#1F2328;font-weight:600}
+</style>
+</helmet>
+<div class="sh" style="width: {{w}}px">
+<div class="ti">{{s.title}}</div>
+<sc-if value="{{hasQuote}}"><div class="qt">{{s.quote}}</div></sc-if>
+<sc-if value="{{hasText}}"><div class="tx">{{s.text}}</div></sc-if>
+<sc-for list="{{opts}}" as="o" hint-placeholder-count="2">
+<div class="op"><span class="{{o.cls}}"></span><div style="display: flex; flex-direction: column"><span>{{o.label}}</span><sc-if value="{{o.hasSub}}"><span class="sub">{{o.sub}}</span></sc-if></div></div>
+</sc-for>
+<sc-if value="{{hasBox}}"><div class="box" style="white-space: pre-line">{{s.box}}</div></sc-if>
+<sc-if value="{{hasNote}}"><div class="nt">{{s.note}}</div></sc-if>
+<div class="bt"><sc-for list="{{btns}}" as="b" hint-placeholder-count="2"><button type="button" class="{{b.cls}}">{{b.label}}</button></sc-for></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"sheet":{"editor":null},"$preview":{"width":480,"height":380}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const demo = { w: 480, title: 'Rewind to before this message?', quote: 'Compare the two refund flows in a table, with a short recommendation.', text: 'This message and the 3 turns after it leave the conversation. The message comes back to your composer to change and send.', options: [ { label: 'Conversation only', sub: 'Files stay as they are now.', on: true }, { label: 'Conversation and files', sub: 'Claude’s changes since then are undone in 2 files.' } ], box: 'docs/refunds/flows.md\ndocs/refunds/limits.md', note: 'Changes made by commands Claude ran, or by you, aren’t undone. Other sessions in this folder lose their later changes to these files.', buttons: [ { label: 'Cancel' }, { label: 'Rewind', def: true } ] };
+    const s = this.props.sheet || demo;
+    return {
+      w: s.w || 480, s,
+      hasQuote: !!s.quote, hasText: !!s.text, hasBox: !!s.box, hasNote: !!s.note,
+      opts: (s.options || []).map((o) => ({ label: o.label, sub: o.sub || '', hasSub: !!o.sub, cls: 'rd' + (o.on ? ' on' : '') })),
+      btns: (s.buttons || []).map((b) => ({ label: b.label, cls: b.def ? 'def' : '' }))
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -62,7 +62,7 @@ extension AppModel {
             FileHandle.standardError.write(Data("confirm: \(q.title) | Convert\n".utf8))
             return q.choices.last!.action()
         }
-        SheetCenter.shared.ask(q)
+        SheetCenter.shared.ask(from: self, q)
     }
 
     /// "Its 12 tracked changes come over as suggestions and its 4 comments as threads. Page layout, columns and text
@@ -130,7 +130,7 @@ extension AppModel {
             FileHandle.standardError.write(Data("confirm: \(q.title) | Convert as \(suggest)\n".utf8))
             return q.choices.last!.action()
         }
-        SheetCenter.shared.ask(q)
+        SheetCenter.shared.ask(from: self, q)
     }
 
     /// "4m", "1h", "3d" (the README's wait times).

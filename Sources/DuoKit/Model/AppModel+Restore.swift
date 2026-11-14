@@ -12,8 +12,10 @@ public struct RestoreState: Codable, Equatable, Sendable {
     public var root: String?
     /// The project on screen, by folder; nil at All projects.
     public var project: String?
-    public var leftCollapsedAllProjects = false
     public var leftCollapsedProject = false
+    /// Old files carry All projects' sidebar state; All projects has no sidebar now (DL-336), so they decode and are ignored.
+    public var leftCollapsedAllProjects: Bool? = nil
+    public var leftTouchedAllProjects: Bool? = nil
     /// The right pane hidden (DL-129); absent in files from before it.
     public var rightCollapsedAllProjects: Bool? = nil
     public var rightCollapsedProject: Bool? = nil
@@ -63,7 +65,6 @@ extension AppModel {
     public func currentRestoreState() -> RestoreState {
         var s = RestoreState()
         s.root = liveRoot?.path
-        s.leftCollapsedAllProjects = leftCollapsedAllProjects
         s.leftCollapsedProject = leftCollapsedProject
         s.rightCollapsedAllProjects = rightCollapsedAllProjects
         s.rightCollapsedProject = rightCollapsedProject
@@ -73,7 +74,7 @@ extension AppModel {
         var byProject: [String: [String]] = [:]
         let parkedNow = parkedTabs.filter { terminals.existing($0) == nil }
         for key in terminals.all.filter({ $0.isLiveClaude && !$0.exited }).map(\.key) + parkedNow.sorted() {
-            guard let session = fixture.sessions.first(where: { $0.tabKey == key }), let id = session.sessionId,
+            guard let session = session(tabKey: key), let id = session.sessionId,
                   session.project != fixture.home?.name else { continue }
             byProject[session.project, default: []].append(id)
         }
@@ -150,7 +151,6 @@ extension AppModel {
             }
         }
         if let h = s.homeTab, let home = fixture.home?.name, fixture.sessions(inProject: home).contains(where: { $0.tabKey == h }) { homeTab = h }
-        leftCollapsedAllProjects = s.leftCollapsedAllProjects
         leftCollapsedProject = s.leftCollapsedProject
         rightCollapsedAllProjects = s.rightCollapsedAllProjects ?? false
         rightCollapsedProject = s.rightCollapsedProject ?? false

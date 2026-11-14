@@ -1,0 +1,40 @@
+▝▜██████▀  claude-haiku-5-5 · API Usage Billing
+ ▝▝   ▝▝   ~/.claude/jobs/1548e976/tmp/run284/ws
+
+
+⚠ Both profile and ANTHROPIC_API_KEY set · auth may not work as expected
+  · to use profile: Unset the ANTHROPIC_API_KEY environment variable, or claude /logout then say "No" to the
+  API key approval before login.
+  · to use ANTHROPIC_API_KEY: Run `ant auth logout`, or remove the active profile under
+  ~/.config/anthropic/configs/.
+
+❯ hello
+
+⏺ Hello from the mock.
+
+✻ Baked for 0s · done 6:14 PM
+
+❯ write A
+
+⏺ Write(a.txt)
+  ⎿  Wrote 1 line to a.txt
+      1 A
+
+⏺ Done.
+
+✻ Worked for 0s · done 6:15 PM
+
+❯ write B
+
+⏺ Write(b.txt)
+  ⎿  Wrote 1 line to b.txt
+      1 B
+
+⏺ Done.
+
+✻ Brewed for 0s · done 6:15 PM
+                                                                                            ● high · /effort
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⏵⏵ accept edits on (shift+tab to cycle) · ← for agents

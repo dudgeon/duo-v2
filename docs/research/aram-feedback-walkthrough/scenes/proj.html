@@ -1,0 +1,31 @@
+<style>
+#note { left: 24px; top: 36px; width: 592px; }
+#tree { left: 24px; top: 108px; width: 250px; height: 200px; box-sizing: border-box; line-height: 28px; }
+#tree .mono { display: block; font-size: 14px; line-height: 28px; white-space: pre; border-radius: 5px; padding: 0 6px; transition: background-color .5s, color .5s; }
+#pf { color: #1a7f37; font-weight: 600; }
+[data-state~="belongs"] #fold { background: #e6f4ea; }
+[data-state~="belongs"] #sess { background: #1f2328; color: #ffffff; }
+#w { left: 294px; top: 108px; width: 322px; height: 200px; }
+#w .tb { font-weight: 400; }
+#crumb { font-weight: 600; border-radius: 4px; padding: 1px 4px; }
+#w .lp { width: 62%; }
+#nsb { border: 1px solid #8b939c; border-radius: 6px; font-size: 13px; line-height: 20px; padding: 2px 8px; margin-top: auto; white-space: nowrap; align-self: flex-start; }
+#second { left: 24px; top: 330px; }
+</style>
+<div class="card" id="note" data-in="up" data-f><b>Aram, a day later:</b> "New Session assumes I'm in a project. But what project? How is a project defined?"</div>
+<div class="card" id="tree" data-in="left" data-f>
+  <span class="mono">~/work/</span>
+  <span class="mono" id="fold" data-f>  checkout/</span>
+  <span class="mono" id="pf" data-f>    _PROJECT.md</span>
+  <span class="mono">    src/</span>
+  <span class="mono" id="sess" data-f>      ● a session</span>
+</div>
+<div class="win" id="w" data-in="right" data-f>
+  <div class="tb">All projects › <span id="crumb" data-f>checkout</span></div>
+  <div class="bd">
+    <div class="lp"><span class="row sel">Fix the cart total</span><span class="row">Refund flow</span><span class="lab" style="margin-top:6px">Files</span><span class="row">src</span>
+      <span id="nsb" data-f>+ New Claude Code session</span></div>
+    <div class="cn"><span class="b" style="width:80%"></span><span class="b" style="width:55%"></span><span class="b lit" style="width:35%"></span></div>
+  </div>
+</div>
+<div class="stamp" id="second" data-in="up" data-f>The second new user to ask · ENH-146</div>

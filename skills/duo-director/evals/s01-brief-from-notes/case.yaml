@@ -20,11 +20,11 @@ graders:
   - name: request-verbatim
     type: regex
     target: trace
-    pattern: "## Request\\\\n\\\\n[^\\\"]*Draft a one-page brief from the three notes in notes/"
+    pattern: "(## Request\\\\n\\\\n[^\\\"]*|--request [^a-zA-Z]{0,4})Draft a one-page brief from the three notes in notes/"
   - name: directed-by
     type: regex
     target: trace
-    pattern: "directed_by: director-"
+    pattern: "directed_by: director-|duo2 director start [^`\\\\n]*--title"
   - name: no-worktree
     type: regex
     target: trace

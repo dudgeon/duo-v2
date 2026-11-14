@@ -11,6 +11,15 @@ extension AppModel {
         docReviewVerb(Invocation([on ? "on" : "off"]), ControlRequest(token: "", command: "doc review", args: []), { _ in })
     }
 
+    /// Esc, or a click at `click` (window content coordinates, top-left origin), while the formatting bar's mode menu is open:
+    /// closes it when a Mac menu would (Q-458 closed, F-571). Returns whether it closed.
+    @discardableResult public func dismissReviewMenu(escape: Bool, click: CGPoint? = nil) -> Bool {
+        guard reviewMenu != nil else { return false }
+        guard FormatBarLogic.dismisses(escape: escape, click: click, menu: formatBarFrames["modeMenu"] ?? .zero, button: formatBarFrames["mode"] ?? .zero) else { return false }
+        reviewMenu = nil
+        return true
+    }
+
     /// A change to the markup mode or Show Closed Comments of the Markdown document showing, kept while Duo runs.
     public func setMarkdownMarkup(mode: String? = nil, showClosed: Bool? = nil) {
         guard let e = editorIfLoaded, let url = e.url else { return }

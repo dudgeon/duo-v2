@@ -1,0 +1,33 @@
+<style>
+#primer { left: 24px; top: 24px; width: 300px; height: 300px; box-sizing: border-box; }
+#primer .mono { display: block; color: #5b636d; margin-top: 6px; }
+#sent, #more { display: block; margin-top: 8px; border-radius: 6px; padding: 5px 7px; font-size: 13px; line-height: 18px; max-height: 0; overflow: hidden; padding-top: 0; padding-bottom: 0; opacity: 0; transition: max-height .6s, opacity .5s, padding .6s; }
+#sent { background: #e6f4ea; color: #1a7f37; }
+#more { background: #fdeee4; color: #c2410c; }
+[data-state~="one"] #sent, [data-state~="full"] #sent { max-height: 120px; opacity: 1; padding: 5px 7px; }
+[data-state~="full"] #more { max-height: 120px; opacity: 1; padding: 5px 7px; }
+#w { left: 344px; top: 24px; width: 272px; height: 300px; }
+#w .cn { background: #f3f4f6; padding: 10px 8px; }
+#w .cl { background: #ffffff; border: 1px solid #c9cdd3; border-radius: 8px; padding: 6px 8px; font-size: 13px; line-height: 19px; }
+#w .lk { font-family: ui-monospace, "SF Mono", Menlo, monospace; transition: color .4s; }
+[data-state~="one"] #w .lk, [data-state~="duo"] #w .lk, [data-state~="full"] #w .lk { color: #0969da; text-decoration: underline; }
+#w .rp { width: 0; padding: 10px 0; opacity: 0; }
+[data-state~="one"] #w .rp { width: 44%; padding: 10px 8px; opacity: 1; }
+#why { left: 24px; top: 340px; }
+</style>
+<div class="card" id="primer" data-in="up" data-f>
+  <b>The primer</b>
+  <span class="mono">You are running inside Duo…</span>
+  <span class="mono">duo2 status, sessions, doc open…</span>
+  <span class="mono">Edit open documents through Duo.</span>
+  <span id="sent">+ File names you write are links. Open a finished document with duo2 doc open.</span>
+  <span id="more">+ In chat, write… In the terminal, write… (sent again when the view changes)</span>
+</div>
+<div class="win" id="w" data-in="right" data-f>
+  <div class="tb">notes-app</div>
+  <div class="bd">
+    <div class="cn"><span class="cl">I wrote the plan in <span class="lk">docs/plan.md</span>.</span></div>
+    <div class="rp" id="rp" data-f><span class="row" style="font-weight:600">plan.md</span><span class="b" style="width:85%"></span><span class="b" style="width:60%"></span></div>
+  </div>
+</div>
+<div class="s" id="why" data-in="up" data-f>Rebuilt with each version. Touches none of your files.</div>

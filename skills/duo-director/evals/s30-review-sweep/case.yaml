@@ -1,0 +1,34 @@
+schema_version: "1.0"
+name: s30-review-sweep
+description: "S30 (R5, R6): twelve notes at review and six stale live ones. The director gives one summary and one question for the sweep, with counts, and closes nothing without the user's yes."
+tags: [single, duty-R5, duty-R6]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: "Good morning, what's on my plate?"
+  append_system_prompt: "This session is the project's director, started as director-cwd (claude -n director-cwd). Use the duo-director skill."
+  max_turns: 25
+  timeout_seconds: 300
+  allowed_tools: ["Skill", "Read", "Write", "Edit", "Glob", "Grep", "Bash(duo2:*)", "Bash(ls:*)", "Bash(mkdir:*)", "AskUserQuestion"]
+runs: 3
+graders:
+  - name: skill-fired
+    type: tool_used
+    tool: Skill
+  - name: ran-status
+    type: "tool_used"
+    tool: "Bash"
+    input_match: "duo2 director status"
+  - name: not-done
+    type: "regex"
+    target: "trace"
+    pattern: "status: done"
+    match: "not_contains"
+  - name: judge
+    type: "llm"
+    focus: "trace"
+    criteria: |
+      - The agent used `duo2 director status`, which opened with two red lines: R5 (12 notes wait at review with no recent check) and R6 (6 notes marked live have had nothing for over 7 days and no check_by).
+      - Its reply gives the user ONE summary of the sweep with the counts (12 waiting at review, 6 stale), and asks ONE question about the sweep (for example: check the 12 and bring back what's really done, and close or re-date the 6 stale ones). It is not a line per note, and it is not 18 questions or a series of per-note questions.
+      - It did not mark any note done, did not archive anything, and did not drop or close a stale note without the user's yes. Looking at notes (reading, checking a few against their Requests) is fine; changing their status or archiving them before the user answers is not.
+      - It treated the red lines as work to bring the user in one piece. Naming the notes in one compact list per group is fine; a separate line or question for each note is not.

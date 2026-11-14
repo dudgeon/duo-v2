@@ -1,0 +1,26 @@
+<style>
+#wm { left: 60px; top: 40px; width: 270px; }
+#sys { left: 360px; top: 40px; width: 220px; }
+.u { display: inline-block; max-width: 12px; overflow: hidden; vertical-align: bottom; transition: max-width .5s, opacity .4s; color: #c2410c; font-weight: 600; }
+[data-state~="us"] .u { max-width: 0; opacity: 0; }
+#alias { left: 60px; top: 250px; }
+#both { left: 60px; top: 250px; }
+[data-state~="us"] #alias, [data-state~="loc"] #both { --o: 1; }
+#six { left: 60px; top: 320px; }
+</style>
+<div class="menu" id="wm" data-in="up" data-f>
+  <div class="mt">Window</div>
+  <div class="mi">Minimize</div>
+  <div class="mi">Zoom</div>
+  <hr>
+  <div class="mi hl" id="mi-c" data-f><div>Window Colo<span class="u">u</span>r</div><span>▸</span></div>
+  <div class="mi"><div>Colo<span class="u">u</span>r new windows automatically</div></div>
+</div>
+<div class="menu" id="sys" data-in="right" data-f>
+  <div class="mt">macOS, US English</div>
+  <div class="mi">Show Colors</div>
+  <div class="mi">Show Fonts</div>
+</div>
+<div class="chip fade" id="alias"><span class="mono">duo2 window color</span>&nbsp;· colour still works</div>
+<div class="chip fade" id="both">en-GB: Colour · en-US: Color</div>
+<div class="s" id="six" data-in="up" data-f>Six strings and one verb. The app's only use of either spelling.</div>

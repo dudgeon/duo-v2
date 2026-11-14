@@ -148,8 +148,9 @@ import SwiftUI
     }
 }
 
-/// Which feature an Explainer is for. Tasks only for now (DL-172 (4)).
-public enum ExplainerID: String, Sendable { case tasks }
+/// Which feature an Explainer is for. Tasks first (DL-172 (4)); modes, director and home are DL-339's (ENH-345),
+/// words only: their pictures aren't drawn, so they show none (Q-523).
+public enum ExplainerID: String, Sendable { case tasks, modes, director, home }
 
 /// What an Explainer is made of: the feature's noun, a line, a picture, two or three points.
 struct ExplainerContent {
@@ -168,7 +169,33 @@ struct ExplainerContent {
         points: [.init(lead: "A to-do.", rest: "Check it off when it’s done."),
                  .init(lead: "Detail and context,", rest: "if you want them. Claude reads them."),
                  .init(lead: "Files and Claude Code sessions,", rest: "attached, so the work stays together.")],
-        learnMore: nil)
+        learnMore: DuoLinks.guidePage("tasks"))
+
+    // DL-339 (ENH-345): stand-in words on the approved component; no picture until one is drawn (Q-523).
+    static let modes = ExplainerContent(
+        title: "Chat and Terminal", line: "Two views of the same Claude session.",
+        points: [.init(lead: "Chat", rest: "shows replies formatted, and file names as links that open on the right."),
+                 .init(lead: "Terminal", rest: "is Claude Code’s own screen, for anything chat can’t show."),
+                 .init(lead: "Switch any time.", rest: "Nothing is sent to the session; Duo falls back to Terminal when chat can’t read the screen, and says why.")],
+        learnMore: DuoLinks.guidePage("sessions"))
+
+    static let director = ExplainerContent(
+        title: "Director", line: "One session that runs the others.",
+        points: [.init(lead: "Say “be the director”", rest: "in a session, or run /director."),
+                 .init(lead: "It turns requests into tasks", rest: "and starts a worker session for each."),
+                 .init(lead: "It checks the work", rest: "against the request and brings you only the decisions.")],
+        learnMore: DuoLinks.guidePage("director"))
+
+    static let home = ExplainerContent(
+        title: "Home", line: "The folder that holds the projects you track.",
+        points: [.init(lead: "A project", rest: "is a folder with a _PROJECT.md."),
+                 .init(lead: "Home’s own session", rest: "sees across all of them."),
+                 .init(lead: "Duo lists every session", rest: "either way, in Home or not.")],
+        learnMore: DuoLinks.guidePage("home"))
+
+    static func content(_ id: ExplainerID) -> ExplainerContent {
+        switch id { case .tasks: tasks; case .modes: modes; case .director: director; case .home: home }
+    }
 }
 
 // MARK: - Trigger
@@ -224,10 +251,10 @@ struct ExplainerOverlay: View {
         let state = model.explainer
         ZStack(alignment: .topLeading) {
             if let id = state.open {
-                let content = ExplainerContent.tasks
+                let content = ExplainerContent.content(id)
                 GeometryReader { root in
                     placed(state: state, root: root.size) {
-                        ExplainerCard(content: content, picture: { TaskExplainerPicture() },
+                        ExplainerCard(content: content, picture: { if id == .tasks { TaskExplainerPicture() } },
                                       onDismissForGood: { state.dismissForGood(id) }, takesFocus: state.pinned)
                     }
                 }
@@ -300,7 +327,7 @@ struct ExplainerCard<Picture: View>: View {
                     Text(content.line).duoText(.body).foregroundStyle(DuoColor.text)
                 }
                 .padding(.top, 1)
-                picture().accessibilityHidden(true)   // decorative
+                picture().accessibilityHidden(true)   // decorative; none for the explainers not yet drawn
                 VStack(alignment: .leading, spacing: 7.5) {
                     ForEach(Array(content.points.enumerated()), id: \.offset) { i, p in
                         HStack(alignment: .top, spacing: 8) {

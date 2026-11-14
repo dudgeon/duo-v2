@@ -56,6 +56,9 @@ public protocol PreviewProvider: AnyObject {
     /// The provider's whole view, with its own bar (a deck's 44 bar, the HTML viewer's picker): split
     /// view hosts it as the preview side and draws no bar of its own.
     var view: NSView { get }
+    /// The split it now previews: its tab key and file, before the first `render` (a deck reads its
+    /// folder's template and pictures from here). Optional; the default does nothing.
+    func bind(path: String, file: URL, model: AppModel)
     /// Whether this provider can preview `file` (its project-relative path or `file:` key) with this frontmatter.
     static func canPreview(file: String, frontmatter: [String: String]) -> Bool
     /// Draws `text`, the editor's buffer at revision `rev` (unsaved edits included). Never writes a file.
@@ -63,6 +66,10 @@ public protocol PreviewProvider: AnyObject {
     func reveal(anchor: String, reason: RevealReason)
     /// Where the provider's events go: split view's `PreviewPolicy`.
     var emit: ((PreviewEvent) -> Void)? { get set }
+}
+
+public extension PreviewProvider {
+    func bind(path: String, file: URL, model: AppModel) {}
 }
 
 /// A provider drops a render older than its newest.
@@ -81,11 +88,23 @@ public struct RevisionGate: Sendable {
 public enum PreviewProviders {
     /// Extra tests (a deck): first match wins, before the built-in ones.
     nonisolated(unsafe) public static var extra: [(kind: PreviewKind, test: @Sendable (_ file: String, _ frontmatter: [String: String]) -> Bool)] = []
+    /// How a registered kind's provider is made: once per window, when a split first shows it.
+    nonisolated(unsafe) static var makers: [PreviewKind: @MainActor () -> PreviewProvider] = [:]
+
+    /// A provider outside split view (Duo Decks' deck) registers its kind, its test and how to make it,
+    /// once at app start. Split view then hosts `view`, pushes `render(text:rev:)` 250 ms after typing pauses
+    /// and takes the provider's events through its policy.
+    public static func register(_ kind: PreviewKind, test: @escaping @Sendable (_ file: String, _ frontmatter: [String: String]) -> Bool,
+                                make: @escaping @MainActor () -> PreviewProvider) {
+        extra.removeAll { $0.kind == kind }
+        extra.insert((kind, test), at: 0)
+        makers[kind] = make
+    }
 
     public static func kind(forFile file: String, frontmatter: [String: String] = [:]) -> PreviewKind? {
         for e in extra where e.test(file, frontmatter) { return e.kind }
         switch (file as NSString).pathExtension.lowercased() {
-        case "md", "markdown": return .markdown
+        // Markdown has no preview: it renders live in the editor (Geoff, 2026-11-01); view/edit source is being explored.
         case "html", "htm": return .html
         default: return nil
         }

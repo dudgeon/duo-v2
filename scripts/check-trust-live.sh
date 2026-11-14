@@ -6,6 +6,7 @@
 # typed, and the second `/fork` must succeed in the same session. Never touches ~/.claude.json: its own config.
 #   scripts/check-trust-live.sh <out>      APP=<Duo.app> (default build/Duo.app)   CLAUDE=<path> another claude
 set -u
+export DUO_ISOLATED=1   # every duo2 here reaches only the test instance; refuses, never the user's Duo (F-529)
 root=${0:A:h:h}
 out=${1:A}
 app=${APP:-$root/build/Duo.app}

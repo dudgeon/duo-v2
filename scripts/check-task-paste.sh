@@ -14,6 +14,7 @@
 # Captures: build/ui/task-paste-*.png.
 # Exit status is the number of failures.
 set -uo pipefail
+export DUO_ISOLATED=1   # every duo2 here reaches only the test instance; refuses, never the user's Duo (F-529)
 root="$(cd "$(dirname "$0")/.." && pwd)"
 app="${1:-$root/build/Duo.app}"
 mkdir -p "$root/build/ui"

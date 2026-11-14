@@ -106,18 +106,18 @@ s = t["size"]
 w(f"    public static let toolbarHeight: CGFloat = {num(s['toolbarHeight'])}")
 w(f"    public static let tabStripHeight: CGFloat = {num(s['tabStripHeight'])}")
 w(f"    public static let chatStripHeight: CGFloat = {num(s['chatStripHeight'])}")   # the console tab strip over chat (DL-136)
-for k in ("splitSideMin", "sidebarRail", "splitMarkWidth", "splitMarkHeight", "sourceLinesMarkWidth", "sourceLinesMarkInset"):   # split view (DL-275)
+for k in ("splitSideMin", "splitConsoleMin", "sidebarRail", "splitMarkWidth", "splitMarkHeight", "sourceLinesMarkWidth", "sourceLinesMarkInset"):   # split view (DL-275)
     w(f"    public static let {k}: CGFloat = {num(s[k])}")
 w(f"    public static let tabFade: CGFloat = {num(s['tabFade'])}")   # a scrolling tab strip's edge fade (DL-225)
 w(f"    public static let tabPeek: CGFloat = {num(s['tabPeek'])}")   # how much of the next tab shows past the selected one
 w(f"    public static let tabEdgeScroll: CGFloat = {num(s['tabEdgeScroll'])}")   # a dragged tab this near an end scrolls the strip
 w(f"    public static let tabNeedsYouDot: CGFloat = {num(s['tabNeedsYouDot'])}")   # a needs-you tab out of view, in the fade
 w(f"    public static let deckBarHeight: CGFloat = {num(s['deckBarHeight'])}")   # the PowerPoint viewer's bar (DL-125)
+w(f"    public static let formatBarHeight: CGFloat = {num(s['formatBarHeight'])}")   # the Markdown formatting bar, laid over the editor (DL-266)
 w(f"    public static let docxMenuWidth: CGFloat = {num(s['docxMenuWidth'])}")   # the Word viewer's Markup menu (docx-viewer-handoff W4)
 w(f"    public static let docxMenuTop: CGFloat = {num(s['docxMenuTop'])}")
 w(f"    public static let docxBarTrailing: CGFloat = {num(s['docxBarTrailing'])}")   # the Word viewer's bar runs close to the right edge, as the board draws it
 w(f"    public static let docxMenuRowPaddingX: CGFloat = {num(s['docxMenuRowPaddingX'])}")
-w(f"    public static let homeSessionTabsHeight: CGFloat = {num(s['homeSessionTabsHeight'])}")
 w(f"    public static let overviewFooterHeight: CGFloat = {num(s['overviewFooterHeight'])}")
 for k, v in s["row"].items():
     w(f"    public static let row{k[0].upper() + k[1:]}: CGFloat = {num(v)}")
@@ -126,7 +126,6 @@ w(f"    public static let jumpFieldWidth: CGFloat = {num(s['jumpField']['width']
 w(f"    public static let jumpFieldHeight: CGFloat = {num(s['jumpField']['height'])}")
 w(f"    public static let newProjectTileHeight: CGFloat = {num(s['newProjectTileHeight'])}")
 w(f"    public static let glyph: CGFloat = {num(s['glyph'])}")
-w(f"    public static let paneOverviewHome: CGFloat = {num(s['pane']['overview']['home'])}")
 w(f"    public static let paneOverviewActionColumn: CGFloat = {num(s['pane']['overview']['actionColumn'])}")
 w(f"    public static let paneProjectLeft: CGFloat = {num(s['pane']['project']['sessionsAndFiles'])}")
 w(f"    public static let paneProjectRight: CGFloat = {num(s['pane']['project']['right'])}")
@@ -370,6 +369,33 @@ w("    ]")
 dp = t["space"]["documentPadding"]
 w(f"    public static let documentPaddingY: CGFloat = {num(dp['vertical'])}")
 w(f"    public static let documentPaddingX: CGFloat = {num(dp['horizontal'])}")
+w("}")
+w("")
+
+# Window colours (DL-313): a window's base colour, by id, in the order new windows take them (DL-312).
+wc = t["windowColour"]
+_roles = ("ground", "pane", "chatGround", "toolOutputFill", "swatch")
+for _id in wc["order"]:
+    for _m in ("light", "dark"):
+        if set(wc["colours"][_id][_m]) != set(_roles):
+            raise SystemExit(f"windowColour.{_id}.{_m} must have exactly {_roles}")
+w("/// Window colours (DL-313, board 4a′): each overrides `ground`, `pane`, `chatGround` and `toolOutputFill` in its window")
+w("/// only; `swatch` is the toolbar's swatch. `all` is in the order new windows take them (DL-312). Classic turns them off.")
+w("public enum DuoWindowColour {")
+w("    public struct Values: Sendable, Equatable {")
+w("        public let ground: UInt32; public let pane: UInt32; public let chatGround: UInt32; public let toolOutputFill: UInt32; public let swatch: UInt32")
+w("    }")
+w("    public struct Colour: Sendable, Equatable, Identifiable {")
+w("        public let id: String; public let name: String; public let hue: Int; public let deep: Bool")
+w("        public let light: Values; public let dark: Values")
+w("    }")
+def _vals(v):
+    return "Values(" + ", ".join(f"{r}: {hex6(v[r])}" for r in _roles) + ")"
+w("    public static let all: [Colour] = [")
+for _id in wc["order"]:
+    c = wc["colours"][_id]
+    w(f'        Colour(id: "{_id}", name: "{c["name"]}", hue: {int(c["hue"])}, deep: {"true" if c["step"] == "deep" else "false"}, light: {_vals(c["light"])}, dark: {_vals(c["dark"])}),')
+w("    ]")
 w("}")
 w("")
 

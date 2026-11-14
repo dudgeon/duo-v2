@@ -15,7 +15,13 @@ extension Deck {
     /// Checks a deck against its template pack: the prototype's messages, one per problem, each
     /// naming the line and the fix. Problems are sorted by line.
     public static func check(deck: URL, packDirs: [URL], measureFit: Bool = true) throws -> Checked {
-        let parsed = parse(try String(contentsOf: deck, encoding: .utf8))
+        try check(source: try String(contentsOf: deck, encoding: .utf8), deck: deck, packDirs: packDirs, measureFit: measureFit)
+    }
+
+    /// The same check on `source`, the deck's text (an editor's unsaved buffer); `deck` says where it lives
+    /// (its pictures and packs are found from there). Reads nothing of the deck itself.
+    public static func check(source: String, deck: URL, packDirs: [URL], measureFit: Bool = true) throws -> Checked {
+        let parsed = parse(source)
         var problems = parsed.problems
         var notices: [Problem] = []
         if parsed.front.isEmpty && parsed.slides.isEmpty { return Checked(parsed: parsed, pack: nil, slides: [], problems: problems) }

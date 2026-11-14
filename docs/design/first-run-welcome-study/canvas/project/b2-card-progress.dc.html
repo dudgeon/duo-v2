@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>B2 Getting started in progress</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.lab{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5B636D}
+.btn{border:1px solid #8B939C;border-radius:6px;padding:4px 10px;font-size:12px;line-height:16px;background:#FFFFFF;font-family:inherit;color:#1F2328;white-space:nowrap}
+.gs{border:1px solid #C9CDD3;border-radius:8px;background:#FFFFFF;display:flex;gap:20px;padding:14px 16px;width:1060px;box-sizing:border-box}
+.st{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:0 8px;align-items:start;padding:7px 0;border-top:1px solid #E9ECEF}
+.box{width:14px;height:14px;border:1.5px solid #8B939C;border-radius:3px;box-sizing:border-box;margin-top:3px}
+.ck{width:14px;height:14px;border-radius:3px;background:#1F2328;margin-top:3px;display:flex;align-items:center;justify-content:center}
+.nm{font-size:13px;line-height:20px;font-weight:600}
+.done .nm{color:#5B636D;text-decoration:line-through;font-weight:400}
+.ln{font-size:13px;line-height:20px;color:#5B636D}
+.acts{display:flex;gap:6px;align-items:center;padding-top:1px}
+.pm{display:inline-block;font-size:11px;line-height:15px;font-weight:600;color:#FFFFFF;background:#1F2328;border-radius:4px;padding:1px 6px;margin-right:4px;vertical-align:middle}
+.ann{font-size:12px;line-height:17px;color:#1F2328;background:#FFF7D6;border:1px solid #D9C36A;border-radius:6px;padding:6px 9px;width:300px;box-sizing:border-box}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;box-sizing:border-box;padding:40px 48px;background:#F3F4F6;color:#1F2328;font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;display:flex;flex-direction:column;gap:22px">
+
+<div class="lab">Two of three done · at the List's width, 1100 less the padding</div>
+<div style="display:flex;gap:24px;align-items:flex-start">
+<section class="gs" aria-label="Getting started with Duo">
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:10px;padding-bottom:6px">
+<span style="font-size:14px;line-height:20px;font-weight:600">Getting started with Duo</span>
+<span style="font-size:12px;color:#5B636D">2 of 3 · all optional</span>
+<button type="button" class="btn" style="margin-left:auto">Hide</button>
+</div>
+<div class="st done"><span class="ck"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5.2 L4.2 7.3 L8 2.8" fill="none" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><div><div class="nm">Open a project, or make one</div><div class="ln">q4-plan · ~/work/q4-plan</div></div><div class="acts"></div></div>
+<div class="st done"><span class="ck"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5.2 L4.2 7.3 L8 2.8" fill="none" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><div><div class="nm">Start a session</div><div class="ln">“Outline the Q4 plan” · in Chat. Terminal is one click on its tab.</div></div><div class="acts"><button type="button" class="btn">Show me</button></div></div>
+<div class="st"><span class="box"></span><div><div class="nm">Make a task</div><div class="ln">A note for one piece of work. It gathers the sessions working on it.</div></div><div class="acts"><button type="button" class="btn">Make a task…</button><button type="button" class="btn">Show me</button></div></div>
+<div class="st"><span style="font-size:13px;color:#5B636D;line-height:20px">○</span><div><div class="nm" style="font-weight:400"><strong>Later, a director.</strong> When you run several sessions at once, one session can hand out the work, start the others and check what comes back. Ask any session to “be the director”.</div></div><div class="acts"><button type="button" class="btn">Watch the director film</button><button type="button" class="btn">Explain</button></div></div>
+</div>
+<div style="width:232px;flex:none;display:flex;flex-direction:column;gap:6px">
+<div style="color:#E6E8EB;width:232px;height:130px;border-radius:6px;background:#15171B;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px">
+<svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="16" fill="none" stroke="#E6E8EB" stroke-width="1.5"></circle><path d="M14 11 L24 17 L14 23 Z" fill="#E6E8EB"></path></svg>
+<span style="font-size:12px;line-height:16px">Watch the intro film</span>
+</div>
+<span style="font-size:12px;line-height:16px;color:#5B636D">9 min 34 s · what Duo is for</span>
+</div>
+</section>
+<div style="display:flex;flex-direction:column;gap:10px">
+<div class="ann"><span class="pm">P</span> A ticked step goes grey and struck through, and says what was done: the project and its folder, the session and the mode it opened in. Show me stays on step 2, because the mode switch is the thing people miss.</div>
+<div class="ann"><span class="pm">P</span> Make a task… opens DL-147's guided sheet (board 08b) in the project last opened; with no project yet it reads Make a project first, greyed.</div>
+</div>
+</div>
+
+<div class="lab" style="margin-top:6px">All three done</div>
+<div style="display:flex;gap:24px;align-items:flex-start">
+<section class="gs" aria-label="Getting started with Duo, done" style="flex-direction:column;gap:6px">
+<div style="display:flex;align-items:center;gap:10px">
+<span class="ck" style="margin-top:0"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5.2 L4.2 7.3 L8 2.8" fill="none" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+<span style="font-size:14px;line-height:20px;font-weight:600">That's the basics</span>
+<span class="ln">The guide has the rest: documents, Home, what needs you, getting around.</span>
+<button type="button" class="btn" style="margin-left:auto">Open the guide</button>
+<button type="button" class="btn">Done</button>
+</div>
+<div class="ln" style="padding-left:24px"><strong style="color:#1F2328;font-weight:600">Later, a director.</strong> When there's more running than you want to watch: Help › Explain › Director.</div>
+</section>
+<div class="ann"><span class="pm">P</span> Done folds it away for good. The director line stays to the end, then lives in Help.</div>
+</div>
+
+<div class="lab" style="margin-top:6px">Hidden · what's left</div>
+<div style="display:flex;gap:24px;align-items:flex-start">
+<div style="width:1060px;box-sizing:border-box;border:1px solid #C9CDD3;border-radius:6px;background:#FFFFFF;height:28px;display:flex;align-items:center;gap:8px;padding:0 10px;font-size:13px">
+<span style="color:#5B636D">Getting started hidden.</span><span style="color:#5B636D">Help › Getting Started brings it back.</span><button type="button" class="btn" style="margin-left:auto;padding:1px 8px">Undo</button>
+</div>
+<div class="ann"><span class="pm">P</span> Hide leaves DL-147's notice (board 13) for 8 s with Undo, then nothing. duo2 getting-started show | hide (DL-71).</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

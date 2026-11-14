@@ -36,26 +36,41 @@ extension AppModel {
             return true
         }
         guard splitHolding(path) == nil, let a = liveFile(path), let b = liveFile(other),
-              !FileKind.isBinary(a), !FileKind.isBinary(b), !Self.isWordViewable(path), !Self.isWordViewable(other) else { return false }
-        if !openDocuments.contains(path) { openDocument(path) }
+              Self.splittable(path, a), Self.splittable(other, b) else { return false }
+        // A PDF is one side at most, beside a text document (DL-333): the text document is the pair's source (its editor),
+        // the PDF its `with`, drawn by the viewer on the side the caller asked for.
+        let pdfs = [path, other].filter(Self.isPdfViewable)
+        guard pdfs.count < 2 else { return false }
+        let (source, with) = Self.isPdfViewable(path) ? (other, path) : (path, other)
+        if !openDocuments.contains(source) { openDocument(source) }
         // The other file's tab moves into the split (its place in the strip is the pair's).
-        if let i = openDocuments.firstIndex(of: other) { openDocuments.remove(at: i) }
+        if let i = openDocuments.firstIndex(of: with) { openDocuments.remove(at: i) }
         rightCollapsed = false
         takeRoomIfNeeded()
-        splitTabs[path] = SplitTab(source: path, kind: .document, active: .preview, with: other)
-        rightTab = path
-        selectedFile = other
-        activate(.right, focus: false)
-        focusSplitRole(.preview, in: path)
+        if pdfs.isEmpty {
+            splitTabs[source] = SplitTab(source: source, kind: .document, active: .preview, with: with)
+            rightTab = source
+            selectedFile = with
+            activate(.right, focus: false)
+            focusSplitRole(.preview, in: source)
+        } else {
+            // The PDF side is view only: the text side keeps the editor and the keyboard.
+            splitTabs[source] = SplitTab(source: source, kind: .document, swapped: Self.isPdfViewable(path), active: .source, with: with)
+            rightTab = source
+            selectedFile = source
+            activate(.right, focus: false)
+            focusSplitRole(.source, in: source)
+        }
         return true
     }
 
     /// The open tabs a tab's Open in Split View ▸ offers: documents that are text, not this one, not in a split.
     public func splitCandidates(beside path: String) -> [String] {
-        guard splitHolding(path) == nil, path.contains("."), !path.hasPrefix("web:"), liveFile(path).map({ !FileKind.isBinary($0) }) == true else { return [] }
+        guard splitHolding(path) == nil, path.contains("."), !path.hasPrefix("web:"), liveFile(path).map({ Self.splittable(path, $0) }) == true else { return [] }
+        let pdf = Self.isPdfViewable(path)
         return openDocuments.filter { o in
-            o != path && o.contains(".") && !o.hasPrefix("web:") && splitHolding(o) == nil && !Self.isWordViewable(o)
-                && liveFile(o).map { !FileKind.isBinary($0) } == true
+            o != path && o.contains(".") && !o.hasPrefix("web:") && splitHolding(o) == nil && !(pdf && Self.isPdfViewable(o))
+                && liveFile(o).map { Self.splittable(o, $0) } == true
         }
     }
 
@@ -64,8 +79,14 @@ extension AppModel {
     public func canOpenInSplitView(_ path: String) -> Bool {
         if splitHolding(path) != nil { return true }
         guard terminalsMode == .live, let b = rightTab, b != path, b.contains("."), !b.hasPrefix("web:"), splitHolding(b) == nil,
-              let f = liveFile(path), !FileKind.isBinary(f), !Self.isWordViewable(path) else { return false }
+              let f = liveFile(path), Self.splittable(path, f), !(Self.isPdfViewable(path) && Self.isPdfViewable(b)) else { return false }
         return true
+    }
+
+    /// A file that can be a side of a split: a text document, or a PDF (DL-333). Other binaries and Word documents can't.
+    static func splittable(_ path: String, _ file: URL) -> Bool {
+        if isPdfViewable(path) { return true }
+        return !FileKind.isBinary(file) && !isWordViewable(path)
     }
 
     /// Close Split View on a pair: both documents stay, as ordinary tabs side by side in the strip.
@@ -131,6 +152,6 @@ extension AppModel {
 
     /// The pair's active side is the active editor: `editor`, ⌘S, Format, review and `duo2 doc` act on it.
     func syncActiveEditor(_ t: SplitTab) {
-        if t.isDocPair { editors.active = Self.editorRef(for: t.active) }
+        if t.isDocPair { editors.active = t.with.map(Self.isPdfViewable) == true ? .main : Self.editorRef(for: t.active) }   // a PDF side has no editor (DL-333)
     }
 }

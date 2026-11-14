@@ -25,10 +25,16 @@ public enum VideoTargets {
                                              "video-s7-md-sel", "video-s7-md-composer-empty", "video-s7-md-composer-ref", "video-s7-md-composer", "video-s7-md-sent", "video-s7-md-after",
                                              "video-s7-html-pick", "video-s7-html-sent", "video-s7-html-after",
                                              "video-s7-pptx-slide3", "video-s7-pptx-pick", "video-s7-pptx-sent", "video-s7-pptx-after"]
-                                            + s9s10Screens + rvScreens + vvScreens
+                                            + s9s10Screens + rvScreens + vvScreens + mwScreens
 
     public static func apply(_ screen: String, to model: AppModel) {
+        // Every video state has a microphone connected (a fixed device, as the voice states have), so the mics in chat,
+        // the terminal and the formatting bar draw as they do for a user with a mic, not struck through by this Mac's lack
+        // of one (F-601). video-vv-nomic sets its own.
+        model.voice.deviceSource = FixedMicrophone(usable: true)
+        model.voice.hasMicrophone = { true }
         if screen.hasPrefix("video-rv-") { return applyReview(screen, model) }
+        if screen.hasPrefix("video-mw-") { return applyWindows(screen, model) }
         if screen.hasPrefix("video-vc-") || screen.hasPrefix("video-vv-") { return applyVoice(screen, model) }
         if screen == "video-s3-list" { return applyS3(model) }
         if screen == "video-s9-board" || screen == "video-s9-list" { return applyS9Home(screen, model) }

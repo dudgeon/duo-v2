@@ -7,12 +7,16 @@ import Foundation
 // menu item or click in the app isn't tied to an action here or listed in `Parity.uiOnly`.
 
 public enum ActionFamily: String, CaseIterable, Sendable {
-    case app, view, split, projects, sessions, director, files, repo, docs, review, html, slides, deck, send, search, setup
+    case app, view, window, split, projects, sessions, director, files, repo, docs, review, html, pdf, slides, deck, send, search, setup
+
+    /// The families `duo2 help`, the primer and the skill show: `deck` only while Duo Decks is on (DeckFeature, DL-307).
+    public static var shown: [ActionFamily] { allCases.filter { $0 != .deck || DeckFeature.enabled } }
 
     public var title: String {
         switch self {
         case .app: "Duo"
         case .view: "What's on screen"
+        case .window: "Windows"
         case .split: "Split view"
         case .projects: "Projects"
         case .sessions: "Sessions"
@@ -22,6 +26,7 @@ public enum ActionFamily: String, CaseIterable, Sendable {
         case .docs: "Documents"
         case .review: "Review in Markdown"
         case .html: "HTML pages"
+        case .pdf: "PDF files"
         case .slides: "PowerPoint decks"
         case .deck: "Decks (Markdown to slides)"
         case .send: "Send to Claude"
@@ -41,7 +46,10 @@ public enum ActionID: String, CaseIterable, Sendable {
     case goAll = "go all", goHome = "go home", open, peek, peekJump = "peek jump"
     case split, splitClose = "split close", splitFocus = "split focus", splitSwap = "split swap", splitUnfold = "split unfold", splitRatio = "split ratio", splitSeparate = "split separate"
     case viewSidebar = "view sidebar", viewRight = "view right", viewTab = "view tab", viewTabMove = "view tab-move", viewPane = "view pane", viewGroup = "view group", viewSelect = "view select"
-    case viewSort = "view sort", viewFilter = "view filter", viewHidden = "view hidden", viewFolder = "view folder", viewHome = "view home"
+    case viewSort = "view sort", viewFilter = "view filter", viewHidden = "view hidden", viewFormatBar = "view format-bar", viewFolder = "view folder", viewFiles = "view files", viewHome = "view home", viewList = "view list"
+    // Windows (multi-window slice 1, DL-311)
+    case windowList = "window list", windowNew = "window new", windowFocus = "window focus", windowClose = "window close"
+    case windowColour = "window color"
     // Projects
     case projects, projectShow = "project show", projectMake = "project make", projectMerge = "project merge"
     case projectArchive = "project archive", projectUnarchive = "project unarchive"
@@ -54,6 +62,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case sessionPark = "session park", sessionKeepRunning = "session keep-running"
     case sessionNote = "session note", sessionNext = "session next", sessionCarryOn = "session carry-on"
     case sessionLink = "session link", sessionTask = "session task", sessionChat = "session chat"
+    case sessionTurns = "session turns", sessionCopyTurn = "session copy-turn", sessionRewind = "session rewind"
     case shellNew = "shell new", sessionFork = "session fork", sessionTrustFolder = "session trust-folder", sessionForkAgain = "session fork-again", idle, sessionDelete = "session delete", sessionArchive = "session archive", sessionUnarchive = "session unarchive"
     case tasks, taskMake = "task make", taskAdd = "task add", taskNew = "task new", taskSession = "task session", taskStatus = "task status"
     case taskRename = "task rename", taskArchive = "task archive", taskUnarchive = "task unarchive", taskDelete = "task delete"
@@ -64,6 +73,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     // Director (DL-193 to DL-206)
     case directorStatus = "director status", directorStart = "director start", directorSend = "director send"
     case directorRetire = "director retire", directorGuide = "director guide", directorWatch = "director watch"
+    case directorCheck = "director check"
     // Files
     case files, filesBrowse = "files browse", fileNew = "file new", fileNewFolder = "file new-folder", fileTemplate = "file template", fileTemplates = "file templates"
     case fileRename = "file rename", fileDuplicate = "file duplicate", fileMove = "file move", fileTrash = "file trash"
@@ -80,7 +90,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case docMarkup = "doc markup", docComments = "doc comments", docOutline = "doc outline", docLayout = "doc layout", docScreenshot = "doc screenshot", docPick = "doc pick", docElement = "doc element"
     case docReview = "doc review"
     case commentAdd = "comment add", commentList = "comment list", commentReply = "comment reply", commentSend = "comment send"
-    case commentClose = "comment close", commentDelete = "comment delete", commentReopen = "comment reopen", commentStatus = "comment status"
+    case commentClose = "comment close", commentDelete = "comment delete", commentReopen = "comment reopen", commentStatus = "comment status", commentUndo = "comment undo"
     case suggestionList = "suggestion list", suggestionAccept = "suggestion accept", suggestionReject = "suggestion reject"
     case docInsert = "doc insert", docReplace = "doc replace", docEdit = "doc edit", docResolve = "doc resolve", docHistory = "doc history", docRevert = "doc revert"
     // HTML pages
@@ -89,6 +99,9 @@ public enum ActionID: String, CaseIterable, Sendable {
     case browserWait = "browser wait", browserScreenshot = "browser screenshot", browserScroll = "browser scroll",browserGo = "browser go", browserBack = "browser back"
     case browserForward = "browser forward", browserClose = "browser close"
     case browserZoom = "browser zoom", browserPrint = "browser print", browserUpload = "browser upload", browserDownloads = "browser downloads"
+    // PDF files (DL-332, DL-334)
+    case pdfRender = "pdf render"
+    case pdfPage = "pdf page", pdfZoom = "pdf zoom", pdfFind = "pdf find", pdfSelection = "pdf selection", pdfCommentsPanel = "pdf comments-panel"
     case htmlReload = "html reload", htmlPick = "html pick", htmlStop = "html stop", htmlElement = "html element", htmlSelection = "html selection"
     // PowerPoint decks
     case slide, slideGo = "slide go", slideShapes = "slide shapes", slideNotes = "slide notes", slidePick = "slide pick", slideElement = "slide element"
@@ -98,6 +111,11 @@ public enum ActionID: String, CaseIterable, Sendable {
     // Duo Decks P2: templates from your decks
     case deckTemplateInventory = "deck template inventory", deckTemplateBuild = "deck template build", deckTemplateSpecimen = "deck template specimen"
     case deckTemplatePick = "deck template pick", deckTemplatePicked = "deck template picked", deckImport = "deck import", deckMigrate = "deck migrate"
+    // Duo Decks P3a: the deck in split view
+    case deckShowing = "deck", deckGo = "deck go", deckPick = "deck pick"
+    // Duo Decks P3b: problems, comments and export state in the deck viewer
+    case deckProblems = "deck problems", deckComments = "deck comments", deckComment = "deck comment"
+    case deckExportAgain = "deck export again", deckExportShow = "deck export show"
     // Send to Claude
     case sendFile = "send file", sendSession = "send session", sendProject = "send project", sendSelection = "send selection"
     case sendElement = "send element", sendText = "send text", selection
@@ -155,9 +173,9 @@ extension DuoAction {
         .init(.install, .setup, "[--director-name director|duo-director]", "Install or refresh what lets Claude sessions anywhere use duo2: a short block in ~/.claude/CLAUDE.md, a duo2 skill, a director skill, ~/.local/bin/duo2 (DL-74). The director skill is named `director`; where a project has a skill of that name, a personal one would hide it, so Duo asks first and until you say yes installs it as `duo-director`. --director-name answers that: `director` takes the name, `duo-director` keeps the project's skill (DL-222).",
               ui: ["Install", "Install…", "Use director", "Keep duo-director"], local: true),
         .init(.uninstall, .setup, "", "Remove exactly what `duo2 install` added (anything you edited stays).", ui: ["Remove…"], local: true),
-        .init(.settings, .setup, "[claude-path <path|auto> | notify on|off | dock-badge on|off | appearance system|light|dark|classic | explainers reset | macos]",
-              "Duo's settings (S3-1): with no arguments, all of them, and what macOS allows; otherwise set one. The `claude` Duo runs, notifications when a session needs the user, the Dock badge; `appearance` (Match System, Light, Dark or Classic, DL-224, DL-252); `explainers reset` shows the explanations the user dismissed again (Settings › General); `macos` opens System Settings › Notifications › Duo.",
-              ui: ["Choose…", "Use Found One", "Open Notification Settings…", "Show dismissed explanations again", "Appearance"]),
+        .init(.settings, .setup, "[claude-path <path|auto> | notify on|off | dock-badge on|off | appearance system|light|dark|classic | model default|opus|sonnet|haiku | explainers reset | macos]",
+              "Duo's settings (S3-1): with no arguments, all of them, and what macOS allows; otherwise set one. The `claude` Duo runs, notifications when a session needs the user, the Dock badge; `appearance` (Match System, Light, Dark or Classic, DL-224, DL-252); `model` is the model new, resumed and reopened sessions use (DL-339; default is Claude's own; a scripted run ignores it); `explainers reset` shows the explanations the user dismissed again (Settings › General); `macos` opens System Settings › Notifications › Duo.",
+              ui: ["Choose…", "Use Found One", "Open Notification Settings…", "Show dismissed explanations again", "Appearance", "Appearance Settings…"]),
         .init(.walkSetup, .setup, "<test id>", "Put Duo in the state an acceptance-walk test starts from (the walk page's Set up test button, or `duo2://walk-setup?id=…`). Steps come from ~/DuoAcceptance/walk-setups.json, never from the caller.",
               ui: ["Set up test"]),
         .init(.compose, .setup, "<file>", "Claude Code's external editor in Duo's sessions (Ctrl+G; chat mode's composer, F-104, F-112): hands Claude the composer's text when chat mode asked for it, and otherwise opens your own editor ($VISUAL or $EDITOR as they were). Not for running by hand.", local: true),
@@ -166,21 +184,21 @@ extension DuoAction {
 
         // What's on screen
         .init(.goAll, .view, "", "Show All projects.", ui: ["All Projects"]),
-        .init(.goHome, .view, "", "Show Home.", ui: ["Home"]),
+        .init(.goHome, .view, "", "Open Home's page, on the session that needs you, else the one it was last on (DL-336).", ui: ["Home"]),
         .init(.open, .view, "<project> [session] [--file <path>]", "Open a project, optionally on one of its sessions or documents.",
               ui: ["Open project", "Review", "project tile", "map session row"], everyday: true),
         .init(.peek, .view, "[open|close]", "Show or hide the sessions that need the user in other projects.", ui: ["Needs You Elsewhere"]),
         .init(.peekJump, .view, "", "Jump into the project selected in the peek.", ui: ["Jump into Selected Project"]),
-        .init(.viewSidebar, .view, "show|hide|toggle|peek", "Show or hide the left pane. `peek` slides it over the console while a split view has folded it to its rail; a second peek closes it (DL-276).", ui: ["Toggle Sidebar", "Show Sidebar", "sidebar rail"]),
+        .init(.viewSidebar, .view, "show|hide|toggle|peek", "Show or hide the left pane (a project's; All projects has none and exits 64, DL-336). `peek` slides it over the console while a split view has folded it to its rail; a second peek closes it (DL-276).", ui: ["Toggle Sidebar", "Show Sidebar", "sidebar rail"]),
         .init(.split, .split, "[<file>] [--side left|right] [--with <file>]",
               "Split view (DL-275): with a file, show it beside its own preview (a deck, Markdown or HTML) as one tab in the right pane, source on the left, or on the side given. With nothing, report the sides, the active side, the ratio, whether it is folded, and whether the split folded the sidebar. `--with <file>`: two documents side by side, both editable (DL-278), <file> (or the showing tab) on the left and the other on the right with the keyboard; a file already open moves its tab into the split, and one already in a split selects it. ⌥⌘P does the same for the showing file's preview.",
               ui: ["Show Preview in Split View", "Close Split View", "Open in Split View", "Open in split view"]),
         .init(.splitClose, .split, "[--side left|right]", "Close Split View: the split ends and the source stays as a tab. With `--side`, close that side as its × does: the preview side closes the preview; the source side closes the whole split with its tab (⌘W closes the active side).", ui: ["Close Split View", "split side close"]),
         .init(.splitFocus, .split, "left|right", "Make a side of the split the active side and give it the keyboard (the active side is what ⌘W, ⌘D, find and `--side`-less verbs act on).", ui: ["split side name", "split side click", "Previous Side of Split View", "Next Side of Split View"]),
-        .init(.splitUnfold, .split, "", "Unfold a folded split: the console narrows just enough for two 340 pt sides (never under 480) and the hidden side becomes active. A rail at the right pane's far right does the same with a click.", ui: ["split rail"]),
+        .init(.splitUnfold, .split, "", "Unfold a folded split: the console narrows just enough for two 300 pt sides (the console never under 400 while a split is open) and the hidden side becomes active. A rail at the right pane's far right does the same with a click.", ui: ["split rail"]),
         .init(.splitSeparate, .split, "", "A split of two documents (DL-278) ends with both kept as ordinary tabs, side by side in the strip. Close Split View on such a split does the same.", ui: []),
         .init(.splitSwap, .split, "", "Swap Sides: the source goes to the other side.", ui: ["Swap Sides"]),
-        .init(.splitRatio, .split, "<0.2-0.8>", "Where the divider is: the left side's share of the pane, kept so that neither side goes under 340 pt. Double-click on the divider evens it (0.5).", ui: ["split divider"]),
+        .init(.splitRatio, .split, "<0.2-0.8>", "Where the divider is: the left side's share of the pane, kept so that neither side goes under 300 pt. Double-click on the divider evens it (0.5).", ui: ["split divider"]),
         .init(.viewRight, .view, "show|hide|toggle", "Show or hide the right pane: the action column at All projects, the documents in a project (⌥⌘0, DL-129).", ui: ["Toggle Right Pane", "right pane button"]),
         .init(.viewTab, .view, "<Project | document path | group | next | previous>", "Switch the right pane's tab; next and previous step through the active pane's tabs instead (⌃Tab, ⌃⇧Tab, DL-165).",
               ui: ["right pane tab", "Open Project File", "Show Next Tab", "Show Previous Tab"]),
@@ -195,9 +213,25 @@ extension DuoAction {
         .init(.viewSort, .view, "recent|name", "Order All projects' map by newest activity or by name (View › Sort Projects By).", ui: ["Sort Projects By", "map sort popup"]),
         .init(.viewFilter, .view, "[text]", "Narrow All projects' middle, whichever shows: the Board to projects and folders whose name or path has the text, the List to sessions about it; no text clears it.", ui: ["Filter folders", "Filter sessions"]),
         .init(.viewHome, .view, "board|list|toggle [--archived on|off]", "All projects' middle (DL-142): the Board (the map) or the List, every session across projects by recency (View › Show Board / Show List). Duo remembers the choice. --archived shows or hides the List's Archived fold (its Group popup's Show Archived).",
-              ui: ["Board", "List", "Show Board", "Show List", "Group By Recent", "Show Archived", "list group popup"]),
+              ui: ["Board", "List", "Show Board", "Show List", "Show Archived", "list group popup"]),
+        .init(.viewList, .view, "group recent|project", "Group All projects' List by recency (Today, This week, Earlier) or by project (DL-341): a header per project with its folder, its count and a + that starts a session there (View › Group Sessions By, the List's Group popup). Duo remembers the choice. Each header's + is `session new --project <p>`.",
+              ui: ["Group Sessions By", "Group popup Recent", "Group popup Project"]),
+        .init(.viewFormatBar, .view, "show|hide|toggle", "Show or hide the Markdown formatting bar over the editor (View › Hide Formatting Bar). It shows only while a Markdown document has the keyboard.", ui: ["Hide Formatting Bar", "Show Formatting Bar", "Formatting Bar"]),
         .init(.viewHidden, .view, "on|off|toggle", "Show or hide dotfiles in the project's file tree (View › Show Hidden Files).", ui: ["Show Hidden Files"]),
-        .init(.viewFolder, .view, "<folder> open|close", "Open or close a folder in the project's file tree.", ui: ["folder row"]),
+        .init(.viewFolder, .view, "<folder> open|close", "Open or close a folder in the project's file tree. The open folders are remembered per project.", ui: ["folder row"]),
+        .init(.viewFiles, .view, "expand|collapse", "Fold the project's Files section to its header, or show it again (the chevron on the Files header, DL-339). Remembered per project.", ui: ["Files header chevron"]),
+
+        // Windows (DL-311): every verb that acts on what's on screen also takes --window <n|project>; with none, it acts
+        // on the window showing the caller's session, else the primary window (the oldest open), never the key window (Q-430).
+        .init(.windowList, .window, "", "Duo's windows: each one's number, title (its project, or Duo at All projects), colour, and which is primary, key and Home's. Every verb that acts on what's on screen takes --window <n|project>; with none it acts on the window showing your session, else the primary window (Q-430)."),
+        .init(.windowNew, .window, "[<project>]", "Open a new window (File › New Window ⌥⌘N) at All projects, or on a project (Project › Open in New Window). A project already in a window brings that window forward instead: a project lives in one window (DL-308). A new window takes the next colour no open window has, while that's on (DL-312).",
+              ui: ["New Window", "Open in New Window"]),
+        .init(.windowFocus, .window, "<n|project>", "Bring a window forward (the Window menu, ⌘`; Go There on Home's pane in another window, DL-314).",
+              ui: ["Go There"]),
+        .init(.windowClose, .window, "[<n|project>]", "Close a window (File › Close Window ⇧⌘W); with none named, the one --window or your session picks. Its projects keep their tabs and sessions. The last window hides; Duo keeps running.",
+              ui: ["Close Window"]),
+        .init(.windowColour, .window, "[<color>|none] [--auto on|off]", "A window's color (Window › Window Color, the swatch after the project's name; DL-312, DL-313, DL-339: the app says Color, and `window colour` still works): blue, ochre, purple, green, coral, teal, deep-blue, deep-ochre, deep-purple, deep-green, deep-coral, deep-teal, or none. --auto turns 'Color new windows automatically' on or off. With nothing, the window's colour and the setting. Classic turns window colors off; each comes back after.",
+              ui: ["Window Color", "Color new windows automatically", "window swatch"]),
 
         // Projects
         .init(.projects, .projects, "", "Projects and folders with sessions, with goal, health and next step.", everyday: true),
@@ -232,7 +266,7 @@ extension DuoAction {
         .init(.sessions, .sessions, "[--project <p>]", "Sessions with id, state, kind (terminal or chat), title and project. Text marks the project's director and the pinned (Keep Running) ones; --json adds \"director\": true, \"pinned\" and the row's \"section\" in the project pane: pinned, needs-you, open, tasks, later or other (DL-217, DL-218). A fork (a /branch or /fork) adds \"forkOf\" (its parent's id) and \"fork\": \"branch\" or \"fork\" (DL-228).", everyday: true),
         .init(.sessionShow, .sessions, "<id>", "A session's title, project, state, note, next step, transcript path and recent turns.", everyday: true),
         .init(.sessionNew, .sessions, "[--project <p> | --folder <path>] [--prompt <text>] [--name <name>] [--remote-control [name]]", "Start a Claude session in a project (the current one by default) or, with --folder, in a plain folder (Claude Code asks its own folder-trust question there, answered in Duo; Duo never writes trust). At All projects with neither, it starts where the New session row does: Home, else ~/Documents; with no such default it refuses and asks for --project or --folder. --name gives it a fixed name (claude -n), which survives restarts: a director's is director-<project> (DL-200). --remote-control makes it reachable from the Claude app, named <name> or its project and a short id, and keeps it on when the session resumes; a claude without the flag starts without it and the reply says so.",
-              ui: ["+ New session", "+ New Claude Code session", "New Session", "console +", "New Claude Session", "New session pill, robot half", "Start Claude here", "Start Claude in Home", "Start in", "New session row", "New session row popup", "Choose Another Folder…"]),
+              ui: ["+ New session", "+ New Claude Code session", "New Session", "console +", "New Claude Session", "New session pill, robot half", "Start Claude here", "Start Claude in Home", "Start in", "New session row", "New session row popup", "Choose Another Folder…", "List project header +"]),
         .init(.sessionOpen, .sessions, "<id>", "Show a session's terminal, resuming it if needed.", ui: ["session row", "console tab", "Home tab", "Resume", "Open Session"]),
         .init(.sessionClose, .sessions, "[id] [--force]", "End a session's process and close its tab (it stays listed and resumable). Refuses while Claude is working there, unless --force.", ui: ["Close Tab", "End Session", "Close"]),
         .init(.sessionPark, .sessions, "<id>… | --background", "Park a session (several ids park each that can; the rest say why): end its Claude process, keep its tab, and resume it when the tab is shown (it picks up where it left off). Refuses, saying why, while Claude is working or waiting on the user, is running something in the background or has a subagent running, or the session is set to Keep Running; a tab on screen first gives its pane to the next tab. --background parks every idle tab that isn't on screen and says what it kept and why.",
@@ -245,8 +279,14 @@ extension DuoAction {
         .init(.sessionNext, .sessions, "<text>", "Tell the user what this session needs next (one line).", everyday: true),
         .init(.sessionTask, .sessions, "[id]", "The task(s) a session is attributed to (this session by default): each note's title, status and path. Duo's hooks tell Claude the same when the session starts, resumes, clears or compacts, and what changed on its next prompt (DL-116)."),
         .init(.sessionCarryOn, .sessions, "<id>", "Start a new session carrying on from an archived one."),
-        .init(.sessionFork, .sessions, "<id>", "Carry a session on as a fork: a new session with the same history (the original is left alone).",
-              ui: ["Resume as a Fork"]),
+        .init(.sessionFork, .sessions, "<id> [--at <turn>]", "Carry a session on as a fork: a new session with the same history (the original is left alone). With --at, the fork stops at that chat turn (a number from `session turns`, or its uuid): from your message the copy is rewound to before it and the message waits in the copy's composer; from Claude's reply, to before your next message (DL-338). Nothing is restored on disk: both sessions share the folder.",
+              ui: ["Resume as a Fork", "Fork", "Fork from Message…", "Fork After Reply"]),
+        .init(.sessionTurns, .sessions, "<id>", "The chat turns of a session, numbered oldest first, each with its role, its transcript uuid and its first words: what `session copy-turn`, `session rewind` and `session fork --at` take (DL-338). Rewound turns are not listed.",
+              everyday: false),
+        .init(.sessionCopyTurn, .sessions, "<id> <turn>", "Put one chat turn on the clipboard as Markdown: yours as typed (pictures as [Image #n]), Claude's text segments joined by blank lines, without thinking or tool calls (DL-338, Q-509). Works while Claude works.",
+              ui: ["Copy", "Copy Message", "Copy Claude’s Reply"]),
+        .init(.sessionRewind, .sessions, "<id> <turn> [--code]", "Rewind a session to before one of your messages: shows Duo's sheet (it names the files Claude changed since) and waits for the user's answer; there is no --yes. The message then waits in the chat composer. --code starts the sheet on Conversation and files. Duo works Claude Code's own /rewind menu; if a screen isn't one it knows, the terminal is shown (DL-338).",
+              ui: ["Rewind", "Rewind to Before Message…"], timeout: 600),
         .init(.sessionTrustFolder, .sessions, "<id>", "When a session's /fork said \"Workspace not trusted\", or Claude Code asks at a session's start whether it trusts the folder: show Duo's sheet and wait for the user's answer. After a /fork, Yes sets only that folder's hasTrustDialogAccepted in Claude Code's file; at the start, Duo gives Claude Code the answer on its own screen. It prints `trusted <path>`, or fails with `cancelled` or `not trusted`. There is no --yes: Claude can ask, but can't trust a folder for itself (DL-229, F-444).",
               ui: ["Trust This Folder…", "Try Again", "Trust Folder", "Don’t Trust"], timeout: 600),
         .init(.sessionForkAgain, .sessions, "<id>", "After the folder is trusted: type the session's blocked /fork line again, only while Claude is at its prompt with nothing typed (DL-229).",
@@ -366,13 +406,13 @@ extension DuoAction {
         .init(.docClose, .docs, "[path] [--others]", "Close a document tab (saved first), or every other one.", ui: ["Close Tab", "Close Other Tabs"]),
         .init(.docTabs, .docs, "", "The open document tabs, and which one shows."),
         .init(.docStatus, .docs, "<file>", "Whether a file is open in Duo's editor, unsaved or in conflict. Check before editing a file the user may have open.", everyday: true),
-        .init(.docRead, .docs, "[path]", "A document's text as the editor has it (unsaved edits included); the showing document by default."),
+        .init(.docRead, .docs, "[path]", "A document's text as the editor has it (unsaved edits included); the showing document by default. A PDF (DL-334) comes back as its text with a `--- page N ---` line before each page, then a list of the pages to look at as images, each with why (no text layer: a scan; mostly a figure: it draws images or many shapes and carries little text); render one with `duo2 pdf render <file> <page>` and read the PNG."),
         .init(.docSelection, .docs, "", "The text selected in the editor, with its file and lines."),
         .init(.docSelect, .docs, "<line> [to-line]", "Select lines in the showing document."),
         .init(.docSave, .docs, "", "Save the showing document now (it also autosaves).", ui: ["Save"]),
-        .init(.docFormat, .docs, "bold|italic|strikethrough|code|link|heading1|heading2|heading3|task|properties",
-              "Format the selection (bold, italic, strikethrough, code, a link waiting for its address), make its lines headings or tasks (again takes it off), or start the properties block.",
-              ui: ["Bold", "Italic", "Strikethrough", "Code", "Link…", "Heading 1", "Heading 2", "Heading 3", "Task", "Add Properties"]),
+        .init(.docFormat, .docs, "bold|italic|strikethrough|code|link|heading1|heading2|heading3|task|body|quote|bullet|numbered|codeblock|properties",
+              "Format the selection (bold, italic, strikethrough, code, a link waiting for its address), make its lines headings, quotes, bulleted or numbered items or tasks (again takes it off; body clears the mark), fence them as a code block, or start the properties block.",
+              ui: ["Bold", "Italic", "Strikethrough", "Code", "Link…", "Heading 1", "Heading 2", "Heading 3", "Task", "Body", "Quote", "Bulleted List", "Numbered List", "Code Block", "Add Properties", "Style"]),
         .init(.docTable, .docs, "insert|row-above|row-below|column-before|column-after|delete-row|delete-column|align-left|align-center|align-right|next|previous",
               "Edit the table at the caret as Markdown, its columns kept lined up: insert a 3 × 2 table, add or delete a row or column, align a column, or move to the next or previous cell (the last cell's next adds a row).",
               ui: ["Insert Table", "Add Row Above", "Add Row Below", "Add Column Before", "Add Column After", "Delete Row", "Delete Column",
@@ -386,10 +426,10 @@ extension DuoAction {
               ui: ["Add a property", "property type menu", "Pick a date", "property checkbox"]),
         .init(.docMarkup, .docs, "[all|simple|none|original] [--comments on|off] [--show-resolved on|off] [--person <name>|everyone]",
               "On a Markdown document: the same modes for its suggestions and comments, with --show-closed on|off for closed threads (DL-237). The Word document showing: which markup its viewer draws, and change it, as the Markup menu does (DL-162). All Markup draws every change in its person's colour with the comments; simple accepts the changes and marks the margin where one was; none accepts them with no marks; original shows the text before them. --person shows only that person's marks. Kept per document while Duo runs. With nothing, says what it shows now and who is in the document.",
-              ui: ["Markup", "All Markup", "Simple Markup", "No Markup", "Original", "Show Comments", "Show Resolved Comments", "Show Closed Comments"]),
+              ui: ["Markup", "All Markup", "Simple Markup", "No Markup", "Original", "Show Comments", "Show Closed Comments", "Show Closed Comments"]),
         .init(.docReview, .docs, "[on|off|next|previous]",
               "The Markdown document's Suggest Edits switch (DL-237): on, every change anyone makes becomes a signed suggestion; kept in the file as `suggest-edits: true` in its frontmatter, written only while on. With nothing, says which it is. next and previous select the next or previous suggestion or comment in the document (the review bar's ‹ ›). Edit › Suggest Edits does the same as on and off.",
-              ui: ["Suggest Edits", "Next Change", "Previous Change"]),
+              ui: ["Suggest Edits", "Editing", "Suggesting", "Next Change", "Previous Change", "Next Comment", "Previous Comment"]),
         .init(.docOutline, .docs, "<file.docx> [--json]",
               "A Word document's paragraphs, read from the file (no viewer needed): each with its w14:paraId (the id the viewer draws it under), style and heading level, its text with the tracked changes accepted, its tracked changes (kind, author, date, text) and the comments that end in it (thread, resolved). Then every comment thread. A picked paragraph's Send to Claude names the same ids."),
         .init(.docLayout, .docs, "<file.docx> [--json]",
@@ -417,22 +457,24 @@ extension DuoAction {
 
         // Review in Markdown (DL-236, DL-237): comments and suggestions as signed CriticMarkup. A file open in Duo's editor is changed through the
         // editor (as Claude's change); any other file on disk. Run from a Claude session the author is `claude`, else the user's Mac name; --as names one.
-        .init(.commentAdd, .review, "<file> --at <line|text> [--as <name>] <text>",
-              "Comment on a line (its number) or on a text that appears once: the text becomes a highlight and the signed comment follows it. A comment that names @claude is addressed to a session (`duo2 comment send`).",
+        .init(.commentAdd, .review, "<file> --at <line|text|paragraph|slide[/shape[/text]]|page N [text]> [--as <name>] <text>",
+              "On a PDF (DL-335) the comment is appended to the file as a standard annotation (an incremental update: the original bytes are never rewritten, and a backup is kept in Duo's support folder): --at is a text that appears once (a Highlight over it), `page N` (a note at the page's top right) or `page N <text>` (a text on that page only); replies, close and reopen (a hidden Completed or None state reply), delete and @claude routing work as below, with thread ids `c1`, replies `c1.2`; encrypted or certified PDFs are refused. On a Word or PowerPoint file (DL-331) the comment is written into the file's comment parts, with a backup of the original in Duo's support folder and nothing else touched: --at is a text that appears once in a Word document (or a paragraph number) or a slide number; its replies, resolved state and @claude routing work as below, with thread ids `c4` (Word) and `s3c1` (slide 3's first). Comment on a line (its number) or on a text that appears once: the text becomes a highlight and the signed comment follows it. A comment that names @claude is addressed to a session (`duo2 comment send`). On a Word or PowerPoint file (DL-331) the comment is written into the file's comment parts, with a backup of the original in Duo's support folder and nothing else touched: --at is a text that appears once in a Word document (or a paragraph number) or a slide: `3` is the whole slide, `3/Photo` a shape (its name or id), `3/Title/some text` a run of text in it, which the viewer highlights; its replies, resolved state and @claude routing work as below, with thread ids `c4` (Word) and `s3c1` (slide 3's first). Comment on a line (its number) or on a text that appears once: the text becomes a highlight and the signed comment follows it. A comment that names @claude is addressed to a session (`duo2 comment send`).",
               ui: ["Add Comment"]),
         .init(.commentList, .review, "<file> [--closed | --unsent]",
               "The file's comment threads: id, who and when, the text it is on, the comment and its replies. Closed threads are left out unless --closed (only those); --unsent lists the open ones that name @claude and have no reply."),
         .init(.commentReply, .review, "<id> <text> [--file <file>] [--suggest] [--as <name>]",
-              "Reply in a thread (or to a suggestion) with the next number, `#c1.2`; a closed thread reopens. --suggest instead proposes the reply text as a replacement of the text the thread is on. Never rewrites anyone's comment. Without --file, the document showing."),
+              "Reply in a thread (or to a suggestion) with the next number, `#c1.2`; a closed thread reopens (in a Word or PowerPoint file the reply goes in the file's comment parts, and --file names the file: the turn sent to a session says so). --suggest instead proposes the reply text as a replacement of the text the thread is on. Never rewrites anyone's comment. Without --file, the document showing.", ui: ["Reply"]),
         .init(.commentSend, .review, "<id | --all> [--file <file>] [--to <session> | --new]",
               "Send a comment that names @claude to a session, quoted as data, when the person says to (DL-236 10): the turn is pasted and Returned through the idle-and-empty-prompt guard of `director send`, or waits (Queued) until the session is ready. Without --to, the thread's session, the document's last choice, the last to edit it through Duo, then the one on screen. --all sends every @claude comment not yet sent or answered. Never sent from the file on its own."),
         .init(.commentClose, .review, "<id> [--file <file>] [--as <name>]",
-              "Close and Keep: add a closing line `{>>@name date #c1.2 closed<<}` after the thread's last comment; the highlight and comments stay (Q-262).",
-              ui: ["Close and Keep"]),
+              "Close and Keep (in a Word or PowerPoint file: mark the thread resolved, which Word and PowerPoint show as done): add a closing line `{>>@name date #c1.2 closed<<}` after the thread's last comment; the highlight and comments stay (Q-262).",
+              ui: ["Close and Keep", "Close Thread"]),
         .init(.commentDelete, .review, "<id> [--file <file>]",
-              "Delete the thread: its highlight markers and every comment go, the text stays."),
+              "Delete the thread: its highlight markers and every comment go, the text stays. In a Word or PowerPoint file the comment, its replies and its anchor go from the file's comment parts (`duo2 comment undo` restores them).", ui: ["Delete Thread"]),
         .init(.commentReopen, .review, "<id> [--file <file>]",
               "Reopen a closed thread: its closing line goes.", ui: ["Reopen"]),
+        .init(.commentUndo, .review, "[--file <file>]",
+              "Undo the last comment change Duo made to a Word or PowerPoint file (add, reply, close, reopen or delete): the file is restored from the copy kept before that write, and each further call steps back one more (DL-337, ⌘Z in the viewer). A Markdown document undoes through its editor, as always."),
         .init(.commentStatus, .review, "<id> [--file <file>]",
               "One thread: open or closed, who is in it, whether it names @claude, whether Claude has replied, and where its delivery stands: not sent, queued, sent, replying, replied or not delivered, with the session."),
         .init(.suggestionList, .review, "<file>",
@@ -467,12 +509,32 @@ extension DuoAction {
         .init(.browserUpload, .html, "<selector> <file…> [--tab <id>]", "Choose files for a file input: the files answer its file chooser, then it's clicked as a person would (DL-124). The user's own click opens the open panel."),
         .init(.browserDownloads, .html, "[--open [<n>] | --cancel]", "Downloads from browser tabs since Duo started, numbered, to ~/Downloads with Finder's names for clashes (DL-124). --open opens one (the newest by default) with its app, as the tab's notice's Open does. --cancel stops the one running and takes its partial file away, as the notice's Cancel does (DL-132).",
               ui: ["Open"]),
-        .init(.htmlReload, .html, "", "Reload the HTML page showing (it also reloads when its files change).", ui: ["Reload Page"]),
+        .init(.htmlReload, .html, "", "Reload the HTML page showing (it also reloads when its files change). It looks at the page again: the bar for a failed open or a page that uses scripts or styles from the web clears or appears, and a page that failed to open loads if it can now be read.", ui: ["Reload Page", "Reload"]),
         .init(.htmlPick, .html, "[selector]", "Start the element picker for the user, or select the element a CSS selector names.",
               ui: ["Select Element", "Pick Another"]),
         .init(.htmlStop, .html, "", "Close the element picker.", ui: ["Cancel picking"]),
         .init(.htmlElement, .html, "[selector]", "Describe an element (the picked one by default): selector, text, attributes, styles, box, HTML."),
         .init(.htmlSelection, .html, "", "The text and images selected in the HTML page."),
+
+        // PDF files (DL-332, DL-334)
+        .init(.pdfRender, .pdf, "<file> <page> [--out <png>] [--width <px>]",
+              "Draw one page of a PDF as a PNG (1000 px wide unless --width, 200 to 3000), as the viewer draws it, annotations included, and print the path. Needs no viewer open. The pages `duo2 doc read` lists as needing a look are the ones to render and read as images. PNGs go in the session's own folder (.duo/screenshots), or Duo's support folder outside a session."),
+
+        // The PDF viewer (DL-332; Q-495 stand-in bar)
+        .init(.pdfPage, .pdf, "[<n> | next | previous]",
+              "The PDF showing in the right pane (or on a side of a split): with no argument print \"page n of N\"; with a page number, `next` or `previous`, go there (also ‹ ›, Page Up and Page Down) and print the page. A number past the end goes to the last page.",
+              ui: ["Previous Page", "Next Page", "Go to Thread"]),
+        .init(.pdfZoom, .pdf, "[in | out | fit | <percent>]",
+              "Zoom the PDF showing: `in` and `out` step by a quarter, `fit` fits the pane's width (the viewer's default, and it follows the pane), a number sets a percentage (25 to 500). With no argument print the zoom.",
+              ui: ["Zoom Out", "Zoom In", "Fit"]),
+        .init(.pdfFind, .pdf, "<text> [--previous]",
+              "Find text in the PDF showing: go to the first match after the current one (--previous goes back), select it, and print \"match n of m on page p\". Repeating the same text steps on; wraps at the ends. Case is ignored.",
+              ui: ["Find in PDF", "Next Match", "Previous Match"]),
+        .init(.pdfSelection, .pdf, "",
+              "The text selected in the PDF showing, as Send Selection puts it in a prompt: `From <path>, page N:` and the text quoted."),
+        .init(.pdfCommentsPanel, .pdf, "[show | hide] [--show-closed on|off]",
+              "Show or hide the comment margin beside the PDF (on by default): the Markdown review margin's cards, one per open thread level with its highlight, with --show-closed on|off for the closed ones (the margin's \"n closed · Show\"). With no argument print whether it shows and how many threads there are; the threads are `duo2 comment list`'s. Add Comment is `comment add`.",
+              ui: ["Comments", "n closed · Show", "Close and Keep", "Reopen", "Delete", "Post", "Reply"]),
 
         // PowerPoint decks (ENH-12, DL-125)
         .init(.slide, .slides, "", "The deck showing and the slide on screen, with that slide's shapes and text."),
@@ -493,22 +555,24 @@ extension DuoAction {
         .init(.sendElement, .send, "[--to <id> | --new]", "Put the picked HTML element, or the shape picked on a slide, into a session's prompt.", ui: ["Send to Claude", "Send To", "New Session"]),
         .init(.sendText, .send, "<text> [--to <id> | --new]", "Type text into a session's prompt for the user to finish and send."),
         // Voice input (DL-260): Apple's on-device recognizer; words land in the prompt, never sent
-        .init(.voiceStart, .send, "[<id> | shell]", "Start voice input in a session (the one showing by default): words go into its chat composer, or its terminal prompt a phrase at a time; Return is never pressed. Needs the user to have allowed the microphone in Duo; never asks in a scripted or isolated Duo.",
+        .init(.voiceStart, .send, "[<id> | shell | --doc]", "With --doc (or while a Markdown document has the keyboard), words go into the document at the caret, a phrase at a time, one undo for the whole dictation, signed as a suggestion when Suggest Edits is on; Return finishes then adds a line. Otherwise: start voice input in a session (the one showing by default): words go into its chat composer, or its terminal prompt a phrase at a time; Return is never pressed. Needs the user to have allowed the microphone in Duo; never asks in a scripted or isolated Duo.",
               ui: ["Start Voice Input", "Voice Input"]),
-        .init(.voiceStop, .send, "[<id> | shell]", "Finish voice input: the last phrases land, nothing is sent.", ui: ["Stop Voice Input"]),
-        .init(.voiceStatus, .send, "[<id> | shell]", "Whether voice input is listening, downloading Apple's speech model, or off, and why."),
-        .init(.voiceFile, .send, "<audio file> [<id> | shell]", "Feed an audio file (absolute path or ~) through voice input into a session's composer or prompt, as if spoken. The scripted twin of the mic; never touches the microphone.", timeout: 180),
+        .init(.voiceStop, .send, "[<id> | shell | --doc]", "Finish voice input: the last phrases land, nothing is sent.", ui: ["Stop Voice Input"]),
+        .init(.voiceStatus, .send, "[<id> | shell | --doc]", "Whether voice input is listening (and into which document), downloading Apple's speech model, or off, and why."),
+        .init(.voiceFile, .send, "<audio file> [<id> | shell | --doc]", "Feed an audio file (absolute path or ~) through voice input into a session's composer or prompt, as if spoken. The scripted twin of the mic; never touches the microphone.", timeout: 180),
         .init(.selection, .send, "", "What the user has selected or picked right now, in the editor or an HTML page.", everyday: true),
 
         // Director (DL-193 to DL-206): the exact parts of the duo-director skill. Each writes a line to
         // the project's .duo/director-log.jsonl, which the director's metrics are counted from.
-        .init(.directorStatus, .director, "[--project <p>]", "Who directs this project (and whether you're its director, or one it replaced), its workers and their tasks with each one's state, the rules to read (the Director sections: Home's _HOME.md, then the project's _PROJECT.md), and what this Claude client can do: messaging, background sessions, Remote Control, hooks, Monitor. Works with Duo closed, from Claude's own files (DL-231)."),
-        .init(.directorStart, .director, "<task> | --title <t> --request <the user's words> [--done-when <text>] [--suggest | --no-worker | --worker <session id> [--adopt]] [--adopt] [--in-duo] [--background] [--take-over] [--project <p>]",
-              "Start a worker on a task this director directs (DL-194, DL-201): writes directed_by:, ## Request and ## Progress, then starts the worker in the background (`claude --bg`, with Remote Control) by default: it prints the command to run, and the worker is linked by its name when it starts. --in-duo starts it in Duo instead; so does a client without background sessions. Workers are reached by SendMessage, not by Duo (DL-257). --worker links an existing session; --background asks for the default explicitly. --suggest files it as suggested with no worker; --no-worker makes it a task the director does itself (organising work, DL-208). Refuses a task another director directs, and a project another director runs (--take-over replaces it; alone, it records a resumed director). A task or session of the user's needs --adopt: Duo then asks the user, and goes ahead only if they allow it.",
+        .init(.directorStatus, .director, "[--project <p>] [--all]", "Red lines first: each duty this director is neglecting right now (a stopped worker nobody has checked, a check_by that passed, a scheduled run that is stuck or missed, a finding the user hasn't heard, a long turn with no word, a stale or mislabelled record, an unhealthy environment), computed from the task notes, Claude's own files and the Claude app's scheduled-task records, or \"Red lines: none.\" Then who directs this project (and whether you're its director, or one it replaced), its workers and their tasks with each one's state, the rules to read (the Director sections: Home's _HOME.md, then the project's _PROJECT.md), and what this Claude client can do: messaging, background sessions, Remote Control, hooks, Monitor. The worker list is the running workers, those waiting for the user and those the user is typing in; --all lists every task. Works with Duo closed, from Claude's own files (DL-231)."),
+        .init(.directorStart, .director, "<task> | --title <t> --request <the user's words> [--done-when <text>] [--suggest | --no-worker | --worker <session id> [--adopt]] [--adopt] [--in-duo] [--background] [--take-over] [--next <30m|2h|3d|date|none>] [--project <p>]",
+              "Start a worker on a task this director directs (DL-194, DL-201): writes directed_by:, ## Request and ## Progress, then starts the worker in the background (`claude --bg`, with Remote Control) by default: it prints the command to run, and the worker is linked by its name when it starts. --in-duo starts it in Duo instead; so does a client without background sessions. Workers are reached by SendMessage, not by Duo (DL-257). --worker links an existing session; --background asks for the default explicitly. --suggest files it as suggested with no worker; --no-worker makes it a task the director does itself (organising work, DL-208). Refuses a task another director directs, and a project another director runs (--take-over replaces it; alone, it records a resumed director). A task or session of the user's needs --adopt: Duo then asks the user, and goes ahead only if they allow it. Starting a worker (or --no-worker) sets the note's check_by to --next, or two hours on if you give none, and says so; --next none sets none, and --suggest sets none.",
               timeout: 600),
         .init(.directorSend, .director, "<task> <message> [--handed-back] | --director <project> <message>",
               "Reach a task's worker (or, from Home, a project's director) the best way this client has, and log which (DL-199, DL-257): a live worker gets your own SendMessage (this prints the call; Duo can't make it for you, and it is held if your permission class and the worker's differ); a stopped background worker is resumed with the message (`claude --bg --resume`, no other flags); a stopped worker in Duo is reopened with it; else the user passes it on. Nothing is typed into a terminal. Every send goes into the task's ## Progress. A worker the user typed in is paused (DL-200): --handed-back makes Duo ask the user to hand it back. With Duo closed, the rungs that need it are left out, and --handed-back records the user's word in your own session (DL-231).",
               timeout: 600),
+        .init(.directorCheck, .director, "<task> | job:<id> <what you verified, and the evidence> [--next <30m|2h|3d|date|none>] [--routine]",
+              "Record that you looked, with the evidence: a `Checked: <evidence>` line in the task's ## Progress (`Checked (routine):` with --routine), the note's check_by set to --next (30m, 2h, 3d, a date or time, or none) or a day on if you give none (cleared for a done or dropped task), and a `check` line in the log. That clears the red lines `director status` shows for the task: a stopped worker you read, a check_by that passed. `job:<id>` records a look at a scheduled job's run (nothing is written to a note); --routine says nothing new was found, so the user needn't hear of it. Works with Duo closed. Only the project's director, on a task it directs."),
         .init(.directorRetire, .director, "[--project <p>]", "Stand this director down: .duo/director.json moves it to the retired list, and if it wakes later it's told to stop. Its workers stay on their tasks until a new director takes over. Works with Duo closed."),
         .init(.directorGuide, .director, "", "Print the duo-director skill, for a Claude client where personal skills are blocked.", local: true),
         .init(.directorWatch, .director, "[--project <p>] [--every <seconds>]", "One line per change to this director's workers (finished, needs you, working, stopped) or their task notes, until stopped: run it under Monitor to be woken (DL-199). It watches without Duo too (DL-231).", local: true),
@@ -525,13 +589,13 @@ extension DuoAction {
               local: true),
         .init(.deckInsert, .deck, "<deck> <template> [--after <n>]",
               "Add a slide of this template after slide n (default: the end; 0 puts it first): the slide marker, an empty title, and a `## slot` heading for each of the template's other slots. Fill in the text, then run `deck check`.",
-              local: true),
+              ui: ["New Slide"], local: true),
         .init(.deckNew, .deck, "<path> --template <pack>",
               "Make a deck file: the frontmatter naming the pack, and a title slide. Refuses a path that exists.",
-              local: true),
+              ui: ["New Deck…", "Create"], local: true),
         .init(.deckChange, .deck, "<deck> <n> <template>",
               "Change slide n to another template. The title stays, same-named slots keep their text, and a slot's text goes to the new default or only same-kind slot when it can (a pack may say otherwise); anything else moves to the slide's speaker notes under `Not placed after changing to <template>: <slot>`, never dropped. Comments travel with their text. Prints what moved.",
-              local: true),
+              ui: ["Slide chip"], local: true),
         .init(.deckRender, .deck, "<deck> [<n>]",
               "Draw a slide as a PNG. Not built yet: it needs Duo's viewer (WebKit), which the deck work reaches in a later phase. Export the deck and open the pptx in Duo meanwhile.",
               local: true),
@@ -545,15 +609,40 @@ extension DuoAction {
               "Write a deck that uses every template of the pack once, each slot filled to its limit with sample text, and export it. Look at the result to see what breaks.",
               local: true),
         .init(.deckTemplatePick, .deck, "[<pack>]",
-              "Start the template picker in the deck viewer for the user. Needs the deck viewer (the Slides view), which isn't built yet."),
+              "Turn on slide picking in the deck viewer for the user (Make Templates…): tick boxes on each slide of the PowerPoint file showing. With slide numbers (`3,7`), those are ticked. Read the result with `deck template picked`.", ui: ["Make Templates…", "Cancel"]),
         .init(.deckTemplatePicked, .deck, "",
-              "The template and slides the user picked in the deck viewer. Needs the deck viewer (the Slides view), which isn't built yet."),
+              "The slides the user ticked in the deck viewer, with the `deck template inventory <pptx> --slides …` line that reads them.", ui: ["Make Templates with Claude", "Add to Pack"]),
         .init(.deckImport, .deck, "<pptx> [--pack <p> | --new-pack <name>] [--plan <file>] [--out <deck.md>]",
               "Turn an existing PowerPoint file into a Duo deck. Without --plan: print the slide groups (identical layout fingerprints), near groups and, for each group, the pack template that fits best, for you to plan with. With --plan: apply your plan (which group becomes which template, optional slots to add, new templates to make, loose boxes mapped to slots), amend or create the pack, convert the text, notes and comments (as Review marks), and print the import report. Never writes the pptx.",
-              local: true),
+              ui: ["Convert to Duo Deck…", "Convert with Claude"], local: true),
         .init(.deckMigrate, .deck, "[--pack <p>] [--dry-run]",
               "After a pack renamed a slot (`renamed: {old: new}` in the template's definition), rewrite the slot headings of every deck in the project that uses the pack, printing a diff. --dry-run prints it without writing.",
               local: true),
+
+        // Duo Decks P3a: the deck in split view (the source beside its slides). These ask the app.
+        .init(.deckShowing, .deck, "",
+              "The Markdown deck showing in split view: its slide count, the slide on screen in the preview, and the slot (with its source lines) the caret is in."),
+        .init(.deckGo, .deck, "<n> | next | previous",
+              "Move both sides of the deck in split view to a slide: the preview scrolls to it and the source shows its first line. Plain .pptx decks use `slide go`."),
+        .init(.deckPick, .deck, "[<slide>/<shape id>]",
+              "Start the shape picker on the deck's preview for the user, or select the shape a slide and id name. Once a shape is picked, this names its slide, slot and source lines."),
+
+        // Duo Decks P3b: problems, comments and export state in the deck viewer. Each works on the deck in split view, or on --deck <file>.
+        .init(.deckProblems, .deck, "[--deck <file>]",
+              "The deck's problems as the viewer's Problems menu lists them: each error (the deck can't export until it is fixed) and each notice (an empty slot), as `file:line: message`. Reads the editor's buffer, so unsaved edits count.",
+              ui: ["Problems", "Go to Line"]),
+        .init(.deckComments, .deck, "[--deck <file>]",
+              "The comment threads in the deck by slide and slot (`slide 3/value`), open and closed, as the viewer's pins show them. Comments are Review in Markdown's, in the deck's own text (DL-284).",
+              ui: ["Open Thread"]),
+        .init(.deckComment, .deck, "<slide>[/<slot>] \"<text>\" [--deck <file>] [--as <name>]",
+              "Comment on a slide or one of its slots: a signed comment on its own line at the slot's end (a slide's, under its title). Signed as Claude when a Claude session runs it, else as the user, or --as. The viewer shows it as a pin and the source's margin as a thread.",
+              ui: ["Add Comment"]),
+        .init(.deckExportAgain, .deck, "[--deck <file>]",
+              "Export the deck in split view again, as the viewer's Export ⌄ does: the dated PowerPoint beside it, the previous one removed (the same writer as `deck export`), and the viewer's state follows.",
+              ui: ["Export as PowerPoint…", "Export Again"], timeout: 120),
+        .init(.deckExportShow, .deck, "[--deck <file>]",
+              "Show the deck's newest dated export in Finder.",
+              ui: ["Show Export in Finder"]),
 
         // Search
         .init(.search, .search, "<query> | --similar <path> [-k N] [--project P] [--kind file|session|memory] [--exact]",
@@ -569,8 +658,15 @@ extension DuoAction {
     /// Old spellings keep working.
     public static func resolve(_ args: [String]) -> (DuoAction, rest: [String])? {
         // Three-word verbs first ("deck template build"): the deck template family.
+        guard let found = resolveAll(args) else { return nil }
+        // Duo Decks off (DL-307): its verbs are unknown, as before they existed.
+        return found.0.family == .deck && !DeckFeature.enabled ? nil : found
+    }
+
+    static func resolveAll(_ args: [String]) -> (DuoAction, rest: [String])? {
         if args.count >= 3, let id = ActionID(rawValue: args.prefix(3).joined(separator: " ")) { return (byID[id]!, Array(args.dropFirst(3))) }
-        let words = args.prefix(2).map { aliases[$0] ?? $0 }
+        var words = args.prefix(2).map { aliases[$0] ?? $0 }
+        if words == ["window", "colour"] { words = ["window", "color"] }   // DL-339 (Q-514): the verb is American, the old spelling stays
         if words.count == 2, let id = ActionID(rawValue: words.joined(separator: " ")) { return (byID[id]!, Array(args.dropFirst(2))) }
         if let w = words.first {
             if let id = ActionID(rawValue: w) { return (byID[id]!, Array(args.dropFirst())) }
@@ -588,26 +684,34 @@ extension DuoAction {
 public enum Parity {
     public static let uiOnly: [String: String] = [
         "Explain Tasks": "Help › Explain Tasks shows an explanation to a person at the screen (DL-172); `duo2 task new` is the action it explains",
-        "Close Window": "window management",
+        "Template picker's typing": "the New Slide list (⌃⌘N) and the slide chip's list filter their templates as you type, like the editor's autocomplete (DL-295); `duo2 deck templates` lists them and `deck insert` / `deck change` take the name",
+        "Slide chip's look": "the editor draws each `<!-- slide: … -->` line as a chip (DL-296); the file is unchanged, `duo2 deck` reads the same lines",
+        "Slide anchor mark": "a 2 pt mark in the editor's margin over the caret's slide (split view's R4); view state, `duo2 deck go` and `duo2 deck` report the current slide",
         "@ menu in a margin comment": "input help while typing a comment (DL-251): it inserts the text `@claude`, and `duo2 comment add`/`reply` take that text as typed",
         "About Duo": "the standard macOS About panel, whose credits list the third-party notices (DL-176); system UI for a person at the screen",
         "Paste or drop a picture in the editor": "a gesture, not a menu item: the picture is saved beside the document and linked (LR-39); `duo2 doc insert` adds the same `![](name)` text, and `duo2 file move` puts a picture beside a note",
         "Anyone": "the task board's owner filter: view state; `duo2 task board` lists every card",
         "Me": "the task board's owner filter: view state; `duo2 task board` lists every card",
+        "Open in Browser (HTML page bar)": "the bar over a local HTML page that uses scripts or styles from the web (F-629): hands the file to the person's own browser, which Claude has no use for; `duo2 browser open` opens a tab in Duo, and `duo2 html reload` is the bar's Reload",
         "Enter Full Screen": "window management",
         "Exit Full Screen": "window management",
         "Toggle Right Pane": "not built yet",
         "Cancel": "a step inside another action's dialog or picker",
         "Look Again": "re-reads what Duo already refreshes every 2 s; the CLI always reads fresh state",
-        "Open Settings…": "not built: Settings waits on its design (DB-10)",
+        "Open Settings…": "opens the Settings window; `duo2 settings` reads and sets what it holds",
         "Go": "a menu, not an action",
         "Format": "a menu, not an action",
         "Project": "a menu, not an action",
+        "Chat": "a menu, not an action",
         "Session": "a menu, not an action",
         "Heading": "a submenu, not an action",
         "Table": "a submenu, not an action",
         "Align Column": "a submenu, not an action",
         "What’s New in This Version": "opens this version's release notes on GitHub; `duo2 status` names the version",
+        "Duo Guide": "opens the user guide on GitHub for a person at the screen (DL-339); the guide is `docs/guide/`, and `duo2 help` is the same material for Claude",
+        "Watch the Intro Film": "opens the intro film for a person to watch (DL-339); a film has no action to take",
+        "Watch the Director Film": "opens the director film for a person to watch (DL-339); `duo2 director guide` prints the skill it shows",
+        "Explain Chat and Terminal": "Help › Explain Chat and Terminal shows an explanation to a person at the screen (DL-172, DL-339); `duo2 session chat` is the action it explains",
         "Report an Issue…": "opens GitHub's new-issue form, filled in, for the user to edit and submit",
         "No templates yet: add .md files to a templates folder": "a disabled hint",
         "No other sessions in": "a disabled hint on + Add",
@@ -637,7 +741,7 @@ public struct Invocation: Sendable {
     public var flags: [String: String] = [:]
 
     /// Flags that take no value.
-    public static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "use-folder", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "full-page", "session", "open", "sessions", "keep-sessions", "synthetic", "resolved", "force", "session-only", "left", "right", "hidden", "anyway", "not-now", "no-interview", "cancel", "fetch", "background", "in-duo", "suggest", "closed", "unsent", "take-over", "handed-back", "no-worker", "adopt", "clear", "refresh", "no-open", "log", "add"]
+    public static let switches: Set<String> = ["fork", "code", "draft", "browser", "pr", "sheet", "use-folder", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "full-page", "session", "open", "sessions", "keep-sessions", "synthetic", "resolved", "force", "session-only", "left", "right", "hidden", "anyway", "not-now", "no-interview", "cancel", "fetch", "background", "in-duo", "suggest", "closed", "unsent", "take-over", "handed-back", "no-worker", "previous", "adopt", "clear", "refresh", "no-open", "log", "add", "doc", "routine", "no-red-lines"]
 
     /// Flags whose value is optional: the next word is theirs unless it's another flag.
     public static let optionalValues: Set<String> = ["remote-control"]
@@ -673,13 +777,13 @@ public struct Invocation: Sendable {
 
 extension DuoAction {
     public static func help(family: String? = nil) -> String {
-        if let family, let f = ActionFamily.allCases.first(where: { $0.rawValue == family || $0.title.lowercased() == family.lowercased() }) {
+        if let family, let f = ActionFamily.shown.first(where: { $0.rawValue == family || $0.title.lowercased() == family.lowercased() }) {
             return "\(f.title)\n\n" + table(all.filter { $0.family == f }) + "\nEvery verb takes --json.\n"
         }
         var out = "duo2 talks to the Duo app: everything a person can do in Duo, Claude can do here.\n\nEveryday:\n"
-        out += table(all.filter(\.everyday))
+        out += table(all.filter { $0.everyday && ActionFamily.shown.contains($0.family) })
         out += "\nAll verbs, by family (duo2 help <family>):\n"
-        out += ActionFamily.allCases.map { f in
+        out += ActionFamily.shown.map { f in
             "  \(f.rawValue.padding(toLength: 9, withPad: " ", startingAt: 0)) " + all.filter { $0.family == f }.map(\.verb).joined(separator: ", ")
         }.joined(separator: "\n")
         return out + "\n\nEvery verb takes --json. Errors go to stderr with a non-zero exit.\n"
@@ -719,7 +823,7 @@ extension DuoAction {
     public static func primer(sessionID: String? = nil, cli: String? = nil) -> String {
         var text = "You are running inside Duo, a Mac app that organizes the user's Claude Code sessions into projects and shows their documents. "
             + "The `duo2` command talks to Duo; it is on PATH and needs no approval. Everything the user can do in Duo, you can do with it "
-            + "(`duo2 help`, then `duo2 help <family>`: " + ActionFamily.allCases.map(\.rawValue).joined(separator: ", ") + "). Everyday:\n"
+            + "(`duo2 help`, then `duo2 help <family>`: " + ActionFamily.shown.map(\.rawValue).joined(separator: ", ") + "). Everyday:\n"
             + all.filter(\.everyday).map { "- `\($0.usage)`: \($0.summary)" }.joined(separator: "\n")
             + "\nFor questions across projects, or about meaning rather than exact text, run `duo2 search \"<question>\"` before grep or reading folders. "
             + "Read only the lines it points to. Its scores only compare results within one search. Use `--exact` for identifiers."
@@ -728,6 +832,10 @@ extension DuoAction {
             + "`duo2 doc edit --stdin`, piping the JSON your Edit tool takes ({\"file_path\",\"old_string\",\"new_string\"}, or {\"file_path\",\"content\"} to rewrite), "
             + "not with Edit, Write or shell redirection. Duo applies it in the editor the user is looking at, highlighted, and merges it with their unsaved typing."
             + "\nTo check a Word document you made, fit the check to where it goes (for Google Docs, structure, not pixels): `duo2 doc outline` and `duo2 doc layout` (page and text width, tables and pictures against it), and `duo2 doc screenshot` to see it; the duo2 skill's \"Checking documents\" says more. Don't start soffice in the sandbox."
+            + "\nTo read a PDF, `duo2 doc read <file.pdf>` gives its text with a `--- page N ---` line per page, then lists the pages that need a look (a scan, a figure); render one with `duo2 pdf render <file> <page>` and read the PNG, rather than reading the whole PDF as images."
+            + "\nFile names you write in a reply (`docs/plan.md`, `src/app.py:42`: a path from the project folder) are links the user can click to open the file beside the conversation; "
+            + "when you finish a document the user should read, once the file is written, open it for them with `duo2 doc open <path>`. Duo tells you at the start, and again when it changes, whether the user is reading in chat or in a terminal. "
+            + "The user's own CLAUDE.md and instructions win over any of this."
             + "\nTo track work, make Duo tasks (`duo2 task new`, one note each in the project's tasks/ folder) and set their status with `duo2 task status`; do not write a TASKS.md or a to-do list file."
             + "\nWhen you start substantial work, `duo2 session note \"<one line>\"`; when you hand back, `duo2 session next \"<one line>\"`."
         if let sessionID {

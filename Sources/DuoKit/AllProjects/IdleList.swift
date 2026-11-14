@@ -75,7 +75,7 @@ extension AppModel {
     /// Return resumes: the project opens with that session in the console (DB-1).
     func resumeIdle(_ r: IdleRow, openOnly: Bool = false) {
         toggleIdleList()
-        guard let project = r.project ?? fixture.sessions.first(where: { $0.tabKey == r.id })?.project else { return }
+        guard let project = r.project ?? session(tabKey: r.id)?.project else { return }
         if openOnly || r.openIn != nil { open(project: project) } else {
             open(project: project, session: r.name)
             if consoleTab != r.id { consoleTab = r.id }

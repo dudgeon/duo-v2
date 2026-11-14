@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>D2 A 480-wide column</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.tb{height:38px;display:flex;align-items:center;gap:18px;padding:0 14px;background:#f3f4f6;border-bottom:1px solid #c9cdd3;font-size:13px;white-space:nowrap}
+.dots{display:flex;gap:8px;margin-right:6px}
+.dots i{width:12px;height:12px;border-radius:50%;background:#c9cdd3;display:block}
+.lab{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5b636d}
+.ny{color:#c2410c}
+.g{width:12px;height:12px;display:inline-block;box-sizing:border-box}
+.g.n{background:#c2410c;border-radius:50%}
+.r{display:grid;grid-template-columns:22px minmax(0,1fr) 150px 64px;align-items:center;height:26px;font-size:13px}
+.r .w{text-align:right;color:#5b636d}
+.r .p{color:#5b636d;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.opt{border:1px solid #c9cdd3;border-radius:6px;padding:6px 10px;font-size:13px;line-height:19px;background:#ffffff}
+.pm{display:inline-block;font-size:11px;line-height:15px;font-weight:600;color:#ffffff;background:#1f2328;border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:middle}
+.ann{position:absolute;font-size:12px;line-height:17px;color:#1f2328;background:#fff7d6;border:1px solid #d9c36a;border-radius:6px;padding:6px 9px;max-width:260px}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;position:relative;background:#ffffff;color:#1f2328;font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;display:flex;flex-direction:column;overflow:hidden">
+<div class="tb">
+<div class="dots"><i></i><i></i><i></i></div>
+<span style="background:#e9ecef;border-radius:4px;padding:0 4px">▯</span>
+<strong>All projects</strong>
+<span class="ny"><span class="g n"></span> 3 need you</span>
+<span>◆ 2 to review</span><span>○ 3 working</span>
+<span style="margin-left:auto;border:1px solid #c9cdd3;border-radius:6px;background:#ffffff;width:290px;padding:3px 10px;color:#5b636d">Search all projects</span>
+<span style="color:#5b636d">▯▯</span>
+</div>
+<div style="flex:1;display:flex;min-height:0">
+<div style="width:480px;flex:none;border-right:1px solid #c9cdd3;background:#ffffff;display:flex;flex-direction:column">
+<div style="height:36px;display:flex;align-items:center;gap:8px;padding:0 14px;background:#f3f4f6"><strong>★ home</strong><span style="font-family:ui-monospace, 'SF Mono', Menlo, monospace;font-size:12px;color:#5b636d">~/work/home</span></div>
+<div style="height:28px;display:flex;align-items:center;gap:14px;padding:0 14px;border-bottom:1px solid #c9cdd3;background:#f3f4f6;font-size:12px"><strong style="text-decoration:underline">Morning triage</strong><span>Weekly status</span><span>+</span></div>
+<div style="flex:1;padding:18px 18px;display:flex;flex-direction:column;gap:12px;justify-content:flex-end">
+<span style="align-self:flex-end;background:#dfe8f6;border-radius:12px;padding:7px 12px;font-size:14px">What came in overnight?</span>
+<span style="font-size:14px;line-height:21px">Five new asks. Three belong to projects. Two are yours.</span>
+<div style="border:1.5px solid #c2410c;border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px">
+<strong style="font-size:13px">Route the three to their projects as tasks?</strong>
+<div class="opt">1 · Yes, one task each</div><div class="opt">2 · Yes, and start a session on each</div><div class="opt">3 · No, list them for me first</div>
+</div>
+<div style="border:1px solid #c9cdd3;border-radius:8px;padding:8px 12px;color:#5b636d;font-size:14px">Reply to Claude</div>
+</div>
+</div>
+<div style="flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-width:0">
+<div style="border:1px dashed #8b939c;border-radius:6px;height:28px;display:flex;align-items:center;gap:8px;padding:0 10px;font-size:13px"><strong>New session</strong> in <span style="border:1px solid #c9cdd3;border-radius:5px;padding:0 6px">★ home ⌄</span></div>
+<div class="lab" style="margin-top:6px">Open · 5</div>
+<div class="r"><span>○</span><span>Teardown research</span><span class="p">checkout-redesign</span><span class="w">working</span></div>
+<div class="r"><span>○</span><span>Edge-case matrix</span><span class="p">refunds-api-spec</span><span class="w">working</span></div>
+<div class="r"><span>○</span><span>Rule audit</span><span class="p">fraud-rules-review</span><span class="w">working</span></div>
+<div class="lab" style="margin-top:6px">Today</div>
+<div class="r"><span>◆</span><span>Results readout</span><span class="p">pricing-experiment-q4</span><span class="w">25m</span></div>
+<div class="r"><span>◆</span><span>Funnel SQL</span><span class="p">onboarding-v3</span><span class="w">40m</span></div>
+</div>
+<div style="width:340px;flex:none;border-left:1px solid #c9cdd3;padding:14px 12px"><div class="lab ny">Needs you · 3</div></div>
+</div>
+<div class="ann" style="left:500px;top:420px;max-width:380px"><span class="pm">P</span> D2: Home's column opens at 480 (about 60 columns), the map's minimum (440) and DL-129's 340 | 600 | 340 change, and the List loses its task column at 1440. At 1280 the right pane gives way first. Fixes narrow questions; the second slot (F-640), the per-window stand-in (DL-314) and the launch start (F-648) stay. D1 (Q-488 a) gets the same result for questions with no change on screen.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

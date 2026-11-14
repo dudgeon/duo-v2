@@ -378,7 +378,7 @@ extension AppModel {
             FileHandle.standardError.write(Data("question: \(q.title) | \(q.choices.map(\.label).joined(separator: " / "))\n".utf8))
             return q.choices.first(where: \.isDefault)?.action() ?? ()
         }
-        SheetCenter.shared.ask(q)
+        SheetCenter.shared.ask(from: self, q)
     }
 
     func sessionCount(_ n: Int) -> String { n == 1 ? "1 session" : "\(n) sessions" }

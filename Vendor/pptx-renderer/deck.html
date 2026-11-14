@@ -11,13 +11,47 @@
     font: 13px/20px var(--duo-font-ui); }
   /* The padding is the body's: the renderer fits slides to #host's width. */
   body { padding: 16px 20px 0; }
-  #host { min-height: 100vh; }
+  #host, #spare { min-height: 100vh; }
+  /* The drawing being made for a redraw: laid out like the visible one, but unseen and out of the page's height. */
+  /* !important: the renderer sets `position: relative` on its container inline, which would leave the hidden
+     drawing in the flow, a viewport tall, above the slides after a redraw (redraw-blank.md). */
+  .staged { position: absolute !important; top: 16px; left: 20px; right: 20px; visibility: hidden; pointer-events: none; }
   /* The renderer's slide items: a number above each, a rule round it, no shadow (Duo has none). */
   #host [data-slide-index] { margin: 0 0 16px 0 !important; width: auto !important; }
   #host [data-slide-index] > div.deck-slide { box-shadow: none !important; outline: 1px solid var(--duo-rule); }
   .deck-number { font-size: 11px; line-height: 16px; color: var(--duo-text2); margin-bottom: 6px; }
   .deck-number.current { color: var(--duo-text); font-weight: 600; }
   body.picking #host [data-duo-shape-id] { cursor: default; }
+  /* DL-337: what a comment is on, as Markdown draws it: text in commentHighlight (active: commentHighlightActive), a shape outlined, the slide's number boxed. */
+  body.margin mark.duo-comment { background: var(--duo-comment-highlight); color: inherit; cursor: pointer; }
+  body.margin mark.duo-comment.duo-active, body.margin mark.duo-comment.duo-hot { background: var(--duo-comment-highlight-active); }
+  body.margin .duo-anchor { outline: 2px solid var(--duo-comment-highlight); outline-offset: 0; cursor: pointer; }
+  body.margin .duo-anchor.duo-active, body.margin .duo-anchor.duo-hot { outline-color: var(--duo-comment-highlight-active); }
+  body.margin .deck-number.duo-anchor-slide { display: inline-block; align-self: flex-start; padding: 0 5px; border: 1px solid var(--duo-rule); border-radius: 4px; background: var(--duo-pane); cursor: pointer; }
+  body.margin .deck-number.duo-anchor-slide.duo-active { border: 1.5px solid var(--duo-text); }
+  body.margin mark.duo-comment.duo-closed, body.margin .duo-anchor.duo-closed { background: none; outline: 0; border-bottom: 0; }
+  body.margin.show-closed mark.duo-comment.duo-closed { border-bottom: 1.5px dotted var(--duo-control-edge); }
+  body.margin.show-closed .duo-anchor.duo-closed { outline: 1.5px dotted var(--duo-control-edge); }
+  body.margin .deck-number.duo-anchor-slide.duo-closed { border-style: dotted; }
+
+  /* Cards under a slide (P3-3): a problem, or content moved to the notes. On pane, a 1 pt rule, radius 6. */
+  .deck-card { margin: 6px 0 0; padding: 8px 10px; background: var(--duo-pane); border: 1px solid var(--duo-rule); border-radius: 6px; box-sizing: border-box; }
+  .deck-card-msg { font-size: 11px; line-height: 16px; color: var(--duo-text); }
+  .deck-card-msg b { font-weight: 600; }
+  .deck-card-buttons { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+  .deck-card button { font: inherit; font-size: 11px; line-height: 16px; height: 22px; padding: 0 8px; border-radius: 5px; border: 1px solid var(--duo-control-edge); background: var(--duo-pane); color: var(--duo-text); cursor: default; }
+  /* A comment pin (P3-1): an 18-high capsule on pane, a 1 pt controlEdge edge, a speech mark and the count. */
+  .deck-pin { position: absolute; z-index: 6; display: inline-flex; align-items: center; gap: 3px; height: 18px; padding: 0 6px; box-sizing: border-box;
+    border-radius: 9px; border: 1px solid var(--duo-control-edge); background: var(--duo-pane); color: var(--duo-text); font: 600 10px/16px var(--duo-font-ui); cursor: default; }
+  /* Picking slides (Make Templates, DL-291): a tick box in each slide's corner, the picked ones ringed. */
+  .deck-tick { position: absolute; left: 10px; z-index: 6; width: 28px; height: 28px; box-sizing: border-box; border: 1.5px solid var(--duo-text); border-radius: 4px;
+    background: var(--duo-pane); color: transparent; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+  .slide-picked .deck-tick { background: var(--duo-text); color: var(--duo-pane); }
+  .slide-picked > .deck-slide { outline: 2px solid var(--duo-text) !important; }
+  .slide-picked > .deck-number { color: var(--duo-text); font-weight: 600; }
+  body.slide-picking #host [data-slide-index] { cursor: default; }
+  #host.grid { display: grid; column-gap: 16px; align-items: start; align-content: start; }
+  #host.grid [data-slide-index] { margin: 0 0 16px 0 !important; min-width: 0; }
   #outline { position: absolute; pointer-events: none; box-sizing: border-box; display: none; z-index: 10; }
   #outline.hover { border: 1px dashed var(--duo-text); }
   #outline.frozen { border: 1.5px solid var(--duo-text); }
@@ -27,6 +61,7 @@
 </head>
 <body>
 <div id="host"></div>
+<div id="spare" class="staged"></div>
 <div id="outline"></div>
 <div id="tag"></div>
 <script type="module" src="deck.js"></script>

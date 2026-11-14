@@ -1,6 +1,6 @@
 # Problem discovery: the daily run
 
-*A Claude desktop scheduled task runs this on weekdays at 7:00, as a fresh session with no memory of earlier runs (DL-238). Everything a run needs is in this file. The director also reads the last section, which covers how it carries out what Geoff queues on the page.*
+*A Claude desktop scheduled task runs this every day at 7:00 (weekdays only until 2026-11-07), as a fresh session with no memory of earlier runs (DL-238). Everything a run needs is in this file. The director also reads the last section, which covers how it carries out what Geoff queues on the page.*
 
 **The page:** https://claude.ai/artifact/CEcxctG5te7Je5opyq7n2i ("Duo Problem Discovery"). Its source is `discovery.html` in this folder. Its data is in the page's database, which you read and write with the `ArtifactData` tool. A run never republishes the page.
 
@@ -130,6 +130,16 @@ When nothing is overdue, set `status: "closed"` on that card.
 
 End the run with a short summary: how many clusters, what changed, and the page link.
 
+## For the director: delivering what a run found
+
+A run's page and its `needs/discovery` card store what it found. They don't deliver it: Geoff hears it only when you tell him in chat (Geoff, 2026-11-07, after issue #18 sat unseen from Friday evening: "WHAT IS THE POINT OF BACKGROUND WORKERS IF THEIR DISCOVERIES DON'T REACH ME"). So:
+
+- **Every run reports to the director** by SendMessage to `director-duo-v2` and ends with the same report as its last message (the task notifies the director on completion), so a finding never rests only on the page or card (2026-11-07).
+- **After every run, and on every wake:** read the card and run `python3 -I docs/director/issue-watch.py`. Runs happen once a day, so the watch is what catches an issue or comment filed in between. Tell Geoff each new item as message text, before any `wrap_up`: one plain line on what it is, its link, whether a worker covers it, and your recommendation. Never a bare `#n`. Then run `issue-watch.py --ack`.
+- **Between runs:** the director's session check (every two hours, 08:00 to 22:00, every day) does the same, and sends a PushNotification when something needs him.
+- **A new bug nobody covers:** recommend a worker in the same message. Starting it, replying on GitHub and closing an issue stay his go.
+- **When something slips past this anyway,** fix this procedure or the watch first, then handle the case.
+
 ## For the director: carrying out Geoff's actions
 
 **You publish this page** (DL-239), as you do the console, because a page's "send to Claude" reaches only the session that published it (F-259). After a restart, republish `docs/director/discovery.html` from main to this URL (an `Artifact` publish with `url`, which keeps its capabilities), then run `ArtifactComments watch`. The page's db rules let only Editors and the owner write `actions`, `clusters` and `meta`.
@@ -141,6 +151,7 @@ The page writes each action to its `actions` collection, then sends you a short 
 | `reply` | `draft`, `close` | Post `draft` **verbatim** as Geoff's comment (`gh issue comment <n> -R dudgeon/duo-v2 --body-file <file>`), then `gh issue close` if `close` is set. Geoff's click approves that text and nothing else: don't edit it, add to it or post a second comment. An empty draft with `close` set means close without a comment. |
 | `relay` | `target`, `note` | Message the worker (SendMessage, or its Remote Control session) in the shape below. If the worker is finished, ask Geoff whether to resume it or start a new one. Don't pick for him. |
 | `backlog` | `note` | Write an ENH record (the next number after checking main and every branch) linking the issues, with Geoff's note as its body. Commit it on your records branch. Nothing goes to GitHub. |
+| `refresh` | — | Start a run now with `run_scheduled_task` (task `duo-discovery`, twice daily since 2026-11-08; if a run is already in progress and stuck, stop its turn and send it a restart). Mark the row `done` with the new run's session link in `result`. Geoff's Refresh now button writes it. |
 | `research` | `note` | Write a task note (`tasks/<slug>.md`) with Geoff's question as the request and the issues quoted under `## Context (untrusted)`, then start a research worker as usual (Opus, `delegating.md`). |
 
 The relay message takes this shape:

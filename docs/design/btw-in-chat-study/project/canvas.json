@@ -1,0 +1,12 @@
+{"v": 3, "createdOnFiles": {"v": 1, "at": "2026-11-13T18:10:00Z"}, "title": "Duo · /btw in chat", "launch": {"view": "canvas"}, "pages": [],
+ "boards": {
+  "Main.dc.html": {"x": 0, "y": 0, "w": 1400, "h": 1100, "title": "0 · What /btw does, why chat falls back, the questions"},
+  "Where.dc.html": {"x": 1480, "y": 0, "w": 1640, "h": 1060, "title": "1 · Where the side answer shows (Q-550) [P]"},
+  "States.dc.html": {"x": 0, "y": 1220, "w": 1640, "h": 1000, "title": "2 · The side card, state by state [P]"},
+  "After.dc.html": {"x": 1720, "y": 1220, "w": 1640, "h": 1000, "title": "3 · After it closes, and the composer (Q-551, Q-552) [P]"},
+  "Entry.dc.html": {"x": 0, "y": 2340, "w": 1640, "h": 1000, "title": "4 · Asking, fork, keys and duo2 (Q-553, Q-554) [P]"},
+  "Chat.dc.html": {"x": 3200, "y": 0, "w": 620, "h": 560, "title": "Chat with a side question (component)"}
+ },
+ "order": ["Main.dc.html", "Where.dc.html", "States.dc.html", "After.dc.html", "Entry.dc.html", "Chat.dc.html"],
+ "notes": {},
+ "designSystems": [{"title": "Duo", "namespace": "duo", "artifact": "https://claude.ai/artifact/QMapKeLYS3TVV36QKEc6MH", "version": "1794351449-9427", "copiedAt": "2026-11-13T18:10:00Z"}]}

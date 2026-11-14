@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Copy, keys and duo2</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.cap{font-size:12px;line-height:17px;color:#5B636D}
+.cap b{color:#1F2328;font-weight:600}
+.lab{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.mono{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:11px}
+.clip{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:10px 12px;font:400 11px/18px 'SF Mono',ui-monospace,Menlo,monospace;color:#1F2328;white-space:pre-wrap}
+.kt{border-collapse:collapse;font-size:12px;line-height:17px}
+.kt td{padding:5px 14px 5px 0;border-bottom:1px solid #E9ECEF;vertical-align:top}
+.kt td:first-child{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:11px;white-space:nowrap}
+</style>
+</helmet>
+<div style="width: 1560px; height: 1000px; box-sizing: border-box; background: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; color: #1F2328; padding: 40px; display: flex; flex-direction: column; gap: 22px">
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <div style="font-size: 18px; line-height: 24px; font-weight: 600">Q-509 · Copy, and reaching every action from the keyboard and duo2 [P]</div>
+    <div class="cap" style="font-size: 13px; line-height: 19px; max-width: 1420px">Copy takes the turn from chat’s own record of it, never the screen, so it is the raw Markdown Claude wrote or you typed. It works while Claude works, on any finished turn. The button turns to a check and “Copied” for 1.5 s; nothing else moves.</div>
+  </div>
+  <div style="display: flex; gap: 36px; align-items: flex-start">
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">After a click</div>
+      <dc-import name="Chat" chat="{{copied}}" hint-size="480px,330px"></dc-import>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">A (recommended) · the words</div>
+      <div class="clip">Both flows are in `docs/refunds/flows.md`. The main difference is **who confirms** the refund.
+
+| Flow | Confirms | Median time |
+|---|---|---|
+| Self-serve | Buyer | 2 min |
+| Assisted | Support agent | 3.4 h |
+
+Keep self-serve as the default, and route orders over $500 to assisted.</div>
+      <div class="cap">Claude’s text, joined by blank lines across its tool calls. No thinking, no tool calls, no “Claude · 9:52”. Yours: as typed; a picture as <span class="mono">[Image #1]</span>, a long paste whole.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">B · with one line per tool call</div>
+      <div class="clip">Both flows are in `docs/refunds/flows.md`. …
+
+&gt; Read docs/refunds/flows.md
+&gt; Ran `rg -n threshold src/refunds`
+
+| Flow | Confirms | Median time |
+…</div>
+      <div class="cap">Each tool call as a quoted line, in place, as chat’s collapsed steps read (DL-135). Better for a bug report; noise in a doc. <b>C</b> is A on a click and B on ⌥-click.</div>
+    </div>
+  </div>
+  <div style="display: flex; gap: 36px; align-items: flex-start">
+    <div style="width: 740px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">The keyboard (no new chord: DL-34 locks the map)</div>
+      <table class="kt">
+        <tr><td>⌥⌘↑ / ⌥⌘↓</td><td>Selects your previous / next message (DL-242, as now): it gets a 2 <span class="mono">text</span> ring and shows its row.</td></tr>
+        <tr><td>Tab / ⇧Tab</td><td>From a selected message, into its row: Copy, Rewind, Fork; Space presses. Escape goes back to the composer.</td></tr>
+        <tr><td>Chat menu</td><td>Copy Message, Rewind to Before Message…, Fork from Message… act on the selected message (or the latest with none selected). Copy Claude’s Reply, Fork After Reply.</td></tr>
+        <tr><td>VoiceOver</td><td>Each turn carries Copy, Rewind…, Fork… as accessibility actions.</td></tr>
+      </table>
+    </div>
+    <div style="width: 740px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">duo2 (DL-71: every button names a verb)</div>
+      <table class="kt">
+        <tr><td>duo2 session turns &lt;id&gt;</td><td>Lists the live turns: number, who, time, first line, uuid. A turn is named by its number or uuid.</td></tr>
+        <tr><td>duo2 session copy-turn &lt;id&gt; &lt;turn&gt; [--tools]</td><td>Prints the turn’s Markdown (to stdout; <span class="mono">--clipboard</span> to copy).</td></tr>
+        <tr><td>duo2 session rewind &lt;id&gt; &lt;turn&gt; [--files]</td><td>Shows Duo’s sheet in Duo and waits for the answer, as <span class="mono">trust-folder</span> does; no <span class="mono">--yes</span>. <span class="mono">--files</span> preselects Conversation and files.</td></tr>
+        <tr><td>duo2 session fork &lt;id&gt; [--at &lt;turn&gt;] [--behind]</td><td>The existing verb gains <span class="mono">--at</span>; prints the new session’s id.</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1560,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      copied: { w: 480, h: 330, tabs: [ { t: 'Refund flows', on: true } ], items: [ { you: true, meta: 'You · 9:52', text: 'Compare the two refund flows in a table, with a short recommendation.' }, { claude: true, meta: 'Claude · 9:52', lines: [ 'Both flows are in docs/refunds/flows.md. The main difference is who confirms the refund.' ], row: [ { icon: 'check', label: 'Copied' }, { icon: 'fork', label: 'Fork' } ] } ] }
+    };
+  }
+}
+</script>
+</body>
+</html>

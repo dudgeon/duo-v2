@@ -41,7 +41,7 @@ I like short answers, with the decision first.
 ## When you're running in this folder itself (not inside one of its projects)
 You're my chief of staff. When I tell you about something new:
 - If it's quick, answer it.
-- If it belongs to a project (the folders here, each with a PROJECT.md),
+- If it belongs to a project (the folders here, each with a _PROJECT.md),
   say which. With my OK, start a session there:
   duo2 session new --project <name> --prompt "<the ask>"
 - Keep inbox.md: one line per ask, and where it went.
@@ -50,6 +50,6 @@ When I ask what's waiting on me, run duo2 needs-you and summarise it.
 
 ## For power users
 
-Home is marked by a `HOME.md` at its top, with the same fields as a `PROJECT.md` (`goal`, `next`). Home's session is an ordinary Claude session in that folder. `duo2 home set <folder>`, `duo2 project move-into-home <project>`; <kbd>⇧⌘H</kbd> goes to Home, ready to type.
+Home is marked by a `_HOME.md` at its top, with the same fields as a `_PROJECT.md` (`goal`, `next`). Home's session is an ordinary Claude session in that folder. `duo2 home set <folder>`, `duo2 project move-into-home <project>`; <kbd>⇧⌘H</kbd> goes to Home, ready to type.
 
 Next: [Topics](topics.md)

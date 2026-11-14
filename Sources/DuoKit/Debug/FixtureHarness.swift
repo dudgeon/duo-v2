@@ -237,11 +237,28 @@ public enum FixtureHarness {
             if parts.count > 1, let target = model.voiceFocusTarget {
                 model.voice.start(target, source: .file(URL(fileURLWithPath: parts[1])))
             }
-        case "window-shot":   // window-shot:<png>: the whole window drawn to <png> now, mid-run (a dictation in progress)
-            if parts.count > 1, let w = NSApp.windows.first(where: { $0.title == "Duo" }) ?? NSApp.windows.first {
-                do { try WindowCapture.window(w, to: URL(fileURLWithPath: parts[1])) }
-                catch { FileHandle.standardError.write(Data("window-shot failed: \(error.localizedDescription)\n".utf8)) }
+        case "window-shot":   // window-shot:[<n>:]<png>: window n (default 1), whole, drawn to <png> now, mid-run
+            let sub = parts.count > 1 ? parts[1].split(separator: ":", maxSplits: 1).map(String.init) : []
+            let (n, path) = sub.count == 2 && Int(sub[0]) != nil ? (Int(sub[0])!, sub[1]) : (1, parts.count > 1 ? parts[1] : "")
+            if !path.isEmpty, let w = FixtureHarness.window(n) ?? (n == 1 ? NSApp.windows.first : nil) {
+                WindowCapture.withWebSnapshots(in: w) {
+                    do { try WindowCapture.window(w, to: URL(fileURLWithPath: path)) }
+                    catch { FileHandle.standardError.write(Data("window-shot failed: \(error.localizedDescription)\n".utf8)) }
+                }
             }
+        // Multi-window slice 1 (DL-311): more windows in a scripted run, as File › New Window and Open in New Window.
+        case "window-new":    // window-new[:<project>]: a new window, at All projects or on the project
+            model.core.openWindow(project: parts.count > 1 ? parts[1] : nil)
+        case "window-colour", "window-open":   // window-colour:<n>:<colour id|none> (the swatch); window-open:<n>:<project> (DL-308)
+            let sub = parts.count > 1 ? parts[1].split(separator: ":", maxSplits: 1).map(String.init) : []
+            if sub.count == 2, let m = model.core.model(named: sub[0]) {
+                if parts[0] == "window-colour" { m.setWindowColour(sub[1] == "none" ? nil : sub[1]) } else { m.open(project: sub[1]) }
+            }
+        case "window-run":    // window-run:<n>:<action>: any harness action on window n's model (new, type:…, enter, …)
+            let sub = parts.count > 1 ? parts[1].split(separator: ":", maxSplits: 1).map(String.init) : []
+            if sub.count == 2, let m = model.core.model(named: sub[0]) { perform(sub[1], on: m) }
+        case "window-popover": // window-popover:<n>: the swatch's popover open in window n
+            if parts.count > 1, let m = model.core.model(named: parts[1]) { m.colourPopoverOpen = true }
         case "voice-log":     // voice-log: the dictation's state and target, and the composer's text, to stderr
             let field = model.visibleSessionId.flatMap { (model.chats.existing($0) ?? model.fixtureChats[$0])?.composerView }
             FileHandle.standardError.write(Data("voice-log: state=\(model.voice.state) target=\(model.voice.target.map { "\($0)" } ?? "-") level=\(String(format: "%.2f", model.voice.level)) field=\((field?.plainText ?? "-").debugDescription) dictation=\(field?.dictation.map { "\($0.start)+\($0.length)" } ?? "none")\n".utf8))
@@ -340,7 +357,7 @@ public enum FixtureHarness {
                 if kv.count == 2 { model.dropFiles(kv[1].split(separator: "|").map { URL(fileURLWithPath: String($0)) }, onto: kv[0] == "root" ? nil : kv[0]) }
             }
         case "window-width":   // window-width:<pt>: Duo's window that wide, its height kept (F-456's narrowing run)
-            if parts.count > 1, let w = Double(parts[1]), let win = NSApp.windows.first(where: { $0.title == "Duo" }) {
+            if parts.count > 1, let w = Double(parts[1]), let win = FixtureHarness.window() {
                 var f = win.frame
                 f.size.width = w
                 win.setFrame(f, display: true)
@@ -349,7 +366,7 @@ public enum FixtureHarness {
             if let t = model.visibleTerminal {
                 let d = t.view.terminalStateSnapshot().dimensions
                 let longest = t.view.visibleRowsText(0..<d.rows).map(\.count).max() ?? 0
-                FileHandle.standardError.write(Data("term-info: \(t.key.prefix(8)) cols=\(d.cols) rows=\(d.rows) onScreen=\(t.view.window != nil) longestRow=\(longest) hiddenResizes=\(t.hiddenResizes)\n".utf8))
+                FileHandle.standardError.write(Data("term-info: \(t.key.prefix(8)) cols=\(d.cols) rows=\(d.rows) onScreen=\(t.view.window != nil) longestRow=\(longest) hiddenResizes=\(t.hiddenResizes) \(t.view.holderInfo)\n".utf8))
             } else { FileHandle.standardError.write(Data("term-info: no terminal\n".utf8)) }
         case "drop-terminal":   // drop-terminal:<path>|<path>: files dropped on the visible terminal
             if parts.count > 1 { model.visibleTerminal?.view.insertPaths(parts[1].split(separator: "|").map { URL(fileURLWithPath: String($0)) }) }
@@ -360,7 +377,7 @@ public enum FixtureHarness {
                 FileHandle.standardError.write(Data("answer: \(q.title) [\(q.choices.map(\.label).joined(separator: " | "))]\n".utf8))
                 if let c = q.choices.first(where: { $0.label == (parts.count > 1 ? parts[1] : "") }) { SheetCenter.shared.answer(c) }
             } else { FileHandle.standardError.write(Data("answer: no question\n".utf8)) }
-        case "undo": NSApp.windows.first(where: { $0.title == "Duo" })?.undoManager?.undo()
+        case "undo": FixtureHarness.window()?.undoManager?.undo()
         case "tabs":
             FileHandle.standardError.write(Data("tabs: \(model.openDocuments) right=\(model.rightTab ?? "-") renaming=\(model.renamingPath ?? "-") editor=\(model.editorIfLoaded?.url?.lastPathComponent ?? "-")\ntree: \(model.currentProject.flatMap { model.fixture.projectFiles[$0.name] } ?? [])\n".utf8))
         case "resume":
@@ -415,6 +432,36 @@ public enum FixtureHarness {
         case "tree-return": model.openSelectedFile()   // Return on the tree's selection
         // Split view (DL-275): split:<path>[/left|right] opens a file with its preview; split-swap, split-ratio:<r>,
         // split-focus:left|right, split-unfold, split-close, sidebar-peek:on|off.
+        case "deck-menu":   // deck-menu:problems|export|off: the deck bar's menu open (Duo Decks P3b)
+            if let p = DeckPreviewHub.current { p.menu = parts.count > 1 && parts[1] != "off" ? parts[1] : nil; p.viewer.onChange?() }
+        case "deck-hover":  // deck-hover:<row id>: a row of that menu under the pointer
+            if let p = DeckPreviewHub.current, parts.count > 1 { p.menuHover = parts[1]; p.viewer.onChange?() }
+        case "deck-export": whenDeckReady { $0.exportDeck() }   // once the deck is drawn
+        case "deck-edit":   // deck-edit:<find>=><replacement>: on the deck's file on disk, once it is drawn (a user's edit elsewhere)
+            let p = (parts.count > 1 ? parts[1] : "").components(separatedBy: "=>")
+            whenDeckReady { preview in
+                if p.count == 2, let url = preview.file, let text = try? String(contentsOf: url, encoding: .utf8) {
+                    try? text.replacingOccurrences(of: p[0], with: p[1]).write(to: url, atomically: true, encoding: .utf8)
+                }
+            }
+        case "deck-probe":   // deck-probe[:<label>]: one stderr line, the deck page's DOM as drawn (visible container, slides, sizes, redraws)
+            let label = parts.count > 1 ? parts[1] : ""
+            if let p = DeckPreviewHub.current {
+                p.viewer.webView.callAsyncJavaScript("return JSON.stringify(window.__duo && __duo.probe ? __duo.probe() : null)", arguments: [:], in: nil, in: .page) { r in
+                    let v: String
+                    switch r { case .success(let s): v = s as? String ?? "nil"; case .failure(let e): v = "error \(e.localizedDescription)" }
+                    FileHandle.standardError.write(Data("deck-probe \(label): state=\(p.viewer.state) \(v)\n".utf8))
+                }
+            } else { FileHandle.standardError.write(Data("deck-probe \(label): no deck preview\n".utf8)) }
+        case "deck-pin-hover":   // deck-pin-hover:<slide>/<shape id>: the slot's outline as under a pin's pointer
+            if let p = DeckPreviewHub.current, parts.count > 1 { p.viewer.hover(parts[1]) }
+        case "sheet-newdeck": model.showNewDeck(name: parts.count > 1 ? parts[1] : "")   // New Deck…'s sheet
+        case "sheet-convert": if parts.count > 1 { model.showConvertDeck(parts[1]) }   // sheet-convert:<pptx>: Convert to Duo Deck…'s sheet
+        case "slide-pick":   // slide-pick:3,7: Make Templates…'s tick boxes on the pptx showing, those slides ticked
+            let v = model.deckViewer
+            v.setSlidePicking(true)
+            v.setPickedSlides((parts.count > 1 ? parts[1] : "").split(separator: ",").compactMap { Int($0) })
+        case "slide-pick-off": model.deckViewer.setSlidePicking(false)   // Esc / Cancel: back to one slide per row at the same slide
         case "split": if parts.count > 1 { _ = model.openSplitView(parts[1]) }
         case "split-swap": model.swapSplitSides()
         case "split-ratio": if parts.count > 1, let r = Double(parts[1]) { model.setSplitRatio(r) }
@@ -422,7 +469,25 @@ public enum FixtureHarness {
         case "split-unfold": model.unfoldSplit()
         case "split-close": if let t = model.showingSplit { model.closeSplitView(t.source) }
         case "sidebar-peek": model.setSidebarPeek(parts.count > 1 ? parts[1] == "on" : !model.splits.peek)
-        case "split-report": FileHandle.standardError.write(Data((model.splitReport() + "\n").utf8))
+        case "split-report":
+            let win = FixtureHarness.window()
+            // The smallest the user can resize it to: what the window's delegate allows for a zero size.
+            let size = win.map { w -> String in
+                let m = w.delegate?.windowWillResize?(w, to: .zero) ?? w.contentMinSize
+                return "window: \(Int(w.frame.width))x\(Int(w.frame.height)), min \(Int(m.width))x\(Int(m.height))"
+            } ?? "window: none"
+            FileHandle.standardError.write(Data((model.splitReport() + "\n" + size + "\n").utf8))
+        case "duo2":   // duo2:<verb and arguments, "double quotes" group words>: the control plane's verb as `duo2` runs it; its answer goes to stderr (captures of PDF states)
+            var words: [String] = [], word = "", quoted = false
+            for c in parts.count > 1 ? parts[1] : "" {
+                if c == "\"" { quoted.toggle() } else if c == " ", !quoted { if !word.isEmpty { words.append(word); word = "" } } else { word.append(c) }
+            }
+            if !word.isEmpty { words.append(word) }
+            guard let verb = words.first else { break }
+            let line = parts[1]
+            model.handle(ControlRequest(token: "", command: verb, args: Array(words.dropFirst()), session: nil, cwd: model.projectFolder?.path)) { r in
+                FileHandle.standardError.write(Data("duo2 \(line): \(r.ok ? "ok" : "FAILED") \(r.output)\n".utf8))
+            }
         case "doc": if parts.count > 1 { model.openDocument(parts[1]) }   // doc:<path>: a document tab, as the file tree opens it
         case "convert": if parts.count > 1 { model.convertToMarkdown(parts[1]) }   // convert:<docx>: the bar's Convert to Markdown (DL-123)
         case "converting":   // converting:<docx>: hold the progress bar (C) as drawn, for a capture
@@ -454,6 +519,46 @@ public enum FixtureHarness {
         case "restore-state":
             let s = model.currentRestoreState()
             FileHandle.standardError.write(Data("restore-state: project=\(s.project.map { URL(fileURLWithPath: $0).lastPathComponent } ?? "-") \(s.projects.map { "\(URL(fileURLWithPath: $0.folder).lastPathComponent):\($0.sessions.count)s/\($0.documents.joined(separator: "+"))/\($0.rightTab ?? "-")" }.joined(separator: " "))\n".utf8))
+        // The formatting bar's states (DL-266), for captures and live checks in a background instance whose window isn't key.
+        case "bar-focus":   // bar-focus[:<ref>]: the editor takes the keyboard as a click would (webFocus), so the bar shows
+            let ref = parts.count > 1 && parts[1] == "second" ? EditorRef.second : EditorRef.main
+            model.editors.active = ref; model.webFocus = .editor; model.editorRevision += 1
+        case "bar-select":   // bar-select:<from>[-<to>]: the caret or selection, as a click or drag leaves it
+            let r = (parts.count > 1 ? parts[1] : "0").split(separator: "-").compactMap { Int($0) }
+            model.editor.run("duo.select(a, b); return 1", ["a": r.first ?? 0, "b": r.last ?? 0]) { _ in }
+        case "bar-listen":   // the mic listening on the showing document (hint row, filled mic)
+            if let u = model.editorIfLoaded?.url { model.voice.showFixture(.listening, target: .document(u.path), level: 0.6, onMicrophone: false) }
+        case "bar-nomic":    // no microphone connected: the faint struck mic
+            model.voice.deviceSource = VideoTargets.FixedMicrophone(usable: false)
+        case "bar-mic":      // a microphone is connected (a fixed device, not the Mac's)
+            model.voice.deviceSource = VideoTargets.FixedMicrophone(usable: true)
+        case "dictation-probe":   // Q-181: macOS's own Dictation talks to the focused view as NSTextInputClient (marked text, then insertText); does the editor take it?
+            let e = model.editor, w = e.webView
+            w.window?.makeFirstResponder(w)
+            let client = w.inputContext?.client
+            let none = NSRange(location: NSNotFound, length: 0)
+            var out = "dictation-probe: inputContext=\(w.inputContext != nil) client=\(client.map { String(describing: type(of: $0)) } ?? "nil") firstResponder=\(w.window?.firstResponder === w)\n"
+            client?.setMarkedText("hello wor", selectedRange: NSRange(location: 9, length: 0), replacementRange: none)
+            client?.insertText("hello world", replacementRange: none)
+            e.run("return duo.text()") { v in
+                FileHandle.standardError.write(Data((out + "dictation-probe: text now ends with: \(String(((v as? String) ?? "").suffix(40)).debugDescription)\n").utf8))
+            }
+        case "bar-dictate":   // bar-dictate:<audio file>: a spoken file through voice input into the showing document (as duo2 voice file --doc)
+            if let u = model.editorIfLoaded?.url, parts.count > 1 { model.voice.start(.document(u.path), source: .file(URL(fileURLWithPath: parts[1]))) }
+        case "bar-text":   // the document's text and undo depth, to stderr
+            model.editor.run("return [duo.text(), duo.undoDepth(), duo.dictActive()]") { v in
+                let a = v as? [Any] ?? []
+                FileHandle.standardError.write(Data("bar-text: depth=\(a.count > 1 ? "\(a[1])" : "?") dictActive=\(a.count > 2 ? "\(a[2])" : "?") text=\(String(describing: a.first ?? "").debugDescription)\n".utf8))
+            }
+        case "bar-undo": model.editor.run("duo.undo(); return 1") { _ in }
+        case "bar-return":   // Return while dictating, as the key monitor takes it: finish, then the editor's Return
+            if let ed = model.editorIfLoaded { model.voice.finishWhenDone { _ in ed.dictationEnd { ed.dictationNewline() } } }
+        case "bar-js":   // bar-js:<script file>: the file's body runs in the editor's page; its return value goes to stderr
+            if parts.count > 1, let code = try? String(contentsOfFile: parts[1], encoding: .utf8) {
+                model.editor.run(code) { v in FileHandle.standardError.write(Data("bar-js: \(String(describing: v ?? "nil"))\n".utf8)) }
+            }
+        case "bar-hide": model.setFormatBarHidden(true)
+        case "bar-show": model.setFormatBarHidden(false)
         case "edit-bold": model.editor.run("duo.select(2, 9); duo.exec('bold'); return 1") { _ in }
         case "editor-snapshot":
             let out = parts.count > 1 ? parts[1] : "/tmp/editor.png"
@@ -538,7 +643,48 @@ public enum FixtureHarness {
             if let id = parts.count > 1 ? parts[1] : nil, let url = model.editor.url, let s = model.fixture.sessions.first(where: { $0.project == model.currentProject?.name && $0.sessionId != nil }) {
                 model.sendReviewComment(url, thread: id, to: s) { r in FileHandle.standardError.write(Data("review-send: \(r.text)\n".utf8)) }
             } else { FileHandle.standardError.write(Data("review-send: no session\n".utf8)) }
-        case "review-menu": model.reviewMenu = parts.count > 1 ? parts[1] : nil   // review-menu:markup|all: the review bar's menu, open for a capture
+        case "review-menu": model.reviewMenu = parts.count > 1 ? (parts[1] == "markup" ? "markup" : "mode") : nil   // review-menu:markup|mode (all): the formatting bar's mode menu (DL-317), open for a capture; markup also opens Markup
+        case "pdf-select":   // pdf-select:<words~joined>: selects that text in the PDF showing
+            if let v = model.visiblePdf { _ = v.select(text: (parts.count > 1 ? parts[1] : "").replacingOccurrences(of: "~", with: " ")) }
+        case "pdf-compose":   // pdf-compose: Add Comment (⌘⌥M) on the selection: the composer opens in the margin
+            if let v = model.visiblePdf { model.composePdfComment(v) }
+        case "pdf-post":   // pdf-post:<words~joined>: the composer's Post, the call the margin's button makes (an @claude comment is sent as it is posted)
+            if let v = model.visiblePdf {
+                let id = model.postPdfComment(v, text: (parts.count > 1 ? parts[1] : "").replacingOccurrences(of: "~", with: " "))
+                FileHandle.standardError.write(Data("pdf-post: \(id ?? "none")\n".utf8))
+            }
+        case "pdf-type":   // pdf-type:<words~joined>: types into the margin's composer field (an input event, so the @ menu opens)
+            let t = (parts.count > 1 ? parts[1] : "").replacingOccurrences(of: "~", with: " ")
+            model.visiblePdf?.margin.evaluate("const f = document.querySelector('textarea'); if (!f) return false; f.focus(); f.value = \(String(reflecting: t)); f.setSelectionRange(f.value.length, f.value.length); f.dispatchEvent(new Event('input')); return true") { _ in }
+        case "pdf-activate":   // pdf-activate:<thread id>: opens that card in the margin (a click on it)
+            model.visiblePdf?.margin.activate(parts.count > 1 ? parts[1] : nil)
+        case "pdf-width":   // pdf-width:<points>: the pane width the margin lays out for (under 420 is the narrow gutter)
+            model.visiblePdf?.paneWidth = CGFloat(Double(parts.count > 1 ? parts[1] : "") ?? 1000)
+        case "office-select":   // office-select:<words~joined>: selects that text in the Word document or deck showing (DL-337)
+            let t = (parts.count > 1 ? parts[1] : "").replacingOccurrences(of: "~", with: " ")
+            let js = "const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); for (let n; (n = w.nextNode());) { const i = n.data.indexOf(t); if (i >= 0) { const r = document.createRange(); r.setStart(n, i); r.setEnd(n, i + t.length); const s = getSelection(); s.removeAllRanges(); s.addRange(r); return true; } } return false;"
+            (model.visibleDocx?.webView ?? model.visibleDeck?.webView)?.callAsyncJavaScript(js, arguments: ["t": t], in: nil, in: .page, completionHandler: nil)
+        case "office-compose": _ = model.composeOfficeComment()   // Add Comment (⌘⌥M) on the selection (a deck: else the slide): the composer opens in the margin
+        case "office-post":   // office-post:<words~joined>: the composer's Post (an @claude comment is sent as it is posted)
+            if let o = model.visibleOfficeMargins.first {
+                let reload: () -> Void = { model.visibleDocx?.reload(); model.visibleDeck?.reload() }
+                let id = model.officePost(o, text: (parts.count > 1 ? parts[1] : "").replacingOccurrences(of: "~", with: " "), reload: reload)
+                FileHandle.standardError.write(Data("office-post: \(id ?? "none")\n".utf8))
+            }
+        case "office-type":   // office-type:<words~joined>: types into the margin's composer field (an input event, so the @ menu opens)
+            let t = (parts.count > 1 ? parts[1] : "").replacingOccurrences(of: "~", with: " ")
+            model.visibleOfficeMargins.first?.margin.evaluate("const f = document.querySelector('textarea'); if (!f) return false; f.focus(); f.value = \(String(reflecting: t)); f.setSelectionRange(f.value.length, f.value.length); f.dispatchEvent(new Event('input', { bubbles: true })); return true;") { _ in }
+        case "office-activate":   // office-activate:<thread id>: that card active, its anchor lit (a click on it)
+            if let o = model.visibleOfficeMargins.first { let id = parts.count > 1 ? parts[1] : nil; o.margin.activate(id); o.lightAnchor(id) }
+        case "office-width":   // office-width:<points>: the pane width the margin lays out for (under 420 is the narrow gutter)
+            model.visibleOfficeMargins.first?.paneWidth = CGFloat(Double(parts.count > 1 ? parts[1] : "") ?? 1000)
+        case "office-hover":   // office-hover:<thread id>|none: the pointer over that card (its anchor lights)
+            model.visibleOfficeMargins.first?.hoverAnchor(parts.count > 1 && parts[1] != "none" ? parts[1] : nil)
+        case "office-closed":   // office-closed:on|off: Show Closed Comments
+            model.visibleOfficeMargins.first?.showClosed = parts.count > 1 ? parts[1] == "on" : true
+        case "office-step": FileHandle.standardError.write(Data("office-step: \(model.visibleOfficeMargins.first?.step(parts.count > 1 && parts[1] == "previous" ? -1 : 1) ?? "none")\n".utf8))
+        case "office-dump":   // the margin's cards as laid out, one stderr line
+            model.visibleOfficeMargins.first?.margin.evaluate("return JSON.stringify(duoSideMargin.dump())") { v in FileHandle.standardError.write(Data("office-dump: \(v ?? "nil")\n".utf8)) }
         case "verb":   // verb:<duo2 words>[ --as name]: a duo2 verb through the control handler, as `duo2` sends it (from a Claude session); its reply to stderr
             let words = (parts.count > 1 ? parts[1] : "").split(separator: " ", omittingEmptySubsequences: true).map(String.init)
             guard let command = words.first else { break }
@@ -574,7 +720,7 @@ public enum FixtureHarness {
             if parts.count > 1, let c = codes[parts[1]] { model.visibleTerminal?.view.send(txt: c) }
         case "event":  // event:esc|return|cmd-v: a real key event through the app's queue (local monitors, key window, field editor); cmd-v reads the real clipboard
             let codes: [String: (UInt16, String)] = ["esc": (53, "\u{1b}"), "return": (36, "\r"), "cmd-v": (9, "v"), "ctrl-tab": (48, "\t"), "ctrl-shift-tab": (48, "\t")]
-            if parts.count > 1, let (code, chars) = codes[parts[1]], let w = NSApp.windows.first(where: { $0.title == "Duo" }) {
+            if parts.count > 1, let (code, chars) = codes[parts[1]], let w = FixtureHarness.window() {
                 if !TestBackground.isOn { NSApp.activate(ignoringOtherApps: true) }; w.makeKey()   // a background launch never activates (F-227)
                 for type in [NSEvent.EventType.keyDown, .keyUp] {
                     guard let e = NSEvent.keyEvent(with: type, location: .zero, modifierFlags: parts[1] == "cmd-v" ? .command : parts[1] == "ctrl-tab" ? .control : parts[1] == "ctrl-shift-tab" ? [.control, .shift] : [], timestamp: ProcessInfo.processInfo.systemUptime,
@@ -639,7 +785,7 @@ public enum FixtureHarness {
                 model.hoveredTaskRow = TaskRowHover.key(project: p, path: parts[1])
             }
         case "keys":   // keys:<text>: real key events to whatever has the keyboard (no focusing first)
-            if parts.count > 1, let w = NSApp.windows.first(where: { $0.title == "Duo" }) {
+            if parts.count > 1, let w = FixtureHarness.window() {
                 if !TestBackground.isOn { NSApp.activate(ignoringOtherApps: true) }; w.makeKey()   // a background launch never activates (F-227)
                 for ch in parts[1] {
                     for type in [NSEvent.EventType.keyDown, .keyUp] {
@@ -651,7 +797,7 @@ public enum FixtureHarness {
                 }
             }
         case "focus":   // what has the keyboard, and the editor's selection
-            let w = NSApp.windows.first(where: { $0.title == "Duo" })
+            let w = FixtureHarness.window()
             let e = model.editor
             e.run("const s = duo.selection(); return s ? s.text : ''") { v in
                 FileHandle.standardError.write(Data("focus: responder=\(w?.firstResponder.map { String(describing: type(of: $0)) } ?? "nil") editor=\(e.hasFocus) selected=\(String(describing: v ?? "nil").debugDescription)\n".utf8))
@@ -664,7 +810,7 @@ public enum FixtureHarness {
                 FileHandle.standardError.write(Data("editor-js: \(String(describing: v ?? "nil"))\n".utf8))
             }
         case "sheet":   // sheet:<button title>: press that button on the sheet attached to Duo's window
-            if let w = NSApp.windows.first(where: { $0.title == "Duo" }), let sheet = w.attachedSheet {
+            if let w = FixtureHarness.window(), let sheet = w.attachedSheet {
                 func buttons(_ v: NSView) -> [NSButton] { (v as? NSButton).map { [$0] } ?? v.subviews.flatMap(buttons) }
                 let all = sheet.contentView.map(buttons) ?? []
                 FileHandle.standardError.write(Data("sheet: [\(all.map(\.title).joined(separator: " | "))]\n".utf8))
@@ -679,7 +825,7 @@ public enum FixtureHarness {
         case "shell": model.newShell()
         case "archived": model.archivedOpen.toggle()
         case "click":   // click:<x> <y>: a real mouse click at that point of the window, from its top left
-            if parts.count > 1, let w = NSApp.windows.first(where: { $0.title == "Duo" }) {
+            if parts.count > 1, let w = FixtureHarness.window() {
                 let xy = parts[1].split(separator: " ").compactMap { Double($0) }
                 if xy.count == 2, let content = w.contentView {
                     let p = NSPoint(x: xy[0], y: content.bounds.height - xy[1])
@@ -721,7 +867,7 @@ public enum FixtureHarness {
             lines.append("  footer: ↩ \(st.returnLabel) · similar=\(st.similarTo?.title ?? "-") · at=\(model.altitude.isAllProjects ? "all" : model.currentProject?.name ?? "?") rightTab=\(model.rightTab ?? "-") console=\(model.consoleTab ?? "-")")
             FileHandle.standardError.write(Data((lines.joined(separator: "\n") + "\n").utf8))
         case "ui-state":
-            let w = NSApp.windows.first(where: { $0.title == "Duo" })
+            let w = FixtureHarness.window()
             let fr = w?.firstResponder.map { String(describing: type(of: $0)) } ?? "-"
             FileHandle.standardError.write(Data("ui-state: renaming=\(model.renamingPath ?? "-") picking=\(model.visiblePage?.picking ?? false) picked=\(model.visiblePage?.picked?.selector ?? "-") send=\((try? model.sendTarget.get()).map { "ok \($0.key.prefix(12))" } ?? { if case .failure(let e) = model.sendTarget { return e.reason }; return "-" }()) key=\(w?.isKeyWindow ?? false) firstResponder=\(fr)\n".utf8))
         case "menus":   // the menu bar as text, to compare with the walk's mockups (DL-108): window captures don't draw it
@@ -852,7 +998,7 @@ public enum FixtureHarness {
             if let w = model.editor.webView.window { NSApp.setActivationPolicy(.regular); NSRunningApplication.current.activate(options: [.activateAllWindows]); if !TestBackground.isOn { NSApp.activate(ignoringOtherApps: true) }; w.makeKeyAndOrderFront(nil); w.makeFirstResponder(model.editor.webView) }
             model.editor.run("document.querySelector('.duo-fm-reffield input').focus(); return 1") { _ in }
         case "real-key":   // real-key:cmd-v=<text> (the text on the private pasteboard, then ⌘V) or key:return: a real keyDown through NSApp.sendEvent, so the local key monitor sees it as a typed key
-            if parts.count > 1, let w = model.editor.webView.window ?? NSApp.windows.first(where: { $0.title == "Duo" }) {
+            if parts.count > 1, let w = model.editor.webView.window ?? FixtureHarness.window() {
                 let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init)
                 let (chars, code, mods): (String, UInt16, NSEvent.ModifierFlags) = kv[0] == "return" ? ("\r", 36, []) : ("v", 9, .command)
                 if kv[0] == "cmd-v" {
@@ -886,7 +1032,7 @@ public enum FixtureHarness {
                 FileHandle.standardError.write(Data("proof-report: composer=\((chat?.ui.composer ?? "").debugDescription) composerView=\((Self.composerView(for: key)?.plainText ?? "").debugDescription) firstResponder=\(w?.firstResponder.map { String(describing: type(of: $0)) } ?? "nil") note=\(v as? String ?? "?")\n".utf8))
             }
         case "chat-hover":   // chat-hover:<x>x<y>: the pointer at that point of the content (top-left origin), as the link monitor reads it (DL-132 g)
-            if parts.count > 1, let w = NSApp.windows.first(where: { $0.title == "Duo" }), let c = w.contentView,
+            if parts.count > 1, let w = FixtureHarness.window(), let c = w.contentView,
                let k = model.visibleSessionId, let chat = model.chat(for: k) {
                 let xy = parts[1].split(separator: "x").compactMap { Double($0) }
                 if xy.count == 2 {
@@ -918,7 +1064,7 @@ public enum FixtureHarness {
             }
             FileHandle.standardError.write(Data("focus-check: \(bad.isEmpty ? "ok" : "FAIL: \(bad.joined(separator: "; "))")\n".utf8))
         case "focus-away":   // the window's keyboard to nothing, as a control that takes it would: focus-check must fail
-            NSApp.windows.first(where: { $0.title == "Duo" })?.makeFirstResponder(nil)
+            FixtureHarness.window()?.makeFirstResponder(nil)
         case "composers":   // every composer in the windows: its session, whether it's on screen, and which has the keyboard
             func all(_ v: NSView) -> [ComposerTextView] { ((v as? ComposerTextView).map { [$0] } ?? []) + v.subviews.flatMap(all) }
             for w in NSApp.windows {
@@ -927,8 +1073,35 @@ public enum FixtureHarness {
                     FileHandle.standardError.write(Data("composer: chat=\(c.coordinator?.chat.key.prefix(8) ?? "-") shown=\(shown) first=\(w.firstResponder === c) text=\(c.string.debugDescription) frame=\(c.convert(c.bounds, to: nil))\n".utf8))
                 }
             }
+        case "turn-uuids", "turn-hover", "turn-select", "turn-copy", "turn-rewind", "turn-fork":
+            // DL-338's boards: turn-uuids stamps the fixture chat's turns with ids (the fixtures have none, so Rewind and Fork are
+            // offered as they are on a real session); turn-hover:<n> / turn-select:<n> show turn n's row; turn-copy:<n> presses its Copy;
+            // turn-rewind:<n> opens the Rewind sheet; turn-fork:<n> reports the fork plan (no tab is made in a fixture).
+            guard let c = model.visibleSessionId.flatMap(model.chat(for:)) else { break }
+            // Stamped on every action: the fixture chat's log is rebuilt now and then, which drops ids put on it earlier.
+            do {
+                for (i, item) in c.log.items.enumerated() {
+                    switch item {
+                    case .you(var y): y.uuid = "uuid-you-\(i)"; c.log.items[i] = .you(y)
+                    case .claude(var t): t.uuid = "uuid-turn-\(i)"; c.log.items[i] = .claude(t)
+                    default: break
+                    }
+                }
+                FileHandle.standardError.write(Data("\(parts[0]): \(c.turnList.map { "\($0.role):\($0.uuid ?? "-")" }) rewind=\(c.turnList.first.map { c.canRewind($0.id) } ?? false) screen=\(c.screen.kind)\n".utf8))
+            }
+            if parts.count > 1, let n = Int(parts[1]), let t = c.turnList.first(where: { $0.n == n }) {
+                switch parts[0] {
+                case "turn-hover": c.ui.hoverTurn = t.id
+                case "turn-select": c.ui.selectedTurn = t.id
+                case "turn-copy": c.copyTurn(t.id)
+                case "turn-rewind": FileHandle.standardError.write(Data("turn-rewind: \(c.askRewind(t.id) ? "asked" : "refused")\n".utf8))
+                default: FileHandle.standardError.write(Data("turn-fork: \(String(describing: c.forkPlan(t.id)))\n".utf8))
+                }
+            }
         case "chat-clear":   // the composer emptied, as select-all and delete would
             if let c = model.visibleSessionId.flatMap(model.chat(for:)) { c.ui.composer = "" }
+        case "chat-fallback":   // the visible chat falls back to the terminal with the bar, as a screen it can't show does (F-640's run)
+            if let c = model.visibleSessionId.flatMap(model.chat(for:)) { c.persistsFallbackLog = false; c.fallBack(.unknownScreen, rule: "harness") }
         case "chat":   // chat:on|off
             if let k = model.visibleSessionId { model.setChatMode(parts.count > 1 && parts[1] == "off" ? .terminal : .chat, for: k) }
         case "chat-send":   // chat-send:<text>: the composer's Return
@@ -952,6 +1125,11 @@ public enum FixtureHarness {
                 }
                 if let intent { let sig = c.screen.sig; Task { let r = await c.ask(intent, sig: sig); FileHandle.standardError.write(Data("chat-ask: \(r.ok ? "ok" : "refused: \(r.why ?? "")")\n".utf8)) } }
             }
+        case "chat-working":   // one line: what chat reads, the spinner, and the working line it draws (F-539)
+            if let k = model.visibleSessionId, let c = model.chat(for: k) {
+                c.reread()
+                FileHandle.standardError.write(Data("chat-working: screen=\(c.screen.kind.rawValue) showing=\(c.showsChat ? "chat" : "terminal") line=\(c.workingLine ?? "-") status=\(c.screen.status ?? "-")\n".utf8))
+            } else { FileHandle.standardError.write(Data("chat-working: no chat\n".utf8)) }
         case "chat-state":   // what the chat shows, for a scripted run's log
             if let k = model.visibleSessionId, let c = model.chat(for: k) {
                 var lines = ["chat-state: \(k.prefix(8)) mode=\(c.mode.rawValue) showing=\(c.showsChat ? "chat" : "terminal") screen=\(c.screen.kind.rawValue) card=\(c.cardUp) fallback=\(c.fallback?.message ?? "-") version=\(c.cliVersion ?? "-") hooks=\(c.log.hooksSeen) streams=\(c.log.streams) compose=\(c.usesExternalEditor)",
@@ -994,7 +1172,7 @@ public enum FixtureHarness {
                 if asked == nil, [.question, .questionReview].contains(c.screen.kind) { asked = now }
                 if asked != nil, drawn == nil, !composer, c.showsChat { drawn = now }   // chat on screen, its composer gone: the card
                 FileHandle.standardError.write(Data("chat-watch: t=\(ms(now)) screen=\(c.screen.kind.rawValue) pending=\(c.pendingRequest?.tool ?? "-") card=\(c.cardUp) composerDrawn=\(composer) showing=\(c.showsChat ? "chat" : "terminal")\n".utf8))
-                if let png, let a = asked, !captured, now.timeIntervalSince(a) >= 1, let w = NSApp.windows.first(where: { $0.title == "Duo" }) {
+                if let png, let a = asked, !captured, now.timeIntervalSince(a) >= 1, let w = FixtureHarness.window() {
                     captured = true
                     try? WindowCapture.content(of: w, to: URL(fileURLWithPath: png))
                     FileHandle.standardError.write(Data("chat-watch: captured \(png) at t=\(ms(now)) composerDrawn=\(composer)\n".utf8))
@@ -1149,13 +1327,13 @@ public enum FixtureHarness {
             if let name = f.first { model.landedNote = f.count > 1 ? f[1] : "2 sessions moved in"; model.landed = name }
         case "video": if parts.count > 1 { VideoTargets.act(parts[1], on: model) }   // video:<verb>=<arg>: the intro video's scene 7 (VideoTargets+S7)
         case "anchors":   // anchors:<path.json>: every named element's frame in window points (H2)
-            if parts.count > 1, let window = NSApp.windows.first(where: { $0.title == "Duo" }) {
+            if parts.count > 1, let window = FixtureHarness.window() {
                 do { try Anchors.write(window: window, to: URL(fileURLWithPath: parts[1])) }
                 catch { FileHandle.standardError.write(Data("anchors: failed: \(error.localizedDescription)\n".utf8)) }
             }
         case "film", "filmw":   // film:<png prefix>:<ms>|<ms>|…: frames at those offsets from now, <prefix>-<ms>.png (Q-77); filmw: with the toolbar
             let f = parts.count > 1 ? parts[1].split(separator: ":", maxSplits: 1).map(String.init) : []
-            guard f.count == 2, let window = NSApp.windows.first(where: { $0.title == "Duo" }) else { break }
+            guard f.count == 2, let window = FixtureHarness.window() else { break }
             let started = CACurrentMediaTime()
             for ms in f[1].split(separator: "|").compactMap({ Int($0) }) {
                 DispatchQueue.main.asyncAfter(deadline: .now() + Double(ms) / 1000) {
@@ -1185,12 +1363,43 @@ public enum FixtureHarness {
         case "tab":   // tab:next|previous: the active pane's tabs (⌃Tab, ⌃⇧Tab)
             if parts.count > 1, ["next", "previous"].contains(parts[1]) { model.cycleTab(forward: parts[1] == "next") }
         case "pane-state":   // one line on stderr: the active pane, the tabs, and what has the keyboard
-            let r = NSApp.windows.first(where: { $0.title == "Duo" })?.firstResponder
+            let r = FixtureHarness.window()?.firstResponder
             FileHandle.standardError.write(Data("pane=\(model.activePane.rawValue) console=\(model.consoleTab ?? "-") right=\(model.rightTab ?? "-") home=\(model.homeTab ?? "-") responder=\(r.map { String(describing: type(of: $0)) } ?? "nil")\n".utf8))
         case let a where a.hasPrefix("wait"): break
         case let a where a.hasPrefix("perf-"): ChatPerf.perform(parts, on: model)   // chat mode's performance runs (F-157)
         default: FileHandle.standardError.write(Data("Unknown action '\(action)'\n".utf8))
         }
+    }
+
+    /// Runs `then` on the deck preview once it has drawn its slides (polls for up to two minutes).
+    static func whenDeckReady(_ then: @escaping @MainActor (DeckPreview) -> Void) {
+        Task { @MainActor in
+            for _ in 0..<240 {
+                if let p = DeckPreviewHub.current, p.viewer.state == .ready, p.viewer.count > 0 { return then(p) }
+                try? await Task.sleep(for: .milliseconds(500))
+            }
+        }
+    }
+
+    /// Window `n` (1 is the primary), by its model: never by title, though window 1 keeps "Duo" as its
+    /// title so captures and scripts are unchanged (multi-window slice 0).
+    @MainActor public static func window(_ n: Int = 1) -> NSWindow? {
+        let models = AppCore.current?.models ?? []
+        if models.indices.contains(n - 1), let w = models[n - 1].window { return w }
+        return n == 1 ? NSApp.windows.first { $0.title == "Duo" } : nil
+    }
+
+    /// A second or later window in a scripted run (multi-window slice 1): drawn as window 1 is (sRGB, the design
+    /// size), 22 pt down and right; the actions and the capture stay window 1's.
+    public static func configureMore(_ window: NSWindow, options: LaunchOptions) {
+        window.isRestorable = false
+        window.tabbingMode = .disallowed
+        guard options.state != nil || options.capturing else { return }
+        window.colorSpace = .sRGB
+        let chrome = window.frame.height - window.contentLayoutRect.height
+        let size = options.windowSize.map { CGSize(width: $0.width, height: $0.height - designContentTop) } ?? contentSize
+        let top = window.frame.maxY
+        window.setFrame(CGRect(x: window.frame.minX, y: top - size.height - chrome, width: size.width, height: size.height + chrome), display: true)
     }
 
     public static func configure(_ window: NSWindow, model: AppModel, options: LaunchOptions) {

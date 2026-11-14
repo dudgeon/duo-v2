@@ -1,4 +1,5 @@
 import SwiftUI
+import DuoControl
 
 // Inside a project (handoff §3.3). Targets: screens/project.html, flow-zoom-2.html, flow-zoom-3.html.
 
@@ -47,7 +48,7 @@ struct ProjectSidebarPane: View {
                             SectionLabel(text: section.title, count: section.sessionCount, needsYou: section.needsYou)
                                 .padding(EdgeInsets(top: 12, leading: DuoSpace.panePadding, bottom: 4, trailing: DuoSpace.panePadding))
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(DuoColor.pane)
+                                .background(WindowTint.pane)
                         case .pinnedHead(let count):
                             if let project { PinnedHeader(project: project.name, count: count) }
                         case .openHead(let count):
@@ -64,7 +65,7 @@ struct ProjectSidebarPane: View {
                             if let project { TimeGroupRow(project: project.name, section: section) }
                         case .row(let row, let indented):
                             SidebarRowView(row: row, indented: indented)
-                                .background(DuoColor.pane)
+                                .background(WindowTint.pane)
                                 .zIndex(movers.contains(row.id) ? 1 : 0)
                                 .transition(.listRow)
                         }
@@ -94,7 +95,7 @@ struct ProjectSidebarPane: View {
             FileTreePane()
         }
         .foregroundStyle(DuoColor.text)
-        .background(DuoColor.pane)
+        .background(WindowTint.pane)
     }
 }
 
@@ -508,13 +509,20 @@ struct FileTreePane: View {
             if let n = model.repoNotice {
                 RepoNoticeView(notice: n).padding(.horizontal, DuoSpace.panePadding).padding(.top, 8)
             }
+            let folded = model.isFilesFolded
             HStack(spacing: DuoSpace.gapRowItems) {
+                // DL-339 (ENH-344): a stand-in on the session groups' chevron, until a board marks it (Q-522).
+                if model.terminalsMode == .live { Chevron(direction: folded ? .right : .down).frame(width: 10) }
                 SectionLabel(text: "Files")
                 Spacer(minLength: 8)
                 // The repo state (B, DL-149; any repo project, DL-157): the branch at the right.
                 if let repo { RepoBranchLabel(view: repo) }
             }
-            .padding(EdgeInsets(top: 12, leading: DuoSpace.panePadding, bottom: 0, trailing: DuoSpace.panePadding))
+            .padding(EdgeInsets(top: 12, leading: DuoSpace.panePadding, bottom: folded ? 10 : 0, trailing: DuoSpace.panePadding))
+            .contentShape(Rectangle())
+            .onActivate { if model.terminalsMode == .live { withDuoAnimation(.fold) { model.setFilesFolded(!folded) } } }   // action: view files
+            .accessibilityLabel(folded ? "Show Files" : "Hide Files")
+            if !folded {
             if let repo {
                 RepoFactLine(view: repo)
                     .padding(.horizontal, DuoSpace.panePadding)
@@ -535,6 +543,7 @@ struct FileTreePane: View {
                 BrowseTree(root: browsing)
             } else {
                 ForEach(tree) { node in FileRow(node: node, depth: 0) }
+            }
             }
             }
             .padding(.bottom, 12)
@@ -788,7 +797,7 @@ struct ConsolePane: View {
                 if let chat = model.chats.existing(t.key) {
                     ConsoleChatBody(chat: chat, terminal: t)
                 } else {
-                    TerminalSlot(session: t)
+                    TerminalSlot(session: t, shown: !model.altitude.isAllProjects)
                 }
                 if t.ended != nil { ConsoleEndedBar(session: t, name: model.consoleTitle(t.key)) }
                 else if model.chats.existing(t.key)?.showsChat != true { TrustBar(key: t.key) }   // chat's own bar sits over its composer
@@ -820,7 +829,7 @@ struct RightPane: View {
             let scrollKeys = scrolling.map(\.id)
             ScrollingTabStrip(
                 pane: .right, space: Self.tabSpace, keys: scrollKeys, selected: model.rightTab,
-                ground: DuoColor.pane, rule: DuoColor.rule, dim: DuoColor.text2, font: .body, dot: DuoColor.needsYou,
+                ground: DuoColor.pane, groundRole: .pane, rule: DuoColor.rule, dim: DuoColor.text2, font: .body, dot: DuoColor.needsYou,
                 rows: { scrolling.map { TabMenuRow(key: $0.id, title: $0.title, state: nil, isShell: false, selected: $0.id == model.rightTab) } },
                 glyphs: false,
                 choose: { id in model.rightTab = id; if tabs.first(where: { $0.id == id })?.isDocument == true { model.selectedFile = id } },  // action: view tab
@@ -849,7 +858,7 @@ struct RightPane: View {
                                 Button("New Browser Tab") { model.newBrowserTab() }
                             }
                             .accessibilityLabel("New Markdown file")
-                            .background(DuoColor.pane)
+                            .background(WindowTint.pane)
                     }
                     }
                 },
@@ -885,9 +894,12 @@ struct RightPane: View {
                let root = AppModel.isOutsideFile(path) ? file.deletingLastPathComponent() : model.projectFolder {
                 // Local HTML, read-only and live (v1; DL-67): its own web view, with the element picker.
                 ZStack(alignment: .bottom) {
-                    HTMLViewerView(viewer: model.htmlViewer, file: file, root: root)
-                        .accessibilityIdentifier("video.right.document")   // on the page alone: the picker bar's buttons keep their own names
-                        .onDisappear { model.htmlViewer.sleep() }
+                    VStack(spacing: 0) {
+                        HTMLNoticeBar(notice: model.htmlViewer.notice, action: { model.htmlViewer.noticeAction() })
+                        HTMLViewerView(viewer: model.htmlViewer, file: file, root: root)
+                            .accessibilityIdentifier("video.right.document")   // on the page alone: the picker bar's buttons keep their own names
+                            .onDisappear { model.htmlViewer.sleep() }
+                    }
                     PickerBar()
                 }
             } else if let path = model.rightTab, AppModel.isDeck(path), let file = model.liveFile(path) {
@@ -895,6 +907,12 @@ struct RightPane: View {
                 DeckView(viewer: model.deckViewer, path: path, file: file)
                     .background {   // anchors: a sibling, so the bar's buttons keep their own names (`video.slide.select`, `video.picker.send`)
                         Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Deck").accessibilityIdentifier("video.right.document")
+                    }
+            } else if let path = model.rightTab, AppModel.isPdfViewable(path), let file = model.liveFile(path) {
+                // A PDF: PDFKit's pages under a stand-in bar (DL-332, Q-495); Quick Look when PDFKit can't open it.
+                PdfView(viewer: model.pdfViewer, path: path, file: file)
+                    .background {   // anchors: a sibling, so the bar's buttons keep their own names
+                        Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("PDF").accessibilityIdentifier("video.right.document")
                     }
             } else if let path = model.rightTab, AppModel.isWordViewable(path), let file = model.liveFile(path) {
                 // A Word document: drawn read only with its comments and tracked changes (DL-162).
@@ -920,7 +938,7 @@ struct RightPane: View {
             }
         }
         .foregroundStyle(DuoColor.text)
-        .background(DuoColor.pane)
+        .background(WindowTint.pane)
         // Files dropped from Finder open as tabs here, from inside the project or anywhere (DL-106).
         .dropDestination(for: URL.self) { urls, _ in
             let opened = urls.filter(\.isFileURL).compactMap { model.openFile(at: $0) }
@@ -1017,7 +1035,7 @@ struct RightPane: View {
                         // Dragged along the strip, its place moves (DL-220, tabs-drag); Project stays first.
                         .modifier(TabDraggable(key: tab.id, pane: .right, space: Self.tabSpace, enabled: tab.isDocument && model.openDocuments.contains(tab.id),
                                                lead: closeSlot, shown: { scrollKeys }))
-                        .background(DuoColor.pane)
+                        .background(WindowTint.pane)
                         .zIndex(model.showsTabClose(tab.id) ? 1 : 0)   // its fill reaches over the next tab's padding (DL-134)
                         .transition(.tab)
     }
@@ -1031,6 +1049,7 @@ struct NewItemsMenu: View {
     var body: some View {
         Button("New Markdown File") { model.newMarkdownFile(near: near) }
         Button("New Folder") { model.newFolder(near: near) }
+        if DeckFeature.enabled { Button("New Deck…") { model.showNewDeck() } }   // action: deck new; absent with Decks off (DL-307)
         Menu("New from Template") {
             let templates = model.templates
             if templates.isEmpty {
@@ -1084,6 +1103,9 @@ struct FileMenu: View {
         if !outside {
             Divider()
             NewItemsMenu(near: path)
+            if DeckFeature.enabled, !isFolder, path.lowercased().hasSuffix(".pptx") {   // absent with Decks off (DL-307)
+                Button("Convert to Duo Deck…") { model.showConvertDeck(path) }   // action: deck import
+            }
             Divider()
             Button("Rename") { model.renamingPath = path }.disabled(onTab && !model.isInTree(path))
             Button("Duplicate") { model.duplicate(path) }

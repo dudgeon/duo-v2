@@ -7,10 +7,14 @@ import Observation
 @MainActor
 @Observable
 public final class SplitState {
-    /// Split tabs by project, then by the source's path (the tab's key).
-    public var tabs: [String: [String: SplitTab]] = [:]
+    /// Split tabs by project, then by the source's path (the tab's key). Per project, so they live in the
+    /// app's core (`SplitTabs`, shared by every window); the room, peek and providers stay this window's.
+    public var tabs: [String: [String: SplitTab]] {
+        get { shared.tabs } set { shared.tabs = newValue } _modify { yield &shared.tabs }
+    }
+    @ObservationIgnored let shared: SplitTabs
     /// What the first split took to make room (DL-276); nil when none is open.
-    public var taken: SplitRoom.Taken?
+    public var taken: SplitRoom.Taken? { didSet { syncMinimums() } }
     /// The folded sidebar is peeking over the console.
     public var peek = false
     /// Which rail is under the pointer: "sidebar" or "split" (no `@State` in Duo, ADR-0001).
@@ -19,21 +23,31 @@ public final class SplitState {
     public var revision = 0
 
     /// The project layout's AppKit split, to set the right pane's width (registered by `PaneSplit`).
-    @ObservationIgnored weak var paneHost: DuoSplitView? {
-        didSet { if paneHost != nil, let w = pendingRightWidth { applyRightWidthSoon(w) } }
-    }
-    /// A restored split's room, applied once the layout exists.
-    @ObservationIgnored var pendingRightWidth: Double?
+    @ObservationIgnored weak var paneHost: DuoSplitView? { didSet { syncMinimums() } }
+    /// A restored room waits to be re-decided for this window (`AppModel.reconcileRoom`).
+    @ObservationIgnored var needsReconcile = false
     @ObservationIgnored var policies: [String: PreviewPolicy] = [:]
-    @ObservationIgnored public lazy var markdown = MarkdownPreviewProvider()
+    @ObservationIgnored var resizeSettle: DispatchWorkItem?
+    @ObservationIgnored private var providers: [PreviewKind: PreviewProvider] = [:]
 
-    public init() {}
+    /// The registered provider for `kind` (one per window), made on first use; nil when none registered.
+    func provider(_ kind: PreviewKind) -> PreviewProvider? {
+        if let p = providers[kind] { return p }
+        guard let make = PreviewProviders.makers[kind] else { return nil }
+        let p = make()
+        providers[kind] = p
+        return p
+    }
+
+    /// While a split holds the room the console may go down to 400 (DL-306); otherwise it keeps its 480.
+    func syncMinimums() { paneHost?.minimumOverrides = taken == nil ? [:] : [1: CGFloat(SplitRoom.consoleMin)] }
+
+    public init(shared: SplitTabs = SplitTabs()) { self.shared = shared }
 
     public var sidebarFolded: Bool { taken?.foldedSidebar == true }
     public var any: Bool { tabs.values.contains { !$0.isEmpty } }
 
     func applyRightWidthSoon(_ w: Double, after delay: Double = 0.4) {
-        pendingRightWidth = nil
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
             MainActor.assumeIsolated { self?.paneHost?.setLastPaneWidth(CGFloat(w)) }
         }
@@ -62,4 +76,12 @@ extension DuoSplitView {
     }
 
     var lastPaneWidth: CGFloat { arrangedSubviews.last?.frame.width ?? 0 }
+}
+
+/// Each project's split tabs (DL-275), shared by every window's `SplitState` (multi-window slice 0).
+@MainActor
+@Observable
+public final class SplitTabs {
+    public var tabs: [String: [String: SplitTab]] = [:]
+    public init() {}
 }

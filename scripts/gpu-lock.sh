@@ -32,7 +32,13 @@ if [ "${1:-}" = "--status" ]; then
   now=$(date +%s)
   age() { local m; m=$(stat -f %m "$1" 2>/dev/null) || return 1; m=$((now - m)); printf '%dm%02ds' $((m / 60)) $((m % 60)); }
   found=""
-  [ -f "$lock/owner" ] && { echo "exclusive holder: $(cat "$lock/owner"), held $(age "$lock/owner")"; found=1; }
+  # An exclusive job takes the lock directory first and then waits for shared jobs already running, so owner alone
+  # doesn't mean it is running: <lock>.running, holding the same owner, is written once the machine is its alone (F-658).
+  # It lives beside the lock, not inside it, so a bare `rmdir <lock>` by another script still works.
+  if [ -f "$lock/owner" ]; then
+    if [ "$(cat "$lock.running" 2>/dev/null)" = "$(cat "$lock/owner")" ]; then st="running, alone since $(age "$lock.running")"; else st="holding the lock, waiting for shared jobs to finish"; fi
+    echo "exclusive holder: $(cat "$lock/owner"), held $(age "$lock/owner"), $st"; found=1
+  fi
   for o in "$lock.shared"/*/owner; do [ -f "$o" ] && { echo "shared holder:    $(cat "$o"), held $(age "$o")"; found=1; }; done
   for t in $(ls "$lock.queue" 2>/dev/null | grep -E '^[0-9]{10}$' | sort); do
     [ -f "$lock.queue/$t" ] && { echo "waiting:          $(cat "$lock.queue/$t" 2>/dev/null), for $(age "$lock.queue/$t")"; found=1; }
@@ -117,7 +123,7 @@ me="$name $$"
 hold=""
 drop() {
   [ -n "$hold" ] || return 0
-  if [ "$(cat "$hold/owner" 2>/dev/null)" = "$me" ]; then rm -f "$hold/owner"; rmdir "$hold" 2>/dev/null
+  if [ "$(cat "$hold/owner" 2>/dev/null)" = "$me" ]; then rm -f "$hold/owner"; [ "$hold" != "$lock" ] || rm -f "$lock.running"; rmdir "$hold" 2>/dev/null
   else echo "gpu-lock: not releasing: the lock is no longer ours (owner now: $(cat "$hold/owner" 2>/dev/null || echo none))" >&2; fi
   hold=""
 }
@@ -172,6 +178,7 @@ rm -f "$ticket"
 if [ "$kind" = exclusive ]; then
   said=""
   while count_shared; [ "$nshared" -gt 0 ]; do say "holding the lock, waiting for $nshared shared job(s) to finish: $sharers"; sleep "$poll"; done
+  echo "$me" > "$lock.running"
   echo "gpu-lock: taken by $name ($$), exclusive" >&2
 else
   echo "gpu-lock: taken by $name ($$), shared slot ${hold##*/} of $slots" >&2

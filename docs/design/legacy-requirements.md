@@ -58,7 +58,7 @@ Priority: **M** = v1 must, **S** = should (v1 if cheap), **L** = later. IDs are 
 | LR-9 | **Bounded transcript reads**: seek head/tail, per-file timeout, concurrency cap, never slurp. Sessions reach 270 MB; iCloud-evicted files stall. | M | A 6 |
 | LR-10 | **Agent affordances gate on live agent presence** ("Send to session" only when a session can receive it), with a regression test: this regressed four times. | M | A 13; C LDI-22 |
 | LR-11 | Empty-console placeholder for a focused project with no session: "No session in ‹project› · Start Claude here". | S | P 9 |
-| LR-12 | **Scheduled sessions**: presets + cron with an English preview, app-open only, skip missed runs by default, land in background, app-minted `--session-id`. | L | P 10; A 20; C 30 |
+| LR-12 | **Scheduled sessions**: presets + cron with an English preview, app-open only, skip missed runs by default, land in background, app-minted `--session-id`. Designed for v2 as recurring jobs under the one-canned-prompt policy (DL-324, DL-325, `docs/research/recurring-jobs-v2.md`): missed runs are always skipped, "same session" jobs are dropped. | L | P 10; A 20; C 30 |
 
 ### 2.2 Console (terminal)
 
@@ -142,7 +142,7 @@ Priority: **M** = v1 must, **S** = should (v1 if cheap), **L** = later. IDs are 
 | LR-63 | Both themes first-class; contrast checked in both; attention never colour-only; roles on tab strips. | M | C LDI-42, 32 |
 | LR-64 | Visibility-gated polling; expensive reads lazy for the visible top-N. | M | C LDI-41, 33 |
 | LR-65 | **Verify the artifact on disk before fixing a reported symptom** (process rule for the build). | M | C LDI-35 |
-| LR-66 | One-time import of legacy `~/.claude/duo/{projects, nav-pins, cron-jobs, home-state, external-domains}.json` on first launch. | S | A Q6 |
+| LR-66 | One-time import of legacy `~/.claude/duo/{projects, nav-pins, home-state, external-domains}.json` on first launch. `cron-jobs.json` is not imported: each job needs a fresh approval anyway, and "same session" and catch-up jobs can't carry over (`docs/research/recurring-jobs-v2.md` §6). | S | A Q6 |
 
 ---
 

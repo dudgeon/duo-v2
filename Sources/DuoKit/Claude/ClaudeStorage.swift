@@ -10,6 +10,16 @@ public enum ClaudeStorage {
         return FileManager.default.homeDirectoryForCurrentUser.appending(path: ".claude")
     }
 
+    /// `dir` names Claude's default folder, `~/.claude` (a trailing slash, a symlink or `..` aside). Claude Code reads its
+    /// global state from `<CLAUDE_CONFIG_DIR>/.claude.json` when the variable is set and from `~/.claude.json` when it isn't,
+    /// so naming the default folder is not the same to Claude as naming nothing: it finds no onboarding, no theme and no
+    /// trusted folders, and waits on the first-run screens (F-646). Duo treats the two alike and leaves the variable out.
+    public static func isDefaultFolder(_ dir: String, home: URL = FileManager.default.homeDirectoryForCurrentUser) -> Bool {
+        let fm = FileManager.default
+        func real(_ p: String) -> String { URL(fileURLWithPath: p).resolvingSymlinksInPath().standardized.path }
+        return real(dir) == real(home.appending(path: ".claude").path) && fm.fileExists(atPath: home.appending(path: ".claude.json").path)
+    }
+
     public static var projects: URL { root.appending(path: "projects") }
     public static var sessions: URL { root.appending(path: "sessions") }
 
@@ -21,6 +31,7 @@ public enum ClaudeStorage {
         let name = sessionId + ".jsonl"
         let direct = projects.appending(path: encode(URL(fileURLWithPath: cwd).realPath)).appending(path: name)
         if fm.fileExists(atPath: direct.path) { return direct }
+        Work.count(.bucketScan)
         let dirs = (try? fm.contentsOfDirectory(at: projects, includingPropertiesForKeys: nil)) ?? []
         return dirs.map { $0.appending(path: name) }.first { fm.fileExists(atPath: $0.path) }
     }
@@ -94,14 +105,47 @@ public enum ClaudeStorage {
 
     /// Every top-level transcript on this Mac with the folder it belongs to (after any /cd),
     /// cached by modification time so the 2 s refresh rereads only what changed.
+    /// A transcript's size and change time as the last `history()` listed them (F-595): one bulk listing per bucket
+    /// answers what each refresh used to ask with a stat per session per reader (title, thread head, mtime).
+    public struct Stamp: Equatable, Sendable { public var size: UInt64; public var mtime: Date }
+    private final class Stamps: @unchecked Sendable { let lock = NSLock(); var entries: [String: Stamp] = [:]; var byID: [String: URL]?; var root = "" }
+    private static let stamps = Stamps()
+    /// The listed stamp, or nil for a file the last listing didn't include (Duo's archive copies, other folders).
+    public static func stamp(_ url: URL) -> Stamp? {
+        stamps.lock.lock(); defer { stamps.lock.unlock() }
+        return stamps.entries[url.path]
+    }
+    /// The transcript the last `history()` listed for a session id, if any; nil before any listing (`hasListing`).
+    public static func listed(sessionId: String) -> URL? {
+        stamps.lock.lock(); defer { stamps.lock.unlock() }
+        return stamps.root == projects.path ? stamps.byID?[sessionId] : nil
+    }
+    /// A listing of this Claude folder exists (a listing of another one, after CLAUDE_CONFIG_DIR changed, doesn't count).
+    public static var hasListing: Bool { stamps.lock.lock(); defer { stamps.lock.unlock() }; return stamps.byID != nil && stamps.root == projects.path }
+
+    /// The listed stamp, else a stat.
+    public static func stampOrStat(_ url: URL) -> Stamp {
+        if let s = stamp(url) { return s }
+        Work.count(.statFallback)
+        let a = try? FileManager.default.attributesOfItem(atPath: url.path)
+        return Stamp(size: (a?[.size] as? NSNumber)?.uint64Value ?? 0, mtime: a?[.modificationDate] as? Date ?? .distantPast)
+    }
+
     public static func history() -> [(id: String, transcript: URL, cwd: String)] {
         let fm = FileManager.default
         guard let dirs = try? fm.contentsOfDirectory(at: projects, includingPropertiesForKeys: nil) else { return [] }
         var out: [(String, URL, String)] = []
+        var listed: [String: Stamp] = [:]
+        var byID: [String: URL] = [:]
+        let root = projects.path
+        defer { stamps.lock.lock(); stamps.entries = listed; stamps.byID = byID; stamps.root = root; stamps.lock.unlock() }
         for d in dirs {
-            let files = (try? fm.contentsOfDirectory(at: d, includingPropertiesForKeys: [.contentModificationDateKey])) ?? []
+            let files = (try? fm.contentsOfDirectory(at: d, includingPropertiesForKeys: [.contentModificationDateKey, .fileSizeKey])) ?? []
             for f in files where f.pathExtension == "jsonl" {
-                let mtime = (try? f.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
+                let values = try? f.resourceValues(forKeys: [.contentModificationDateKey, .fileSizeKey])
+                let mtime = values?.contentModificationDate ?? .distantPast
+                listed[f.path] = Stamp(size: UInt64(values?.fileSize ?? 0), mtime: mtime)
+                byID[f.deletingPathExtension().lastPathComponent] = f
                 cwdCache.lock.lock()
                 let hit = cwdCache.entries[f.path]
                 cwdCache.lock.unlock()

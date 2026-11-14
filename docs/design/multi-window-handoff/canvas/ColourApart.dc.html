@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Telling windows apart</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1720px; height: 920px; box-sizing: border-box; padding: 40px 48px; display: flex; flex-direction: column; gap: 20px; background: #F3F4F6; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 13px; line-height: 20px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; color: #5B636D">DECISION 4a″ · Q-441 · AFTER GEOFF'S NOTE ON 4a′</span>
+<span style="font-size: 22px; line-height: 28px; font-weight: 600">Telling windows apart at a glance: three directions [P]</span>
+<span style="color: #5B636D; white-space: normal; max-width: 1500px">Geoff on 4a′: “these are all far too similar … colors are meant to help rapidly distinguish between disparate windows”. Measured, he's right: on 4a′ no two toolbars are 15 apart (OKLab ΔE ×100, the dataviz method's line for easy to tell apart), and the closest are 1.9, about the smallest step anyone can see. Each column is twelve windows' toolbars, light and dark, with the pane tint below. Twelve colours can't all be 15 apart under any design, but the project name sits in every toolbar too, so the closest pair needs only to differ, not shout.</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px">
+<sc-for list="{{opts}}" as="o" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 14px; border: 1px solid #C9CDD3; border-radius: 8px; background: #FFFFFF">
+<span style="display: flex; align-items: baseline; gap: 8px"><span style="font-size: 16px; font-weight: 600">{{o.letter}} · {{o.title}}</span><sc-if value="{{o.rec}}" hint-placeholder-val="{{ true }}"><span style="padding: 0 6px; border: 1px solid #1F2328; border-radius: 4px; font-size: 11px; font-weight: 600">Recommended</span></sc-if></span>
+<span style="color: #5B636D; white-space: normal; min-height: 60px">{{o.desc}}</span>
+<span style="font-weight: 600; white-space: normal">{{o.stat}}</span>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<div style="display: flex; flex-direction: column; gap: 5px"><span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; color: #5B636D">LIGHT</span>
+<sc-for list="{{o.cols}}" as="c" hint-placeholder-count="12"><div style="display: flex; flex-direction: column; border: 1px solid #C9CDD3; border-radius: 5px; overflow: hidden">
+<div style="display: flex; align-items: center; gap: 5px; height: 22px; padding: 0 7px; background: {{c.l}}; color: #1F2328; font-size: 10px; white-space: nowrap">
+<span style="display: flex; gap: 3px; margin-right: 3px"><span style="width: 6px; height: 6px; border-radius: 50%; background: #FF5F57"></span><span style="width: 6px; height: 6px; border-radius: 50%; background: #FEBC2E"></span><span style="width: 6px; height: 6px; border-radius: 50%; background: #28C840"></span></span>
+<span style="color: {{c.crumbL}}">All projects ›</span><span style="font-weight: 600">{{c.p}}</span>
+<sc-if value="{{c.chip}}" hint-placeholder-val="{{ true }}"><span style="margin-left: auto; padding: 0 4px; border: 1.5px solid #C2410C; border-radius: 4px; background: #FFFFFF; color: #C2410C; font-size: 8px; line-height: 12px; font-weight: 600">1 needs you</span></sc-if>
+</div>
+<div style="height: 6px; background: {{c.pl}}; border-top: 1px solid #C9CDD3"></div>
+</div></sc-for></div>
+<div style="display: flex; flex-direction: column; gap: 5px; padding: 0 6px 6px; border-radius: 6px; background: #0C0D10"><span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; color: #5B636D; color: #9AA1AB">DARK</span>
+<sc-for list="{{o.cols}}" as="c" hint-placeholder-count="12"><div style="display: flex; flex-direction: column; border: 1px solid #2B2F36; border-radius: 5px; overflow: hidden">
+<div style="display: flex; align-items: center; gap: 5px; height: 22px; padding: 0 7px; background: {{c.d}}; color: #E6E8EB; font-size: 10px; white-space: nowrap">
+<span style="display: flex; gap: 3px; margin-right: 3px"><span style="width: 6px; height: 6px; border-radius: 50%; background: #FF5F57"></span><span style="width: 6px; height: 6px; border-radius: 50%; background: #FEBC2E"></span><span style="width: 6px; height: 6px; border-radius: 50%; background: #28C840"></span></span>
+<span style="color: {{c.crumbD}}">All projects ›</span><span style="font-weight: 600">{{c.p}}</span>
+<sc-if value="{{c.chip}}" hint-placeholder-val="{{ true }}"><span style="margin-left: auto; padding: 0 4px; border: 1.5px solid #F97316; border-radius: 4px; background: #181A1E; color: #F97316; font-size: 8px; line-height: 12px; font-weight: 600">1 needs you</span></sc-if>
+</div>
+<div style="height: 6px; background: {{c.pd}}; border-top: 1px solid #2B2F36"></div>
+</div></sc-for></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 11px; line-height: 16px; color: #5B636D">
+<sc-for list="{{o.cols}}" as="c" hint-placeholder-count="12"><span>{{c.name}} {{c.l}}</span></sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1720,"height":920}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {"opts": [{"letter": "A", "title": "As drawn on 4a′: pale tints", "desc": "Toolbar L 0.90 to 0.94, chroma 0.03. Keeps text2 on the toolbar. Twelve hues 22.5° apart, no orange or red.", "cols": [{"name": "Sand", "l": "#ECE6D3", "d": "#1D190D", "pl": "#F9F7EF", "pd": "#231F14", "p": "checkout", "crumbL": "#5B636D", "crumbD": "#9AA1AB", "chip": true}, {"name": "Pear", "l": "#DFE3C8", "d": "#1E200F", "pl": "#F4F6EB", "pd": "#242617", "p": "vendor-review", "crumbL": "#5B636D", "crumbD": "#9AA1AB", "chip": false}, {"name": "Moss", "l": "#DEEBDA", "d": "#151C12", "pl": "#F4F8F2", "pd": "#1B2218", "p": "pricing", "crumbL": "#5B636D", "crumbD": "#9AA1AB", "chip": false}, {"name": "Sage", "l": "#CCE7D7", "d": "#112219", "pl": "#EDF8F1", "pd": "#192820", "p": "ops-notes", "crumbL": "#5B636D", "crumbD": "#9AA1AB", "chip": false}, {"name": "Mint", "l": "#D4ECE7", "d": "#0D1D1A", "pl": "#F0F9F7", "pd": "#142220", "p": "refunds", "crumbL": "#5B636D", "crumbD": "#9AA1AB", "chip": true}, {"name": "Teal", "l": "#C5E7EB", "d": "#0A2225", "pl": "#EAF7F9", "pd": "#14282A", "p": "onboarding", "crumbL": "#5B636D", "crumbD": "#9AA1AB", "chip": false}, {"name": "Sky", "l": "#D5EAF4", "d": "#0E1C21", "pl": "#F0F8FC", "pd": "#152127", "p": "billing", "crumbL": "#5B636D", "crumbD": "#9AA1AB", "chip": false}, {"name": "Cornflower", "l": "#CEE2F7", "d": "#131F2C", "pl": "#EEF5FE", "pd": "#1A2530", "p": "search", "crumbL": "#5B636D", "crumbD": "#9AA1AB", "chip": false}, {"name": "Iris", "l": "#E0E6F8", "d": "#161924", "pl": "#F4F7FE", "pd": "#1C1F29", "p": "mobile-app", "crumbL": "#5B636D", "crumbD": "#9AA1AB", "chip": true}, {"name": "Lilac", "l": "#E1DCF6", "d": "#1F1B2B", "pl": "#F5F3FD", "pd": "#25222F", "p": "data-export", "crumbL": "#5B636D", "crumbD": "#9AA1AB", "chip": false}, {"name": "Orchid", "l": "#EDE1F2", "d": "#1E1620", "pl": "#FAF5FB", "pd": "#231C26", "p": "support-bot", "crumbL": "#5B636D", "crumbD": "#9AA1AB", "chip": false}, {"name": "Mauve", "l": "#F1D7E7", "d": "#281823", "pl": "#FBF1F7", "pd": "#2D1F28", "p": "launch-plan", "crumbL": "#5B636D", "crumbD": "#9AA1AB", "chip": false}], "stat": "Closest pair 1.9 light, 1.6 dark · pairs easy to tell apart (ΔE ≥ 15): 0% light, 0% dark", "rec": false}, {"letter": "B", "title": "Real colours, six hues × two depths", "desc": "The toolbar becomes a real colour (chroma up to 0.14) in a light and a deep step, so depth tells apart what hue alone can't. Toolbar text moves from text2 to text. Still no orange or red.", "cols": [{"name": "Yellow", "l": "#ECD78A", "d": "#746219", "pl": "#F7F4E6", "pd": "#211E12", "p": "checkout", "crumbL": "#1F2328", "crumbD": "#E6E8EB", "chip": true}, {"name": "Deep yellow", "l": "#BFA32F", "d": "#483C0C", "pl": "#F7F4E6", "pd": "#211E12", "p": "vendor-review", "crumbL": "#1F2328", "crumbD": "#E6E8EB", "chip": false}, {"name": "Green", "l": "#C2E59F", "d": "#4C701A", "pl": "#EFF6EA", "pd": "#1B2015", "p": "pricing", "crumbL": "#1F2328", "crumbD": "#E6E8EB", "chip": false}, {"name": "Deep green", "l": "#87B651", "d": "#2D460A", "pl": "#EFF6EA", "pd": "#1B2015", "p": "ops-notes", "crumbL": "#1F2328", "crumbD": "#E6E8EB", "chip": false}, {"name": "Teal", "l": "#81ECEC", "d": "#1B7171", "pl": "#E6F8F7", "pd": "#112121", "p": "refunds", "crumbL": "#1F2328", "crumbD": "#E6E8EB", "chip": true}, {"name": "Deep teal", "l": "#35BABA", "d": "#0E4646", "pl": "#E6F8F7", "pd": "#112121", "p": "onboarding", "crumbL": "#1F2328", "crumbD": "#E6E8EB", "chip": false}, {"name": "Blue", "l": "#BADCFA", "d": "#19689F", "pl": "#EAF5FF", "pd": "#151F28", "p": "billing", "crumbL": "#1F2328", "crumbD": "#E6E8EB", "chip": false}, {"name": "Deep blue", "l": "#4DACF6", "d": "#0E4064", "pl": "#EAF5FF", "pd": "#151F28", "p": "search", "crumbL": "#1F2328", "crumbD": "#E6E8EB", "chip": false}, {"name": "Violet", "l": "#DDCFFB", "d": "#6E519D", "pl": "#F5F1FE", "pd": "#201C27", "p": "mobile-app", "crumbL": "#1F2328", "crumbD": "#E6E8EB", "chip": true}, {"name": "Deep violet", "l": "#B28FEF", "d": "#482971", "pl": "#F5F1FE", "pd": "#201C27", "p": "data-export", "crumbL": "#1F2328", "crumbD": "#E6E8EB", "chip": false}, {"name": "Pink", "l": "#FBC6DE", "d": "#94436D", "pl": "#FEEFF5", "pd": "#261A1F", "p": "support-bot", "crumbL": "#1F2328", "crumbD": "#E6E8EB", "chip": false}, {"name": "Deep pink", "l": "#E57DB1", "d": "#681946", "pl": "#FEEFF5", "pd": "#261A1F", "p": "launch-plan", "crumbL": "#1F2328", "crumbD": "#E6E8EB", "chip": false}], "stat": "Closest pair 5.4 light, 5.2 dark · pairs easy to tell apart (ΔE ≥ 15): 77% light, 67% dark", "rec": false}, {"letter": "C", "title": "As B, with coral and ochre allowed", "desc": "As B, but the hues spread round the whole wheel except the needs-you orange itself (h 22–64 stays out). The needs-you chip keeps its ring and a solid fill (white in light, the dark pane in dark) on every coloured toolbar.", "cols": [{"name": "Coral", "l": "#FAC0BF", "d": "#9C4246", "pl": "#FFEFEE", "pd": "#281A1A", "p": "checkout", "crumbL": "#1F2328", "crumbD": "#E6E8EB", "chip": true}, {"name": "Deep coral", "l": "#EF7E80", "d": "#6F1821", "pl": "#FFEFEE", "pd": "#281A1A", "p": "vendor-review", "crumbL": "#1F2328", "crumbD": "#E6E8EB", "chip": false}, {"name": "Ochre", "l": "#F8C885", "d": "#835A17", "pl": "#FBF2E6", "pd": "#241D12", "p": "pricing", "crumbL": "#1F2328", "crumbD": "#E6E8EB", "chip": false}, {"name": "Deep ochre", "l": "#D6972F", "d": "#523709", "pl": "#FBF2E6", "pd": "#241D12", "p": "ops-notes", "crumbL": "#1F2328", "crumbD": "#E6E8EB", "chip": false}, {"name": "Green", "l": "#B5E09E", "d": "#437224", "pl": "#EEF6EA", "pd": "#1A2016", "p": "refunds", "crumbL": "#1F2328", "crumbD": "#E6E8EB", "chip": true}, {"name": "Deep green", "l": "#7DB85A", "d": "#25470A", "pl": "#EEF6EA", "pd": "#1A2016", "p": "onboarding", "crumbL": "#1F2328", "crumbD": "#E6E8EB", "chip": false}, {"name": "Teal", "l": "#7EE7D9", "d": "#197269", "pl": "#E7F8F5", "pd": "#12221F", "p": "billing", "crumbL": "#1F2328", "crumbD": "#E6E8EB", "chip": false}, {"name": "Deep teal", "l": "#35BCAE", "d": "#114641", "pl": "#E7F8F5", "pd": "#12221F", "p": "search", "crumbL": "#1F2328", "crumbD": "#E6E8EB", "chip": false}, {"name": "Blue", "l": "#B3D5F9", "d": "#2266A4", "pl": "#EBF5FF", "pd": "#161F28", "p": "mobile-app", "crumbL": "#1F2328", "crumbD": "#E6E8EB", "chip": true}, {"name": "Deep blue", "l": "#5CAAF6", "d": "#0C3F6B", "pl": "#EBF5FF", "pd": "#161F28", "p": "data-export", "crumbL": "#1F2328", "crumbD": "#E6E8EB", "chip": false}, {"name": "Purple", "l": "#E8BFFB", "d": "#7D4B92", "pl": "#F8F0FC", "pd": "#221B25", "p": "support-bot", "crumbL": "#1F2328", "crumbD": "#E6E8EB", "chip": false}, {"name": "Deep purple", "l": "#C588E0", "d": "#542467", "pl": "#F8F0FC", "pd": "#221B25", "p": "launch-plan", "crumbL": "#1F2328", "crumbD": "#E6E8EB", "chip": false}], "stat": "Closest pair 8.3 light, 7.4 dark · pairs easy to tell apart (ΔE ≥ 15): 71% light, 70% dark", "rec": true}]};
+  }
+}
+</script>
+</body>
+</html>

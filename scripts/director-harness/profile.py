@@ -21,6 +21,8 @@ if cmd == "setup":
 elif cmd == "get":
     v = p
     for k in sys.argv[3].split("."):
+        if k not in v:   # a key a profile leaves out reads as empty
+            sys.exit(0)
         v = v[k]
     print(v if isinstance(v, str) else json.dumps(v))
 elif cmd == "env":

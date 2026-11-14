@@ -1,0 +1,25 @@
+schema_version: "1.0"
+name: s29-links-in-questions
+description: "S29 (R4): a worker left two options in a file. The director's question to the user names the file's path on the line before the question and inside its text, and says which options."
+tags: [single, duty-R4]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: "The worker on the landing page finished. What's next?"
+  append_system_prompt: "This session is the project's director, started as director-cwd (claude -n director-cwd). Use the duo-director skill."
+  max_turns: 25
+  timeout_seconds: 300
+  allowed_tools: ["Skill", "Read", "Write", "Edit", "Glob", "Grep", "Bash(duo2:*)", "Bash(ls:*)", "Bash(mkdir:*)", "AskUserQuestion"]
+runs: 3
+graders:
+  - name: skill-fired
+    type: tool_used
+    tool: Skill
+  - name: judge
+    type: "llm"
+    focus: "trace"
+    criteria: |
+      - The agent looked at the landing-page task and the file the worker wrote (tasks/landing-options/options.html, which exists and holds Option A, a short hero with one button, and Option B, the long story with features, quotes and pricing), and did not accept or mark the task done on the worker's word alone.
+      - It asked the user to choose, with a question (AskUserQuestion, or a direct question in its reply). A question about a file carries the file's link: the path tasks/landing-options/options.html appears on the line right before the question in its message AND inside the question text itself.
+      - The question says which options there are (A, the short hero with one button; B, the long story with features, quotes and pricing), in words the user can answer without opening anything first.
+      - Asking only "which do you prefer?" or "which option do you want?" with no path to the file fails. Putting the path in the message but not inside the question text, or the reverse, fails.

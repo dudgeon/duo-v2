@@ -1,0 +1,19 @@
+<style>
+#hd { left: 24px; top: 20px; }
+.r { left: 24px; width: 592px; display: flex; gap: 10px; align-items: baseline; }
+.r b { width: 190px; flex: none; }
+.r em { font-style: normal; margin-left: auto; white-space: nowrap; font-size: 13px; }
+#r1 { top: 68px; } #r2 { top: 118px; } #r3 { top: 168px; } #r4 { top: 218px; height: 96px; align-items: flex-start; } #r5 { top: 328px; }
+#modes { position: absolute; left: 212px; top: 36px; display: flex; gap: 10px; }
+#modes span { width: 150px; height: 46px; border-radius: 7px; font-size: 13px; line-height: 17px; padding: 5px 8px; box-sizing: border-box; transition: transform .5s, box-shadow .5s; }
+#m-chat { background: #f3f4f6; border: 1px solid #c9cdd3; }
+#m-term { background: #15171b; color: #e6e8eb; border: 1px solid #15171b; }
+[data-state~="two"] #m-term { transform: scale(1.06); box-shadow: 0 0 0 3px #c2410c; }
+</style>
+<div class="h" id="hd" data-in="up">Built, and hard to find</div>
+<div class="card r" id="r1" data-in="up" data-f><b>Hide the right side</b><span>⌥⌘0 and a toolbar button</span><em class="miss">not in the View menu</em></div>
+<div class="card r" id="r2" data-in="up" data-f><b>Fold the file list</b><span>Folders fold</span><em class="miss">the Files section doesn't</em></div>
+<div class="card r" id="r3" data-in="up" data-f><b>Clickable file names</b><span>Links that open on the right</span><em class="miss">in chat mode only</em></div>
+<div class="card r" id="r4" data-in="up" data-f><b>White IDE, or a terminal</b><span>Two views of one session</span>
+  <div id="modes"><span id="m-chat">Home opens in <b>Chat</b></span><span id="m-term">A project opens in <b>Terminal</b></span></div></div>
+<div class="card r" id="r5" data-in="up" data-f><b>Onboarding</b><span>A guide and two films exist</span><em class="miss">the app links to neither</em></div>

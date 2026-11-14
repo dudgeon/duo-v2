@@ -1,0 +1,43 @@
+<style>
+#ghost { display: none; }
+[data-state~="closed"] #hc, [data-state~="c"] #hc { width: 0; padding: 0; border: none; opacity: 0; }
+[data-state~="ghost"] #ghost { display: flex; }
+[data-state~="c"] #homecard, [data-state~="home"] #homecard { display: none; }
+[data-state~="c"] #homefull, [data-state~="home"] #homefull { display: block !important; }
+[data-state~="c"] #sbb, [data-state~="nosbb"] #sbb { visibility: hidden; }
+[data-state~="b"] #hc > span:not(.hh) { display: none; }
+[data-state~="b"] #startcard { display: block !important; }
+[data-state~="d"] #hc { width: 42%; }
+#ap-tb span#sbb { display: inline-block; }
+
+#c1 { left: 20px; top: 306px; width: 190px; } #c2 { left: 225px; top: 306px; width: 190px; } #c3 { left: 430px; top: 306px; width: 190px; }
+</style>
+<div class="win ap c-none" id="ap" data-f style="left:20px;top:24px;width:600px;height:270px">
+  <div class="tb" id="ap-tb"><span id="sbb" data-f>▯</span> All projects <span style="color:#c2410c">● 3 need you</span></div>
+  <div class="bd">
+    <div class="hc" id="hc" data-f>
+      <span class="hh">★ home</span>
+      <span class="bub">What came in overnight?</span>
+      <span class="ans">Five new asks. Two are yours.</span>
+      <span class="qb" id="hq">Route the three to their projects?</span>
+      <div id="startcard" class="card" style="display:none"><b>Home's agent</b><br>Nothing runs until you start it.<br><span class="chip" style="height:22px;font-size:12px;margin-top:4px">Start Home's Agent</span></div>
+    </div>
+    <div class="mid" id="mid" data-f>
+      <span class="nr" id="newrow" data-f>New session in ★ home ⌄</span>
+      <div class="lr" id="ghost"><span>▭</span><span>Session 8:05 PM</span><span>★ home · at prompt</span></div>
+      <div class="lr"><span>○</span><span>Teardown research</span><span>working</span></div>
+      <div class="lr"><span>○</span><span>Edge-case matrix</span><span>working</span></div>
+      <div class="lr"><span>◆</span><span>Results readout</span><span>25m</span></div>
+      <div class="lr"><span>–</span><span>Weekly status draft</span><span>★ home</span></div>
+    </div>
+    <div class="rp" id="rp" data-f>
+      <span class="lab2">Needs you · 3</span>
+      <div class="card home" id="homecard">● Morning triage<br>← Waiting in the Home pane</div>
+      <div class="card" id="homefull" style="display:none">● Morning triage · ★ home<div class="q">Route the three to their projects?</div></div>
+      <div class="card">● Copy review pass 2<div class="q">Approve 6 changes?</div></div>
+    </div>
+  </div>
+</div>
+<div class="call" id="c1" data-in="up" data-f><b>Narrow.</b> 38–43 columns: 2–4 of 17 questions fall back</div>
+<div class="call" id="c2" data-in="up" data-f><b>Two places.</b> One terminal, two slots: Oliver's black terminal</div>
+<div class="call" id="c3" data-in="up" data-f><b>Unseen.</b> Closed, yet Home's Claude starts at launch</div>

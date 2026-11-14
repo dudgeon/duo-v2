@@ -152,7 +152,7 @@ extension AppModel {
         let field = DuoQuestion.Field(label: "Issue", text: "")
         let where_ = repo.map { " in \($0.slug)" } ?? ""
         if Env.autoconfirm { FileHandle.standardError.write(Data("question: Link an issue\(where_)\n".utf8)); return }
-        SheetCenter.shared.ask(DuoQuestion(title: "Link an issue", paragraphs: ["Paste an issue’s link, or type #number\(where_). The task tracks one issue; its state shows on the card. Nothing on GitHub changes."],
+        SheetCenter.shared.ask(from: self, DuoQuestion(title: "Link an issue", paragraphs: ["Paste an issue’s link, or type #number\(where_). The task tracks one issue; its state shows on the card. Nothing on GitHub changes."],
                                            field: field, choices: [
             .init(label: "Cancel", isCancel: true) {},
             .init(label: "Link", isDefault: true) { if let why = self.linkIssue(project: project, path: path, raw: field.text) { self.info(why) } },
@@ -227,7 +227,7 @@ extension AppModel {
         }
         let go = { self.createIssue(project: project, path: path, title: t.title, repo: repo, then: then) }
         if Env.autoconfirm { return go() }
-        SheetCenter.shared.ask(DuoQuestion(title: "New issue in \(repo.slug)?", paragraphs: ["Duo files “\(t.title)” as an issue on GitHub, under your name, with this task’s text, and links it to the task."], choices: [
+        SheetCenter.shared.ask(from: self, DuoQuestion(title: "New issue in \(repo.slug)?", paragraphs: ["Duo files “\(t.title)” as an issue on GitHub, under your name, with this task’s text, and links it to the task."], choices: [
             .init(label: "Cancel", isCancel: true) {},
             .init(label: "Create Issue", isDefault: true) { go() },
         ]))

@@ -11,11 +11,31 @@ import SwiftUI
 public enum ClaudeLocator {
     /// The last answer: the console asks on every draw, and the PATH lookup starts a login shell.
     nonisolated(unsafe) private static var cached: String??
+    /// Guards `cached` and the lookup: launch resolves off the main thread (F-564), a draw may ask meanwhile.
+    private static let lock = NSLock()
+
+    /// How long the login shell may take to say where `claude` is (F-564). A `.zprofile` or `.zshrc` that waits
+    /// (on a terminal, a prompt, a keychain, a slow version manager) hung Duo's launch for good: it ran on the main
+    /// thread with no limit. Past this the shell is ended and Duo carries on as if no `claude` were found.
+    nonisolated(unsafe) public static var shellTimeout: TimeInterval = 3
+    /// The places tried before the shell, and the shell. Settable by DuoChecks; the app keeps these.
+    nonisolated(unsafe) public static var candidates: () -> [String] = {
+        // The release launch matrix (F-580) launches a signed copy with `claude` missing from these places, through
+        // LaunchServices, so the login shell runs: `DUO_CLAUDE_CANDIDATES` (colon-separated; empty for none) stands in
+        // for them, in an isolated instance only, so the user's Duo always looks in the real places.
+        if SupportFolder.isIsolated, let given = ProcessInfo.processInfo.environment["DUO_CLAUDE_CANDIDATES"] {
+            return given.split(separator: ":").map(String.init)
+        }
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        return ["\(home)/.local/bin/claude", "\(home)/.claude/local/claude", "/opt/homebrew/bin/claude", "/usr/local/bin/claude"]
+    }
+    nonisolated(unsafe) public static var shell = "/bin/zsh"
 
     /// Look again next time (DB-3's Look Again).
-    public static func forget() { cached = nil; ClaudeVersion.forget(); RemoteControl.forget() }
+    public static func forget() { lock.lock(); cached = nil; lock.unlock(); ClaudeVersion.forget(); RemoteControl.forget() }
 
     public static func resolve() -> String? {
+        lock.lock(); defer { lock.unlock() }
         if let c = cached { return c }
         // One the user chose in Settings wins while it runs (LR-19, S3-1).
         let found = chosenRunnable ?? lookUp()
@@ -33,25 +53,49 @@ public enum ClaudeLocator {
     public static func found() -> String? { lookUp() }
 
     private static func lookUp() -> String? {
-        let home = FileManager.default.homeDirectoryForCurrentUser.path
-        let candidates = [
-            "\(home)/.local/bin/claude", "\(home)/.claude/local/claude",
-            "/opt/homebrew/bin/claude", "/usr/local/bin/claude",
-        ]
-        if let hit = candidates.first(where: { FileManager.default.isExecutableFile(atPath: $0) }) { return hit }
-        // Fall back to the login shell's PATH (nvm, asdf, custom installs).
+        if let hit = candidates().first(where: { FileManager.default.isExecutableFile(atPath: $0) }) { return hit }
+        // Fall back to the login shell's PATH (nvm, asdf, custom installs), within `shellTimeout` (F-564).
+        let path = loginShellLookUp(timeout: shellTimeout) ?? ""
+        return FileManager.default.isExecutableFile(atPath: path) ? path : nil
+    }
+
+    /// `command -v claude` in the user's login shell, or nil if it fails or doesn't answer in `timeout`. Never
+    /// waits longer: no terminal on stdin, and the output is read as it comes, so a child the shell left
+    /// holding the pipe can't block either.
+    public static func loginShellLookUp(timeout: TimeInterval) -> String? {
         let p = Process()
-        p.executableURL = URL(fileURLWithPath: "/bin/zsh")
+        p.executableURL = URL(fileURLWithPath: shell)
         p.arguments = ["-lc", "command -v claude"]
         let out = Pipe()
         p.standardOutput = out
         p.standardError = FileHandle.nullDevice
-        guard (try? p.run()) != nil else { return nil }
-        p.waitUntilExit()
-        let path = String(data: out.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)?
-            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        return FileManager.default.isExecutableFile(atPath: path) ? path : nil
+        p.standardInput = FileHandle.nullDevice
+        let done = DispatchSemaphore(value: 0), eof = DispatchSemaphore(value: 0)
+        let buffer = LockedData()
+        out.fileHandleForReading.readabilityHandler = { h in
+            let d = h.availableData
+            if d.isEmpty { h.readabilityHandler = nil; eof.signal() } else { buffer.append(d) }
+        }
+        p.terminationHandler = { _ in done.signal() }
+        guard (try? p.run()) != nil else { out.fileHandleForReading.readabilityHandler = nil; return nil }
+        if done.wait(timeout: .now() + timeout) == .timedOut {
+            p.terminate()
+            out.fileHandleForReading.readabilityHandler = nil
+            FileHandle.standardError.write(Data("claude: the login shell (\(shell) -lc) didn't answer in \(Int(timeout)) s; Duo carries on without it (F-564)\n".utf8))
+            return nil
+        }
+        // The shell has ended: the rest of its output, unless a child it left still holds the pipe open.
+        if eof.wait(timeout: .now() + 0.5) == .timedOut { out.fileHandleForReading.readabilityHandler = nil }
+        return String(data: buffer.data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
     }
+}
+
+/// Bytes appended from a pipe's handler thread.
+final class LockedData: @unchecked Sendable {
+    private let lock = NSLock()
+    private var bytes = Data()
+    func append(_ d: Data) { lock.lock(); bytes.append(d); lock.unlock() }
+    var data: Data { lock.lock(); defer { lock.unlock() }; return bytes }
 }
 
 /// What a terminal runs.
@@ -93,10 +137,14 @@ public enum ChildEnvironment {
     /// F-17): a child inheriting CLAUDE_CODE_SESSION_ID would write into the parent's session.
     /// CLAUDE_CONFIG_DIR is the user's and is kept.
     /// `base` is Duo's own environment; checks pass a fixed one.
-    public static func make(sessionID: String?, base: [String: String] = ProcessInfo.processInfo.environment) -> [String] {
+    public static func make(sessionID: String?, base: [String: String] = ProcessInfo.processInfo.environment,
+                            model: String? = ModelSetting.saved, isolated: Bool = SupportFolder.isIsolated) -> [String] {
         var env = base.filter { k, _ in
             !(k == "CLAUDECODE" || (k.hasPrefix("CLAUDE_") && k != "CLAUDE_CONFIG_DIR"))
         }
+        // Naming ~/.claude is not naming nothing to Claude: it then reads ~/.claude/.claude.json and starts on the first-run
+        // theme screen, never at a prompt (F-646). The default folder is left to the default.
+        if let dir = env["CLAUDE_CONFIG_DIR"], ClaudeStorage.isDefaultFolder(dir) { env.removeValue(forKey: "CLAUDE_CONFIG_DIR") }
         env["TERM"] = "xterm-256color"
         env["COLORTERM"] = "truecolor"
         env["LANG"] = env["LANG"] ?? "en_US.UTF-8"
@@ -106,6 +154,9 @@ public enum ChildEnvironment {
         // user's own, take the shared socket and remove it on quit (C-28, F-113). Without it, a
         // scripted launch gets a temporary folder (F-89); an isolated instance keeps passing its own.
         if !SupportFolder.isIsolated { env.removeValue(forKey: SupportFolder.variable) }
+        // The model Settings names (DL-339, Q-516) goes in ANTHROPIC_MODEL, which beats the model a transcript saved, so resumes and
+        // reopens come back on it too. Never a --model flag, and never in a scripted run, which keeps the Haiku its driver set.
+        if let model, !isolated, sessionID != nil { env["ANTHROPIC_MODEL"] = model }
         if let sessionID { env["DUO_SESSION_ID"] = sessionID }  // LR-20
         // Chat mode's composer is Claude's external editor (Ctrl+G, F-104, F-112): `duo2 compose`
         // hands over the composer's text, and opens the user's own editor for anything else.
@@ -144,13 +195,25 @@ public final class TerminalSession {
 
     /// How long the pane must keep a size before the hidden terminal takes it.
     public static let holdSettle: TimeInterval = 0.25
+    /// While chat shows, the hidden terminal is never narrower than this many columns, whatever the pane's width (Q-488 (a),
+    /// DL-336): Claude Code's questions draw cleanly at 60×49 (F-648) and fall back below it, and chat's questions are
+    /// the terminal's. Shown in a pane under 60 columns, the terminal resizes once: the cost Q-488 accepts.
+    public static let heldMinColumns = 60
     private var heldPane: CGSize?
     private var holdTimer: Timer?
 
     func applyHeldSize() {
         guard let pane = heldPane, view.window == nil else { return }
         if PaneMotion.running > 0 { holdHiddenSize(pane); return }
-        let f = CGRect(origin: .zero, size: pane).insetBy(dx: 12, dy: 8)
+        var f = CGRect(origin: .zero, size: pane).insetBy(dx: 12, dy: 8)
+        // The mic's margin comes off as the slot does (`SlotView.layout`, F-641), then the floor applies.
+        if VoiceMicStyle.current.keepsMargin, isClaude || TerminalMicView.onShellForProofs {
+            f.size.width = max(0, f.width - 4 * cellSize.width)
+        }
+        // 60 columns of the view's own measure: the cells plus what the view keeps beyond them (its scroller, rounding).
+        let cell = cellSize.width
+        let spare = view.frame.width - CGFloat(view.terminalStateSnapshot().dimensions.cols) * cell
+        f.size.width = max(f.width, ceil(CGFloat(Self.heldMinColumns) * cell + max(0, spare)))
         guard f.width > 0, f.height > 0, view.frame.size != f.size else { return }
         view.frame = f
         hiddenResizes += 1
@@ -325,6 +388,8 @@ public enum TerminalKeys {
 /// SwiftTerm's view, with LR-14's floor: never shrink the terminal below 8 columns by 1 row,
 /// whatever its pane does (collapse animations pass through zero width).
 public final class GuardedTerminalView: LocalProcessTerminalView {
+    /// A ⌘-clicked link: true when Duo opened it (ENH-343 3); set by the slot that shows the view.
+    var onOpenLink: ((String) -> Bool)?
     static let minColumns: CGFloat = 8
     static let minRows: CGFloat = 1
 
@@ -350,6 +415,16 @@ public final class GuardedTerminalView: LocalProcessTerminalView {
     /// Forces a repaint from the current buffer. SwiftTerm's renderer draws from a snapshot, so
     /// `needsDisplay` alone repaints the old frame; a selection change invalidates the snapshot
     /// without resizing the PTY (findings F-20). Used when a terminal is attached to a slot.
+    /// For the harness's `term-info`: where the view sits, so a run can tell a terminal drawn in the pane on
+    /// screen from one another slot holds (F-640).
+    var holderInfo: String {
+        var chain: [String] = [], v: NSView? = superview
+        while let s = v, chain.count < 40 { chain.append(String(describing: type(of: s)).prefix(24) + "@" + String(UInt(bitPattern: ObjectIdentifier(s).hashValue) % 100000)); v = s.superview }
+        let inWin = window.map { convert(bounds, to: nil).intersection($0.contentView?.frame ?? .zero) } ?? .zero
+        let place = (superview as? TerminalSlot.SlotView)?.place ?? "none"
+        return "place=\(place) frame=\(Int(frame.width))x\(Int(frame.height)) hidden=\(isHiddenOrHasHiddenAncestor) inWindow=\(Int(inWin.minX)),\(Int(inWin.minY)),\(Int(inWin.width))x\(Int(inWin.height)) chain=\(chain.joined(separator: ">"))"
+    }
+
     func repaint() {
         selectAll()
         selectNone()
@@ -460,6 +535,7 @@ public final class GuardedTerminalView: LocalProcessTerminalView {
     /// text arrives after it. `pasteboard` is a private one in DuoChecks.
     public var pasteboard = NSPasteboard.general
     private var copyCleaner: CopyCleaningDelegate?
+    private var copyGeneration = 0
 
     /// Puts Duo between SwiftTerm and this view for OSC 52 (`clipboardCopy` isn't open to override).
     public func installCopyCleaning() {
@@ -477,13 +553,17 @@ public final class GuardedTerminalView: LocalProcessTerminalView {
 
     /// OSC 52 from the program.
     func programCopied(_ text: String) {
+        copyGeneration &+= 1   // a newer copy retires every repair still waiting on an older one (F-568)
+        let generation = copyGeneration
         let clean = cleanedCopy(text)
         put(clean)
         guard clean != text else { return }
         // `pbcopy` may land after the OSC 52: put the clean text back whenever the raw text shows up in the next 1.5 s.
         for ms in [60, 150, 300, 600, 1000, 1500] {
             DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(ms)) { [weak self] in
-                guard let self, self.pasteboard.string(forType: .string) == text else { return }
+                // At fire time, not just when armed: still this copy, still a Claude terminal, raw text back (F-568).
+                guard let self, self.copyGeneration == generation, self.runsClaude,
+                      self.pasteboard.string(forType: .string) == text else { return }
                 self.put(clean)
             }
         }
@@ -496,6 +576,7 @@ public final class GuardedTerminalView: LocalProcessTerminalView {
 
     /// Edit ▸ Copy on SwiftTerm's own selection (⇧-drag, Select All): cleaned the same way when it is the prompt's.
     public override func copy(_ sender: Any) {
+        copyGeneration &+= 1
         guard runsClaude, let s = getSelection(), !s.isEmpty else { return super.copy(sender) }
         put(cleanedCopy(s))
     }
@@ -624,20 +705,30 @@ public final class TerminalStore {
 struct TerminalSlot: NSViewRepresentable {
     @Environment(AppModel.self) private var model
     let session: TerminalSession
+    /// Whether this slot's pane is the one on screen. Both layouts stay in the window (RootView), so the console is
+    /// still there, out of sight, at All projects: its slot must not take a terminal back on an update (F-640).
+    var shown = true
+    /// Named in the harness's `term-info`.
+    var place = "console"
 
     func makeNSView(context: Context) -> SlotView { SlotView() }
 
     func updateNSView(_ slot: SlotView, context: Context) {
-        slot.show(session.view)
+        slot.place = place
+        slot.show(session.view, shown: shown)
         // Voice input's mic on Claude's input box (DL-261): a sibling above the terminal, never inside it.
         let key = session.key
         slot.mic.session = session
         slot.mic.voice = model.voice
         slot.mic.onClick = { [weak model] in model?.toggleVoice(.terminal(key)) }  // action: voice start
+        let cwd = session.cwd
+        session.view.onOpenLink = { [weak model] link in model?.openTerminalLink(link, cwd: cwd) ?? false }
     }
 
     final class SlotView: NSView {
         private weak var current: NSView?
+        private(set) var shown = true
+        var place = "console"
         let mic = TerminalMicView(frame: NSRect(origin: .zero, size: TerminalMicView.size))
 
         override var isFlipped: Bool { true }
@@ -645,16 +736,23 @@ struct TerminalSlot: NSViewRepresentable {
         override init(frame: NSRect) {
             super.init(frame: frame)
             clipsToBounds = true   // a terminal held at its size while a pane slides (DL-129)
-            NotificationCenter.default.addObserver(self, selector: #selector(paneMotionEnded), name: PaneMotion.endedNotification, object: nil)
+            NotificationCenter.default.addObserver(self, selector: #selector(paneMotionEnded(_:)), name: PaneMotion.endedNotification, object: nil)
         }
 
         required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
-        @objc private func paneMotionEnded() { needsLayout = true }
+        /// A slide ended: in this slot's window (C-44), or with no window named.
+        @objc private func paneMotionEnded(_ note: Notification) {
+            guard note.object == nil || note.object as AnyObject? === window else { return }
+            needsLayout = true
+        }
 
-        func show(_ view: NSView) {
-            guard view !== current else { return }
-            current?.removeFromSuperview()
+        func show(_ view: NSView, shown: Bool = true) {
+            self.shown = shown
+            guard Self.takes(holds: view.superview === self, had: view === current, shown: shown,
+                             holder: (view.superview as? SlotView).map { (shown: $0.shown, elsewhere: $0.window != nil && $0.window !== window) }) else { return }
+            // Only a view this slot still holds (C-43): one another slot (another window's) took stays where it is.
+            if let current, current.superview === self { current.removeFromSuperview() }
             view.removeFromSuperview()
             addSubview(view)
             addSubview(mic, positioned: .above, relativeTo: view)
@@ -667,12 +765,24 @@ struct TerminalSlot: NSViewRepresentable {
             }
         }
 
+        /// Whether a slot takes the terminal's view when SwiftUI updates it (F-640, DL-336). One view; each window has its
+        /// own console slot (C-43), and a session shows in one place per window, so the rule is short:
+        /// - A slot out of sight never takes the view, and one that holds it already has nothing to take.
+        /// - A slot on screen that had the view and lost it to a slot on screen in another window (`elsewhere`) leaves
+        ///   it there (C-43). Lost to this window's own other slot, it takes it back.
+        /// - Otherwise (a slot on screen, new to the view) it takes it.
+        nonisolated static func takes(holds: Bool, had: Bool, shown: Bool, holder: (shown: Bool, elsewhere: Bool)?) -> Bool {
+            if holds || !shown { return false }
+            if had, let holder, holder.shown, holder.elsewhere { return false }
+            return true
+        }
+
         override func layout() {
             super.layout()
             // The terminal fills the slot, inset like the targets' console body. GuardedTerminalView
             // enforces the 8×1 floor if the slot gets smaller (LR-14). While a pane slides (DL-129)
             // it keeps its size, clipped, and takes the new one when the slide ends.
-            guard PaneMotion.running == 0 || current?.frame.isEmpty != false else { return }
+            guard PaneMotion.running(in: window) == 0 || current?.frame.isEmpty != false else { return }
             // Only a terminal this slot still holds: one another slot took keeps that slot's size.
             // Sizing it from here too made two slots resize one terminal by turns, and each size
             // made Claude Code redraw (F-208).
@@ -684,6 +794,23 @@ struct TerminalSlot: NSViewRepresentable {
                 current.frame.size.width = max(0, current.frame.width - 4 * s.cellSize.width)
             }
         }
+    }
+}
+
+/// The slots' rule replayed on real slot views, for DuoChecks (C-43).
+@MainActor
+public enum TerminalSlotProof {
+    /// Two windows' consoles on one session (C-43): the second takes the view, and the first, updated again, leaves it there.
+    public static func twoWindows() -> Bool {
+        let make = { () -> (NSWindow, TerminalSlot.SlotView) in
+            let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 400, height: 300), styleMask: [.titled], backing: .buffered, defer: true)
+            w.isReleasedWhenClosed = false
+            let s = TerminalSlot.SlotView(); w.contentView?.addSubview(s)
+            return (w, s)
+        }
+        let (a, b) = (make(), make()), view = NSView()
+        a.1.show(view); b.1.show(view); a.1.show(view)
+        return view.superview === b.1
     }
 }
 
@@ -703,7 +830,11 @@ final class CopyCleaningDelegate: TerminalViewDelegate {
     func hostCurrentDirectoryUpdate(source: TerminalView, directory: String?) { base.hostCurrentDirectoryUpdate(source: source, directory: directory) }
     func send(source: TerminalView, data: ArraySlice<UInt8>) { base.send(source: source, data: data) }
     func scrolled(source: TerminalView, position: Double) { base.scrolled(source: source, position: position) }
-    func requestOpenLink(source: TerminalView, link: String, params: [String: String]) { base.requestOpenLink(source: source, link: link, params: params) }
+    func requestOpenLink(source: TerminalView, link: String, params: [String: String]) {
+        // ⌘-click goes through Duo's own link rule (ENH-343 3), not the Mac's default app.
+        if base.onOpenLink?(link) == true { return }
+        base.requestOpenLink(source: source, link: link, params: params)
+    }
     func bell(source: TerminalView) { base.bell(source: source) }
     func clipboardRead(source: TerminalView) -> Data? { base.clipboardRead(source: source) }
     func kittyClipboardCapabilities(source: TerminalView) -> KittyClipboardCapabilities { base.kittyClipboardCapabilities(source: source) }

@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Chat with a side question</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.ch{position:relative;box-sizing:border-box;display:flex;flex-direction:column;background:#F3F4F6;border:1px solid #C9CDD3;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;color:#1F2328;font-size:14px;line-height:22px;overflow:hidden}
+.ch .strip{height:32px;flex:none;box-sizing:border-box;background:#15171B;display:flex;align-items:center;gap:16px;padding:0 14px;font:400 12px/16px 'SF Mono',ui-monospace,Menlo,monospace;color:#9AA1AB;white-space:nowrap}
+.ch .strip .tb{display:flex;align-items:center;gap:6px}
+.ch .strip .on{color:#E6E8EB;font-weight:500}
+.ch .strip .sp{flex:1}
+.ch .tog{display:flex;border:1px solid #3A3F47;border-radius:6px;overflow:hidden}
+.ch .tog span{width:22px;height:18px;display:flex;align-items:center;justify-content:center}
+.ch .tog .act{background:#2B2F36}
+.ch .feed{flex:1;min-height:0;padding:16px 20px 8px;display:flex;flex-direction:column;justify-content:flex-end;gap:12px;overflow:hidden}
+.ch .who{font-size:12px;line-height:16px;color:#5B636D}
+.ch .yw{align-self:flex-end;display:flex;flex-direction:column;align-items:flex-end;gap:4px;max-width:400px}
+.ch .you{background:#DCE6F7;border-radius:14px 14px 3px 14px;padding:8px 14px;white-space:pre-line}
+.ch .you.q{opacity:.6}
+.ch .cw{margin-right:36px;display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+.ch .card{align-self:stretch;background:#FFFFFF;border-radius:14px 14px 14px 3px;padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+.ch .bar{height:9px;border-radius:2px;background:#D5D9DE}
+.ch .note{align-self:center;font-size:12px;line-height:16px;color:#5B636D;display:flex;gap:6px;align-items:center}
+.ch .note a{color:#5B636D;text-decoration:underline}
+.ch .wk{display:flex;align-items:center;gap:8px;color:#5B636D;font-size:12px;line-height:16px;padding-left:4px}
+.ch .aw{margin-right:36px;margin-left:24px;display:flex;flex-direction:column;gap:4px}
+.ch .aside{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}
+.ch .sl{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.ch .sq{font-weight:600;font-size:13px;line-height:20px}
+.ch .sa{font-size:14px;line-height:22px}
+.ch .sa b{font-weight:600}
+.ch .st{display:flex;align-items:center;gap:8px;color:#5B636D;font-size:12px;line-height:16px}
+.ch .err{color:#5B636D;font-size:13px;line-height:20px}
+.ch .dock{flex:none;margin:0 14px 10px;background:#FFFFFF;border:1px solid #8B939C;border-radius:12px;padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+.ch .dock .hd{display:flex;align-items:center;gap:8px}
+.ch .dock .hd .sp{flex:1}
+.ch .pager{display:flex;align-items:center;gap:6px;font-size:12px;line-height:16px;color:#5B636D}
+.ch .pager button{width:22px;height:22px;box-sizing:border-box;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;color:#5B636D;font-size:12px;line-height:16px;padding:0}
+.ch .btns{display:flex;align-items:center;gap:6px;margin-top:2px}
+.ch .btns .sp{flex:1}
+.ch .btns .why{font-size:12px;line-height:16px;color:#5B636D}
+.ch .b{display:inline-flex;align-items:center;gap:5px;height:26px;box-sizing:border-box;padding:0 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font:400 12px/16px -apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:#1F2328;white-space:nowrap}
+.ch .b .k{color:#5B636D}
+.ch .b.dim{color:#5B636D;border-color:#C9CDD3}
+.ch .pop{position:absolute;left:14px;right:14px;background:#FFFFFF;border-radius:10px;box-shadow:0px 12px 32px rgba(31,35,40,.22),0 0 0 1px rgba(31,35,40,.08);padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+.ch .menu{flex:none;margin:0 14px 6px;background:#FFFFFF;border-radius:10px;box-shadow:0px 12px 32px rgba(31,35,40,.22),0 0 0 1px rgba(31,35,40,.08);padding:5px}
+.ch .menu .r{display:flex;gap:12px;padding:3px 10px;border-radius:6px;font-size:13px;line-height:20px}
+.ch .menu .r.sel{background:#E9ECEF}
+.ch .menu .r .n{font:400 12px/20px 'SF Mono',ui-monospace,Menlo,monospace;width:122px;flex:none}
+.ch .menu .r .d{color:#5B636D}
+.ch .cr{flex:none;display:flex;gap:8px;align-items:center;margin:0 14px 6px}
+.ch .comp{flex:1;background:#FFFFFF;border:1px solid #8B939C;border-radius:12px;min-height:44px;box-sizing:border-box;padding:10px 14px;font-size:14px;line-height:22px;color:#5B636D}
+.ch .comp.full{color:#1F2328}
+.ch .comp .mono{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:13px}
+.ch .hint{flex:none;margin:0 18px 10px;font-size:12px;line-height:16px;color:#5B636D}
+.ch .fb{flex:none;background:#FFFFFF;border-bottom:1px solid #C9CDD3;padding:10px 16px;display:flex;gap:12px;align-items:center;font-size:13px;line-height:20px}
+.ch .fb .m{flex:1}
+.ch .fb .mono{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:12px}
+.ch .term{flex:1;background:#15171B;padding:12px 16px;font:400 12px/18px 'SF Mono',ui-monospace,Menlo,monospace;color:#E6E8EB;white-space:pre;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end}
+.ch .term .d{color:#9AA1AB}
+</style>
+</helmet>
+<div class="ch" style="width: {{w}}px; height: {{h}}px">
+<div class="strip">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="2">
+<span class="{{t.cls}}"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="none" stroke="currentColor" stroke-width="1.4"></circle></svg>{{t.t}}</span>
+</sc-for>
+<span class="sp"></span>
+<span class="tog" role="img" aria-label="{{togLabel}}"><span class="{{togTerm}}"><svg width="12" height="10" viewBox="0 0 12 10" aria-hidden="true"><path d="M1.5 1.5 5 5 1.5 8.5M6.5 8.5h4" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class="{{togChat}}"><svg width="12" height="11" viewBox="0 0 12 11" aria-hidden="true"><path d="M1.5 2.2c0-.7.5-1.2 1.2-1.2h6.6c.7 0 1.2.5 1.2 1.2v4.2c0 .7-.5 1.2-1.2 1.2H5L2.6 9.6V7.6h0c-.6 0-1.1-.5-1.1-1.2z" fill="none" stroke="#9AA1AB" stroke-width="1.2" stroke-linejoin="round"></path></svg></span></span>
+</div>
+<sc-if value="{{isTerm}}" hint-placeholder-val="{{ false }}">
+<div class="fb"><span class="m"><span class="mono">/btw</span> opens in Claude Code’s own screen. Esc closes it and brings chat back.</span><button type="button" class="b">Back to Chat</button></div>
+<div class="term"><sc-for list="{{term}}" as="l" hint-placeholder-count="4"><div class="{{l.cls}}">{{l.t}}</div></sc-for></div>
+</sc-if>
+<sc-if value="{{isChat}}" hint-placeholder-val="{{ true }}">
+<div class="feed">
+<sc-for list="{{items}}" as="it" hint-placeholder-count="3">
+<sc-if value="{{it.isBars}}"><div class="cw" style="display: flex; flex-direction: column; gap: 7px"><div class="bar" style="width: 64%"></div><div class="bar" style="width: 48%"></div></div></sc-if>
+<sc-if value="{{it.isYou}}">
+<div class="yw">
+<sc-if value="{{it.showWho}}"><div class="who">{{it.meta}}</div></sc-if>
+<div class="{{it.bcls}}">{{it.text}}</div>
+<sc-if value="{{it.queued}}"><div class="who">Queued · Claude reads it when it’s ready</div></sc-if>
+</div>
+</sc-if>
+<sc-if value="{{it.isClaude}}">
+<div class="cw">
+<div class="who">{{it.meta}}</div>
+<div class="card"><sc-for list="{{it.lines}}" as="l" hint-placeholder-count="2"><div>{{l}}</div></sc-for></div>
+</div>
+</sc-if>
+<sc-if value="{{it.isAside}}">
+<div class="aw">
+<div class="who">{{it.meta}}</div>
+<div class="aside">
+<div class="sl">Side question · not part of the conversation</div>
+<div class="sq">{{it.q}}</div>
+<sc-for list="{{it.lines}}" as="l" hint-placeholder-count="2"><div class="sa">{{l}}</div></sc-for>
+<sc-if value="{{it.busy}}"><div class="st"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg>Answering</div></sc-if>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{it.isNote}}"><div class="note"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2.5c0-.6.4-1 1-1h6c.6 0 1 .4 1 1v4c0 .6-.4 1-1 1H5.5L3.2 9.4V7.5H3c-.6 0-1-.4-1-1z" fill="none" stroke="#5B636D" stroke-width="1.2" stroke-linejoin="round"></path></svg><span>{{it.text}}</span><sc-if value="{{it.hasLink}}"><a href="#">{{it.link}}</a></sc-if></div></sc-if>
+<sc-if value="{{it.isWorking}}"><div class="wk"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg>{{it.text}}</div></sc-if>
+</sc-for>
+</div>
+<sc-if value="{{hasPop}}" hint-placeholder-val="{{ false }}">
+<div class="pop" style="bottom: {{popBottom}}px">
+<div class="sl">Side question</div>
+<div class="sq">{{pop.q}}</div>
+<sc-for list="{{pop.lines}}" as="l" hint-placeholder-count="2"><div class="sa">{{l}}</div></sc-for>
+<div class="btns"><button type="button" class="b">Copy</button><button type="button" class="b">Fork…</button><span class="sp"></span><button type="button" class="b">Close <span class="k">esc</span></button></div>
+</div>
+</sc-if>
+<sc-if value="{{hasMenu}}" hint-placeholder-val="{{ false }}">
+<div class="menu"><sc-for list="{{menu}}" as="r" hint-placeholder-count="3"><div class="{{r.cls}}"><span class="n">{{r.n}}</span><span class="d">{{r.d}}</span></div></sc-for></div>
+</sc-if>
+<sc-if value="{{hasDock}}" hint-placeholder-val="{{ false }}">
+<div class="dock" aria-label="Side question">
+<div class="hd"><span class="sl">Side question · not part of the conversation</span><span class="sp"></span><sc-if value="{{dock.hasPager}}"><span class="pager"><button type="button" aria-label="Previous side question">‹</button>{{dock.pager}}<button type="button" aria-label="Next side question">›</button></span></sc-if></div>
+<div class="sq">{{dock.q}}</div>
+<sc-if value="{{dock.busy}}"><div class="st"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg>{{dock.busyText}}</div></sc-if>
+<sc-if value="{{dock.isErr}}"><div class="err">{{dock.err}}</div></sc-if>
+<sc-for list="{{dock.lines}}" as="l" hint-placeholder-count="2"><div class="sa">{{l}}</div></sc-for>
+<div class="btns">
+<sc-for list="{{dock.btns}}" as="b" hint-placeholder-count="3"><button type="button" class="{{b.cls}}">{{b.label}} <span class="k">{{b.key}}</span></button></sc-for>
+<span class="sp"></span><span class="why">{{dock.why}}</span>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{hasComposer}}" hint-placeholder-val="{{ true }}">
+<div class="cr"><div class="{{compCls}}">{{composer}}</div><sc-if value="{{busy}}"><button type="button" class="b">Stop <span class="k">esc</span></button></sc-if></div>
+<div class="hint">{{hint}}</div>
+</sc-if>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"chat":{"editor":null},"$preview":{"width":620,"height":560}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const demo = {
+      w: 620, h: 560, busy: true,
+      items: [
+        { you: true, meta: 'You · 9:52', text: 'Compare the two refund flows in a table, with a short recommendation.' },
+        { claude: true, meta: 'Claude · 9:52', lines: [ 'Both flows are in docs/refunds/flows.md. The main difference is who confirms the refund.' ] },
+        { working: true, text: 'Writing · 32s' }
+      ],
+      dock: { q: 'What does “idempotent” mean for a refund?', lines: [ 'A refund call that can be repeated safely: sending it twice refunds once. The flows use an idempotency key per order for this.' ], btns: [ { label: 'Copy', key: 'c' }, { label: 'Fork…', key: 'f' }, { label: 'Close', key: 'esc' } ], why: 'Claude keeps working above' }
+    };
+    const c = this.props.chat || demo;
+    const tabs = (c.tabs || [ { t: 'Refund flows', on: true }, { t: 'Teardown research' } ]).map((t) => ({ t: t.t, cls: 'tb' + (t.on ? ' on' : '') }));
+    const items = (c.items || []).map((it) => ({
+      isBars: !!it.bars, isYou: !!it.you, isClaude: !!it.claude, isNote: !!it.note, isWorking: !!it.working, isAside: !!it.aside,
+      showWho: !!it.you && !it.queued, queued: !!it.queued, bcls: 'you' + (it.queued ? ' q' : ''),
+      meta: it.meta || '', text: it.text || '', lines: it.lines || [], q: it.q || '', busy: !!it.busy,
+      hasLink: !!it.link, link: it.link || ''
+    }));
+    const d = c.dock || null;
+    const dock = d ? {
+      q: d.q || '', lines: d.lines || [], busy: !!d.busy, busyText: d.busyText || 'Answering', isErr: !!d.err, err: d.err || '',
+      hasPager: !!d.pager, pager: d.pager || '', why: d.why || '',
+      btns: (d.btns || []).map((b) => ({ label: b.label, key: b.key || '', cls: 'b' + (b.dim ? ' dim' : '') }))
+    } : { q: '', lines: [], btns: [], hasPager: false };
+    const term = (c.term || []).map((l) => (typeof l === 'string' ? { t: l, cls: '' } : { t: l.t, cls: l.dim ? 'd' : '' }));
+    return {
+      w: c.w || 620, h: c.h || 560, tabs, items,
+      isTerm: !!c.term, isChat: !c.term, term,
+      togLabel: c.term ? 'Terminal showing' : 'Chat showing', togTerm: c.term ? 'act' : '', togChat: c.term ? '' : 'act',
+      hasDock: !!d, dock,
+      hasPop: !!c.pop, pop: c.pop || { q: '', lines: [] }, popBottom: c.popBottom || 92,
+      hasMenu: !!c.menu, menu: (c.menu || []).map((r) => ({ n: r.n, d: r.d, cls: 'r' + (r.sel ? ' sel' : '') })),
+      hasComposer: !d, busy: !!c.busy,
+      composer: c.composer || 'Reply to Claude', compCls: 'comp' + (c.composerFilled ? ' full' : ''),
+      hint: c.hint || '⏎ send · ⇧⏎ new line · / commands'
+    };
+  }
+}
+</script>
+</body>
+</html>

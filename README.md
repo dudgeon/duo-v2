@@ -6,9 +6,9 @@ A Mac app for working with Claude Code across many pieces of work at once. It ke
 
 > **Duo v2 is an early beta and an experiment.** Things will change and some will break. Try it, and tell us what you find: open an [issue](https://github.com/dudgeon/duo-v2/issues), or use Help › Report an Issue… in Duo. Legacy Duo is in maintenance mode: it gets fixes, not new features.
 
-### ▶ [Watch the intro to Duo](https://github.com/dudgeon/duo-v2/releases/download/v0.2.13/duo-intro.mp4)
+### ▶ [Watch the intro to Duo](https://github.com/dudgeon/duo-v2/releases/download/v0.2.26/duo-intro.mp4)
 
-<a href="https://github.com/dudgeon/duo-v2/releases/download/v0.2.13/duo-intro.mp4">
+<a href="https://github.com/dudgeon/duo-v2/releases/download/v0.2.26/duo-intro.mp4">
 <img width="1280" height="720" alt="duo-intro-poster" src="https://github.com/user-attachments/assets/45bd3812-90ea-4f31-857c-e274167270b1" />
 </a>
 
@@ -42,7 +42,7 @@ Tried it? Tell us what you found, good or bad.
 
 ## Films
 
-- **[Intro to Duo](https://github.com/dudgeon/duo-v2/releases/download/v0.2.13/duo-intro.mp4)** (7 min 22 s): why Duo exists, and a walk through it.
+- **[Intro to Duo](https://github.com/dudgeon/duo-v2/releases/download/v0.2.26/duo-intro.mp4)** (9 min 34 s): why Duo exists, and a walk through it.
 - **[The director agent](https://github.com/dudgeon/duo-v2/releases/download/v0.2.13/duo-director.mp4)** (6 min 47 s): how Geoff uses one Claude Code session to direct the others while building Duo, from a single prompt to the patterns for different setups. Narrated in his own voice.
 
 ## Install

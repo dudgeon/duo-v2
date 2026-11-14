@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>C2 A director hint</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.lab{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5B636D}
+.side{width:300px;background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;display:flex;flex-direction:column;padding-bottom:12px;overflow:hidden}
+.row{display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;margin:0 8px;border-radius:6px;font-size:13px;white-space:nowrap}
+.row .w{margin-left:auto;color:#5B636D}
+.ring{width:9px;height:9px;border:1.5px solid #1F2328;border-radius:50%;box-sizing:border-box;flex:none}
+.btn{border:1px solid #8B939C;border-radius:6px;padding:4px 10px;font-size:12px;line-height:16px;background:#FFFFFF;font-family:inherit;color:#1F2328;white-space:nowrap}
+.pm{display:inline-block;font-size:11px;line-height:15px;font-weight:600;color:#FFFFFF;background:#1F2328;border-radius:4px;padding:1px 6px;margin-right:4px;vertical-align:middle}
+.ann{font-size:12px;line-height:17px;color:#1F2328;background:#FFF7D6;border:1px solid #D9C36A;border-radius:6px;padding:8px 10px;width:320px;box-sizing:border-box}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;box-sizing:border-box;padding:40px 48px;background:#F3F4F6;color:#1F2328;font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;flex-direction:column;gap:4px">
+<div class="lab">C · the director, said once, when it would help</div>
+<span style="font-size:14px;line-height:21px;color:#5B636D;max-width:1200px">The fourth open session in one project, with no director in it: one quiet line at the top of the project's sidebar. Once, per install. It starts nothing.</span>
+</div>
+<div style="display:flex;gap:32px;align-items:flex-start">
+<div style="display:flex;flex-direction:column;gap:8px">
+<div class="lab">The hint · q4-plan, four sessions open</div>
+<div class="side">
+<div style="padding:12px 16px 6px;font-size:14px;line-height:20px;font-weight:600">q4-plan</div>
+<div style="margin:6px 8px 4px;border:1px solid #C9CDD3;border-radius:6px;padding:8px 10px;display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;gap:8px;align-items:flex-start"><span style="font-size:13px;line-height:20px">A director can run these: it hands out the work and checks what comes back.</span><button type="button" aria-label="Not now" style="border:none;background:none;color:#5B636D;font-size:13px;padding:0;font-family:inherit">×</button></div>
+<div style="display:flex;gap:6px"><button type="button" class="btn">Explain</button><button type="button" class="btn">Watch the film</button></div>
+</div>
+<div class="lab" style="padding:10px 16px 4px">Open · 4</div>
+<div class="row"><span class="ring"></span>Outline the Q4 plan<span class="w">working</span></div>
+<div class="row"><span class="ring"></span>Budget table<span class="w">working</span></div>
+<div class="row"><span class="ring"></span>Hiring section<span class="w">working</span></div>
+<div class="row" style="background:#E9ECEF"><span class="ring"></span>Staff feedback notes<span class="w">working</span></div>
+<div class="lab" style="padding:12px 16px 4px">Tasks · 1</div>
+<div class="row">☐ Draft plan<span class="w">3</span></div>
+<div class="row" style="color:#5B636D">+ New task</div>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;padding-top:24px">
+<div class="ann"><span class="pm">P</span> A card in the sidebar's pane colours, above PINNED's place; no accent, no badge, no count. It says what a director does in one line and offers only Explain (the Director explainer, X2) and the film. It has no Start button (Geoff on Q-512).</div>
+<div class="ann"><span class="pm">P</span> × is Not Now: gone for good. It also goes the moment any session in the project becomes a director, and never shows in a project that has had one.</div>
+<div class="ann"><span class="pm">P</span> Four open at once is the trigger: a guess at where watching them by hand gets heavy. A number to tune, not a principle.</div>
+<div class="ann">Against it: the most visible of the options for the director, so the closest to pushing it. In B, the same words sit in the Getting started card instead, with no trigger at all.</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -4821,10 +4821,13 @@ Making room does two things at once: the sidebar folds (a `motionPaneToggle` sli
 
 ## F-502 · Preview render time (split-view-build, 2026-10-31; C-136)
 
+**Removed 2026-11-01:** Geoff dropped the Markdown preview ("markdown editing is inherently wysiwyg/live rendering"; he'd rather see view/edit source), so the converter timed here is gone. The numbers stay as the cost of rendering Markdown to HTML in Swift, should a Markdown view return.
+
 Timed under `--exclusive` (`DUO_CHECKS=split-perf`, best of five): on a release build the Markdown preview's HTML and anchor map take 3.7 ms for 200 lines, 34 ms for 2,000 lines (46 KB) and 343 ms for 20,000 lines (471 KB); a debug build was 3.8, 38 and 377 ms, so the cost is the parse and string work, not debug overhead. A 2,000-line note is about a tenth of a second of background work, a 20,000-line one about a third of a second, and typing never waits for it. That is the conversion only; WebKit loads the page after. The conversion runs off the main thread (`Task.detached`), and a newer revision wins at the gate, so typing never waits for it. The render waits 250 ms after typing pauses. (`scripts/timing-lock.sh` fails when run from the main checkout: `git rev-parse --git-common-dir` prints a relative `.git` there, so its `cd .git/..` fails. I called `gpu-lock.sh --exclusive` with `GPU_LOCK_ENFORCE=1` directly, which is what it runs.)
 
 ## F-503 · What slice 1 does not do yet (split-view-build, 2026-10-31)
 
+- **No Markdown preview (Geoff, 2026-11-01).** The provider and its HTML converter were removed; `PreviewKind.markdown` stays in the enum only so the contract doesn't change under slice 2 and Duo Decks, and nothing offers it. View/edit source for Markdown and HTML is a design exploration the director started.
 - **Caret-follow and the source-lines mark.** The editor's page doesn't report the caret's line to Swift (only `selection` facts), and adding it means rebuilding `Vendor/codemirror/dist/cm6.js`. `PreviewPolicy` has the policy (`anchorToReveal(forLine:)`, loop suppression) and DuoChecks cover it; nothing feeds it a line yet. Q-399.
 - **A page rendered from the buffer** loads through `loadHTMLString` with the folder as its base address, which WebKit may not let read local images until the editor's autosave (a second after typing) lets it load from disk again. Q-400.
 - **The deck provider** is Duo Decks' (`PreviewProviders.extra`); `deck` is never offered until it registers.
@@ -5067,3 +5070,1311 @@ Weak spot: the survey's "best" template for a chart slide was `table`. That's a 
 - It reloads by polling every 1 s for the newest modification date of the page and its folder's web files (`HTMLViewer.swift:111-141`), unless the picker is active.
 - A source view in place must stop that reload while a dirty source is open, and reload from the buffer (`renderBuffer`) when the page comes back.
 - Matching elements to source needs the lezer HTML tree walked beside the DOM in document order; no such mapping exists.
+## F-522: the search scrim didn't reach the toolbar's items
+
+With search open, the Sessions/Tasks toggle and the toolbar's search field stayed bright. The scrim is a content overlay; an `NSToolbar` item is hosted in its own view above the content, so the content's scrim passes under it. The target says the scrim covers "the whole window, toolbar included" (search-handoff README, scrim row; DL-76), so Geoff's report matches the design. The screens' backdrop doesn't show the toolbar separately.
+
+Fix: `dimmedUnderSearch()` on each toolbar item (`Shell/DuoToolbar.swift`) draws the same `scrim` over the item's own shape (masked by its alpha, so the toolbar's empty space isn't dimmed twice), fades with `scrimIn`/`scrimOut` (off with Reduce Motion, as the other scrim fades), and a click on a dimmed item closes search as a click on the content does. A DuoCheck (`searchScrimToolbarChecks`) counts items against the modifier. Window captures in Light, Dark and Classic (`build/ui-scrim/`) show the field and breadcrumb dimmed; before, the field was bright white.
+## F-527 · Split view's layout bugs from Geoff's first try (split-view-build, 2026-11-01)
+
+Geoff's screen recordings (2026-11-01) showed four bugs. Each now has a live check in `scripts/check-split.sh`:
+- **The window shrank below its 1280 × 800 minimum,** so the panes overflowed and were clipped on every side: when narrow, the console's left and the page's right were cut off; when short, the console drew over the toolbar.
+  - Cause: `MainWindow` sets `host.sizingOptions = []`, so the hosting controller never gave the window its content's minimum, and it reset `contentMinSize` too.
+  - Fix: a window delegate (`MinimumWindowSize.windowWillResize`) holds 1280 × 800.
+  - Not split view's own bug, but a split made it easy to hit.
+- **The sidebar stayed folded in a wide window.**
+  - Cause: the fold was decided once, when the split opened, and widening the window gave the room to the console.
+  - Fix: the window's resizes are watched (`DuoSplitView.onResize`). A moment after a resize stops, the sidebar comes back once the window is at least about 1,464 pt, and folds again under it. Only a sidebar the user had showing moves.
+- **Closing the split left the sidebar hidden:** the model said shown, but the pane stayed 0 wide.
+  - Cause: the sidebar was asked to open while the console was still squeezed to 480, so the console's minimum clamped the divider back to 0.
+  - Fix: the right pane's width is given back first, then the sidebar.
+  - Also, a pane at no width now counts as hidden (`DuoSplitView.isHidden`). `adjustSubviews`, after a divider set from code, leaves a collapsed pane 0 wide but no longer "collapsed", so a second hide saved 0 as its open width.
+  - A collapse asked for during another pane's slide is now queued, not dropped.
+- **The room didn't count the pane dividers,** which left the console 2 pt under 480. The right pane now gives them back: sides of 470 at 1440 and 390 at 1280.
+- The room is also given back when the project on screen has no split left (a split in another project used to hold it), and taken again when a split comes on screen.
+
+## F-518 · Q-181 answered as far as a background run can: the editor is a text input client, the system's Dictation was not run (md-format-bar, 2026-11-01)
+
+The editor's web view is first responder and takes marked and inserted text like any editable web content; a probe (`dictation-probe` in the harness: `setMarkedText` then `insertText` through the view's input context) found `inputContext` nil in a background instance, because its window is never key. So macOS's own fn-fn Dictation couldn't be exercised without a visible, key window, which needs Geoff's OK (asked in the report). Duo's mic doesn't depend on it or fight it: the mic is a button and ⇧⌘D, and its words arrive as ordinary `input.type` changes. Q-181 stays open for the editor, to be closed by a 30-second foreground check.
+
+## F-519 · Suggest Edits rewrote a dictated phrase without its annotations, so the page took it for the user typing (md-format-bar, 2026-11-01; DL-237, DL-266)
+
+`suggestTyping` (critic.js) returns a fresh spec for a single-hunk `input.*` change, and the spec carried only `userEvent`: the dictation's own mark, its history timestamp and `isolateHistory` were dropped. With Suggest Edits on, the first phrase landed as `{++…++}` and was then read as a break-in, ending the dictation; the second phrase was lost. Found by the live check, not by the node test (which didn't look at the mark). The spec now passes `tr.annotations` except the user event; `test/dictation.test.mjs` checks that a signed phrase is still the dictation's own. Typing under Suggest Edits is unchanged.
+
+## F-520 · Live proof of dictation into a document, on the real recognizer (md-format-bar, 2026-11-01; DL-266)
+
+Isolated background instance, fixture Home with the refunds project: a spoken file (`say`, then `DUO_VOICE_FILE_REALTIME=1`) through `VoiceInput` with target `.document` into `notes.md`, caret inside a list item. Apple's recognizer settled the phrases a few seconds apart, they landed at the caret with single spaces ("- o Who approves assing refunds over a $1000? Does a partial refund reset the limit?ne"), the undo depth went 0 → 1, and one `duo.undo` took the whole dictation out. The recognizer's own misses ("assing", "$1000") are its. The harness's `bar-dictate`, `bar-text`, `bar-undo` and `bar-return` drive this (`scripts/bar-live.sh`).
+
+## F-521 · F-458's cause and fix: CodeMirror's zero-width buffer images are break opportunities (md-format-bar, 2026-11-01; DL-237)
+
+A suggestion that ends a line left its full stop on the next, in Dark and Light alike, at 457–460 pt (and 321) with the review margin narrowing the column. The hidden marks (`{++`, `++}`, the signature) are `Decoration.replace`, and CodeMirror puts `<img class="cm-widgetBuffer">` around each; a browser may break at an inline image. A probe that steps the page's width 300–560 and checks where the full stop sits found 5 bad widths; with the buffers out of the flow (`.duo-rv ~ .cm-widgetBuffer { position: absolute }` in the review theme) it finds none, in 522 cases; `display: none` also fixes it, `word-break` and `nowrap` don't. The probe is `bar-js:` with `/private/tmp/mdb/wrap-probe.js`'s approach (a page script run from the harness).
+
+F-457 (the table bar's buttons 1 apart) is moot: the in-document table bar is gone (DL-266). Its controls are in the formatting bar at the board's spacing.
+
+## F-528 · The shipped director skill makes every question about something to look at carry its link (fix/director-skill-question-links, 2026-11-01)
+
+Geoff: when the director or a worker asks him a question about an artifact, it must say what to look at. duo-v2's own rules had this (ea577a2a); the skill Duo ships did not. `skills/duo-director/SKILL.md` §7 now requires it of the director and its workers: the link (URL, `duo2://` link or a file path the user can open) on the line right before the question and inside the question text, naming the board or section. `Director.workerPrompt` (the brief every worker starts with) carries the same sentence, and a DirectorChecks check pins it. The skill revision goes 3 → 4 so installed copies update at launch. No duo-v2 URLs in the text. No open question, so Q-424 is unused.
+## F-523 · Duo Decks P3a: the deck preview provider (duo-decks, 2026-11-01; DL-269)
+
+Built on build/duo-decks-viewer (8697b3f9, aaf07964, 64491b41, 9078b487) by a Sonnet subagent. Write-up: `docs/design/duo-decks-study/p3a.md`.
+
+`DeckPreview`, kind `.deck`, renders the editor's buffer to pptx bytes in memory (never a file), behind RevisionGate. It emits:
+- the anchor map (`slide N`, `slide N/slot`);
+- problems, as errors or notices;
+- comment anchors.
+
+Its behaviour:
+- **Reveal:** goes to a slide, with no scroll when it's already current and no echo.
+- **Slide changes** emit `current`.
+- **Picking a shape** emits `activate(slide N/slot)`. The pptx writer now records each slot's shape id.
+- **Redraws** happen in a hidden second host and are swapped in, keeping the scroll.
+- **A deck with errors** keeps its last good drawing.
+
+The verbs `duo2 deck`, `deck go` and `deck pick` are app verbs. Checks: `deckpreview` 30/0, `deck` 187/0.
+
+Captures in Light, Dark and Classic, from an isolated instance with the split wiring applied locally, match `split-deck`'s strip, layout, 44 bar and slide frames. They're in `docs/design/duo-decks-handoff/proof/`.
+
+What was left:
+- **Split wiring:** it's in `Split/*` and `AppModel+Split.swift`, which belong to split-view-build. It's handed over as `p3a-split-wiring.patch`.
+- **Registration:** it uses `PreviewProviders.extra` until split view's `register` merges.
+- **The editor's anchor mark and click-to-caret:** they wait for the editor hook.
+
+## F-524 · A test run reached Geoff's own Duo and changed his appearance (duo-decks, 2026-11-01)
+
+P3a's first live run looked for the isolated instance's `endpoint.json` in the wrong place. With `DUO_SOCKET`/`DUO_TOKEN` unset, `duo2` quietly reached Geoff's running Duo, exactly as CLAUDE.md warns.
+
+What reached his Duo:
+- reads (`status`, `doc tabs`);
+- unknown-command errors;
+- **one write, `duo2 settings appearance light`**.
+
+Geoff chose Match System, and the lead set it back with `duo2 settings appearance system` (confirmed: `appearance: system`).
+
+The script now refuses to run unless both variables are set from the instance's own `endpoint.json`. A later run confirmed `status` named the isolated project.
+
+The lesson: a script that drives a test instance should check `duo2 status` names the fixture before any write, and fail closed when the endpoint can't be read.
+
+## F-525 · A protocol method with an optional parameter is silently not the protocol's (duo-decks P3, 2026-11-01)
+
+`DeckPreview.bind(path:file:model:)` took `model: AppModel?`, while `PreviewProvider.bind` requires `AppModel`. Swift doesn't count the optional version as satisfying the requirement. So split view would have called the protocol extension's do-nothing default, the deck would never have bound, and nothing would have warned.
+
+The director caught it while merging track A onto integrate/2026-11-01f. It added an exact-signature overload that forwards to ours, in the commit after 30ee8fc1.
+
+The lesson: a provider method meant to satisfy a protocol requirement that has a default should match its signature exactly. A check that calls the method through the protocol type, not the concrete type, would have caught this.
+
+## F-526 · Duo Decks P3 track C: the deck's editor pieces (duo-decks-editor worker, 2026-11-01; DL-295, DL-296, DL-303)
+
+The work is on build/duo-decks-editor: 362feef0, f32c0f1d, acef4a34 and c31d6fd3. Full DuoChecks passes 5317 of 5317. Write-up: `docs/design/duo-decks-study/p3c.md`.
+
+The page side lives in `Vendor/codemirror/src/deck.js`; duo-editor.js has only the two agreed lines.
+- **The slide chip:** 22 high, with a `rule` above, reading "Slide n · name ⌄". The comment is hidden and the file unchanged. Clicking it opens the picker in change mode.
+- **⌃⌘N:** Format › New Slide, enabled in a deck. It adds a pending chip with the picker open, and typing filters.
+- **A pick** runs `Deck.insertSlide` or `Deck.changeTemplate` on the buffer, the same code as `duo2 deck insert`/`change`, as one undo step.
+- **The anchor:** a 2 pt `controlEdge` bar fed by `setDeckAnchor`. `revealDeckSlot` is in place.
+
+Captures in Light, Dark and Classic (`docs/design/duo-decks-handoff/proof/`) match P3-2-picker: the chip rule is #C9CDD3, and the picker is 320 wide against the target's ~319. The lead looked at the comparison.
+
+What's left:
+- the thumbnails are a stand-in drawn from slot kinds (Q-415);
+- the editor's context-menu New Slide… is not built (Q-416);
+- ⌃⌘N wasn't exercised through the real menu; the captures call the same `duo.deckNewSlide()`.
+
+## F-530 · The deck preview went blank after every edit (duo-decks, 2026-11-01; fixed 2c96dae7, on main as 6ffc5fc8)
+
+Found while running the P3 walk's tests first: window captures after a valid edit showed the slides pane blank. A probe of the live page's DOM (harness `deck-probe`, 9d765c91) settled it as a real bug, not a capture artefact (F-120). It had two causes in `Vendor/pptx-renderer/deck.js` and `deck.html`:
+
+1. **The old drawing stayed in the page's flow.** pptx-renderer sets `position: relative` inline on its container on every render, and `destroy()` doesn't clear it. That beat `.staged { position: absolute }`. After the no-flash swap, the old, empty, 100vh-tall container sat above the new slides, which were drawn a screen below the top. The swap also left the visible container with id `spare`, so `#host` CSS (spacing, rules, the Make Templates grid) stopped applying after any redraw.
+2. **Overlapping redraws.** A `show(bytes:)` arriving during a refresh drew into the same spare. Each swap wiped the other, leaving zero slides.
+
+The fix:
+- `.staged` is `position: absolute !important`;
+- the ids follow the roles on a swap;
+- open and refresh run one at a time, with superseded requests skipped, so the newest bytes always draw.
+
+There's still no flash. DuoChecks (`deckviewer`) drives an offscreen viewer through one edit and two quick edits, and three checks for each cause fail without the fix. Full DuoChecks gives 5416/0. Keeping the scroll at a scrolled-down position wasn't checked live.
+
+The lesson: a library's inline styles outlive `destroy()`, so staging CSS that has to win needs `!important`, or its own wrapper element. Write-up: `docs/design/duo-decks-study/redraw-blank.md`.
+## F-531 · A restored split came back folded with room to spare (split-view-build, 2026-11-01)
+
+Geoff, in Duo Dev on 8ba74b25: "left pane is literally not visible". At about 1810 wide the panes were [0, 1345, 459]: the split folded, and the sidebar folded "by the split", although 300 + 480 + two 340 sides fit easily. His diagnosis was that the break point is too aggressive. The rule itself is DL-276's and is unchanged: fold the sidebar only under about 1,464 pt. DuoChecks now pin it at 1810, 1464/1463, 1440 and 1280.
+- **Cause:** the restore. A split restored on launch put back the room it had taken in an earlier session as it was: the sidebar folded at 1440, and a right-pane width computed before the layout existed. That width waited for `paneHost` to be set, which had already happened, so it was never applied. The window came back wider (1810) with the sidebar folded, the right pane at its design 459, and the split folded inside it.
+- **Reproduced:** in isolated launches with `DUO_RESTORE=1`, first at 1440, then a relaunch at 1810 on the same support folder. On 8ba74b25 it comes back folded with the right pane at 459. The before and after pictures are `build/split/compare-relaunch-1810.png` and `-1440.png`.
+- **Fix:** a restored room is re-decided for the window it comes back in (`AppModel.reconcileRoom`), once the layout has its first width (`DuoSplitView.onPlaced`) and the split is on screen. The sidebar folds only if the window can't fit it, and the right pane widens so the console is at 480. Only what to give back on close comes from the file. `scripts/check-split.sh` has the relaunch as a case.
+- **The hangs** in the same `hangs.jsonl` (3 to 5.7 s on 8ba74b25, at 18:16, 18:17, 18:23, 18:59, 19:00, 19:24, 21:35 and 23:29 UTC) don't involve split view. All are main-thread timers that turn terminal rows into text under the terminal lock:
+  - `TerminalMicView.tick` reads `visibleRowsText`, and once `InputBoxFinder.find`.
+  - `AppModel.scanTrustNotices` reads `LiveChatTerminal.columns`, whose getter builds a whole `terminalStateSnapshot`, or `screenLines()`.
+  - Symbolicated against the 8ba74b25 binary (UUID B0B017D9-…); output in /tmp/hangsym/out.txt. The 9f5b18e2 hangs (the longest 16.7 s) couldn't be symbolicated because that binary is gone, but their system frames have the same shape.
+- **The tab strip "Project ge.html"** after a document split closes is DL-225's scrolling strip at a 459-wide pane. Three document tabs overflow, the selected one is revealed whole, the tab before it peeks 32 pt (`tabPeek`) under the fade, and the overflow menu reads "3 ⌄". That's the strip as designed, not a split view bug. Q-423 (the split's tab strip) is where to take it if it should look different.
+
+## F-532 · Squeezing the console and the sides before the sidebar (split-view-build, 2026-11-02; DL-306)
+
+Geoff chose "Squeeze others first" for the fold rule (DL-306), so the sidebar keeps its place at 1440. Built as `SplitRoom` and the console's minimum:
+- **The numbers.** Opening a split puts the console at 400 and the right pane takes the rest (738 at 1440; sides of about 368). The sidebar folds to its rail only under 1,303 (300 + 400 + two 300 sides and their divider + the two pane dividers); the director's "about 1,300" is the same sum without the dividers.
+- **The console's 400 is held by the split view itself.** `DuoSplitView.minimumOverrides` carries a pane's minimum from outside the layout, set when the room is taken (`SplitState.taken`) and cleared when it is given back, so the 400 applies the moment the right pane is widened and the console's 480 returns after the split closes. Changing a pane's `minWidth` through the layout didn't work: the layout reaches the split only after the SwiftUI update, later than the `setPosition` that needs it.
+- **Tokens:** `splitSideMin` 340 → 300, new `splitConsoleMin` 400.
+- **Where the screens differ now.** `making-room` and `fold` draw the sidebar folded at 1440 with a console of 480 and sides of 470 (and 391 at 1280). Under DL-306 at 1440 the sidebar stays, the console is 400 and the sides about 368; at 1280 the sidebar still folds to its rail and the sides are about 430. The rail, the peek and the unfold look as drawn; only those widths changed.
+- **Checks:** DuoChecks pin 1810, 1440, 1303/1302 (the edge) and 1280; `scripts/check-split.sh` has 1440 and 1300 keeping the sidebar, 1280 folding it, and the relaunch cases at 1280 and 1810.
+
+
+## F-533 · Duo Decks hidden in a release build (duo-decks, 2026-11-02; DL-307)
+
+The switch is `DeckFeature.enabled`. It is on when the build is `DEBUG`, `DUO_DECKS=1` is set, or the `DuoDecks` default is YES (the app's domain, or `com.dudgeon.duo` for `duo2`). DuoChecks sets `DeckFeature.override`. It is read in these places:
+- `ActionFamily.shown`, for help, the primer and the skill's families;
+- `DuoAction.resolve`, where deck verbs are unknown to `duo2` and the app;
+- `Installer.decksSkill`;
+- `DeckPreviewRegistration.test`, where there is no deck split tab;
+- the File and Format menu items, and their enabled state;
+- the Files + and .pptx context menus;
+- `DeckBar`, which draws 0.2.22's bar for a plain .pptx;
+- the editor, where a document-start `window.__duoDecksOff` makes `isDeckDoc` false in `deck.js` (cm6.js rebuilt), and `isDeck` stays false.
+
+`docs/cli/duo2.md` still lists every verb: it is the full reference, and DuoChecks runs with Decks on.
+
+Checks: DuoChecks `deckhidden` covers both sides of the switch with 22 checks, including that Parity stays clean with Decks off. Full DuoChecks: 5442 passed, 0 failed.
+
+Proof on `scripts/bundle.sh release`:
+- The release `duo2 help` names no deck verb, and `duo2 deck check` is "unknown command"; with `DUO_DECKS=1` the family is back.
+- Isolated captures (own support folder and scratch config, `open -g`) of the release build and of the installed 0.2.22, same workspace, are in `docs/design/duo-decks-handoff/proof/compare-decks-hidden-{pptx,deckmd,plain}.png` (0.2.22 | release | difference).
+  - The .pptx captures differ only in the workspace's folder name in the Files path.
+  - The `type: deck` note is plain Markdown in both. Its editor sits 10 pt lower in the release build, and a plain note without `type: deck` moves by the same amount. That shift comes from main's editor changes since 0.2.22 (the formatting bar work, DL-266), not from Decks.
+
+## F-537 · Window state today: three kinds, not two (multi-window round 2, 2026-11-02; DL-141)
+
+Read from main at 1f974b71 for `docs/research/multi-window-2026-11.md`. It updates F-167.
+
+- **One of everything.** `DuoApp.init` makes one `AppModel` (`Duo/DuoApp.swift:36`), one `ControlServer` whose handler is that model (`:54`) and one `MainWindow` (`:125`, titled "Duo", frame autosave "main"). The scene is `Settings {}` with `DuoCommands(model:)`.
+  - `AppModel`'s doc comment already says "One instance per window", and so do `SplitState` and `EditorSet` (F-506).
+  - The intent was per-window models, but only one is ever made.
+- **Three kinds of state.**
+  - **App-wide:** `fixture`, `liveFolders`, `terminals`, `chats`, the timers and live loop, `seen`, `notified`, keep-running, director registries, restore I/O, voice.
+  - **Per project**, kept on the model today: `openDocumentsByProject`, `lastConsoleTab`, `lastRightTab`, `shellTabs`, `consoleTabOrder`, `webTabs`, `parkedTabs`, `splits.tabs[project]`. It must follow the project between windows, so it is app-wide too.
+  - **Per window:** altitude, the tabs now showing, collapse and widths, the split's room, search UI, peek, filters, hover and drag, forms, focus, editors and viewers.
+- **The live loop mixes both** (C-146). `refreshLive` applies the snapshot, then:
+  - does window work: marks the visible session seen and settles the map;
+  - does app work: notifies, prunes director registries, delivers review comments, archives and moves files.
+- **Counts on 2026-11-02:**
+  - `title == "Duo"`: 30 lines. Eight are in product code: `DuoAlert.swift:10`, `AppModel+Panes.swift:96`, `Commands.swift:474`, `PaneFocus.swift:65`, `AppModel+Control.swift:49`, `AppModel+Organize.swift:318`, `AppModel+Walk.swift:28` and `SessionListFilter.swift:141`. The rest are in `FixtureHarness` and `ChatPerf`.
+  - `SheetCenter.shared` 68; `model.` 1,866; `@Environment(AppModel` 191.
+  - `currentProject` 180, `fixture` 176, `consoleTab` 170, `rightTab` 151, `altitude` 110, `terminals` 49.
+  - `duo2` has about 248 verbs, and about 50 of them act on what is on screen.
+- **Consequence:** keep `AppModel` as the window model and lift the app-wide and per-project state into an `AppCore` behind forwarding properties. That leaves the 1,866 call sites alone. A separate `WindowModel` would move about 1,000 of them.
+
+## F-538 · What v1's multi-window really cost (multi-window round 2, 2026-11-02; ENH-191 in the legacy repo)
+
+Read from `/Users/geoff/repos/duo`: `docs/prd/enh-191-multi-window.md`, tasks.md, `docs/DECISIONS.md:1049` and the git history. It corrects the first round's summary.
+
+- **The three releases were a staged build, not break-and-fix:**
+  - v0.9.1: write serialization, for a lost-update bug that predated windows.
+  - v0.9.2: the window registry as a "registry-of-one", identical with one window, with no visible feature.
+  - v0.10.0 (2026-06-08): window 2.
+  - No BUG entries were filed against window routing afterwards.
+  - The 13 to 17 engineer-weeks went into the spine. Electron's main process held about 128 reads and 37 sends to one `mainWindow`, plus 12 last-writer-wins caches.
+- **What broke while building:**
+  - Focus-based routing silently dropped sends to windows in the background. Testing missed it, because there the one window is focused. Identity routing and a grep gate fixed it.
+  - Closing the last window tore down the socket, so the CLI was dead after a Dock reopen.
+  - Context menus, popups and confirms crashed in window 2.
+  - Dialogs were parented to the main window.
+  - A per-window cache pruned from one window's ids erased the other window's.
+- **Left open in v1:**
+  - The per-request window target was module-global ("correct by discipline").
+  - A window closed just before a crash came back.
+  - The git watcher was last-armer-wins.
+- **CLI routing in v1:** `--window N`, then `DUO_WINDOW` stamped on each terminal, then the primary (lowest-id) window. v2 shouldn't stamp the window into a session's environment, because a session's project can move between windows. It resolves the window from the session each time (Q-430).
+- The first round cited lessons 31 and 32 of `legacy-duo-product-review.md` for windows, but those are about the accessibility tree. The window lines are 36, 81, 192, 229 and 235.
+## F-534 · An open document follows Claude's edits on disk; a wholesale rewrite gets no banner (power-user-audit, 2026-11-02; DL-77, LR-32)
+
+A power user's v1 report (a doc open in the editor didn't pick up Claude's edits; v1 0.9.1 added a diff banner for bigger changes), tested on main `1f974b71` in an isolated Duo. Detail in `docs/research/power-user-v1-feedback.md`.
+- A small edit written in place, and one written by temp file and rename, reach the open editor within 3 s, highlighted as Claude's. No banner.
+- A rewrite of every line of a clean document also reloads silently with the highlight (`power-user-v1-feedback/large-change-reload.png`). v1's "most of this document was replaced" banner (LR-32: Keep mine, Load new, View diff) has no v2 counterpart. DL-77 dropped the banner on every dirty change, but nothing replaced the one for a big clean change either.
+- With unsaved edits: a change on other lines merges silently; the same line shows the Keep Mine / Use Theirs bar, pauses saving and keeps `conflict-mine` and `conflict-theirs` in history (`conflict-bar.png`).
+- Quirk, not chased: after a clean outside reload, `duo2 doc status` says "open in Duo with unsaved edits" and keeps saying it, while the file on disk isn't rewritten (mtime unchanged after 9 s). The highlighted change probably counts as dirty. Claude reads that line to decide whether to touch the file, so it can mislead.
+- Not tested: a file over a few thousand lines, or an edit during an IME composition.
+
+## F-535 · Where a web link goes (power-user-audit, 2026-11-02; DL-3, DL-99, DL-124)
+
+- By default Duo's browser takes only files and localhost; every other `http(s)` link goes to the system browser. The allow list (`allowed-sites.txt`, Settings › Browser › Edit…) is empty on a new install. This is already what the power user asked for and what Geoff proposed to her.
+- Notes, tasks, chat and local HTML pages all use `AppModel.openLink`; the terminal uses SwiftTerm's `openDefaultLink` (system browser, even for an allowed host).
+- Live: `duo2 browser open https://example.com` makes a tab holding the page ("isn't on the allow list") with Allow and Open in Browser; nothing loads.
+- Gap: no "never use Duo's browser" switch, and the two routes disagree for an allowed host (note link: a Duo tab; terminal link: the system browser). No click was made on a real link (it would launch the system browser and take focus).
+
+## F-536 · A 129 s dictation runs clean into the document and the composer (power-user-audit, 2026-11-02; DL-260, DL-261)
+
+The 90 s blank/terminal-error report (v1, unresolved) isn't reproduced. `say` made 129 s of speech (350 words, 25 sentences); `duo2 voice file` and the harness's `voice-file:` fed it through the real `VoiceInput` and SpeechAnalyzer at the pace spoken (`DUO_VOICE_FILE_REALTIME=1`).
+- Document (`--doc`): all 25 phrases landed, 674 recognizer results, state back to off, no error, RSS 229 MB falling to about 120 MB.
+- Composer: text ends at "number 25", state idle, RSS 236 MB falling to about 213 MB, screen intact.
+- Not exercised: a real microphone (AVAudioEngine, device or route changes, Bluetooth), the terminal prompt target, a person's pauses (the only timer is the 15 s "nothing heard" stop), and Apple's older recognizer (used only where SpeechTranscriber has no model for the language), which has its own time limit. Geoff's question to her (OS transcription or something else, and which target) was unanswered.
+- A hands-on 3-minute run on Geoff's own Mac is ENH-317.
+- `duo2 voice file` blocks until the file ends; killing the CLI doesn't stop the dictation (a second call said "already on").
+
+## F-542 · A per-window colour can't ride on the NSColor tokens alone (multi-window round 3, 2026-11-02; ENH-319, Q-435)
+
+Read from main at 6d9eb748 for ENH-319.
+
+- **How a colour resolves today.** Every `DuoColor`/`DuoNSColor` token is an `NSColor(name:dynamicProvider:)` from `NSColor.duoDynamic(light:dark:classic:)` (`Design/ColorSupport.swift:17`). The provider gets only the drawing `NSAppearance`: it picks dark from the appearance and Classic from a process-wide flag, `DuoScheme.classicActive` (`Design/Appearance.swift:31`). Classic is therefore app-wide by construction (DL-252's "a scheme is only a tokens block").
+- **So a window's colour can't be one more scheme.** `NSAppearance` carries no window identity (the system's named appearances are shared instances), so a provider can't tell which window it is drawing for.
+- **What it takes instead:**
+  - The colour only overrides a few tokens: `ground` (39 SwiftUI and 8 AppKit uses), `pane` (105 and 10), `chatGround` (6) and `toolOutputFill` (4). The rest stay as they are: console, text, rules, selected, needs-you, cards, fields and the document's page.
+  - Those tokens resolve through a per-window value: an environment value `windowColour`, set on each window's `RootView`, and a `ShapeStyle` whose `resolve(in:)` reads it (macOS 26 target, so this is available). The AppKit uses ask the window's model.
+  - `gen-tokens.py` emits a `windowColour.<name>.light|dark.ground|pane|swatch` block.
+  - A DuoChecks gate keeps raw `DuoColor.ground`/`.pane` out of window-coloured views.
+  - The editor's page and the WKWebViews don't change, so no CSS work is needed.
+- **Classic excludes it in one place:** while `DuoScheme.classicActive` is set, `windowColour` resolves to None (board 4c A).
+- **Contrast** (4a's table):
+  - Light: text is 12.4:1 or better and text2 is 5.59:1 or better on every coloured pane. The orange on a coloured light ground is 4.07–4.35:1, so the toolbar chip keeps F-169's white fill.
+  - Dark: every pair is 5.7:1 or better.
+- **Found in passing:** Classic's own `text2` (#7B6F58) on its `ground` (#F0E9D6) is 4.07:1, under 4.5:1. It is 4.64:1 on `pane`. This predates multi-window. It affects Classic's toolbar crumbs and any text2 drawn on the ground.
+
+## F-539 · Chat looked idle through a long turn in a narrow pane: the footer's `esc to interrupt` was cut off (chat-working, 2026-11-02)
+
+Geoff (work Mac, Claude Code 2.1.284): mid-turn, chat mode showed no activity, while the terminal of the same session showed the spinner ("Moseying…").
+
+- **How chat decides Claude is working.** `ChatScreenReader` reads the screen as busy only when a row under the input box contains `esc to interrupt`. Hooks, the transcript and the spinner line didn't decide it. The working line (`ChatWorkingLine`, chat-polish `mixed`: `Working · 9s · Esc to interrupt`) shows only while the screen reads busy (or text is streaming).
+- **What the CLI draws.** Real turns on Haiku 5.5, a 45 s foreground `python3 -c 'import time; time.sleep(45)'` and its thinking, in a pty (node-pty + @xterm/headless, the spike's `drive.mjs`), on 2.1.284 (installed from npm into a scratch folder) and 2.1.316. Both versions draw the same footer: `  ⏵⏵ auto mode on (shift+tab to cycle) · esc to interrupt`, 57 columns. At 100 columns the row is whole all through the turn. At 60 it ends `esc to interrupt…`. **At 48 it is `· esc …` for the whole turn**, while the spinner line above the box (`· Transmogrifying… (22s · ↓ 102 tokens)`) keeps going. The reader then said idle from the first second to the last. Auto mode is the default since 2.1.284 (F-273). accept-edits' label is longer still.
+- **Duo's chat terminals are that narrow.** Home's chat at Duo's default window size is 43 columns (`term-info` in the live run). A split squeezes the console to 400 pt (DL-306). So on the work Mac's default, auto mode, chat could never see a turn as busy in Home, and only sometimes in a project.
+- **Ruled out:** a hook (busy isn't taken from hooks); the indicator only showing at turn start (it follows the screen); an unrecognised spinner verb (the reader never looked at the verb); duo-signal (off by default, and no mods on 2.1.284).
+- **Fix.** The spinner line is the busy sign that survives a narrow pane. `ChatSignatures.spinnerActive`: a status row whose verb ends in `…` (`✻ Moseying… (12s · …)`, `· Leavening… (1s · thinking)`, 2.1.219's `(12s · esc to interrupt)` form too) or a retry line reads busy. A finished one (`✻ Cooked for 48s · done 8:49 AM`, `… · 1 shell still running`) doesn't. The footer rule stays as well. The fallback report lists the new signature.
+- **Proof.** DuoChecks `chat` gains "working while the spinner is up, at any width" (7 checks): 14 real screens (`Spikes/chat-mode/screens/working-2.1.284/`, `working-2.1.316/`) at 48, 60 and 100 columns; a 48-column session drawing `Working · … · Esc to interrupt` from the turn's start to the tool's end, and dropping it after; and **a rule over every captured screen (179): none reads idle while its spinner is going.** With the fix taken out, 3 of the 7 fail on exactly the 48-column screens. Live: `scripts/check-chat-working-live.sh` (an isolated Duo in the background, Home on the real CLI, the real login, Haiku 5.5) reads chat every 5 s through the 45 s tool. **2.1.284: 8 of 8 reads busy, with the line drawn; 2.1.316: 8 of 8**, at a 43-column terminal, then idle once the turn is done. Captures: `docs/design/chat-mode-handoff/proof/working-2.1.284-43col-45s.png`, `working-2.1.316-43col-5s.png`, against `working-target-text-board.png` (the chat-mode `text` board's working line). Glyph (10 pt ring, `text`), 8 pt gap, 4 pt inset and `text2` words match the boards. The line sits 16 pt under the card, which is the feed's item spacing; the `text` board has 14. That predates this fix and is left as it is.
+- The live check runs against the real login, so its full-window captures list the real session list. Only the chat column is kept.
+
+## F-540 · The working line sat half under the composer: the feed didn't follow a small growth (chat-working, 2026-11-02)
+
+Seen in F-539's first live capture (`docs/design/chat-mode-handoff/proof/working-before-follow-fix.png`): the line was drawn, but the feed's bottom edge cut through it, above the composer.
+
+- **Cause.** On a change of content size, the feed scrolls back to the end only when it is no longer "at the bottom", and that test allows 60 pt of slack. The slack is there so that a small scroll doesn't count as leaving the end. The working line adds 32 pt (16 of gap and 16 of line), so the feed stayed where it was and the line hung under the edge for the whole turn. Streaming text that grew by less than 60 pt at a time lagged the same way.
+- **Fix** (`ChatView`'s `onScrollGeometryChange`): while following, it goes to the very end (within 1 pt) on any growth. Deciding that you scrolled away still uses the 60 pt slack. `follow` keeps F-225's limit (once per run-loop turn, at most 20 a second, then it stops following), so a feed that keeps changing size still can't loop.
+- **Proof:** the second live run's captures show the line whole, 16 pt under the card, at 5 s and at 45 s, on both versions. All of DuoChecks passes (5452 of 5452).
+
+## F-543 · The artifact host serves .mp3 but not .m4a (decision walkthrough, 2026-11-02; DL-309)
+
+A publish whose `files` included `audio/*.m4a` was refused whole: "extension .m4a is not served". The served media types are `.mp3 .wav .ogg .mp4 .webm`. The walkthrough builder writes 64 kb/s mono MP3 (`libmp3lame`); a 3-minute walkthrough with 28 clips and two JPEG captures is 2.7 MB. Supporting files published through `files` load from the page by a relative path (`audio/why.mp3`), so a page needs no `assets` capability for its own audio.
+
+## F-544 · The house voice, on lines written for a walkthrough (2026-11-02; DL-310)
+
+- **Speed:** Qwen3-TTS clone voices at an RTF of about 0.92 on this Mac, so a 3-minute walkthrough (62 lines) takes about 4 minutes of exclusive GPU, plus about 1 minute for the ASR check. The builder caches each line by its text and the voice, so an edit re-voices only the lines it changed (one line: 6 s).
+- **What the ASR check flags:** colour/color, none/nun, plain/plane and pane/pain are spelling, not errors. Record numbers voice well from `said` ("D L three oh eight" was heard as "DL308"). The one real miss: "I recommend Classic wins" came out as "classic winds… class classic". Reworded to "Classic takes over" and re-voiced, it passes.
+- **Narrated pace:** at tempo 1.1, about 3.1 words a second. A finding chapter of 6 lines (about 95 words) is 31 s, well inside the 45 s gate.
+
+## F-545 · Checking a walkthrough without a visible browser (2026-11-02)
+
+`check.mjs` and `filmstrip.mjs` in the skill drive the built page headless with `playwright-core` (the copy in `~/repos/thinking-about-risk/node_modules`, browsers cached in `~/Library/Caches/ms-playwright`, Chromium and WebKit), so nothing takes Geoff's screen. Headless Chromium plays the MP3s for real (`audio.currentTime` advances, cues fire on time, chapters chain into each other), grants clipboard read for the Copy check, and runs at 375 px. Two bugs only the moving frames showed: elements not yet shown were dimmed back to 22 % opacity by the focus rule (ghosts), and a scene's boxes overlapped while chips moved. Neither appears in end-state captures. What it can't show: iOS Safari's audio rules inside the artifact frame.
+
+**Then in claude.ai itself** (Geoff's Chrome, on the worker's draft https://claude.ai/artifact/HwMUZyk8Lj4zxJ7q9wKmR6, 2026-11-02, with Geoff's OK):
+- Play started the audio inside the artifact frame, captions and cues kept time, and jumping to Q-99 played its intro and stopped at the decision.
+- Save wrote `answers/q99-when` with every field (read back with ArtifactData, then deleted).
+- Copy decisions put the full text on the macOS clipboard.
+- **The first send to Claude raises claude.ai's own consent dialog** ("Let this artifact send messages to your Claude session?"). The answer is already saved to the db before it appears. Geoff answers it once per page; the worker closed it without choosing, so the comment wasn't sent.
+
+## F-547 · Twelve window colours from one OKLCH recipe (multi-window, 2026-11-02; Q-441, DL-312)
+
+- **What the design system had:** no general-purpose palette. The tokens have two sets of hues, both made for other jobs:
+  - the terminal's ANSI colours (on the console);
+  - `reviewAuthor1–5`, text-strength colours that include a red and an amber.
+  - There is also a rule that nothing orange sits between red (h354) and yellow (h49).
+  - `windowColour` isn't in `tokens.json` yet: 4a's four colours were only on the canvas.
+- **The recipe** (`docs/design/multi-window-studies/palette/window_palette.py`, output in `palette.json`):
+  - hue = 92° + 22.5° × i for i = 0 to 11. The arc ends at 339.5°, so it skips orange and red: needs-you sits at OKLCH h38 in light and h48 in dark.
+  - Even i are tier A (lighter, softer), odd i tier B (deeper, richer), so neighbours differ in lightness and chroma as well as hue.
+  - Each surface (ground, pane, chatGround, toolOutputFill, swatch) has one (L, C) per tier and appearance.
+- **sRGB limits the chroma, teal worst.** At L 0.59 to 0.60 teal (h204) holds only about C 0.10, while violet holds 0.25. So a swatch can't be richer than C 0.10 at tier B's dark lightness if every hue is to keep the same chroma. Sand and Pear could go much further.
+- **Contrast is set by tier B in light.** Text2 #5B636D on a tier-B light ground is 4.53:1 (Mauve), 4.57 (Lilac), 4.59 (Cornflower). Deepening tier B's light ground past L 0.905 would fail. Tier A has about 0.35 to spare. Dark values pass easily (text2 5.90:1 or more).
+- **The order new windows get colours in** is five steps round the hue order each time (5 is coprime with 12, so all twelve come up). That puts each new colour 112.5° from the last and flips its tier. Sky is first, as on 4a.
+- **Names reused from 4a** (Sky, Sage, Lilac, Sand) now have new values; 4a's own files are kept unchanged for comparison.
+- **Rendered proof** (`palette/board-4a-prime.png`, from `palette/proof/`). `gen_board.py` writes the board and component from `palette.json`. `expand.py` turns them into static HTML. `shot.mjs` renders that in Playwright's headless Chromium at 1720 wide. Read region by region, everything draws as intended. Light chatGround equals ground, as in the base scheme, so the chat column is the most tinted part of a light window. The fixed blue `chatYou` bubble then sits on that tint: it reads fine on all twelve, but it is the one place a window colour meets another hue.
+
+## F-548 · Multi-window slice 0 as built: one AppCore, a model per window, nothing visible changes (2026-11-02; DL-311, F-537, C-146)
+
+Built on `build/multi-window-slice0` from main `2c9a2bdb`, as `docs/research/multi-window-2026-11.md` §3 slice 0 planned. Still one window.
+
+- **The cut.** `DuoKit/Model/AppCore.swift` holds 73 stored properties that were `AppModel`'s, plus the split tabs by project (`SplitTabs`, shared by each window's `SplitState`) and the one `VoiceInput`.
+  - App-wide: the fixture, live folders, terminals, chats, the timers, `seen`, `notified`, keep-running, parked tabs, detached forks, restore bookkeeping, repos, issues, conversions, settings flags.
+  - Per project: open documents, last console and right tabs, tab order, shells and their titles, web tabs, the tree's open folders and browse roots, source-mode documents.
+  - `AppModel` keeps the rest and forwards each moved name (`get`/`set`/`_modify { yield &core.x }`), so no call site changed. `@Observable` tracks through the forwarders because `AppCore` is observable itself.
+  - Left per window on purpose: the fixture-mode extras (`fixtureChats`, `fixtureTerminals`, `fixtureEnded` and the rest, set per capture by the harness), view caches (`propertyCorpus`, `baseOrderCache`), `markdownMarkup`, `mapSort`/`homeView`, and `lastSent`/`lastDrafted`/`lastInterview`.
+  - `AppModel(core:)` makes a window's model; `AppModel(fixture:)` still makes a model with a core of its own, so the checks and the harness are unchanged.
+- **The loop runs once** (C-146). `AppCore.startLoop` starts one 2 s timer and one minute clock. Each tick runs `refreshLive` and the trust scan through `core.primary`. A `refreshLive` called on another window's model goes to the primary.
+  - After the snapshot, the app-wide passes run once: notify, director pruning, review delivery, archive, GitIgnore, moving files, restore.
+  - Each window then does its own part: the seen mark for its visible session, map order, its editor's note context, repo and issues for the project it shows, its Home tab.
+  - `followSessionChanges`, shell promotion and `closeShell` move every window's console or Home tab with the session.
+  - The bodies of the passes still live in `AppModel` extensions and run on the primary's model, so they read window 1's state (C-150).
+- **Counted.** `AppCore.passCounts` counts each pass. `core.snapshotSource` lets the checks hand a refresh a stand-in snapshot, so it touches no real folder.
+  - `DUO_CHECKS=core` (also in the full run, 27 checks) builds two models on one core and checks one scan, one snapshot, and one each of notify, prune, deliver, GitIgnore and move per refresh. It checks the window part twice, the loop started once from two windows, at most one archive pass a minute, and that per-window state stays apart while per-project memory is shared.
+- **Windows by identity.** `AppModel.window` (weak, set in `MainWindow.show`) replaces the eight product `title == "Duo"` lookups: DuoAlert (now `present(_:from:)`), pane focus, Full Screen, the List's filter focus, `paneWindow`, undo in Organize and in `duo2 undo`, and the walk.
+  - The harness's lookups (17 lines) and ChatPerf's 3 go through `FixtureHarness.window(n)`.
+  - Window 1 keeps the title "Duo", so scripts and captures that look for it still work.
+- **Questions.** `DuoQuestion.target` is `.any`, `.window(id)` or `.project(name)`. `SheetCenter.current(for:)` gives a window only its own question, and `sheetIsUp` and `SheetOverlay` use it.
+  - Every question asked from an `AppModel` extension now passes `from: self`.
+  - Launch questions (install, appearance, GitIgnore, voice's first press) stay `.any`: they show in the key window's model, else the primary's.
+- **Keys and menus.** `PaneKeyMonitor` and `ChatKeys` stay one monitor for the app, and each finds the model of the event's window (`core.model(for:)`, `model(forWindowNumber:)`). `DuoCommands` acts on `core.keyModel`; `MainWindow` sets `core.keyWindowID` on `didBecomeKey`.
+- **C-44 and C-43.** `PaneMotion` counts slides per window and posts its end with the window as the object. A slot lays out only for its own window's slide; a hidden terminal still waits for every window.
+  - `SlotView.show` removes the view it held only while it is still that slot's subview.
+- **`duo2`.** `ControlServer` calls `core.handle`, which hands the request to the primary's `handle`, as before.
+- **Proof, same captures as main.** `scripts/check-ui.sh`'s six states are pixel-identical to main `2c9a2bdb`'s (0 differing pixels each, 2880 × 1722, compared pixel by pixel).
+- **Proof, same captures and checks as main.** Main is `2c9a2bdb`, built from a scratch export; each comparison is pixel by pixel.
+  - `scripts/check-ui.sh`'s six states are pixel-identical to main's (0 differing pixels each, 2880 × 1722).
+  - `scripts/check-split.sh` passes 23/23, as main does. 17 of its 18 captures are pixel-identical to main's.
+  - The 18th, `close` (Close Split View at 1440 × 900), sometimes catches the HTML page before WebKit draws it. Three runs of each build put one blank page on main and one on the branch; the others match.
+  - DuoChecks: 5,479 passed, 0 failed, with `DUO_CHECKS=core`'s 27 checks in the full run.
+  - `check-background.sh` (merge-gate's ui-chat-background): 144 passed. The screen was locked, so its front-app half proves only that much.
+  - `check-context.sh`: 7/7.
+  - `duo2 help --markdown` is byte-identical to `docs/cli/duo2.md`.
+  - `check-scale.sh` ran under `timing-lock.sh`, the branch then main in one exclusive hold. Both had no stalls (none of 1 s, none of 250 ms) and restored their tabs. Mean CPU after 15 s: branch 11.1%, main 12.9%. Both are over the 10% budget: F-549.
+
+## F-549 · check-scale's idle CPU is over budget on main, too (2026-11-02; multi-window slice 0)
+
+While proving slice 0 (F-548), `scripts/check-scale.sh` ran on main `2c9a2bdb`'s build twice under the exclusive lock, an hour apart.
+- **Mean CPU after 15 s:** 12.7% and then 12.9%, over the 10% budget, so the check fails on main.
+- **Stalls:** none of 1 s and none of 250 ms.
+- **The slice 0 branch,** in the same hold, measured 11.1%.
+- **Earlier runs** recorded 1.4% to 4.4% (F-297: 1.4%; F-308: 4.4%).
+
+The cause isn't known. The per-second samples on both builds have several 14% to 21% seconds after the settle, which points to load on the Mac (other sessions' Claude processes run outside the lock) or a change on main since. Not investigated here. Re-run check-scale on a quiet Mac, then bisect main if it still fails.
+- **Geoff turned 4a′ down (2026-11-02): "these are all far too similar".** Measured, he's right.
+  - On 4a′ the closest pair of toolbars is 1.9 apart (OKLab ΔE ×100), and no pair is 15 apart, which is the dataviz method's line for easy to tell apart.
+  - The cause is chroma: 0.03 reads as grey (the dataviz method's floor for identity is 0.10).
+  - The chroma is that low because text2 at 4.5:1 pins a light toolbar at L 0.90 or above.
+- **Twelve colours can't all be 15 apart under any design.** A search over every in-gamut colour (`palette/proof/search.py`) finds the best twelve reach a worst pair of about 6 with orange and red excluded, and about 8 with every hue allowed. Dark mode is the tighter case.
+- **What does work: a real-colour toolbar and two depths per hue.** The toolbar takes chroma up to 0.14 in a light and a deep step, and toolbar text moves from text2 to text (≥ 5.9:1 light, ≥ 4.66:1 dark).
+  - 4a″ B keeps the no-orange rule: closest pair 5.4, 77% of pairs ≥ 15.
+  - 4a″ C lets in coral and ochre (only h 22–64, around needs-you, stays out): closest 8.3 light, 7.4 dark, about 70% of pairs ≥ 15.
+  - The needs-you chip needs a solid fill on a coloured toolbar in dark too (the dark pane), or it disappears on the coral and ochre ones.
+  - The rendered board is `palette/board-4a-double-prime.png`.
+- **Direction C, built out (Geoff, 2026-11-02: "c is good; the order should be all light, then all dark").** Board 4a′ was redrawn from the round-2 `window_palette.py`.
+  - The toolbar holds the colour. The pane, chat and tool output take a pale tint of the same hue, so text2 still passes there (5.14:1 or more), and toolbar text is `text` (4.66:1 or more).
+  - The swatch is the toolbar colour itself, so the swatch control needs its controlEdge ring to show on the toolbar.
+  - The closest toolbars are Coral and Ochre in light (8.3) and Deep green and Deep teal in dark (7.3).
+  - The order runs the six light steps, then the six deep ones, with the hues jumping across the wheel (Blue, Ochre, Purple, Green, Coral, Teal).
+
+## F-558 · Saved restore state decides the sidebars, so a default change reaches no existing install (2026-11-03; DL-315)
+
+- **`RestoreState` stores both left-sidebar flags as plain Bools,** and `applyRestore` assigns them from the file whenever one exists for that Home. Changing the `AppModel` defaults alone changes only a first launch, a new Home or a deleted restore file.
+- **Nothing saved says whether the person ever touched All projects' sidebar.** I looked at the restore file, `state.json` (`DuoState`) and the history: only `leftCollapsedAllProjects` is stored. A saved `true` means they closed it (or Not Now on Home's prompt did, `dismissHomePrompt`, which also leaves it closed under the new rule). A saved `false` is ambiguous, because the old default was open.
+- **The rule (Geoff, DL-315):** a person who has opened or closed the pane keeps it as they left it; one who never did gets it closed. So `RestoreState` has an optional `leftTouchedAllProjects`, and `AppModel.leftTouchedAllProjects` is set by any user toggle (the toolbar button, ⌃⌘S, the View menu and `duo2 view sidebar` all go through the `leftCollapsed` setter) at the All projects altitude.
+- **Old files have no flag,** so a saved `true` counts as touched and a saved `false` as untouched. **A user who deliberately opened it before this build gets it closed once** (there is no way to tell them from someone who never touched it); after they open it, it stays.
+- **What Geoff sees on his next launch:** his file has no flag, so All projects starts closed either way (closed, or open and so read as untouched); once he opens it, it stays open.
+- **The fixture states set the sidebar open for All projects** (`TargetState.allProjects`), because the approved targets draw it open.
+- **`startLive`'s `homePromptDismissed` special case is removed:** the default is closed now, so it did nothing.
+## F-552 · Multi-window slice 1 as built: two or more windows, a project in one, each with its colour (2026-11-03; DL-311 to DL-314)
+
+Built on `build/multi-window-slice1` from main `b93abb27` (merged up to `ca5946ac`), to `docs/design/multi-window-handoff/`.
+- **Windows.** `AppCore+Windows.swift` holds the window set. `core.openWindow(project:)` makes an `AppModel` with the lowest free number, gives it the next free colour while "Colour new windows automatically" is on (DL-312, DL-313's order), and asks the app for a window (`windowMaker`, `MainWindow` in `DuoApp.swift`, one per model, frame name `main` or `window-<n>`, 22 pt down and right of the key window). The core holds the windows it opened until they close; `detach` forgets a closed one and gives Home back to the primary.
+  - File › New Window ⌥⌘N; Project › Open in New Window and the same item on a tile's right-click menu; Close Window ⇧⌘W through the core (a second window closes, the last hides); Window › Window Colour above macOS's window list. The system Window menu lists the windows by title (the project, or "Duo") and ⌘\` moves between them.
+- **A project lives in one window (DL-308).** `open(project:session:document:)` returns the model that shows the project: when another window shows it, that window opens it and comes forward, and the caller stays as it was. `duo2 open --file`, `session open` and `session fork` act on the returned window. C-152 lists the other callers.
+- **Home (Q-431, DL-314 10′ A).** `core.homeOwner` (the window Show Here was last pressed in, else the primary) draws Home live; the others draw `HomeElsewhere`: "Home is showing in the ‹Blue› window" on a chip of that window's toolbar colour, or "in another window, at ‹project›", with Show Here and Go There.
+- **duo2 (DL-71, Q-430).** `window list|new|focus|close|colour|home`; `status` lists the windows when there are two or more. `core.handle` takes `--window <n|project>` out of any request; with none it acts on the window showing the caller's session, else the primary, never the key window. `docs/cli/duo2.md` regenerated. "Go There" is `window focus`; "Appearance Settings…" is `settings`.
+- **C-150, routed.** Notify skips a session on screen in any window (`core.visibleSessionIds`); a notification or Dock click opens the project's window, else the key window (`model(forProject:)`); voice dictates into the window that started it (`core.voiceWindow`; ⇧⌘D uses the key window's model); the Escape monitor for the element picker uses the event's window. Ended shells were already closed in every window by `closeShell`.
+- **Checks.** `DUO_CHECKS=windows` (51 checks, also in the full run): the registry and numbers, DL-308 from a tile, Open in New Window and `duo2 open`, the colour order and round-again, the switch off, Classic off and back, Home's owner and Show Here, `--window` and Q-430 (never the key window), every window verb, and C-150 with a session on screen only in window 2 and a notification clicked from the primary's Notifier.
+- **One window against main** (`ca5946ac`, both rebuilt, pixel by pixel, a Sonnet loop): check-ui's overview, project, flow-zoom-1, -2 and -4 are byte-identical in light and dark, and check-chat's 112 boards are too. check-split passes 23/23 on both. The differences are the swatch, which board 4b A draws in every window (empty for None): inside a project it ends the breadcrumb, so Sessions | Tasks and the needs-you chip sit 35 pt further right (every check-split capture's breadcrumb band), and flow-zoom-3's peek, anchored to that chip, opens 35 pt further right than main and its target. Classic's split capture is identical (no swatch under Classic). check-split's `wide` differs on the branch, the same on two runs: the "New task" row has its hover fill and the Tasks explainer is open, so the real pointer was over that spot of the invisible test window (the main run was earlier, with the pointer elsewhere); `widenclose` has a small block in the right pane, not inspected. Neither is slice 1's code, but they weren't rerun on main.
+- **Captures.** `scripts/check-windows.sh` (background, isolated): two windows light and dark, Classic, Home in a second window light and dark; `build/windows/compare.png` puts each next to its board (F-553 has the measured regions).
+
+## F-553 · A window colour needs an environment value and a band under the toolbar (2026-11-03; DL-313, F-542)
+
+- **No dynamic NSColor can tell windows apart**, as F-542 said. The colour travels as `\.windowColour`, set by each window's `RootView` from its model (nil under Classic). `WindowTint.pane|ground|chatGround|toolOutputFill|strip` are `ShapeStyle`s that resolve from it; AppKit takes `model.tint(_:)`. A Sonnet pass moved the surfaces to them (sidebar, tab strips, right pane, the map and action column, chat's ground, tool output) and left controls, cards, sheets, the console and documents plain.
+- **The toolbar is the system's.** With full-size content it draws its material over the root view's background, so the toolbar looked like the pale pane. A coloured window hides the toolbar's background (`toolbarBackgroundVisibility(.hidden, for: .windowToolbar)`) and draws a band of `ground` as tall as the safe area's top in the root background. A window with None keeps the system toolbar as before.
+- **A light tab strip drawn in `ground`** (chat's console strip, Home's light strip) takes the pale `pane` tint when the window has a colour (`WindowTint.strip`): board 4a′ gives strips the tint, not the toolbar's chroma.
+- **Cards were transparent.** Tiles and action cards (`Bordered`) drew only a border over the pane, so on a tint they turned the tint. `Bordered` now fills plain `pane`, only while the window has a colour, so a window with None draws exactly as before.
+- **Measured** (`scripts/pixels.py`, points): Blue window light toolbar #B2D5FA, sidebar and right pane #ECF4FD, needs-you chip #FFFFFF; dark #2266A4, #161F28, chip #181A1E; Ochre at All projects: toolbar #F8C885, map pane #FBF2E6, cards #FFFFFF; Classic: no swatch, Classic's grounds. All are `palette.json`'s values.
+
+## F-554 · `--then` is one comma-separated list, and an action is split at its first colon only (2026-11-03)
+
+`LaunchOptions` keeps only the last `--then`, so several `--then` flags silently ran one action; `FixtureHarness.perform` splits `name:rest` once, so an action with two arguments reads `rest` itself. `window-shot:[<n>:]<png>`, `window-colour:<n>:<id>` and `window-open:<n>:<project>` do. `scripts/check-windows.sh` joins its actions with commas.
+
+## F-578 · 0.2.23's launch hang isn't a code regression: 0.2.22 hangs the same way under the same trigger (2026-11-03)
+
+The repro of F-573 (claude hidden from its four places, and a `.zprofile` that waits) hangs the notarized 0.2.22 release binary exactly as it hangs 0.2.23's. The main thread sits in `DuoApp.init → ClaudeLocator.resolve → lookUp → waitUntilExit`, and nothing is logged.
+- The probe and its call in `DuoApp.init` are in every release since 0.2.0: 55ad7069, 2026-10-06; the shell probe itself dates from dfdeed87.
+- The two bundles differ only in version and code. Info.plist keys, entitlements, Hardened Runtime flags, team, Sparkle 2.10.0 and the appcast's shape are all the same.
+- No 0.2.23 change touches the probe's environment or the user's shell files.
+- The conditions only an update creates launch normally, both on main and on 0.2.23's code: a leftover instance on the same support folder, a dead instance's `endpoint.json` and socket, `state.json` and restore migrations.
+- No Claude Code changelog entry from 2.1.310 to 2.1.318 moves its install.
+
+So the trigger most likely changed on the user's Mac: their login shell stopped answering when Finder starts it, or `claude` left the four places. That is C-159. The whole review is in `docs/plan/incidents/2026-11-03-launch-hang-0-2-23.md`.
+
+## F-579 · Why no check caught it: no launch we test ever asked the login shell (2026-11-03)
+
+- **The release launch check** runs `--state overview --capture`. That is fixture mode, and `DuoApp.init` resolves `claude` only when `terminalsMode == .live`.
+- **check-ui, check-chat and check-background** use fixture states too.
+- **check-scale** passes its stand-in with `--claude`, so the chosen path wins before any lookup.
+- **Live runs here** find `claude` at `~/.local/bin` and `/opt/homebrew/bin`, before the shell, and they're started from a terminal anyway.
+- **The hang monitor** couldn't see a nested run loop (F-573), so the field gave no stacks either.
+
+Lesson: a launch that depends on the user's environment has to be tested in environments this Mac doesn't have, launched the way Finder launches (F-580).
+
+## F-580 · The release launch matrix: the signed app, launched as Finder does, in conditions this Mac doesn't have (2026-11-03)
+
+`scripts/check-launch-matrix.sh <app> [case…]`, run by `scripts/release.sh` on the signed app before notarizing.
+- **How it launches.** Each case goes through LaunchServices (`open -g -n`, launchd's environment, stdin /dev/null), isolated (its own short support folder and Claude config) and in the background.
+- **Pass rule.** A case passes when the app writes `Duo: finished launching in N s` (at `didFinishLaunching`, isolated instances only) within 20 s.
+- **Cases:**
+  - `plain`
+  - `no-claude`: `DUO_CLAUDE_CANDIDATES=` empties the four places, honoured only by an isolated instance
+  - `shell-hangs`: a `.zprofile` that waits 40 s
+  - `shell-child`: one that leaves a child on the pipe
+  - `shell-read`: one that reads the terminal
+  - `no-path`
+  - `stale-endpoint`
+  - `second`: a second instance on the same folder
+- **Not vacuous.** `shell-hangs` must also show the "login shell didn't answer" line, so the case can't pass by never asking the shell.
+- **Results.** On main all eight pass, each launch finishing in 0.1 to 0.2 s. On v0.2.23 with only the two test hooks added (the candidates variable and the finished line), the matrix fails `shell-hangs` (sampled in `DuoApp.init` at `DuoApp.swift:82` → `lookUp` → `waitUntilExit`) and `shell-child` (`lookUp` → `readDataOfLength`), and passes the other six, so the update-only cases launch on 0.2.23's code too.
+- Every instance is quit with SIGTERM; one still stuck in its shell ends when the shell does.
+
+## F-573 · The 0.2.23 launch hang reproduced: the login-shell probe, which the hang monitor couldn't see (2026-11-03)
+
+A second review of the 0.2.23 launch hang (`launch-hang-review`), with fresh eyes before 0.2.24.
+
+- **Reproduced with the 0.2.23 release binary** (the notarized DMG's, run directly, isolated: its own `DUO_SUPPORT_DIR`, a fake home through `CFFIXED_USER_HOME`, a Seatbelt profile hiding `claude` at its four usual places, and `ZDOTDIR` with a `.zprofile` that sleeps 25 s). After 8 s the process was alive, at 0% CPU, and `sample` showed the main thread in `DuoApp.init` → `ClaudeLocator.resolve` → `lookUp` → `-[NSTask waitUntilExit]` → `CFRunLoopRun`, before `NSApplicationMain`. That is a launch that never finishes: the Dock bounces for as long as the shell waits. `Duo/logs/` was never even created.
+- **Why the hang log was empty.** `waitUntilExit` doesn't block: it spins the main run loop until the task ends. The main dispatch queue is drained by that run loop, so HangMonitor's pings (`DispatchQueue.main.async { signal }`) were answered every 50 ms, and nothing counted as a stall. So F-564's main argument against this cause (the empty hangs.jsonl) is wrong. The empty log is exactly what this hang leaves. Why a terminal launch went further: there the login shell has a terminal and the user's PATH, and answers.
+- **Fixed on main by F-564**, and checked the same way: main's build, given the same shell, reaches `-[NSApplication run]`, prints the 3 s timeout line and carries on, and logs no stall. No other app code waits on a process with `waitUntilExit` on the main thread (GitIgnoreOffer's is in a detached task, and WindowCapture's runs only in scripted captures).
+- **The blind spot, closed.** HangMonitor now also watches the launch itself. Until `didFinishLaunching` calls `HangMonitor.shared.launchFinished()`, a launch still going after 10 s samples the main thread once a second, whether or not the pings are answered. It writes an ongoing `launching: not finished after N s` line with the samples, again every 10 s, and replaces it with `launching: finished after N s` if launch does end. A field launch that never finishes now leaves its stacks for `duo2 hangs --stacks`.
+- **Check:** `DUO_CHECKS=launch-hang` (`LaunchHangChecks.swift`, also in the full run). A HangMonitor on its own log, with the main thread held in a nested run loop past a 0.5 s limit, logs a launch line with samples. One told the launch finished in time logs nothing, and a slow one that finishes leaves one finished, non-ongoing line. `DuoApp` calls `launchFinished()`. No `waitUntilExit()` appears in `Sources/Duo` or `Sources/DuoKit` outside the two reviewed files. With the watchdog turned off and a `waitUntilExit` like 0.2.23's put back, it fails three of its five checks.
+- **Ruled out in the review:**
+  - The bundles. 0.2.22's and 0.2.23's DMGs have the same Info.plist keys, entitlements (audio input only), Hardened Runtime flags and team, and the same Sparkle 2.10.0 code (the binaries differ only in signature). Both pass `spctl` (Notarized Developer ID), `stapler validate` and `codesign --verify --deep --strict`.
+  - Everything new in 0.2.22 → 0.2.23 that runs before the first window: `DeckPreviewRegistration.install` (closures only; `DeckFeature.enabled` is false in a release before any file read), the split restore (`splits` and `splitRoom` are optional, so old files decode), `formatBarHidden` (`decodeIfPresent`), and `MinimumWindowSize` (a pure clamp, after `didFinishLaunching`).
+  - On main: AppCore (main-actor state, no lock), the DL-315 sidebar default, the F-531 restore lines and soft wrap. None has a wait, a deadlock or a trap on the launch path.
+  - The ClaudeLocator lock. It is held across the bounded lookup, so a first draw on the main thread can wait at most about 3.5 s. In the repro it didn't: no stall over 250 ms was logged.
+- **Why 0.2.22 worked for the user** is unknown. The probe is the same in 0.2.22. Something on their Mac likely changed with the update (a Claude Code install that moved off the four paths, or a shell profile change). The "crashes later from a terminal" half is open: C-157.
+
+## F-569 · One wide table made every Markdown line wrap at its width, so paragraphs ran off screen (2026-11-03; DL-316)
+
+Cause: `.duo-table th, .duo-table td` were `white-space: nowrap`, so a table's min-content width was its widest row. `.cm-content` is a flex item of `.cm-scroller` with the default `min-width: auto`, so it grew to that width (20,351 px for a table with a 3,000-character cell and a long cell of prose, against a 500 px pane) and `EditorView.lineWrapping` then wrapped every paragraph at that width, off the right edge. The `.duo-table { overflow-x: auto }` box doesn't help: it clips what's inside it but not the min-content its parent measures. Frontmatter wasn't a cause here (its rows already wrap at the pane's width; the properties block is `pre-wrap` mono); code blocks are `white-space: pre-wrap` and wrap too, so both stay as designed. Images are `max-width: 100%`. Reproduced in a browser page at 600 px (content 20,841 px), fixed to the pane's width. Fix: cells wrap (`white-space: normal`, `overflow-wrap: anywhere`, `min-width: 6em` so short headings like "Name" don't break letter by letter), the table and its box are `max-width: 100%`, and `.cm-content` has `min-width: 0; max-width: 100%` as a guard so no future block can widen the document. Check: `DUO_CHECKS=editorwrap` (`EditorWrapChecks.swift`) fails on the old bundle (content 20,351 of 500) and passes on the new.
+
+## F-570 · Table cells now wrap; the approved screens draw no wide table (2026-11-03; DL-316)
+
+None of the approved screens (`docs/design/*/screens/`) draw a table wider than the pane or specify cell wrapping: the editor targets (`project`, `prd-v2.md`) have no table, and the table-bar screens (markdown-toolbar handoff) draw only the bar. So the only change to a table's look is that cells with long text wrap onto several lines, text top-aligned in the row (`vertical-align: top`), and a cell is at least 6em wide. Border, padding, header ground and alignment are unchanged. A table with many columns, each at least 6em, can still be wider than the pane; it scrolls inside its own box (`overflow-x: auto`), the document doesn't. `scripts/check-ui.sh project` was compared: the difference is the same as before this change (no table in that state).
+## F-568 · A copy repair armed by an earlier copy could rewrite a later shell copy (2026-11-03)
+
+- **Race.** `programCopied` armed six timers (60 to 1500 ms) that put the clean text back if the raw text reappeared. They checked only the pasteboard, not which copy they served nor `runsClaude`. In the full DuoChecks run the "pbcopy lands after" case's 600/1000/1500 ms timers fired during the next cases, so "a shell's copy is never changed" failed whenever the run was slow (once on the slice 1 merge; twice on 4b85d2e7, whose shell waits stretch the run). Alone it passed because the timers fired after `w.close()`.
+- **Fix.** `copyGeneration` counts copies (OSC 52 and Edit ▸ Copy); each timer checks at fire time that it is still the latest copy, that the view still `runsClaude`, and that the raw text is back.
+## F-564 · Finding `claude` could hang Duo's launch for good: the login-shell probe had no limit (2026-11-03)
+
+A user's 0.2.23 bounced in the Dock forever when opened from /Applications (Geoff, 2026-11-03). The cause isn't confirmed: the user's diagnostic (`docs/director/launch-hang-diagnostic.md`) is out, and this Mac doesn't reproduce it. Every 0.2.22 → 0.2.23 upgrade tried here launches, in background and visible runs, with restored splits, a .pptx, a deck note and a real-install folder. The bundles differ only in version. The hazard found on the way is real, and older than 0.2.23.
+
+- `ClaudeLocator.lookUp` (Terminals.swift) runs `/bin/zsh -lc 'command -v claude'` when `claude` isn't at `~/.local/bin`, `~/.claude/local`, `/opt/homebrew/bin` or `/usr/local/bin` (an nvm or npm install, a managed one). `DuoApp.init` called it on the main thread before the app ran, with `waitUntilExit`, then `readDataToEndOfFile`, no timeout and stdin inherited. A `.zprofile` or `.zshrc` that waits (a prompt, a keychain, a slow version manager) hangs launch. So does one that starts a background agent without redirecting its output: the shell exits, but the child holds the pipe and `readDataToEndOfFile` never returns. A v0.2.23 copy of the code, run against both shells, was still waiting after 4 s.
+- Fixed: the probe is bounded (`ClaudeLocator.shellTimeout`, 3 s; then the shell is ended and Duo goes on as if none were found, with a line on stderr). Stdin is /dev/null, and output is read as it comes, with the pipe's end awaited at most 0.5 s after the shell exits. Launch resolves on a global queue under a lock, so a draw that asks meanwhile waits for the same lookup, at most its timeout.
+- Check: `DUO_CHECKS=launch-shell` (`LaunchShellChecks.swift`, also in the full run). A shell that never answers returns in about 1 s, a shell that answers and leaves a child holding the pipe still gives its answer, an ordinary answer is kept, and `DuoApp.init` resolves only inside `DispatchQueue.global`.
+- Against this being the user's hang: `HangMonitor.start` runs before the lookup and writes an ongoing stall after 2 s, and the user found nothing in `hangs.jsonl`. Item 6 of the diagnostic times their Finder-environment login shell, to settle it. **Settled by F-573:** the empty log is what this hang leaves. `waitUntilExit` runs a nested run loop that answers the monitor's pings, and the v0.2.23 release binary, given a login shell that waits, reproduces the endless launch here with no line logged.
+- Against this being the user's hang: `HangMonitor.start` runs before the lookup and writes an ongoing stall after 2 s, and the user found nothing in `hangs.jsonl`. Item 6 of the diagnostic times their Finder-environment login shell, to settle it.
+
+## F-583 · An isolated Duo still reads Geoff's real archive and projects; a `duo2` with no socket reaches his running Duo (2026-11-04; F-529)
+
+Found while regression-testing multi-window slice 1 ([report](../acceptance/2026-11-04-mw-slice1-regression.md)). Two separate things.
+- **Reads leak.** An instance started with its own `DUO_SUPPORT_DIR`, `CLAUDE_CONFIG_DIR` and a scratch `HOME` still answers `duo2 doctor` with Geoff's real session archive (`~/Library/Application Support/Duo/archive`, 399 sessions, 4 GB) and `duo2 search-status` with his 87 real projects. It reads them through the account's home, not `$HOME`. The same in 0.2.22, so not a regression, but an isolated run is not fully isolated for reads, and `duo2 search-rebuild` there would reach the real index.
+- **Writes leak when the socket is missing.** A `duo2` run with `DUO_SOCKET` and `DUO_TOKEN` empty reaches the running Duo (CLAUDE.md). On 2026-11-03 about 22:27 a test script did this for about 60 s (a parallel run had wiped its `endpoint.json`): settings, a comment on a fixture document, a task note and a session were changed on the real Duo. Repaired except Geoff's dismissed explanations. The incident and its command list are in the report.
+- Fix direction: the F-529 guard, plus `duo2` refusing when `DUO_SOCKET` names a path that does not exist, and an isolated instance (`DUO_ISOLATED=1`) ignoring the account's real archive and projects.
+- **It reached the fixtures too (2026-11-04, F-581's live check).**
+  - The isolated instance ran on a scratch workspace with a `refunds` project, but it resolved `refunds` to the acceptance fixture `~/DuoAcceptance/workspace/payments/refunds`, a project it read from the account. It started its Claude session there.
+  - That wrote `refunds/.duo/sessions.json` (the one test session) into the fixture, and a 50-line transcript into the real `~/.claude/projects/-Users-geoff-DuoAcceptance-workspace-payments-refunds/`.
+  - Both were moved to `/tmp/mwf/leaked/`. `refunds` matches `~/DuoAcceptance-backup-2026-11-01-decks` again (`diff -rq`).
+  - Until F-529 lands, a live test should name projects that exist nowhere else.
+
+## F-582 · `duo2 open <project> --window N` says "Opened" when the project lives in another window (2026-11-04; DL-308)
+
+Repro: windows 1 `checkout`, 2 `refunds`, 3 `onboarding`; `duo2 open refunds --window 3` prints `Opened refunds.` Window 3 stays on `onboarding` and window 2 comes forward, which is what DL-308 says should happen (a project lives in one window); only the message is wrong. Compare `duo2 window new refunds`, which says "refunds is in window 2; brought it forward." Severity: low. Evidence: `raw/mw/015-open-in-w3-refunds.out`, `016-list-after-open.out`.
+- **Fixed** on fix/mw-slice1-defects: when the project's window isn't the one asked, `duo2 open` says "refunds is in window 2; brought it forward." It still says "Opened refunds." when the window itself opens it. `DUO_CHECKS=windows` checks both.
+
+## F-581 · `duo2` with `DUO_SESSION_ID` of a session shown in window 2 acted on window 1 (2026-11-04; Q-430) — checked live: not a bug in Duo
+
+Q-430 says a `duo2` call acts on the window showing the caller's session. The regression run set `DUO_SESSION_ID` to a session in window 2 and got window 1. On a release build of `main`: three windows (`checkout`, `refunds`, `onboarding`), `duo2 session new --project refunds --window 2`, then `DUO_SESSION_ID=<that id> duo2 status --json` replied `"window": 1, "project": "checkout"`, and `go all` with the same variable moved window 1. A planted (not running) refunds id did the same. (Evidence on `test/mw-slice1-regression-clean`: `raw/mw/from-session-*.out`, `sid.txt`, `from-planted-status.out`.)
+
+- **Why.** `duo2` sends `CLAUDE_CODE_SESSION_ID ?? DUO_SESSION_ID` as the caller (`Sources/duo2/main.swift`). The run called `duo2` from its own Claude session, so its own `CLAUDE_CODE_SESSION_ID`, a session that instance didn't know, went first. An unknown session falls back to the primary, as Q-430 says.
+- **Live check** (fix/mw-slice1-defects, 2026-11-04):
+  - An isolated instance (support folder `/tmp/mwf/s`) opened `refunds` in window 2 and started a real Claude session there.
+  - In that session's prompt, Claude Code's `!` shell mode ran `duo2 status --json` and `duo2 window list` with the session's own environment, with no model turn. The command was guarded to run only while `DUO_SOCKET` was under `/tmp/mwf/`.
+  - It printed `CC=08ca2e86-… DUO=08ca2e86-… SOCK=/tmp/mwf/s/Duo/duo.sock`, then `"window" : 2`, `"view" : "project"` on refunds, and the list `1 Duo None (primary, Home)`, `2 refunds Blue (key)`.
+  - Inside a Duo session the two ids are the same, and the call lands in window 2.
+- **Kept as is.** After `/clear` or `/fork` in a Duo terminal, `CLAUDE_CODE_SESSION_ID` is the new session's id, which Duo follows, so it should keep going first.
+- `DUO_CHECKS=windows` now also checks that an unknown caller session acts on the primary.
+- To test from outside a Duo terminal, unset `CLAUDE_CODE_SESSION_ID` as well.
+
+## F-571 · Review in the formatting bar, as built: the mode menu is a drawn menu, and the bar's Fit rules come from `FormatBarLogic` (2026-11-04; DL-317)
+
+- The 44 review bar (`MarkdownReviewBar`, `MarkdownReviewSlot`) is gone; `Project/MarkdownModeMenu.swift` holds the mode menu and `MarkdownFormatBar` the Comment glyph (`plus.bubble`, ⌥⌘M → `reviewAddComment`, which takes the word at the caret with no selection) and the Editing ⌄ / Suggesting ⌄ button before the mic.
+- The mode menu is drawn in SwiftUI under its button (`model.reviewMenu` = "mode", or "markup" with Markup's four choices open), not an `NSMenu`: a capture can't show a system menu, and the board draws it with the `selected` row. Every item calls the function the old bar's did (`toggleSuggestEdits`, `reviewStep`, `reviewResolveAll`, `setMarkdownMarkup`); no duo2 verb changed. `review-menu:markup|mode` in the harness opens it for a capture (`all` is kept as `mode`).
+- `FormatBarLogic.shows(… reviewPending:)` keeps the bar while the document has marks, comments or Suggest Edits on. `controls(inTable:width:tableInMore:)` and `tableInMore(width:hasKeyboard:reviewPending:)` hold the README's Fit rules: Insert Table folds into ⋯ under 420 and, at 460, when the bar is there only for review. In a table the mode menu is the pen and ⌄.
+- The mode menu closes on Esc and on a click outside it and its button (a local event monitor while it is open, since the keyboard is in the page); the button toggles it. `FormatBarLogic.dismisses` and `AppModel.dismissReviewMenu` hold the rule, and DuoChecks reads both (Q-458 closed).
+- **A table at 420 overflowed** once Comment and the mode menu joined the bar (the screens draw 460 and 360 only): Align and Delete now fold into ⋯ under 450, not 420 (`foldsTableMenus`). A stand-in for the director to confirm.
+- **Not this branch:** `check-review-editor.sh` fails "@ menu: Tab inserts @claude" (the log lacks `field="Please @claude " menu=closed`) on main at 09dd53cf as well (57 of 58), so the margin composer's Tab, not the bar, needs a look.
+- Captures: `scripts/check-format-bar-review.sh` (Light, Dark, Classic at 460, 420, 360; clean, marks, suggest, table, listening, menu, menu-markup) and `scripts/compare-format-bar-review.py` (mine above, `review-in-bar@2x.png` below). No editor source changed, so `cm6.js` is not rebuilt and the browser-width check has nothing new to measure.
+
+## F-572 · The Style label (and any word in the bar) could be squeezed to nothing (2026-11-04; DL-317)
+
+The bar's `HStack` gave a word less than its width when the row was tight, and Style showed only its chevron in a capture. `wordLabel`'s text and the mode word are now `fixedSize()`, so a tight bar overflows its spacers first.
+Q-430 says a `duo2` call acts on the window showing the caller's session. Repro on a release build of `main`: three windows (`checkout`, `refunds`, `onboarding`), `duo2 session new --project refunds --window 2`, then with `DUO_SESSION_ID=<that session's id> duo2 status --json` the reply says `"window": 1, "project": "checkout"`, and `go all` with the same variable moved window 1 to All projects. The same happened with a planted (not running) refunds session id. The only check of this routing, `WindowChecks.swift:113`, sits under `if let s = sessionInQ, let sid = s.sessionId` and did not run in `DUO_CHECKS=windows` on 2026-11-04 (51 passed, and that line is not among them), so nothing covers it. The gap is either how the live request carries the session, or that the call came from outside a Duo terminal. Not proven either way: it needs the call made from a real session running in window 2. Severity: medium until checked, because a session in another window would drive the primary window. Evidence: `raw/mw/from-session-*.out`, `raw/mw/sid.txt`, `raw/mw/from-planted-status.out`.
+## F-584 · Idle Duo at ~60–90% CPU: the 2 s refresh was quadratic in projects × history (idle-cpu, 2026-11-04)
+
+Geoff's own Duo 0.2.22 (pid 81908, up 2 d 20 h) ran at 67–118% CPU while idle. mw1-regression saw it while measuring. `hangs.jsonl` held 427 stalls on 0.2.22 (1–4 Nov, 513 s in all; the longest 21 s).
+- **Field evidence.** `hangs.jsonl` was symbolicated against the v0.2.22 release binary (UUID D286034C-…, the same as /Applications). Most of the main-thread stall time (about 75 s of the sampled hangs) is the 2 s `refreshTimer` → `AppModel.scanTrustNotices` → `LiveChatTerminal.screenLines`/`columns` → `terminalStateSnapshot`/`visibleRowsText` → `BufferLine.translateToString`. The rest is `AppModel.apply` (`pruneDirectorRegistries`, `followSessionChanges`) and `duo2` verbs, as F-531 found. Those reads cost 0.7–2.2 ms per terminal in a release build (a DuoChecks bench, 137×50 to 175×87). They take seconds only because the process was paging: footprint 53 GB, swap 60.1 of 60.4 GB used (F-585).
+- **The CPU.** A live 10 s `sample` (Geoff's OK) had the main thread idle. About 60% of a core was `closure #5 in AppModel.refreshLive` → `LiveSnapshot.build`, run back to back, each refresh starting as the last ended. Inside it:
+  - `Sources/DuoKit/Live/LiveSnapshot.swift:190` (0.2.22 and main before this fix): `history.sorted(by: { $0.transcript.path > $1.transcript.path })` inside the per-project loop, evaluating `URL.path` in the comparator. That's all of history sorted once per project.
+  - `inside(h.cwd)` → `owner(ofPath:)` (`:123`) for every history entry, for every project; each call filtered every project and built `path + "/"`. That's O(projects² × history) per refresh.
+  - `ids.contains` and `index.sessions.first`/`history.first` were linear lookups per session.
+  - `title()` searched for each transcript again (realPath, a stat, and on a miss a listing of every bucket), although history already named it.
+- **Fix** (fix/idle-cpu): `owner(ofPath:)` answers each path once (memoized, by index); history is sorted and attributed to its project once per refresh (`historyByOwner`); sets and dictionaries replace the linear lookups; `title(known:)` takes history's transcript when it's in Claude's own folder and still exists. A purged session still takes its archived title (DL-44). Results are unchanged: same sessions, same order, same titles.
+- **Check:** `DUO_CHECKS=refresh-cost` (`RefreshCostChecks.swift`, a timing check, not in the full run): a Home of 40 projects × 150 past sessions with real transcripts in a scratch `CLAUDE_CONFIG_DIR`. Release build, one refresh: **5.2 s on main before the fix, 1.08 s after**. It fails over 2.5 s, and checks attribution (deepest project), history order and titles. What's left is linear: about five stats per session per refresh (`ThreadCache` twice, the title, the mtime). Removing those would mean caching on file-system events. Full DuoChecks: 5547 passed, 0 failed.
+- **Isolated runs** (check-scale's shape, 42 sessions, 5 min each, exclusive lock): main 6–32% CPU and 0.2.22 0.3–16%, footprints flat at 205–729 MB. The cost scales with real history, which the fixture doesn't have.
+- **Also seen:** Geoff's real `duo.log` gets DuoChecks lines ("trusted /private/tmp/checkout … (asked by duo2)", "drop on docs") several times a day. Some session runs checks without its own `DUO_SUPPORT_DIR`. The 9.4 s stall at 03:27Z was a `duo2` voice verb on Geoff's real Duo, in a project called "checkout" (`VoiceDevice.defaultInput` blocked in CoreAudio): a test reached his Duo through an unguarded `duo2`.
+
+## F-585 · 0.2.22 held 51 GB of GPU memory after 2 d 20 h; not the search model, not reproduced off screen (idle-cpu, 2026-11-04; C-161)
+
+`footprint 81908` (Geoff's OK, read-only) on Geoff's Duo 0.2.22: **53 GB footprint, of which 51 GB is IOAccelerator (graphics) in 2,333 regions** (~22 MB each). Malloc Small was 1 GB, Malloc Large 864 MB, IOSurface 20 MB, CoreAnimation 13 MB, RSS 996 MB. Swap was full (60.1 of 60.4 GB), so every thread paged; that is why F-584's millisecond terminal reads showed as 3–21 s stalls. A second reading 2 minutes later was unchanged (2,333 regions): it grows in steps, not steadily. The director restarted his Duo at ~11:55Z (pid 50156, 1.5 GB at 21 s) with his OK.
+- **Not the indexing model.** `DUO_CHECKS=embedder-gpu` (`EmbedderGPUBench.swift`, `EMBED_MODEL_DIR` = the bundle's `Resources/search`, `DUO_SEARCH_ROOT` scratch) loads `Embedder(use: .indexing)` (`.cpuAndGPU`), embeds 64 passages and releases it 15 times: IOAccelerator stays at 704 KB, 6 regions. In the app, the first index pass holds 507 MB and the idle release (C-79) frees it (3–6 MB after).
+- **Not reproduced in the background.** main, check-scale's shape (16 tabs, stand-in Claude TUIs redrawing), 10 min with the window drawn but not on screen: IOAccelerator 3–507 MB, never growing. SwiftTerm's Metal renderer is the only other in-process allocator of Metal textures and buffers (glyph atlases, the vertex buffer pool, kitty image textures), and it renders only for a window on screen (display link), so a background run can't show its growth.
+- **Next:** C-161.
+
+## F-529 · `duo2` in a test context reaches only the named instance, or refuses (2026-11-04; F-583, C-145, F-524)
+
+Tests reached Geoff's real Duo three times: F-524, C-145, and the 2026-11-03 sweep in F-583, where an empty `DUO_SOCKET`/`DUO_TOKEN` fell back to his running Duo and changed his settings. `duo2` now decides with `Isolation.resolve` (`Sources/DuoControl/Isolation.swift`).
+- **A test context** is any of these: `DUO_ISOLATED=1` (any value but empty or `0`), a `DUO_SUPPORT_DIR` other than the real Application Support, a `DUO_SOCKET` outside the real `Duo/` folder, any of the three set but blank, or only one of `DUO_SOCKET`/`DUO_TOKEN` set.
+- **In a test context** duo2 uses only the endpoint those variables name. The socket must exist, sit inside `DUO_SUPPORT_DIR`'s `Duo/` (when given), match that folder's `endpoint.json` (socket and token), and belong to a live process. Anything else exits 64 with `duo2: refused (test context, F-529): …`. Its local verbs (search, doctor, legacy, uninstall) read that instance's folders only (`confineProcess`), and a dead socket never runs the offline director verbs. Each call re-checks, so an endpoint deleted mid-run, or `director watch`'s next poll after it, refuses.
+- **Sends never cross to another Duo.** C-80's retry (an env endpoint that went stale) now stays in the env socket's own folder, and an isolated target never retries.
+- **Hooks** (`hook context`, `hook pre-edit`) treat a refusal as "no Duo": exit 0, nothing sent, Claude's tool runs.
+- **Geoff's own use is unchanged.** No variables means the default Duo. A terminal of his Duo, whose `DUO_SOCKET` is in the real folder, keeps C-80's retry and the offline verbs.
+- Checks: `DUO_CHECKS=isolation` (`IsolationChecks.swift`, also in the full run) covers every case on decoy folders, plus the real `duo2` as a subprocess. `scripts/check-isolation-live.sh` runs them against a real isolated instance. `check-sandbox.sh`'s stale-token and dead-socket cases now expect a refusal.
+
+## F-587 · An isolated Duo used the account's real `~/.claude`: `open` passes no environment (2026-11-04; F-583)
+
+F-583's fixture leak had one cause. `run-live.sh` launches with `open -g`, which hands the app launchd's environment, not the script's. A scripted launch got a temporary support folder (F-89) but no `CLAUDE_CONFIG_DIR`, so `ClaudeStorage`, `ClaudeTrust` (`~/.claude.json`, Claude's project list), the inventory and the session indexer all read the real `~/.claude`. That is how `refunds` resolved to `~/DuoAcceptance/workspace/payments/refunds`, and its session wrote a transcript into the real `~/.claude/projects`. The doctor and search-status reads in F-583 were on `duo2`'s side: it had only `DUO_SOCKET`, so it read the real support folder's archive and index.
+- Fixed: `Isolation.confineLaunch()` runs right after `SupportFolder.prepareForLaunch()`. In an isolated instance it uses the given `CLAUDE_CONFIG_DIR`, or else a stand-in, `<support>/Duo/claude-config`. It sets `DUO_ISOLATED=1`, drops a `DUO_ARCHIVE_ROOT`/`DUO_SEARCH_ROOT` that leads into the real folder, and says so on stderr (`Duo: isolated: …`). Every reader of Claude's folder already goes through `CLAUDE_CONFIG_DIR`, so this one variable confines them all, and terminals, Claude and `duo2` inherit it.
+- Search recents lived in `UserDefaults.standard`, the user's defaults domain for the main build. An isolated instance now keeps them in `<support>/Duo/search-recents.json`.
+- A canary transcript in a decoy `~/.claude` is found through that folder and not through the confined one (`DUO_CHECKS=isolation`, section 7).
+
+## F-588 · The other real-home reads, and every script isolated (2026-11-04; F-529, F-587)
+
+An audit of `Sources/` for paths built from the home folder found two more reads that ignored isolation:
+- `walk-setups.json` came from `~/DuoAcceptance` even in an isolated instance, and its steps name the real fixture workspace and repo. An isolated instance now reads `<support>/Duo/walk-setups.json`.
+- `~/.claude/keybindings.json` (Ctrl+G and Ctrl+V in chat mode) ignored `CLAUDE_CONFIG_DIR`. It now reads `ClaudeStorage.root`.
+
+Harmless and left alone: `claude` binary lookups, open-panel start folders, `~`-for-display, and home as a walk's stopping point. `DeckFeature`'s read of the `DuoDecks` default is C-162.
+
+Scripts: every script that launches Duo or drives `duo2` exports `DUO_ISOLATED=1`, and `open` launches pass it with `--env`. That covers run-live, check-ui, check-split, check-windows, check-chat-working-live, check-launch-matrix, the merge gate, release.sh and the rest. `run-live.sh` now gives each run its own `/tmp/duo-rl-*` support folder (or the one in `DUO_EXTRA_ENV`/`DUO_RUN_SUPPORT`) and prints it. `check-ui.sh` gives each state its own folder. A DuoChecks scan fails on any script that doesn't.
+
+DuoChecks wrote into the real support folder too (director, 2026-11-04). Geoff's real `logs/duo.log` had lines from it several times a day, such as "trusted /private/tmp/checkout … asked by duo2" (TrustChecks, through `DuoLog`) and "drop on docs". A plain `swift run DuoChecks` had no `DUO_SUPPORT_DIR`, so `DuoLog` and every other `SupportFolder.duo` writer used the real folder. Now the first statement in `DuoChecks/main.swift` gives the run its own `/tmp/duochk-*` folder, or keeps a given one if `Isolation.checksSupport` says it is isolated. It exits 73 if it can't make one, or if the folder in use isn't the run's own. A canary line written through `DuoLog` must land in the run's folder and never in the real `duo.log` (`DUO_CHECKS=isolation`, section 9).
+## F-586 · The GPU leak was Core ML's per-shape buffers in the loaded indexing model; indexing batches now use four fixed shapes (idle-cpu, 2026-11-04; C-161)
+
+F-585's 51 GB of IOAccelerator came from search indexing.
+- **Cause.** `Embedder.embed` (`Sources/DuoSearch/Embedder.swift`) padded each batch to its own row count and its own longest text, so nearly every batch was a new input shape (up to 32 × 512 of them). On the GPU (`.cpuAndGPU`, indexing only), Core ML keeps buffers for every shape it has run for as long as the model is loaded. The model goes only after 180 s without use (C-79, `SearchService.idleRelease`, checked at the end of a pass). On Geoff's Mac, live transcripts keep indexing busy, so it was rarely released, and the buffers piled up: 796 MB and 209 regions 76 minutes after a restart, 51 GB and 2,333 regions after 2 d 20 h.
+- **Measured** (`DUO_CHECKS=embedder-gpu`, release build, the bundle's model): 20 batches of different lengths through one loaded model used 17 MB → 1,679 MB (101 → 256 regions), still climbing. The same length 20 times stayed at 29 MB. Loading and releasing the model around each batch left 0.7 MB. Releasing frees all of it, so a restart cleared his Duo.
+- **Ruled out:** UI and terminal drawing. A visible isolated run (Geoff's OK) churned the sidebar, the right pane, tabs and All projects 163 times over 14 min with the stand-in TUIs redrawing: IOAccelerator stayed at 2.7 MB after the first pass's release. SwiftTerm's Metal renderer is off in Duo (`useMetalRenderer` defaults to false and Duo never calls `setUseMetal`), so "Metal off" is how Duo runs and `SWIFTTERM_ATLAS_MAX` doesn't apply.
+- **Fix:** indexing batches run at fixed shapes. Rows are padded to `Embedder.batchRows` (32) by repeating the first text and its vectors dropped; lengths round up to the next of `lengthBuckets` (64, 128, 256, 512). Padded positions are masked, so the vectors are the same (cosine 1.0001–1.0008 against the natural shape, fp16 rounding). Queries are unchanged (`.cpuOnly`, one text). At most four shapes ever run, so the loaded model's GPU memory has a ceiling: **324 MB** in the check, against 991 MB and climbing without it.
+- **Check:** `DUO_CHECKS=embedder-gpu` (`EmbedderGPUBench.swift`; `EMBED_MODEL_DIR` = `build/Duo.app/Contents/Resources/search`, a scratch `DUO_SEARCH_ROOT`, exclusive lock) fails over 600 MB after 20 varied batches or if a fixed shape moves a vector; `EMBED_EXPECT_GROWTH=1` adds the control (natural shapes must grow past twice the fixed). It isn't in the full run: it needs the model bundle and the GPU. Full DuoChecks: 5578 passed, 0 failed.
+- **In the field:** hourly read-only `footprint` readings of Geoff's Duo (pid 50156, Geoff's OK) are in `build/c161/geoff-duo-50156.log`; on 0.2.24 they should keep climbing until he runs a build with this fix.
+
+## F-589 · The F-586 fix does not stop the GPU growth: Core ML leaks per call, not per shape (release test 0.2.25, 2026-11-04; C-161, C-163)
+
+The release test of the 0.2.25 candidate (47ef3a5d) found the leak still there. Raw outputs stay on the test machine; the numbers are in [the report](../acceptance/2026-11-04-release-0-2-25-test.md).
+- **In the app** (isolated, release build, 25 sessions, each rewritten once per ~200 s so the 180 s quiet period (`SearchService.quietPeriod`) keeps indexing busy and the model loaded; every pass logs "model loaded"): IOAccelerator (graphics) of the test pid read 64 MB at start, 632 MB at 5 min, 1.2 GB at 20, 2.1 GB at 35, 3.5 GB at 55 min (311 regions), with no plateau. The same run on 0.2.24: 30 MB for 4 min, then 668 MB at 19 min. At 19 min the candidate was at about 1.2 GB, so it grew no slower.
+- **Without the app** (`DUO_CHECKS=embedder-gpu`, `EMBED_BATCHES=300`, new in this pass): the fixed-shape path grows about 16 MB per call, linearly, to 4.8 GB after 300 calls (natural shapes: 14 GB). The shipped check passes only because 20 calls end at 324–348 MB, below its 600 MB line; it can't tell a ceiling from the start of a line.
+- **So** the cause is per call (each `model.prediction` keeps GPU buffers while the model is loaded), not per input shape, or not only. Fixing the shape count removed the variety, not the growth. Padding every call to 32 rows may make each call keep more.
+- **Check changed:** `EmbedderGPUBench.swift` takes `EMBED_BATCHES=<n>` (default 20) and prints the footprint every 25 calls for the fixed run, so a fix has to show a flat line over 300 calls, not a number under 600 MB after 20.
+
+## F-590 · 0.2.24's local `duo2` verbs and a bare launch read Geoff's real folders; the baseline is the only unisolated app in a comparison (release test 0.2.25, 2026-11-04; F-529, F-583, F-587)
+
+Comparing 0.2.24 against the candidate on an isolated fixture, the 124-verb sweep differs on `hangs`, `doctor`, `search` and `search-status` for one reason: 0.2.24's `duo2` runs those verbs against the real support folder (14,264 lines of Geoff's `hangs.jsonl`, his 405-session archive, his search index with 90 projects), while the candidate's guard (F-529) confines them to the instance's own folders ("16 sessions, 18 KB", 7 projects). Reads only. Two things follow:
+- A baseline run of an app older than F-529 can't be isolated by variables alone: `duo2 doctor`, `hangs` and `search` go to the real folder. A regression sweep reads that for old and new alike; compare them knowing that.
+- This test's own first step ran `Duo.app/Contents/MacOS/Duo --version` on the extracted 0.2.24, which starts the app; it exited with no instance left, but a bare start uses the real support folder. The sweep agent also saw writes to the real `search/index.sqlite`, `hangs.jsonl`, `archive/manifest.json` and a restore file at 09:41–09:42; Geoff's own Duo (pid 50156) was running and writes those files itself, so these can't be attributed. Never start an old app without `DUO_SUPPORT_DIR` and `DUO_ISOLATED`; read its version from `Info.plist`.
+
+## F-591 · The hidden-sidebar pane collapse and the open/other session flip on relaunch are in 0.2.24 too (release test 0.2.25, 2026-11-04)
+
+`restore.sh` showed, candidate against 0.2.24 and each against itself (five runs): after `view sidebar hide`, the saved split is [~250, ~720, 459]; every relaunch restores it as [0, 979, 459], on 0.2.24 as well, so it is the hidden sidebar's collapsed width and not a regression. The sessions the sections list as "open" (home chat, checkout terminal) go 2 → 0/1/2 → 0/1/2 across relaunches in an unpredictable way on both builds (stand-in claude, so the terminal may have ended by then). Saved documents, projects, the active session, tasks and the view restore identically.
+
+## F-592 · A background launch never loads the editor, so the document flows can't be tested without a window (release test 0.2.25, 2026-11-04; C-160, Q-461)
+
+`user-type:`, `disk-write:` and `resolve:` run only in a launch that captures (`--capture-window --then`); there, with the window not on screen, the document tab opens but the editor text is empty (`bar-text text=""`), so the typing isn't found, nothing is on disk to conflict with, and the conflict bar never appears. `duo2 doc status` also answers "not open in Duo" for a document the window shows. Same on 0.2.24. The chat/terminal flow (`duo2 session chat`) works in the background on both and gives identical output. A visible run (`DUO_TEST_FOREGROUND=1`, Geoff's OK) changed nothing: the front app was `loginwindow`, the screen is locked, so no window is on screen and the editor still didn't load. C-160's two document flows need an unlocked Mac, or Q-461.
+
+## F-593 · A loaded indexing model grows with every prediction; the model now goes after each pass and every 32 uses (idle-cpu, 2026-11-04; C-161, F-586)
+
+test-0-2-25's 60-minute soak of the F-586 candidate (main 47ef3a5d; 25 sessions, each rewritten every ~200 s) still climbed: 632 MB at 5 min to 3,491 MB at 55 min. The 0.2.24 control was at 668 MB at 19 min. Its log said "model loaded" on every pass: the model stayed loaded, it wasn't reloading.
+- **Per call, not per shape.** With one model kept loaded, GPU memory grows with every prediction: about 8.5 MB a call in an app-faithful soak (a detached task; passes of 25 files of 1–3 chunks; `await` between files; 2 s between passes). It went 3 MB → 32 GB in 8 min. test-0-2-25's 300-batch bench measured ~16 MB a call at fixed shapes (4.8 GB) and 14 GB at natural shapes. Not the cause:
+  - an autoreleasepool around each prediction (3 → 11 GB in 3 min with it);
+  - running every prediction on one serial queue (the same 11 GB);
+  - reloading: every release returns to 0.7 MB, and three load/unload cycles leave nothing.
+  F-586's earlier 20-batch runs were too short to show it.
+- **F-586 made each call bigger.** Padding every call to 32 rows ran even one- or two-chunk calls at the largest shape. That's why the candidate was above 0.2.24 at 19 min.
+- **Fix:**
+  - rows round up to 1/2/4/8/16/32 (`Embedder.rowBuckets`), lengths to 64/128/256/512: 24 shapes at most, and small calls stay small;
+  - `EmbedderSource.maxUses`: the model goes and loads afresh after `SearchService.maxModelUses` (32) uses;
+  - `SearchService.pass` releases it at the end of every pass that embedded anything, instead of only after 180 s quiet (C-79), which busy indexing never reached.
+  Growth is then bounded by 32 calls. A load costs **347 ms** (154 loads in the 8 min soak, which ran a pass every ~3 s). In the app a pass starts at most every minute when nothing changed, so that's under 1% of indexing time when busy, and about 0.35 s per minute while files keep changing. Queries don't change: they use the CPU-only `QueryEmbedder`, never reloaded by indexing, so a search mid-pass doesn't wait for a load.
+- **Soak with the app's policy:** 3–29 MB for 8 minutes, against 32 GB with the model kept loaded.
+- **Check:** `DUO_CHECKS=embedder-gpu` now has the app-faithful soak (`EMBED_SOAK_MIN`, default 6). It fails unless GPU memory plateaus under 600 MB (second half no more than 50 MB above the first). `EMBED_EXPECT_GROWTH=1` adds the kept-loaded control, and `EMBED_BATCHES=300` runs test-0-2-25's batch bench through the app's source. Results: the soak 3–29 MB over 8 min (155 loads, 348 ms each) against 32 GB kept loaded; the 300-batch bench 90–708 MB with no trend (peaks are 32 uses of 32 × 512 batches) against 14 GB held. Full DuoChecks 5636 passed, 0 failed (isolation's 4 subprocess cases need a fresh `.build/debug/duo2`).
+
+## F-594 · Core ML's growth comes from shape switching; indexing runs a model per fixed shape with a 512 MB growth budget, and loads once per bulk pass (idle-cpu, 2026-11-04; C-161, F-593)
+
+F-593's fix bounded the leak but made bulk passes slow. `maxUses = 32` counted `get()` calls, including the tokenizer lookups, so a 6,150-session pass reloaded the model hundreds of times: 148 s instead of 93, idle CPU 119.6% instead of 0.2.24's 101.3% (test-0-2-25).
+- **The cause, measured** (`DUO_CHECKS=embedder-gpu`, one model held):
+  - the same input repeated 150 times never grows, at any shape;
+  - reusing the input arrays changes nothing;
+  - two shapes alternating with identical content grew 6 → 503 MB over 300 calls;
+  - one shape (32 × 512) with varied content stayed at 200 MB through 300 calls.
+  So a loaded Core ML model on the GPU keeps memory each time its input shape changes between predictions. F-586's four length buckets, and test-0-2-25's 300-batch bench, switched on almost every call.
+- **One shape for everything is too slow.** A 32 × 512 call takes 81 ms, against 3.2 ms at 1 × 64, 4.5 at 2 × 128 and 10.6 at 8 × 256.
+- **Fix:**
+  - `Embedder.shapes` = 2 × 128, 2 × 512, 8 × 512, 32 × 512; each batch takes the cheapest that fits, on a model of its own (loaded on first use, at most four), so no model ever switches shape;
+  - the models share one GPU, so some growth remains (about 17× less than the control). `EmbedderSource.memoryBudget` (`SearchService.modelMemoryBudget`, 512 MB) lets the embedder go once the process footprint (`task_info` phys_footprint, read on the indexing task) has grown that much since it loaded;
+  - F-593's per-pass release and `maxUses` are gone; the idle release (C-79, 180 s) is back.
+- **Results:**
+  - an app-faithful soak at a pass every ~3 s (far busier than the app): 4–468 MB over 8 min with 7 loads (382 ms each), against 11 GB in 5 min for one model switching shapes;
+  - a bulk pass of 3,000 small varied calls: 1 load, 350 MB peak, 30 s;
+  - the 300-batch bench: 303 MB, against 14 GB held;
+  - vectors unchanged (cosine 1.000);
+  - 8 concurrent embeds on one embedder give exactly the serial vectors (the embedder's lock covers each batch, and the shape models are made under it).
+- **6,150-session fixture** (test-0-2-25's generator; isolated, background, 600 s each, one exclusive hold):
+
+  | | first pass (6,423 chunks embedded) | later passes | mean CPU after 60 s | footprint |
+  |---|---|---|---|---|
+  | 0.2.24 | 145 s | 91.2–91.5 s | 109.7% | ~490–540 MB |
+  | this build | 149 s | 91.9 s | 105.4% | ~640–700 MB (the four shape models) |
+
+  Both builds spend those passes re-checking 5,110 unchanged files: that's the remaining idle CPU (the incremental-refresh follow-up), not search.
+- **Check:** `DUO_CHECKS=embedder-gpu` (`EMBED_MODEL_DIR` = the bundle's `Resources/search`, exclusive lock) fails if the soak through the app's source goes over 800 MB or loads more than once a minute, if the bulk pass loads more than once or goes over 600 MB, if the batch bench goes over 800 MB, if a vector moves, or if concurrent embeds differ. `EMBED_EXPECT_GROWTH=1` adds the control, and `EMBED_TINY`, `EMBED_ALT` and `EMBED_SPEED` are the measurements above.
+## F-595 · The refresh reads each transcript's size and date from one listing, and takes its title from the transcript history names: 2.0 s → 0.21 s at 6,000 sessions (idle-cpu, 2026-11-04; F-584)
+
+After F-584, a refresh of 40 projects × 150 sessions read through the real `ClaudeStorage.history()` still took 2,010 ms on main. Nearly all of it was per-session file calls, every 2 s:
+- `ThreadCache.head`/`declaredParents` stat each transcript twice;
+- `SessionTitles.title` stats it again;
+- `makeSession` reads its mtime again;
+- `title()` searched for the transcript by path, which on a miss lists every bucket. F-584's `known` transcript was skipped whenever the config folder's spelling differed (/var vs /private/var), so that fallback ran for many sessions.
+
+**Fix:**
+- `history()` already lists each bucket in bulk; it now asks that listing for the size as well and keeps both as `ClaudeStorage.Stamp`s for the refresh;
+- `stamp(_:)`/`stampOrStat(_:)` answer the title, thread-head and mtime readers, falling back to a stat for anything the listing didn't include (Duo's archive copies, other folders);
+- `known` is "stamped by this refresh's listing", not a path-prefix test.
+
+**Check:** `DUO_CHECKS=refresh-cost` now goes through the real listing of its own `CLAUDE_CONFIG_DIR`, with realistic transcript heads: **2,010 ms → 210 ms**; attribution, order and titles unchanged.
+
+## F-596 · "sql: disk I/O error" at 246k transcripts: cause not found; `vacuumContent` was ruled out; SQLite errors now carry the extended code (idle-cpu, 2026-11-04)
+
+test-0-2-25 saw `search: sql: disk I/O error` once, in the app's own indexing pass (not `duo2`), on a 246,000-transcript fixture launched from a Claude Code Bash tool (possibly under Seatbelt). The message came from `SQLiteDB.exec`, which has no "in <sql>" suffix.
+- **Suspected, then ruled out:** `vacuumContent`'s `DELETE … WHERE id NOT IN (SELECT DISTINCT content FROM chunks)` spilling a temp b-tree. `DUO_CHECKS=vacuum` (`VacuumChecks.swift`) builds an index of 246,000 (and, with `VACUUM_ROWS`, 1,500,000) content rows and chunks, orphans a tenth, and runs each query with no room for a large temp structure (temp in memory, a 256 KB cache, a 6 MB hard heap limit). The old query's plan is `LIST SUBQUERY … CREATE BLOOM FILTER`, and it completes: 56 ms at 246k, 358 ms at 1.5M. So it isn't shown to be the cause. test-0-2-25's 100-minute run never reached it either: the vacuum only runs after a pass that removed chunks.
+- **Kept:**
+  - `vacuumContent` now uses `NOT EXISTS (SELECT 1 FROM chunks WHERE chunks.content = content.id)`: a probe through `chunks_content`, no temp structure, same result and speed (55 ms / 350 ms); the check asserts its plan and that exactly the orphans go;
+  - `PRAGMA temp_store=MEMORY` on the writer;
+  - every SQLite error now ends with ` (code <extended>, errno <n>)` (IOERR_READ 266, SHORT_READ 522, IOERR_ACCESS 3338 …), so a recurrence names its cause. Until it recurs there's no reproduction.
+
+## F-597 · Keep-alive rewrote every listed transcript older than 15 days every minute, so the archive re-copied and search re-indexed them nonstop; it now moves each about once every two days (idle-cpu, 2026-11-04; DL-47)
+
+On the 6,150-session fixture, idle CPU stayed around a core on every build (0.2.24 109.7%). Every round the log read "archive: copied 5110 of 6150 listed transcripts", and back-to-back search passes read "5110 files changed, 0 embedded" (~92 s each).
+- **Cause:** `SessionArchive.keepAlive` (DL-47) set any listed transcript older than half the cleanup period (15 days by default) to exactly "now − 15 days". A minute later the boundary had moved a minute, so the same files were older than it again and were rewritten again: every listed session over 15 days old had its date rewritten every minute, forever. Each rewrite changed size-and-date in the archive manifest (a copy) and in the search index (a re-read and re-store, with embeddings reused). The 5,110 were the fixture's back-dated sessions. Geoff's Duo (0.2.24) sat at ~96% idle CPU with real history, which fits the same loop, and it rewrote his real transcripts' dates in `~/.claude` all day.
+- **Fix:** only items older than half the period **plus a margin** move: `min(2 days, half / 4)`, so 2 days at 30 and 21 h at 7. They are still set to exactly half the period ago (DL-47's rule unchanged), so each moves about once per margin.
+- **Checks** (main.swift, archive):
+  - a second run a minute later, or a day later, moves nothing; three days later it moves again;
+  - hourly for 40 days, a listed session never gets older than half the period + margin: 408 h at 30 days against cleanup at 720 h, 105 of 168 h at 7 days, 60 of 96 h at 4 days. It moves 12, 39 and 70 times, not once an hour.
+  - Full DuoChecks 5644 passed, 0 failed.
+- **To measure** (waits for the lock): the 6,150-session idle CPU and pass times against 0.2.24, and that after the first round the archive copies 0 and search passes report 0 changed files.
+
+## F-598 · Idle CPU at 6,150 sessions after F-597: 100% → 33%; three more per-refresh costs gone, the 2 s rebuild itself is what's left (idle-cpu, 2026-11-05)
+
+After F-597, the isolated 6,150-session app (test-0-2-25's generator) searched nothing (passes of 0 changed files, 84–566 ms) but still averaged ~50% CPU. A 20 s `sample` of the idle app showed:
+- **`SessionArchive.purged()` on every refresh:** it decoded the 6,150-entry archive manifest and looked up each transcript by path (a resolve and a stat, and on a miss a listing of every bucket). It now asks the refresh's listing (`ClaudeStorage.listed(sessionId:)`, `hasListing`, tied to the Claude folder it listed, so a changed `CLAUDE_CONFIG_DIR` doesn't answer for another). The manifest decode is cached by the file's size and date. `archiveListedSessions` takes its transcripts from the listing too.
+- **`Env.value`'s default argument** was `ProcessInfo.processInfo.environment`, a copy of the whole environment into a dictionary on every call, and `ClaudeStorage.root` calls it thousands of times a refresh. With no dictionary given it now reads the one variable with `getenv` (which sees `setenv` the same way); all 19 callers use that.
+- **The session list** looked up each row's session with `fixture.sessions.first { $0.tabKey == key }` (`AppModel.sessionKind`: 6,150² comparisons a refresh, on the main thread) and each row's task by scanning every task and group (`SessionList.task(of:in:)`). Now there's `AppCore.session(tabKey:)`, an index rebuilt after `fixture` changes and checked on every use, and one task/group index per `SessionList.build`. Same first-match answers.
+
+**Results:**
+- one `LiveSnapshot.build` of the real fixture: 226 ms (`REFRESH_ROOT=<ws> DUO_CHECKS=refresh-cost`);
+- the idle app averages **33%** CPU over 60 s (`ps -o time` delta): bursts of ~85% for about 5 s, then 2–6%;
+- full DuoChecks 5644 passed, 0 failed.
+
+**What's left** (sample, idle):
+- the 2 s refresh closure (~21% of a core), mostly `LiveSnapshot.build` rebuilding 6,150 sessions every 2 s, which is about 11% by itself;
+- applying the snapshot on the main thread;
+- keep-alive's once-a-minute stat of every listed transcript (~1%);
+- `TerminalMicView`'s 20 Hz poll (~1–3%, F-531).
+
+Under 10% at this size needs the refresh to skip rebuilding when nothing changed (or back off when idle): Q-462.
+
+## F-599 · The idle refresh backs off (DL-318), and the 20 Hz mic tick and the remaining scans stop re-reading what hasn't changed: idle CPU at 6,150 sessions 33% → 8.7% (idle-cpu, 2026-11-05; Q-462)
+
+Geoff chose to back off when idle (DL-318).
+
+**Built:**
+- **`RefreshPacer`** (`Model/RefreshPacer.swift`): after `quietRuns` (3) refreshes in a row whose snapshot is the same apart from the clock (`sameApartFromClock`), the 2 s tick refreshes only every `idle` (8) s.
+- **`AppCore.poke`** brings it back to 2 s with an immediate refresh, on:
+  - a change under Claude's `sessions` (beacons) and `projects` (transcripts), Duo's hook `events`, or Home and the extra projects. One `FolderWatch` (FSEvents) watches folders that exist (Claude's root, Duo's support folder, Home) and keeps only events under those, so Duo's own writes to its logs and search index don't count. A stream started on a missing folder never reports it appearing, which a first check caught;
+  - any key, click or scroll in Duo (a local event monitor);
+  - Duo becoming active.
+  Duo's own actions still call `refreshLive()` directly, unpaced. The "N minutes ago" texts of a large Home change about once a minute, so it runs three 2 s refreshes a minute, then backs off again. `live:` stderr lines log each back-off and each poke (with the path, for a file).
+- **`TerminalMicView.tick`** (20 Hz per visible Claude terminal) skips its screen read while the output count, size, layout, input generation (bumped by the input monitor, so scrolling counts), voice state and notice are unchanged and no dictation runs. It used to build a whole state snapshot plus every row's text 20 times a second. The skip key is cleared only when the view can't be read, not when no input box is on screen; clearing it there made every tick a full read on a screen without a box.
+- **`scanTrustNotices`** reads only terminals with new output or a new size since the last scan, plus any with a bar up (that bar goes when the folder is trusted elsewhere). `LiveChatTerminal` takes its size from `terminalDimensions`, not a full snapshot (F-531's area).
+- **Search** chunks with a tokenizer loaded by itself (`EmbedderSource.tokenizerLoad`), so re-reading one changed transcript with nothing new to embed no longer loads the Core ML model.
+- **Keep-alive** runs every 30 min (its margin is 2 days, F-597); the archive sync takes sizes and dates from the refresh's listing.
+- **`LiveSnapshot.build`**: task notes and index groups find their sessions through maps (`nameInProject`, `nameByID`), and threads group sessions by project once (lines 232, 321, 329 by `atos` against the bundle).
+
+**Checks:** `DUO_CHECKS=backoff` (also in the core checks):
+- the pacer's due times, back-off and poke;
+- 20 s of quiet ticks makes 4 refreshes, not 10;
+- an immediate refresh and a return to 2 s on a file poke, a real key event and activation;
+- while backed off, a beacon written into the watched Claude folder brings the needs-you snapshot and its notification pass in under 0.1 s, through the watcher's poke.
+
+Full DuoChecks 5659 passed, 0 failed.
+
+**Measured** (6,150-session fixture, isolated, background, average over 300 s from the `ps` cputime delta, exclusive ≤ 10 min):
+
+| | idle CPU |
+|---|---|
+| before (F-598) | 33% |
+| back-off only | 17.5% |
+| + tokenizer, keep-alive, sync | 14.9% |
+| + mic tick, build scans | **8.7%** |
+
+The 60 s windows used earlier swing by 5–10 points with the once-a-minute passes. What's left is mostly SwiftUI's `SessionOrganizeMenu.body` for the visible rows and the refresh itself.
+
+## F-600 · Views looked sessions up by scanning every session; the core's index had a stale-answer bug the new checks caught; deterministic perf regression checks (idle-cpu, 2026-11-05)
+
+After F-599, SwiftUI's `SessionOrganizeMenu.body` was the largest idle cost (482 samples in 20 s at 6,150 sessions). Its body ran `model.fixture.sessions.first(where: { $0.tabKey == sessionKey })` for every visible row on every render. 34 more places in DuoKit did the same scan, including the console tab strip and titles, the idle list, the pane title, forks, park, send and the control verbs.
+- **Fix:** `AppModel.session(tabKey:)` answers from `AppCore`'s index; the exact single-condition scans now call it. Scans with extra conditions (`|| $0.sessionId == key`) and scans over local arrays are unchanged.
+- **Measured** (6,150-session fixture, average over 300 s): idle **8.7% → 6.9%**, and `SessionOrganizeMenu.body` is gone from the profile.
+- **The index was wrong after a fixture change.** F-598 dropped it in a `didSet` on `AppCore.fixture`. On an `@Observable` property that `didSet` never runs, so after a change, a key that wasn't in the last map answered nil. Now the index checks itself on every use: rebuilt when the count changed or a slot no longer holds its key, and a miss falls back to the old scan (rebuilding if that finds the key). The one case left is an in-place edit, at the same count, that gives an earlier session a later one's key; tab keys come from unique session ids.
+- **`DUO_CHECKS=perf`** (`PerfRegressionChecks.swift`, in the full run): deterministic checks with no timings. `Work` (`Debug/Work.swift`) counts the expensive operations: `bucketScan`, `statFallback`, `manifestDecode`, `micScreenRead`. `PerfProbe.micReads` drives a real `TerminalMicView` over a real Claude terminal without a window. The checks cover:
+  - `Env.value`'s getenv semantics (set, empty, unset; the dictionary form);
+  - the listing: ids to transcripts, stamps equal to the file's size and date, ignored after `CLAUDE_CONFIG_DIR` changes;
+  - one snapshot build: 0 bucket scans and 0 stats behind the listing; attribution, titles and a task note's sessions as before;
+  - the archive: no re-copy of unchanged files, a re-copy of a changed one, 0 stats; `purged()` exactly the session the listing lost, with 0 path lookups; the manifest decoded once;
+  - `session(tabKey:)`: the same as `first { tabKey }` for every fixture session; right after a removal, a replacement and an in-place edit;
+  - each session-list row's task equal to `task(of:in:)`;
+  - search's tokenizer without loading the Core ML model;
+  - a lint: no single-condition `fixture.sessions.first { $0.tabKey == … }` left in DuoKit;
+  - the mic tick: one screen read per change (50 idle ticks → 1; new output → 1; input → 1), with and without Claude's input box;
+  - `FolderWatch`: events outside its folders don't count, inside they do.
+
+  **Mutation-tested:** ignoring the stamps, disabling the manifest cache, trusting a stale index, and clearing the mic's key on hide each make the matching checks fail (160 stats; 3 decodes; the two changed-fixture checks; 50 reads).
+- Full DuoChecks 5695 passed, 0 failed.
+- **Still open:** F-596's "disk I/O error" isn't reproduced. A blanket sandbox denial doesn't fit one failure in a long run. A transient condition (a full disk, or a file swapped underneath) does; the extended codes will say which.
+
+## F-601 · Video captures drew every mic struck through: this Mac has no microphone, and only the voice states pinned one (intro v12, 2026-11-05)
+
+Recapturing the intro's states on 0.2.27's main for v12 showed the chat composer's mic, and the formatting bar's, in the no-microphone look (DL-265's faint, struck-through mic) in every state outside the 0.2.22 film's `video-vv-*`. The Mac mini the captures run on has no microphone, and `VoiceInput.hasMicrophone` asks the real device unless a state sets it. The voice states set a fixed one (`FixedMicrophone`); the rest didn't, so v11's S5 to S7 would have shown a mic that looks broken. `VideoTargets.apply` now gives every video state a connected, fixed microphone first (`video-vv-nomic` still sets its own), so a capture never depends on the Mac it runs on.
+
+## F-602 · A scripted capture finds its window by the title "Duo": a fixture state that sets `windowNumber` above 1 hangs (intro v12, 2026-11-05)
+
+The intro's S14 windows (`video-mw-*`) first set `model.windowNumber = 2` (and 3) as well as the window's colour. Every launch then drew its window and never captured or quit: `FixtureHarness.window(1)` falls back to the window titled "Duo", and a window numbered 2 or more is titled by its project (DL-311), so the capture never found it, and `capture.mjs` left the instance running. A window's number shows nowhere in a capture, so the states now set only `windowColourID`. Any future state that needs a second window's number has to run as window 2 (`window-run:` in a two-window launch), not relabel window 1.
+
+## F-603 · Shared accessibility identifiers sent v11's S3 camera onto a button: the film's anchors now resolve to the container (intro v12, 2026-11-05)
+
+On today's app, All projects' list (`video.s3.list`) hands its identifier to everything inside it, as SwiftUI does with a container's identifier (`Anchors.swift` already notes it). The planner took the first element with the identifier, which is now the Board button (71 × 10 pt) rather than the list (1120 × 477), so S3's push-in zoomed onto the button. The anchor check reported it as "moved with the app", not stale, because the identifier still existed. `plan.mjs`'s `anchorRect` now takes the largest element among those sharing an identifier, the container that encloses the rest. A "moved" line in the build log whose size changes by an order of magnitude is worth a look, not only a STALE one. The same recapture found All projects' Board switch renamed (`video.allprojects.board` is gone; its label "Show Board" is the anchor now).
+
+## F-604 · An outside bug report sat unseen for a day: problem discovery stored its findings, and nothing delivered them (2026-11-07)
+
+Issue #18 (in chat mode, a `.md` path looks like a link but won't open, and its paragraph grows and overlaps) was filed on Friday at 17:20 EST. Problem discovery's Friday run had finished three hours earlier, and its next run was Monday. Nothing watched GitHub in between: the director's scheduled check only asked whether a run was stuck, not what it found. That run's own finding (reply to and close #16 and #17) sat on the console's `needs/discovery` card and never reached Geoff either. When the director did find #18, it gave it as a bare number. The agent did its job; the workflow ended at a page Geoff would have had to go and check. Fixed in the workflow, not the case:
+- `docs/director/issue-watch.py` lists issues and comments that are new since the last delivery, with a machine-local stamp. `--ack` marks them delivered.
+- The director runs it at the start of every wake and check. A session check every two hours (08:00–22:00, every day) tells Geoff in chat, with a push notification when he's away.
+- _PROJECT.md's Director rules, problem-discovery.md ("delivering what a run found") and the director's memory now say a page or card stores a finding, and only a message to Geoff delivers it, in plain words, with its link, never a bare id.
+
+## F-605 · Scheduled runs start in Default mode, so problem discovery stalled at its first command (2026-11-07)
+
+A Claude desktop scheduled task's run starts in the permission mode the settings give it, and no settings tier on this Mac sets `permissions.defaultMode`, so every problem-discovery and tidy run started in Default and waited on its first command for an approval nobody saw. The director had worked around it run by run since 2026-11-05 (switch that run to Auto, stop it, tell it to start over) instead of fixing where runs start, and the 2026-11-07 run sat for ten minutes before it was noticed. Geoff: "WHAT PART OF BACKGROUND AGENT DONT YOU UNDERSTAND". The fix is a setting: `"permissions": {"defaultMode": "auto"}`. Auto mode refused the director's shell write of a project `.claude/settings.local.json` as self-modification; with Geoff's explicit yes the same night ("broaden the scope beyond this project; I'm sick of agents not being in auto mode") it went into the user tier, `~/.claude/settings.json`, so every Claude Code session on this Mac starts in Auto unless a project or the session's picker says otherwise (the settings tool reports `default_permission_mode: auto`). Machine-local; nothing on the work Mac changes. The same night, the discovery task was changed to run every day and to report its findings to the director by message and in its last message, and it notifies the director when it finishes.
+
+## F-606 · Geoff's Duo sat on 0.2.22 for three days at 165% CPU, unreachable by duo2 (2026-11-07)
+
+Geoff's own Duo had been running since 2026-11-04 07:12 on 0.2.22, four releases behind; its last update check was that day. It used about 165% CPU, and `duo2` couldn't reach it: `endpoint.json` named a second Duo (started 09:35 that day, since gone), whose control socket had replaced this one's. A 5-second `sample` put the work in file-system scans (`getattrlistbulk`, `open`, `getattrlist`) and string handling. The director skill it installed was therefore revision 3, not revision 4. With Geoff's yes the director quit it (SIGTERM, out in 2 s) and installed the signed, notarized 0.2.26 DMG (SHA-256 checked); after relaunch it used about 3% CPU, `duo2` reached it, its three sessions came back and the skill was revision 4. Open: why a second instance could take the control socket from a running one, and why Sparkle didn't offer 0.2.23–0.2.26 in three days. The sample is machine-local; the scans may already be fixed by 0.2.26's idle-CPU work.
+
+## F-613 · Cleaning the Mac mini's disk: build output in idle work trees was 94 GB (2026-11-08)
+
+The data volume was at 98% (25 GiB free) on 2026-11-07. A scan by director-game-studio-arcade put duo-v2 at 185 GB, with 175 GB in 114 work trees. Another session had already cleared the caches (Batch 1), so this run started at 660 GiB used, 215 GiB free (`df -h /System/Volumes/Data`).
+
+- **Build output (Batch 2):** `.build`, `build`, `node_modules` and `.venv` removed from 100 idle trees, 94.5 GB by `du`. Used space fell to 582 GiB, so **about 78 GiB came back** (clones and shared blocks make `du` overstate it). Left alone: the 11 live trees the report named, `landing-dev`, `director-*` and `work-in-flight-review-282901`, and `duo-decks` and `split-view`, where a process has the tree as its cwd.
+- **Stale trees (Batch 3):** 22 of 99 trees passed every test (clean, every commit on a remote, nothing running, no nested tree, no open task note naming the tree or its branch) and were removed with `git worktree remove`: check-ui-abs, claude-edit-green, director-check2, duo2-guard, embedder-pool, md-review-convert, multi-window-round3, mw-fix, mw-slice1-standins, mw1-regress, release-0-2-23 to -26, return-chords, source-links, task-board, tb-main-check, test-0-2-27, update-dialog-notes, update-notes-links, window-palette-12. About 7.4 GB; used space ended at 575 GiB, 301 GiB free (66%). No branch was deleted.
+- **Skipped on purpose:** 25 otherwise-clean trees named by an open task note (mostly `_record-reservations.md`, which has no status, and in-progress notes); 35 with uncommitted changes; 15 with unpushed commits; the two nested pairs (`release-0-2-21` with `release-0-2-22`, `test-0-2-25` with `test-0-2-25b`), which the director should look at.
+
+## F-614 · Three ways a liveness check lied during the cleanup (2026-11-08)
+
+- **`ps | grep -F <path>` matches itself.** The `grep` in these sessions is `ugrep`, which carries the pattern on its own command line, so every tree looked in use and `grep -v 'grep -F'` didn't remove it. Take one `ps` snapshot into a variable and test the path with the shell's string match (`[[ $PS == *"$t"* ]]`).
+- **A shell that `cd`s into a tree is using it.** `lsof -d cwd` listed the tree for the checking shell itself, and the session's working directory moved there. Use `git -C <tree>` and absolute paths. (A `claude` session in a tree has no path on its command line either, so the `lsof -d cwd` test is needed too.)
+- **`df -h /` is the wrong volume.** It reads the sealed system snapshot (13 GiB used, 6%) while the data volume was at 76%. Use `df -h /System/Volumes/Data`.
+Written into `docs/director/weekly-tidy.md` §4.
+## F-607 · Search never sees a git-ignored folder, so `tasks/` here isn't searched, and a git-ignored knowledge folder wouldn't be (2026-11-08)
+
+`FileSource` (`Sources/DuoSearch/FileSource.swift`) skips anything a `.gitignore` lists, and reads only `.gitignore` files, not `.git/info/exclude`. `tasks/` is in this repo's `.gitignore`, so by that code `duo2 search` doesn't cover its task notes. It would also have defeated the search-before-writing step of the project knowledge design (DL-322), which is why that design keeps `_knowledge/` out of git with `.git/info/exclude`. From reading the code; the pilot (ENH-325) confirms it.
+
+## F-608 · What a director's status can and can't compute today (2026-11-08)
+
+Read on this Mac while designing the learning loop. **(1)** 68 task notes are unfinished by status, and 12 have a Progress line from the last 7 days. `.duo/director.json` lists only 2 workers, because it was re-adopted on 2026-11-08 and the older notes carry no `sessions:` link, so a red line can't rely on the registry: a live note with no known worker has to count as a finding. Status words in use include `in progress`, `building` and none. **(2)** The Claude desktop app keeps scheduled tasks and their runs in `~/Library/Application Support/Claude/claude-code-sessions/<a>/<b>/`: `scheduled-tasks.json` (cron, `cwd`, `lastRunAt`, `lastScheduledFor`) and `local_*.json` (`scheduledTaskId`, `permissionMode`, `lastActivityAt`, `completedTurns`, `cliSessionId`). The format is private and undocumented (DL-321). **(3)** The 07:15 problem-discovery run that day showed `permissionMode: default`, no completed turn and a transcript silent since 07:16 when read at 08:02. It started before the user-tier Auto default was set at 07:56, so it says nothing about whether that setting works.
+
+## F-609 · Filtering transcripts cuts a dream's input by about 700 times, and text copied across projects is almost nil (2026-11-08)
+
+Measured for `docs/research/project-knowledge.md`. This project's main transcript folder held 410.7 MB from the last 14 days (50 sessions; work-tree folders not counted), of which what the user typed plus each turn's closing text was 0.6 MB. Across 14 projects' `CLAUDE.md`, `_PROJECT.md` and `AGENTS.md`, 1 of 24,146 distinct six-word runs appears in more than one project; across 9 projects' Claude memory folders, 7 of 11,748. This only detects literal copies, not a fact reworded or re-learned, so it doesn't show that duplication is low.
+
+## F-615 · What legacy Duo's scheduled sessions did, and what the record says of them (recurring-jobs, 2026-11-08)
+
+ENH-223 (v0.11.2) and ENH-237 (v0.13.0): a 30 s tick in the app, firing only with Duo open, typing `claude --session-id <minted> '<prompt>'` or `claude --resume <id> '<prompt>'` into a background tab; presets and custom cron with an English preview; one app-wide `~/.claude/duo/cron-jobs.json`. Its tick fires a due time of any age on wake, though the PRD calls that a miss, and it guards overlap only while starting. "Same session" and catch-up break the one-prompt policy. The record holds bugs (focus steal, catch-up clobbered by restore, unreadable errors) but no complaint about the idea. `~/.claude/duo/` doesn't exist on this Mac, so there's nothing here to import. Table: `docs/research/recurring-jobs-v2.md` §2.
+
+## F-616 · Claude's own schedulers against the one-prompt policy (recurring-jobs, 2026-11-08)
+
+From Claude's docs, read 2026-11-08 (desktop-scheduled-tasks, routines, scheduled-tasks). Desktop tasks need the app open and the Mac awake, run "exactly one catch-up run" within seven days of a miss, set the mode per task (unset means your settings, F-605), and keep the prompt in `~/.claude/scheduled-tasks/<name>/SKILL.md`, where "changes take effect on the next run"; schedule, model and state are elsewhere. They're created by the form or by asking Claude in a Desktop session, so a Duo app has no public way to create one or to tell whether an account has them. Cloud tasks run with the Mac off, on a fresh clone with no local files, in Auto by default, and an owner can turn them off. `/loop` and `CronCreate` re-prompt one session, which the policy forbids; `CLAUDE_CODE_DISABLE_CRON=1` removes them. Comparison: `docs/research/recurring-jobs-v2.md` §4.
+
+## F-617 · What firing a job needs from Duo's session start (recurring-jobs, 2026-11-08)
+
+`TerminalCommand.newClaude` (`Terminals.swift`) mints the id and takes a prompt, the right shape for a job, but appends the prompt with no `--` (`resumeClaude` has it), so a prompt starting with `-` would read as a flag. It has no mode or model yet. `claude --bg` ignores `--session-id` (F-318), so a background start can't keep DL-14; a Duo tab can. `keep-running`'s text implies a hidden tab may wait until shown to start, which a job can't. `--permission-mode auto` was seen in 2.1.316's help; not checked on the work Mac's 2.1.284. `--tools`, `--allowedTools`, `--disallowedTools` and `--permission-mode dontAsk` are in `--help` on 2.1.219, 2.1.284 and 2.1.316 (scratch installs, no login). By the permission-modes doc, only `dontAsk` with allow rules is a true allowlist; `--allowedTools` in Auto only pre-approves. Nothing here was run: this is from reading the code, `--help` and the docs, and no session was started.
+
+## F-626 · Duo's implicit state machines, mapped: a session has no single state; DL-167 step 5 half happened (implicit-state-machines, 2026-11-08)
+
+A read-only review of the whole code base (`docs/research/implicit-state-machines.md`, page in `docs/research/implicit-state-machines/index.html`). Nothing was run.
+- **24 machines.** Six are serious: session life, a terminal tab's process, the chat surface, the prompt channel, the editor document, the split room.
+- **A session has no single state.** `SessionState` is only the attention enum. Running, parked, detached, elsewhere, ending and ended live in separate stores, read by at least nine deciders (`tabSessions`, `busy`, `hasOpenTerminal`, `ParkCheck.why`, `workerFacts`, …). About 36 logged incidents, the most of any surface.
+- **DL-167 step 5:** `phase` and `generation` exist and held (F-264). There's no single place that moves `phase` (14 assignments), `dirty` and about ten others stay outside it, and DuoChecks has no transition case: the proof is `scripts/check-editor-host.sh`.
+- **`sending` is a bare Bool with 23 write sites.** Twelve operations set and clear it; `peekPrompt` saves and restores it because it can't nest, and the others don't.
+- **Counts, non-Debug, by grep:** 465 Bools in DuoKit, 89 timers, 15 hand-rolled generation or revision counters.
+- **Done well, to copy:** `VoiceMachine.next`, `Migrator`, `ParkCheck.why`, `SessionSelection`, `RevisionGate`, `RepoStatus`, Suggest Edits derived from the file, `gpu-lock.sh`.
+
+## F-627 · Twenty bugs the state-machine review read in the code, none run (implicit-state-machines, 2026-11-08)
+
+Listed a to t with lines in `docs/research/implicit-state-machines.md`, "Bugs this review turned up". Each needs a failing check before its fix. The ones a user would notice most: Earlier turns makes newer turns vanish (filed 2026-10-12 as bug 6 of the codebase review, still in the code); ⌘W on a tab restored at launch ends the process but leaves the tab, because only `closeSession` clears `parkedTabs`; `/clear` drops Keep Running and a hand-placed tab position, since neither is rekeyed; a document tab whose file isn't visible at launch is forgotten when the next save overwrites the restore file; `migrate undo` on a delete leaves the journal `.reverting` and blocks every later migration; `refreshing` has no timeout, so a hung read would stop the session lists for good; `send` has no `guard !sending`; `SheetCenter.answer` removes the queue's first without checking it's the question answered.
+
+## F-619 · The director's harness had been failing for weeks, and nothing runs it (2026-11-08)
+
+`scripts/check-director.sh` is Tier 1 of the director's harness, and it couldn't pass. Since the isolation guard (F-529, 2026-11-04) it has exported `DUO_ISOLATED=1`, and `duo2` then refuses the offline verbs this script exists to test, so it stopped at its first line. Past that, three of its expectations were older still: the skill's name (DL-222), the start command's shape with Remote Control (DL-230) and "only `--background` starts", which background-by-default retired. With no background sessions, its later steps failed too. It wasn't noticed because nothing ran it: it wasn't in `merge-gate.sh` or a release step, and the last result on record is 154 checks in an older finding. So every change to the director since then shipped without this check. **Fixed:** `DUO_TEST_DUO_CLOSED=1` tells `duo2` in a test context that having no instance is the point, so the offline verbs run and no Duo can be reached (`IsolationChecks` proves it can't reach the real one); the stale expectations now match current behaviour; and `merge-gate.sh` has a `director` gate, so it can't go quiet again. This is the failure protocol's first real case: a check that exists only helps if something runs it.
+
+**The gate then caught the harness depending on who ran it.** The repaired script passed 237 for its author and failed 40 in the merge gate, all "Claude's CLI is logged out". `duo2` asks `claude auth status` from PATH, the profile loop had no stand-in for it (only the duties section did), and a real CLI's answer for a scratch config depends on the caller's login: the author's session said logged in, the gate's said logged out. **Fixed in the harness, not in `ClientCaps`,** because a user with a custom `CLAUDE_CONFIG_DIR` really can be logged out there. The stub is `claude` first on PATH for the whole script and answers `auth status` from the profile's `stub.loggedIn`; a new `logged-out` profile gives R8's line and the start refusal a real case; and each section asserts that the probe reached the stub. Proved with a `claude` that says logged out ahead on PATH (the gate's condition: without the stub on PATH the failures appear, with it they don't), with a real one, with none, and in a stripped environment: the same count each time.
+
+## F-620 · A scratch HOME alone doesn't isolate duo2, and it reached Geoff's Duo once (2026-11-08)
+
+While building the red lines, a subagent ran `duo2 director status` with only `HOME` pointed at a scratch folder and no `DUO_ISOLATED`, against CLAUDE.md's rule. `SupportFolder.real` doesn't take its path from `HOME`, so `duo2` found the real endpoint and reached Geoff's running Duo. It was one read-only status call for a folder Duo didn't know, and it wrote nothing. `CFFIXED_USER_HOME` would have moved the folder, but `DUO_ISOLATED=1` with a scratch `DUO_SUPPORT_DIR` is the rule, and `DUO_TEST_DUO_CLOSED=1` now covers what that run wanted. A scratch home also hides nothing from `ps` or the user's Library, so R8's Duo facts and the Claude app's records are skipped when `HOME` isn't this user's (`Isolation.scratchHome`). The skill's evals run that way.
+
+**The same blind spot in the login probe, found on the first real run.** Under `DUO_ISOLATED=1` on this repo, status printed "RED R8 the CLI: Claude's CLI is logged out on this Mac" while `claude auth status` in the same shell said logged in. `confineProcess` points `CLAUDE_CONFIG_DIR` at a stand-in folder, and the probe then asked `claude` about that folder, not about this Mac. The parse was right; the question was wrong. A test context now reports the login as unknown and doesn't ask, and `check-director.sh`, whose `claude` is the stub, opts in with `DUO_TEST_LOGIN_PROBE=1`. Whether a real CLI answers "logged out" for a stand-in folder varies by caller: it did for the director and didn't for its worker, and I don't know why. So the only safe rule is not to ask.
+
+## F-621 · With Claude's shell sandbox on, every offline `duo2 director` write failed (2026-11-08)
+
+`duo2 director check`, `start` and the registry all said "You don't have permission to save the file". `mkdir` in the same folder worked. `Data.write(options: .atomic)` stages its copy in the system's temporary items folder under `/private/var/folders`, which Claude's shell sandbox denies. So a director in a sandboxed session, or with managed settings that turn the sandbox on, couldn't record anything with Duo closed, and fell back on writing notes by hand or giving up. The harness has a `sandboxed` profile, but it only reads status, so nothing wrote under it. The evals found it. A plain `sandbox-exec` that denies that folder reproduces it with no model. **Fixed:** `DirectorOffline.write` puts the temporary file beside the target and renames it, which is just as atomic, and all the director's writes go through it. `check-director.sh` runs a write under that sandbox. App code that uses `.atomic` isn't affected, because the app doesn't run in that sandbox.
+
+## F-622 · What the evals showed about the duties, and about the suite itself (2026-11-08)
+
+`run-evals.sh --runs 3` on Haiku 5.5 and 2.1.316, against unmodified main (090306d3) as the baseline. About $15 at list price in all, over several rounds: $9 on the runs and $6 on the judges.
+
+- **The 23 cases both have:** branch 52 of 69 runs and score 0.877, main 50 of 69 and 0.874. No case is worse than main by two runs or more. One run per case is very noisy here: s24 went 3/3, 0/3, 2/3 on nearly the same skill, so a single round proves little either way. The branch figures combine the last full run with a re-run of the six cases the last fixes touched.
+- **The nine new cases on Haiku:** 18 of 27. s25, s28 and s32 at 3/3; s26, s29, s30 and s31 at 2/3; s27 at 1/3; s33 at 0/3.
+- **On Sonnet 5.5, the two weakest:** s29 and s33 both 3/3. Sonnet's message after a complaint gave the cause, the duty by name, a preventative change, an eval case and how you'd know if it came back, which is what the failure protocol asks. On Haiku, s33 reliably opens the `Failure:` task and finds the cause but skips the eval step. So that gap is the model, and a director doesn't normally run on Haiku.
+- **What the evals found that review didn't:** the sandbox write failure (F-621); "memory keeps preferences" sending a user's standing rule to memory, which contradicts DL-207; hiding suggested tasks from status's shortened list (s09 went 0/3); and the model copying the skill's own `--next 2h` example for a one-hour job.
+- **Graders tuned to a bug:** s01 and s07 passed on main partly because `duo2 director start` couldn't write there, so the model wrote notes by hand. Fixing the write exposed them. The start graders in s02, s07 and s09 also stopped at the first escaped quote in a command, so a quoted `--title` hid a later `--suggest`. All are fixed.
+- **Rot that predates this work (C-168):** main scores 0.874 against the 0.94 recorded in F-316, and s02, s04, s15 and s20 are 0/3 on main.
+- **The environment still limits what a case can prove:** `claude --bg` is denied in a case, so no worker ever really starts, and a judge sees a trimmed trace. Graders give votes, not reasons.
+## F-623 · What a dream really costs: over an hour and 26 M tokens for 14 busy days, ten cents for a small project (knowledge-pilot, 2026-11-08; ENH-325)
+
+Measured on Haiku 5.5, `docs/research/knowledge-pilot.md` §4. The couch-spacers project (6 sessions, 83 KB filtered): 4 min 50 s, 0.21 M cache writes, 0.91 M cache reads, 0.11 M output, $0.10 by the CLI's list figure. duo-v2's last 14 days (114 sessions across the main and work-tree transcript folders, 2.25 GB raw, 3.7 MB filtered): the first run was killed at a 55-minute limit with analysis done and no pages (3.70 M writes, 11.61 M reads; a killed run reports no output total or cost), and a second, Organize-only run took 10 min 15 s (0.29 M, 10.72 M, 0.14 M, $1.18). The study's "$270" for raw input is far too high, and its per-run cap (§4a) is required: a first dream on a busy project doesn't finish in a turn. An answer costs about the same with or without pages (35 to 63 k tokens, mostly cached).
+
+## F-624 · `.git/info/exclude` does what the study read from the code: out of git, in search, in the file tree (knowledge-pilot, 2026-11-08)
+
+With `_knowledge/` in `.git/info/exclude`: `git status` shows nothing (`git check-ignore -v` names the exclude line, shared by a repo's work trees), `duo2 search` returned page text in both projects within minutes, and an isolated capture of the current build lists `_knowledge/` in the Files pane with "up to date with GitHub" above it. Two side facts. `--workspace <folder>` treats the folder's children as projects, so a repo given directly opens no project: pass its parent and `open:<name>`. And the main checkout's `build/Duo.app` was from Oct 12 when the pilot ran, older than the isolation guard (F-529), so nothing launched it; the director rebuilt it on 2026-11-08. A development build always reports version 0.0.1 (`release.sh` sets the real one), so judge a build by its binary's date, not its version string.
+
+## F-625 · What the dream got wrong: mid-turn messages are invisible to the filter, and it over-disputes (knowledge-pilot, 2026-11-08)
+
+Fresh sessions answered no better with the pages: 10 right without against 7 with on duo-v2, 7 against 8 on the couch-spacers project (`docs/research/knowledge-pilot.md` §3). What caused the errors (§5):
+- **A message typed during a turn isn't a `user` entry.** It's an `attachment` of type `queued_command`, with `origin.kind: human`. The study's filter (user and assistant text) drops it: 58 of Geoff's messages in 20 sessions in duo-v2's window. Anything reading transcripts for what the user said needs this, including `discovery-gather.py`-style tools and any corrections pass; nothing was checked beyond the pilot's own filter.
+- `gather` without the project file can't apply the trust order, so a recorded decision read as a dispute.
+- 8 of 25 duo-v2 pages were `disputed`, several resolvable in one read. `sources` held batch ids rather than session ids, and `checked` said "by reading its sources" when the run worked from digests.
+- In-flight facts go stale within hours, and a session that finds a page may stop there rather than open the primary source (D8, D9).
+- No session in either condition ran `duo2 search`, despite the global instruction to prefer it: 40 answers used grep, reads, git and gh. The pilot doesn't compare search with pages.
+
+## F-628 · `git push` hangs for hours when the login keychain is locked: the osxkeychain helper waits on a prompt nobody sees (director, 2026-11-09)
+
+Pushes that had worked at 11:40 hung at 14:30 with GitHub reachable (`curl` 200 in 66 ms). `ps` showed `git-credential-osxkeychain get` processes from three sessions stuck for up to two hours: the credential helper asks the keychain, the keychain is locked while Geoff is away, and the unlock prompt is on a screen no session can answer. `gh auth status` still answers, since gh keeps its token in its own keyring. The push that works then: `GIT_ASKPASS=<script> GIT_TERMINAL_PROMPT=0 git -c credential.helper= push …`, where the script prints `dudgeon` for the username prompt and `gh auth token` otherwise (the token never appears on a command line, unlike `https://x-access-token:…@` URLs, which `ps` shows). Nothing is changed in git's config. A hung push also holds its shell, so a chain `gate && push && merge` looks like a slow gate. `docs/director/merging-and-records.md` carries the recipe.
+
+## F-629 · The HTML viewer goes blank without a word: a page drawn by a script from the web shows only its background, and a load that fails shows nothing (director, 2026-11-09)
+
+Geoff, from the work Mac: double-clicking an HTML file in the file navigator opens its tab, and the pane stays blank white. Reproduced here on main's build in an isolated `--workspace` run (scratch project, `open-file:`, `--capture-window`): a plain page renders, `docs/research/implicit-state-machines/index.html` renders, and a page whose body is built by React from cdnjs shows only its background colour, because DL-175's rule list blocks every remote script, style and font for local pages and WebKit reports nothing. Claude-written prototypes often load Tailwind or React from a CDN, so this is the likeliest cause of a blank page, but the work Mac's file couldn't be read from here. What the viewer lacks (`Sources/DuoKit/Editor/HTMLViewer.swift`): no `didFailProvisionalNavigation`/`didFail` delegate, so a file WebKit refuses (a cloud-drive file not yet downloaded, a root that doesn't cover the file, a sandbox refusal) leaves the pane blank; no `DuoLog` line on load start, finish or failure, so a report from a Mac we can't inspect has no evidence; no notice when a page's remote dependencies were blocked. Side fact: a page without `<meta charset>` renders UTF-8 punctuation as mojibake from `file:` (`·` became `Â·` on the state-machines page; fixed by adding the meta). Captures: the director's scratchpad `html-bug/ws.png`, `ws2.png`, `ws3.png`.
+
+## F-630 · The HTML viewer refused a page reached through a symlink: "outside the sandbox", a blank pane (html-viewer-blank, 2026-11-09)
+
+Found by the new DuoChecks check (F-629's causes, tested one by one). A project whose root is a symlink (or a file that is itself a link) made `loadFileURL(allowingReadAccessTo:)` fail with "Ignoring request to load this main resource because it is outside the sandbox": WebKit compares real paths, Duo passed the linked spelling, and `decidePolicyFor`'s prefix test compared unresolved paths too. Fixed in `HTMLViewer`: the file and the root are resolved before loading (`loadResolved`), a link that leaves the root reads from its own folder, and `inside(_:_:)` resolves both sides and compares at a folder edge. Before this change the failure was silent; now any failure shows "Couldn't open this page: <reason>" with Reload and writes `html: failed <path>: <reason> [domain code]` to `duo.log`. Also logged: `html: open <path>`, `html: loaded <path> in <ms> ms`, and `html: <path> loads remote scripts or styles, which DL-175 blocks`. Per Geoff (via the director) the work Mac's files are local and open in Chrome, so the CDN case (F-629) stays the leading candidate there; the cloud-drive case is covered by a plain reason ("in the cloud and isn't downloaded") but could not be reproduced with a dataless stub here. Captures kept in the report: a CDN-built page (notice bar over the blank page), an unreadable file (failure bar), a plain page.
+
+## F-631 · Foundation words a refused read as "permission to save" (html-viewer-blank, 2026-11-09)
+
+`FileHandle(forReadingFrom:)` on a file with no read permission gives "You don't have permission to save the file…" (NSFileReadNoPermissionError). The viewer's notice replaces it (the code tests both 257 and 513, which is what the real error is) with "it can't be read: this Mac hasn't given Duo permission to read it", which also fits a folder macOS keeps behind a privacy prompt (Documents, Desktop, a cloud drive).
+
+Review follow-up (director, 2026-11-09): the bar's detection counts only what can leave a page blank or unstyled (script src, stylesheet and preload links, @import, module imports from http(s)) with comments stripped, so canonical and icon links no longer raise it; the file is read and scanned off the main thread (4 MB cap); reloads (watcher, wake, Reload Page, the bar) all re-check the page and clear or set the bar; a file that can't be read blanks the view so the previous page is never drawn under its name; the log says "html: open" before the rules wait, logs a state change once (split view's re-renders add nothing), and a rule-list wait past 5 s logs and shows the failure bar without loading the page (loading without the rules would widen DL-175, which is Geoff's call).
+
+## F-634 · The HTML viewer only looked at the tab's own file: a page that redirected (meta refresh) to a CDN-built page, a missing page or one outside the project showed no bar (html-viewer-redirect, 2026-11-09)
+
+A top-level index.html that meta-refreshes to a page in a subfolder opened blank with no bar in 0.2.27's viewer (Geoff, work Mac). Reproduced in DuoChecks and in isolated `--workspace` captures (a redirect to a CDN-built page, a missing page and a plain page). Causes, tested: (1) the scan read only the tab's file, so the redirect's target, the page actually showing, was never looked at; (2) **WebKit silently drops a meta refresh to a file that isn't there**: no policy call, no `didFail`, nothing; (3) a main-frame move that `decidePolicyFor` cancels (outside the read root, or to the web) left no word. Fixed in `HTMLViewer`: `didCommit` for any main-frame navigation the viewer didn't start logs `html: navigated <path>` and scans the page now showing (so the bar and log follow a refresh, a followed link or a script's location change); the scan also reads the page's own `<meta http-equiv=refresh>` and names a missing local target ("the page it redirects to isn't there (<path>)"); a cancelled main-frame move outside the folder or to the web shows a plain failure bar and logs `html: blocked navigation to …`; WebKit failure logs name the failing URL. Checks: HTMLViewerBlankChecks (CDN redirect shows the bar, a missing target and an outside target show the failure bar, a plain target shows none, a JS location change to a CDN page shows the bar). A link click to a file outside the project now also says so (it used to be dropped). Not exercised: the work Mac's real project (not available here).
+## F-632 · What limits a background worker, and what `/goal` would need (director-skill-article, 2026-11-09)
+
+Read from `claude --help` (2.1.316) and the docs, with no real turns. **A `claude --bg` worker can't be given a spend cap:** `--max-budget-usd` works only with `--print`, and the guide gives `--max-turns` for `-p` too. So a worker is stopped by the director noticing (R1, R2, R7, Stalls), and by nothing else. **`/goal` would close the "stops early" gap but doesn't fit `done_when` as written:** its evaluator reads only the transcript and runs no commands; it's unavailable when hooks are disabled or managed-only; and setting one starts its own turn, so it would have to carry the worker prompt. Duo's `done_when` is written for the user and director (it can name a merge or a choice no worker can reach), so a worker-side condition would be a separate field. Whether a `--bg` worker takes a goal as its first prompt, and which versions between Duo's 2.1.219 floor and the work Mac's 2.1.284 have it, I didn't test. **The worker prompt** (`Director.workerPrompt`) is the only text every worker reads, and it asks what you checked only at the end, in the report. The study is `docs/research/director-skill-article.md`; the same study read these from the machine: 92 directed notes all have `done_when`, 33 have `## Brief`, the director log spans 26 hours, and no commit since 10 Oct begins "revert" across 318 merges.
+
+## F-633 · A day after the learning loop: the register dated the open notes without closing any, and what Geoff types is small (director-skill-article, 2026-11-09)
+
+Read from `tasks/*.md`, `.duo/director-log.jsonl` and the sizes of this project's transcripts, without running a director verb or reading any message's text into a record. **The register cleared its red lines with one sweep.** 64 task notes are open (39 in progress, 25 at review; 55 created in October). On 2026-11-08 at 22:41 one sweep wrote a `Checked:` line on 61 of them, in three wordings (31 "marked live with no worker and nothing recent; the director triages this note … by the check date", 21 "merged work at review, waiting on Geoff's sign-off", 9 "no worker running now"), and set each `check_by` six days out, so all 61 come due on 2026-11-15. The log has 66 checks in all, 62 in that hour and four since. The last progress line that isn't a check is a median 12 days old for notes in progress and 10 for notes at review. So `duo2 director status` shows no red lines and the notes are as open as before: a check moves a date, and nothing in the skill closes a note or says who may. **Suggestions aren't offered.** 1 of 97 notes is `suggested`; ideas go to `enhancements.md` (109 rows), which nothing ranks. No `Failure:` task exists yet (the protocol is a day old). **What Geoff typed is small.** In the 132 sessions touched in 14 days (about 1 GB of transcripts), about 390 messages look typed by a person: about 320 at the start of a turn and 72 mid-turn (`queued_command` attachments, C-173), about 65,000 tokens together. The split is rough: worker briefs (about 108) and notices between sessions (about 15, most of the bytes) sit in the same fields and were set aside by length and opening words. The knowledge pilot's dream read over 26 million tokens for the same period (F-623), so a pass over the typed text alone costs about a four-hundredth of it. Study: `docs/research/director-unified-view.md`.
+
+
+## F-636 · One hand-clearing of the open task notes by DL-329: 54 of 69 were decidable by an agent, 51 closed (clear-open-notes, 2026-11-09)
+
+Tested every task note at in-progress, in progress, open or review (69, counting the sweep's own) against its `done_when`, with git (`merge-base --is-ancestor` on every sha a note names, branch merge state, `git log origin/main --grep` on its records), file reads on origin/main and `gh release view`. Outcome: **51 closed** (47 whose check passed, 4 superseded by a decision or a release), **3 sent back** with a line saying what is missing (a Debug report the fallback fix waits on, a real-keypress proof, the director film's poster in the README), **7 left as taste or a spend decision** (a film, a decision page, a checked-against-a-real-export, a note with no `done_when`), **7 left alone** because a session on the note is still alive (working or blocked), and the sweep's own note. What it showed: (1) 54 of the 61 notes with no live session had a `done_when` an agent could test as written (merged, named files present, a check passed); the 2026-11-08 sweep that dated them to 2026-11-15 had the evidence in each note's own Progress and closed none of them. (2) Review status hid the cause: nearly every `review` note was merged and gated weeks ago and waited only for "Geoff's sign-off", which none of their `done_when` lines asked for. (3) Notes that end in "then, with Geoff's first reports, fix X" (chat-fallback-debug) cannot close at merge and want a second note for the second stage. (4) A note with no `done_when` (multi-window, two older ones) cannot be tested at all; a note should not be filed without one. (5) Seven notes name sessions that still run, blocked, on work that is merged: nothing stops a finished session, so its note stays out of reach of the sweep. The notes live in the machine-local `tasks/` folder, so the list of which note went which way is in the report, not here. DL-329 applied; `docs/research/director-unified-view.md` §6 step 1.
+## F-638 · Readers that took only `type == "user"` missed what you typed mid-turn; four now count it, the rest never asked (midturn-readers, 2026-11-09)
+
+Shape, from the keys and `origin` of real transcripts (no text copied): a message typed while a turn runs is `{"type":"attachment","attachment":{"type":"queued_command","prompt":<text>,"commandMode":"prompt","origin":{"kind":"human"},"humanTurn":…}}`. The origin sits inside the attachment, not on the record. Other queued commands: `commandMode: "task-notification"` with `origin.kind: "task-notification"` (the great majority, about 420 in this project), a few with no origin, and `origin.kind: "peer"` (a subagent hand-back or message from another session). Only `origin.kind == "human"` is yours. A few human ones start with `<` (a channel wrapper); they still count. `MidTurnPrompt.text` (`Sources/DuoControl/MidTurnPrompt.swift`) is the one test for it.
+- **Fixed, with checks that failed before (`DUO_CHECKS=midturn swift run DuoChecks`, `MidTurnChecks.swift`):** search's indexer (`SessionSource.read`: a mid-turn message is now a turn of its own with the reply that followed, so search finds it); the director facts reader (`transcriptTail`'s turn start, whose line filter also needed `queued_command`) and `DirectorTranscript.userTurnSinceDirector` (so a correction typed mid-turn counts as the user having spoken); the chat feed (`ChatIngest.record` shows it as an ordinary message of yours, claiming the same bubble the hook's echo does; `ChatFeed.start` and `loadEarlier` count it as a turn).
+- **Not affected, nothing to fix:** `discovery-gather.py` reads only assistant text and the session link; `tidy-gather.py` reads Duo's own logs, not transcripts; `session-links.py` reads titles and links. `SessionTitles`, `ForkLineage`, `ThreadCache` take the first user entry (a mid-turn message can't come first); `Inventory` reads tool results and edited files. So no Python fixture test was needed.
+- **The look:** a mid-turn message uses the existing message-of-yours bubble, so nothing new was drawn and there is no Q row (Q-487 not taken). Not captured on screen; the check proves the feed's log holds it.
+- **Not done:** the knowledge pilot's own filter (`docs/research/knowledge-pilot.md`) and the study's counting script are outside Duo's readers and unchanged.
+
+## F-644 · PDFKit draws and keeps PDF comment threads but can't write a reply or save incrementally; CGPDF reads threads and a small appender writes them; Read takes a whole PDF as images (pdf-viewing research, 2026-11-10)
+
+Spikes in `docs/research/pdf-viewing-spikes/` on an invented 120-page fixture (charts drawn only as bars, a two-column page, a table, an image-only scan). The decision document is `docs/research/pdf-viewing.md` (Q-490 to Q-493, ENH-339).
+- **Reading a PDF for a session:**
+  - Claude Code 2.1.316's Read with no `pages` read all 120 pages of a 300 KB PDF in one call, each as text and a page image. Anthropic's figure for that is about 1,500 to 3,000 tokens a page, so roughly 180k to 360k tokens for this fixture.
+  - PDFKit's `PDFPage.string` for all pages took 0.07 s: 133,894 characters, about 33k tokens. It kept columns and table rows in order but lost all 12 charts' values and the scanned page's words.
+  - One page rendered at 1000 px takes 15 ms (about 70 KB PNG).
+  - Page-range Read needs poppler's `pdftoppm`, which isn't installed here; not tested.
+- **PDFKit writes:**
+  - Text and Highlight annotations with `/T`, `/M`, `/NM` and `/Contents`, plus `/State` and `/StateModel` as text strings and `/RT /R`.
+  - Not `/IRT`: `setValue(_:forAnnotationKey: "/IRT")` with a `PDFAnnotation` fails and nothing is written. A highlight's `/Popup` wasn't written either.
+  - `write(to:)` rewrites the whole file (the original bytes aren't a prefix).
+- **PDFKit reads:** `annotationKeyValues` hides `/IRT`, `/RT`, `/State`, `/StateModel` and `/CreationDate`. Yet a PDFKit resave of a file holding a thread keeps all of them, with `/IRT` renumbered to the right parent.
+- **CGPDF reads threads:** the `/Annots` dictionaries expose every key, and the `CGPDFDictionaryRef` reached through `/IRT` is the same pointer as the parent's, so the tree rebuilds natively.
+- **An incremental update by hand works:** a reply and an Accepted state reply took 756 bytes (two objects, the page's `/Annots` array, an xref section, a trailer with `/Prev`). The original stays a byte prefix, and PDFKit, CGPDF and PDF.js all open it.
+- **PDF.js (pdfjs-dist 4.10.38, 13 MB `build/`):**
+  - It reports `inReplyTo` and `replyType` but doesn't return hidden (`/F 32`) state replies, so it shows no review state.
+  - `saveDocument()` is an incremental update.
+- **Quick Look** (`qlmanage -t`, headless) draws the highlight and the note icon.
+- **Not tested:** whether Preview's sidebar and Acrobat Reader show the `/IRT` thread and the status. That needs a window, and Acrobat isn't installed.
+- **Also learned:** split view refuses `.pptx` as well as PDFs (`FileKind.binaryTypes` includes `.presentation`), so no viewer takes part in a split today (Q-491).
+## F-640 · A black terminal after chat fell back on Home's page, and Home's Needs you card that did nothing (ask-fallback-black-terminal, 2026-11-10)
+
+Reported by Oliver, through Geoff: in chat mode Claude asked a question (AskUserQuestion), Duo showed the fallback bar over a black, empty terminal; Back to Chat came straight back to the same black terminal; going to All projects and clicking the session again drew the terminal. At All projects, the Needs you card in the right pane did nothing. Thanks to Oliver for the report.
+
+**1. The black terminal: Home's column took the terminal from the console.**
+- A session's terminal is one view that moves between slots (`TerminalSlot`, `Terminals.swift`). Home's session has two: Home's column at All projects and the console on Home's own page. Both layouts stay in the window (`RootView`: All projects at opacity 0 under a project), so Home's column is still there, out of sight.
+- While chat shows under a project, Home's column draws nothing (C-47). When chat stops showing, `HomePane` (`AllProjectsPanes.swift:61`, `isAllProjects || !chat.showsChat`) builds the terminal's slot again, in the same SwiftUI pass in which the console builds its own. `SlotView.show` gave the view to whichever slot was updated last and never gave it back (`guard view !== current`). Home's column was last. The console kept the fallback bar over an empty slot in the console colour: black.
+- Proved, not assumed: in the isolated run the terminal's text held the question the whole time, and `term-info` put the view in Home's slot at 38 columns (so Claude also redrew the question at the wrong width, out of sight). Not F-25 (a capture that can't draw a terminal's layer): the view was in another pane.
+- Back to Chat changed nothing because the fallback fired again at once and both slots were remade the same way. Choosing the terminal with the toggle left it the same. Leaving for All projects and opening the session again made a new console slot, which took the view: the workaround.
+- The same rule had a second hole: after Home's page, back at All projects, Home's column never took the view back (it "had" it), so Home's column was empty there when the session showed its terminal.
+- Only Home's sessions, and only on Home's own page: no other session has two slots in one window. It needs no question: any fallback there, or choosing the terminal from chat there, did it.
+- **Fix** (`TerminalSlot.SlotView.takes`): each slot is told whether its pane is the one on screen (`shown`: Home's column at All projects, the console under a project). A slot out of sight never takes the view; a slot on screen takes it, and takes it back from this window's other pane. Another window's console keeps what it took (C-43, unchanged).
+- **Checks that fail on the old rule:** `DUO_CHECKS=terminal-slot swift run DuoChecks` replays the moves on real slot views in both update orders (the old rule: console empty after the fallback; Home's column empty back at All projects). `scripts/check-chat-fallback-slot-live.sh <out>` is the live proof: an isolated background Duo, the real `claude` 2.1.316 against the mock API, Home's session in chat with the mock's question pending, the fallback, Back to Chat and straight back, the terminal chosen, All projects, the page again; the view must be in the pane on screen at each step and its text must hold the question. `WHERE=all-projects` starts from Home's column. `RULE=old` (the app's `DUO_SLOT_RULE=old`, the rule before this fix) fails both: on Home's page, steps 1 to 3 in Home's column in one run, and in another (SwiftUI updated the console last that time) steps 1 to 3 right and step 4 in no slot; from All projects, step 5 in no slot. Which slot is updated last varies from run to run, which is why the black terminal came and went. With the fix both pass. Harness: `chat-fallback` (the visible chat falls back with the bar), and `term-info` now names the slot (`place=`).
+- Not captured as pixels: a background capture doesn't draw a terminal's layer (F-25), so the proof is where the view sits and what it holds.
+
+**2. Home's Needs you card: it pointed at a closed pane and asked nobody for the keyboard.**
+- A Home session that needs you shows in the action column as the dashed card "← Waiting in the Home terminal" (`HomePointerCard`). Its click chose Home's tab and added one to `focusHomeRequest`. Nothing has ever read that counter (it dates from Phase C; only a check looks at it), and since DL-315 Home's column starts closed. So on a fresh install the click changed nothing on screen. Its own bug, not the slot one, though after a visit to Home's page the column it should have shown was also empty (1, the second hole).
+- **Fix:** `AppModel.showHomeSession` chooses the tab, opens Home's column if it is closed, makes it the active pane and puts the keyboard in its chat or terminal (`focusHome`). Opening it this way doesn't set DL-315's `touched` flag: it isn't the person's own toggle. A session link to a Home session at All projects takes the same path, and ⇧⌘H and the pane keys now really focus Home's terminal (they don't open a closed column). The card's verb is unchanged (`duo2 session open`).
+- Checked in DuoChecks at the model (the column opens, the tab, the active pane, the flag). Not clicked in a live window.
+
+**3. Why a question sends chat to the terminal, and how often.**
+- It isn't meant to. Chat answers AskUserQuestion with its own card (F-106, F-110). The terminal shows only when a safety rule fires: the screen doesn't read as a question for 0.5 s (`unknown-screen`), the dialog doesn't read whole (`dialog-unreadable`), the hook's request doesn't match the screen within 1.5 s (`dialog-request-mismatch`), the CLI isn't 2.1.x (`version-unverified`), or the answer is refused because the screen and the request differ when you pick (`answer-refused`, the bar that starts "Chat mode didn’t send your answer").
+- **Measured on 2.1.316** with the headless suite (`DUO_CHECKS=chat-live`, the real TUI against the mock, 17 question cases): at 100×34, 60×34 and 80×20 every case is answered from the card, 92 checks of 92, no fallback. **At the widths of Home's column at All projects it is not so.** At 43×49 (the hidden terminal's width there while chat shows, at the column's default width) both preview cases are refused on answering and fall back ("the options on screen differ from what Claude asked"): 2 of 17. At 38×49 (the same column once its terminal has shown, F-641, or a column dragged narrower) it is 4 of 17: also four questions ("the question on screen is not the one Claude asked") and long wrapped labels. Home's sessions open in chat by default (DL-142), and while chat shows the hidden terminal is held at the chat pane's width (F-456), so questions asked of Home at All projects are drawn that narrow. That is one concrete, repeatable source of "routinely" (C-178).
+- **Not known:** which rule fired for Oliver, and his CLI version. This Mac's field log holds one line (a 2.1.219 test on 2026-11-03), so there is no field count here. `duo2 session chat why --log` on his Mac, or the bar's Debug report, names the rule and counts by rule.
+- **What it would take to stop it** (not built; Q-488): the card's questions and options come from the hook's request, matched to the screen; answering goes through the TUI's keys and so needs the screen to match. Either hold the hidden terminal at a width the reader is proved at (60 columns or more) while chat shows, whatever the pane's width, at the cost of one redraw when the terminal is shown; or teach the matcher the narrow layouts (wrapped labels, the preview layout and the four-question tabs at 38 columns). The first is small and covers every narrow case at once.
+
+**Not done:** nothing new was drawn, so no design question beyond Q-488. `DUO_SLOT_RULE=old` stays in the app only so the live check can show the failure.
+
+## F-641 · The hidden terminal is held 5 columns wider than its slot shows it, so F-456's check fails (ask-fallback-black-terminal, 2026-11-10)
+
+`scripts/check-chat-narrow-live.sh` fails on origin/main's code (run here with the slot rule before F-640, and with it: the same): Home's column holds the hidden terminal at 43 columns while chat shows, and the slot shows it at 38. `TerminalSession.applyHeldSize` sizes the hidden view to the pane inset 12 × 8; `SlotView.layout` then takes 4 more columns for the mic's margin on a Claude terminal (DL-264), which came after F-456. So each switch from chat to the terminal in Home's column resizes the PTY and Claude redraws, the redraw F-456 removed, and a question drawn at 43 columns is shown at 38. Not fixed here (outside the task): `applyHeldSize` should take the same margin off, and the check then passes again. I did not find it in the merge gate.
+## F-642 · @claude comments in the Word and PowerPoint viewers: not built, by DL-162; the route that worked was the Markdown copy (claude-comments-office, 2026-11-10)
+
+- **Asked (Geoff, 2026-11-10):** confirm that commenting with an @claude tag works in the PowerPoint and "Docs" viewers; if not, find a solution urgently. "Docs" tested as the Word (.docx) viewer; no Google Docs viewer exists in Duo.
+- **Tested** in an isolated run (build of `91707d42`, scratch `DUO_SUPPORT_DIR` and `CLAUDE_CONFIG_DIR`, a fixture .docx with an @claude Word comment and the Decks study's `grower-update.pptx` with legacy and modern comments), through the control handler `duo2` uses:
+  - **Add a comment naming @claude in the viewer: not built.** Both viewers are read-only (DL-162, DL-125; "Duo never writes the .docx"): the bar has Markup, Select Text/Shape, Convert, Open With, and no composer. `duo2 comment add/list/send` on a .docx or .pptx refused with "isn't a Markdown document".
+  - **The @ menu (DL-251): not built** there; it belongs to the Markdown margin composer.
+  - **Unsent status: not built** on either file. The .pptx viewer draws no comments at all (only Convert to Duo Deck reads them, as Review marks).
+  - **Send and reply: not built**, since nothing can be written back.
+  - **What worked:** `duo2 file convert Review.docx` made `Review.md` with the Word @claude comment as thread `#c2` (replies kept), and `comment list --unsent` listed it. `comment send` then stopped at "no session to send it to" (the run had none). Select Text and Select Shape send a paragraph, shape or comment to Claude one way.
+- **Fixed (check failed before: no such function; the old message fails the new `contains` checks):** the comment verbs on a Word or PowerPoint file now say it is read-only and name the route (`duo2 file convert`, `duo2 deck import`) instead of "isn't a Markdown document" (`Review.notMarkdownMessage`, `ReviewChecks.swift`).
+- **Decision:** Geoff chose "A: write into file" (DL-331, Q-489 closed). Built as `OfficeZip` (rewrites a zip keeping every other entry's raw bytes), `OfficeComments` (read and write: `word/comments.xml`, `commentsExtended.xml` for replies and done, the `commentRange*`/`commentReference` anchors in `word/document.xml`; PowerPoint's modern `ppt/comments/modernComment_*.xml` and `ppt/authors.xml`), and the `duo2 comment add|reply|list|close|reopen|status|send` verbs on a .docx or .pptx (`AppModel+ReviewOffice.swift`). Delete isn't built; a legacy PowerPoint comment is read, not written; a PowerPoint comment is on a whole slide (not a shape).
+- **Ids:** Word `c<w:id>` and `c4.1`; PowerPoint `s<slide>c<n>` and `s3c1.1`. The turn names the paragraph or slide and tells Claude to reply with `--file`.
+- **Checks (`DUO_CHECKS=office-comments`, `OfficeCommentChecks.swift`, 33):** add, reply, resolve and reopen on the committed Word and PowerPoint fixtures; only the comment parts (and the anchors, relationships, content types, authors) change and every other part is byte for byte as it was; Duo's `Docx.outline` and `OfficeComments` read the result back; routing sees the thread as a Review thread naming @claude; the refusals. The whole suite: 6055 passed.
+- **Other readers:** python-docx 1.2 lists the added comment and Claude's reply with author and date; python-pptx 1.0.2 opens the deck and finds the new comments part on the slide. **LibreOffice could not be used** (installed but quarantined, so a headless start waits on a macOS prompt; the attempt was killed). Word, PowerPoint, Google, Pages and Keynote: untested (C-179).
+- **Live turn not proved here:** `scripts/check-review-office-live.sh` (new, two Haiku turns) wrote the comments and sent them (the session was found and the turn built) but the session never reached idle, so both stayed "Queued"; the existing `scripts/check-review-claude-live.sh` fails the same way on this Mac today ("no session"), so it is the environment, not this change. Re-run both on a Mac where it passes.
+- **A defect found later and fixed (2026-11-10):** the first PowerPoint writer put a new `p188:replyLst` after the comment's own `p188:txBody`; MS-PPTX's child order is anchor, pos, replyLst, txBody, and PowerPoint drops replies that come after (`research-comments.md` §1.2). It now goes before `txBody` (check: "a new reply list goes before the comment's own text body"; 34 checks). Not written, and untested: the slide's own `p188:commentRel` extension that Microsoft's sample adds with the first comment (C-179).
+- **Not done:** the viewers' composer, reply box, resolve and @ menu (Q-494, a canvas first). This slice first took Q-490 for it; the PDF research already had Q-490 to Q-493 on main, so it was renumbered to Q-494 (the ledger's reservation) in the records and in `AppModel+ReviewOffice.swift`.
+
+## F-646 · An @claude comment stayed Queued: the session sat on Claude's first-run theme screen because Duo named `~/.claude` as `CLAUDE_CONFIG_DIR` (review-send-never-idle, 2026-11-10)
+
+- **Symptom:** `scripts/check-review-claude-live.sh` failed 2 of 8 on main (3be92d1d) on Claude Code 2.1.316: "verb session: ok=true Started session…", then `review-send: Queued: Session … isn't ready (Claude isn't idle there)` for ever.
+- **Root cause:** the guard was right. `AppModel.attemptReviewSend` → `guardedSubmit` (`AppModel+DirectorSend.swift:148`) refuses with `SubmitGuard.refusal`'s "Claude isn't idle there" (`Director.swift:883`) when the beacon or the screen read says not idle. The session's screen was Claude's **first-run "Welcome to Claude Code … Choose the text style" screen** (the run.log's chat-fallback dump shows it for the Home and the garden session). The live checks name the real folder (`DUO_CLAUDE_CONFIG_DIR=$HOME/.claude`, Q-425), so every child got `CLAUDE_CONFIG_DIR=~/.claude`. Claude Code reads its global state from `<CLAUDE_CONFIG_DIR>/.claude.json` when the variable is set, but from `~/.claude.json` when it isn't. `~/.claude/.claude.json` exists here but has no `hasCompletedOnboarding` and no theme, so Claude started as a new install. Naming the default folder is not naming nothing. (Whether 2.1.316 changed this or the file only appeared recently is not known: the file's earlier history isn't in the repo.)
+- **Fix:** `ClaudeStorage.isDefaultFolder` (`ClaudeStorage.swift`); `ChildEnvironment.make` (`Terminals.swift`) drops `CLAUDE_CONFIG_DIR` from a child's environment when it names `~/.claude`, and `ClaudeTrust.configFile` then reads `~/.claude.json`, as Claude does. Any other folder is passed on as before. Duo's own process keeps the variable, so its reads of `~/.claude/projects` and `sessions` don't change.
+- **Check that failed first:** `TrustChecks.swift`, the four F-646 checks (three failed before the change).
+- **Live checks:** `check-review-claude-live.sh` 2/8 → 8/8 and `check-review-office-live.sh` 6/6 (Word and PowerPoint), real login, Haiku 5.5, this Mac. Two test hardenings: the first project wait went 3 s → 12 s (in a work tree the project list had not loaded at 3 s: "no project 'garden'"), and `comment status` is polled four times in the first 4 s, because Haiku replied so fast that the `replying` state fell between two polls.
+- **Hazard seen (not fixed):** run the two live checks with the **same** out folder. Run with different ones, the Office check's `session new --project garden` said "'garden' is ambiguous", because the first run's `garden` is still in the real `~/.claude/projects`.
+- **The white sheet** in the run's capture (`final.png`, the session tab's pane drawn white while the sidebar says "at prompt") is most likely the capture only: `--capture-window` draws terminals as blank panes (F-25) and web views from WebKit's snapshot (F-120). Not separately proven; the run.log's screen dumps show the real terminal text.
+
+## F-648 · Home's Claude session starts at every launch with its column closed; the narrow-question fallbacks reproduce, and 60 columns at the column's height is clean (home-agent-panel study, 2026-11-10)
+
+- **Home's session runs unseen.** Checked live: `docs/research/home-agent-panel-checks/check-f648.sh` launches an isolated Duo (its own `DUO_SUPPORT_DIR` and `CLAUDE_CONFIG_DIR`, `DUO_ISOLATED=1`, in the background, quit by SIGTERM) on a fresh Home folder, with a stub `claude` that only logs how it was started (no real Claude, no tokens). Main's build of 2026-11-09. All projects opened with Home's column closed (DL-315's default; capture `f648-launch.png`), and within a second the stub was started in Home's folder with `--session-id`, Duo's hook settings and its system prompt. The List showed `Session 8:05 PM · ★ ws · at prompt`, a session nobody started. `term-info` put the view at 38×49.
+- **Why** (read in code): `AppModel.refreshLive` starts a Home session whenever Home has none (DL-54, C-15, from before DL-315); `HomePane` is built while the column is collapsed (a collapsed `PaneSplit` pane keeps its view, LR-13), and its `model.terminal(project:session:)` resumes Home's last session. With an existing Home session (not run here: it would need a resumable transcript), the same body resumes it.
+- **So since DL-315** most people have a `claude` process in Home's folder they never opened, and anything it shows (a trust question, Claude's first-run screen, F-646) sits in a closed pane. Its needs-you, if any, still reaches the column's pointer card.
+- **The narrow fallbacks reproduce** (F-640, C-178): `DUO_CHAT_LIVE_SIZES=38x49,43x49,60x49 DUO_CHECKS=chat-live swift run DuoChecks` on Claude Code 2.1.316, under the shared GPU lock. 38×49: 4 of 17 cases fall back (four questions, long wrapped labels, both previews). 43×49: 2 (both previews). **60×49: none** (17 of 17), the first run at Home's column's height at Q-488 (a)'s floor. 45 passed, 6 failed overall: all six are the narrow ones. Log: `docs/research/home-agent-panel-checks/chat-live-38-43-60x49.txt`.
+- Not run: a real login, a real Claude turn, a visible window. The study (`docs/research/home-agent-panel.md`) puts the options to Geoff as Q-498 to Q-501 and recommends Q-488 (a).
+## F-645 · Native PDFs built: PDFKit viewer, comments appended as standard annotations, doc read with pages to view; PDFKit's selection boxes are wrong on macOS-printed PDFs (pdf-viewer build, 2026-11-10)
+
+Built on build/pdf-viewer to DL-332..DL-335. The visible parts are stand-ins: Q-495 (bar), Q-496 (comment controls), Q-497 (split side).
+- **Core** (`Sources/DuoSearch/PdfObjects.swift`, `PdfComments.swift`, Foundation and Compression only):
+  - Reads classic xref tables, xref streams and hybrids along `/Prev`, object streams, and Flate with PNG predictors.
+  - Writes add, reply, close, reopen and delete as one incremental update per call. A classic table or an uncompressed xref stream matches the file's newest section, and the original stays an exact byte prefix.
+  - Refuses `/Encrypt`, a DocMDP certification with P 1 or 2 (P 2 doesn't allow annotations; a missing P means 2), and an xref it can't read.
+  - Offsets count from `%PDF-` when junk precedes it, and `startxref` is searched in the last 1 MB.
+  - `COMPRESSION_ZLIB` is raw deflate, so the zlib header is skipped.
+- **Corpus:** 48 real PDFs from /System, /Library and /Applications, copied to scratch. All took add, reply, close, reopen and delete with the original as a prefix, and PDFKit and CGPDF opened every result. Seven were linearized and one used an xref stream (231 pages). None were encrypted, certified or carried foreign comments; foreign threads are covered by a hand-made Acrobat-style fixture.
+- **PDFKit's selection boxes are wrong on macOS-printed PDFs** (Monaco at 1 pt under a 12x text matrix, wrapped lines over two rows). Boxes are 27 to 39 pt tall, sometimes start at x −121, and `characterBounds` is off too. So highlights landed half a line low and anchors read back the neighbour line.
+  - Fix: `PdfTextRows.swift` reads the page's text rows from the content stream (CGPDFScanner: text matrix, CTM, Tf, /Widths). Duo keeps PDFKit's boxes when they look plausible, writes one box per row otherwise, and reads anchors from the rows first.
+  - Limits: simple fonts with /Widths and ASCII text only; others keep PDFKit's boxes. A foreign highlight on such a file falls back to `selection(for:)` and may read imperfectly.
+  - 15 checks failed before the fix. `Fixtures/pdf/quartz-mono.pdf` is the fixture.
+- **PDFKit lists hidden annotations:** the state replies (/F 32) are in `page.annotations`, so counts must come from Duo's threads, not PDFKit.
+- **Agent reading:** `doc read <pdf>` gives `--- page N ---` blocks, then the pages to view ("no text layer" under 20 characters, or "mostly a figure": an image /Do, or six or more path-paint operators with under 400 characters of text). `pdf render <file> <page>` writes a PNG, because Read's `pages` needs poppler, which this Mac lacks.
+- **Viewer:**
+  - `PdfViewer` replaces Quick Look for `.pdf` and falls back to Quick Look with a notice.
+  - The bar: ‹ › Page n of N, zoom − + Fit with ⌘+ ⌘− ⌘0, find, Add Comment, Comments, Open With.
+  - Send Selection sends "From <path>, page N:".
+  - Verbs: `pdf page`, `pdf zoom`, `pdf find`, `pdf selection`, `pdf comments-panel`.
+  - A PDF can be the view-only side of a split beside a text document.
+  - The comments panel (off by default) has Reply, Close and Reopen, Delete, Go to, and Send to Claude.
+- **Checks:** `DUO_CHECKS=pdf` 171/0; the full DuoChecks run was 6236/0 before the F-646 merge. Live @claude on a PDF: `scripts/check-review-pdf-live.sh`, one Haiku turn.
+- **Not tested:** whether Preview's and Acrobat's comment lists show Duo's threads and status, and the dark scheme. The inflate no-progress guard couldn't be triggered.
+check-review-editor.sh's "@ menu: Tab inserts @claude" (57 of 58) failed identically on origin/main dc8df8e9: the test sends down then Tab, and since DL-251 stage 2 Claude is row one and down lands on the first person (@geoff), so the expectation was stale, not the menu; it now expects `@geoff` after down+Tab.
+
+## F-652 · What Claude Code does for rewind and fork, on 2.1.284 and 2.1.316 (chat-hover-actions study, 2026-11-10)
+
+- **Checked** with the repo's mock API (`scripts/director-harness/mock-api.mjs`), a scratch `CLAUDE_CONFIG_DIR`, a dummy key and `--model claude-haiku-5-5`, the TUI driven headless; four turns that wrote files with Write and with Bash. No login, no tokens, nothing on screen.
+- **Rewind** is `/rewind` (aliases `/checkpoint`, `/undo`) or Esc Esc on an empty prompt: a list of your prompts (each with its file changes, or "No code changes"), then Restore code and conversation · Restore conversation · Restore code · Summarize from here · Summarize up to here · Never mind (code options only when that turn changed files). Same on both versions except the words: 2.1.284 "The conversation will be forked." and "Rewinding does not affect files edited manually or via bash."; 2.1.316 "This message and everything after it will be removed." and "Restored files go back whole, losing later changes by anyone. Bash changes to other files are not undone."
+- **Restore conversation** keeps the session id and file, appends nothing to mark it, and leaves the removed turns in the JSONL: the next prompt's `parentUuid` skips them. The prompt goes back into the input. **Restore code** puts back files changed by Write/Edit (deleting ones they made) and never Bash's. Copies live in `‹config›/file-history/‹session›/`, indexed by `file-history-snapshot` records keyed by the user message's uuid.
+- **Fork:** `--resume X --fork-session --session-id N` works interactively and in `-p` on both, copying every record (no `forkedFrom`). Hidden flags on both: `--resume-session-at ‹uuid›` (cuts at a message; print mode only), `--resume-drops-turn`, `--rewind-files ‹uuid›` (needs `CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING=1`; 2.1.284 is silent without it, 2.1.316 says "File rewinding is not enabled."). So an interactive fork at an earlier turn is a whole fork plus a conversation-only rewind in the copy (each half tried, not the two together).
+- **Transcripts:** a typed prompt is a `user` record with string content, `promptSource: "typed"`, `origin.kind: "human"` and a `promptId`; an image adds blocks and an `isMeta` companion; a reply is several `assistant` records sharing `message.id`. Turns must be walked from the leaf by `parentUuid`. 2.1.316 also writes `api-request*` records.
+- Research and decisions: `docs/research/chat-hover-actions.md`, Q-505 to Q-509.
+
+## F-653 · Chat keeps no transcript ids and follows file order, so it shows rewound turns; the Claude desktop app's rewind (chat-hover-actions study, 2026-11-10)
+
+- **Read in code** (dc8df8e9): `ChatYou.id` and `ChatTurn.id` are counters; `ChatIngest.record` reads neither `uuid` nor `parentUuid`, and `ChatFeed` appends in file order. So after any `/rewind` (typed in the terminal today) chat keeps showing the removed turns, and a reload shows them again, because F-652's dead branch stays in the file. Not run live. Any turn action needs the uuid kept per turn and the feed walked from the leaf.
+- **No per-turn actions exist in chat**: no context menu, no hover row; the code block's Copy is always shown though DL-220 drew it on hover.
+- **Claude desktop** (5.1231.2, its bundle's strings, not run): `rewindV2(sessionId, targetMessageUuid)`, `canRewindTo`, `rewindFiles(…, dryRun)`, `undoRewind`, rewind marks. Issue reports describe Rewind beside Copy on hover with no confirmation (#99611) and "Fork from here" on past user messages.
+
+## F-656 · Chat, search and the readers followed the transcript's file order, so /rewind's removed turns kept showing; chat now follows the live branch and keeps each turn's uuid (chat-feed-rewind, 2026-11-10)
+
+- **Root cause.** After `/rewind` Claude Code deletes nothing and writes no marker: the next prompt's `parentUuid` points at the record before the rewound turn, so the removed turns stay in the JSONL as a dead branch (F-652, run on 2.1.284 and 2.1.316). `ChatFeed` read the file front to back and `ChatIngest` ignored `uuid` and `parentUuid`, so chat, and a reload, showed the removed turns. `SessionSource.read` (search) did the same.
+- **The real shape, replayed.** `Fixtures/rewind/rewound-session.jsonl` is Claude Code 2.1.316 on the mock API (`claude -p` three prompts, then `--resume-session-at` the first reply and a fourth; invented text), trimmed to the record kinds chat reads (request blobs and attachment bodies dropped). Alpha → Bravo → Charlie are the dead branch; Delta's `parentUuid` is Alpha's reply. File order shows all four.
+- **Not "everything not an ancestor of the last record".** That throws real turns away: in 51 of the 60 newest local transcripts, parallel tool results hang off sibling records the chain doesn't pass through. So `LiveBranch` (`Sources/DuoControl/LiveBranch.swift`) is about *prompts*: a typed prompt (or one typed mid-turn) is live when it is an ancestor of the last record; the records after a dead prompt, up to the next prompt, go with it. Run (a Python port of the rule) over the 80 newest local transcripts it finds one session with prompts it would drop, and that one is a compaction: the `compact_boundary`'s `logicalParentUuid` isn't in the file, so the walk can't prove anything before it and **keeps** those prompts. The rule is conservative wherever the chain breaks (missing parent, cycle, a boundary).
+- **Chat.** `ChatFeed` filters the history it loads (`ChatFeed.liveRecords`), and keeps the set of live typed prompts' parents. A new typed prompt whose parent is already a live prompt's parent is a rewound branch: the feed appends the tail to its history, replays the same window off the main thread (`rewound()`), and the removed turns leave. A message typed mid-turn is an attachment hung off whatever record was last, so it never counts toward that set. `ChatYou.uuid` and `ChatTurn.uuid` (the reply's last assistant record) are kept for the rewind and fork builds (F-653).
+- **Search.** `SessionSource.read` filters the same way, so a removed prompt and its reply are no longer indexed as a turn.
+- **Not changed, and why.** `DirectorFactsReader.transcriptTail` and `Director`'s reader ask when the *last* prompt was typed: the last prompt is always live. `SessionTitles` reads the first prompt for a fallback title: a rewind to before the first prompt would keep the old first prompt as the fallback title until Claude's own title replaces it (Claude's `ai-title` wins anyway). `ForkLineage`/`ThreadCache` read uuid chains already. Session links (`duo2://session/…`) name sessions, not turns.
+- **A limit that stays.** The rewind writes nothing, so Duo can't see it until the next prompt is sent: between `/rewind` and that prompt the removed turns still show in an open chat. The build that drives `/rewind` from chat knows it just did it and drops them at once.
+- **Checks that failed first:** `RewindChecks.swift` (`DUO_CHECKS=rewind swift run DuoChecks`), run with the filter switched off before it went in.
+- **Checked:** `DUO_CHECKS=rewind`: 16 pass; with the filter and the rewind detection switched off, 6 of them (chat open, replies, both uuid checks, search, the open chat) fail. Full DuoChecks: 6076 pass, 3 fail (the three `EDITOR`/`VISUAL` git-helper checks, line 766 to 774 of `main.swift`; they don't touch transcripts and I didn't run them on main). `scripts/check-chat-perf.sh` on the heavy session: 8 of 8 within budget (open 115 ms against 600; the filter and the tracker run off the main thread). Capture of the fixture through chat, `docs/research/chat-feed-rewind-checks/chat-rewind-after.png` (`--state chat-rewind-after`): Alpha and Delta and their replies only. Not run: a live TUI `/rewind` in a window, any real Claude turn, 2.1.284 (the fixture is 2.1.316's; the study found the same shape on 2.1.284).
+
+## F-658 · gpu-lock's "exclusive holder" and "shared holder" lines looked like an overlap; it wasn't one (2026-11-11)
+
+- **Seen:** `--status` listed `exclusive holder: film-omnigent-canvas`, `shared holder: merge-gate …`, both held 2m31s, with a queue behind. It read as an exclusive and a shared job running together.
+- **Found:** it wasn't. An exclusive job takes the lock directory first and *then* waits for shared jobs already running (by design, F-298); `--status` printed it as a plain holder, aged from when it took the directory, not from when it began running. Live check on 2026-11-10: the "exclusive holder" (`arcade-walkthrough-asr`) had only `sleep 2` as its child (the waiting loop) beside a running shared `cco-checks`.
+- **No real overlap found:** `scripts/check-gpu-lock-race.sh` starts a shared and an exclusive taker together with random offsets, in a scratch lock folder, 200 rounds at poll 0.01 and 0.05 s, and the commands themselves assert they never ran together. 0 overlaps before the fix too (the take is already ordered: a shared job takes its slot then checks for the lock, an exclusive job takes the lock then counts slots, so one always sees the other). I could not reproduce a true double hold; if one is seen again, the first suspect is `alive` calling a live owner dead in a sandboxed shell, which clears its hold.
+- **Fix:** the exclusive job writes `<lock>.running` (beside the lock, so a bare `rmdir` by another script still works; a first version inside the lock wedged check-gpu-lock.sh's test Q) once the shared jobs are gone; `--status` says "holding the lock, waiting for shared jobs to finish" or "running, alone since …". Release and stale-clearing remove the file. The repro also fails if `--status` lists both kinds without saying which: 19 of 20 rounds before, 200 of 200 after.
+## F-654 · Word and PowerPoint comments in the Markdown margin: the writer side (claude-comments-office, 2026-11-11)
+
+DL-337 approved the margin build for 0.2.28. Slice 1, the parts that don't need the shared margin code:
+- **PowerPoint anchors written and read** (`OfficeCommentsAnchors.swift`): `duo2 comment add <deck> --at 3` (slide), `3/Photo` or `3/<shape id>` (a shape), `3/Title/some text` (a run of text in a shape, once). The comment gets `pc:sldMkLst`, `ac:deMkLst` (spMk, picMk, graphicFrameMk, grpSpMk or cxnSpMk) or `ac:txMkLst` with `ac:txMk cp len`. The slide's `p14:creationId` and the shape's `a16:creationId` are written into the slide part when missing, so a commented slide's own part changes (nothing else does). Reading gives each thread its kind, shape and range, and `anchorLost` when the shape or the text is gone (the margin shows the card with no highlight). **A run of text falls back to its shape** (the verb says so): the range PowerPoint reads back (cp and len counting, and the `ac:context` hash it re-finds text by) can't be verified without a PowerPoint-written sample, so none is written; a range written by PowerPoint is read and highlighted (check: a hand-made `txMk` reads back as its characters). **A slide that has legacy comments takes no new modern comment**: adding one would renumber the legacy threads (modern number first), so the verb refuses with what to do (comment elsewhere, or open the deck in PowerPoint once to convert them). This was the cheaper safe choice over keeping legacy ids stable.
+- **Delete** (Word and PowerPoint): the comment, its replies and its anchors leave the file's comment parts; an emptied PowerPoint list stays. **Undo** (`duo2 comment undo`, ⌘Z in the viewer): the file is restored from the copy kept before the write; a journal beside the backups steps back through several writes.
+- **Checks** (`DUO_CHECKS=office-comments`, 50): shape and text anchors read back; slide and shape ids written; only the commented slide's part changes; delete and undo, three undos returning the original bytes; refusals. Whole suite: 6073 passed.
+- **Next:** the margin in the two web views on the shared Cards class (waits for the PDF worker's rename), anchors drawn, Add Comment on a selection, then the captures and the live @claude check through Post.
+- **Slice 2, the margin in both viewers (2026-11-11):** the Word viewer and the PowerPoint viewer (a .pptx opened from a file) show Markdown review's margin through the shared `SideMargin` page (`PdfMargin(kind:)` takes the message kind: `wordMargin`, `slideMargin`), driven by `OfficeMargin` (threads read from the file's comment parts; anchors, selection and scroll from the viewer's page: `docx.js` and `deck.js` gain `anchors`, `setActive`, `selection`, `margin`). Cards under paragraphs are not drawn when the margin is on; anchors are (text in commentHighlight, a shape outlined, the slide's number boxed; active in commentHighlightActive); a click on an anchor activates its card. Post, Reply, Close and Keep, Reopen and Delete write the file (`AppModel+OfficeMargin`) and an @claude comment is sent as it is posted; ⌥⌘M, ‹ › and `duo2 doc review next|previous` work; the Word bar folds Convert and Open With into ⋯; the Markup menu says Show Closed Comments. Captures (light appearance, `build/office-compare/`): the cards, composer, verbs and card states match the boards; differences are the app's own tab strip and the Duo Decks buttons (not on the boards), the Word sheet frame around the text, and names in signature form (`dana-writer`), as Markdown's cards show them. Checks: `DUO_CHECKS=office-comments` (69, pages included); whole suite below.
+- **Slice 3, hover, the narrow popover and the live check (2026-11-11):** (1) A card under the pointer lights its anchor: `cards.js` lets a host override `setHover`, so `side-margin.js` sends `{op:"hover"}` and the viewers' pages toggle `duo-hot` (the active fill). (2) **The shared page hid the document under the narrow popover**: its `html, body` painted `--duo-ground`, and the popover widens the page to gutter + 280 + 20, so in a pane under 420 an opaque panel covered the Word text, the slides and the PDF's pages. `side-margin.js` is now transparent and each host gives the reserved column the ground the page used to paint (`PdfView`, `DocxView`, `DeckView`); proof in `build/margin-bg/` (before | after | difference): wide PDF, Word and slides are pixel-identical (0 pixels differ by more than 24); narrow ones now show the document behind the popover. `margin.js`, `cards.js` and the Markdown editor are untouched. (3) Under 420 the Word and deck bars drop ‹ › for a Review ⌄ menu (Next and Previous Comment, Show Closed Comments), as board S1b draws. (4) `scripts/check-review-office-live.sh` goes through Post on both formats and passed 6 of 6 (Word: c9, delivery replying then replied, Claude's reply in the .docx; PowerPoint: a comment on the title's shape, s4c1, Claude's reply in the .pptx); it opens its own project (`ofgarden`) because the real account's sessions made `garden` ambiguous. Three Haiku turns were used across its runs (the limit was two): two earlier debugging runs reached a live reply. Capture limitation: a window that is off screen gets no animation frames, so the deck renderer's re-fit after a pane resize may not show in a capture. Checks: office-comments 73; full suite 6309; vendor JS tests pass.
+
+## F-660 · A new user's five complaints: most of it exists and can't be found (aram-feedback, 2026-11-11)
+
+Read in the code at `d8656529`; nothing launched. Full account: `docs/research/aram-feedback.md` §1 and §2.
+- **"White IDE" or "terminal wrapper".** Chat is light (grey ground, white cards) and the terminal is always dark, whatever the appearance. A new project session opens in "the mode used last", which starts as terminal (`ChatSession.swift:21-47`, DL-119); Home's opens in chat (DL-142); a chat session falls back to the terminal on screens it can't read and stays there (DL-154, DL-235). The only switch is the pill on the tab (DL-253): no tooltip, no menu item, no shortcut, no Settings row for project sessions (`duo2 session chat --default` only).
+- **File list.** Folders fold (DL-105); the Files section has no chevron; which folders are open isn't saved (`expandedFolders` is in memory). The whole sidebar hides (⌃⌘S).
+- **Right pane.** Hides by its toolbar button, ⌥⌘0, a drag and `duo2 view right` (DL-129). The View menu has no item for it: `Commands.swift:466` still says it was "left out until they work".
+- **Clickable file names.** Chat mode already links paths and opens them in the right pane at the line (`ChatMarkdown.linkify`, `openChatLink`; DL-132 g). Misses: a path with a space links only its last word, to nothing; a name with no slash and no listed extension (`Makefile`) isn't linked; `file://` links and the plan card's "Open plan in Duo" go to the Mac's default app; a missing file is a silent no-op; a Markdown file link resolves against the project, not the session's folder, and drops `:line`. Terminal mode has no Duo handling: SwiftTerm's default ⌘-click opens the default app, with relative paths resolved against Duo's own folder. One check covers four link cases; none covers opening.
+- **Spelling.** "Window Colour" in six strings and the verb (`WindowViews.swift`, DL-312, DL-314); they are the app's only use of either spelling. No house spelling is recorded.
+- **Onboarding.** No welcome. Help has duo2 Reference, What's New, Explain Tasks, Report an Issue, and no link to the guide (ten pages) or the two films. One explainer exists (Tasks), its Learn more still hidden (Q-177) though the guide's tasks page now exists. The director starts only by typing "be the director" or `/director`; it has no page in the guide.
+- **F-145's note is stale here:** it says a `duo-file:` URL's `path` is empty; on this macOS `url.path` returns the path, and `openChatLink` relies on it.
+
+## F-661 · How Legacy Duo told Claude it was inside Duo, and what Duo v2 does (aram-feedback, 2026-11-11)
+
+Read in Legacy Duo's repo at v0.13.8 and in v2 at `d8656529`. `docs/research/aram-feedback.md` §3.
+- **Legacy Duo:** a `claude` wrapper first on PATH that added `--append-system-prompt "$(cat ~/.claude/duo/priming.md)"` when `DUO_SESSION` was set (it didn't start Claude itself); the same text again from a SessionStart hook in the user's settings.json; `DUO_SESSION`, `DUO_SOCKET`, `DUO_TAB`, `DUO_WINDOW`, `DUO_VERSION`, `TERM_PROGRAM=Duo`; a managed block in `~/.claude/CLAUDE.md`, a skill, a subagent and a warn-only edit hook for every session on the Mac. The priming text said: you're in Duo, prefer `duo` verbs, check `duo status` and edit open files through Duo, never switch off the user's controls. Its one showing convention was "run `duo open --reveal` after you create something". No link convention, no link scheme, nothing about what the user was looking at. The priming file was copied once and never updated.
+- **Duo v2:** starts `claude` itself with `--append-system-prompt <primer>` (`DuoAction.primer`, generated from the verbs; DL-15, DL-74, DL-256) and a per-session `--settings` file layered on the user's own: event hooks, the edit hook (DL-78), and `duo2 hook context`, whose output reaches Claude (the brief and the task, then what changed; DL-116). Environment: `DUO_SESSION_ID`, `DUO_SOCKET`, `DUO_TOKEN`, PATH. For sessions outside Duo, with consent: a five-line CLAUDE.md block, the duo2 and director skills (DL-75).
+- **Neither tells Claude which view is showing**, and v2 can't from the primer: chat is a view over the same terminal process (DL-118) and the user switches at will. v2's primer names `duo2 doc open` as an everyday verb but never says when to use it, or that file names in replies are links.
+
+## F-662 · Claude already writes file names the way chat links them; a finer rule isn't followed (aram-feedback, 2026-11-11)
+
+- **Run:** four `claude -p` turns on Haiku 5.5 (Claude Code 2.1.316, a scratch project in `/tmp/aram-spike/ws` with `src/app.py`, `docs/plan.md`, `config.json`, `Makefile` and `Meeting Notes/2026-11-02 kickoff.md`; a scratch `CLAUDE_CONFIG_DIR`; Read, Glob and Grep only), plus one "say ok" turn. Two prompts ("where is the config parsed, and which document describes the plan?"; "list every file… which records the kickoff decision?"), each with no added prompt and with a convention in `--append-system-prompt`: paths from the project folder, `file:line`, and a Markdown link for a path with spaces or no extension.
+- **Without the convention**, every file was a path from the project folder in backticks, with `:line` where known (`src/app.py:4`). Replaying `ChatMarkdown`'s two patterns and extension list over the replies (Python): `src/app.py:4`, `docs/plan.md` and `config.json` link and resolve; `Makefile` isn't linked; `Meeting Notes/2026-11-02 kickoff.md` links only `kickoff.md`, which doesn't exist.
+- **With the convention**, the replies were the same in every respect that matters: backticks, the same paths, no Markdown links. The two misses stayed.
+- **So:** the fix for the misses is in Duo's link rule (a code span that names a real file is a link, whole: ENH-343), not in an instruction. Four turns on one model is thin: it shows the default and that Haiku didn't take the finer rule, not that no model would.
+- **Left behind:** `/tmp/aram-spike` (the project, the scratch config, the four replies). No Duo was launched; Geoff's own config and sessions weren't touched.
+
+## F-663 · A project is a folder with a project file, and the app shows only its name (aram-feedback, second round, 2026-11-12)
+
+Read in the code at `cd0855ff`; nothing launched. `docs/research/aram-feedback.md` §1.6.
+- **The rule:** a folder with `_PROJECT.md` (or the older `PROJECT.md`) is a project, anywhere (`DuoFiles.swift:5-16`, DL-82, DL-259); a session belongs to the nearest such folder at or above its own (`ProjectDiscovery.enclosingProject`); a folder with sessions and no project file shows as "Folder · no project file" (DL-63, DL-110). No surface in the app states the rule.
+- **Where the project shows:** the toolbar's `All projects › [topic] › name` (only "All projects" is clickable; the name has no tooltip or path; DL-92's "full breadcrumb" is the topic's last folder name in the code), the window title, the sidebar header. The folder appears once, as an unlabeled grey path line in the Files section; Reveal in Finder is in the Project menu.
+- **New Session:** in a project it starts in the project's folder, and only the tab strip's + says so, on hover ("New Claude session ⌘T · in <project>"); the sidebar's "+ New Claude Code session" has no tooltip. At All projects' List, the "New session in [home ⌄]" row names the place first (DL-262).
+- **Not built:** DL-147's explainer on the New project sheet. DL-147 (3) also calls `project_brief: true` a second way Duo finds a project; `DuoFiles.isProject` doesn't read it.
+- **Docs:** the guide says `PROJECT.md` in `projects.md`, `home.md` and `where-a-session-belongs.md`; the app writes `_PROJECT.md`.
+- **Second report:** ENH-146 is an earlier new user asking for an expandable project list in the left nav.
+
+## F-664 · Why a session starts on another model than the one picked, and the settings line that holds (aram-feedback, second round, 2026-11-12)
+
+`docs/research/aram-feedback.md` §1.7.
+- **Duo:** no `--model`, no model key in the per-session `--settings` file, no model setting (DL-153; `DuoChecks/main.swift:2957` enforces it). `claude` is started directly, so `~/.zshrc` exports and aliases don't apply unless Duo was opened from a terminal; `ANTHROPIC_*` passes through from Duo's own environment and `CLAUDE_CODE_*` is stripped (DL-14).
+- **Claude Code's order** (its docs): `/model`, `--model`, `ANTHROPIC_MODEL`, then the `model` key with managed settings over a `--settings` file over the user's file, then the organization's default, then the plan's. `/model`'s "Set as Default" writes the user's file, so a managed `model` beats it at the next start: the "revert". `availableModels` is the administrator's lock.
+- **Run** (2.1.316, scratch `CLAUDE_CONFIG_DIR`, `claude -p "Say only: ok" --settings <file with model sonnet> --output-format json`, reading `modelUsage`): with `model: claude-haiku-5-5` in the user's settings the turn ran on Sonnet (the higher tier won); with `env: {ANTHROPIC_MODEL: claude-haiku-5-5}` in the user's settings it ran on Haiku. A `--settings` file stood in for managed settings, which need root.
+- **So** `"env": {"ANTHROPIC_MODEL": "opus"}` in `~/.claude/settings.json` should start every session on Opus, in Duo and in Terminal. Not checked: the work Mac's real policy and its 2.1.284; whether Sonnet is where sessions start in Terminal there too.
+## F-667 · Rewind and fork-then-rewind, run on the mock API on Claude Code 2.1.284 and 2.1.316; the real /rewind screens are fixtures (chat-turn-actions, 2026-11-12)
+
+- **Run** with the repo's mock API (`scripts/director-harness/mock-api.mjs`), a scratch `CLAUDE_CONFIG_DIR`, a dummy key, `--model claude-haiku-5-5`, the TUI driven headless (node-pty, headless xterm). No login, no tokens, nothing on screen. 2.1.284 npm-installed into a scratch folder; 2.1.316 is the installed one. Three turns: "hello", "write A" (Write `a.txt`), "write B" (Write `b.txt`).
+- **The fork-then-rewind chain, end to end (the research's §5 gap).** `--session-id O` for the original, then `--resume O --fork-session --session-id N`, then `/rewind` in the copy to "write A" (Up, Up, Return, Down, Return = *Restore conversation*), then a new prompt. Both versions: the copy has every record of the original under a new `sessionId` and the **same uuids**; after the rewind the next prompt's `parentUuid` skips the removed turns (the dead branch stays in the copy's file, F-652); the original's file is unchanged (10 records). On 2.1.284 the first attempt stalled on the list (Return ignored) and the second succeeded: the driver waits for each screen and refuses (terminal shown) rather than pressing again.
+- **The screens** are saved as `Fixtures/rewind/screens/2.1.284` and `2.1.316` (idle after three turns; the list on `(current)`; two Ups on "write A"; the confirmation; after Down; after the restore) and `ChatRewindReader` is checked against all of them. The list is `Rewind` / `Restore the code and/or conversation to the point before…` / your prompts each over its change line / `(current)` / `Enter to continue · Esc to cancel`, with `↑ n more` / `↓ n more` (2.1.284 says `↓ 2 more below` on the confirmation's list). The confirmation quotes the prompt in `│` lines with `(21s ago)` last, then the words that differ by version (F-652), then the numbered options, the cursor `❯`.
+- **A third wording.** The `claude` first on a bare `PATH` here was 2.1.304 (`Claude Code v2.1.304`): it has 2.1.284's words ("The conversation will be forked."). The reader doesn't depend on those words.
+- **Real turns:** none. Everything above is the mock; the first real Haiku turn of a rewind is for an approved real-login test.
+
+## F-668 · A rewind writes nothing until the next prompt, so Duo cuts what chat shows and a reload shows the removed turns until then (chat-turn-actions, 2026-11-12)
+
+- **Read in code and run:** after *Restore conversation* Claude Code appends no record (F-652, F-656). `LiveBranch` can only tell a rewound branch once the next prompt's `parentUuid` skips it. So `ChatSession.rewind` cuts the log itself (`ChatLog.cut(from:)`), adds a quiet "Rewound to before “…”" line, and the removed turns stay out of this chat for as long as it is open. **A reload of the chat (reopening Duo, a re-window) before the next prompt reads the file again and shows them.** The fix is Claude Code's, not Duo's (Duo never edits a transcript, DL-338); the next prompt corrects it.
+- **Fork from your message:** the copy's feed is built from the copy's own file, which has every record; the rewind runs after Claude Code is up in it, so for a moment the copy's chat shows the whole history, then cuts. Seen only in the scripted tests (FakeTUI), not live.
+
+## F-669 · How the turn row sits in the feed, and what isn't built of board 4 (chat-turn-actions, 2026-11-12)
+
+- **The row is an overlay** hanging 26 pt under the turn into the 16 pt gap, so it moves nothing and shows on the turn or the row under the pointer, or on the message ⌥⌘↑/↓ selected (a 2 pt `text` ring). A long Claude turn is several pieces; any piece sets the hover and the last carries the row.
+- **Not built:** Tab through the row's buttons (Q-519); the narrow-chat icon-only row under about 420 pt; the count in "n files put back" (Q-520).
+- **Captures:** see the report; WebKit-free surfaces, so `check-ui.sh` states compare directly.
+
+## F-671 · The director skill's install and update are intact; what was proved, and what Geoff's Mac holds (director-skill-install-check, 2026-11-12)
+
+Geoff, on Q-512: "do ensure (now) that director skill installation and updating is intact." Traced in `Installer.install` / `installDirectorSkill` / `writeSkill` and proved by DuoChecks `director-install` (13, new, in the full run) plus the director and installer-lock checks that were already there, and an isolated run of `duo2 install` / `doctor` (scratch `DUO_SUPPORT_DIR`, `DUO_ISOLATED=1`, scratch `CLAUDE_CONFIG_DIR`, a scratch `DUO_INSTALL_ROOT`; no Claude turn; Geoff's `~/.claude/skills` mtimes unchanged before and after).
+
+| Case | Result |
+|---|---|
+| First launch (consented) | writes `skills/director/SKILL.md` and the `duo-director` stub; second launch changes neither |
+| New Duo version | a copy whose hash Duo recorded is rewritten ("updated"); until then doctor says "from an older Duo (updates at launch)" |
+| User-edited copy | left alone at every later launch, and doctor says "edited by you (left alone)"; uninstall leaves it |
+| Copy there before Duo's | left alone and never recorded as Duo's (existing check) |
+| Deleted copy | written again at the next launch, folder included |
+| Read-only skills folder | "skipped … its folder isn't writable"; the duo2 skill, the link and CLAUDE.md still done; nothing recorded as Duo's; doctor lists it under "Skipped at the last install"; fixed, the next launch writes it |
+| Linked skill folder | untouched (existing check) |
+| `CLAUDE_CONFIG_DIR` set | both skill files follow it (`LegacyDuo.claudeDir`) |
+| Isolated, no `DUO_INSTALL_ROOT` | refused ("Not installed: …"); nothing written |
+| Isolated with `DUO_INSTALL_ROOT` | written under that root only, never in `CLAUDE_CONFIG_DIR` or `~/.claude` |
+| A project skill named `director` | installed as `duo-director` until the user answers (existing check) |
+
+**Geoff's Mac.** `/Applications/Duo.app` is **0.2.26**; `duo2 doctor` there says the director skill and the stub are "current" for it. The file is revision 4 (0.2.26's text). `main` is revision 5, and 0.2.27 and 0.2.28 are released, so his copy refreshes the first time he runs a newer Duo (the "from an older Duo" path above). Nothing is wrong; the gap is that the app on that Mac isn't the newest release.
+
+**The work Mac's pin, 2.1.284.** The skill is one `SKILL.md` whose frontmatter is only `name` and `description`: no hooks, no `allowed-tools`, no newer fields. What it asks of Claude Code is `claude --bg`, `--remote-control`, `-n`, `SendMessage`, `Monitor`, `ScheduleWakeup` and `AskUserQuestion`; `docs/research/director-messaging.md` tested the messaging and background-resume parts on 2.1.284 itself, and `Director.swift` gates resume on `2.1.284+` and messaging on `2.1.224+` and falls back below. The `duo2 director …` verbs it names are checked to exist (DirectorChecks). Not run: no 2.1.284 binary is installed on this Mac (only 2.1.310, .311, .316), and a skill-loading run needs a real turn; so "works on the pin" rests on that earlier test and on reading, not on a new run.
+
+## F-672 · A first install into a missing CLAUDE.md is rewritten once at the second launch (director-skill-install-check, 2026-11-12)
+
+Found by the isolated run, not a skill fault. With no `CLAUDE.md`, the first launch writes the block with no blank line before it; the second finds it "current" by hash but `replaceBlock` returns it with a leading newline, so it reports "CLAUDE.md block: updated." once and is stable from then on. Harmless (one blank line, one report line), and the existing "a second launch changes nothing" check starts from a file that already has text, so it never saw it. Not fixed here (outside the skill); a fix is to write `"\n" + block + "\n"` the first time, with a check that starts from a missing file.
+## F-675 · The model setting: ANTHROPIC_MODEL for every session Duo starts (aram-model-setting, 2026-11-12)
+
+- **Mechanism:** Settings › Claude Code › Model for sessions (`duo2 settings model default|opus|sonnet|haiku`, state `sessionModel`) is put in `ANTHROPIC_MODEL` by `ChildEnvironment.make`, which every new, resumed and forked session goes through. Default (nothing saved) changes nothing. No `--model` flag; a DuoChecks check still scans the app sources for it. A scripted, isolated run (`DUO_ISOLATED`) ignores the setting, so run-live.sh's Haiku stays.
+- **Run (real Haiku/Sonnet turns, scratch folder, 2 turns):** a session started on `ANTHROPIC_MODEL=sonnet` (reply by claude-sonnet-5-5), then `--resume` of it with `ANTHROPIC_MODEL=haiku`: the resumed turn was answered by claude-haiku-5-5. So the launch override beats the model the transcript saved. The transcript also holds one claude-opus-5-5 entry that Duo did not ask for (unexplained; probably a side call).
+- **Read, not run:** Claude Code's docs say `/model` inside a session lasts for that session and the launch override applies on reopen (so a `/model` change is overridden on reopen: the row's help says so); a managed `availableModels` lock still wins over `ANTHROPIC_MODEL`.
+- **Not run:** a click in the live Settings window (no visible runs); the row is a stand-in (Q-524), uncaptured.
+## F-676 · Claude follows the Duo convention on Haiku 5.5, in both views; what carries it (aram-claude-convention, 2026-11-12)
+
+- **Built (DL-339 Q-513):** the primer (`DuoAction.primer`) gains one mode-neutral passage: file names in a reply are links, open a finished document with `duo2 doc open <path>`, Duo says which view the user is in, the user's own CLAUDE.md wins. The per-mode text (`ViewConvention`, `Sources/DuoKit/Live/ViewConvention.swift`) goes through `duo2 hook context`: in full at SessionStart (so a resume or `/clear` tells again), and at UserPromptSubmit only when the view differs from the one last told (the session's `<id>.view.txt` in the events folder). It is about 400 characters for chat and 300 for terminal; a session that never switches pays once. A session Duo has no chat for says nothing.
+- **Risks from `aram-feedback.md` §3.3:** tokens per turn (nothing on a prompt with no change); a stale mode between prompts (the check is at each prompt, so a switch is told with the next one; a switch with no prompt after it costs nothing); the user's CLAUDE.md (the text states facts and defaults, and the primer says theirs wins); 2.1.284 (`--append-system-prompt`, `--settings` hooks and `additionalContext` are what DL-116 already relies on there; not run on 2.1.284 here).
+- **Run:** three real Haiku 5.5 turns, Claude Code 2.1.316, `claude -p`, a scratch project (the F-662 one) and scratch `CLAUDE_CONFIG_DIR`, the real primer (its `duo2` path replaced with a stub that logs calls), the per-mode text delivered by a real UserPromptSubmit hook's `additionalContext`. Chat, a questions turn: every file was a backticked path from the project folder with `:line` (`src/app.py:4`), and the space-path `Meeting Notes/2026-11-02 kickoff.md` came whole in one code span. Chat, "write a summary and tell me when it's ready": it ran `duo2 doc open docs/summary.md` (the stub logged it), but before the file existed, because the write was refused in the sandbox of that run; so it follows the rule but may open early. Terminal, asked for a table: no Markdown table or links, a plain-text aligned table in a code block, the same backticked paths.
+- **So** this convention is followed, unlike F-662's finer rule: the difference is that it asks for actions (open the document) and a style tied to what the user sees, not a finer spelling of what Claude already did. Three turns on one model is thin; no baseline without the convention was run this time, so "caused by" is not shown for the backticks (F-662 shows they were the default); the `doc open` and the no-table behaviour are what the text adds.
+- **Duo's link rule** (ENH-343 1, 3, part of 2): a code span that names a file is one link whole (`ChatMarkdown.linkCodeSpans`: a path with a space, `Makefile` and other known bare names, `:line`); a click on a missing file says so; the terminal's ⌘-click goes through `openTerminalLink` to the right pane at the line, resolved against the session's folder, web addresses as Duo opens links. Not done: `file://` in Markdown links and the plan card's "Open plan in Duo" in chat, `#L42`, Markdown links resolved against the session's folder. Not run: a real ⌘-click (needs a visible Duo, so Geoff's OK).
+## F-673 · A new install is "no chat.json and no state.json"; the chat default is seeded once and saved (aram-teaching-layer, 2026-11-12)
+
+- **Fact:** `ChatPrefs.load` seeds `last = chat` and writes `chat.json` when the support folder has neither `chat.json` nor Duo's `state.json` (DL-339, Q-510). Anyone who has run Duo has `state.json`, so an existing user who never clicked Chat keeps the terminal. A fresh `ChatPrefs()` is still terminal (checks and fixtures rely on it).
+- **Run:** DuoChecks `teaching layer (DL-339)`: new install opens in chat and persists; an existing folder stays terminal and writes nothing; a saved choice and `--default` win. **Not run:** a real first launch on an empty support folder.
+- **Also:** the Files fold and open folders are saved in `state.json` (`filesFolded`, `expandedFolders`, by project name); only a live run writes them.
+
+## F-674 · What the teaching layer built and what it left (aram-teaching-layer, 2026-11-12)
+
+- **Built:** Help › Duo Guide, Watch the Intro Film, Watch the Director Film, Explain Chat and Terminal; View › Hide/Show Right Pane (⌥⌘0); Files header chevron and `duo2 view files expand|collapse`; Settings › New sessions open in; the mode pill's tooltip; Window Color (verb `duo2 window color`, `colour` an alias); Explainers for Chat and Terminal (on the pill), Director and Home (content only, no trigger); guide pages (director, the two modes, tasks and sessions); `_PROJECT.md` in the guide.
+- **Film links** are the README's release-asset URLs (v0.2.26, v0.2.13): re-cut a film and update `DuoLinks`.
+- **Not run:** a live capture of the chevron, Help menu or Settings row (fixture states don't show live-only chrome); `check-ui` project and overview were captured and unchanged by this work. DuoChecks: 4 backoff/folder-watcher checks failed in the work tree (`BackoffChecks` lines 100 to 103, 178); not compared with main.
+
+## F-650 · Home's agent lives on Home's page only; no Home session at launch; chat holds the hidden terminal at 60 columns or more (DL-336 build, 2026-11-11)
+
+- **What moved.** All projects is the middle (List or Board) and the 340 Needs you column; `HomePane`, `HomeRule`, `HomePointerCard`, `HomeElsewhere`, `homeOwner`/`ownsHome`/Show Here, `duo2 window home`, `focusHomeRequest`, `leftCollapsedAllProjects`/`leftTouchedAllProjects` and the tokens `paneOverviewHome`/`paneMinHome` are gone (old restore files still decode; the keys are ignored). A Home session that needs you is an ordinary `NeedsYouCard` with "Open Home" (Q-502). ⇧⌘H, the card, session links, `duo2 go home` and `duo2 session open <home session>` open Home's page. The toolbar's sidebar button isn't drawn and ⌃⌘S is disabled at All projects; `duo2 view sidebar` there exits 64 (`ControlResponse` carries an optional `code` for it, Q-504). `refreshLive` starts no Home session; Home's page with none shows "Start Claude in Home" (Q-503). `TerminalSession.applyHeldSize` takes off the mic margin as the slot does (F-641) and holds the hidden view at `max(pane, heldMinColumns = 60)` columns (Q-488 (a)), measured against the view's own scroller so it reads as 60 columns, not 59. `TerminalSlot`'s rule lost its F-640 "old" mode and Home's slot.
+- **Release-note line (suggested):** "Home's agent now lives on Home's page: ★ home in the list, or ⇧⌘H. New Home sessions start when you ask, not at launch. All projects no longer has a Home column or a sidebar button."
+- **Checked live** (isolated, background, stub `claude` or the chat-mode mock API, no real Claude turn): `check-f648.sh` logs no `claude` start in Home's folder at launch and the List shows no "Session …" row; `check-chat-fallback-slot-live.sh` (rewritten: a session started on Home's page, fallback, back to chat, a trip to All projects and back; the terminal is in the console on screen at every step) pass; `check-chat-narrow-live.sh` (rewritten: Home's page with the right pane widened; hidden terminal 83 → 60 → 83 columns, one resize per settled move, none at the switch to the terminal) pass; captures of `list-1440`, `list-1280` against board C1 (`docs/design/home-agent-panel-handoff/checks/`). **Only in DuoChecks:** the Home card and ⇧⌘H opening Home's page, pane order and ⌃⌘S disabled at All projects, old restore files, Home's page in two windows, the slot rule for two windows (C-43), the parity scan.
+- **Settings button.** The console's "Open Settings…" button (Claude Code not found) still said Settings "isn't built"; it now opens Settings, and `Parity.uiOnly` keeps its entry with the true reason (`duo2 settings` reads and sets what the window holds). Also removed with the column: `ConsoleTabStrip`'s Home branch (`pane: .left`, `isHome`) and the token `homeSessionTabsHeight`. **Live look at the Needs you card:** `scripts/check-home-card-live.sh` (a Home session asked the mock's question; capture in `docs/design/home-agent-panel-handoff/checks/home-needs-you-live.png`).
+
+## F-679 · Room for a projects list, and where the window names a project today (design-projects-left-nav, 2026-11-13)
+Design study only; nothing built. Canvas https://claude.ai/artifact/MMAaxkzezLUu8LEBGUpbpQ, `docs/design/projects-left-nav-study/`.
+- **Width.** DL-336 left All projects at 0 | 1100 | 340 at 1440. A 260 Projects pane leaves the middle 840 at 1440 and 680 at 1280 (1280 − 260 − 340), above the map's 440 minimum, so the List keeps every column (name, project, task, wait) and the Board packs two topic columns at 220. Inside a project nothing changes in direction A: the list slides over the 300 sidebar.
+- **Where the project is named today** (captures of main, `scripts/check-ui.sh project list-1440`, isolated): the toolbar crumb (name only), the sidebar header (name and health), the window title, and the folder once, as FILES' unlabelled `monoPath` line at the sidebar's foot. The sidebar's "+ New Claude Code session" sits right after the last session group, not at the pane's foot, and carries no tooltip. The fixtures' project still shows `PROJECT.md` in FILES (DL-259's old name, read as the same file).
+- **Free keys.** ⇧⌘O is not in `DuoCommand`'s map (`Navigation/Commands.swift`); ⌘O is Open File, ⇧⌘P the peek, ⌥⌘P Preview in Split View. The Go menu exists (`CommandMenu("Go")`), so Go to Project… has a home.
+## F-680 · What a new install's first launch teaches today, read and captured for the welcome round (design-first-run-welcome, 2026-11-13)
+
+- **Captured** (isolated, background, `DUO_ISOLATED=1`, empty workspace, support and config folders; gpu-lock --shared; no Claude turn): a new install lands on **All projects › List**; no Home session starts (DL-336). With no sessions: "No sessions yet / Start one above, or ⌘T", the "New session in ~/Documents" row and "Nothing needs you." No welcome, no explainer, no film link on screen.
+- **Read:** the install sheet ("Let Claude sessions outside Duo use it?", Not Now / Install; the director-skill name question only on a clash; Legacy Duo's only if found) is the first and only thing a new install says (`InstallPrompt.swift`). Help has Duo Guide, both films, duo2 Reference, What's New, Explain Tasks, Explain Chat and Terminal, Report an Issue (`Commands.swift:549-559`).
+- **Explainers:** Tasks has a picture and triggers; Chat and Terminal has words and the pill; **Director and Home have words and no trigger anywhere** (`Explainer.swift:150-195`). **Session › Show as Chat / Show as Terminal, listed in ENH-345, does not exist**: switching is the pill or `duo2 session chat`.
+- **DL-147's Getting started card** (board `08-first-project`) is designed and not built; no code in Sources.
+- **Used by** the study `docs/design/first-run-welcome-study/` (canvas https://claude.ai/artifact/1a6Lfh9dNwco7X5ksruKhJ). Captures kept in `today/`.
+## F-681 · The Word page stays a white sheet in every appearance (Q-239, DL-340) (2026-11-13)
+
+- **Cause.** The viewer's web view is pinned to Aqua so a document keeps its own colours (DL-224), but the sheet behind the text was `var(--duo-pane)`, which `tokenCSS` resolves in the app's appearance: near-black in Dark, cream in Classic. A document's black text then sat on a dark sheet. (The sheet's default ink, `--duo-text`, had the same trouble in the same places.)
+- **Fix.** New token `docxPage` (#FFFFFF in Light, Dark and, by fallback, Classic) and the sheet's default ink `--duo-docx-ink`, the light `text` value, set with the review colours in `DocxViewer.reviewScript`. `#sheet` in `Vendor/docx-viewer/docx.html` uses both. The pane around the sheet, the margin cards, the hover label and the toolbar still follow the appearance. In Classic the sheet is now white, not cream, as Geoff asked ("keep the page white", all appearances).
+- **Check.** `docxLookChecks` (DUO_CHECKS=docxlook) draws a document in Light and Dark and requires a white sheet, dark text and a ground that differs from the sheet in Dark: it failed first (sheet rgb(24, 26, 30) in Dark), passes now (100 passed). Captures of the board's Garden plan in Light, Dark and Classic: `build/docx/viewer-{light,dark,classic}-pane.png`; Light matches the board's viewer screen as before (the compare images are `viewer-*-compare.png`).
+## F-682 · Why s02, s04, s15 and s20 failed, and what fixed them (director-evals-upkeep, 2026-11-13)
+
+Each case on Haiku 5.5, 2.1.316; a run costs about $0.03 at list price including the judge. **s20** tested the worker cap DL-232 removed; retired (deleted), not retargeted. **s02** (0/3 before; 3/3 after): Haiku read "document drafts" as organising work (§3) and did all three itself; the skill's "several requests" bullet now says it covers any kind of request, files each with `--suggest`, and that organising work waits for the go. **s04** (0/3 before; 3/3 after one more edit): `run-evals.sh`'s `--allow-tools` list overrides each case's `allowed_tools` and lacked `python3`, so the test run was denied; added. Then Haiku chained `; echo exit=$?`, which the allow pattern refuses, and gave up; the skill's "check before you accept" bullet now says reading code isn't running the check and to retry the bare command. **s15** (2/3 after): the scaffold named "1 Nov / 3 Nov", so the model spent its answer on the dates being past; the dates are now relative. The remaining miss is the skill not firing (a Haiku skip). Skill revision 5 to 6. Full suite once after the fixes, one run per case: 24 of 31, score 0.926 (F-622's baseline 0.874); misses s02 (3/3 in its own run), s09, s12, s14, s24, s31, s33, all judge-only and one run each, so noise-level evidence.
+
+## F-683 · What the evals cost and what they showed about the noise (director-evals-upkeep, 2026-11-13)
+
+A full run, 31 cases at one run each, cost about $0.85 at list price ($0.55 runs, $0.30 judges); three runs each is about $2.50. The task spent about $1.5 in all, well under its $5 cap. F-622's "$15" counted several rounds on two branches. Single runs still flip (s02 went 3/3 and then failed in the full run), so a fail in a one-run sweep means "re-run that case three times", not "regression".
+## F-684 · Why All projects' Board leaves space unused (design-all-projects-board, 2026-11-13)
+Design study only; nothing built. study page https://claude.ai/artifact/KssyGmv9iLu75RAtsAnkHV (canvas https://claude.ai/artifact/7zdNWzWyfrCPDgGtBot5M4 once its sources are loaded), `docs/design/all-projects-board-study/` (captures in `today/`, `scripts/check-ui.sh map-many` at 1440 and 1900, isolated, background).
+- **Folders are packed whole.** `PackedColumns` (`AllProjects/AllProjectsPanes.swift`) places each topic, a folder's whole `MapColumn`, under the shortest column so far (DL-129) and never splits one, so a folder's tiles always run down one column.
+- **Home's column is always the tallest.** Home's ★ tile and every project directly in Home share the first, unlabelled topic (DL-83, DL-104); Home's tile is the tallest tile (five sessions and "n more"). Only when Home's projects are the sole topic does `loneColumn` flow them three across (DL-111).
+- **Three columns at most.** `MapPacking.columnCount` caps at `maxPerRow` 3 with `mapColumnMin` 220, so a wider window widens the three (526 pt each at a 1900 window, 1560 middle) and never adds a fourth.
+- **The rest waits below the tallest column.** OUTSIDE HOME, its active tiles (`TileFlow`) and the rows by parent folder start under the grid, so the space beside a short folder is never used.
+- **No Home folder:** every folder groups under its parent's path and the map is all OUTSIDE HOME.
+
+## F-685 · Where a new session starts from All projects today (design-all-projects-board, 2026-11-13)
+- The Board has no New session control. The List's dashed row `New session in [★ home ⌄] ⌘T` (DL-262, `NewSessionRow.swift`) and ⌘T start in Home, else `~/Documents`; neither names a project you can see. A project's sidebar has "+ New Claude Code session" (Q-531 proposes naming the project).
+- The verb a tile's button would use already exists: `duo2 session new --project <p>` or `--folder <path>` (a folder with no project file). Arrow keys already move a focus ring between tiles and Enter opens one (§6.3), so ⌘T can target the focused tile.
+- Session glyphs on tiles are DL-174's (kind glyph, replaced by attention); the study's boards draw them simplified (dot for needs you, a bubble, ◆), as the sketches in other studies do.
+- **The Design canvas can't be published from a background session:** the director minted https://claude.ai/artifact/7zdNWzWyfrCPDgGtBot5M4 for this study, but the Artifact tool here refuses any publish to an artifact made from an Artifact type. The boards' sources are in `canvas/project/` ready for a session with the Design canvas tools, and the study page shows them as images.
+
+## F-686 · The List grouped by project: built, with what the screens leave open (build/list-by-project, 2026-11-13)
+
+- **Built to DL-341:** Group ⌄ gains Project (View › Group Sessions By; `duo2 view list group recent|project`; remembered in `DuoState.listGroup`). Each project has a 30-high header (chevron, name, folder in `monoPath`, count) with a 22-pt + at its right end that widens to "+ New session" on a `selected` pill under the pointer (tooltip: project and folder; accessibility label always "New session in ‹project›"). The + starts a session through `startSession(in:)` (the sidebar's path) and opens the project's page. With a header or one of its rows selected, ⌘T starts there and the + shows ⌘T. Projects go newest activity first, five rows then "n more ›", projects quiet for 7 days fold into Quieter projects, Archived last.
+- **Checks:** DuoChecks (`HomeListChecks.swift`: order, five-then-more, quiet cut-off, ⌘T target, arrow stops, folded header, verb and UI names) and the state `L1-list-by-project` (hover as L1 draws it), `list-by-project-rest`, `list-by-project-selected`, captured with `scripts/check-ui.sh`.
+- **Needs-you sessions sit in their project** in this grouping, as L1 draws them with the column showing; the `N need you ›` line is not shown while grouped (Q-548).
+- **A session whose project isn't in the project list** still gets a header, with no folder, instead of vanishing (the fixture has some); a real project always has a folder.
+- **`compare.sh` wrote a 40×17 image in this session's environment** for `L1-list-by-project` (the reference render was not made: `build/reference-renders` doesn't exist), so the target and the capture were compared by eye, region by region (F-686's capture `build/ui/L1-list-by-project.png` against `screens/png/L1-list-by-project@2x.png`).
+## F-688 · What /btw does on 2.1.284 and 2.1.323: a panel in the prompt's place, nothing in the transcript, one SubagentStop (btw-in-chat, 2026-11-13)
+
+- **Checked** headless on the chat spike's mock (a copy with a slow reply and a side-question reply), scratch `CLAUDE_CONFIG_DIR` and `HOME`, a dummy key, Haiku 5.5, 100×34, a hook logger on every event; no login, no tokens, nothing on screen. Runs: /btw during a turn (fast and slow answers), at the prompt, over an Agent step, and bare.
+- **Command:** `local-jsx`, `immediate: true` (runs during a turn, never queues), "Ask a quick side question without interrupting the main conversation". The model is told to answer in one response, with no tools.
+- **Screen:** a panel replaces the input box and footer, topped by the `▔` effort rule: `/btw <q>`, `· Answering…`, then the answer (Markdown marks dropped) and `↑/↓ to scroll · c to copy · f to fork · Esc to close`; at the prompt it browses earlier side questions (`⇧←/→ to browse … x to clear history`). Esc restores the box and footer. Bare `/btw` prints `Usage: /btw <your question>`. The same on both versions.
+- **Records:** nothing in the transcript on either version; the typed line is in `history.jsonl`. **Hooks:** no UserPromptSubmit, no SubagentStart; one `SubagentStop` with `agent_type: ""`, an `agent_id`, the answer's Markdown in `last_assistant_message`, and an `agent_transcript_path` that is never written.
+- **`f` (fork) not run:** the code either forks a background agent (`forkOrigin: "btw"`) or branches the session titled `btw: <q>`.
+- Screens: `Spikes/chat-mode/screens/btw-2.1.284/`, `btw-2.1.323/`. Research: `docs/research/btw-in-chat.md`.
+
+## F-689 · Why chat falls back on /btw, and two faults with it (btw-in-chat, 2026-11-13)
+
+- **Cause:** the panel has no `─`-ruled input box (`ChatScreen.swift:355`), so the reader returns unknown (`ChatScreen.swift:454`); after `grace` 0.5 s (`ChatSession.swift:272`) chat falls back with the named bar, "/btw opens in Claude Code's own screen…" (`ChatSession.swift:434`), since `/btw` is on `terminalCommands` (`ChatScreen.swift:87`, F-173) and the menu says "Opens in the terminal" (`ChatComposerView.swift:159`).
+- **A Queued bubble that never clears:** `send` records a /btw sent mid-turn as a queued message (`ChatSend.swift:49`); nothing ever echoes it, so it stays "Queued · Claude reads it when it's ready" until a reload.
+- **The side answer finishes an Agent card:** with an Agent step running, /btw's SubagentStop (no start) passes the side-agent guard (`ChatLog.swift:527`) and marks that card done with the side answer as its result (`ChatLog.swift:532–533`).
+
+## F-690 · A failing check reproduces /btw's fallback (btw-in-chat, 2026-11-13)
+
+- `Sources/DuoChecks/BtwChecks.swift`, run alone with `DUO_CHECKS=btw swift run DuoChecks` and not in the default run (it fails until the fix; the fix build adds it there). On the captured screens of both versions: the panel reads unknown (6 fail), a `/btw` sent through `ChatSession.send` on a scripted TUI falls back and leaves a queued bubble (4 fail), and the hook payload finishes a running Agent card (1 fail). 8 sanity checks pass (the screens before and after read busy; the send itself succeeds).
+- Method notes for the next run: an inherited `CLAUDE_CODE_*` environment from a Claude session turns transcript saving off ("inherited CLAUDE_CODE_CHILD_SESSION marker") and leaks the host's tools into requests, so the TUI runs under `env -i` with a scratch `HOME`; port 8791 was another session's mock, so pick a free port and check the mock's own log.
+## F-691 · A stop with no start no longer finishes a running Agent card (fix-sidestop-misfile, 2026-11-13)
+
+- Cause (F-689): `ChatLog.agentFinished` ignored an unmatched SubagentStop only when no Agent card was running. With one running, /btw's side answer (SubagentStop with `agent_type: ""`, an agent id, no SubagentStart) finished that card and filled it with the side answer.
+- Fix: a stop counts for a card only when its agent id had a SubagentStart (`agentsStarted`). Any other stop, with no id or an unknown one, touches no card and adds no "Background agent finished" line. Its id, type, text and time go to `ChatLog.sideStops` (last 20), so the later /btw design (Q-550..Q-554) can use the answer.
+- Check: `Sources/DuoChecks/ChatSideStopChecks.swift`, run by `chatChecks()`: red first (5 failures), green after; a side stop between a real start and stop leaves the card running and the real stop still finishes it with its own message.
+- The EDITOR/VISUAL helper checks (ChatChecks around line 787) fail in this tree before and after the change; not caused by this.
+
+## F-692 · A note with review comments kept its first margin when the pane changed width (fix-editor-softwrap-widen, 2026-11-13)
+
+- **Geoff's report:** a Markdown note in a very narrow right pane wrapped correctly; widened, the paragraphs stayed narrow while the table widened.
+- **Cause:** `Margin` (`Vendor/codemirror/src/margin.js`) gives the review margin its share of the text column as an inline `marginRight` on `.cm-content` (24 under 420 wide, 184 from 420), but it recomputed only in `update()`, and a pane that changes width alone (a divider drag, no window resize) did not reach it. A note opened wide kept 184 in a 359 pane (text column 119 wide); one opened narrow kept 24 when widened. Notes with no comments (no margin) were never affected, and neither Chrome, Playwright WebKit nor an offscreen WKWebView reproduced it: it took the real app with a visible window and a note with a comment thread.
+- **Fix:** `Margin` observes `view.dom` with a `ResizeObserver` and reschedules its layout when the width changes. Bundle rebuilt (`Vendor/codemirror/build.sh`).
+- **Check:** `scripts/check-editor-widen.sh` (isolated Duo, scratch workspace, `right-width:` moves, `editor-js:` measures): red on the release build (119 wide in a 359 pane, margin 184), green with the fix (279, margin 24; 420, margin 184). A window that is not shown gets no resize notifications, so it needs `DUO_TEST_FOREGROUND=1`.
+- **Not found:** the folder in the note was a red herring in my tests (a task note with a folder reference widens fine). If the note Geoff saw had no review comments, this is not its cause: send the file.
+## F-678 · Rewind and Fork were not run on a real Claude session: no login is available in an isolated background run (chat-turn-real-run, 2026-11-13)
+
+- **Run:** built the branch (`scripts/bundle.sh`, under `gpu-lock --shared`) and ran `scripts/check-chat-turn-actions.sh` (fixture states: row on your message, busy, Claude's reply, Copy's check, selected message, Rewind's sheet): six captures in `build/ui/turn-*.png`. These are fixtures, not a real session. Not compared region by region against boards 1 to 4 in this run.
+- **Not run:** the four real Haiku turns, Rewind through Duo's driver, Fork, the fork transcript check, the original-untouched check, Copy as Markdown on real turns. An isolated Duo's scratch `CLAUDE_CONFIG_DIR` has no credentials, copying Geoff's is forbidden, and `claude /login` can't be run in this cloud session (Geoff: "shell commands don't work in a cloud instance"). So DL-338's real-session behaviour stays proved only on the mock (F-667, F-668).
+- **To finish it:** a run on the Mac mini with a login in a scratch config (`CLAUDE_CONFIG_DIR=<scratch> claude /login` once, by Geoff), or a throwaway `ANTHROPIC_API_KEY`.
+- No code was changed; no break found, none looked for beyond the fixtures.
+
+## F-670 · Four file-watcher checks failed because this Mac's FSEvents service delivered nothing, not because of Duo (filewatcher-checks, 2026-11-14)
+
+BackoffChecks lines 100, 102, 103 and PerfRegression line 178 failed on main on 2026-11-12 and reproduced on 2026-11-14 (0.2.29, f2cd3bad) at load average about 9. A standalone probe with none of Duo's code (a plain `FSEventStreamCreate` on a folder, a file written 1.5 s later, an 8 s wait) saw **zero events**, in a scratch folder and inside the work tree, with and without the sandbox. `fseventsd` was at about 100 % CPU (up 42 days, Darwin 27). So the cause is the machine's event service, not `FolderWatch` and not a commit; `FolderWatch` is unchanged and the 0.2.28 gate passed while the service was healthy. A restart of `fseventsd` (needs root, shared Mac) was not tried; a reboot would be the cure. The three EDITOR checks did not fail here (6434 passed after the fix).
+Fix (checks only): `Sources/DuoChecks/FSEventsCanary.swift` runs a plain stream once and waits up to 6 s; the four checks run only if it delivers, else a loud `⚠ SKIPPED` line is printed and counted in the summary. With a working service nothing changes: the checks run and fail as before. `DUO_CHECKS_REQUIRE_FSEVENTS=1` makes a dead service a failure. Risk: a gate on a wedged Mac passes without exercising the watcher's poke; the summary says "2 skipped".
+## F-366 · Which session links open where: tested in Claude Code's TUI, Duo and the Claude desktop app (director-session-links, 2026-10-24; Q-236)
+
+- **Claude Code's TUI writes no hyperlinks in Duo's terminal.** With Duo's environment (`TERM=xterm-256color`, no `TERM_PROGRAM`), 2.1.310 and 2.1.219 both draw `[t](url)` as plain `t (url)`. With `FORCE_HYPERLINK=1` both emit OSC 8 for `duo2://`, `https://`, `claude://` and `#local_…`, showing only the title. Tested with `claude --resume` on a made-up transcript in a pty (scratch config, dummy key, no model turn). SwiftTerm opens OSC 8 on ⌘-click through `NSWorkspace`; Duo doesn't override `requestOpenLink`.
+- **Duo's chat parses all four forms as links** (Foundation Markdown). `duo2://session/` opens the session in Duo (DL-87's route); `https` opens a browser tab or the browser; `claude://` goes to the desktop app; `#local_…` reads as a missing file.
+- **The desktop app's own form is `#local_<id>`**, the app's id, not Claude Code's (its session records map `local_…` to `cliSessionId`). `claude --bg` workers have no `local_` id. In Geoff's clicks in the desktop app (reading a background session), `#local_` links weren't drawn as links, `claude://claude.ai/epitaxy/local_…` links did nothing, and a Remote Control URL (`https://claude.ai/code/session_…`) worked.
+- **Hosting can't be read reliably from the environment:** a `--bg` worker started from a desktop session inherits `CLAUDE_CODE_DESKTOP_APP_VERSION` and the parent's `CLAUDE_CODE_HOST_SESSION_ID`, and a Remote Control session is read on the Mac and the phone at once. Details: `docs/research/director-session-links.md`.
+
+## F-367 · Duo's chat mode showed a blank pane for a running background session (director-session-links, 2026-10-24)
+
+- Geoff opened this research session (`6b29216a…`, a `claude --bg` worker running outside Duo, Remote Control on) in Duo's chat mode, and the pane was fully blank: no transcript and no explain-and-fork message. Not explored here; it needs its own task (Q-237 asks what a link to such a session should show).

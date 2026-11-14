@@ -27,7 +27,18 @@ struct DocxView: View {
                 ZStack(alignment: .topLeading) {
                     VStack(spacing: 0) {
                         DocxBar(viewer: viewer, path: path, file: file)
-                        DocxWebHost(viewer: viewer)
+                        GeometryReader { geo in
+                            // The margin's page says how wide it wants to be and how much the document gives up: a narrow pane's
+                            // popover floats over it (the page's own layout, Markdown's; DL-337).
+                            HStack(spacing: 0) {
+                                DocxWebHost(viewer: viewer)
+                                if viewer.office.margin.reserve > 0 { DuoColor.ground.frame(width: viewer.office.margin.reserve) }
+                            }
+                            .overlay(alignment: .trailing) {
+                                if viewer.office.margin.width > 0 { PdfMarginHost(margin: viewer.office.margin).frame(width: viewer.office.margin.width) }
+                            }
+                            .onChange(of: geo.size.width, initial: true) { _, w in viewer.office.paneWidth = w }
+                        }
                         DocxPickerBar(viewer: viewer)
                     }
                     if model.docxMenuOpen {
@@ -57,21 +68,42 @@ struct DocxBar: View {
 
     var body: some View {
         let _ = model.pickerRevision
-        HStack(spacing: DuoSpace.gapButtonToButton) {
-            Button { model.docxMenuOpen.toggle() } label: {   // action: doc markup
-                HStack(spacing: 1) { Text("Markup"); Image(systemName: "chevron.down").font(.system(size: DuoSymbolSize.chevronSmall, weight: .semibold)) }
-            }
-            .buttonStyle(DuoButtonStyle(on: model.docxMenuOpen)).fixedSize().disabled(viewer.state != .ready)
-            Spacer(minLength: 0)
-            Button("Select Text") { viewer.picking ? viewer.stopPicking() : viewer.startPicking() }   // action: doc pick
-                .buttonStyle(DuoButtonStyle(on: viewer.picking)).fixedSize().disabled(viewer.state != .ready)
-            Button("Convert to Markdown…") { model.askConvertToMarkdown(path) }.buttonStyle(.duo).fixedSize()
-            OpenWithMenu(path: path, file: file, bordered: true)
+        ViewThatFits(in: .horizontal) {
+            bar(folded: false)
+            bar(folded: true)
         }
         // The board's four buttons run to 10 from the pane's right edge, not 20; Duo's are a little wider, so 6 here: that is what fits them at 460.
         .padding(.leading, DuoMetric.noticePaddingX).padding(.trailing, DuoMetric.docxBarTrailing)
         .frame(height: DuoMetric.deckBarHeight)
         .overlay(alignment: .bottom) { DuoColor.rule.frame(height: DuoMetric.borderHairline) }
+    }
+
+    /// Markup ⌄ and Select Text at the left; ‹ › (the next and previous comment, DL-337) and Convert to Markdown… and Open With ⌄ at the
+    /// right, the last two folded into ⋯ ⌄ when the pane is too narrow for them (as the Decks bar folds, DL-305).
+    private func bar(folded: Bool) -> some View {
+        HStack(spacing: DuoSpace.gapButtonToButton) {
+            Button { model.docxMenuOpen.toggle() } label: {   // action: doc markup
+                HStack(spacing: 1) { Text("Markup"); Image(systemName: "chevron.down").font(.system(size: DuoSymbolSize.chevronSmall, weight: .semibold)) }
+            }
+            .buttonStyle(DuoButtonStyle(on: model.docxMenuOpen)).fixedSize().disabled(viewer.state != .ready)
+            Button("Select Text") { viewer.picking ? viewer.stopPicking() : viewer.startPicking() }   // action: doc pick
+                .buttonStyle(DuoButtonStyle(on: viewer.picking)).fixedSize().disabled(viewer.state != .ready)
+            Spacer(minLength: 0)
+            if viewer.office.paneWidth < 420 {
+                OfficeReviewMenu(office: viewer.office, ready: viewer.state == .ready)
+            } else {
+                Button { viewer.office.step(-1) } label: { Text("‹") }   // action: doc review
+                    .buttonStyle(.duo).disabled(viewer.state != .ready || viewer.office.threads.isEmpty).help("Previous Comment").accessibilityLabel("Previous Comment")
+                Button { viewer.office.step(1) } label: { Text("›") }   // action: doc review
+                    .buttonStyle(.duo).disabled(viewer.state != .ready || viewer.office.threads.isEmpty).help("Next Comment").accessibilityLabel("Next Comment")
+            }
+            if folded {
+                DocxMoreMenu(path: path, file: file)
+            } else {
+                Button("Convert to Markdown…") { model.askConvertToMarkdown(path) }.buttonStyle(.duo).fixedSize()   // action: file convert
+                OpenWithMenu(path: path, file: file, bordered: true)
+            }
+        }
     }
 }
 
@@ -93,7 +125,7 @@ struct MarkupMenu: View {
             }
             divider
             row("Show Comments", checked: m.comments).onActivate { model.setMarkup(comments: !m.comments) }   // action: doc markup
-            row("Show Resolved Comments", checked: m.resolved).onActivate { model.setMarkup(resolved: !m.resolved) }   // action: doc markup
+            row("Show Closed Comments", checked: m.resolved).onActivate { model.setMarkup(resolved: !m.resolved) }   // action: doc markup
             if !viewer.people.isEmpty {
                 divider
                 Text("PEOPLE").duoText(.sectionLabel).foregroundStyle(DuoColor.text2)
@@ -200,5 +232,49 @@ struct DocxPickerBar: View {
             .background(DuoColor.ground)
             .overlay(alignment: .top) { DuoColor.rule.frame(height: DuoMetric.borderHairline) }
         }
+    }
+}
+
+/// ⋯ ⌄: Convert to Markdown… and Open With, folded into one menu when the bar is too narrow for them.
+struct DocxMoreMenu: View {
+    @Environment(AppModel.self) private var model
+    let path: String
+    let file: URL
+
+    var body: some View {
+        Menu {
+            Button("Convert to Markdown…") { model.askConvertToMarkdown(path) }   // action: file convert
+            Divider()
+            ForEach(Array(FileActions.apps(for: file).enumerated()), id: \.offset) { i, app in
+                Button("Open With " + FileManager.default.displayName(atPath: app.path) + (i == 0 ? " (default)" : "")) {
+                    NSWorkspace.shared.open([file], withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
+                }
+            }
+            Button("Other…") { model.openWithChosenApp(path) }
+        } label: {
+            HStack(spacing: 4) { Text("⋯"); Image(systemName: "chevron.down").font(.system(size: DuoSymbolSize.chevron, weight: .semibold)) }
+        }
+        .menuStyle(.button).buttonStyle(.duo).fixedSize()
+        .accessibilityLabel("More")
+    }
+}
+
+/// Review ⌄: under 420 the margin is a gutter and the bar has no room for ‹ ›, so Next and Previous Comment and Show Closed Comments
+/// move into one menu, as the Markdown bar's Review ⌄ does (DL-237, board S1b).
+struct OfficeReviewMenu: View {
+    @Bindable var office: OfficeMargin
+    let ready: Bool
+
+    var body: some View {
+        Menu {
+            Button("Next Comment") { office.step(1) }   // action: doc review
+            Button("Previous Comment") { office.step(-1) }   // action: doc review
+            Divider()
+            Toggle("Show Closed Comments", isOn: $office.showClosed)   // action: doc markup
+        } label: {
+            HStack(spacing: 4) { Text("Review"); Image(systemName: "chevron.down").font(.system(size: DuoSymbolSize.chevron, weight: .semibold)) }
+        }
+        .menuStyle(.button).buttonStyle(.duo).fixedSize().disabled(!ready || office.threads.isEmpty)
+        .accessibilityLabel("Review")
     }
 }

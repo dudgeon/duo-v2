@@ -2,6 +2,10 @@
 
 **A task is a to-do note in a project. It keeps track of the sessions working on it.** You don't need tasks to use Duo; plenty of sessions are quick questions that don't need one.
 
+## Tasks and sessions
+
+A **session** is one conversation with Claude. A **task** is an optional note that gathers the sessions working on one piece of work. A session can exist with no task; a task needs no session until you start one. If you're unsure, start with sessions.
+
 ## The problem
 
 Real work takes more than one conversation. Getting ready for an exec review might take a research session on Monday, a draft on Tuesday and a review on Thursday. A week later, which conversations were part of it?

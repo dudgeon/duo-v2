@@ -1,0 +1,21 @@
+<style>
+#term { left: 20px; top: 16px; width: 320px; height: 190px; }
+#m2 { display: none; } [data-state~="s2"] #m1 { display: none; } [data-state~="s2"] #m2 { display: block; }
+#chain { left: 20px; top: 222px; display: flex; gap: 6px; }
+[data-state~="rew"] #c3, [data-state~="rew"] #c4 { opacity: .45; border-style: dashed; }
+#k1 { left: 355px; top: 16px; width: 265px; } #k2 { left: 355px; top: 100px; width: 265px; }
+#k3 { left: 355px; top: 184px; width: 265px; } #k4 { left: 20px; top: 280px; width: 320px; }
+#stamp { left: 355px; top: 290px; font-size: 14px; white-space: normal; width: 250px; }
+</style>
+<div class="term" id="term" data-in="fade" data-f>
+<div id="m1"><div class="dm">Restore to the point before…</div>
+<div id="p1">  hello</div><div id="p2" data-f class="hl">  write A      a.txt +1</div><div id="p3">  write B      b.txt +1</div><div id="p4">  bash C       No code changes</div><div class="dm">  (current)</div></div>
+<div id="m2"><div class="dm">Restore to before this message:</div>
+<div id="o1">  1 Restore code and conversation</div><div id="o2" data-f class="hl">  2 Restore conversation</div><div id="o3">  3 Restore code</div><div id="o4">  4 Summarize from here</div><div id="o5">  5 Summarize up to here</div></div>
+</div>
+<div id="chain" data-in="fade"><span class="step" id="c1">hello</span><span class="step" id="c2">write A</span><span class="step" id="c3">write B</span><span class="step" id="c4">bash C</span></div>
+<div class="call" id="k1" data-in="up" data-f>Conversation: the prompt comes back to the box. Removed turns stay in the file, a dead branch.</div>
+<div class="call" id="k2" data-in="up" data-f>Code: only what Write and Edit changed. Never Bash. 2.1.316 warns later changes by anyone are lost.</div>
+<div class="call" id="k3" data-in="up" data-f>Same on 2.1.284 (the work Mac) and 2.1.316, apart from the wording.</div>
+<div class="call" id="k4" data-in="up" data-f>Fork copies it all. A fork at one turn is print mode only: fork whole, then rewind the copy.</div>
+<div class="stamp" id="stamp" data-in="scale" data-f>Tried on a mock API, no real Claude</div>

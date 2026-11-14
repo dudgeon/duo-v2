@@ -1,0 +1,22 @@
+<style>
+.sl { left: 24px; height: 40px; width: 600px; display: flex; align-items: center; gap: 12px; }
+.sl .n { width: 190px; flex: none; font-size: 16px; line-height: 20px; font-weight: 600; }
+.sl .n small { display: block; font-size: 13px; font-weight: 400; color: #5b636d; }
+.sl .bar { height: 26px; border-radius: 6px; background: #1f2328; color: #ffffff; font-size: 13px; line-height: 26px; padding: 0 10px; white-space: nowrap; overflow: visible; }
+.sl .bar.later { background: #ffffff; color: #5b636d; border: 1.5px dashed #8b939c; line-height: 23px; }
+.sl .bar.yours { background: #A88FD0; color: #1f2328; }
+#s0 { top: 22px; } #s1 { top: 72px; } #s2 { top: 122px; } #sc { top: 172px; } #s3 { top: 222px; }
+.cmp { left: 24px; height: 30px; display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.cmp .bar { height: 26px; border-radius: 6px; }
+#cmp-v1 { top: 292px; } #cmp-v1 .bar { width: 400px; background: #c9cdd3; }
+#cmp-v2 { top: 334px; } #cmp-v2 .bar { width: 64px; background: #1f2328; }
+#rule { left: 320px; top: 336px; }
+</style>
+<div class="sl" id="s0" data-in="up" data-f><span class="n">Slice 0<small>one core</small></span><span class="bar" style="width:100px">nothing visible</span><span class="s">2 sessions</span></div>
+<div class="sl" id="s1" data-in="up" data-f><span class="n">Slice 1<small>two windows</small></span><span class="bar" style="width:170px">New Window, titles</span><span class="s">1–2</span></div>
+<div class="sl" id="s2" data-in="up" data-f><span class="n">Slice 2<small>restore, needs-you</small></span><span class="bar" style="width:60px">&#8203;</span><span class="s">1</span></div>
+<div class="sl" id="sc" data-in="up" data-f><span class="n">Colour<small>your idea, ENH-319</small></span><span class="bar yours" style="width:60px">&#8203;</span><span class="s">1</span></div>
+<div class="sl" id="s3" data-in="up" data-f><span class="n">Slice 3<small>pins, two-window sessions</small></span><span class="bar later" style="width:150px">later</span><span class="s">2–3</span></div>
+<div class="cmp" id="cmp-v1" data-in="right" data-f><span class="bar"></span><span>v1 · 13–17 engineer-weeks</span></div>
+<div class="cmp" id="cmp-v2" data-in="right" data-f><span class="bar"></span><span>0 + 1 · 3–4 sessions</span></div>
+<div class="stamp" id="rule" data-in="left" data-f>a project lives in one window</div>

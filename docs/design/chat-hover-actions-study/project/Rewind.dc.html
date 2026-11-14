@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rewind</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.cap{font-size:12px;line-height:17px;color:#5B636D}
+.cap b{color:#1F2328;font-weight:600}
+.lab{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.mono{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:11px}
+.term{box-sizing:border-box;background:#15171B;border:1px solid #C9CDD3;padding:12px 14px;font:400 11px/17px 'SF Mono',ui-monospace,Menlo,monospace;color:#E6E8EB;white-space:pre;overflow:hidden}
+.term .d{color:#9AA1AB}
+.tbar{box-sizing:border-box;background:#15171B;border:1px solid #C9CDD3;border-top:1px solid #2B2F36;padding:8px 14px;display:flex;align-items:center;gap:10px;font:400 12px/16px -apple-system,system-ui,sans-serif;color:#E6E8EB}
+.tbar button{font:400 12px/16px -apple-system,system-ui,sans-serif;color:#E6E8EB;background:#2B2F36;border:1px solid #4A4F57;border-radius:6px;padding:3px 10px}
+</style>
+</helmet>
+<div style="width: 1560px; height: 1180px; box-sizing: border-box; background: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; color: #1F2328; padding: 40px; display: flex; flex-direction: column; gap: 22px">
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <div style="font-size: 18px; line-height: 24px; font-weight: 600">Rewind: Duo asks in its own sheet, then works Claude Code’s own menu [P]</div>
+    <div class="cap" style="font-size: 13px; line-height: 19px; max-width: 1420px">Rewind hangs Duo’s sheet from the toolbar (<span class="mono">SheetCenter</span>), never a system alert. On Rewind, Duo opens Claude’s menu in the hidden terminal, picks this message by its words and place in the list, picks the option, and reads every screen before each key (both 2.1.284’s and 2.1.316’s words). Duo never edits the transcript. Desktop’s Rewind has no confirmation and is clicked by accident (its issue #99611); this asks once.</div>
+  </div>
+  <div class="lab">Q-506 · What Rewind restores</div>
+  <div style="display: flex; gap: 36px; align-items: flex-start">
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">A (recommended) · the sheet asks, when files changed</div>
+      <dc-import name="Sheet" sheet="{{sa}}" hint-size="480px,380px"></dc-import>
+      <div class="cap"><b>Conversation only</b> is the default, every time. The files are the ones Claude changed with its own Write and Edit from this turn on (from the transcript’s checkpoint records); the note is Claude’s own limit, said plainly. Return rewinds, Escape cancels.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">A · when that turn changed no files</div>
+      <dc-import name="Sheet" sheet="{{sn}}" hint-size="480px,220px"></dc-import>
+      <div class="cap">No choice to make, so none is shown: the same sheet as B. Claude’s menu offers no code restore here either.</div>
+      <div class="lab" style="margin-top: 14px">B · conversation only, always</div>
+      <div class="cap">The sheet above for every turn. Putting files back stays a terminal job (<span class="mono">/rewind</span> there). Simplest and safest; you lose the one thing Rewind does that git can’t do for a non-engineer.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">C · Claude’s whole menu, in Duo</div>
+      <dc-import name="Sheet" sheet="{{sc}}" hint-size="480px,330px"></dc-import>
+      <div class="cap">Everything Claude offers, Summarize included. Faithful, but “Restore code” alone (files back, conversation kept) and the two Summarize options are rarely wanted from a hover button.</div>
+    </div>
+  </div>
+  <div class="lab" style="margin-top: 6px">After, and Q-507 · how Duo does it</div>
+  <div style="display: flex; gap: 36px; align-items: flex-start">
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">After (A or B)</div>
+      <dc-import name="Chat" chat="{{after}}" hint-size="480px,330px"></dc-import>
+      <div class="cap">The removed turns fade out (<span class="mono">motionRowOut</span>); a note marks the place; your message waits in the composer, caret at its end. With files: “Rewound, and 2 files put back.” The note stays until the next turn. ⌘Z doesn’t undo a rewind (Claude can’t); the old turns live on only in a fork made before it.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">Q-507 A (recommended) · Duo works the menu; if a screen doesn’t match</div>
+      <div class="term">  Rewind
+  Confirm you want to restore to the point before you sent this message:
+  │ Compare the two refund flows in a table…
+  <span class="d">  The conversation will be forked.</span>
+  ❯ 1. Restore code and conversation
+    2. Restore conversation
+    3. Restore code
+  …</div>
+      <div class="tbar"><span style="flex: 1">Duo couldn’t finish the rewind. Claude’s menu is open here.</span><button type="button">Back to Chat</button></div>
+      <div class="cap">Duo stops at the first screen it doesn’t recognise and shows the terminal with Claude’s menu as it is (chat’s fallback, DL-258: back only by Back to Chat). Nothing is guessed; you finish or press Esc there.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">Q-507 B · Duo opens Claude’s menu for you</div>
+      <div class="term">  Rewind
+  Restore the code and/or conversation to the point before…
+    ↑ 2 more
+  ❯ Compare the two refund flows in a table…
+    docs/refunds/flows.md +4
+    Make it shorter.
+    No code changes
+    (current)
+  Enter to continue · Esc to cancel</div>
+      <div class="cap">No Duo sheet: Rewind switches the tab to the terminal with Claude’s list open on this message. Always right, never a surprise from Duo, but every rewind leaves chat, and chat has to come back by hand.</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1560,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const quote = 'Compare the two refund flows in a table, with a short recommendation.';
+    return {
+      sa: { w: 480, title: 'Rewind to before this message?', quote, text: 'This message and the 3 turns after it leave the conversation. The message comes back to your composer to change and send.', options: [ { label: 'Conversation only', sub: 'Files stay as they are now.', on: true }, { label: 'Conversation and files', sub: 'Undo Claude’s changes since then in 2 files:' } ], box: 'docs/refunds/flows.md\ndocs/refunds/limits.md', note: 'Changes from commands Claude ran, or made by you or another app, aren’t undone. A file put back loses any later change to it, by anyone.', buttons: [ { label: 'Cancel' }, { label: 'Rewind', def: true } ] },
+      sn: { w: 480, title: 'Rewind to before this message?', quote: 'Make it shorter.', text: 'This message and the turn after it leave the conversation. The message comes back to your composer. No files change.', buttons: [ { label: 'Cancel' }, { label: 'Rewind', def: true } ] },
+      sc: { w: 480, title: 'Rewind to before this message?', quote, options: [ { label: 'Restore code and conversation', on: true }, { label: 'Restore conversation' }, { label: 'Restore code' }, { label: 'Summarize from here' }, { label: 'Summarize up to here' } ], note: 'Rewinding does not affect files edited manually or via bash.', buttons: [ { label: 'Cancel' }, { label: 'Rewind', def: true } ] },
+      after: { w: 480, h: 330, tabs: [ { t: 'Refund flows', on: true }, { t: 'Teardown research' } ], items: [ { bars: true }, { claude: true, meta: 'Claude · 9:41', lines: [ 'The refund docs are in docs/refunds/.' ] }, { note: true, text: 'Rewound to before “Compare the two refund flows…”' } ], composer: quote, composerFilled: true }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<style>
+#w { left: 24px; top: 24px; width: 592px; height: 300px; }
+#w .tb { font-weight: 400; }
+#crumb { font-weight: 600; }
+#w .lp { width: 36%; transition: width .6s; }
+#nav { width: 0; overflow: hidden; background: #f3f4f6; border-right: 0 solid #c9cdd3; padding: 10px 0; display: flex; flex-direction: column; gap: 7px; transition: width .6s, padding .6s; white-space: nowrap; }
+[data-state~="nav"] #nav { width: 24%; padding: 10px 8px; border-right-width: 1px; }
+[data-state~="nav"] #w .lp { width: 30%; }
+#path { font: 13px/17px ui-monospace, "SF Mono", Menlo, monospace; color: #8b939c; border-radius: 4px; }
+#nsb { border: 1px solid #8b939c; border-radius: 6px; font-size: 13px; line-height: 20px; padding: 2px 8px; margin-top: auto; white-space: nowrap; align-self: flex-start; }
+.tip { background: #1f2328; color: #ffffff; border-radius: 6px; padding: 4px 9px; font-size: 13px; line-height: 18px; white-space: nowrap; z-index: 12; box-shadow: 0 6px 16px rgba(31,35,40,.25); }
+#t1 { left: 150px; top: 56px; } #t2 { left: 44px; top: 330px; }
+#exp { left: 330px; top: 96px; width: 262px; }
+#guide { left: 330px; top: 110px; width: 262px; }
+[data-state~="tips"] #t1, [data-state~="tips"] #t2, [data-state~="tips"] #exp, [data-state~="docs"] #exp, [data-state~="docs"] #guide { --o: 1; }
+[data-state~="docs"] #exp { top: 180px; transition: opacity .5s, top .5s; }
+</style>
+<div class="win" id="w" data-in="up" data-f>
+  <div class="tb">All projects › <span id="crumb" data-f>checkout</span></div>
+  <div class="bd">
+    <div id="nav"><span class="lab">Projects</span><span class="row">▸ payments</span><span class="row sel">▾ checkout</span><span class="row">&nbsp;&nbsp;Fix the cart total</span><span class="row">▸ refunds</span></div>
+    <div class="lp"><span class="row sel">Fix the cart total</span><span class="row">Refund flow</span><span class="lab" style="margin-top:6px">Files</span><span id="path" data-f>~/work/checkout</span><span class="row">src</span>
+      <span id="nsb" data-f>+ New Claude Code session</span></div>
+    <div class="cn"><span class="b" style="width:80%"></span><span class="b" style="width:55%"></span><span class="b lit" style="width:35%"></span></div>
+  </div>
+</div>
+<div class="tip fade" id="t1">~/work/checkout · a folder with a _PROJECT.md</div>
+<div class="tip fade" id="t2">New Claude session ⌘T · in checkout (~/work/checkout)</div>
+<div class="sheet fade" id="exp"><b>Projects</b>A project is a folder with a _PROJECT.md. Sessions started in it belong to it. Learn more</div>
+<div class="card fade" id="guide"><b>Guide · Where a session belongs</b></div>

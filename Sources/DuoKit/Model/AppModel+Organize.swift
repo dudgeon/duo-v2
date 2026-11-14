@@ -281,14 +281,14 @@ extension AppModel {
         // Duo's own sheet (S3-7, DL-101): the detail's paragraphs, and any list in it as items.
         var q = Self.question(title: title, detail: detail)
         q.choices = [.init(label: "Cancel", isCancel: true) { then(false) }, .init(label: button, isDefault: true) { then(true) }]
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { MainActor.assumeIsolated { SheetCenter.shared.ask(q) } }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { MainActor.assumeIsolated { SheetCenter.shared.ask(from: self, q) } }
     }
 
     func info(_ text: String) {
         if Env.autoconfirm {
             FileHandle.standardError.write(Data("info: \(text)\n".utf8)); return
         }
-        SheetCenter.shared.ask(DuoQuestion(title: text, choices: [.init(label: "OK", isDefault: true, isCancel: true) {}]))
+        SheetCenter.shared.ask(from: self, DuoQuestion(title: text, choices: [.init(label: "OK", isDefault: true, isCancel: true) {}]))
     }
 
     /// Splits a detail written for an alert into a sheet's parts: blank-line paragraphs, and a
@@ -315,7 +315,7 @@ extension AppModel {
     func registerUndo(_ name: String, _ undo: @escaping @MainActor (AppModel) -> Void) {
         if undoBatch != nil { undoBatch?.append((name, undo)); return }
         if let undoRecorder { return undoRecorder(name, undo) }
-        guard let manager = NSApp.windows.first(where: { $0.title == "Duo" })?.undoManager else { return }
+        guard let manager = window?.undoManager else { return }
         // Each change is its own undo step. Left to group by event, a change made from duo2 opens a
         // group that only closes at the next user event, so several duo2 changes undid as one (F-57).
         // At level 0 beginUndoGrouping would first open the automatic group, which then stays open.

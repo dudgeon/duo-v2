@@ -1,5 +1,7 @@
 # Duo: split view, slice 1 (a file beside its preview) — design handoff
 
+**Superseded in part by DL-306 (Geoff, 2026-11-02, "Squeeze others first"):** the minimums below are now the console 400 and each side 300, and the sidebar folds only under about 1,300 (1,303 with the dividers), not 1,464. At 1440 the sidebar stays; at 1280 it folds. Every 480, 340, 470, 391 and 1,464 on this page and on its screens is the earlier rule; the rail, the peek, the unfold and the fold are unchanged.
+
 Status: approved by Geoff, 2026-10-31 (DL-275 to DL-278). Build after 0.2.22. Duo Decks' viewer is the first customer and waits on this.
 
 The boards were drawn on the Design canvas https://claude.ai/artifact/8j6ukv88cvTqvdSEoHnEc1 with the Duo design system; every new mark is a [P]. Geoff chose option C, a split tab, in two slices. The boards are exported here as static HTML (`screens/`, listed in `screens/manifest.json`), with PNGs at 2x in `screens/png/`.

@@ -12,6 +12,7 @@
 # frame while replies arrive; DUO_PERF_TRACE=1 writes a timeline of each append to stderr.txt;
 # DUO_FEED=whole draws the lazy feed's turns whole, as before F-304, to measure against.
 set -u
+export DUO_ISOLATED=1   # every duo2 here reaches only the test instance; refuses, never the user's Duo (F-529)
 root=${0:A:h:h}
 cd $root
 out=${1:-build/perf/run}; shift 2>/dev/null

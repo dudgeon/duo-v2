@@ -10,7 +10,7 @@
 // The scan runs over the whole document, not per paragraph, so a mark that spans paragraphs reads
 // as one (Q-244). Marks inside fenced or inline code are text. The text stays the truth (LR-30):
 // drawing hides the marks' syntax with decorations and never rewrites the document.
-import { StateField, StateEffect, EditorState, EditorSelection } from "@codemirror/state";
+import { StateField, StateEffect, EditorState, EditorSelection, Transaction } from "@codemirror/state";
 import { EditorView, Decoration, hoverTooltip } from "@codemirror/view";
 
 const OPENERS = [["{++", "++}", "ins"], ["{--", "--}", "del"], ["{~~", "~~}", "sub"], ["{==", "==}", "hl"], ["{>>", "<<}", "cm"]];
@@ -392,7 +392,9 @@ const suggestTyping = EditorState.transactionFilter.of((tr) => {
   if (h.from !== h.to && ownInsertionAt(st, h.from, h.to)) return tr;
   const author = st.field(reviewerField), id = nextIds(st.doc)();
   const old = st.sliceDoc(h.from, h.to), m = markFor(old, h.insert, author, id);
-  return { changes: { from: h.from, to: h.to, insert: m.text }, selection: EditorSelection.cursor(h.from + m.caret), userEvent: tr.isUserEvent("delete") ? "delete.backward" : "input.type", scrollIntoView: true };
+  return { changes: { from: h.from, to: h.to, insert: m.text }, selection: EditorSelection.cursor(h.from + m.caret), userEvent: tr.isUserEvent("delete") ? "delete.backward" : "input.type", scrollIntoView: true,
+    // The rewritten change keeps the original's annotations (a dictation's own mark, its history time and isolation), not its user event.
+    annotations: tr.annotations.filter((a) => a.type !== Transaction.userEvent) };
 });
 
 // ---------- theme ----------
@@ -400,6 +402,9 @@ const suggestTyping = EditorState.transactionFilter.of((tr) => {
 const A = [1, 2, 3, 4, 5];
 export const reviewTheme = EditorView.baseTheme({
   ".duo-rv-ins": { textDecoration: "underline", textUnderlineOffset: "3px" },
+  // F-458: CodeMirror's zero-width buffers around the hidden marks (`{++`, `++}`, the signature) are inline images, and a browser may
+  // break a line at one: a suggestion that ends a line left its full stop alone on the next. Out of the flow, they break nothing.
+  ".duo-rv ~ .cm-widgetBuffer": { position: "absolute" },
   ".duo-rv-del": { textDecoration: "line-through" },
   ...Object.fromEntries(A.map((n) => [`.duo-rv-a${n}`, { color: `var(--duo-review-${n})` }])),
   ".duo-rv-hl": { backgroundColor: "var(--duo-comment-highlight)" },

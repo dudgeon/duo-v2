@@ -26,6 +26,6 @@ lock=(${main:-$root}/scripts/gpu-lock.sh --shared director-evals)
 [[ -n ${GPU_LOCK:-} && -x ${lock[1]} ]] || lock=()
 cd $skill
 $lock $claude plugin ev""al $skill --trust-plugin --scaffold --ablation none --model ${DIRECTOR_EVAL_MODEL:-claude-haiku-5-5} \
-  --allow-tools Write Edit "Bash(duo2:*)" "Bash(ls:*)" "Bash(mkdir:*)" "Bash(git:*)" \
+  --allow-tools Write Edit "Bash(duo2:*)" "Bash(ls:*)" "Bash(mkdir:*)" "Bash(git:*)" "Bash(python3:*)" \
   --max-cost-usd ${DIRECTOR_EVAL_MAX_USD:-5} --json $out/result.json --report $out/report.html "$@"
 echo "Results: $out/result.json, $out/report.html"

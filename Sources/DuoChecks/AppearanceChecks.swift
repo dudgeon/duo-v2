@@ -73,7 +73,7 @@ import Foundation
     // Style audit fix list: the terminal has a palette per scheme (the same in light and dark for now), and the web gets every token.
     check(DuoScheme.light.terminal.ansi == DuoScheme.dark.terminal.ansi && DuoScheme.dark.terminal.ansi.count == 16, "the terminal palette is picked by scheme; dark takes the base while it has no override of its own")
     let css = EditorController.tokenCSS()
-    check(DuoWebTokens.colors.count == 41 && DuoWebTokens.colors.allSatisfy { css.contains("--duo-\($0.name):") }, "the web pages get all 41 colours as variables, generated from tokens")
+    check(DuoWebTokens.colors.count == 42 && DuoWebTokens.colors.allSatisfy { css.contains("--duo-\($0.name):") }, "the web pages get all 42 colours as variables, generated from tokens")
     check(css.contains("--duo-font-ui:") && css.contains("--duo-font-mono:") && css.contains("--duo-font-document:") && css.contains("--duo-document-size: 13px") && css.contains("--duo-shadow-popover: 0px 12px 32px"), "the web pages get the faces, the document's type and the whole popover shadow")
     check(AppearanceSetting.allCases.map(\.rawValue) == ["system", "light", "dark", "classic"], "the setting is system, light, dark or classic")
 
@@ -93,10 +93,11 @@ import Foundation
     full.reviewSessions = ["d": "s"]; full.forgottenFolders = ["x"]; full.notNowFolders = ["n"]; full.claudePath = "/c"; full.notifyNeedsYou = false
     full.dockBadge = false; full.appearance = "dark"; full.legacyDismissed = "l"; full.legacyBackup = "b"; full.root = "/r"; full.skippedUpdate = "1"
     full.gitignore = ["g": "y"]; full.projects = ["p"]; full.archivedProjects = ["ap"]; full.archivedSessions = ["as"]; full.mapSort = "name"
-    full.homeView = "board"; full.showHiddenFiles = true; full.dismissedExplainers = ["e"]; full.keepRunning = ["k"]
+    full.homeView = "board"; full.showHiddenFiles = true; full.dismissedExplainers = ["e"]; full.keepRunning = ["k"]; full.formatBarHidden = true
+    full.colourNewWindows = false; full.sessionModel = "opus"; full.listGroup = "project"
     let again = try? JSONDecoder().decode(DuoState.self, from: JSONEncoder().encode(full))
     check(again == full, "every stored field of the state survives encode and decode")
-    check(Mirror(reflecting: DuoState()).children.count == 27, "a field added to DuoState is added to this check (and to its decoder) too")
+    check(Mirror(reflecting: DuoState()).children.count == 33, "a field added to DuoState is added to this check (and to its decoder) too")
     check(AppearanceSetting.resolve(environment: "system", isolated: false, saved: "light") == .light, "DUO_APPEARANCE in the user's own Duo does not pin the picker")
     check(AppearanceSetting.resolve(environment: "dark", isolated: true, saved: "light") == .dark, "in a scripted, isolated run it still wins, for captures")
     // A failed write is reported, not swallowed; an unreadable file is left alone rather than written over.
