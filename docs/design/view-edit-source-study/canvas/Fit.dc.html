@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Options side by side</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.bd{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;color:#1f2328;background:#eceef1;box-sizing:border-box}
+h1.t{font-size:28px;line-height:36px;font-weight:600;margin:0}
+.P{font:10px/14px ui-monospace,'SF Mono',Menlo,monospace;color:#5b636d;border:1px dashed #8b939c;border-radius:3px;padding:0 3px;font-weight:400;white-space:nowrap}
+table.f{border-collapse:collapse;background:#fff;border:1px solid #c9cdd3;font-size:12.5px;line-height:18px;width:100%;table-layout:fixed}
+table.f th,table.f td{padding:8px 12px;border-bottom:1px solid #e3e5e8;text-align:left;vertical-align:top}
+table.f th{font-size:13px;font-weight:600;background:#f3f4f6}
+table.f td:first-child{font-weight:600;color:#5b636d;font-size:11px;letter-spacing:.66px;text-transform:uppercase;line-height:18px}
+table.f td.rec{background:#f7f8f9}
+.mono{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11.5px}
+.badge{font-size:11px;line-height:16px;font-weight:600;padding:1px 7px;border-radius:9px;background:#1f2328;color:#fff;margin-left:6px}
+</style>
+</helmet>
+<div class="bd" style="width: 1560px; height: 1060px; padding: 44px 56px; display: flex; flex-direction: column; gap: 18px;">
+  <h1 class="t">The three options, point by point</h1>
+  <table class="f">
+    <colgroup><col style="width: 170px"><col><col><col></colgroup>
+    <tr><th></th><th>A · One Source toggle<span class="badge">Recommended</span></th><th>B · Source beside, in the split</th><th>C · Source block by block</th></tr>
+    <tr><td>In and out</td><td class="rec">View › Source, <b>⌥⌘U</b> <span class="P">[P]</span>, the tab’s menu, and a Page | Source (Live | Source) switch at the tab strip’s end <span class="P">[P]</span>. New chord: DL-300 under DL-34.</td><td>⌥⌘P, renamed Show Source in Split View; View, the tab’s menu. No new chord. Source Mode retired.</td><td>⌥-click a block; a <span class="mono">&lt;/&gt;</span> tag on a hovered element; Edit Source… on the picker bar. Plus A’s toggle for a whole file.</td></tr>
+    <tr><td>Editing, saving</td><td class="rec">The editor, in place; autosave and DL-77 merges. The page reloads from the buffer on the way back.</td><td>The source side is the editor; the page redraws from the buffer 250 ms after typing (slice 1).</td><td>A small editor per block or element; Apply writes one hunk through DL-77.</td></tr>
+    <tr><td>Sync</td><td class="rec">Keeps your place on each switch (element at the top ⇄ its tag). In the pair: caret-follow, as DL-275.</td><td>Scroll-follow both ways, caret ⇄ element, ⌥-click on the page to the tag.</td><td>None needed: the source sits on the thing.</td></tr>
+    <tr><td>Review marks</td><td class="rec">Raw, braces in <span class="mono">text2</span>, text in the author’s colour; margin hidden; review bar works.</td><td>Raw on the source side, drawn with the margin on the live side.</td><td>Raw in the revealed block only.</td></tr>
+    <tr><td>Highlighting</td><td class="rec" colspan="3">The same everywhere: board “Highlighting”, five new tokens <span class="P">[P]</span>, the HTML language already bundled (F-514).</td></tr>
+    <tr><td>Formatting bar</td><td class="rec">Shown in Markdown source (amends DL-266 3) <span class="P">[P]</span>; never on HTML.</td><td>On the side with the keyboard.</td><td>As in Live.</td></tr>
+    <tr><td>Narrow (360)</td><td class="rec">Fine; nothing folds.</td><td>Folds below 680; folded it is a toggle, like A.</td><td>Fine; editors are the pane’s width.</td></tr>
+    <tr><td>Light, Dark, Classic</td><td class="rec" colspan="2">The source follows Duo’s appearance; the page keeps its own (DL-224).</td><td>Duo’s editor laid over a page in its own colours: the one place both meet.</td></tr>
+    <tr><td>duo2 (DL-71)</td><td class="rec"><span class="mono">doc mode</span> on HTML too; new <span class="mono">html source [selector]</span>.</td><td><span class="mono">split &lt;file&gt; --with source</span>, <span class="mono">split sync</span>; <span class="mono">doc mode</span> retired (alias one release).</td><td><span class="mono">html source|edit &lt;selector&gt;</span>, <span class="mono">doc reveal &lt;line&gt;</span>, plus A’s.</td></tr>
+    <tr><td>Split view’s pair</td><td class="rec">Page ⫼ Source stays on ⌥⌘P, its source side now A’s highlighted Source. The Markdown pair is gone.</td><td>Is the feature: every source view is a pair; Markdown’s pair is one file in two editable views (amends DL-278, builds ENH-301).</td><td>Unchanged from A.</td></tr>
+    <tr><td>Duo Decks</td><td class="rec">The deck’s source side takes the switch; Source shows the slide marker as typed.</td><td>The deck already uses the split; its raw text has nowhere to go (an open question).</td><td>The slide chip reveals its marker in place.</td></tr>
+    <tr><td>Cost</td><td class="rec"><b>About a week.</b></td><td><b>About two weeks.</b> Reverses DL-167 Q3 and part of DL-278.</td><td><b>Three weeks or more</b>, the HTML half a research risk (ENH-311 if later).</td></tr>
+  </table>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1560,"height":1060}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

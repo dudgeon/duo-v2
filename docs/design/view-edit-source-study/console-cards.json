@@ -1,0 +1,164 @@
+{
+  "_note": "Console-ready needs cards for the view-edit-source design round (Q-407..Q-410), for the director to post (docs/director/console.md, needs/<id>). Recommendation first. Cards 2-4 apply only if Geoff picks A on card 1. Canvas: https://claude.ai/artifact/5gfPPr8uFxfypxLZXazeJh. Worker session: duo2://session/c9374e85-f347-4fc5-be94-7acf4fa0c72d.",
+  "needs": {
+    "ves-q407-design": {
+      "kind": "decision",
+      "title": "View and edit source: which design? (Q-407 → DL-299)",
+      "body": [
+        "You asked for a full exploration of viewing and editing source, in place of the Markdown preview (now removed). Today a Markdown file has an unhighlighted Source Mode and an HTML file has no source view except split view's pair, which reads the HTML as Markdown.",
+        "Look at the canvas https://claude.ai/artifact/5gfPPr8uFxfypxLZXazeJh: boards **Overview**, **Today, captured**, **A · One Source toggle**, **B · Source beside, in the split**, **C · Source in place, block by block**, and **Side by side** for the comparison.",
+        "**Which design for viewing and editing source (canvas https://claude.ai/artifact/5gfPPr8uFxfypxLZXazeJh, boards A, B and C)?**"
+      ],
+      "options": [
+        {
+          "id": "A",
+          "label": "A · One Source toggle (recommended)",
+          "desc": "View › Source (⌥⌘U) switches any Markdown or HTML document between its page and its source, in place, highlighted and editable. Split view's pair uses the same highlighted source. About a week. Board A.",
+          "recommended": true
+        },
+        {
+          "id": "B",
+          "label": "B · Source beside, in the split",
+          "desc": "Source always opens as the split's other side, with scroll sync both ways. Retires Source Mode, amends DL-278 (one file in two editable views, ENH-301). About two weeks. Board B."
+        },
+        {
+          "id": "C",
+          "label": "C · Source in place, per block",
+          "desc": "The caret or ⌥-click shows one Markdown block's source. Hovering an HTML element offers its source in a small editor. Whole-file Source Mode stays as well. Three weeks or more; the HTML half is a research risk (ENH-311). Board C."
+        }
+      ],
+      "links": [
+        {
+          "label": "Canvas: View and edit source",
+          "url": "https://claude.ai/artifact/5gfPPr8uFxfypxLZXazeJh"
+        },
+        {
+          "label": "Study (README), branch design/view-edit-source",
+          "url": "file:///Users/geoff/repos/duo-v2/.claude/worktrees/view-edit-source/docs/design/view-edit-source-study/README.md"
+        },
+        {
+          "label": "Worker session",
+          "url": "duo2://session/c9374e85-f347-4fc5-be94-7acf4fa0c72d"
+        }
+      ],
+      "refs": [
+        "Q-407",
+        "DL-299",
+        "F-514",
+        "F-515",
+        "F-516",
+        "C-142",
+        "ENH-311"
+      ],
+      "status": "open"
+    },
+    "ves-q408-chord": {
+      "kind": "decision",
+      "title": "Source's chord and switch (Q-408 → DL-300; only with A)",
+      "body": [
+        "With A, how do you get into and out of source? ⌥⌘U is the Safari and Chrome View Source key, and Duo doesn't use it (checked on main 2026-11-14). It still has to be checked against 1Password, Raycast and Rectangle before it's logged under DL-34.",
+        "Look at board **A · One Source toggle** on https://claude.ai/artifact/5gfPPr8uFxfypxLZXazeJh: sections 1 and 2 show the Live/Source and Page/Source switch at the tab strip's trailing end.",
+        "**How do you switch to source (canvas https://claude.ai/artifact/5gfPPr8uFxfypxLZXazeJh, board A, sections 1 and 2)?**"
+      ],
+      "options": [
+        {
+          "id": "both",
+          "label": "⌥⌘U and the switch (recommended)",
+          "desc": "View › Source on ⌥⌘U, plus a Page | Source (Live | Source for Markdown) switch at the tab strip's trailing end that shows which mode you're in.",
+          "recommended": true
+        },
+        {
+          "id": "chord",
+          "label": "⌥⌘U and the menu only",
+          "desc": "No switch on screen, so the strip stays as it is. The mode shows only in the content itself."
+        },
+        {
+          "id": "switch",
+          "label": "The switch and the menu, no chord",
+          "desc": "Keeps DL-34's chord list unchanged; View › Source still works from the menu."
+        }
+      ],
+      "links": [
+        {
+          "label": "Canvas, board A",
+          "url": "https://claude.ai/artifact/5gfPPr8uFxfypxLZXazeJh"
+        }
+      ],
+      "refs": [
+        "Q-408",
+        "DL-300",
+        "DL-34",
+        "DL-277"
+      ],
+      "status": "open"
+    },
+    "ves-q409-tokens": {
+      "kind": "decision",
+      "title": "Syntax highlight colours (Q-409; any option)",
+      "body": [
+        "Nothing in Duo highlights code yet (F-515), and every option needs it. The proposal is five tokens: three hues for tags, attributes and strings, plus text2 for comments and marks. Light reuses existing hues (reviewAuthor2 blue, reviewAuthor4 purple, diffAddText green), so no new colour families. HTML source is in SF Mono 12/19. Markdown source keeps the document face, so it lines up with Live.",
+        "Look at board **Highlighting: Light, Dark, Classic** on https://claude.ai/artifact/5gfPPr8uFxfypxLZXazeJh.",
+        "**Are the highlight colours right (canvas https://claude.ai/artifact/5gfPPr8uFxfypxLZXazeJh, board Highlighting)?**"
+      ],
+      "options": [
+        {
+          "id": "asdrawn",
+          "label": "As drawn (recommended)",
+          "desc": "Five tokens, quiet on purpose, contrast held at 4.5:1 by a DuoCheck.",
+          "recommended": true
+        },
+        {
+          "id": "comment",
+          "label": "Something else",
+          "desc": "Name the token or scheme to change in the box; nothing else is drawn."
+        }
+      ],
+      "links": [
+        {
+          "label": "Canvas, board Highlighting",
+          "url": "https://claude.ai/artifact/5gfPPr8uFxfypxLZXazeJh"
+        }
+      ],
+      "refs": [
+        "Q-409",
+        "F-515"
+      ],
+      "status": "open"
+    },
+    "ves-q410-bar": {
+      "kind": "decision",
+      "title": "The formatting bar in Markdown source (Q-410; only with A)",
+      "body": [
+        "DL-266 (3) and the bar as built (DL-301) keep the formatting bar out of Source mode. Since this round was drawn, DL-317 put Review's controls into the same bar. Showing the bar in Markdown source would therefore offer Suggest and Add Comment there too, writing marks you can see. It would never show on HTML source.",
+        "Look at board **A · One Source toggle** (section 1) and **Side by side** (row 'bar') on https://claude.ai/artifact/5gfPPr8uFxfypxLZXazeJh.",
+        "**Show the formatting bar in Markdown source (canvas https://claude.ai/artifact/5gfPPr8uFxfypxLZXazeJh, board A section 1 and board Side by side)?**"
+      ],
+      "options": [
+        {
+          "id": "show",
+          "label": "Show it, Review included (recommended)",
+          "desc": "Each command is a text rewrite whose marks you can see in source, so it teaches the syntax. Amends DL-266 (3) and DL-301.",
+          "recommended": true
+        },
+        {
+          "id": "hide",
+          "label": "Keep it hidden in source",
+          "desc": "As decided and built today. Source is for raw text only."
+        }
+      ],
+      "links": [
+        {
+          "label": "Canvas, boards A and Side by side",
+          "url": "https://claude.ai/artifact/5gfPPr8uFxfypxLZXazeJh"
+        }
+      ],
+      "refs": [
+        "Q-410",
+        "DL-266",
+        "DL-301",
+        "DL-317"
+      ],
+      "status": "open"
+    }
+  }
+}

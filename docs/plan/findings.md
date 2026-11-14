@@ -5054,6 +5054,22 @@ The specimen showed nine overflows in the sample pack's own limits, which is the
 
 Weak spot: the survey's "best" template for a chart slide was `table`. That's a heuristic, and Claude's plan decides.
 
+## F-514 · The HTML, CSS and JavaScript parsers are already in the editor's bundle (view-edit-source, 2026-11-01)
+
+`@codemirror/lang-markdown` depends on `@codemirror/lang-html`, which brings `lang-css` and `lang-javascript` with their lezer grammars. esbuild already keeps all three in `Vendor/codemirror/dist/cm6.js` (690,427 bytes; 231,560 gzipped): `TemplateString`, `PseudoClassName` and `SelfClosingTag` are in it. A test bundle of `EditorView` plus `markdown({base: markdownLanguage})` measured 470,537 bytes, and adding `html()` made it 470,542. So **an HTML source view costs no bundle size**. Its cost is wiring (a language compartment by file kind), a highlight style and its tokens. Measured with the main checkout's `node_modules` and esbuild 0.28.2, `--bundle --minify --format=iife`. `docs/design/view-edit-source-study/README.md` §4.
+
+## F-515 · Nothing in Duo's editor highlights syntax; split's HTML source is read as Markdown (view-edit-source, 2026-11-01)
+
+`Vendor/codemirror/src/*.js` has no `HighlightStyle`, `syntaxHighlighting`, `lineNumbers` or `highlightActiveLine`.
+- **Source Mode (DL-167 Q3):** shows the text in the document font in one colour. Review marks show raw and uncoloured, and YAML shows as plain lines (captures `md-source.png`, `md-review-source.png`).
+- **Split view's HTML pair (DL-275):** its source side is `DocumentStack(file:, ref: .main)`, the Markdown editor in live preview. HTML goes through `markdown()`, so it shows in the proportional document font with no highlighting (`html-split.png`). Captured from main at 9f5b18e2 in an isolated instance with sample files.
+
+## F-516 · The HTML viewer has no link to its source (view-edit-source, 2026-11-01)
+
+- `HTMLViewer` isn't a `PreviewProvider`. It has no anchor map, so the HTML pair has no caret-follow even once Q-399 reports the caret line.
+- It reloads by polling every 1 s for the newest modification date of the page and its folder's web files (`HTMLViewer.swift:111-141`), unless the picker is active.
+- A source view in place must stop that reload while a dirty source is open, and reload from the buffer (`renderBuffer`) when the page comes back.
+- Matching elements to source needs the lezer HTML tree walked beside the DOM in document order; no such mapping exists.
 ## F-522: the search scrim didn't reach the toolbar's items
 
 With search open, the Sessions/Tasks toggle and the toolbar's search field stayed bright. The scrim is a content overlay; an `NSToolbar` item is hosted in its own view above the content, so the content's scrim passes under it. The target says the scrim covers "the whole window, toolbar included" (search-handoff README, scrim row; DL-76), so Geoff's report matches the design. The screens' backdrop doesn't show the toolbar separately.

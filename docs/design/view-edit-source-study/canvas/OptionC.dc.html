@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Option C, source block by block</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.bd{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;color:#1f2328;background:#eceef1;box-sizing:border-box}
+h1.t{font-size:28px;line-height:36px;font-weight:600;margin:0}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.66px;text-transform:uppercase;color:#5b636d;display:flex;gap:8px;align-items:center}
+.P{font:10px/14px ui-monospace,'SF Mono',Menlo,monospace;color:#5b636d;border:1px dashed #8b939c;border-radius:3px;padding:0 3px;letter-spacing:0;text-transform:none;font-weight:400;white-space:nowrap}
+.light{--ground:#f3f4f6;--pane:#ffffff;--sel:#e9ecef;--text:#1f2328;--text2:#5b636d;--rule:#c9cdd3;--edge:#8b939c;--doc:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;--tag:#1d5fa8;--attr:#7b3fb5;--str:#2f7d32;--cm:#5b636d;--r1:#b0244f;--r3:#2e7a3a}
+.pane{box-sizing:border-box;background:var(--pane);color:var(--text);border:1px solid var(--rule);display:flex;flex-direction:column;overflow:hidden;font-size:13px;line-height:20px;position:relative}
+.tabs{flex:none;height:36px;box-sizing:border-box;display:flex;align-items:center;gap:20px;padding:0 10px 0 16px;border-bottom:1px solid var(--rule);color:var(--text2);font-size:12px;white-space:nowrap}
+.tabs b{color:var(--text);font-weight:600}
+.sp{flex:1}
+.doc{flex:1;padding:22px 28px;font-family:var(--doc);font-size:13px;line-height:20px;overflow:hidden}
+.doc h3{font-size:18px;line-height:24px;font-weight:600;margin:0 0 10px}
+.doc h4{font-size:14px;line-height:20px;font-weight:600;margin:10px 0 0}
+.doc p{margin:0 0 10px}
+.doc table{border-collapse:collapse;margin:0}
+.doc th,.doc td{padding:3px 8px;border:1px solid var(--rule);text-align:left;white-space:nowrap}
+.doc th{background:var(--ground);font-weight:600}
+.props{border:1px solid var(--rule);border-radius:6px;padding:6px 10px;margin:0 0 14px;font-size:12px;line-height:20px;color:var(--text2)}
+.props b{color:var(--text);font-weight:400;margin-left:8px}
+.blk{display:block;white-space:pre-wrap;background:var(--ground);border-radius:6px;padding:6px 10px;margin:0 0 12px;position:relative}
+.blk .tag{position:absolute;right:6px;top:6px;font-size:10px;line-height:14px;color:var(--text2);border:1px solid var(--edge);border-radius:4px;padding:0 4px;background:var(--pane)}
+.src{padding:8px 10px;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;line-height:19px;white-space:pre-wrap}
+.t{color:var(--tag)}.a{color:var(--attr)}.s{color:var(--str)}.c{color:var(--cm);font-style:italic}.m{color:var(--text2)}.hb{font-weight:600}
+.ri{color:var(--r3)}.rc{color:var(--r1)}
+.caret{display:inline-block;width:1.5px;height:1.05em;background:var(--text);vertical-align:-0.15em;margin:0 -0.75px}
+.spec{font-size:12.5px;line-height:19px;color:#1f2328}
+.spec p{margin:0 0 9px}
+.spec b{font-weight:600}
+.mono{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11.5px}
+.cap{font-size:12px;line-height:17px;color:#5b636d;margin-top:8px}
+.page{flex:1;padding:22px 26px;font-family:-apple-system,system-ui,sans-serif;background:#fff;color:#1b1b1b;overflow:hidden;font-size:13px;line-height:20px;position:relative}
+.page h3{font-size:22px;line-height:28px;font-weight:600;margin:0 0 8px}
+.page .up{color:#2f7d32}
+.page ul{margin:6px 0 12px;padding-left:20px}
+.out{outline:1.5px solid #1d5fa8;outline-offset:2px;border-radius:2px}
+.pill{display:inline-block;font:600 10px/16px ui-monospace,'SF Mono',Menlo,monospace;color:#fff;background:#1f2328;border-radius:4px;padding:0 5px;vertical-align:2px;margin-left:6px}
+.ed{border:1px solid #8b939c;border-radius:6px;background:#fff;box-shadow:0 6px 24px rgba(0,0,0,.18);margin:8px 0 10px;font-family:-apple-system,system-ui,sans-serif}
+.edf{display:flex;gap:6px;align-items:center;justify-content:flex-end;padding:6px 8px;border-top:1px solid #e3e5e8;font-size:11px;color:#5b636d}
+.btn{flex:none;height:22px;box-sizing:border-box;display:inline-flex;align-items:center;padding:2px 8px;border:1px solid #8b939c;border-radius:6px;background:#fff;font-size:11px;color:#1f2328}
+</style>
+</helmet>
+<div class="bd light" style="width: 1560px; height: 1720px; padding: 44px 56px; display: flex; flex-direction: column; gap: 22px;">
+  <div style="display: flex; flex-direction: column; gap: 4px;">
+    <h1 class="t">C · Source in place, block by block</h1>
+    <div style="font-size: 14px; line-height: 21px; color: #5b636d;">Obsidian’s live preview carried a step further: the caret already shows its own line raw, so let a whole block show its source where it stands. For HTML, the same idea on the page: pick an element, edit its source under it. Whole-file Source Mode stays for everything else.</div>
+  </div>
+
+  <div class="lbl">1 · Markdown: a block reveals its source</div>
+  <div style="display: flex; gap: 24px; align-items: flex-start;">
+    <div style="width: 460px;">
+      <div class="pane" style="height: 440px;">
+        <div class="tabs"><b>refunds-review.md</b><span>notes.md</span></div>
+        <div class="doc">
+          <div class="blk"><span class="m">---</span>
+<span class="a">title</span><span class="m">:</span> Refunds review
+<span class="a">suggest-edits</span><span class="m">:</span> <span class="s">true</span><span class="caret"></span>
+<span class="m">---</span><span class="tag">YAML</span></div>
+          <h3>Refunds review</h3>
+          <p>Refunds fell <b>12%</b> in Q3 <span style="border-bottom: 1.5px solid var(--r3);">since July</span>.</p>
+          <h4>Next</h4>
+          <p style="margin: 4px 0 10px;">☐ Check the <s style="color: var(--r1);">July</s> <u style="color: var(--r1);">June</u> baseline</p>
+          <table><tr><th>Reason</th><th>Count</th></tr><tr><td>Card disputes</td><td>41</td></tr><tr><td>Late delivery</td><td>28</td></tr></table>
+        </div>
+      </div>
+      <div class="cap"><b>The caret enters the properties block</b> → it shows as YAML, in place, on <span class="mono">ground</span> <span class="P">[P]</span>; it closes when the caret leaves. Today the properties block is edited field by field.</div>
+    </div>
+    <div style="width: 460px;">
+      <div class="pane" style="height: 440px;">
+        <div class="tabs"><b>refunds-review.md</b><span>notes.md</span></div>
+        <div class="doc">
+          <div class="props">title<b>Refunds review</b><br>suggest-edits<b>on</b></div>
+          <h3>Refunds review</h3>
+          <div class="blk">Refunds fell <span class="m">**</span>12%<span class="m">**</span> in Q3 <span class="m">{==</span>since July<span class="m">==}{&gt;&gt;</span><span class="ri">@claude 2026-11-01 #c4:</span> source?<span class="caret"></span> <span class="m">&lt;&lt;}</span>.<span class="tag">⌥-click</span></div>
+          <h4>Next</h4>
+          <p style="margin: 4px 0 10px;">☐ Check the <s style="color: var(--r1);">July</s> <u style="color: var(--r1);">June</u> baseline</p>
+          <table><tr><th>Reason</th><th>Count</th></tr><tr><td>Card disputes</td><td>41</td></tr><tr><td>Late delivery</td><td>28</td></tr></table>
+        </div>
+      </div>
+      <div class="cap"><b>⌥-click a paragraph</b> <span class="P">[P]</span> (or ⌥⌘U with the caret in it) → the whole block raw, review marks included, until Esc or the caret leaves. Tables reveal as today (DL-182); a slide chip shows its <span class="mono">&lt;!-- slide: kpi --&gt;</span>.</div>
+    </div>
+    <div class="spec" style="width: 440px;">
+      <p><b>What changes in Markdown</b> <span class="P">[P]</span></p>
+      <p>· Today the caret’s <i>line</i> shows its marks. C widens that to the caret’s <i>block</i> when you ask (⌥-click, or the chord), and to frontmatter whenever the caret is in it.</p>
+      <p>· This is DL-167 Q4’s “calmer per-node reveal” study, now. Its trap is height: a block that reveals must keep its height or the text below jumps (DL-167 Q1). YAML and a paragraph with marks do change height, so the lines below move.</p>
+      <p>· <b>Review marks:</b> drawn everywhere but the revealed block, where they’re raw in author colours.</p>
+      <p>· <b>Formatting bar:</b> as in Live. <b>Saving:</b> as today.</p>
+      <p>· <b>Whole file raw:</b> Source Mode stays, unchanged except for A’s highlighting.</p>
+    </div>
+  </div>
+
+  <div class="lbl">2 · HTML: edit one element’s source on the page</div>
+  <div style="display: flex; gap: 24px; align-items: flex-start;">
+    <div style="width: 600px;">
+      <div class="pane" style="height: 440px;">
+        <div class="tabs"><b>q3-refunds.html</b><span>refunds-review.md</span></div>
+        <div class="page">
+          <h3>Refunds, Q3</h3>
+          <div class="out" style="display: inline-block;">Down <span class="up">12%</span> since July.</div><span class="pill">&lt;/&gt;</span> <span class="P">[P]</span>
+          <div class="ed">
+            <div class="src"><span class="t">&lt;p</span> <span class="a">class</span>=<span class="s">"lede"</span><span class="t">&gt;</span>Down <span class="t">&lt;span</span> <span class="a">class</span>=<span class="s">"up"</span><span class="t">&gt;</span>11%<span class="caret"></span><span class="t">&lt;/span&gt;</span> since July.<span class="t">&lt;/p&gt;</span></div>
+            <div class="edf"><span>line 12 · Esc cancels</span><span class="sp" style="flex: 1;"></span><span class="btn">Cancel</span><span class="btn" style="background: #1f2328; color: #fff; border-color: #1f2328;">Apply ↩</span></div>
+          </div>
+          <ul><li>Card disputes: 41</li><li>Late delivery: 28</li><li>Wrong size: 17</li></ul>
+        </div>
+      </div>
+      <div class="cap"><b>Hover an element</b> → the picker’s outline and a <span class="mono">&lt;/&gt;</span> tag <span class="P">[P]</span>; click it → that element’s source opens in a small editor under it, laid over the page <span class="P">[P]</span>. ⌘↩ or Apply writes the change into the file at that element’s range and the page reloads; Esc cancels. Like DevTools’ Edit as HTML, but saved.</div>
+    </div>
+    <div class="spec" style="width: 760px;">
+      <p><b>What it needs</b></p>
+      <p>· Each element on the page mapped to its exact range in the file: the HTML parse tree matched to the DOM in document order. A page whose script builds or moves elements (the chart here) breaks the match, so those elements can’t be edited this way.</p>
+      <p>· Duo’s own editor laid over somebody else’s page, inside its web view: styles, focus and keys must not leak either way, and DL-175’s content rules still hold.</p>
+      <p>· A small applied edit is a one-hunk save through DL-77, so Claude’s rewrites merge like any other.</p>
+      <p><b>Getting in and out:</b> the hover tag; Edit Source… on the picker’s bar and the page’s right-click menu <span class="P">[P]</span>; ⌥⌘U with an element picked. For the whole file, View › Source as in A.</p>
+      <p><b>Sync:</b> none needed: the source sits on the element. <b>Narrow:</b> the editor is the page’s width, fine at 360. <b>Themes:</b> the inline editor takes Duo’s appearance over a page that keeps its own (DL-224), the one place both meet. <b>duo2</b> <span class="P">[P]</span>: <span class="mono">duo2 html source &lt;selector&gt;</span> reads an element’s source, <span class="mono">html edit &lt;selector&gt; --text …</span> replaces it; <span class="mono">doc reveal &lt;line&gt;</span> for Markdown blocks.</p>
+      <p><b>The split and decks:</b> the pair stays as A draws it. A deck’s slide chip reveals its marker in place; nothing else changes.</p>
+      <p><b>Cost: three weeks or more</b>, and the HTML half is research: the mapping and the overlay can each fail on real pages Claude writes (charts, generated lists). Best kept as a later step on top of A (ENH-311).</p>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1560,"height":1720}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

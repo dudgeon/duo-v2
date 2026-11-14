@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Option B, source beside</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.bd{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;color:#1f2328;background:#eceef1;box-sizing:border-box}
+h1.t{font-size:28px;line-height:36px;font-weight:600;margin:0}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.66px;text-transform:uppercase;color:#5b636d;display:flex;gap:8px;align-items:center}
+.P{font:10px/14px ui-monospace,'SF Mono',Menlo,monospace;color:#5b636d;border:1px dashed #8b939c;border-radius:3px;padding:0 3px;letter-spacing:0;text-transform:none;font-weight:400;white-space:nowrap}
+.light{--ground:#f3f4f6;--pane:#ffffff;--sel:#e9ecef;--text:#1f2328;--text2:#5b636d;--rule:#c9cdd3;--edge:#8b939c;--doc:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;--tag:#1d5fa8;--attr:#7b3fb5;--str:#2f7d32;--cm:#5b636d;--r1:#b0244f;--r3:#2e7a3a}
+.pane{box-sizing:border-box;background:var(--pane);color:var(--text);border:1px solid var(--rule);display:flex;flex-direction:column;overflow:hidden;font-size:13px;line-height:20px;position:relative}
+.tabs{flex:none;height:36px;box-sizing:border-box;display:flex;align-items:center;gap:20px;padding:0 10px 0 16px;border-bottom:1px solid var(--rule);color:var(--text2);font-size:12px;white-space:nowrap}
+.tabs b{color:var(--text);font-weight:600}
+.dim{color:var(--text2);font-weight:400}
+.sp{flex:1}
+.doc{flex:1;padding:22px 24px;font-family:var(--doc);font-size:13px;line-height:20px;overflow:hidden}
+.doc h3{font-size:18px;line-height:24px;font-weight:600;margin:0 0 10px}
+.doc h4{font-size:14px;line-height:20px;font-weight:600;margin:10px 0 0}
+.doc p{margin:0 0 10px}
+.props{border:1px solid var(--rule);border-radius:6px;padding:6px 10px;margin:0 0 14px;font-size:12px;line-height:20px;color:var(--text2)}
+.props b{color:var(--text);font-weight:400;margin-left:8px}
+.src{flex:1;padding:14px 14px 14px 12px;overflow:hidden;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;line-height:19px;white-space:pre-wrap}
+.msrc{flex:1;padding:22px 24px;overflow:hidden;font-family:var(--doc);font-size:13px;line-height:20px;white-space:pre-wrap}
+.ln{display:block;padding-left:24px;text-indent:-24px}
+.t{color:var(--tag)}.a{color:var(--attr)}.s{color:var(--str)}.c{color:var(--cm);font-style:italic}.m{color:var(--text2)}.hb{font-weight:600}
+.ri{color:var(--r3)}.rc{color:var(--r1)}
+.caret{display:inline-block;width:1.5px;height:1.05em;background:var(--text);vertical-align:-0.15em;margin:0 -0.75px}
+.caret2{display:inline-block;width:1.5px;height:1.05em;background:var(--text2);vertical-align:-0.15em;margin:0 -0.75px;opacity:.6}
+.seg{flex:none;display:flex;height:22px;box-sizing:border-box;border:1px solid var(--edge);border-radius:6px;overflow:hidden;font-size:11px;line-height:20px}
+.seg span{padding:0 8px;color:var(--text2)}
+.seg span.on{background:var(--sel);color:var(--text);font-weight:600}
+.seg span+span{border-left:1px solid var(--edge)}
+.menu{box-sizing:border-box;background:#fff;border:1px solid #c9cdd3;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.18);padding:5px;font-size:13px;line-height:22px;color:#1f2328;width:300px}
+.menu div{display:flex;padding:0 10px;border-radius:5px;gap:6px}
+.menu div.hi{background:#1d5fa8;color:#fff}
+.menu div.hi i{color:#fff}
+.menu div.off{color:#a0a6ad;text-decoration:line-through}
+.menu i{font-style:normal;color:#5b636d;margin-left:auto}
+.menu hr{border:0;border-top:1px solid #e3e5e8;margin:4px 6px}
+.spec{font-size:12.5px;line-height:19px;color:#1f2328}
+.spec p{margin:0 0 9px}
+.spec b{font-weight:600}
+.mono{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11.5px}
+.cap{font-size:12px;line-height:17px;color:#5b636d;margin-top:8px}
+.page{flex:1;padding:20px 22px;font-family:-apple-system,system-ui,sans-serif;background:#fff;color:#1b1b1b;overflow:hidden;font-size:13px;line-height:20px}
+.page h3{font-size:22px;line-height:28px;font-weight:600;margin:0 0 8px}
+.page .up{color:#2f7d32}
+.page ul{margin:6px 0 12px;padding-left:20px}
+.page .chart{height:70px;border-radius:6px;background:#f1f5f9;display:flex;align-items:flex-end;gap:8px;padding:8px 10px;box-sizing:border-box}
+.page .chart i{display:block;width:22px;background:#94a3b8;border-radius:2px}
+.flash{background:var(--sel);border-radius:2px}
+.out{outline:1.5px solid #1d5fa8;outline-offset:2px;border-radius:2px}
+.rail{flex:none;width:16px;background:var(--ground);border-left:1px solid var(--rule)}
+.div{flex:none;width:1px;background:var(--rule)}
+.sync{position:absolute;left:50%;top:44px;transform:translateX(-50%);font-size:11px;line-height:16px;padding:1px 7px;border:1px solid var(--edge);border-radius:9px;background:var(--pane);color:var(--text2);white-space:nowrap}
+</style>
+</helmet>
+<div class="bd light" style="width: 1560px; height: 1720px; padding: 44px 56px; display: flex; flex-direction: column; gap: 22px;">
+  <div style="display: flex; flex-direction: column; gap: 4px;">
+    <h1 class="t">B · Source beside, in the split</h1>
+    <div style="font-size: 14px; line-height: 21px; color: #5b636d;">Source is never a mode: it is always the split’s other side, as code editors do it (VS Code, Nova). ⌥⌘P becomes Show Source in Split View, for HTML and Markdown. The in-place Source Mode goes.</div>
+  </div>
+
+  <div class="lbl">1 · HTML: Page ⫼ Source, scrolled together</div>
+  <div style="display: flex; gap: 24px; align-items: flex-start;">
+    <div style="width: 820px;">
+      <div class="pane" style="height: 430px;">
+        <div class="tabs"><b>q3-refunds.html ⫼ Source</b><span>refunds-review.md</span></div>
+        <div style="flex: 1; display: flex; min-height: 0;">
+          <div class="page">
+            <h3 class="out">Refunds, Q3</h3>
+            <div>Down <span class="up">12%</span> since July.</div>
+            <ul><li>Card disputes: 41</li><li>Late delivery: 28</li><li>Wrong size: 17</li></ul>
+            <div class="chart"><i style="height:50px"></i><i style="height:40px"></i><i style="height:30px"></i><i style="height:34px"></i><i style="height:22px"></i></div>
+          </div>
+          <div class="div"></div>
+          <div class="src"><span class="ln"><span class="t">&lt;body&gt;</span></span><span class="ln flash">  <span class="t">&lt;h1&gt;</span>Refunds, Q3<span class="caret"></span><span class="t">&lt;/h1&gt;</span></span><span class="ln">  <span class="t">&lt;p</span> <span class="a">class</span>=<span class="s">"lede"</span><span class="t">&gt;</span>Down <span class="t">&lt;span</span> <span class="a">class</span>=<span class="s">"up"</span><span class="t">&gt;</span>12%<span class="t">&lt;/span&gt;</span> since July.<span class="t">&lt;/p&gt;</span></span><span class="ln">  <span class="c">&lt;!-- by reason, from the export --&gt;</span></span><span class="ln">  <span class="t">&lt;ul&gt;</span></span><span class="ln">    <span class="t">&lt;li&gt;</span>Card disputes: 41<span class="t">&lt;/li&gt;</span></span><span class="ln">    <span class="t">&lt;li&gt;</span>Late delivery: 28<span class="t">&lt;/li&gt;</span></span><span class="ln">    <span class="t">&lt;li&gt;</span>Wrong size: 17<span class="t">&lt;/li&gt;</span></span><span class="ln">  <span class="t">&lt;/ul&gt;</span></span><span class="ln">  <span class="t">&lt;div</span> <span class="a">id</span>=<span class="s">"chart"</span><span class="t">&gt;&lt;/div&gt;</span></span><span class="ln">  <span class="t">&lt;script</span> <span class="a">src</span>=<span class="s">"chart.js"</span><span class="t">&gt;&lt;/script&gt;</span></span><span class="ln"><span class="t">&lt;/body&gt;</span></span></div>
+        </div>
+      </div>
+      <div class="cap">The page first, then its source <span class="P">[P]</span>: you read the page and fix the text. Highlighted as A. <b>Scroll-follow both ways</b> <span class="P">[P]</span> (amends DL-275’s caret-follow only): the side you scroll leads, the other keeps the same element at its top. <b>Click on the page</b> (with ⌥, so links still work) puts the caret on that element’s tag; the caret in source outlines its element on the page.</div>
+    </div>
+    <div class="spec" style="width: 540px;">
+      <p><b>Getting in and out</b></p>
+      <div class="menu" style="margin-bottom: 10px;">
+        <div class="off">Source Mode</div>
+        <div class="hi">Show Source in Split View <i>⌥⌘P</i></div>
+        <div>Previous Side of Split View <i>⇧⌘[</i></div>
+        <div>Next Side of Split View <i>⇧⌘]</i></div>
+      </div>
+      <p>⌥⌘P keeps its chord (DL-277) and is renamed <span class="P">[P]</span>; it closes the split again. View › Source Mode goes. No new chord.</p>
+      <p><b>Editing and saving:</b> the source side is the editor (DL-77), the page redraws from the buffer 250 ms after typing pauses (slice 1). Copy exact text from the source side.</p>
+      <p><b>Cost:</b> A’s work, plus two-way scroll sync, page → source picking, the Markdown pair’s second view of one buffer, and folding rules. <b>About two weeks.</b></p>
+      <p><b>The catch:</b> the source needs 680 of width (two 340 sides), so the console narrows and, under about 1,464, the sidebar folds (DL-276) just to read a file’s text.</p>
+    </div>
+  </div>
+
+  <div class="lbl">2 · Markdown: Live ⫼ Source, one file in two editable views</div>
+  <div style="display: flex; gap: 24px; align-items: flex-start;">
+    <div style="width: 820px;">
+      <div class="pane" style="height: 400px;">
+        <div class="tabs"><b>refunds-review.md ⫼ Source</b><span>notes.md</span></div>
+        <div style="flex: 1; display: flex; min-height: 0;">
+          <div class="doc">
+            <div class="props">title<b>Refunds review</b><br>suggest-edits<b>on</b></div>
+            <h3>Refunds review</h3>
+            <p>Refunds fell <b>12%</b> in Q3 <span style="border-bottom: 1.5px solid var(--r3);">since July</span>.</p>
+            <h4>Next</h4>
+            <p style="margin: 4px 0 10px;">☐ Check the <s style="color: var(--r1);">July</s> <u style="color: var(--r1);">June</u><span class="caret2"></span> baseline</p>
+          </div>
+          <div class="div"></div>
+          <div class="msrc"><span class="m">---</span>
+<span class="a">title</span><span class="m">:</span> Refunds review
+<span class="a">suggest-edits</span><span class="m">:</span> <span class="s">true</span>
+<span class="m">---</span>
+<span class="m"># </span><span class="hb">Refunds review</span>
+Refunds fell <span class="m">**</span><b>12%</b><span class="m">**</span> in Q3 <span class="m">{==</span>since July<span class="m">==}{&gt;&gt;</span><span class="ri">@claude 2026-11-01 #c4:</span> source? <span class="m">&lt;&lt;}</span>.
+<span class="m">## </span><span class="hb">Next</span>
+<span class="m">- [ ]</span> Check the <span class="m">{~~</span><span class="rc">July</span><span class="m">~&gt;</span><span class="rc">June</span><span class="m">~~}</span><span class="caret"></span> baseline</div>
+        </div>
+      </div>
+      <div class="cap">The live editor on one side, its whole source on the other <span class="P">[P]</span>, <b>both editable</b>: one buffer shown twice (CodeMirror can show two views of one state). Typing in either moves both; the other side’s caret shows as a dim ghost. Review’s margin lives on the live side; the source shows the raw marks in author colours.</div>
+    </div>
+    <div class="spec" style="width: 540px;">
+      <p><b>Decisions this reverses</b></p>
+      <p>· DL-278: “one file in two editable views is not part of it” (ENH-301). B builds ENH-301 for the source case.</p>
+      <p>· DL-167 Q3: Source Mode per document goes; the split is the only way to see a whole file raw.</p>
+      <p><b>Formatting bar</b> (DL-266): on whichever side has the keyboard; its commands write into the one buffer, so both sides change.</p>
+      <p><b>Decks</b> (DL-269): <span class="mono">deck.md ⫼ Slides</span> already uses the split, and its source side is the live editor. A deck’s raw text (the slide marker as typed, DL-296) has no place: a third side, or the chip only. <span class="P">[P] open</span></p>
+      <p><b>duo2</b> <span class="P">[P]</span>: <span class="mono">duo2 split &lt;file&gt; --with source</span> (and with no option on an HTML file); <span class="mono">split sync on|off</span>; <span class="mono">doc mode</span> is retired, kept one release as an alias that opens the split.</p>
+    </div>
+  </div>
+
+  <div class="lbl">3 · Narrow: folded, the tab’s names toggle</div>
+  <div style="display: flex; gap: 24px; align-items: flex-start;">
+    <div style="width: 376px;">
+      <div class="pane" style="height: 300px;">
+        <div style="flex: 1; display: flex; flex-direction: column; min-width: 0;">
+          <div class="tabs" style="gap: 6px;"><b>q3-refunds.html</b><span class="dim">⫼</span><span class="seg"><span>Page</span><span class="on">Source</span></span></div>
+          <div style="flex: 1; display: flex; min-height: 0;">
+            <div class="src"><span class="ln"><span class="t">&lt;h1&gt;</span>Refunds, Q3<span class="t">&lt;/h1&gt;</span></span><span class="ln"><span class="t">&lt;p</span> <span class="a">class</span>=<span class="s">"lede"</span><span class="t">&gt;</span>Down <span class="t">&lt;span</span> <span class="a">class</span>=<span class="s">"up"</span><span class="t">&gt;</span>12%<span class="t">&lt;/span&gt;</span> since July.<span class="t">&lt;/p&gt;</span></span><span class="ln"><span class="t">&lt;ul&gt;</span></span></div>
+            <div class="rail"></div>
+          </div>
+        </div>
+      </div>
+      <div class="cap">Under two 340 sides the split folds (DL-275): one side fills, the other is a 16 rail, and the tab’s two names become a Page / Source toggle, as a folded deck’s do (DL-269). So folded, B looks like A, reached by a longer road.</div>
+    </div>
+    <div class="spec" style="width: 960px;">
+      <p><b>How B handles the brief’s list</b></p>
+      <p>· <b>In and out:</b> ⌥⌘P, View, the tab’s menu. <b>Editing and saving:</b> the source side, DL-77. <b>Sync:</b> scroll both ways, caret ⇄ element. <b>Review marks:</b> raw on the source side, drawn on the live side. <b>Highlighting:</b> as A. <b>Formatting bar:</b> on the active side. <b>Narrow:</b> folds to a toggle. <b>Themes:</b> board “Highlighting”. <b>Verbs:</b> above. <b>Cost:</b> about two weeks.</p>
+      <p>· <b>Best at:</b> working on a page while watching it, which is what Nova and VS Code users expect. <b>Worst at:</b> a quick look at a Markdown file’s raw text, which now costs a split and the room it takes; and decks, whose source side is already taken.</p>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1560,"height":1720}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

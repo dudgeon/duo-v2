@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Today, captured</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.bd{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;color:#1f2328;background:#eceef1;box-sizing:border-box}
+h1.t{font-size:28px;line-height:36px;font-weight:600;margin:0}
+.shot{width:100%;display:block;border:1px solid #c9cdd3;border-radius:6px}
+.cap{font-size:12.5px;line-height:18px;color:#5b636d;margin-top:8px}
+.cap b{color:#1f2328}
+</style>
+</helmet>
+<div class="bd" style="width: 1560px; height: 1240px; padding: 44px 56px; display: flex; flex-direction: column; gap: 18px;">
+  <div style="display: flex; flex-direction: column; gap: 4px;">
+    <h1 class="t">Today, captured (main at 9f5b18e2, isolated instance, sample files)</h1>
+    <div style="font-size: 14px; line-height: 21px; color: #5b636d;">1440 × 900, Light. The files are in <span style="font-family: ui-monospace, monospace; font-size: 12px;">docs/design/view-edit-source-study/captures/</span>, with md-live and md-source-dark beside them.</div>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 32px;">
+    <div><img class="shot" src="/_blob/8678f1ed25037243119d1008352c165d" alt="A Markdown note in Source Mode: plain text, no colours"><div class="cap"><b>Markdown, View › Source Mode.</b> Plain text in the document font: frontmatter, ** marks, table pipes and code fences as typed, all one colour.</div></div>
+    <div><img class="shot" src="/_blob/e6deb72b7783baa2193d8f1a42249540" alt="Review marks raw in Source Mode under the review bar"><div class="cap"><b>Review marks in Source Mode.</b> {-- --}{++ ++}, {&gt;&gt; &lt;&lt;} and {~~ ~&gt; ~~} raw and uncoloured; the review bar stays above.</div></div>
+    <div><img class="shot" src="/_blob/da5e9bbaa05c6345c1714cc7589a279d" alt="An HTML page in the viewer"><div class="cap"><b>HTML, the viewer.</b> Read-only; no source view (ENH-66).</div></div>
+    <div><img class="shot" src="/_blob/ac3a0d831317efd21cf22a6b746cdfac" alt="Split view pair: HTML source beside its page, unhighlighted"><div class="cap"><b>Split view’s pair, ⌥⌘P.</b> The source is the Markdown editor reading HTML: proportional font, no highlighting, no sync.</div></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1560,"height":1240}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
