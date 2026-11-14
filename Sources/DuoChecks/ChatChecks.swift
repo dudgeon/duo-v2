@@ -664,6 +664,47 @@ func spikeScreen(_ name: String) -> String {
         try? FileManager.default.removeItem(at: cfg)
     }
 
+    print("chat mode: a fork with no transcript yet shows its parent's history, then its own (F-367, F-705)")
+    do {
+        let cfg = FileManager.default.temporaryDirectory.appending(path: "duo-forkchat-\(UUID().uuidString)")
+        let cwdDir = cfg.appending(path: "work")
+        try FileManager.default.createDirectory(at: cwdDir, withIntermediateDirectories: true)
+        let was = getenv("CLAUDE_CONFIG_DIR").map { String(cString: $0) }
+        setenv("CLAUDE_CONFIG_DIR", cfg.path, 1)
+        defer { if let was { setenv("CLAUDE_CONFIG_DIR", was, 1) } else { unsetenv("CLAUDE_CONFIG_DIR") } }
+        let parent = "parent-\(UUID().uuidString.prefix(8))", fork = "fork-\(UUID().uuidString.prefix(8))"
+        let folder = ClaudeStorage.projects.appending(path: ClaudeStorage.encode(cwdDir.realPath))
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        func turn(_ i: Int, _ id: String) -> [String] {
+            [#"{"type":"user","uuid":"u\#(i)","sessionId":"\#(id)","message":{"role":"user","content":"question \#(i)"}}"#,
+             #"{"type":"assistant","uuid":"a\#(i)","parentUuid":"u\#(i)","sessionId":"\#(id)","message":{"content":[{"type":"text","text":"answer \#(i)"}]}}"#]
+        }
+        try ((0..<3).flatMap { turn($0, parent) }.joined(separator: "\n") + "\n").write(to: folder.appending(path: parent + ".jsonl"), atomically: true, encoding: .utf8)
+        // Resume as a Fork, before its first message: Claude Code has written no file under the fork's id.
+        let store = ChatStore(persist: false)
+        let c = store.session("fork-tab")
+        c.follow(sessionId: fork, cwd: cwdDir.path, historyFrom: parent)
+        var until = Date().addingTimeInterval(5)
+        while c.log.items.count < 6, Date() < until { spin(0.02) }
+        check(c.log.items.count == 6, "a fork's chat shows its parent's 3 turns before its first message, not a blank pane (\(c.log.items.count) items)")
+        // Its first message: Claude Code copies every record under the new id, then the new turn (F-292).
+        try ((0..<4).flatMap { turn($0, fork) }.joined(separator: "\n") + "\n").write(to: folder.appending(path: fork + ".jsonl"), atomically: true, encoding: .utf8)
+        until = Date().addingTimeInterval(5)
+        while c.log.items.count != 8, Date() < until { spin(0.05) }
+        spin(0.5)   // a few more ticks: nothing is added twice
+        check(c.log.items.count == 8, "once the fork writes its own transcript, the chat reads it: 4 turns, none twice (\(c.log.items.count) items)")
+        c.feedStop()
+        // Reopening a fork that never got a message forks again from its parent; it never starts an empty session
+        // under the fork's id (F-706: Duo's relaunches did, and the fork lost its history).
+        check(AppModel.claudeLaunch(id: fork, hasTranscript: false, forkedFrom: parent, parentHasTranscript: true, remoteControl: nil)
+              == .forkClaude(from: parent, sessionID: fork), "an unused fork reopens as a fork of its parent")
+        check(AppModel.claudeLaunch(id: fork, hasTranscript: true, forkedFrom: parent, parentHasTranscript: true, remoteControl: nil)
+              == .resumeClaude(sessionID: fork, remoteControl: nil), "a used fork resumes as itself")
+        check(AppModel.claudeLaunch(id: fork, hasTranscript: false, forkedFrom: parent, parentHasTranscript: false, remoteControl: nil)
+              == .newClaude(sessionID: fork, prompt: nil, remoteControl: nil), "a fork whose parent is gone starts new, as before")
+        try? FileManager.default.removeItem(at: cfg)
+    }
+
     print("chat mode: a long chat opens off the main thread (F-160)")
     do {
         // Every board's recording, replayed off the main thread, gives the log the main thread's replay gives.

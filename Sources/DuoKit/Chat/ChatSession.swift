@@ -340,10 +340,12 @@ public final class ChatSession {
     }
 
     /// Starts reading the session's hooks and transcript (live sessions).
-    public func follow(sessionId: String, cwd: String) {
+    /// `historyFrom`: a fork's parent. A fork made with `--fork-session` has no transcript of its own until its first
+    /// message (F-292), so until then its history is read from the parent's (F-367: chat showed a blank pane).
+    public func follow(sessionId: String, cwd: String, historyFrom: String? = nil) {
         guard feed?.sessionId != sessionId else { return }
         feed?.stop()
-        feed = ChatFeed(sessionId: sessionId, cwd: cwd, chat: self)
+        feed = ChatFeed(sessionId: sessionId, cwd: cwd, chat: self, historyFrom: historyFrom)
         signalReader.start(for: self)
     }
 
