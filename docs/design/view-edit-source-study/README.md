@@ -18,6 +18,13 @@ Paths are relative to the repo root. `JS` means `Vendor/codemirror/src/duo-edito
 - **Three options on the canvas** (§6), from a toggle, through the split's second side, to source inline per block.
   - **Recommended: A, one Source toggle for every document, highlighted, editable, ⌥⌘U.** The split pair reuses the same highlighted source editor, so the page beside its source comes free.
 
+## Since the round was drawn (2026-11-14)
+
+- **The Markdown preview is gone** from split view (F-503's note, 2026-11-01). `PreviewKind.markdown` stays in the enum, but nothing offers it.
+- **The formatting bar is built** (DL-301), still kept out of Source mode, and **Review's controls are now in it** (DL-317). So Q-410 now also decides whether Suggest and Add Comment show in Markdown source.
+- **⌥⌘U is still unused in Duo** (checked on main at 8934b5d1). The record numbers reserved for this round are still free.
+- The questions are written as console cards in `console-cards.json`, for the director to post.
+
 ## 1. What Duo does today
 
 ### Source Mode (Markdown only)
