@@ -1,0 +1,15 @@
+<style>
+#r1 { left: 24px; top: 18px; } #r2 { left: 228px; top: 18px; } #r3 { left: 432px; top: 18px; }
+#m1 { left: 24px; top: 118px; } #m2 { left: 228px; top: 118px; } #m3 { left: 432px; top: 118px; }
+.m { width: 184px; font-size: 14px; line-height: 19px; color: #c2410c; font-weight: 600; }
+#chk { left: 24px; top: 224px; width: 592px; }
+#none { left: 24px; top: 346px; }
+</style>
+<div class="rb" id="r1" data-in="scale" data-f><b>Status</b>Lists workers and turns red</div>
+<div class="rb" id="r2" data-in="scale" data-f><b>The worker</b>Reports to the director</div>
+<div class="rb" id="r3" data-in="scale" data-f><b>The director skill</b>Tells it what to do</div>
+<div class="m" id="m1" data-in="down">Skips any worker you typed in</div>
+<div class="m" id="m2" data-in="down">Reports only when done or stuck</div>
+<div class="m" id="m3" data-in="down">Says "paused", never "read it"</div>
+<div class="panel" id="chk" data-in="up" data-f><span class="mono">DUO_CHECKS=missed-turns swift run DuoChecks</span><div class="big"><span class="gd">2 passed</span> · <span class="rd">5 failed</span></div><span class="mono">the 10 November case, rebuilt from a transcript</span></div>
+<div class="stamp bad" id="none" data-in="scale" data-f>No red line at all</div>

@@ -1,0 +1,14 @@
+<style>
+#b1 { left: 24px; top: 44px; } #b2 { left: 228px; top: 44px; } #b3 { left: 432px; top: 44px; }
+.rb { height: 112px; }
+[data-state~="status"] #b2, [data-state~="status"] #b3, [data-state~="worker"] #b1, [data-state~="worker"] #b3 { opacity: .3; }
+[data-state~="all"] .rb, [data-state~="status"] #b1, [data-state~="worker"] #b2 { border-color: #1a7f37; background: #eaf6ee; }
+#nS { left: 24px; top: 190px; width: 592px; } #nW { left: 24px; top: 190px; width: 592px; } #nA { left: 24px; top: 190px; width: 592px; }
+[data-state~="status"] #nS, [data-state~="worker"] #nW, [data-state~="all"] #nA { --o: 1; }
+</style>
+<div class="rb" id="b1" data-in="scale" data-f><b>Status</b>A red line quoting how the turn ended</div>
+<div class="rb" id="b2" data-in="scale" data-f><b>The worker</b>A report after every turn you drove</div>
+<div class="rb" id="b3" data-in="scale" data-f><b>The director skill</b>"Paused is for sending, not reading"</div>
+<div class="card fade" id="nA">Status is the backstop. The worker report is the cheap fix. The skill sentence tells the director to read.</div>
+<div class="card fade" id="nS">The backstop, no worker change. The director learns at its next status.</div>
+<div class="card fade" id="nW">No code. But nothing catches a worker that dies, or one that predates the rule.</div>

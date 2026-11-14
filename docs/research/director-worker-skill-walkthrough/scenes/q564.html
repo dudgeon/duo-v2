@@ -1,0 +1,15 @@
+<style>
+#nt { left: 24px; top: 40px; width: 300px; height: 130px; display: flex; flex-direction: column; gap: 8px; }
+#cm { left: 280px; top: 90px; width: 336px; }
+#wk { left: 340px; top: 200px; width: 276px; } #sr { left: 340px; top: 200px; width: 276px; } #td { left: 24px; top: 200px; width: 300px; }
+[data-state~="comments"] #cm, [data-state~="search"] #cm { --o: 1; }
+[data-state~="comments"] #wk, [data-state~="search"] #sr, [data-state~="list"] #td { --o: 1; }
+#rec { left: 24px; top: 336px; }
+[data-state~="list"] #nt { box-shadow: 0 0 0 2px #1a7f37; }
+</style>
+<div class="card" id="nt" data-in="left" data-f><b>A note</b><span class="b" style="width:90%"></span><span class="b" style="width:70%"></span><span class="b" style="width:80%"></span></div>
+<div class="bub fade" id="cm"><span class="lab">Comment, the director's observation</span>Decided Friday. Still right?</div>
+<div class="card fade" id="wk"><b>What we know</b><span class="s">A short file of confirmed facts</span></div>
+<div class="card fade" id="sr"><b>Found by search</b><span class="s">Does search index comments? Unchecked</span></div>
+<div class="card fade" id="td"><b>To confirm</b><span class="s">A separate list, the note untouched</span></div>
+<div class="stamp" id="rec" data-in="up" data-f>The worker on 10 November recommended this</div>

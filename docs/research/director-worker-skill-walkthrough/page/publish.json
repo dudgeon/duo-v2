@@ -1,0 +1,36 @@
+{
+ "note": "Publish with the Artifact tool: file_path = <this folder>/index.html, root = this folder, files = the map below, capabilities as below, icon 'play'. The director publishes the final page (DL-166).",
+ "file_path": "index.html",
+ "root": ".",
+ "files": {
+  "audio/gone.mp3": "audio/gone.mp3",
+  "audio/mech.mp3": "audio/mech.mp3",
+  "audio/fix.mp3": "audio/fix.mp3",
+  "audio/worker.mp3": "audio/worker.mp3",
+  "audio/q561-fix.mp3": "audio/q561-fix.mp3",
+  "audio/q561-fix--all-three.mp3": "audio/q561-fix--all-three.mp3",
+  "audio/q561-fix--status-only.mp3": "audio/q561-fix--status-only.mp3",
+  "audio/q561-fix--worker-only.mp3": "audio/q561-fix--worker-only.mp3",
+  "audio/q562-sessions.mp3": "audio/q562-sessions.mp3",
+  "audio/q562-sessions--tagged-only.mp3": "audio/q562-sessions--tagged-only.mp3",
+  "audio/q562-sessions--every-session.mp3": "audio/q562-sessions--every-session.mp3",
+  "audio/q562-sessions--none.mp3": "audio/q562-sessions--none.mp3",
+  "audio/q563-worker-skill.mp3": "audio/q563-worker-skill.mp3",
+  "audio/q563-worker-skill--ship-now.mp3": "audio/q563-worker-skill--ship-now.mp3",
+  "audio/q563-worker-skill--keep-growing.mp3": "audio/q563-worker-skill--keep-growing.mp3",
+  "audio/q563-worker-skill--project-only.mp3": "audio/q563-worker-skill--project-only.mp3",
+  "audio/q564-notes.mp3": "audio/q564-notes.mp3",
+  "audio/q564-notes--comments-and-file.mp3": "audio/q564-notes--comments-and-file.mp3",
+  "audio/q564-notes--comments-search.mp3": "audio/q564-notes--comments-search.mp3",
+  "audio/q564-notes--to-confirm-list.mp3": "audio/q564-notes--to-confirm-list.mp3",
+  "audio/q565-order.mp3": "audio/q565-order.mp3",
+  "audio/q565-order--fix-first.mp3": "audio/q565-order--fix-first.mp3",
+  "audio/q565-order--review-first.mp3": "audio/q565-order--review-first.mp3",
+  "audio/q565-order--trim-first.mp3": "audio/q565-order--trim-first.mp3",
+  "audio/wrap.mp3": "audio/wrap.mp3"
+ },
+ "capabilities": {
+  "db": {},
+  "comments": {}
+ }
+}

@@ -1,0 +1,17 @@
+<style>
+#x0 { left: 24px; top: 20px; width: 592px; } #x1 { left: 24px; top: 70px; width: 592px; } #x2 { left: 24px; top: 120px; width: 592px; }
+#x3 { left: 24px; top: 170px; width: 592px; } #x4 { left: 24px; top: 220px; width: 592px; }
+#x0 .flag { background: #5b636d; }
+[data-state~="tagged"] #fl1, [data-state~="tagged"] #fl2, [data-state~="every"] #fl1, [data-state~="every"] #fl2, [data-state~="every"] #fl3, [data-state~="every"] #fl4 { --o: 1; }
+#noise { left: 24px; top: 290px; } #quiet { left: 24px; top: 290px; } #just { left: 24px; top: 290px; width: 592px; }
+[data-state~="every"] #noise, [data-state~="none"] #quiet, [data-state~="tagged"] #just { --o: 1; }
+[data-state~="every"] #x3, [data-state~="every"] #x4 { border-color: #c2410c; }
+</style>
+<div class="srow" id="x0" data-in="left" data-f><span>Registered worker</span><span class="flag">always read</span></div>
+<div class="srow" id="x1" data-in="left" data-f><span>This director's tag in its first message</span><span class="flag fade" id="fl1">read</span></div>
+<div class="srow" id="x2" data-in="left" data-f><span>"I'll pass this to the director" in its last reply</span><span class="flag fade" id="fl2">read</span></div>
+<div class="srow" id="x3" data-in="left" data-f><span>Your own session, you typed in it</span><span class="flag fade" id="fl3">read</span></div>
+<div class="srow" id="x4" data-in="left" data-f><span>Your own session, you typed in it</span><span class="flag fade" id="fl4">read</span></div>
+<div class="stamp bad fade" id="noise">Most of these are yours. Noise.</div>
+<div class="stamp fade" id="quiet">Quiet, but a worker the registry lost stays unread</div>
+<div class="card fade" id="just">Only what was the director's, or promised it something.</div>
