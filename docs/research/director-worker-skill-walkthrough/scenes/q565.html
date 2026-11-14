@@ -1,0 +1,20 @@
+<style>
+#nums { left: 24px; top: 100px; width: 592px; }
+.st { top: 130px; }
+#s1 { left: 24px; } #s2 { left: 142px; } #s3 { left: 260px; } #s4 { left: 378px; } #s5 { left: 496px; }
+[data-state~="rf"] #s3 { left: 142px; } [data-state~="rf"] #s2 { left: 260px; }
+[data-state~="tf"] #s5 { left: 260px; } [data-state~="tf"] #s3 { left: 378px; } [data-state~="tf"] #s4 { left: 496px; }
+[data-state~="rf"] #s3, [data-state~="tf"] #s5 { border-color: #1a7f37; background: #eaf6ee; }
+#why { left: 24px; top: 250px; width: 592px; }
+#ra { left: 24px; top: 250px; width: 592px; } #rb { left: 24px; top: 250px; width: 592px; } #rc { left: 24px; top: 250px; width: 592px; }
+[data-state~="rec"] #ra, [data-state~="rf"] #rb, [data-state~="tf"] #rc { --o: 1; }
+</style>
+<div class="lab" id="nums" data-in="fade">Order, first to last</div>
+<div class="st" id="s1" data-in="up" data-f><b>1</b>Missed-turns fix</div>
+<div class="st" id="s2" data-in="up" data-f><b>2</b>Worker skill</div>
+<div class="st" id="s3" data-in="up" data-f><b>3</b>Review pass</div>
+<div class="st" id="s4" data-in="up" data-f><b>4</b>Notes trial</div>
+<div class="st" id="s5" data-in="up" data-f><b>5</b>The trim</div>
+<div class="card fade" id="ra">The fix protects everything after it. The trim goes last, against trustworthy tests.</div>
+<div class="card fade" id="rb">The sweep showed the pass's value now. The worker skill waits behind it.</div>
+<div class="card fade" id="rc">A shorter skill first. But the evals can't yet be trusted to judge the cut.</div>

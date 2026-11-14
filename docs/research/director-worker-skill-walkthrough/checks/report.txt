@@ -1,0 +1,40 @@
+desktop after play: {"cur":0,"t":3.970131,"mode":"intro","cap":"On the tenth of November you told a worker the director should get a worker skill, and a librarian skill. That was your idea."}
+desktop option playing: {"mode":"option","t":2.414872}
+desktop saved: Saved on this page. Copy decisions sends it by hand.
+desktop after save, chapter 5
+desktop copy button: Copied
+desktop clipboard:
+Director design round walkthrough · all decisions (director-worker-skill-2026-11)
+For director-duo-v2. Saved in this page's db under answers/<id>.
+
+Q-561 (q561-fix) How to fix the missed turns: All three readers [all-three] (recommended)
+  Comment: check run: a comment
+Q-562 (q562-sessions) Sessions the registry doesn't know: not answered
+Q-563 (q563-worker-skill) The worker skill: not answered
+Q-564 (q564-notes) Where the director's observations on notes go: not answered
+Q-565 (q565-order) The order of what's left: not answered
+
+Research: https://github.com/dudgeon/duo-v2/blob/research/director-worker-skill/docs/research/director-worker-skill.md
+desktop horizontal overflow px: 0
+desktop targets under 40px: ["● Fix 30x44","● Sessions 36x44","● Worker skill 34x44","● Order 20x44","Every session you typed inCatc 206x39","NoneRegistered workers only. 207x39"]
+desktop errors: []
+phone after play: {"cur":0,"t":3.977063,"mode":"intro","cap":"On the tenth of November you told a worker the director should get a worker skill, and a librarian skill. That was your idea."}
+phone option playing: {"mode":"option","t":2.46103}
+phone saved: Saved on this page. Copy decisions sends it by hand.
+phone after save, chapter 5
+phone copy button: Copied
+phone clipboard:
+Director design round walkthrough · all decisions (director-worker-skill-2026-11)
+For director-duo-v2. Saved in this page's db under answers/<id>.
+
+Q-561 (q561-fix) How to fix the missed turns: All three readers [all-three] (recommended)
+  Comment: check run: a comment
+Q-562 (q562-sessions) Sessions the registry doesn't know: not answered
+Q-563 (q563-worker-skill) The worker skill: not answered
+Q-564 (q564-notes) Where the director's observations on notes go: not answered
+Q-565 (q565-order) The order of what's left: not answered
+
+Research: https://github.com/dudgeon/duo-v2/blob/research/director-worker-skill/docs/research/director-worker-skill.md
+phone horizontal overflow px: 0
+phone targets under 40px: ["What went wrong 52x30","Why 55x30","The fix 45x30","Worker skill 69x30","● Fix 11x30","● Sessions 13x30","● Worker skill 13x30","● Notes 23x30","● Order 8x30","Done 18x30","Every session you typed inCatc 209x39","NoneRegistered workers only. 210x39"]
+phone errors: []

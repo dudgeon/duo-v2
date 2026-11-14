@@ -1,0 +1,1197 @@
+{
+ "id": "director-worker-skill-2026-11",
+ "title": "The worker skill and the missed turns",
+ "subtitle": "Decision walkthrough · 14 Nov 2026 · the missed-turns failure, the worker skill and five decisions · narrated by Duo's house voice",
+ "posterLine": "A worker's offer that never reached the director, why three readers missed it, the fix, and five decisions. Tap play and listen; it stops when it needs you.",
+ "footer": "Built with the decision-walkthrough skill from docs/research/director-worker-skill-walkthrough/spec.json. Answers are saved in this page and sent to director-duo-v2.",
+ "source": {
+  "label": "director-worker-skill.md",
+  "url": "https://github.com/dudgeon/duo-v2/blob/research/director-worker-skill/docs/research/director-worker-skill.md"
+ },
+ "director": "director-duo-v2",
+ "sendPrefix": "Director design round walkthrough",
+ "voice": "house",
+ "styles": "scenes.css",
+ "out": "page",
+ "said": {
+  "duo2": "duo two",
+  "Q-485": "Q four eighty five",
+  "Q-561": "Q five sixty one",
+  "Q-562": "Q five sixty two",
+  "Q-563": "Q five sixty three",
+  "Q-564": "Q five sixty four",
+  "Q-565": "Q five sixty five",
+  "F-698": "F six ninety eight",
+  "DL-208": "D L two oh eight",
+  "R1": "R one"
+ },
+ "chapters": [
+  {
+   "id": "gone",
+   "title": "What went wrong",
+   "short": "What went wrong",
+   "sceneFile": "scenes/gone.html",
+   "lines": [
+    {
+     "text": "On the tenth of November you told a worker the director should get a worker skill, and a librarian skill. That was your idea.",
+     "cues": [
+      {
+       "on": "You",
+       "do": "show",
+       "sel": "#g1"
+      },
+      {
+       "on": "worker skill",
+       "do": "focus",
+       "sel": "#g1",
+       "soft": true
+      }
+     ]
+    },
+    {
+     "text": "The worker agreed. It ended its reply, if you agree, I'll pass this to the director. Then it never did.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "unfocus"
+      },
+      {
+       "on": "agreed",
+       "do": "show",
+       "sel": "#g2"
+      },
+      {
+       "on": "pass",
+       "do": "focus",
+       "sel": "#g2",
+       "soft": true
+      },
+      {
+       "on": "never",
+       "do": "show",
+       "sel": "#g2x"
+      }
+     ]
+    },
+    {
+     "text": "Four days later, the director had never heard of it.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "unfocus"
+      },
+      {
+       "on": "Four",
+       "do": "show",
+       "sel": "#dir"
+      },
+      {
+       "on": "never",
+       "do": "focus",
+       "sel": "#dir",
+       "soft": true
+      }
+     ]
+    },
+    {
+     "text": "So I swept 333 transcripts. I found four open threads like it, two workers that died after your input, and fifteen sessions blocked for up to three weeks.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "unfocus"
+      },
+      {
+       "on": "swept",
+       "do": "show",
+       "sel": "#swl"
+      },
+      {
+       "on": "four",
+       "do": "show",
+       "sel": "#s1"
+      },
+      {
+       "on": "four",
+       "do": "focus",
+       "sel": "#s1",
+       "soft": true
+      },
+      {
+       "on": "two",
+       "do": "show",
+       "sel": "#s2"
+      },
+      {
+       "on": "two",
+       "do": "focus",
+       "sel": "#s2",
+       "soft": true
+      },
+      {
+       "on": "fifteen",
+       "do": "show",
+       "sel": "#s3"
+      },
+      {
+       "on": "fifteen",
+       "do": "focus",
+       "sel": "#s3",
+       "soft": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "mech",
+   "title": "Why it happened",
+   "short": "Why",
+   "sceneFile": "scenes/mech.html",
+   "lines": [
+    {
+     "text": "Three readers should have caught it, and each one missed.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "show",
+       "sel": "#r1"
+      },
+      {
+       "on": "each",
+       "do": "show",
+       "sel": "#r2"
+      },
+      {
+       "on": "missed",
+       "do": "show",
+       "sel": "#r3"
+      }
+     ]
+    },
+    {
+     "text": "Status skips any worker you typed in. It treats that worker as yours, so it never turns red.",
+     "cues": [
+      {
+       "on": "Status",
+       "do": "focus",
+       "sel": "#r1",
+       "soft": true
+      },
+      {
+       "on": "skips",
+       "do": "show",
+       "sel": "#m1"
+      }
+     ]
+    },
+    {
+     "text": "The worker reports only when it's done or stuck. A reply that ends on an offer is neither.",
+     "cues": [
+      {
+       "on": "worker",
+       "do": "focus",
+       "sel": "#r2",
+       "soft": true
+      },
+      {
+       "on": "only",
+       "do": "show",
+       "sel": "#m2"
+      }
+     ]
+    },
+    {
+     "text": "The director skill says it's paused there. It never says to read what you said.",
+     "cues": [
+      {
+       "on": "director",
+       "do": "focus",
+       "sel": "#r3",
+       "soft": true
+      },
+      {
+       "on": "never",
+       "do": "show",
+       "sel": "#m3"
+      }
+     ]
+    },
+    {
+     "text": "I wrote a check for this, finding F-698. Run it on main, and you get two passed, five failed, and no red line at all.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "unfocus"
+      },
+      {
+       "on": "check",
+       "do": "show",
+       "sel": "#chk"
+      },
+      {
+       "on": "check",
+       "do": "focus",
+       "sel": "#chk",
+       "soft": true
+      },
+      {
+       "on": "no red",
+       "do": "show",
+       "sel": "#none"
+      },
+      {
+       "on": "no red",
+       "do": "focus",
+       "sel": "#none",
+       "soft": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "fix",
+   "title": "The fix",
+   "short": "The fix",
+   "sceneFile": "scenes/fix.html",
+   "lines": [
+    {
+     "text": "The fix is one change for each reader.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "focus",
+       "sel": "#f1",
+       "soft": true
+      },
+      {
+       "at": 0.5,
+       "do": "unfocus"
+      }
+     ]
+    },
+    {
+     "text": "Status gets a red line. It quotes how the turn ended, so you can see the dropped offer.",
+     "cues": [
+      {
+       "on": "Status",
+       "do": "show",
+       "sel": "#f1"
+      },
+      {
+       "on": "quotes",
+       "do": "focus",
+       "sel": "#f1",
+       "soft": true
+      }
+     ]
+    },
+    {
+     "text": "The worker sends the director one message after every turn you drove. Asked, decided, waiting on.",
+     "cues": [
+      {
+       "on": "worker",
+       "do": "show",
+       "sel": "#f2"
+      },
+      {
+       "on": "worker",
+       "do": "focus",
+       "sel": "#f2",
+       "soft": true
+      }
+     ]
+    },
+    {
+     "text": "And the director skill says paused is for sending, not for reading. Read it at your next wake.",
+     "cues": [
+      {
+       "on": "director",
+       "do": "show",
+       "sel": "#f3"
+      },
+      {
+       "on": "director",
+       "do": "focus",
+       "sel": "#f3",
+       "soft": true
+      }
+     ]
+    },
+    {
+     "text": "Then the same check should pass.",
+     "cues": [
+      {
+       "at": 0,
+       "do": "unfocus"
+      },
+      {
+       "on": "check",
+       "do": "show",
+       "sel": "#fchk"
+      },
+      {
+       "on": "check",
+       "do": "focus",
+       "sel": "#fchk",
+       "soft": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "worker",
+   "title": "The worker skill",
+   "short": "Worker skill",
+   "sceneFile": "scenes/worker.html",
+   "lines": [
+    {
+     "text": "Your idea from the tenth was right. A skill is worth it for a different reader, with its own tests.",
+     "cues": [
+      {
+       "on": "different",
+       "do": "show",
+       "sel": "#w1"
+      },
+      {
+       "on": "different",
+       "do": "focus",
+       "sel": "#w1",
+       "soft": true
+      }
+     ]
+    },
+    {
+     "text": "The worker is that reader. Today its rules are a paragraph in a Swift string.",
+     "cues": [
+      {
+       "on": "Today",
+       "do": "show",
+       "sel": "#w2"
+      },
+      {
+       "on": "Today",
+       "do": "focus",
+       "sel": "#w2",
+       "soft": true
+      }
+     ]
+    },
+    {
+     "text": "The skill carries the proof rule. The first progress line says how it will prove the work. The report says what ran, what it showed, and what it didn't check.",
+     "cues": [
+      {
+       "on": "proof",
+       "do": "show",
+       "sel": "#w3"
+      },
+      {
+       "on": "proof",
+       "do": "focus",
+       "sel": "#w3",
+       "soft": true
+      },
+      {
+       "on": "report",
+       "do": "show",
+       "sel": "#w3b"
+      },
+      {
+       "on": "report",
+       "do": "focus",
+       "sel": "#w3b",
+       "soft": true
+      }
+     ]
+    },
+    {
+     "text": "Questions carry links. It ships like the director skill, the prompt names it, and duo2 worker guide is the fallback.",
+     "cues": [
+      {
+       "on": "Questions",
+       "do": "show",
+       "sel": "#w4"
+      },
+      {
+       "on": "Questions",
+       "do": "focus",
+       "sel": "#w4",
+       "soft": true
+      },
+      {
+       "on": "ships",
+       "do": "show",
+       "sel": "#w5"
+      },
+      {
+       "on": "ships",
+       "do": "focus",
+       "sel": "#w5",
+       "soft": true
+      },
+      {
+       "on": "fallback",
+       "do": "show",
+       "sel": "#w6"
+      },
+      {
+       "on": "fallback",
+       "do": "focus",
+       "sel": "#w6",
+       "soft": true
+      }
+     ]
+    },
+    {
+     "text": "One honest note. It barely shortens the director skill, about two lines. It stops the prompt growing.",
+     "cues": [
+      {
+       "on": "honest",
+       "do": "show",
+       "sel": "#w7"
+      },
+      {
+       "on": "honest",
+       "do": "focus",
+       "sel": "#w7",
+       "soft": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "q561-fix",
+   "kind": "decision",
+   "q": "Q-561",
+   "title": "How to fix the missed turns",
+   "short": "Fix",
+   "ask": "How should we fix the missed turns?",
+   "why": "A red line, a worker report, a sentence in the director skill: each reader can be fixed on its own.",
+   "look": [
+    {
+     "label": "Q-561 · How to fix the missed turns · §7 of the research",
+     "url": "https://github.com/dudgeon/duo-v2/blob/research/director-worker-skill/docs/research/director-worker-skill.md#7-decisions-for-geoff"
+    }
+   ],
+   "sceneFile": "scenes/q561.html",
+   "lines": [
+    {
+     "text": "First decision. How should we fix the missed turns? Each reader can be fixed on its own.",
+     "cues": [
+      {
+       "on": "First",
+       "do": "show",
+       "sel": "#b1"
+      },
+      {
+       "on": "fixed",
+       "do": "show",
+       "sel": "#b2"
+      },
+      {
+       "on": "own",
+       "do": "show",
+       "sel": "#b3"
+      }
+     ]
+    }
+   ],
+   "options": [
+    {
+     "id": "all-three",
+     "label": "All three readers",
+     "desc": "Status, the worker report, and the director skill.",
+     "lines": [
+      {
+       "text": "I'd fix all three. Status is the backstop, the worker report is the cheap fix, and the skill sentence tells the director to read.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "state",
+         "value": ""
+        },
+        {
+         "on": "fix",
+         "do": "state",
+         "value": "all"
+        },
+        {
+         "on": "backstop",
+         "do": "focus",
+         "sel": "#b1",
+         "soft": true
+        },
+        {
+         "on": "cheap",
+         "do": "focus",
+         "sel": "#b2",
+         "soft": true
+        },
+        {
+         "on": "tells",
+         "do": "focus",
+         "sel": "#b3",
+         "soft": true
+        }
+       ]
+      }
+     ],
+     "recommended": true
+    },
+    {
+     "id": "status-only",
+     "label": "Status only",
+     "desc": "The backstop, no worker change.",
+     "lines": [
+      {
+       "text": "Or status only. That's the backstop with no worker change, but the director learns only at its next status.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "state",
+         "value": ""
+        },
+        {
+         "on": "status",
+         "do": "state",
+         "value": "status"
+        },
+        {
+         "on": "status",
+         "do": "focus",
+         "sel": "#b1",
+         "soft": true
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "worker-only",
+     "label": "The worker rule only",
+     "desc": "No code.",
+     "lines": [
+      {
+       "text": "Or the worker rule only. No code, but nothing catches a worker that dies, or one that predates the rule.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "state",
+         "value": ""
+        },
+        {
+         "on": "worker",
+         "do": "state",
+         "value": "worker"
+        },
+        {
+         "on": "worker",
+         "do": "focus",
+         "sel": "#b2",
+         "soft": true
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "q562-sessions",
+   "kind": "decision",
+   "q": "Q-562",
+   "title": "Sessions the registry doesn't know",
+   "short": "Sessions",
+   "ask": "Which sessions the registry doesn't know should status read?",
+   "why": "Most of Geoff's sessions are his own, so reading all of them would drown the real ones.",
+   "look": [
+    {
+     "label": "Q-562 · Sessions the registry doesn't know · §7 of the research",
+     "url": "https://github.com/dudgeon/duo-v2/blob/research/director-worker-skill/docs/research/director-worker-skill.md#7-decisions-for-geoff"
+    }
+   ],
+   "sceneFile": "scenes/q562.html",
+   "lines": [
+    {
+     "text": "Second. Which sessions that the registry doesn't know should status read? Most of your sessions are your own.",
+     "cues": [
+      {
+       "on": "Second",
+       "do": "show",
+       "sel": "#x0"
+      },
+      {
+       "on": "registry",
+       "do": "show",
+       "sel": "#x1"
+      },
+      {
+       "on": "own",
+       "do": "show",
+       "sel": "#x3"
+      },
+      {
+       "on": "own",
+       "do": "show",
+       "sel": "#x4"
+      }
+     ]
+    }
+   ],
+   "options": [
+    {
+     "id": "tagged-only",
+     "label": "Only the director's, or those that promised it",
+     "desc": "Its tag in the first message, or the director named in the last reply.",
+     "lines": [
+      {
+       "text": "I'd read only the ones that were this director's, or promised it something. Its tag in the first message, or the director named in the last reply.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "state",
+         "value": ""
+        },
+        {
+         "on": "read",
+         "do": "state",
+         "value": "tagged"
+        },
+        {
+         "on": "tag",
+         "do": "focus",
+         "sel": "#x1",
+         "soft": true
+        },
+        {
+         "on": "named",
+         "do": "focus",
+         "sel": "#x2",
+         "soft": true
+        }
+       ]
+      }
+     ],
+     "recommended": true
+    },
+    {
+     "id": "every-session",
+     "label": "Every session you typed in",
+     "desc": "Catches more, but it's noise.",
+     "lines": [
+      {
+       "text": "Or every session you typed in. It catches more, but most are yours, so it would be clutter.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "state",
+         "value": ""
+        },
+        {
+         "on": "every",
+         "do": "state",
+         "value": "every"
+        },
+        {
+         "on": "clutter",
+         "do": "focus",
+         "sel": "#x3",
+         "soft": true
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "none",
+     "label": "None",
+     "desc": "Registered workers only.",
+     "lines": [
+      {
+       "text": "Or none. Registered workers only. Quiet, but a worker the registry lost never gets read.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "state",
+         "value": ""
+        },
+        {
+         "on": "none",
+         "do": "state",
+         "value": "none"
+        },
+        {
+         "on": "Quiet",
+         "do": "focus",
+         "sel": "#x0",
+         "soft": true
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "q563-worker-skill",
+   "kind": "decision",
+   "q": "Q-563",
+   "title": "The worker skill",
+   "short": "Worker skill",
+   "ask": "Should the worker skill ship with Duo now?",
+   "why": "It would ship the way the director skill does, with the proof rule in it and the prompt keeping a minimum.",
+   "look": [
+    {
+     "label": "Q-563 · The worker skill · §4 of the research",
+     "url": "https://github.com/dudgeon/duo-v2/blob/research/director-worker-skill/docs/research/director-worker-skill.md#4-the-worker-skill"
+    },
+    {
+     "label": "The draft worker skill",
+     "url": "https://github.com/dudgeon/duo-v2/blob/research/director-worker-skill/docs/research/director-worker-skill/worker-SKILL.md"
+    }
+   ],
+   "sceneFile": "scenes/q563.html",
+   "lines": [
+    {
+     "text": "Third. The worker skill. Today its rules sit in the prompt, and the prompt keeps growing.",
+     "cues": [
+      {
+       "on": "Third",
+       "do": "show",
+       "sel": "#pr"
+      },
+      {
+       "on": "prompt",
+       "do": "focus",
+       "sel": "#pr",
+       "soft": true
+      }
+     ]
+    }
+   ],
+   "options": [
+    {
+     "id": "ship-now",
+     "label": "Ship it now with Duo",
+     "desc": "Step 3 inside, the prompt keeps a minimum.",
+     "lines": [
+      {
+       "text": "I'd ship it now, with the proof rule in it. The prompt names it and keeps a short minimum, and it gets its own tests.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "state",
+         "value": ""
+        },
+        {
+         "on": "ship",
+         "do": "state",
+         "value": "skill"
+        },
+        {
+         "on": "proof",
+         "do": "focus",
+         "sel": "#sk",
+         "soft": true
+        },
+        {
+         "on": "tests",
+         "do": "focus",
+         "sel": "#ev",
+         "soft": true
+        }
+       ]
+      }
+     ],
+     "recommended": true
+    },
+    {
+     "id": "keep-growing",
+     "label": "Keep growing the prompt",
+     "desc": "No new skill, no worker evals.",
+     "lines": [
+      {
+       "text": "Or keep growing the worker prompt. No new skill, but no worker tests either.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "state",
+         "value": ""
+        },
+        {
+         "on": "keep",
+         "do": "state",
+         "value": "grow"
+        },
+        {
+         "on": "tests",
+         "do": "focus",
+         "sel": "#nG",
+         "soft": true
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "project-only",
+     "label": "A guide for duo-v2 only",
+     "desc": "Other Duo users don't get it.",
+     "lines": [
+      {
+       "text": "Or a worker guide for duo-v2 only. Other Duo users don't get it.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "state",
+         "value": ""
+        },
+        {
+         "on": "guide",
+         "do": "state",
+         "value": "project"
+        },
+        {
+         "on": "Other",
+         "do": "focus",
+         "sel": "#pm",
+         "soft": true
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "q564-notes",
+   "kind": "decision",
+   "q": "Q-564",
+   "title": "Where the director's observations on notes go",
+   "short": "Notes",
+   "ask": "Where should the director's observations on notes go, for the trial?",
+   "why": "This answers the open Q-485. The worker on 10 November looked at it and recommended the first option.",
+   "look": [
+    {
+     "label": "Q-564 · Where the director's observations on notes go · §7 of the research",
+     "url": "https://github.com/dudgeon/duo-v2/blob/research/director-worker-skill/docs/research/director-worker-skill.md#7-decisions-for-geoff"
+    }
+   ],
+   "sceneFile": "scenes/q564.html",
+   "lines": [
+    {
+     "text": "Fourth. This answers the open question, Q-485. Where do the director's observations on notes go, for the trial? The worker on the tenth looked at it, and recommended an answer.",
+     "cues": [
+      {
+       "on": "Fourth",
+       "do": "show",
+       "sel": "#nt"
+      },
+      {
+       "on": "worker",
+       "do": "show",
+       "sel": "#rec"
+      },
+      {
+       "on": "recommended",
+       "do": "focus",
+       "sel": "#rec",
+       "soft": true
+      }
+     ]
+    }
+   ],
+   "options": [
+    {
+     "id": "comments-and-file",
+     "label": "Comments, confirmed, plus a what-we-know file",
+     "desc": "On the made-up project first.",
+     "lines": [
+      {
+       "text": "The worker recommended this. Comments on the note, confirmed by a reply or one batch of questions, plus a short what-we-know file, tested with and without. On the made-up project first.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "state",
+         "value": ""
+        },
+        {
+         "on": "Comments",
+         "do": "state",
+         "value": "comments"
+        },
+        {
+         "on": "Comments",
+         "do": "focus",
+         "sel": "#cm",
+         "soft": true
+        },
+        {
+         "on": "file",
+         "do": "focus",
+         "sel": "#wk",
+         "soft": true
+        }
+       ]
+      }
+     ],
+     "recommended": true
+    },
+    {
+     "id": "comments-search",
+     "label": "Comments only, facts found by search",
+     "desc": "Needs search to index comments.",
+     "lines": [
+      {
+       "text": "Or comments only, with confirmed facts found by search. That needs search to index comments, and nobody has checked.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "state",
+         "value": ""
+        },
+        {
+         "on": "comments",
+         "do": "state",
+         "value": "search"
+        },
+        {
+         "on": "search",
+         "do": "focus",
+         "sel": "#sr",
+         "soft": true
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "to-confirm-list",
+     "label": "A separate to-confirm list",
+     "desc": "Notes untouched.",
+     "lines": [
+      {
+       "text": "Or a separate to-confirm list, with the notes untouched. Safe, but the observation sits away from its evidence.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "state",
+         "value": ""
+        },
+        {
+         "on": "separate",
+         "do": "state",
+         "value": "list"
+        },
+        {
+         "on": "separate",
+         "do": "focus",
+         "sel": "#td",
+         "soft": true
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "q565-order",
+   "kind": "decision",
+   "q": "Q-565",
+   "title": "The order of what's left",
+   "short": "Order",
+   "ask": "In what order should the rest be done?",
+   "why": "Five steps remain. The order decides what protects what.",
+   "look": [
+    {
+     "label": "Q-565 · The order of what's left · §7 of the research",
+     "url": "https://github.com/dudgeon/duo-v2/blob/research/director-worker-skill/docs/research/director-worker-skill.md#7-decisions-for-geoff"
+    }
+   ],
+   "sceneFile": "scenes/q565.html",
+   "lines": [
+    {
+     "text": "Last. The order of what's left. Five steps.",
+     "cues": [
+      {
+       "on": "Last",
+       "do": "show",
+       "sel": "#nums"
+      },
+      {
+       "on": "Five",
+       "do": "show",
+       "sel": "#s1"
+      },
+      {
+       "on": "Five",
+       "do": "show",
+       "sel": "#s2"
+      },
+      {
+       "on": "Five",
+       "do": "show",
+       "sel": "#s3"
+      },
+      {
+       "on": "Five",
+       "do": "show",
+       "sel": "#s4"
+      },
+      {
+       "on": "Five",
+       "do": "show",
+       "sel": "#s5"
+      }
+     ]
+    }
+   ],
+   "options": [
+    {
+     "id": "fix-first",
+     "label": "Fix, skill, review, trial, trim",
+     "desc": "The fix protects everything after it.",
+     "lines": [
+      {
+       "text": "I'd do the fix, then the worker skill, then the review pass, the notes trial, and the trim. The fix protects everything after it.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "state",
+         "value": ""
+        },
+        {
+         "on": "fix",
+         "do": "state",
+         "value": "rec"
+        },
+        {
+         "on": "fix",
+         "do": "focus",
+         "sel": "#s1",
+         "soft": true
+        },
+        {
+         "on": "trim",
+         "do": "focus",
+         "sel": "#s5",
+         "soft": true
+        }
+       ]
+      }
+     ],
+     "recommended": true
+    },
+    {
+     "id": "review-first",
+     "label": "Review pass before the worker skill",
+     "desc": "The sweep showed its value now.",
+     "lines": [
+      {
+       "text": "Or the review pass before the worker skill. The sweep showed its value now.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "state",
+         "value": ""
+        },
+        {
+         "on": "review",
+         "do": "state",
+         "value": "rf"
+        },
+        {
+         "on": "review",
+         "do": "focus",
+         "sel": "#s3",
+         "soft": true
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "trim-first",
+     "label": "Trim before the review pass",
+     "desc": "A shorter skill first.",
+     "lines": [
+      {
+       "text": "Or the trim before the review pass, so the skill is shorter first. But the evals can't yet be trusted to judge the cut.",
+       "cues": [
+        {
+         "at": 0,
+         "do": "state",
+         "value": ""
+        },
+        {
+         "on": "trim",
+         "do": "state",
+         "value": "tf"
+        },
+        {
+         "on": "trim",
+         "do": "focus",
+         "sel": "#s5",
+         "soft": true
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "wrap",
+   "title": "That's all five",
+   "short": "Done",
+   "final": true,
+   "sceneFile": "scenes/wrap.html",
+   "lines": [
+    {
+     "text": "That's all five.",
+     "cues": [
+      {
+       "on": "all",
+       "do": "show",
+       "sel": "#done"
+      },
+      {
+       "at": 0,
+       "do": "show",
+       "sel": "#list"
+      }
+     ]
+    },
+    {
+     "text": "The director records each answer as a decision, and the fix goes first.",
+     "cues": [
+      {
+       "on": "director",
+       "do": "show",
+       "sel": "#next"
+      }
+     ]
+    },
+    {
+     "text": "And thank you. The worker skill was your idea.",
+     "cues": [
+      {
+       "on": "thank",
+       "do": "show",
+       "sel": "#thanks"
+      },
+      {
+       "on": "thank",
+       "do": "focus",
+       "sel": "#thanks",
+       "soft": true
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,18 @@
+<style>
+#pr { left: 24px; top: 44px; width: 270px; height: 96px; transition: height .8s; overflow: hidden; }
+#pr .b { margin-top: 6px; }
+[data-state~="grow"] #pr { height: 250px; }
+#sk { left: 340px; top: 44px; width: 276px; } #pm { left: 340px; top: 44px; width: 276px; }
+#nG { left: 340px; top: 44px; width: 276px; }
+[data-state~="skill"] #sk, [data-state~="project"] #pm, [data-state~="grow"] #nG { --o: 1; }
+#ev { left: 340px; top: 150px; width: 276px; }
+[data-state~="skill"] #ev { --o: 1; }
+#minp { left: 24px; top: 160px; width: 270px; }
+[data-state~="skill"] #minp { --o: 1; }
+</style>
+<div class="card" id="pr" data-in="left" data-f><b>Worker prompt today</b><span class="s">Seven sentences, all rules</span><span class="b" style="width:92%"></span><span class="b" style="width:80%"></span><span class="b" style="width:88%"></span><span class="b" style="width:70%"></span><span class="b" style="width:90%"></span><span class="b" style="width:60%"></span><span class="b" style="width:85%"></span><span class="b" style="width:75%"></span><span class="b" style="width:82%"></span><span class="b" style="width:66%"></span><span class="b" style="width:88%"></span></div>
+<div class="card fade" id="sk"><b>skills/duo-worker/SKILL.md</b><span class="s">Ships with Duo, a revision, step 3 inside</span></div>
+<div class="card fade" id="pm"><b>A guide for duo-v2 only</b><span class="s">Other Duo users get nothing</span></div>
+<div class="card fade" id="nG"><b>No new skill</b><span class="s">And no worker evals</span></div>
+<div class="card fade" id="ev"><b>Its own evals</b><span class="s">Seven cases, about 65 cents on Haiku</span></div>
+<div class="card fade" id="minp"><b>Prompt: names it</b><span class="s">Keeps a short minimum</span></div>
