@@ -84,9 +84,20 @@ class Margin extends Cards {
     this.width = 0;
     view.dom.addEventListener("mouseover", (e) => this.anchorHover(e));
     view.contentDOM.addEventListener("mousedown", (e) => this.anchorClick(e), true);
+    // F-692: the margin's share of the text column (contentDOM's marginRight) depends on the pane's width, and a pane that
+    // changes width alone (a divider drag) raises no CodeMirror update that reaches `update`, so the share stayed what the
+    // first layout chose: a note opened wide kept a 184 margin in a narrow pane, and one opened narrow kept 24 when widened.
+    if (typeof ResizeObserver === "function") {
+      this.resizeWidth = view.dom.clientWidth;
+      this.observer = new ResizeObserver(() => {
+        const w = view.dom.clientWidth;
+        if (w !== this.resizeWidth) { this.resizeWidth = w; this.schedule(); }
+      });
+      this.observer.observe(view.dom);
+    }
     this.schedule();
   }
-  destroy() { this.layer.remove(); }
+  destroy() { this.observer?.disconnect(); this.layer.remove(); }
   update(u) {
     for (const t of u.transactions) for (const e of t.effects) { if (e.is(setActive)) { this.active = e.value; this.sig = ""; } if (e.is(setDeliveryEffect)) { this.delivery = e.value; this.sig = ""; } }
     // Moving the caret out of the active thread puts it away (the card is "active" while you're in it).
