@@ -87,6 +87,7 @@ import Foundation
         waiting.counts.needsYou += 1
     }
     while !core.pacer.backedOff { now = now.addingTimeInterval(2); let b = applied(); core.tick(); _ = settle(b + 1) }
+    if FSEventsCanary.available("the backed-off beacon poke") {
     let notifiesBefore = core.passCounts["notify"] ?? 0, pokesBefore = core.passCounts["poke-files"] ?? 0
     served = waiting
     try FileManager.default.createDirectory(at: ClaudeStorage.sessions, withIntermediateDirectories: true)
@@ -101,5 +102,6 @@ import Foundation
           "backed off, a beacon written: the needs-you shows in \(String(format: "%.1f", took)) s, with no tick (the watcher's poke)")
     check((core.passCounts["notify"] ?? 0) > notifiesBefore, "and the notification pass ran for it")
     check((core.passCounts["poke-files"] ?? 0) > pokesBefore, "brought by the folder watcher's poke, not a tick")
+    }
     core.isLive = false
 }
