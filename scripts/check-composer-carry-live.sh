@@ -31,10 +31,12 @@ for run in typed voice; do
   mock=$!
   sleep 0.5
   png=$out/$run.png
+  # No Home session at launch since DL-336: start one on Home's page, as check-chat-fallback-slot-live.sh does (F-703).
+  start="wait:8,open:$(basename $fx/ws),wait:2,new,wait:10"
   if [[ $run == typed ]]; then
-    then="wait:8,chat:on,wait:3,chat-type:typed in chat then switched,wait:1,chat-state,chat:off,wait:5,chat-state,chat:on,wait:4,chat-state"
+    then="$start,chat:on,wait:3,chat-type:typed in chat then switched,wait:1,chat-state,chat:off,wait:5,chat-state,chat:on,wait:4,chat-state"
   else
-    then="wait:8,chat:on,wait:3,voice-file:$out/spoken.aiff,wait:4,voice-log,chat:off,wait:1.5,voice-log,wait:1,voice-log,wait:16,voice-log,chat-state"
+    then="$start,chat:on,wait:3,voice-file:$out/spoken.aiff,wait:4,voice-log,chat:off,wait:1.5,voice-log,wait:1,voice-log,wait:16,voice-log,chat-state"
   fi
   err=$out/stderr-$run.txt
   env -u DUO_SUPPORT_DIR -u DUO_SOCKET -u DUO_TOKEN -u DUO_SIGNAL DUO_SUPPORT_DIR=$fx/sup CLAUDE_CONFIG_DIR=$fx/cfg DUO_AUTOCONFIRM=1 \
