@@ -5,7 +5,7 @@ import Speech
 // MARK: - SpeechAnalyzer family (SpeechTranscriber, DictationTranscriber)
 
 final class AppleAnalyzerEngine: Engine {
-    enum Kind { case speech, dictation }
+    enum Kind { case speech, speechProgressive, dictation }
     let kind: Kind
     let terms: [String]
     let locale = Locale(identifier: "en-US")
@@ -21,6 +21,21 @@ final class AppleAnalyzerEngine: Engine {
     func make(stream: Bool) -> (any SpeechModule, Collector) {
         switch kind {
         case .speech:
+            // Duo's own configuration: no transcription options, volatile results only when streaming, no
+            // attributes (no fastResults, no audioTimeRange).
+            let t = SpeechTranscriber(
+                locale: locale, transcriptionOptions: [], reportingOptions: stream ? [.volatileResults] : [],
+                attributeOptions: [])
+            return (
+                t,
+                { st, t0 in
+                    Task {
+                        for try await r in t.results { st.note(text: String(r.text.characters), isFinal: r.isFinal, t0: t0) }
+                    }
+                }
+            )
+        case .speechProgressive:
+            // The October runs' stream configuration (preset adds fastResults); kept for comparison.
             let t = SpeechTranscriber(locale: locale, preset: stream ? .progressiveTranscription : .transcription)
             return (
                 t,

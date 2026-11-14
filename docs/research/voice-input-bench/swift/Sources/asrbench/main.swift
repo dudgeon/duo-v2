@@ -8,6 +8,10 @@ let engineNames = [
     "fluid-parakeet-v3", "fluid-parakeet-v2", "fluid-parakeet-redux",
     "fluid-parakeet-unified", "fluid-parakeet-stream", "fluid-parakeet-stream-7-1", "fluid-parakeet-stream-2-2", "fluid-nemotron-stream",
     "whisperkit-turbo", "whisperkit-small-en",
+    "apple-speechtranscriber-progressive",
+    "fluid-parakeet-ultra", "fluid-speech-pro", "fluid-phonon-2", "fluid-bark-3",
+    "fluid-nemotron-unified", "fluid-nemotron-unified-stream",
+    "whisperkit-turbo-632", "whisperkit-distil-594", "whisperkit-small-en-217", "whisperkit-base-en",
 ]
 
 var args: [String: String] = [:]
@@ -44,6 +48,7 @@ let writer = try JsonlWriter(path: outPath)
 func engineFor(_ name: String) -> Engine? {
     switch name {
     case "apple-speechtranscriber": return AppleAnalyzerEngine(kind: .speech, terms: terms)
+    case "apple-speechtranscriber-progressive": return AppleAnalyzerEngine(kind: .speechProgressive, terms: terms)
     case "apple-dictation": return AppleAnalyzerEngine(kind: .dictation, terms: terms)
     case "apple-sfspeech": return SFSpeechEngine(terms: terms)
     case "fluid-parakeet-v3": return FluidTdtEngine(which: .v3, terms: terms)
@@ -54,6 +59,17 @@ func engineFor(_ name: String) -> Engine? {
     case "fluid-parakeet-stream-7-1": return FluidUnifiedEngine(terms: terms, streaming: true, tier: (7, 1))
     case "fluid-parakeet-stream-2-2": return FluidUnifiedEngine(terms: terms, streaming: true, tier: (2, 2))
     case "fluid-nemotron-stream": return FluidNemotronEngine()
+    case "fluid-parakeet-ultra": return FluidTdtEngine(which: .ultra, terms: terms)
+    case "fluid-speech-pro": return FluidTdtEngine(which: .speechPro, terms: terms)
+    case "fluid-phonon-2": return FluidTdtEngine(which: .phonon2, terms: terms)
+    case "fluid-bark-3": return FluidTdtEngine(which: .bark3Clean, terms: terms)
+    case "fluid-nemotron-unified": return FluidUnifiedEngine(terms: terms, streaming: false, family: .nemotronMultilingual(.en))
+    case "fluid-nemotron-unified-stream":
+        return FluidUnifiedEngine(terms: terms, streaming: true, tier: (2, 5), family: .nemotronMultilingual(.en))
+    case "whisperkit-turbo-632": return WhisperKitEngine(modelName: "openai_whisper-large-v3-v20240930_turbo_632MB", terms: terms)
+    case "whisperkit-distil-594": return WhisperKitEngine(modelName: "distil-whisper_distil-large-v3_594MB", terms: terms)
+    case "whisperkit-small-en-217": return WhisperKitEngine(modelName: "openai_whisper-small.en_217MB", terms: terms)
+    case "whisperkit-base-en": return WhisperKitEngine(modelName: "openai_whisper-base.en", terms: terms)
     case "whisperkit-turbo": return WhisperKitEngine(modelName: "openai_whisper-large-v3-v20240930_turbo", terms: terms)
     case "whisperkit-small-en": return WhisperKitEngine(modelName: "openai_whisper-small.en", terms: terms)
     default: return nil
@@ -71,6 +87,15 @@ if mode == "stream" && !engine.supportsStream {
 if engineName == "apple-sfspeech", let e = SFSpeechEngine.authError() {
     writer.write(["error": e, "engine": engineName])
     logErr(e)
+    exit(0)
+}
+
+if args["download-only"] != nil {
+    let t = nowNs()
+    do { try await engine.download(); logErr("download_ms \(Int(msSince(t)))") } catch {
+        logErr("download failed: \(error)")
+        exit(1)
+    }
     exit(0)
 }
 

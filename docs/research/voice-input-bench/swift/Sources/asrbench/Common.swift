@@ -122,6 +122,8 @@ struct ClipResult {
 }
 
 protocol Engine {
+    /// Fetches the model files only (no load, so no Core ML compile); a no-op where the model is already local.
+    func download() async throws
     /// Loads (and downloads if necessary) the model.
     func load() async throws
     /// One whole clip, audio already in memory. proc_ms == final_ms.
@@ -132,6 +134,7 @@ protocol Engine {
 }
 
 extension Engine {
+    func download() async throws {}
     var supportsStream: Bool { false }
     func stream(_ samples: [Float], chunkMs: Int) async throws -> ClipResult {
         throw BenchError("stream mode unsupported")

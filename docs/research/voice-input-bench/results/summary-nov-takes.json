@@ -1,0 +1,65 @@
+{
+  "set": "takes (Geoff, read in place; aggregates only)",
+  "engines": [
+    {
+      "engine": "apple-speechtranscriber (stream)",
+      "wer": 0.0567,
+      "ref_words": 1835,
+      "clips": 170
+    },
+    {
+      "engine": "apple-speechtranscriber",
+      "wer": 0.0567,
+      "ref_words": 1835,
+      "clips": 170
+    },
+    {
+      "engine": "fluid-nemotron-unified",
+      "wer": 0.0431,
+      "ref_words": 1835,
+      "clips": 170
+    },
+    {
+      "engine": "fluid-parakeet-redux",
+      "wer": 0.0561,
+      "ref_words": 1835,
+      "clips": 170
+    },
+    {
+      "engine": "fluid-parakeet-ultra",
+      "wer": 0.0431,
+      "ref_words": 1835,
+      "clips": 170
+    },
+    {
+      "engine": "fluid-parakeet-v3",
+      "wer": 0.0441,
+      "ref_words": 1835,
+      "clips": 170
+    },
+    {
+      "engine": "fluid-phonon-2",
+      "wer": 0.0501,
+      "ref_words": 1835,
+      "clips": 170
+    },
+    {
+      "engine": "fluid-speech-pro",
+      "wer": 0.0409,
+      "ref_words": 1835,
+      "clips": 170
+    },
+    {
+      "engine": "whisperkit-small-en-217",
+      "wer": 0.067,
+      "ref_words": 1835,
+      "clips": 170
+    },
+    {
+      "engine": "whisperkit-turbo-632",
+      "wer": 0.0594,
+      "ref_words": 1835,
+      "clips": 170
+    }
+  ]
+}

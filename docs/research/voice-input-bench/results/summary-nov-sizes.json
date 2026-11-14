@@ -1,0 +1,193 @@
+{
+  "note": "disk_mb = du -sk of only the files the engine loads (apple: system asset, not shipped); dmg_mb = size of a UDZO HFS+ dmg of the same folder",
+  "engines": {
+    "apple-speechtranscriber": {
+      "files": [],
+      "disk_mb": 0.0
+    },
+    "fluid-parakeet-v3": {
+      "files": [
+        "Decoder.mlmodelc",
+        "Encoder.mlmodelc",
+        "JointDecisionv3.mlmodelc",
+        "Preprocessor.mlmodelc",
+        "parakeet_vocab.json"
+      ],
+      "disk_mb": 460.8,
+      "dmg_mb": 453.0
+    },
+    "fluid-parakeet-v2": {
+      "files": [
+        "Decoder.mlmodelc",
+        "Encoder.mlmodelc",
+        "JointDecision.mlmodelc",
+        "Preprocessor.mlmodelc",
+        "parakeet_vocab.json"
+      ],
+      "disk_mb": 442.9,
+      "dmg_mb": 437.5
+    },
+    "fluid-parakeet-redux": {
+      "files": [
+        "Decoder.mlmodelc",
+        "Encoder.mlmodelc",
+        "JointDecisionv3.mlmodelc",
+        "Preprocessor.mlmodelc",
+        "parakeet_vocab.json"
+      ],
+      "disk_mb": 384.1,
+      "dmg_mb": 311.0
+    },
+    "fluid-parakeet-unified": {
+      "files": [
+        "parakeet_unified_decoder.mlmodelc",
+        "parakeet_unified_encoder_int8.mlmodelc",
+        "parakeet_unified_joint_decision_single_step.mlmodelc",
+        "vocab.json"
+      ],
+      "disk_mb": 585.7,
+      "dmg_mb": 522.6
+    },
+    "fluid-parakeet-stream-7-1": {
+      "files": [
+        "parakeet_unified_decoder.mlmodelc",
+        "parakeet_unified_encoder_streaming_70_7_1_int8.mlmodelc",
+        "parakeet_unified_joint_decision_single_step.mlmodelc",
+        "vocab.json"
+      ],
+      "disk_mb": 580.4,
+      "dmg_mb": 520.7
+    },
+    "fluid-parakeet-ultra": {
+      "files": [
+        "Decoder.mlmodelc",
+        "Encoder.mlmodelc",
+        "JointDecisionv3.mlmodelc",
+        "Preprocessor.mlmodelc",
+        "parakeet_vocab.json"
+      ],
+      "disk_mb": 602.9,
+      "dmg_mb": 534.1
+    },
+    "fluid-speech-pro": {
+      "files": [
+        "Decoder.mlmodelc",
+        "Encoder.mlmodelc",
+        "JointDecision.mlmodelc",
+        "Preprocessor.mlmodelc",
+        "parakeet_vocab.json"
+      ],
+      "disk_mb": 622.1,
+      "dmg_mb": 554.9
+    },
+    "fluid-phonon-2": {
+      "files": [
+        "Decoder.mlmodelc",
+        "Encoder.mlmodelc",
+        "JointDecisionv3.mlmodelc",
+        "Preprocessor.mlmodelc",
+        "parakeet_vocab.json"
+      ],
+      "disk_mb": 360.6,
+      "dmg_mb": 252.9
+    },
+    "fluid-bark-3": {
+      "files": [
+        "Decoder.mlmodelc",
+        "Encoder.mlmodelc",
+        "JointDecisionv3.mlmodelc",
+        "Preprocessor.mlmodelc",
+        "parakeet_vocab.json"
+      ],
+      "disk_mb": 426.7,
+      "dmg_mb": 297.4
+    },
+    "fluid-nemotron-unified": {
+      "files": [
+        "nemotron_unified_decoder.mlmodelc",
+        "nemotron_unified_encoder_int8.mlmodelc",
+        "nemotron_unified_joint_decision_single_step.mlmodelc",
+        "vocab.json"
+      ],
+      "disk_mb": 597.5,
+      "dmg_mb": 528.4
+    },
+    "fluid-nemotron-unified-stream": {
+      "files": [
+        "nemotron_unified_decoder.mlmodelc",
+        "nemotron_unified_encoder_streaming_70_2_5_int8.mlmodelc",
+        "nemotron_unified_joint_decision_single_step.mlmodelc",
+        "vocab.json"
+      ],
+      "disk_mb": 592.1,
+      "dmg_mb": 526.4
+    },
+    "fluid-nemotron-stream": {
+      "files": [
+        "560ms"
+      ],
+      "disk_mb": 597.5,
+      "dmg_mb": 532.1
+    },
+    "ctc-110m (for --context)": {
+      "files": [
+        "AudioEncoder.mlmodelc",
+        "MelSpectrogram.mlmodelc",
+        "tokenizer.json",
+        "vocab.json"
+      ],
+      "disk_mb": 98.1,
+      "dmg_mb": 86.9
+    },
+    "whisperkit-turbo": {
+      "files": [
+        "config.json",
+        "openai_whisper-large-v3-v20240930_turbo",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ],
+      "disk_mb": 1565.3,
+      "dmg_mb": 1438.9
+    },
+    "whisperkit-turbo-632": {
+      "files": [
+        "config.json",
+        "openai_whisper-large-v3-v20240930_turbo_632MB",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ],
+      "disk_mb": 618.5,
+      "dmg_mb": 464.7
+    },
+    "whisperkit-distil-594": {
+      "files": [
+        "config.json",
+        "distil-whisper_distil-large-v3_594MB",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ],
+      "disk_mb": 569.7,
+      "dmg_mb": 491.0
+    },
+    "whisperkit-small-en-217": {
+      "files": [
+        "config.json",
+        "openai_whisper-small.en_217MB",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ],
+      "disk_mb": 210.1,
+      "dmg_mb": 166.5
+    },
+    "whisperkit-base-en": {
+      "files": [
+        "config.json",
+        "openai_whisper-base.en",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ],
+      "disk_mb": 142.3,
+      "dmg_mb": 129.3
+    }
+  }
+}

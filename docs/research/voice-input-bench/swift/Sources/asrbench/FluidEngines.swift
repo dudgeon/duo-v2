@@ -49,7 +49,7 @@ struct CtcBoost {
 // MARK: - Parakeet TDT (v2, v3, Redux): batch
 
 final class FluidTdtEngine: Engine {
-    enum Which { case v2, v3, redux }
+    enum Which { case v2, v3, redux, ultra, phonon2, bark3Clean, speechPro }
     let which: Which
     let terms: [String]
     var manager: AsrManager!
@@ -60,9 +60,45 @@ final class FluidTdtEngine: Engine {
         self.terms = terms
     }
 
+    var versionForDownload: AsrModelVersion? {
+        switch which {
+        case .v2: return .v2
+        case .v3: return .v3
+        case .ultra: return .ultra
+        case .phonon2: return .phonon2
+        case .bark3Clean: return .bark3Clean
+        case .redux, .speechPro: return nil
+        }
+    }
+
+    func dirName() -> String {
+        switch which {
+        case .v2: return "parakeet-v2"
+        case .v3: return "parakeet-v3"
+        case .ultra: return "parakeet-ultra"
+        case .phonon2: return "phonon-2"
+        case .bark3Clean: return "bark-3-clean"
+        default: return ""
+        }
+    }
+
+    func download() async throws {
+        guard let v = versionForDownload else { return }
+        _ = try await AsrModels.download(to: modelsRoot.appendingPathComponent(dirName(), isDirectory: true), version: v)
+    }
+
     func load() async throws {
         let models: AsrModels
         switch which {
+        case .ultra, .phonon2, .bark3Clean:
+            models = try await AsrModels.downloadAndLoad(
+                to: modelsRoot.appendingPathComponent(dirName(), isDirectory: true), version: versionForDownload!)
+        case .speechPro:
+            // FluidVoice-Labs/fluid-speech-pro-coreml, files fetched into models/fluid-speech-pro by hand (curl);
+            // its joint is JointDecision.mlmodelc, linked as JointDecisionv3.mlmodelc for the v3 loader.
+            ModelHub.offlineMode = true
+            models = try AsrModels.loadLocal(
+                from: modelsRoot.appendingPathComponent("fluid-speech-pro", isDirectory: true), version: .v3)
         case .v2:
             models = try await AsrModels.downloadAndLoad(
                 to: modelsRoot.appendingPathComponent("parakeet-v2", isDirectory: true), version: .v2)
@@ -105,12 +141,26 @@ final class FluidUnifiedEngine: Engine {
     var supportsStream: Bool { streaming }
 
     let ucfg: UnifiedConfig
+    let family: UnifiedModelFamily
 
     /// tier = (chunkFrames, rightFrames), 80 ms each; default 13/13 = 2.08 s theoretical latency.
-    init(terms: [String], streaming: Bool, tier: (Int, Int) = (13, 13)) {
+    init(terms: [String], streaming: Bool, tier: (Int, Int) = (13, 13), family: UnifiedModelFamily = .parakeetEnglish) {
         self.terms = terms
         self.streaming = streaming
-        self.ucfg = UnifiedConfig(leftFrames: 70, chunkFrames: tier.0, rightFrames: tier.1)
+        self.family = family
+        self.ucfg = UnifiedConfig(leftFrames: 70, chunkFrames: tier.0, rightFrames: tier.1, family: family)
+    }
+
+    func download() async throws {
+        let base = modelsRoot.appendingPathComponent("fluid", isDirectory: true)
+        let f = ucfg.family
+        var files: Set<String> = [f.decoderFile, f.jointDecisionFile, f.vocab, f.metadata]
+        if streaming {
+            files.insert(f.streamingEncoderFile(precision: .int8, contextSuffix: ucfg.contextSuffix))
+        } else {
+            files.insert(f.offlineEncoderFile(precision: .int8))
+        }
+        try await ModelHub.download(f.repo, to: base, variant: streaming ? nil : "offline", additionalModelNames: files)
     }
 
     func load() async throws {
@@ -120,7 +170,7 @@ final class FluidUnifiedEngine: Engine {
             try await streamMgr.loadModels(to: base)
             if !terms.isEmpty { throw BenchError("--context unsupported for fluid-parakeet-stream: StreamingUnifiedAsrManager.configureVocabularyBoosting needs the CTC tokenizer in ~/Library/Application Support (outside the allowed folders)") }
         } else {
-            batchMgr = UnifiedAsrManager()
+            batchMgr = UnifiedAsrManager(config: ucfg)
             try await batchMgr.loadModels(to: base)
             if !terms.isEmpty { boost = try await CtcBoost(terms: terms) }
         }

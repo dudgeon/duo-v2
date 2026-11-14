@@ -12,6 +12,13 @@ final class WhisperKitEngine: Engine {
         self.terms = terms
     }
 
+    func download() async throws {
+        let base = modelsRoot.appendingPathComponent("whisperkit", isDirectory: true)
+        try FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
+        let url = try await WhisperKit.download(variant: modelName, downloadBase: base)
+        logErr("downloaded \(modelName) to \(url.path)")
+    }
+
     func load() async throws {
         let base = modelsRoot.appendingPathComponent("whisperkit", isDirectory: true)
         try FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)

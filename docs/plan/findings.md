@@ -6362,3 +6362,23 @@ Fix (checks only): `Sources/DuoChecks/FSEventsCanary.swift` runs a plain stream 
 ## F-367 · Duo's chat mode showed a blank pane for a running background session (director-session-links, 2026-10-24)
 
 - Geoff opened this research session (`6b29216a…`, a `claude --bg` worker running outside Duo, Remote Control on) in Duo's chat mode, and the pane was fully blank: no transcript and no explain-and-fork message. Not explored here; it needs its own task (Q-237 asks what a link to such a session should show).
+## F-694 · Bundled speech models, November bench: Parakeet Ultra makes ~30 % fewer errors than Duo's Apple recognizer (research-bundled-speech-model, 2026-11-14)
+
+- **Run:** the voice-input bench, FluidAudio bumped to v0.18.3 (`c8b41f98`; October's numbers for Apple, v3, v2, Redux and Unified reproduce exactly), WhisperKit 1.1.1; new engines Parakeet Ultra, fluid-speech-pro, Phonon-2, Bark 3.0 Clean, Nemotron Unified, WhisperKit turbo 632 MB / distil 594 / small.en 217 / base.en. 160 synthetic Duo-style clips, 170 of Geoff's takes (aggregates only, per-clip output deleted), a 40-clip latency pass twice under the exclusive lock.
+- **Result:** WER* Apple (as Duo runs it) 13.5 %, Ultra 9.6 %, v3 10.2 %, speech-pro 9.9 %, Whisper turbo 632 MB 7.1 %; Geoff's takes Apple 5.7 %, Ultra 4.3 %, speech-pro 4.1 %, turbo 632 MB 5.9 %, small.en 6.7 %. With CTC vocabulary Ultra 7.3 %. Ultra 44–62 ms after release vs Apple 81–123 ms.
+- **Caveat:** load averages 13–57 in every timing hold (other projects, outside the lock); milliseconds are upper bounds. Tables and sizes in `docs/research/bundled-speech-model.md` §3; aggregates in `docs/research/voice-input-bench/results/summary-nov-*.json`.
+
+## F-695 · A bundled model costs nothing in a Sparkle delta update (research-bundled-speech-model, 2026-11-14)
+
+- **Measured:** Duo 0.2.28 and 0.2.29 from their released DMGs, each with Parakeet v3 in `Contents/Resources/Models/`; Sparkle 2.10.0's `BinaryDelta create` (official tarball, hash-checked): **2.80 MB with the model, 2.80 MB without.** The DMG grows 77 → 529 MB (v3), ~610 MB with Ultra; ad-hoc codesign 0.46 → 1.50 s, verify 0.18 → 0.61 s.
+- **So:** with deltas (`release.sh` writes none today) in-app updates stay ~3 MB; new installs, releases-page updates (DL-114), anyone further behind than the published deltas, and the release that changes the model pay the full DMG. What release.sh needs: `docs/research/bundled-speech-model.md` §4.2.
+
+## F-696 · Duo's Apple recognizer shows its first live words 3.5 s into speech (research-bundled-speech-model, 2026-11-14)
+
+- `AppleRecognizer` builds `SpeechTranscriber(transcriptionOptions: [], reportingOptions: [.volatileResults], attributeOptions: [])`. Run that way on the bench (100 ms chunks at real time), the first volatile result came at **3.49 s** in both passes; the `.progressiveTranscription` preset (adds `.fastResults`) gave **1.14 s** (October's bench used the preset, so its 1.13 s was not what Duo does).
+- The trade: the preset's final text had more errors on the 40 latency clips (WER* 14.3 % vs 11.2 %, terms 66.7 % vs 75.4 %). Likely the lag Geoff described in DL-271. Q-560.
+
+## F-697 · First use of a bundled Core ML model waits for a Neural Engine compile, again after each macOS update (research-bundled-speech-model, 2026-11-14)
+
+- First load after download on this M6 under load: fluid-speech-pro 97 s, Nemotron Unified 192 s, Phonon-2 245 s, Whisper turbo 632 MB 716 s, small.en 60 s (Parakeet v3 63 s in October). Parakeet Ultra and Bark loaded in < 1 s only because another session had compiled the same weights here: Core ML's cache is keyed by the model, not the app, so a bench "first load" can be warm. Warm loads 0.37–0.39 s for the Parakeets.
+- Apple's Core AI docs say the cache is invalidated by an OS update or a changed model. A bundled model should load at the first mic press with Apple's recognizer serving until it is ready (Q-557 A); ahead-of-time compile is ENH-354.
