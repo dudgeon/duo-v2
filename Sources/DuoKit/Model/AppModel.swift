@@ -298,12 +298,26 @@ public final class AppModel {
                reconnectForResume(id, to: folder) { filed = folder.realPath }
             let movedHere = filed.map { $0 != folder.realPath && FileManager.default.fileExists(atPath: $0) } ?? false
             // Remote Control stays on for a session started with it (DL-128).
-            let remote = SessionIndex.load(project: folder).sessions.first { $0.sessionId == id }?.remoteControl
-            let t = terminals.session(key, command: transcript != nil ? .resumeClaude(sessionID: id, remoteControl: remote) : .newClaude(sessionID: id, prompt: nil, remoteControl: remote),
-                                      cwd: movedHere ? filed! : folder.path)
+            let entry = SessionIndex.load(project: folder).sessions.first { $0.sessionId == id }
+            let remote = entry?.remoteControl
+            let parent = entry.flatMap { $0.provenance.hasPrefix("forked-from:") ? String($0.provenance.dropFirst("forked-from:".count)) : nil }
+            let command = Self.claudeLaunch(id: id, hasTranscript: transcript != nil, forkedFrom: parent,
+                                            parentHasTranscript: parent.map { ClaudeStorage.transcript(sessionId: $0, cwd: folder.path) != nil } ?? false,
+                                            remoteControl: remote)
+            let t = terminals.session(key, command: command, cwd: movedHere ? filed! : folder.path)
             if movedHere { relocate(t, to: folder) }
             return t
         }
+    }
+
+    /// How a closed session's tab starts Claude: resumed when it has a transcript, else new under its own id. A fork
+    /// that never got a message has no transcript yet (F-292): it forks again from its parent under the same id, or
+    /// the reopened tab was an empty session and the fork's history was gone (F-706).
+    public static func claudeLaunch(id: String, hasTranscript: Bool, forkedFrom parent: String?, parentHasTranscript: Bool,
+                                    remoteControl: String?) -> TerminalCommand {
+        if hasTranscript { return .resumeClaude(sessionID: id, remoteControl: remoteControl) }
+        if let parent, parentHasTranscript { return .forkClaude(from: parent, sessionID: id) }
+        return .newClaude(sessionID: id, prompt: nil, remoteControl: remoteControl)
     }
 
     /// A pane's session tabs: live sessions, plus any Duo holds a terminal for. A Claude process

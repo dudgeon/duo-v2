@@ -167,7 +167,12 @@ extension AppModel {
         }
         if (c.terminal as? LiveChatTerminal)?.view !== t.view { c.attach(LiveChatTerminal(t.view)) }
         // Live sessions are keyed by their id; demo and fixture terminals have no hooks to read.
-        if terminalsMode == .live { c.follow(sessionId: t.key, cwd: t.cwd) }
+        // A fork's history is its parent's until its first message writes its own transcript (F-367).
+        if terminalsMode == .live {
+            var parent: String?
+            if case .forkClaude(let from, _) = t.command { parent = from }
+            c.follow(sessionId: t.key, cwd: t.cwd, historyFrom: parent)
+        }
         // The composer hands over through `duo2 compose` when this build has it (F-112). Not in an attach tab (F-363): the
         // fork runs in Claude's daemon, which never got Duo's EDITOR, so Ctrl+G would open vi; it pastes on send instead.
         if case .attachClaude = t.command { c.composeDir = nil } else if let bin = ChildEnvironment.cliDirectory, ChatComposer.editorCommand(cli: bin + "/duo2") != nil { c.composeDir = ChatComposer.dir }

@@ -9,6 +9,11 @@ import Foundation
 final class ChatFeed {
     let sessionId: String
     let cwd: String
+    /// A fork's parent: its history until the fork writes a transcript of its own (F-367, F-705).
+    let historyFrom: String?
+    /// The history shown is the parent's. The fork's own file, when it appears, replaces it (it holds a copy of every
+    /// parent record, F-292); nothing more is read from the parent's file after the first load.
+    private var borrowed = false
     weak var chat: ChatSession?
     private var timer: Timer?
     private var eventsPos: UInt64 = 0
@@ -25,9 +30,10 @@ final class ChatFeed {
     private var tracker = LiveBranch.Tracker()
     nonisolated static let turnsShown = 50
 
-    init(sessionId: String, cwd: String, chat: ChatSession) {
+    init(sessionId: String, cwd: String, chat: ChatSession, historyFrom: String? = nil) {
         self.sessionId = sessionId
         self.cwd = cwd
+        self.historyFrom = historyFrom
         self.chat = chat
         chat.log.cwd = cwd
         loadHistory()
@@ -44,8 +50,13 @@ final class ChatFeed {
     /// 100 MB and more, seconds of work, F-160); the last 50 turns go into the log. Until it's in,
     /// the tick reads nothing, so hooks and the transcript resume where the history ends.
     private func loadHistory() {
-        guard let url = ClaudeStorage.transcript(sessionId: sessionId, cwd: cwd) else { return }
-        transcript = url
+        // A `--fork-session` fork has no file under its id until its first message (F-292): show its parent's meanwhile,
+        // or chat is a blank pane while the terminal draws the history (F-367).
+        let own = ClaudeStorage.transcript(sessionId: sessionId, cwd: cwd)
+        guard let url = own ?? historyFrom.flatMap({ ClaudeStorage.transcript(sessionId: $0, cwd: cwd) }) else { return }
+        borrowed = own == nil
+        if !borrowed { transcript = url }
+        let borrowing = borrowed
         loading = true
         let cwd = cwd, declined = chat?.lastDeclined
         Task.detached(priority: .userInitiated) { [weak self] in
@@ -57,7 +68,7 @@ final class ChatFeed {
             let built = Built(records: records, start: start, turns: ChatFeed.turnsShown, log: ChatFeed.replay(records, from: start, cwd: cwd, lastDeclined: declined))
             await MainActor.run { [weak self] in
                 guard let self else { return }
-                self.transcriptPos = UInt64(cut)
+                self.transcriptPos = borrowing ? 0 : UInt64(cut)   // the fork's own file is read from its start
                 self.land(built)
             }
         }
@@ -217,6 +228,14 @@ final class ChatFeed {
         if chat.isShown() { chat.wake() } else if ticks % 13 != 0 { return }
         readEvents(chat)
         if transcript == nil { transcript = ClaudeStorage.transcript(sessionId: sessionId, cwd: cwd) }
+        // The fork's first message wrote its own file, every parent record copied into it: rebuild from that file.
+        if borrowed, let t = transcript, FileManager.default.fileExists(atPath: t.path) {
+            borrowed = false
+            transcript = nil
+            transcriptPos = 0; transcriptRest = Data()
+            return loadHistory()
+        }
+        if borrowed { return }
         if let t = transcript {
             let fresh = read(t, &transcriptPos, &transcriptRest)
             var branched = false
