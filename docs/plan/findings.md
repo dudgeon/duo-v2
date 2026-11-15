@@ -6434,3 +6434,15 @@ Geoff's 2026-10-31 note that typed words are lost too, as well as dictated ones,
 - **Check:** DuoChecks (chat), three lines under F-705's: red on main for the unused fork, green with the fix. Not run live (a quit and relaunch with the fork's tab restored).
 
 F-670 (follow-up, 2026-11-14): the first canary flaked: one run skipped the four watcher checks, the next ran them and all four failed. Cause in the canary, not the service: it started a stream on a folder it had just created and counted any event after 0.5 s, so the folder's own creation event, delivered late, passed for a working service. A plain probe now (0/6 tries) gets nothing while the service is wedged, so the late creation event was the only thing that could have flipped it. Fix: the probe counts only an event whose path names a file written after the stream was armed, uses the same flags as `FolderWatch` (UseCFTypes, FileEvents, NoDefer), and runs fresh right before each of the two sites (no cached verdict), so a service that comes and goes is judged at the moment of each check. Limit: a service that delivers to a plain stream but not to Duo's watcher would still fail the checks, which is then a real finding.
+
+## F-707 · The director has four of the "always-on agents" primitives; it lacks a durable inbox (director-worker-skill addendum, 2026-11-15)
+
+Against Anthropic's "Building always-on agents" (claude.com/resources/articles/building-always-on-agents): timers are `check_by` and scheduled tasks; memory is the instruction files, DL-320's narrow auto memory and the task notes (pointers, not copies); permissions are Auto everywhere and the Nevers; the outbox is the reply and the console. There's no inbox: a worker's report is a SendMessage, held and expired across permission classes (F-421), and idle subscriptions die when the director restarts or compacts, so the director can't restart without losing an event. `docs/research/director-worker-skill.md` §9.
+
+## F-708 · "Defer a tool call" is -p only; a Stop hook can make a worker report (director-worker-skill addendum, 2026-11-15)
+
+Hooks reference: `permissionDecision: "defer"` "requires non-interactive mode with the `-p` flag" and is ignored in interactive sessions, so it can't apply to Duo's background workers. The `Stop` hook gets `stop_hook_active`, `last_assistant_message`, `background_tasks` and `session_crons`, and can continue the turn with `additionalContext` or `decision: "block"` (8 consecutive continuations at most); `StopFailure` fires on a turn ended by an API error. Not yet run: whether a hook passed with `claude --bg --settings` fires in a background session, and on 2.1.284.
+
+## F-709 · Hooks can only be a backstop for the director (director-worker-skill addendum, 2026-11-15)
+
+`ClientCaps.probe` reads `disableAllHooks`, and the director harness's `hooks-off` and `pinned-219-strict` profiles model Macs where hooks are off. Every hook in §9 of `docs/research/director-worker-skill.md` therefore has a fallback: the worker skill's rule and `status`'s transcript-based red lines.

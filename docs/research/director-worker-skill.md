@@ -22,6 +22,8 @@
 
 **Five decisions for Geoff**, recommendation first, are in §7 and on the walkthrough page.
 
+**Addendum, 2026-11-15 (§9):** the "always-on agents" article. The director stays a Claude Code session. Its one real lesson is that events from workers must be durable: a `duo2 director report` inbox that `status` reads, a worker `Stop` hook that makes each turn end in a report, nothing or a question, and a director `Stop` hook that checks a wake is armed. The five recommendations stand; four decisions are new (Q-569 to Q-572).
+
 ## 1. What I read
 
 - `docs/research/director-unified-view.md` (steps 1, 2 and 4 done; 3, 5, 6, 7 not) and `director-skill-article.md` (options A to L).
@@ -213,3 +215,82 @@ On the walkthrough page (link in the report), each with a recommendation first. 
 **F-699 · A real director on main tells the user "you took it over" and never reads what was said.** `s34-user-drove-worker`, 3 runs on Haiku 5.5, $0.043: 0 of 3 pass (judge FAIL in each). Every run's status printed "Red lines: none" and "the user took it over … you're paused there until they hand it back"; each director asked the user whether to hand the worker back, and none read the session, so the onboarding change and the worker's offer never came up. (The case's regex grader used `(?i)`, which the harness's JavaScript regexes reject; fixed to `[Oo]nboarding` afterwards.)
 
 **F-700 · The worker skill barely shortens the director skill.** Of the director skill's 205 lines, about two describe the worker's side (§5 "Hearing back"); everything else that would move is in `Director.workerPrompt`, seven sentences. The worker skill's value is a versioned home for worker rules, its own evals, and a stop to the prompt's growth; the director skill shrinks only with the trim (ENH-338).
+
+## 9. Addendum (2026-11-15): "Building always-on agents"
+
+Geoff, 2026-11-15: "ask it to read this article, and consider if any changes would make sense based on the findings: https://claude.com/resources/articles/building-always-on-agents. We still need director to work in Claude code -- not as a managed agent or api call, but I wonder if there are useful primitives."
+
+**What I read.** The article (Anthropic, on claude.com), and from what it links: the Claude Code hooks reference (`code.claude.com/docs/en/hooks`), for "defer a tool call" and the Stop hook. I read it through a fetch tool, so short quotes only. Its other links (the memory tool, prompt caching, compaction, the agent-memory post, auto mode, MCP Apps) cover things the director already does or can't use here; I didn't read them in full.
+
+**In one line:** the article's always-on agent is the director with its parts made durable. Most of its primitives exist here already, under other names. Two gaps are real, and they are the missed-turns failure seen from another side: **events from workers aren't durable**, and **nothing makes a worker end a turn in one of the article's three ways**. Both translate into Claude Code: a durable inbox that `duo2` keeps, and a `Stop` hook. Neither needs a Managed Agent or an API loop.
+
+### 9.1 What the article says
+
+An always-on agent is idle most of the time and wakes for short **runs**. Each run gets events, works in a session, saves state and sleeps. Five primitives sit around the loop:
+
+1. **Event inbox.** Webhooks, schedules and background jobs write to a durable store instead of calling the agent. Acknowledge fast; the inbox is the source of truth, so a new worker can retry what a dead one dropped; one active worker per inbox; batch pending events into one run; an event that arrives mid-run is pushed to the next run, folded in, or interrupts.
+2. **Timers.** Follow-ups the agent sets for itself, and recurring schedules, in their own store. A scheduler polls them and puts due ones into the inbox; "a timer never starts a run by itself".
+3. **Memory**, in durable storage, not on the worker: user instructions, user notes, past messages (what the user has already been told), task progress. Store a pointer, not a copy, for what lives elsewhere. Optional "dreaming" curates it.
+4. **Permissions:** a credential proxy, auto mode, and **deferred tool calls**: a hook defers a call, the run ends, the question goes to the user, and the answer returns as an inbox event that resumes the saved session.
+5. **Outbox.** A run ends in one of three ways: a message, nothing, or a deferred call. "It's better for the agent to start quiet"; tune the volume with evals.
+
+Plus context: keep the fixed overhead lean, and anything that must outlive compaction goes to memory during the run.
+
+### 9.2 Each idea against the director
+
+"Today" is main at 783b56aa. "Proposed" is this study's §3 and §4.
+
+| Article | The director today | Proposed here | Verdict | What it fixes in the sweep |
+|---|---|---|---|---|
+| **Run cycle:** idle, wake on events, save state, sleep | A long-lived Claude Code session that wakes on SendMessage, idle notices, Monitor or ScheduleWakeup, and compacts | Same | **Already.** The constraint holds: it stays a Claude Code session. What the article adds is the test for it: *could the director restart now and lose nothing?* Today it can't (next row). | — |
+| **Event inbox, durable, source of truth** | No inbox. A worker's report is a SendMessage: held and expired across permission classes (F-421), and idle subscriptions die when the director restarts or compacts. The log (`.duo/director-log.jsonl`) records the director's own actions, not what reaches it. | §3.3: the worker sends "Asked / Decided / Waiting on" by SendMessage | **Adapt: `duo2 director report`** (Q-569). A worker reports by running `duo2 director report <task> "<text>"`, which appends to `.duo/director-inbox.jsonl` in the main checkout, then SendMessages the director only to wake it. `status` lists unread inbox items as R1 red lines until a `check` after them. The inbox is the source of truth; the message is a doorbell. Works with Duo closed, on 2.1.219 (no messaging), across permission classes, and across director restarts. | **"Promises a worker makes on the director's behalf have no owner"** (sweep, point 5): a promise becomes a file line. Reports held or expired across classes. The director restarting and losing its subscriptions. |
+| **Acknowledge fast; mid-run arrivals** | Mid-turn typing is read since C-173/F-638 | — | **Already.** | — |
+| **One worker per inbox** | One director per project (DL-200's registry) | — | **Already.** | — |
+| **Batch pending events into one run** | `status` lists everything at once | The inbox adds one line per report | **Already**, as long as `status` groups inbox items per task (one line per task, its newest report quoted). | — |
+| **Timers: follow-ups the agent sets** | `check_by`, set by `duo2 director check --next` | — | **Already** as a store. | — |
+| **Scheduler moves due timers into the inbox and wakes the worker** | Nothing wakes the director at a `check_by`. It's red only when the director next runs `status`. Its own wakes are ScheduleWakeup, Monitor or a desktop scheduled task, which it must remember to arm (memory: "Close the loop… watcher armed"). | — | **Adapt: a director `Stop` hook** (Q-571). The Stop hook's input carries `session_crons` and `background_tasks` (hooks reference). A hook `duo2` installs for the director's session checks: workers in flight or a `check_by` ahead, and no cron, Monitor or wakeup armed → it returns `additionalContext` ("arm a wake for <earliest check_by> before you stop"), once per turn (`stop_hook_active`). It doesn't block twice. The reference caps continuations at 8. | **"Nobody reads blocked workers: 15 sessions sat blocked, some for three weeks"** (sweep, point 4), in part: blocked workers are red only for a director that wakes. |
+| **Duo as the scheduler** | Duo runs most of the time and already watches transcripts | — | **Adapt later** (Q-572): when Duo is running, it could send the director a message when a `check_by` passes or an inbox item lands. It's the article's scheduler, and it covers the director that forgot to arm a wake. It's a Duo feature with UI consequences (a director woken while Geoff types to it), so after the hook shows whether it's needed. | Same as above, when the hook isn't there (hooks disabled). |
+| **Memory: user instructions** | `_PROJECT.md`'s Director section, `_HOME.md`, CLAUDE.md, loaded each start | — | **Already.** | — |
+| **Memory: user notes** | Claude Code auto memory, narrowed by DL-320 to preferences and hard facts | — | **Already.** | — |
+| **Memory: past messages** (what the user has been told) | R4 knows only *when* the director last spoke to the user; the console's done rows hold some of what | — | **Skip a new store.** `duo2 director check` already records what the director found; R4 nudges until it's said. Q-569's inbox items, marked read by a check, give "told or not" per report without a message log. | — |
+| **Memory: task progress, an index loaded each run** | Task notes with `## Progress`; `status` is the index | The worker's first Progress line (step 3) | **Already**, and the article's "anything that must persist goes to memory during the run" is the Progress rule. | Died mid-turn workers (session-links, view-edit-source): their Progress lines are what survived. |
+| **Pointer, not copy** | DL-320, DL-328 (no knowledge pages), the evidence ladder (§5 of the unified view) | — | **Already**, and the strongest agreement: duo-v2's records are pointers with sources. | — |
+| **Dreaming** | Stopped (DL-328) | The review pass (step 5) only proposes | **Skip as dreaming; keep the review pass.** The article calls it optional and gives no evaluation; Duo's pilot did, and lost (DL-328). | — |
+| **Credential proxy** | Not applicable: CLI login on one Mac, no secrets passed | — | **Skip.** | — |
+| **Auto mode** | Every director and worker runs in Auto (DL-257) | — | **Already.** | — |
+| **Deferred tool calls** | — | — | **Skip the mechanism; adopt the idea.** The hooks reference: `defer` "requires non-interactive mode with the `-p` flag" and in interactive sessions "logs a warning and ignores the hook result" (F-708). Workers are interactive background sessions, so it can't apply. The idea it carries is the right one: a question to the user is a paused run whose answer must come back as an event. In Duo's terms, a worker's question goes into the director's inbox as well as the worker's screen (Q-569), so the director can carry it to the console. | **The waiting-on-Geoff rows** (pdf-viewing, google-docs, launch-hang, design-projects-left-nav): each question sat in one session only. |
+| **Outbox: every run ends in a message, nothing, or a deferred call** | Workers report "when done or stuck"; a turn may end on anything | §3.3: report after every user-driven turn | **Adopt, enforced by a worker `Stop` hook** (Q-570). `duo2 director start` passes the worker `--settings` with a Stop hook that reads `transcript_path` and `last_assistant_message`: if the turn followed a human message, or ends on a question or an offer, and no `duo2 director report` (or SendMessage to the director) followed it, it returns `additionalContext`: "Before you stop: report this turn to director-<project> with duo2 director report (Asked / Decided / Waiting on)". Once per turn. A `StopFailure` hook (an API error ends the turn) writes an inbox item itself: "worker stopped on <error>". Where hooks are off (some managed Macs: the `pinned-219-strict` and `hooks-off` profiles), the worker skill's rule and §3.2's red line still apply. | **The 11-10 case itself**, and the other three "Geoff talked to a worker" rows: the hook fires at the end of exactly the turn that left them open. Died after Geoff's input (session-links, view-edit-source), when the turn ended on an API error. Not a killed process, which status's red line covers. |
+| **Outbox: start quiet, tune volume with evals** | "Ask only real decisions"; the console is the dispatcher | C-186: a report per user-driven turn could flood the director | **Adapt** (ENH-356): the director's messages to Geoff get volume evals (too many and too few both fail), and the worker report's volume is measured in the first week. The inbox lowers C-186's cost: an inbox line doesn't need to wake anyone if the turn decided nothing, so "Waiting on: no one" reports can skip the SendMessage. | — |
+| **Lean fixed overhead; compaction loses detail** | The skill is 205 lines and grows (ENH-338) | The worker skill keeps worker rules out of it | **Already in the plan** (step 7, the trim). | — |
+
+### 9.3 What changes in the proposal
+
+- **§3.3, the worker's report**, goes through `duo2 director report` (the inbox) instead of SendMessage alone. SendMessage stays as the doorbell. The worker skill's §3 and §4 say "run `duo2 director report`", with SendMessage as the fallback where `duo2` can't run.
+- **§3.2, the red lines**, read the inbox as well as transcripts: an unread report is R1 red until checked. The transcript reading stays: it's the backstop for workers that never report (an old client, a killed process, a session started before the skill).
+- **A worker Stop hook**, where hooks are allowed, makes §3.3 deterministic. It's optional, so the skill rule and the red line stay.
+- **A director Stop hook** checks a wake is armed when work is in flight.
+- **The failing eval stands.** `DUO_CHECKS=missed-turns` gains, at build time, a case for an unread inbox report. s34 is unchanged.
+
+### 9.4 What it changes in the five walkthrough decisions
+
+The five recommendations stand. Two descriptions change, and four decisions are new.
+
+| | Change |
+|---|---|
+| **D1 / Q-561** (how to fix the missed turns) | Unchanged. "A worker report" now means `duo2 director report` into an inbox the director can't lose, not a SendMessage alone (Q-569). |
+| **D2 / Q-562** (unregistered sessions) | Unchanged. |
+| **D3 / Q-563** (the worker skill) | Unchanged. Its report and its §3 name `duo2 director report`. |
+| **D4 / Q-564** (observations on notes) | Unchanged. The article's "pointer, not copy" agrees with option A (comments on the note, confirmed facts filed with a link). |
+| **D5 / Q-565** (the order) | Unchanged. The inbox and both hooks join step 1, the fix. Q-572 (Duo as scheduler) is after step 2, if the director hook isn't enough. |
+| **New: Q-569** | A durable inbox: `duo2 director report` writes it, status reads it, SendMessage only wakes. **Recommended: yes, in step 1.** Or later, after the SendMessage version ships; or no inbox. |
+| **New: Q-570** | A worker Stop hook that makes every turn end in a report, nothing, or a question to the user. **Recommended: yes, where hooks are allowed, with the skill rule and the red line as the fallback.** Or the skill rule only; or require hooks and refuse a worker without them (it would break the work Mac's hooks-off case). |
+| **New: Q-571** | A director Stop hook: with work in flight and no wake armed, remind it once before it stops. **Recommended: yes, once per turn, as a reminder.** Or block until a wake is armed (risks loops, the 8-continuation cap); or skip and keep the rule in memory. |
+| **New: Q-572** | Duo as the scheduler: wake the director when a `check_by` passes or an inbox item lands. **Recommended: later, only if the director hook isn't enough.** Or build it now with the inbox; or never: the director wakes itself. |
+
+### 9.5 Findings
+
+**F-707 · The director already has four of the article's five primitives under other names; what it lacks is durability where events arrive.** Timers are `check_by` and scheduled tasks; memory is the instruction files, DL-320's narrow auto memory and the task notes (the article's four kinds, with pointers, not copies); permissions are Auto everywhere and the Nevers; the outbox is the reply and the console. The inbox is missing: a worker's report is a SendMessage, held and expired across permission classes (F-421), and the director's idle subscriptions die when it restarts or compacts. Today's director can't restart without losing an event, which is the article's test for an always-on agent. Read from the article and main at 783b56aa.
+
+**F-708 · "Defer a tool call" doesn't work in a Duo worker; a Stop hook can do the job.** The hooks reference: `permissionDecision: "defer"` "requires non-interactive mode with the `-p` flag", and in interactive sessions it "logs a warning and ignores the hook result". Workers are interactive background sessions. The `Stop` hook receives `stop_hook_active`, `last_assistant_message`, `background_tasks` and `session_crons`, and can keep the turn going with `additionalContext` or `decision: "block"`, under a cap of 8 consecutive continuations. `StopFailure` fires when an API error ends a turn. Not yet run: whether a hook passed by `claude --bg --settings` fires in a background session, and on 2.1.284 (the work pin). That's the first check of the build.
+
+**F-709 · Hooks can't be the only mechanism.** `ClientCaps.probe` reads `disableAllHooks`, and two director-harness profiles (`hooks-off`, `pinned-219-strict`) model Macs where hooks are off. So each hook here is a backstop with a fallback: the worker skill's rule, and the transcript reading behind `status`'s red lines.
