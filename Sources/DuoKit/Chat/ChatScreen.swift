@@ -70,6 +70,12 @@ public struct ChatSignatures: Sendable, Equatable {
     public var confirmTitle = #"^\s*(Switch model\?|Change effort level\?)\s*$"#
     /// The effort the TUI draws: `◐ medium · /effort` in the input box's top rule (2.1.296) or at the right end of the footer (2.1.219).
     public var effort = #"(\S) ([a-z]+) · /effort(?: ▔+)?\s*$"#
+    /// `/btw`'s side-question panel (DL-344): drawn in the input box's place, its top the effort rule in `▔`, the
+    /// question as an indented `/btw …` row (one per earlier side question too), and a footer ending `Esc to close`.
+    public var sideRule = #"^▔{20,}(?: \S.*\S ▔*)?$"#
+    public var sideQuestion = #"^ {4}/btw (.+)$"#
+    public var sideFooter = #"^ {4}(?:\S.* · )?Esc to close\s*$"#
+    public var sideAnswering = #"^\s*\S\s+Answering…\s*$"#
     /// Chat about this, Next and Submit in a question.
     public var chatAbout = "Chat about this"
     /// A row of the `/` command menu: `  ❯ /add-dir      Add a new working directory`.
@@ -84,7 +90,7 @@ public struct ChatSignatures: Sendable, Equatable {
     public var terminalCommands: Set<String> = ["/help", "/config", "/permissions", "/resume", "/tasks", "/login", "/logout",
                                                 "/hooks", "/memory", "/theme", "/status", "/terminal-setup", "/install-github-app",
                                                 "/ide", "/export", "/rewind", "/plugin", "/usage", "/cost", "/release-notes", "/skills",
-                                                "/btw", "/fast", "/sandbox", "/scroll-speed", "/add-dir", "/powerup", "/workflows",
+                                                "/fast", "/sandbox", "/scroll-speed", "/add-dir", "/powerup", "/workflows",
                                                 "/autocompact", "/keybindings", "/mobile"]
 
     /// 2.1.291: every dialog verified with the mock tour and asktest (F-104, F-106) and with real
@@ -216,6 +222,23 @@ public struct ChatPicker: Sendable, Equatable {
     }
 }
 
+/// `/btw`'s side-question panel as its screen draws it (DL-344): the question, the answer's words as wrapped paragraphs,
+/// and which keys its footer offers.
+public struct ChatSide: Sendable, Equatable {
+    public var question: String
+    /// Side questions this session's panel lists (earlier ones first); 1 when it shows only this one.
+    public var history = 1
+    public var answering = false
+    /// The answer as the screen shows it, paragraphs apart by a blank line (Claude Code drops Markdown's marks).
+    public var answer = ""
+    public var canCopy = false, canFork = false, canScroll = false, canBrowse = false, canClear = false
+
+    public init(question: String) { self.question = question }
+
+    /// Claude Code's own words when the side query failed or came back empty.
+    public var noAnswer: Bool { answer.hasPrefix("(No answer available") }
+}
+
 /// One row of a dialog, in screen order.
 public struct ChatScreenRow: Sendable, Equatable {
     public enum Kind: String, Sendable { case option, other, next, submit, chat }
@@ -237,6 +260,8 @@ public struct ChatScreenRow: Sendable, Equatable {
 public struct ChatScreen: Sendable, Equatable {
     public enum Kind: String, Sendable {
         case starting, idle, busy, permission, plan, question, questionReview = "question-review", picker, trust, unknown
+        /// `/btw`'s panel as read; the session keeps the busy or idle underneath it and holds the panel in `side` (DL-344).
+        case side
         /// Chat mode can draw this (or it is about to settle): no fallback.
         public var known: Bool { self != .unknown }
     }
@@ -270,6 +295,8 @@ public struct ChatScreen: Sendable, Equatable {
     public var picker: ChatPicker?
     /// The effort the TUI draws on an idle or busy screen; nil when it draws none (DL-168).
     public var effort: ChatEffort?
+    /// `/btw`'s side-question panel, when it is up (DL-344).
+    public var side: ChatSide?
 
     public var options: [ChatScreenRow] { rows.filter { $0.kind == .option } }
     public var other: ChatScreenRow? { rows.first { $0.kind == .other } }
@@ -285,7 +312,7 @@ public struct ChatScreen: Sendable, Equatable {
             && a.menu == b.menu && a.tabs.map(\.label) == b.tabs.map(\.label) && a.tabs.map(\.done) == b.tabs.map(\.done)
             && a.question == b.question && a.multi == b.multi && a.preview == b.preview && a.notes == b.notes && a.answers == b.answers
             && a.commands.map(\.name) == b.commands.map(\.name) && a.commands.map(\.selected) == b.commands.map(\.selected)
-            && a.picker == b.picker && a.effort == b.effort
+            && a.picker == b.picker && a.effort == b.effort && a.side == b.side
     }
 }
 
@@ -408,6 +435,12 @@ public enum ChatScreenReader {
         }
         let nav = find(s.questionNav)
         if nav >= 0 { return question(t, nav: nav, s) }
+        if input == nil, let side = side(t, s) {
+            var r = ChatScreen(kind: .side, sig: "side")
+            r.side = side
+            r.effort = effort
+            return r
+        }
         if let p = picker(t, s) {
             var r = ChatScreen(kind: .picker, sig: "picker:" + p.kind.rawValue)
             r.picker = p
@@ -452,6 +485,36 @@ public enum ChatScreenReader {
             return r
         }
         return ChatScreen(kind: .unknown, sig: "unknown")
+    }
+
+    /// `/btw`'s panel (DL-344), else nil: a `▔` rule, one or more indented `/btw …` rows, the answer, and the footer.
+    static func side(_ t: [String], _ s: ChatSignatures) -> ChatSide? {
+        guard let foot = t.lastIndex(where: { $0.chatIs(s.sideFooter) }),
+              let top = t[..<foot].lastIndex(where: { $0.chatIs(s.sideRule) }) else { return nil }
+        let body = Array(t[(top + 1)..<foot])
+        var questions: [String] = []
+        var i = 0
+        while i < body.count, body[i].chatTrim.isEmpty { i += 1 }   // the panel's top margin
+        while i < body.count, let m = body[i].chatMatch(s.sideQuestion) { questions.append((m[1] ?? "").chatTrim); i += 1 }
+        guard let last = questions.last else { return nil }
+        var r = ChatSide(question: last)
+        r.history = questions.count
+        var rest = body[i...].map { $0.replacingOccurrences(of: #"^ {6}"#, with: "", options: .regularExpression) }
+        while rest.first?.chatTrim.isEmpty == true { rest.removeFirst() }
+        while rest.last?.chatTrim.isEmpty == true { rest.removeLast() }
+        r.answering = rest.first?.chatIs(s.sideAnswering) == true
+        if !r.answering {
+            var paras: [String] = [], cur: [String] = []
+            for l in rest {
+                if l.chatTrim.isEmpty { if !cur.isEmpty { paras.append(cur.joined(separator: " ")); cur = [] } } else { cur.append(l.chatTrim) }
+            }
+            if !cur.isEmpty { paras.append(cur.joined(separator: " ")) }
+            r.answer = paras.joined(separator: "\n\n")
+        }
+        let f = t[foot]
+        r.canCopy = f.contains("c to copy"); r.canFork = f.contains("f to fork"); r.canScroll = f.contains("↑/↓ to scroll")
+        r.canBrowse = f.contains("⇧←/→ to browse"); r.canClear = f.contains("x to clear history")
+        return r
     }
 
     /// "Accessing workspace:" with its folder and both choices on screen, else nil. `title` is the folder as drawn,
