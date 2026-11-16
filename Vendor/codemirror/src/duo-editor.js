@@ -1801,7 +1801,7 @@ const sourceHighlight = syntaxHighlighting(HighlightStyle.define([
 // Frontmatter keys and values, and CriticMarkup's marks, by line patterns (nothing parses them): a key is an attribute, a value a
 // string, `{++ ++}` / `{>> <<}` and their friends are marks, an addition green and a comment red as the board draws them.
 const sourceMarkDeco = {
-  key: Decoration.mark({ class: "duo-src-attr" }), val: Decoration.mark({ class: "duo-src-str" }), mark: Decoration.mark({ class: "duo-src-mark" }),
+  key: Decoration.mark({ class: "duo-src-attr", attributes: { style: "font-weight:400" } }), val: Decoration.mark({ class: "duo-src-str", attributes: { style: "font-weight:400" } }), mark: Decoration.mark({ class: "duo-src-mark", attributes: { style: "font-weight:400" } }),
   ins: Decoration.mark({ class: "duo-src-ins" }), note: Decoration.mark({ class: "duo-src-note" }),
 };
 function sourceMarkSet(state) {
@@ -1837,7 +1837,8 @@ const sourceMarks = StateField.define({
 // page; an HTML page is code, mono 12/19, its wrapped lines hung 24 under the first.
 const sourceTheme = EditorView.theme({
   ".duo-src-attr": { color: sv("attr"), fontWeight: "400" }, ".duo-src-str": { color: sv("string"), fontWeight: "400" }, ".duo-src-mark": { color: sv("mark"), fontWeight: "400" },  // frontmatter is not a setext heading here
-  ".duo-src-ins": { color: "var(--duo-review-author3)" }, ".duo-src-note": { color: "var(--duo-review-author1)" },
+  ".duo-src-attr *, .duo-src-str *, .duo-src-mark *": { fontWeight: "inherit" },
+  ".duo-src-ins": { color: "var(--duo-review-3)" }, ".duo-src-note": { color: "var(--duo-review-1)" },
   "&.duo-src-html .cm-scroller": { fontFamily: "var(--duo-font-mono)", fontSize: "12px", lineHeight: "19px" },
   "&.duo-src-html .cm-content": { padding: "12px 14px 12px 12px", fontSize: "12px" },
   "&.duo-src-html .cm-line": { paddingLeft: "24px", textIndent: "-24px" },

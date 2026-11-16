@@ -20,7 +20,7 @@ const tk = JSON.parse(fs.readFileSync(new URL("../docs/design/build-handoff/toke
 const kebab = (k) => k.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
 const pick = (name) => (tk[scheme]?.[name] || tk.light[name]).value;
 const names = ["ground", "pane", "selected", "rule", "controlEdge", "text", "text2", "needsYou", "syntaxTag", "syntaxAttr", "syntaxString", "syntaxComment", "syntaxMark", "reviewAuthor1", "reviewAuthor3"];
-const tokens = names.map((n) => `--duo-${kebab(n)}:${(scheme === "dark" ? tk.dark[n] : scheme === "classic" ? tk.classic[n] : null)?.value || pick(n)}`).join(";") + ";--duo-radius-card:8px;--duo-heading-above:4px;";
+const tokens = names.map((n) => `--duo-${n.startsWith("reviewAuthor") ? "review-" + n.slice(12) : kebab(n)}:${(scheme === "dark" ? tk.dark[n] : scheme === "classic" ? tk.classic[n] : null)?.value || pick(n)}`).join(";") + ";--duo-radius-card:8px;--duo-heading-above:4px;";
 const rgb = (hex) => { const n = parseInt(hex.slice(1), 16); return `rgb(${n >> 16}, ${(n >> 8) & 255}, ${n & 255})`; };
 const want = (n) => rgb((scheme === "dark" ? tk.dark[n] : scheme === "classic" ? tk.classic[n] : null)?.value || tk.light[n].value);
 
@@ -83,6 +83,7 @@ async function run(name, launch) {
   await page.waitForTimeout(250);
   ok((await page.evaluate(() => duo.text())) === MD, "the source text is as typed");
   ok((await colourOf("status")) === want("syntaxAttr"), `a frontmatter key is syntaxAttr: ${await colourOf("status")}`);
+  ok(await page.evaluate(() => { const w = document.createTreeWalker(document.querySelector(".cm-content"), NodeFilter.SHOW_TEXT); for (let n; (n = w.nextNode());) if (n.nodeValue === "status") return getComputedStyle(n.parentElement).fontWeight === "400"; return false; }), "a frontmatter key is not bold");
   ok((await colourOf("draft")) === want("syntaxString"), `a frontmatter value is syntaxString: ${await colourOf("draft")}`);
   ok((await colourOf("q3.csv")) === want("syntaxString"), `a link target is syntaxString: ${await colourOf("q3.csv")}`);
   ok((await colourOf("export")) === want("syntaxTag"), `a link's text is syntaxTag: ${await colourOf("export")}`);

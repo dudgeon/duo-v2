@@ -16,6 +16,9 @@ Exported from the canvas https://claude.ai/artifact/5gfPPr8uFxfypxLZXazeJh (stud
 
 ## Proof
 
-`scripts/check-editor-view-source.mjs` (Chromium and WebKit; `DUO_SCHEME=dark|classic` for the others) checks each token's computed colour. `source-html-light-webkit.png` and `source-md-light-webkit.png` are its captures, to put beside the Highlighting board's Light column.
+- `scripts/check-view-source-live.sh`: an isolated background Duo opens a Markdown and an HTML file, flips Source with `duo2 doc mode`, edits the HTML in source, goes back to the page (saved first) and reads the file on disk. 16 steps pass.
+- `scripts/check-editor-view-source.mjs` (Chromium and WebKit; `DUO_SCHEME=dark|classic`): each token's computed colour, no bold frontmatter key.
+- `proof/source-{q3,review}-{light,dark,classic}.png`: `check-view-source-live.sh --captures`, the right pane looked at against the Highlighting board's three columns: tag, attribute, string, comment and mark colours match in all three; the formatting bar shows over Markdown source and not over HTML. Window captures draw the page from WebKit's snapshot (F-120).
+- Found and fixed in this pass: review marks weren't coloured in the app (the web variables are `--duo-review-1` and `-3`), and frontmatter keys came out bold (the setext-heading style sat inside the mark).
 
-Not done: a live-app capture compared region by region in Dark and Classic, and keeping your place across Page and Source (Q-580).
+Not done: keeping your place across Page and Source (Q-580).
