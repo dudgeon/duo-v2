@@ -83,7 +83,7 @@ func repoFixture() throws -> Fixture {
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "park" { return try parkChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "director" { return try directorChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "director-duties" { return try directorDutyChecks() }
-    // `DUO_CHECKS=missed-turns`: a turn the user drove in a worker reaches the director (MissedTurnChecks.swift, F-698). Fails until fixed; not in the default run.
+    // `DUO_CHECKS=missed-turns`: a turn the user drove in a worker reaches the director (MissedTurnChecks.swift, F-698). In the default run too, inside directorDutyChecks (DL-343).
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "missed-turns" { return try missedTurnChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "control" { return try controlPlaneChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "isolation" { return try isolationChecks() }

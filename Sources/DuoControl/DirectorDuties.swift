@@ -50,9 +50,40 @@ public struct DirectorFacts: Sendable {
     public var jobsUnreadable: String?
     public var me: Me
     public var events: [DirectorEvent]
+    /// The project's inbox (DL-342), oldest first; `evaluate` keeps this director's unread reports.
+    public var inbox: [InboxItem]
+    /// Sessions the registry doesn't know that were this director's or promised it something (Q-562).
+    public var sessions: [Session]
+    /// The director these facts are for: whose reports in the inbox count.
+    public var director: String
 
-    public init(now: Date, notes: [Note] = [], jobs: [Job] = [], jobsUnreadable: String? = nil, me: Me = Me(), events: [DirectorEvent] = []) {
+    public init(now: Date, notes: [Note] = [], jobs: [Job] = [], jobsUnreadable: String? = nil, me: Me = Me(), events: [DirectorEvent] = [],
+                inbox: [InboxItem] = [], sessions: [Session] = [], director: String = "") {
         self.now = now; self.notes = notes; self.jobs = jobs; self.jobsUnreadable = jobsUnreadable; self.me = me; self.events = events
+        self.inbox = inbox; self.sessions = sessions; self.director = director
+    }
+
+    /// A session in this project the registry doesn't know (started by hand, before the registry, or in Duo
+    /// for design work) whose first message carries this director's tag, or whose last reply offers or
+    /// promises it something ("I'll pass this to the director"). Status reads only these (Q-562): every
+    /// other session is the user's.
+    public struct Session: Sendable, Equatable {
+        public var id: String
+        public var name: String?
+        /// Its first message is this director's brief (a worker the registry lost).
+        public var tagged: Bool
+        /// Its last reply names this director in an offer or a promise.
+        public var promised: Bool
+        /// A turn is running in it now.
+        public var working: Bool
+        public var turn: DirectorTranscript.TurnEnd
+        /// The latest `check` event for `session:<id>`.
+        public var lastCheck: Date?
+
+        public init(id: String, name: String? = nil, tagged: Bool = false, promised: Bool = false, working: Bool = false,
+                    turn: DirectorTranscript.TurnEnd = .init(), lastCheck: Date? = nil) {
+            self.id = id; self.name = name; self.tagged = tagged; self.promised = promised; self.working = working; self.turn = turn; self.lastCheck = lastCheck
+        }
     }
 
     /// A task note this director directs, with its worker as the registry, the beacons and the
@@ -80,11 +111,16 @@ public struct DirectorFacts: Sendable {
         /// The worker's transcript's modification date.
         public var workerLastActivity: Date?
         public var userTyping: Bool
+        /// How the worker's last turn ended, from its transcript (the missed-turns fix, DL-343).
+        public var turn: DirectorTranscript.TurnEnd
+        /// The worker's session id, for the line's `duo2 session show`.
+        public var session: String?
 
         public init(path: String, title: String = "", status: String? = "in-progress", modified: Date, checkBy: Date? = nil, lastProgress: Date? = nil,
                     lastChecked: Date? = nil, inWorkTree: Bool = false, workerState: String = "no worker", hasWorkerRecord: Bool = false,
                     pendingExpired: Bool = false, workerName: String? = nil, question: String? = nil, workerSince: Date? = nil,
-                    workerLastActivity: Date? = nil, userTyping: Bool = false) {
+                    workerLastActivity: Date? = nil, userTyping: Bool = false, turn: DirectorTranscript.TurnEnd = .init(), session: String? = nil) {
+            self.turn = turn; self.session = session
             self.path = path; self.title = title.isEmpty ? path : title; self.status = status; self.modified = modified; self.checkBy = checkBy
             self.lastProgress = lastProgress; self.lastChecked = lastChecked; self.inWorkTree = inWorkTree; self.workerState = workerState
             self.hasWorkerRecord = hasWorkerRecord; self.pendingExpired = pendingExpired; self.workerName = workerName; self.question = question
@@ -157,6 +193,10 @@ public enum DirectorRedLines {
     public enum Limits {
         /// A worker "working" with no transcript write for this long (R1).
         public static let workerSilent: TimeInterval = 2 * 3600
+        /// A worker waiting on a question this long is red even when the user typed in it (R1, DL-343).
+        public static let blockedLong: TimeInterval = 24 * 3600
+        /// Sessions the registry doesn't know are read when they changed this recently (R1, Q-562).
+        public static let unregisteredWindow: TimeInterval = 21 * 86400
         /// A scheduled run with no finished turn and no activity for this long is stuck (R3).
         public static let runStuck: TimeInterval = 30 * 60
         /// Activity this recent means a run is still going (R3).
@@ -253,12 +293,44 @@ public enum DirectorRedLines {
         let active = live.filter { !atReview($0) }
         var taken = Set<String>()
 
-        // R1: workers watched to a conclusion.
-        for n in active where n.hasWorkerRecord && !n.userTyping {
+        // R1: workers watched to a conclusion. First the inbox (DL-342): a report nobody has checked, one
+        // line per task, its newest report quoted. A worker the user typed in is still read (DL-343): "the
+        // user took it over" means don't send there, not don't look.
+        let checkedAt = Dictionary(f.notes.compactMap { n in n.lastChecked.map { (n.path, $0) } }, uniquingKeysWith: max)
+        for (task, items) in DirectorInbox.unread(f.inbox, director: f.director, events: f.events, lastChecked: checkedAt) {
+            guard let last = items.last, let at = last.date else { continue }
+            if task.hasPrefix("tasks/"), let n = f.notes.first(where: { $0.path == task }), !Director.unfinished(status: n.status, archived: false) { continue }
+            let count = items.count == 1 ? "Its worker reported" : "Its worker sent \(items.count) reports, the last"
+            add(.R1, task, "\(count) \(span(now.timeIntervalSince(at))) ago, and you haven't checked since: \"\(DirectorInbox.reportQuote(last.text))\".",
+                "Read it, take up what it asks of you, put anything waiting on the user to them, then duo2 director check \(task) \"what you found\".")
+            taken.insert(task)
+        }
+        for n in active where n.hasWorkerRecord && !taken.contains(n.path) {
+            let show = n.session.map { " (duo2 session show \($0))" } ?? ""
+            // A turn the user drove that never reached you, and no check since it ended.
+            if n.workerState != "working", n.workerState != "starting", let typed = n.turn.lastUserTurn, n.turn.missed {
+                let ended = n.turn.endedAt.map { max($0, typed) } ?? typed
+                if n.lastChecked.map({ $0 < ended }) ?? true {
+                    add(.R1, n.path, "A turn the user drove in its worker \(span(now.timeIntervalSince(typed))) ago never reached you. "
+                        + (n.turn.endedOn.map { "It ended: \"\($0)\"." } ?? "It ended with no reply (it may have died mid-turn)."),
+                        "Read it\(show), record what was decided, take up anything asked of you, and put any open offer or question to the user; then duo2 director check \(n.path) \"what you found\".")
+                    taken.insert(n.path)
+                    continue
+                }
+            }
             switch n.workerState {
             case "needs-you":
-                add(.R1, n.path, "Its worker is waiting: \"\(n.question ?? "input needed")\".", "Read it (claude logs, or duo2 session show), then answer it or ask the user.")
-                taken.insert(n.path)
+                let waited = now.timeIntervalSince(n.workerLastActivity ?? n.workerSince ?? n.modified)
+                if waited > Limits.blockedLong {
+                    add(.R1, n.path, "Its worker has waited over a day (\(span(waited))) on: \"\(n.question ?? n.turn.endedOn ?? "input needed")\".",
+                        "Read it\(show), then answer it, ask the user, or stop it.")
+                    taken.insert(n.path)
+                } else if !n.userTyping {
+                    add(.R1, n.path, "Its worker is waiting: \"\(n.question ?? "input needed")\".", "Read it (claude logs, or duo2 session show), then answer it or ask the user.")
+                    taken.insert(n.path)
+                }
+            case "working" where n.userTyping:
+                break   // the user is talking to it now: don't nag mid-conversation
             case "stopped", "idle":
                 let report = n.workerLastActivity ?? n.workerSince
                 let unchecked = n.lastChecked == nil || (report != nil && n.lastChecked.map { report! > $0 } == true)
@@ -273,6 +345,18 @@ public enum DirectorRedLines {
                 }
             default: break
             }
+        }
+        // Sessions the registry doesn't know that were yours or promised you something (Q-562).
+        for s in f.sessions where !s.working {
+            guard let typed = s.turn.lastUserTurn, s.turn.missed else { continue }
+            let ended = s.turn.endedAt.map { max($0, typed) } ?? typed
+            let logged = f.events.filter { $0.event == "check" && $0.task == "session:\(s.id)" }.compactMap(eventDate).max()
+            guard [s.lastCheck, logged].compactMap({ $0 }).max().map({ $0 < ended }) ?? true else { continue }
+            let quote = s.turn.endedOn.map { ": \"\($0)\"" } ?? "."
+            add(.R1, "session:\(s.id)" + (s.name.map { " (\($0))" } ?? ""),
+                s.promised ? "A turn the user drove here \(span(now.timeIntervalSince(typed))) ago never reached you, and it says it would tell you\(quote)"
+                           : "A turn the user drove in this session of yours (your tag starts it; the registry lost it) \(span(now.timeIntervalSince(typed))) ago never reached you\(quote)",
+                "Read it (duo2 session show \(s.id)), take up what it promised or asked, then duo2 director check session:\(s.id) \"what you found\".")
         }
 
         // R3: scheduled jobs.
@@ -406,6 +490,12 @@ public enum DirectorRedLines {
         return ["Red lines (\(lines.count)): clear what you can this turn, and put anything you can't in your next message to the user, in plain words with links."]
             + lines.map { "  " + $0.line }
     }
+
+    /// A worker the user typed in, in status's list (DL-200, DL-343: paused is for sending, not reading).
+    public static let pausedWords = "the user took it over (typed there since your last message): don't send there until they hand it back, but do read what they said there (duo2 session show) at your next wake"
+
+    /// How reports reach the director (DL-342): the inbox, with SendMessage as the doorbell.
+    public static let hearingBack = "Hearing back: workers report into this project's inbox (`duo2 director report`), which the red lines above read; their SendMessage only wakes you. SendMessage a live worker with notify_when_idle: true to hear when it stops; where messaging can't carry (a class mismatch, or no messaging), run `duo2 director watch` under Monitor."
 
     /// What ends status's shortened worker list.
     public static func otherTasks(_ n: Int) -> String { "  and \(n) other task\(n == 1 ? "" : "s") (--all lists them)." }

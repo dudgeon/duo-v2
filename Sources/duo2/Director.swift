@@ -132,7 +132,7 @@ struct OfflineDirector {
     /// working in another director's project). `duo` is what R8 knows of Duo: pass `DuoHealthReader.unreachable()`
     /// when Duo can't be reached, `.reachable()` when it can.
     func redLines(duo: DirectorFacts.DuoHealth?, all: Bool = false) -> [RedLine]? {
-        guard DirectorFactsReader.applies(role: role, callerName: caps.name) else { return nil }
+        guard DirectorFactsReader.applies(role: role, callerName: caps.name, overseers: DirectorInbox.overseers(project: project, home: home)) else { return nil }
         return DirectorFactsReader.report(project: project, director: directing, reg: reg, beacons: beacons, caps: caps,
                                           skillNote: DirectorFactsReader.skillNote(), duo: duo, all: all)
     }
@@ -218,7 +218,7 @@ func directorStatusOffline(_ rest: [String]) -> Int32 {
         if let s = t.session {
             l += "\(t.state), \(t.place), session \(s.prefix(8))"
             if let q = t.question { l += ": \(q)" }
-            if t.userTyping { l += " · the user took it over (typed there since your last message): you're paused there until they hand it back" }
+            if t.userTyping { l += " · " + DirectorRedLines.pausedWords }
         } else if let n = t.pendingName { l += "starting in the background as \(n)" }
         else { l += "no worker" }
         print(l)
@@ -229,7 +229,7 @@ func directorStatusOffline(_ rest: [String]) -> Int32 {
             print("  \(t.path): your messages to its worker and its to you are held (\(theirs.rawValue) against your \(mine.rawValue)): switch this session to Auto, or ask the user to switch the worker.")
         }
     }
-    print("Hearing back: SendMessage a live worker (notify_when_idle: true); its reply or the idle notice wakes you. Where messaging can't carry, run `duo2 director watch` under Monitor as the fallback.")
+    print(DirectorRedLines.hearingBack)
     print("Rules (the project's win where they disagree):")
     for s in DirectorRules.sources(project: d.project, home: home) { print("  - " + s.report) }
     if home == nil { print("  - No Home: rules for every director live in Home's _HOME.md. Offer to set one up (`duo2 home set <folder>`), or keep a rule in this project (DL-207).") }
@@ -366,7 +366,7 @@ func directorStartOffline(_ rest: [String]) -> Int32 {
 
     // `claude --bg` picks its own session id (F-318), so the worker is recorded under the name the
     // command carries, and linked when a session with that name appears.
-    let (worker, cmd) = Director.backgroundStart(folder: d.project, task: path, director: d.name, remoteControl: d.caps.remoteControl == .yes)
+    let (worker, cmd) = Director.backgroundStart(folder: d.project, task: path, director: d.name, remoteControl: d.caps.remoteControl == .yes, duo2: Director.hookCLI(caps: d.caps))
     d.reg.setWorker(task: path, session: "", at: now, adopted: false, name: worker)
     do { try d.reg.save(project: d.project) } catch { return offlineFail("couldn't write \(DirectorRegistry.file(project: d.project).path): \(error.localizedDescription)") }
     let status = noteStatus()
@@ -400,6 +400,13 @@ func directorCheckOffline(_ rest: [String]) -> Int32 {
         guard !job.isEmpty else { return offlineFail("usage: \(ActionID.directorCheck.action.usage)") }
         d.log("check", task: "job:\(job)", routine: routine, DirectorCheck.logDetail(evidence))
         print(DirectorCheck.output("job:\(job)", nextLook: nil) + (next == nil ? "" : " (--next doesn't apply to a job: its schedule is its next look.)"))
+        return 0
+    }
+    if let sid = DirectorCheck.sessionID(target) {
+        // A session the registry doesn't know has no note either (Q-562): the log alone.
+        guard !sid.isEmpty, let full = DirectorOffline.fullId(sid, beacons: d.beacons) else { return offlineFail("no session '\(sid)' in Claude's sessions") }
+        d.log("check", task: "session:\(full)", routine: routine, DirectorCheck.logDetail(evidence))
+        print(DirectorCheck.output("session:\(full)", nextLook: nil))
         return 0
     }
     guard let hit = d.findTask(target) else { return offlineFail("no task '\(target)' in \(d.projectName)") }

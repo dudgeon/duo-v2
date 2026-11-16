@@ -309,10 +309,30 @@ import Foundation
         let skill = DirectorSkill.text()
         check(!source.isEmpty && skill == source.replacingOccurrences(of: "{{FORMAT}}", with: "\(DirectorSkill.format)").replacingOccurrences(of: "{{REVISION}}", with: "\(DirectorSkill.revision)"),
               "DirectorSkillText.swift is skills/duo-director/SKILL.md (run scripts/gen-director-skill.py)")
+        let refDir = repoRoot().appending(path: "skills/duo-director/reference")
+        let refFiles = ((try? FileManager.default.contentsOfDirectory(atPath: refDir.path)) ?? []).filter { $0.hasSuffix(".md") }.sorted()
+        check(!refFiles.isEmpty && DirectorSkill.referenceFiles.map(\.name) == refFiles.map { "reference/" + $0 }
+              && zip(DirectorSkill.referenceFiles, refFiles).allSatisfy { (try? String(contentsOf: refDir.appending(path: $1), encoding: .utf8)) == $0.text },
+              "DirectorSkillText.swift's references are skills/duo-director/reference/*.md (run scripts/gen-director-skill.py)")
+        check(DirectorSkill.referenceNames.first.flatMap { n in DirectorSkill.reference(n) == DirectorSkill.reference(n + ".md") && DirectorSkill.reference(n) == DirectorSkill.reference("reference/" + n + ".md") && DirectorSkill.reference(n) != nil } == true
+              && DirectorSkill.reference("no-such-reference") == nil, "a reference is found by name, name.md or reference/name.md")
+        let workerSource = (try? String(contentsOf: repoRoot().appending(path: "skills/duo-worker/SKILL.md"), encoding: .utf8)) ?? ""
+        check(!workerSource.isEmpty && WorkerSkill.text() == workerSource.replacingOccurrences(of: "{{FORMAT}}", with: "\(WorkerSkill.format)").replacingOccurrences(of: "{{REVISION}}", with: "\(WorkerSkill.revision)")
+              && WorkerSkill.text().hasPrefix("---\nname: worker\n") && !WorkerSkill.text().contains("{{"),
+              "WorkerSkillText.swift is skills/duo-worker/SKILL.md (run scripts/gen-director-skill.py)")
+        let workerVerbs = Set(WorkerSkill.text().matches(of: /duo2 ([a-z-]+(?: [a-z-]+)?)/).map { String($0.1) })
+        let unknownWorker = workerVerbs.filter { v in DuoAction.resolve(v.split(separator: " ").map(String.init)) == nil && !DuoAction.all.contains { $0.verb.hasPrefix(v + " ") } }
+        check(unknownWorker.isEmpty, "every duo2 verb the worker skill names exists (\(unknownWorker.sorted()))")
+        check(WorkerSkill.versionNote(installed: WorkerSkill.text()) == nil && WorkerSkill.versionNote(installed: "revision \(WorkerSkill.revision + 1)")?.contains("update Duo") == true
+              && WorkerSkill.versionNote(installed: "revision \(WorkerSkill.revision - 1)")?.contains("older") == true, "the worker skill's version note")
         check(skill.hasPrefix("---\nname: director\n") && DirectorSkill.text(name: "duo-director").hasPrefix("---\nname: duo-director\n") && DirectorSkill.aliasText().hasPrefix("---\nname: duo-director\n"),
               "it's named director (DL-222), with the old name kept as an alias; the installer asks before it hides a project's own")
-        for verb in ["status", "start", "send", "retire", "guide", "watch"] { check(skill.contains("duo2 director \(verb)"), "the skill uses `duo2 director \(verb)`") }
-        let verbs = Set(skill.matches(of: /duo2 ([a-z-]+(?: [a-z-]+)?)/).map { String($0.1) })
+        // The skill as installed: SKILL.md and its reference files (the hygiene pass, DL-343).
+        let whole = skill + DirectorSkill.referenceFiles.map(\.text).joined(separator: "\n")
+        for verb in ["status", "start", "send", "check", "retire", "guide", "watch", "report"] { check(whole.contains("duo2 director \(verb)"), "the skill uses `duo2 director \(verb)`") }
+        for r in DirectorSkill.referenceFiles { check(skill.contains("](\(r.name))"), "SKILL.md links \(r.name), one level deep") }
+        check(DirectorSkill.referenceFiles.allSatisfy { !$0.text.contains("](reference/") }, "reference files don't link further reference files (one level deep)")
+        let verbs = Set(whole.matches(of: /duo2 ([a-z-]+(?: [a-z-]+)?)/).map { String($0.1) })
         let unknown = verbs.filter { v in DuoAction.resolve(v.split(separator: " ").map(String.init)) == nil && !DuoAction.all.contains { $0.verb.hasPrefix(v + " ") } }
         check(unknown.isEmpty, "every duo2 verb the skill names exists (\(unknown.sorted()))")
 
@@ -328,6 +348,41 @@ import Foundation
         check((try? String(contentsOf: Installer.directorAliasFile, encoding: .utf8)) == DirectorSkill.aliasText() && Installer.directorAliasFile.path.hasSuffix("skills/duo-director/SKILL.md"),
               "and a duo-director stub at the old name (DL-222)")
         check(Installer.status(cli: nil).contains { $0.hasPrefix("Director skill: current") }, "doctor says it's current")
+        let skillsDir = Installer.claudeDir.appending(path: "skills")
+        check((try? String(contentsOf: Installer.workerSkillFile, encoding: .utf8)) == WorkerSkill.text() && Installer.workerSkillFile.path.hasSuffix("claude/skills/worker/SKILL.md") && r1.lines.contains("Worker skill: written."),
+              "install writes ~/.claude/skills/worker/SKILL.md")
+        check(DirectorSkill.referenceFiles.allSatisfy { (try? String(contentsOf: file.deletingLastPathComponent().appending(path: $0.name), encoding: .utf8)) == $0.text }
+              && Installer.manifest().directorReferenceHashes?.count == DirectorSkill.referenceFiles.count && Installer.manifest().workerSkillHash == Installer.hash(WorkerSkill.text()),
+              "install writes each reference file beside the director skill, and records their hashes")
+        check(Installer.status(cli: nil).contains { $0.hasPrefix("Worker skill: current") } && Installer.status(cli: nil).contains { $0.hasPrefix("Director reference files: \(DirectorSkill.referenceFiles.count) of \(DirectorSkill.referenceFiles.count)") },
+              "doctor reports the worker skill and the reference files")
+        check(Installer.plannedItems(cli: "/x").contains { $0.what == "Write the worker skill" }, "the install question lists the worker skill")
+        let editedWorker = WorkerSkill.text() + "\nmy worker line\n"
+        try Data(editedWorker.utf8).write(to: Installer.workerSkillFile)
+        let rw = Installer.install(cli: "/x/Duo.app/Contents/Helpers/duo2")
+        check(rw.lines.contains("Worker skill: edited by you, left alone.") && (try? String(contentsOf: Installer.workerSkillFile, encoding: .utf8)) == editedWorker
+              && Installer.status(cli: nil).contains { $0.hasPrefix("Worker skill: edited by you") }, "an edited worker skill is left alone, and doctor says so")
+        if let ref = DirectorSkill.referenceFiles.first {
+            let refFile = file.deletingLastPathComponent().appending(path: ref.name)
+            try Data((ref.text + "\nmine\n").utf8).write(to: refFile)
+            let rr = Installer.install(cli: "/x/Duo.app/Contents/Helpers/duo2")
+            check(rr.lines.contains("Director \(ref.name): edited by you, left alone.") && (try? String(contentsOf: refFile, encoding: .utf8))?.hasSuffix("mine\n") == true, "an edited reference file is left alone")
+            try Data(ref.text.utf8).write(to: refFile)
+            // A reference Duo wrote that this Duo no longer ships: removed when unedited, kept when edited.
+            let gone = "reference/gone-\(UUID().uuidString.prefix(4)).md", keep = "reference/keep-\(UUID().uuidString.prefix(4)).md"
+            var gm = Installer.manifest()
+            for (n, t) in [(gone, "old\n"), (keep, "old\n")] {
+                try Data(((n == keep) ? t + "edited\n" : t).utf8).write(to: file.deletingLastPathComponent().appending(path: n))
+                gm.directorReferenceHashes?[n] = Installer.hash(t)
+            }
+            Installer.save(gm)
+            _ = Installer.install(cli: "/x/Duo.app/Contents/Helpers/duo2")
+            check(!FileManager.default.fileExists(atPath: file.deletingLastPathComponent().appending(path: gone).path) && FileManager.default.fileExists(atPath: file.deletingLastPathComponent().appending(path: keep).path),
+                  "a reference Duo no longer ships is removed if unedited, kept if edited")
+            try? FileManager.default.removeItem(at: file.deletingLastPathComponent().appending(path: keep))
+        }
+        try Data(WorkerSkill.text().utf8).write(to: Installer.workerSkillFile)
+        _ = skillsDir
         try Data((skill + "\nmy own line\n").utf8).write(to: file)
         let r2 = Installer.install(cli: "/x/Duo.app/Contents/Helpers/duo2")
         check(r2.lines.contains("Director skill: edited by you, left alone.") && ((try? String(contentsOf: file, encoding: .utf8))?.hasSuffix("my own line\n") ?? false),
@@ -341,6 +396,8 @@ import Foundation
         let u2 = Installer.uninstall()
         check(!FileManager.default.fileExists(atPath: file.deletingLastPathComponent().path) && u2.lines.contains { $0.contains("skills/director") }, "and removes Duo's own")
         check(Installer.plannedItems(cli: "/x").contains { $0.what == "Write the director skill" }, "the install question lists it")
+        check(!FileManager.default.fileExists(atPath: Installer.workerSkillFile.deletingLastPathComponent().path) && !FileManager.default.fileExists(atPath: Installer.directorAliasFile.deletingLastPathComponent().path.appending("/reference")),
+              "uninstall removes the worker skill and the reference files, folders and all")
 
         // A skill the user already had, before Duo ever wrote one: theirs, never claimed or removed.
         let fm = FileManager.default
