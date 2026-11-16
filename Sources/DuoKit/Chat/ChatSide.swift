@@ -246,7 +246,7 @@ struct ChatSideLine: View {
     var body: some View {
         if !chat.sideShowing(exchange.id), !exchange.answering || exchange.closed {
             HStack(spacing: 8) {
-                Image(systemName: "bubble.left").font(.system(size: 10)).foregroundStyle(DuoColor.text2)
+                Image(systemName: "bubble.left").font(.system(size: DuoTextStyle.chatMeta.spec.size)).foregroundStyle(DuoColor.text2)
                 Text("Side question: \(exchange.question)").duoText(.chatMeta).foregroundStyle(DuoColor.text2).lineLimit(1).truncationMode(.tail)
                 Text("Show").duoText(.chatMeta).underline().foregroundStyle(DuoColor.text2)
                     .onActivate { chat.reopenSide(exchange.id) }  // action: session chat
