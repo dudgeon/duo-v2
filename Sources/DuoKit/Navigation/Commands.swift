@@ -507,7 +507,13 @@ public struct DuoCommands: Commands {
             Button(model.formatBarHidden ? "Show Formatting Bar" : "Hide Formatting Bar") { DuoCommand.toggleFormatBar.perform(in: model) }  // action: view format-bar
             Toggle("Source Mode", isOn: Binding(get: { model.showingSourceMode }, set: { model.setSourceMode($0) }))
                 .disabled(model.terminalsMode != .live || model.editorIfLoaded?.url == nil)
-            // The map's order (DL-104), the same choice as its Sort popup.
+            // The Board's grouping (DL-347), the same choice as its Group popup.
+            Picker("Group Projects By", selection: Binding(get: { model.boardGroup }, set: { model.setBoardGroup($0) })) {  // action: view group
+                Text("Activity").tag(BoardGroup.activity)
+                Text("Folder").tag(BoardGroup.folder)
+                Text("None").tag(BoardGroup.none)
+            }
+            // The folder bands' order (DL-104; the Board's Group replaced its Sort popup, DL-347).
             Picker("Sort Projects By", selection: Binding(get: { model.mapSort }, set: { model.setMapSort($0) })) {
                 Text("Recent Activity").tag(MapSort.recent)
                 Text("Name").tag(MapSort.name)

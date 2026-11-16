@@ -559,6 +559,7 @@ func repoFixture() throws -> Fixture {
     nav.goHome()
     check(nav.altitude == .project(nav.fixture.home?.name ?? "") && nav.consoleTab == "Morning triage", "shift-cmd-H: Home's page, on the session that needs you (DL-336)")
     let tiles = AppModel(fixture: f)
+    tiles.boardGroup = .folder   // the folder bands' arrow keys (DL-104); the activity Board's are checked in boardActivityChecks
     tiles.moveTileFocus(dx: 0, dy: 0)
     check(tiles.focusedTile == "home", "first arrow focuses the first tile: Home's, in a column of its own (DL-104)")
     tiles.moveTileFocus(dx: 1, dy: 0)

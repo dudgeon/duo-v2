@@ -349,6 +349,16 @@ public final class AppModel {
     public var listGroup: ListGroup = ListGroup(rawValue: DuoState.load().listGroup ?? "") ?? .recent
     /// The project whose header + the pointer is on (DL-341); target states set it for a capture.
     public var listPlusHover: String?
+    /// The Board's grouping (DL-347): Activity, Folder or None; remembered (`setBoardGroup`).
+    public var boardGroup: BoardGroup = BoardGroup(rawValue: DuoState.load().boardGroup ?? "") ?? .activity
+    /// Pinned projects (DL-347), by folder path (or name when it has no folder, as fixtures); `fixturePinned` stands in for a capture.
+    public var pinnedKeys: [String] = DuoState.load().pinnedProjects
+    public var unpinnedKeys: [String] = DuoState.load().unpinnedProjects
+    public var fixturePinned: Set<String>?
+    /// The project whose tile's New session row the pointer is on (DL-347); target states set it for a capture.
+    public var boardNewSessionHover: String?
+    /// Tiles across on the Board as last drawn, for the up and down arrow keys (not observed: the view writes it while drawing).
+    @ObservationIgnored public var boardPerRow = 3
     /// The list's filter, its selected row (a session's `id`), and Group › Show Archived.
     public var listFilter = "" { didSet { if listFilter != oldValue { listFilterChanged() } } }
     /// The filter's answer (DL-142 (4)): sessions best first, each with the passage that matched;
@@ -688,6 +698,7 @@ public final class AppModel {
     public func newSession() {
         if altitude.isAllProjects {
             if let p = listSelectedProject { return newSessionFromHeader(p) }   // DL-341: ⌘T starts in the selected project
+            if let p = boardFocusedProject { return newSessionFromHeader(p) }   // DL-347, Q-543: ⌘T starts in the focused tile's project
             return pressNewSessionRow()   // F-446, DL-262
         }
         guard let project = currentProject?.name else { return }
@@ -863,6 +874,7 @@ public final class AppModel {
 
     /// Arrow keys between tiles on the map: columns as drawn (DL-104), rows are tiles.
     public func moveTileFocus(dx: Int, dy: Int) {
+        if boardGroup != .folder { return moveActivityFocus(dx: dx, dy: dy) }   // DL-347
         let columns = mapLayout.focusColumns
         guard let current = focusedTile,
               let c = columns.firstIndex(where: { $0.contains(current) }),

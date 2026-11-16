@@ -34,27 +34,34 @@ struct ProjectMapPane: View {
                 let firstRun = model.mapFilter.isEmpty ? model.firstRunFolders : nil
                 VStack(alignment: .leading, spacing: DuoSpace.gapMapColumns) {
                     MapHeader(layout: map)
-                    if !map.homeColumns.isEmpty {
-                        // + New project closes Home's columns, in sight above the folders outside Home (DL-212).
-                        MapGrid(columns: map.homeColumns, home: map.home, tileAtEnd: model.mapFilter.isEmpty && firstRun == nil)
-                    }
-                    if let firstRun { HomeFoldersSection(folders: firstRun) }
-                    if outsideAny {
-                        if model.fixture.home != nil {
-                            HStack(spacing: 10) {
-                                SectionLabel(text: "Outside Home", count: map.outsideTotal)
-                                DuoColor.rule.frame(height: DuoMetric.borderHairline)
+                    if model.boardGroup != .folder {
+                        // DL-347: sections by activity (or one flat run of tiles); the first-run card keeps the top (DL-348 builds there).
+                        if let firstRun { HomeFoldersSection(folders: firstRun) }
+                        let activity = model.activityLayout
+                        if activity.isEmpty && model.mapFilter.isEmpty && firstRun == nil { NewProjectTile() } else { ActivityBoard(layout: activity) }
+                    } else {
+                        if !map.homeColumns.isEmpty {
+                            // + New project closes Home's columns, in sight above the folders outside Home (DL-212).
+                            MapGrid(columns: map.homeColumns, home: map.home, tileAtEnd: model.mapFilter.isEmpty && firstRun == nil)
+                        }
+                        if let firstRun { HomeFoldersSection(folders: firstRun) }
+                        if outsideAny {
+                            if model.fixture.home != nil {
+                                HStack(spacing: 10) {
+                                    SectionLabel(text: "Outside Home", count: map.outsideTotal)
+                                    DuoColor.rule.frame(height: DuoMetric.borderHairline)
+                                }
+                                .padding(.top, 6)
                             }
-                            .padding(.top, 6)
+                            if !map.active.isEmpty {
+                                SectionLabel(text: "Active outside Home", count: map.active.count)
+                                TileFlow(projects: map.active)
+                            }
+                            if !map.outside.isEmpty { OutsideGroups(columns: map.outside) }
+                            if model.mapFilter.isEmpty && map.homeColumns.isEmpty { NewProjectTile() }
                         }
-                        if !map.active.isEmpty {
-                            SectionLabel(text: "Active outside Home", count: map.active.count)
-                            TileFlow(projects: map.active)
-                        }
-                        if !map.outside.isEmpty { OutsideGroups(columns: map.outside) }
-                        if model.mapFilter.isEmpty && map.homeColumns.isEmpty { NewProjectTile() }
                     }
-                    if map.isEmpty && model.mapFilter.isEmpty { NewProjectTile() }
+                    if model.boardGroup == .folder && map.isEmpty && model.mapFilter.isEmpty { NewProjectTile() }
                 }
                 .padding(DuoSpace.panePadding)
                 ArchivedRollup()
@@ -258,7 +265,7 @@ struct MapHeader: View {
             HStack(spacing: 6) {
                 Image(systemName: "magnifyingglass").font(.system(size: DuoSymbolSize.searchIcon, weight: .medium)).foregroundStyle(DuoColor.text2)
                     .accessibilityHidden(true)
-                TextField(list ? "Filter sessions" : "Filter folders", text: text)
+                TextField(list ? "Filter sessions" : "Filter projects", text: text)
                     .textFieldStyle(.plain)
                     .duoText(.control)
                     .foregroundStyle(DuoColor.text)
@@ -280,8 +287,9 @@ struct MapHeader: View {
             .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusField)
                 .strokeBorder(text.wrappedValue.isEmpty ? DuoColor.rule : DuoColor.controlEdge, lineWidth: DuoMetric.borderHairline))
             Spacer(minLength: 8)
-            if list {
-                // The List's way to the Board tile's action (Q-158, stand-in): same sheet, same verb.
+            if list || model.boardGroup != .folder {
+                // The List's way to the Board tile's action (Q-158, stand-in): same sheet, same verb. On the Board
+                // by activity (B1) it's the header's too: that Board has no New project tile.
                 Text("+ New project").duoText(.control).foregroundStyle(DuoColor.text2)
                     .padding(.horizontal, 8)
                     .frame(height: DuoMetric.mapHeaderControlHeight)
@@ -292,7 +300,7 @@ struct MapHeader: View {
                     .onActivate { model.showNewProject() }  // action: project new
                     .accessibilityAddTraits(.isButton)
             }
-            Text(list ? "Group" : "Sort").duoText(.control).foregroundStyle(DuoColor.text2)
+            Text("Group").duoText(.control).foregroundStyle(DuoColor.text2)
             Menu {
                 if list {
                     // The Group popup's menu isn't drawn (home-evolution-handoff, Not drawn): a system menu.
@@ -306,15 +314,16 @@ struct MapHeader: View {
                         if model.listShowsArchived { Label("Show Archived", systemImage: "checkmark") } else { Text("Show Archived") }
                     }
                 } else {
-                    ForEach(MapSort.allCases, id: \.self) { s in
-                        Button { model.setMapSort(s) } label: {
-                            if s == model.mapSort { Label(s.title, systemImage: "checkmark") } else { Text(s.title) }
+                    // Group replaces Sort on the Board (DL-347, Q-540); View › Sort Projects By still orders Folder.
+                    ForEach(BoardGroup.allCases, id: \.self) { g in
+                        Button { model.setBoardGroup(g) } label: {  // action: view group
+                            if g == model.boardGroup { Label(g.title, systemImage: "checkmark") } else { Text(g.title) }
                         }
                     }
                 }
             } label: {
                 HStack(spacing: 6) {
-                    Text(list ? model.listGroup.title : model.mapSort.title).duoText(.control).foregroundStyle(DuoColor.text)
+                    Text(list ? model.listGroup.title : model.boardGroup.title).duoText(.control).foregroundStyle(DuoColor.text)
                     Image(systemName: "chevron.up.chevron.down").font(.system(size: DuoSymbolSize.chevronSmall, weight: .semibold)).foregroundStyle(DuoColor.text2)
                 }
                 .padding(.leading, 8).padding(.trailing, 6)
@@ -326,7 +335,7 @@ struct MapHeader: View {
             .buttonStyle(.plain)
             .menuIndicator(.hidden)
             .fixedSize()
-            .accessibilityLabel(list ? "Group sessions by \(model.listGroup.title.lowercased())" : "Sort projects by \(model.mapSort.title)")
+            .accessibilityLabel(list ? "Group sessions by \(model.listGroup.title.lowercased())" : "Group projects by \(model.boardGroup.title.lowercased())")
         }
         .frame(height: DuoMetric.mapHeaderControlHeight)
     }
@@ -344,6 +353,9 @@ struct HomeTile: View {
         let shown = Array(all.prefix(5))
         VStack(alignment: .leading, spacing: DuoSpace.gapTileRows) {
             Text("★ \(home.name)").duoText(.bodyEmphasis).lineLimit(1)
+            if model.boardGroup != .folder {
+                Text(BoardText.folder(home)).duoText(.monoPath).foregroundStyle(DuoColor.text2).lineLimit(1).truncationMode(.middle)
+            }
             if !home.goal.isEmpty { Text(home.goal).duoText(.body).fixedSize(horizontal: false, vertical: true) }
             Text("Home · \(all.count) session\(all.count == 1 ? "" : "s")").duoText(.body).foregroundStyle(DuoColor.text2)
             ForEach(Array(shown.enumerated()), id: \.element.id) { i, s in
@@ -363,6 +375,7 @@ struct HomeTile: View {
                 .contentShape(Rectangle())
                 .onActivate { model.open(project: home.name) }  // action: open
             }
+            TileNewSessionRow(project: home)   // DL-347 (T1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .bordered(DuoSpace.cardPadding, color: DuoColor.text)
@@ -527,11 +540,15 @@ struct ProjectTile: View {
             // shrinks them (the target wins over handoff §8's truncation proposal).
             FlexShrinkRow {
                 Text(project.name).duoText(.bodyEmphasis)
-                if focused {
+                if focused && model.boardGroup == .folder {   // T draws the focused tile without the hint; the row says ⌘T (DL-347)
                     // Non-breaking space: SwiftUI avoids a one-word last line ("Enter" / "to open");
                     // the target breaks "Enter to" / "open" (findings F-13).
                     Text("Enter\u{00A0}to open").duoText(.body).foregroundStyle(DuoColor.text2)
                 }
+            }
+            if model.boardGroup != .folder, !project.isMissing, !project.isFolderOnly {
+                // DL-347: each tile names its folder (a folder with no project file already does, below).
+                Text(BoardText.folder(project)).duoText(.monoPath).foregroundStyle(DuoColor.text2).lineLimit(1).truncationMode(.middle)
             }
             if project.isMissing {
                 // Its folder is gone (S3-2, DB-8): what happened, where it was, and what to do.
@@ -578,7 +595,9 @@ struct ProjectTile: View {
                     .frame(height: DuoMetric.rowTileSession)
                     .padding(.top, 6)
             } else if sessions.isEmpty {
-                Text("Nothing running")
+                let last = MapLayout.activity(of: project.name, in: model.fixture, now: model.minute.timeIntervalSince1970 * 1000)
+                let ago = OutsideRow.wait(last, now: model.minute)
+                Text(ago.isEmpty ? "Nothing running" : "Nothing running · \(ago)")
                     .duoText(.body)
                     .foregroundStyle(DuoColor.text2)
                     .frame(height: DuoMetric.rowTileSession)
@@ -593,6 +612,7 @@ struct ProjectTile: View {
                         .accessibilityIdentifier("video.board.card.\(s.name)")   // anchors: the video cursor's target
                 }
             }
+            if !project.isMissing { TileNewSessionRow(project: project) }   // DL-347 (T1): on every tile
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .bordered(DuoSpace.cardPadding, color: focused ? DuoColor.text : DuoColor.rule)
@@ -1060,6 +1080,8 @@ struct ProjectOrganizeMenu: ViewModifier {
                 .contextMenu {
                     // DL-311, board 1 A: the project in a window of its own (or its window forward, DL-308).
                     Button("Open in New Window") { model.core.openWindow(project: project.name) }   // action: window new
+                    if !project.isMissing { Button("New Session") { model.newSessionFromHeader(project.name) } }   // action: session new
+                    Button(model.isPinned(project) ? "Unpin" : "Pin to Top") { model.setPinned(project.name, !model.isPinned(project)) }   // action: project pin
                     Divider()
                     SendMenu { _ in model.projectPayload(project.name) }
                     Divider()
@@ -1092,7 +1114,12 @@ struct ProjectOrganizeMenu: ViewModifier {
                 .modifier(TakesDrops(name: project.name))
         } else if model.terminalsMode == .live {
             // Home takes drops (sessions move into Home) but isn't merged away.
-            content.contextMenu { SendMenu { _ in model.projectPayload(project.name) } }
+            content.contextMenu {
+                Button("New Session") { model.newSessionFromHeader(project.name) }   // action: session new
+                Button(model.isPinned(project) ? "Unpin" : "Pin to Top") { model.setPinned(project.name, !model.isPinned(project)) }   // action: project pin
+                Divider()
+                SendMenu { _ in model.projectPayload(project.name) }
+            }
                 .modifier(DropTarget(name: project.name))
                 .modifier(TakesDrops(name: project.name))
         } else {

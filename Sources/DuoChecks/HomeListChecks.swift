@@ -101,4 +101,71 @@ import Foundation
     let panes = (try? String(contentsOf: repoRoot().appending(path: "Sources/DuoKit/AllProjects/AllProjectsPanes.swift"), encoding: .utf8)) ?? ""
     let calls = panes.split(separator: "\n").filter { $0.contains("model.showNewProject()") && $0.contains("// action: project new") }
     check(calls.count == 2 && ActionID.projectNew.action.ui.contains("+ New project"), "the Board tile and the List header's + New project both run `duo2 project new` (Q-158)")
+    boardActivityChecks(f, now: evening)
+}
+
+/// The Board by activity (DL-347): sections, pins, grouping, ⌘T on a focused tile, the verbs.
+@MainActor func boardActivityChecks(_ f: Fixture, now: Date) {
+    print("the board by activity (DL-347)")
+    let ms = now.timeIntervalSince1970 * 1000
+    let pins: Set<String> = ["home", "checkout-redesign"]
+    func build(_ g: BoardGroup = .activity, filter: String = "", earlierOpen: Bool = false, pinned: Set<String> = pins) -> ActivityLayout {
+        ActivityLayout.build(f, group: g, filter: filter, earlierOpen: earlierOpen, isPinned: { pinned.contains($0.name) },
+                             isOpen: { _ in false }, now: ms)
+    }
+    let l = build()
+    let ids = l.sections.map(\.id)
+    check(ids == ids.filter { ["pinned", "now", "today", "week", "earlier"].contains($0) } && ids.first == "pinned", "sections: Pinned first, then Now, Today, This week, Earlier")
+    check(l.sections.first?.projects.map(\.name).first == "home" && Set(l.sections.first?.projects.map(\.name) ?? []) == pins, "Pinned holds the pins, Home first")
+    let names = l.sections.flatMap { $0.projects.map(\.name) }
+    check(Set(names).count == names.count && names.count == f.projects.count, "every project is in one section, once (a folder with no project file too)")
+    let nowNames = Set(l.sections.first { $0.id == "now" }?.projects.map(\.name) ?? [])
+    let liveNames = Set(f.projects.map(\.name).filter { n in !pins.contains(n) && f.sessions(inProject: n).contains { [.needsYou, .readyForReview, .working].contains($0.state) } })
+    check(!nowNames.isEmpty && nowNames == liveNames, "Now: exactly the unpinned projects with a session needing you, to review or working")
+    check(l.sections.first { $0.id == "week" }?.style == .rows && l.sections.first { $0.id == "earlier" }.map { $0.style == .fold && !$0.open && $0.shownProjects.isEmpty } ?? true,
+          "This week is rows; Earlier is a fold, closed by default")
+    check(build(earlierOpen: true).visibleNames.count >= l.visibleNames.count, "opening Earlier adds its rows to the arrow-key walk")
+    check(build(.none).sections.count == 1 && build(.none).sections[0].title.isEmpty && build(.none).sections[0].projects.count == f.projects.count, "None: one flat run of tiles")
+    let vendor = build(filter: "checkout", pinned: [])
+    check(vendor.shown >= 1 && vendor.shown < f.projects.count && vendor.sections.flatMap(\.projects).allSatisfy { ($0.name + $0.path).lowercased().contains("checkout") }, "the filter narrows to matching names and folders")
+    let unpinned = build(pinned: [])
+    check(!unpinned.sections.contains { $0.id == "pinned" }, "no pins, no Pinned section (Home is just a project, then)")
+    let archived = ActivityLayout.build(f, group: .activity, filter: "", isArchived: { $0 == "vendor-review" }, isPinned: { _ in false }, now: ms)
+    check(!archived.sections.flatMap(\.projects).contains { $0.name == "vendor-review" }, "an archived project leaves the sections (the Archived rollup has it)")
+    check(MapPacking.columnCount(width: 1060, items: 12, minWidth: DuoMetric.mapColumnMin, spacing: 12, maxPerRow: Int(DuoMetric.mapPerRowMax)) >= 4
+          && MapPacking.columnCount(width: 1560, items: 12, minWidth: DuoMetric.mapColumnMin, spacing: 12, maxPerRow: Int(DuoMetric.mapPerRowMax)) >= 6,
+          "as many tiles across as fit at 220: more than three (DL-83's cap lifted)")
+    let m = AppModel(fixture: f)
+    m.altitude = .allProjects; m.homeView = .board
+    m.fixturePinned = []
+    check(BoardGroup(rawValue: DuoState().boardGroup ?? "") == nil && m.boardGroup == .activity, "a new user's Board is grouped by activity")
+    let home = f.projects.first { $0.isHome == true }!
+    check(!m.isPinned(home) , "fixture pins stand in: none pinned")
+    m.fixturePinned = nil
+    check(m.isPinned(home), "★ home starts pinned when there is a Home")
+    m.fixturePinned = []
+    m.setPinned("checkout-redesign", true)
+    check(m.fixturePinned == ["checkout-redesign"] && m.isPinned(f.projects.first { $0.name == "checkout-redesign" }!), "Pin to Top pins")
+    m.setPinned("checkout-redesign", false)
+    check(m.fixturePinned == [], "Unpin unpins")
+    m.focusedTile = nil
+    check(m.boardFocusedProject == nil, "⌘T with no tile focused is DL-262's")
+    m.focusedTile = "checkout-redesign"
+    check(m.boardFocusedProject == "checkout-redesign" && m.startPlace(forProject: "checkout-redesign")?.project == "checkout-redesign", "⌘T with a tile focused starts in its project")
+    m.homeView = .list
+    check(m.boardFocusedProject == nil, "…but only on the Board")
+    m.homeView = .board
+    m.fixturePinned = pins
+    m.focusedTile = nil
+    m.moveTileFocus(dx: 1, dy: 0)
+    let order = m.activityLayout.visibleNames
+    check(m.focusedTile == order.first, "the first arrow focuses the first tile")
+    m.moveTileFocus(dx: 1, dy: 0)
+    check(m.focusedTile == order[1], "right steps to the next tile in reading order")
+    m.boardPerRow = 2
+    m.moveTileFocus(dx: 0, dy: 1)
+    check(m.focusedTile == order[3], "down steps a row of tiles")
+    check(DuoAction.resolve(["view", "group", "activity"]) != nil && ActionID.viewGroup.action.ui.contains("Group Projects By")
+          && DuoAction.resolve(["project", "pin", "home"]) != nil && ActionID.projectPin.action.ui.contains("Pin to Top")
+          && ActionID.sessionNew.action.ui.contains("Board tile New session row"), "duo2 view group activity|folder|none, project pin, and the tile's New session row (DL-71)")
 }

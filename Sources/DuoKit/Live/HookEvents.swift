@@ -285,6 +285,11 @@ public struct DuoState: Codable, Sendable, Equatable {
     public var homeView: String?
     /// The List's grouping (DL-341): "recent" (the default) or "project".
     public var listGroup: String?
+    /// All projects' Board grouping (DL-347): "activity" (the default), "folder" or "none".
+    public var boardGroup: String?
+    /// Projects pinned to the Board's first row (DL-347), and ones unpinned that start pinned (Home), by folder path.
+    public var pinnedProjects: [String] = []
+    public var unpinnedProjects: [String] = []
     /// View › Show Hidden Files (DL-105).
     public var showHiddenFiles = false
     /// View › Hide Formatting Bar (DL-266): the Markdown bar over the editor is turned off.
@@ -329,6 +334,9 @@ public struct DuoState: Codable, Sendable, Equatable {
         appearance = try c.decodeIfPresent(String.self, forKey: .appearance)   // C-122: the one field this init forgot
         homeView = try c.decodeIfPresent(String.self, forKey: .homeView)
         listGroup = try c.decodeIfPresent(String.self, forKey: .listGroup)
+        boardGroup = try c.decodeIfPresent(String.self, forKey: .boardGroup)
+        pinnedProjects = try c.decodeIfPresent([String].self, forKey: .pinnedProjects) ?? []
+        unpinnedProjects = try c.decodeIfPresent([String].self, forKey: .unpinnedProjects) ?? []
         showHiddenFiles = try c.decodeIfPresent(Bool.self, forKey: .showHiddenFiles) ?? false
         dismissedExplainers = try c.decodeIfPresent([String].self, forKey: .dismissedExplainers) ?? []
         keepRunning = try c.decodeIfPresent([String].self, forKey: .keepRunning) ?? []
