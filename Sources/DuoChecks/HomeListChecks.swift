@@ -165,6 +165,21 @@ import Foundation
     m.boardPerRow = 2
     m.moveTileFocus(dx: 0, dy: 1)
     check(m.focusedTile == order[3], "down steps a row of tiles")
+    // `view group <unknown>` is refused with the valid choices, not "Expanded bogus".
+    do {
+        let m2 = AppModel(fixture: f)
+        func duo2(_ args: String...) -> ControlResponse {
+            var out: ControlResponse?
+            m2.handle(ControlRequest(token: "", command: args[0], args: Array(args.dropFirst()), session: nil, cwd: "/tmp")) { out = $0 }
+            let until = Date().addingTimeInterval(5)
+            while out == nil, Date() < until { RunLoop.main.run(until: Date().addingTimeInterval(0.02)) }
+            return out ?? ControlResponse(ok: false, output: "no answer")
+        }
+        let bad = duo2("view", "group", "bogus")
+        check(!bad.ok && bad.output.contains("activity") && bad.output.contains("expand"), "view group <unknown> is refused, naming the choices (activity|folder|none, expand|collapse)")
+        check(!duo2("view", "group", "today", "sideways").ok, "view group <id> with neither expand nor collapse is refused")
+        check(duo2("view", "group", "today", "collapse").ok, "a group's collapse still works (the Board's own values write Duo's state file, so they're run live)")
+    }
     check(DuoAction.resolve(["view", "group", "activity"]) != nil && ActionID.viewGroup.action.ui.contains("Group Projects By")
           && DuoAction.resolve(["project", "pin", "home"]) != nil && ActionID.projectPin.action.ui.contains("Pin to Top")
           && ActionID.sessionNew.action.ui.contains("Board tile New session row"), "duo2 view group activity|folder|none, project pin, and the tile's New session row (DL-71)")
