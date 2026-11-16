@@ -622,6 +622,19 @@ private func stopped(_ path: String = "tasks/s.md", checked: Date? = nil, typing
     check(aging.isEmpty, "no eval carries a fixed date that ages out; dates come from _lib/fixtures.sh at run time (Q-586): \(aging.prefix(5).joined(separator: "; "))")
     let probe = evalFixedDates(in: ["- 2026-10-14 09:00 Worker started.", "goal: launch the beta on 1 Nov", "on November 3", "{\"since\":\"2026-10-14T08:00:00-04:00\"}", "# written 2026-11-14",
                                     "until 2099-01-01.", "\"$(ago $((2 * D)) '%Y-%m-%d %H:%M')\" Worker started.", "Release notes 1.2"], file: "x")
+    let cost = Process()
+    let pipe = Pipe()
+    cost.executableURL = URL(fileURLWithPath: "/usr/bin/python3")
+    cost.arguments = [repoRoot().appending(path: "scripts/director-harness/eval-cost.py").path, "--self-test"]
+    cost.standardOutput = pipe
+    cost.standardError = pipe
+    try cost.run()
+    let said = String(decoding: pipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+    cost.waitUntilExit()
+    check(cost.terminationStatus == 0 && said.contains("total includes judgeCostUsd"),
+          "eval spend adds each run's judgeCostUsd to costUsd (eval-cost.py --self-test, F-740): \(said.prefix(120))")
+    let harness = (try? String(contentsOf: repoRoot().appending(path: "scripts/director-harness/run-evals.sh"), encoding: .utf8)) ?? ""
+    check(harness.contains("eval-cost.py $out/result.json"), "run-evals.sh prints each round's cost with the judges (eval-cost.py)")
     check(probe.count == 4, "the fixed-date scan finds an ISO date, a timestamp, \"1 Nov\" and \"November 3\", and passes comments, 2099 and ago() (\(probe))")
 }
 
