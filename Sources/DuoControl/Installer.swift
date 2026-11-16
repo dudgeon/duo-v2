@@ -39,6 +39,8 @@ public enum Installer {
     /// the name where a project has one (`projectDirectorSkills`); until the user says yes the
     /// skill is installed as `duo-director`.
     public static var directorSkillFile: URL { claudeDir.appending(path: "skills/director/SKILL.md") }
+    /// The worker skill: Duo's second shared skill, beside `director`.
+    public static var workerSkillFile: URL { claudeDir.appending(path: "skills/worker/SKILL.md") }
     /// The old name (one release): a stub pointing at `director`, or the full skill while the name is held back.
     public static var directorAliasFile: URL { claudeDir.appending(path: "skills/duo-director/SKILL.md") }
     /// Project skills named `director` that a personal one would hide; the app sets this to look
@@ -150,6 +152,10 @@ public enum Installer {
         public var directorAliasHash: String?
         /// 2 once the director skill lives at `director` (DL-222); nil for a manifest from before.
         public var directorLayout: Int?
+        /// The worker skill's hash; nil for a manifest from before it existed.
+        public var workerSkillHash: String?
+        /// The director skill's reference files Duo wrote, by relative path (`reference/failures.md`) to hash.
+        public var directorReferenceHashes: [String: String]?
         /// The user's answer to "may the shared skill take the name `director`, hiding a project's own?"; nil until asked.
         public var directorNameAllowed: Bool?
         public var linkTarget: String?
@@ -182,6 +188,7 @@ public enum Installer {
             "Add a short \"Duo\" section to \(claudeMD.path), between <!-- duo2:begin --> and <!-- duo2:end --> markers (\(block().split(separator: " ").count) words; it loads into every Claude session).",
             "Write a duo2 skill to \(skillFile.path).",
             "Write a director skill to \(directorSkillFile.path) (Director: Claude hands out and checks work in a project; your own rules never go in it), and a duo-director stub at the old name for one release.",
+            "Write a worker skill to \(workerSkillFile.path) (how a session works a task a director gave it), and the director skill's reference files beside the director skill.",
             "Link \(link.path) to \(cli), so duo2 works in any terminal.",
             "Keep these current each time Duo starts. Anything you edit is left alone; `duo2 uninstall` removes all of it.",
         ]
@@ -194,6 +201,7 @@ public enum Installer {
         return [("Add a short Duo section, between duo2 markers (\(block().split(separator: " ").count) words)", short(claudeMD.path)),
                 ("Write the duo2 skill", short(skillFile.path)),
                 ("Write the director skill", short(directorSkillFile.path)),
+                ("Write the worker skill", short(workerSkillFile.path)),
                 ("Put duo2 on your PATH", short(link.path))]
     }
 
@@ -269,6 +277,7 @@ public enum Installer {
         let before = r.lines.count
         m.skillHash = writeSkill(skill(), to: skillFile, label: "Skill", hash: m.skillHash, into: &r)
         installDirectorSkill(&m, into: &r)
+        m.workerSkillHash = writeSkill(WorkerSkill.text(), to: workerSkillFile, label: "Worker skill", hash: m.workerSkillHash, into: &r)
         skipped += r.lines[before...].filter { $0.contains("skipped.") }
 
         // The link: replaced only if it's Duo's (a link to some Duo.app's duo2).
@@ -304,11 +313,37 @@ public enum Installer {
         }
         if let hidden = directorNameQuestion(m) {
             m.directorAliasHash = writeSkill(DirectorSkill.text(name: "duo-director"), to: directorAliasFile, label: "Director skill", hash: m.directorAliasHash, into: &r)
+            installDirectorReferences(&m, folder: directorAliasFile.deletingLastPathComponent(), into: &r)
             r.lines.append("Director skill: installed as duo-director, not director, since \(hidden.count == 1 ? "a project skill" : "\(hidden.count) project skills") named director (\(hidden.map(\.path).joined(separator: ", "))) would be hidden. Duo asks; `duo2 install --director-name director` says yes.")
             return
         }
         m.directorSkillHash = writeSkill(DirectorSkill.text(), to: directorSkillFile, label: "Director skill", hash: m.directorSkillHash, into: &r)
         m.directorAliasHash = writeSkill(DirectorSkill.aliasText(), to: directorAliasFile, label: "Director skill (old name)", hash: m.directorAliasHash, into: &r)
+        installDirectorReferences(&m, folder: directorSkillFile.deletingLastPathComponent(), into: &r)
+    }
+
+    /// The director skill's reference files, written beside its SKILL.md under the same rules as the
+    /// skill (edited files stay), with a hash each; ones Duo wrote earlier that no longer exist are
+    /// removed when unedited.
+    static func installDirectorReferences(_ m: inout Manifest, folder: URL, into r: inout Report) {
+        var hashes = m.directorReferenceHashes ?? [:]
+        let current = Set(DirectorSkill.referenceFiles.map(\.name))
+        for (name, text) in DirectorSkill.referenceFiles {
+            hashes[name] = writeSkill(text, to: folder.appending(path: name), label: "Director \(name)", hash: hashes[name], into: &r)
+        }
+        for (name, h) in hashes where !current.contains(name) {
+            let file = folder.appending(path: name)
+            if let s = try? String(contentsOf: file, encoding: .utf8), hash(s) != h {
+                r.lines.append("Director \(name): no longer shipped, but you edited it: left alone.")
+            } else if !isLink(file), !isLink(file.deletingLastPathComponent()) {
+                try? FileManager.default.removeItem(at: file)
+                let dir = file.deletingLastPathComponent()
+                if (try? FileManager.default.contentsOfDirectory(atPath: dir.path))?.isEmpty == true { try? FileManager.default.removeItem(at: dir) }
+                r.lines.append("Director \(name): no longer shipped, removed.")
+            }
+            hashes[name] = nil
+        }
+        m.directorReferenceHashes = hashes.isEmpty ? nil : hashes
     }
 
     /// The project skills a personal `director` would hide, while the user hasn't said yes; nil
@@ -404,13 +439,24 @@ public enum Installer {
             } else { r.lines.append("Left the Duo block in \(claudeMD.path): you edited it. Delete it by hand if you like.") }
         }
         removeSkill(skill(), at: skillFile, hash: m.skillHash, into: &r)
+        for folder in [directorSkillFile, directorAliasFile].map({ $0.deletingLastPathComponent() }) {
+            for (name, text) in DirectorSkill.referenceFiles {
+                let file = folder.appending(path: name)
+                guard fm.fileExists(atPath: file.path) else { continue }
+                removeSkill(text, at: file, hash: m.directorReferenceHashes?[name], into: &r)
+            }
+            for (name, h) in m.directorReferenceHashes ?? [:] where !DirectorSkill.referenceFiles.contains(where: { $0.name == name }) {
+                removeSkill("", at: folder.appending(path: name), hash: h, into: &r)
+            }
+        }
         removeSkill(DirectorSkill.text(), at: directorSkillFile, hash: m.directorSkillHash, into: &r)
         removeSkill(DirectorSkill.aliasText(), at: directorAliasFile, hash: m.directorAliasHash, into: &r)
+        removeSkill(WorkerSkill.text(), at: workerSkillFile, hash: m.workerSkillHash, into: &r)
         if let dest = try? fm.destinationOfSymbolicLink(atPath: link.path), isDuoCLI(dest) {
             try? fm.removeItem(at: link)
             r.lines.append("Removed \(link.path).")
         }
-        m.blockHash = nil; m.skillHash = nil; m.directorSkillHash = nil; m.directorAliasHash = nil; m.linkTarget = nil; m.consented = false
+        m.blockHash = nil; m.skillHash = nil; m.directorSkillHash = nil; m.directorAliasHash = nil; m.workerSkillHash = nil; m.directorReferenceHashes = nil; m.linkTarget = nil; m.consented = false
         save(m)
         if r.lines.isEmpty { r.lines.append("Nothing of Duo's was installed.") }
         return r
@@ -440,6 +486,15 @@ public enum Installer {
         } else { out.append("Director skill: not installed.") }
         if let s = try? String(contentsOf: directorAliasFile, encoding: .utf8) {
             out.append("Old name duo-director: \(s == DirectorSkill.aliasText() || s == DirectorSkill.text(name: "duo-director") ? "current" : m.directorAliasHash.map { hash(s) == $0 } == true ? "from an older Duo (updates at launch)" : "edited by you (left alone)") (\(directorAliasFile.path)).")
+        }
+        if let s = try? String(contentsOf: workerSkillFile, encoding: .utf8) {
+            out.append("Worker skill: \(s == WorkerSkill.text() ? "current" : m.workerSkillHash.map { hash(s) == $0 } == true ? "from an older Duo (updates at launch)" : "edited by you (left alone)") (\(workerSkillFile.path)).")
+        } else { out.append("Worker skill: not installed.") }
+        let refFolder = (FileManager.default.fileExists(atPath: directorSkillFile.path) ? directorSkillFile : directorAliasFile).deletingLastPathComponent()
+        if !DirectorSkill.referenceFiles.isEmpty {
+            let there = DirectorSkill.referenceFiles.filter { FileManager.default.fileExists(atPath: refFolder.appending(path: $0.name).path) }
+            let edited = there.filter { f in (try? String(contentsOf: refFolder.appending(path: f.name), encoding: .utf8)).map { $0 != f.text } ?? false }
+            out.append("Director reference files: \(there.count) of \(DirectorSkill.referenceFiles.count) installed in \(refFolder.path)/reference\(edited.isEmpty ? "" : "; edited by you (left alone): " + edited.map(\.name).joined(separator: ", ")).")
         }
         if let hidden = directorNameQuestion(m) { out.append("A project skill named director would be hidden by Duo's: \(hidden.map(\.path).joined(separator: ", ")). \(m.directorNameAllowed == false ? "You said keep it, so Duo's is installed as duo-director." : "Duo asks at launch; `duo2 install --director-name director` says yes.")") }
         if let dest = try? FileManager.default.destinationOfSymbolicLink(atPath: link.path) {

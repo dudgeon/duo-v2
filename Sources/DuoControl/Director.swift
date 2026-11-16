@@ -19,14 +19,14 @@ public enum Director {
     /// absolute path: a worker that moves into a git work tree (where `tasks/` may not exist, or be
     /// ignored) still finds it.
     public static func workerPrompt(note: String, director: String) -> String {
+        // DL-343 (3): the rules live in the worker skill; this keeps the minimum for a client that can't load it.
         tag(director) + """
-        You're the worker on the task whose note is \(note), directed by \(director). Read its ## Request and done_when: first; \
-        don't decide anything the Request says you mustn't, and ask in this session if something only the user can answer comes up. \
-        When your question needs the user to look at something (a canvas or board, a page, a document, a file, a capture, a session), put its link (a URL, a duo2:// link or a file path they can open) on the line right before the question and inside the question text, naming the board or section. \
-        As you go, append dated one-line updates under the note's ## Progress; if you can't write to the note, put those lines in your report. \
-        When you're done or stuck, end your turn with your report as your last message: what you did, what you checked and how, \
-        and any other work you noticed (as suggestions, not done). \
-        Also send that report to \(director) with SendMessage(to: \"\(director)\"), by that name (not a from address), if you have SendMessage.
+        You're the worker on the task whose note is \(note), directed by \(director). \
+        Load the `worker` skill and follow it; if it isn't available, run `duo2 worker guide`, which prints it. \
+        If you can do neither: read the note's ## Request and done_when: first, don't decide what the Request leaves to the user, \
+        make your first ## Progress line say how you'll prove the work, and when a question needs the user to look at something, put its link on the line right before the question and inside the question text. \
+        When you're done, stuck, or the user has driven a turn here, report with duo2 director report \(shellQuote(note)) "<report>" \
+        (else SendMessage(to: \"\(director)\"), by that name), and end your turn with the report.
         """
     }
 
@@ -34,11 +34,22 @@ public enum Director {
     /// session id, F-318, so the name is how Duo links it) and the command the director runs.
     /// With `remoteControl`, the worker comes up reachable from the user's phone under the same
     /// name (DL-230): a director the user drives from their phone can't ask for it afterwards.
-    public static func backgroundStart(folder: URL, task path: String, director: String, remoteControl: Bool = false) -> (name: String, command: String) {
+    /// With `duo2` (its path; nil where hooks are off), the worker gets Duo's Stop hook by `--settings` (DL-342 (2)).
+    public static func backgroundStart(folder: URL, task path: String, director: String, remoteControl: Bool = false, duo2: String? = nil) -> (name: String, command: String) {
         let stem = URL(fileURLWithPath: path).deletingPathExtension().lastPathComponent
         let name = String(slug(stem).prefix(36)) + "-" + UUID().uuidString.lowercased().prefix(6)
         let rc = remoteControl ? " --remote-control \(shellQuote(name))" : ""
-        return (name, "cd \(shellQuote(folder.path)) && claude --bg\(rc) -n \(shellQuote(name)) -- \(shellQuote(workerPrompt(note: folder.appending(path: path).path, director: director)))")
+        let hook = duo2.map { " --settings \(shellQuote(DirectorStopHook.workerSettings(duo2: $0)))" } ?? ""
+        return (name, "cd \(shellQuote(folder.path)) && claude --bg\(rc)\(hook) -n \(shellQuote(name)) -- \(shellQuote(workerPrompt(note: folder.appending(path: path).path, director: director)))")
+    }
+
+    /// The duo2 a worker's hook calls: this process's own when it is duo2 (resolved, so a link into Duo.app
+    /// still works after an update), else the one in Duo.app beside this app. Nil when hooks are off for the client.
+    public static func hookCLI(caps: ClientCaps, executable: URL? = Bundle.main.executableURL) -> String? {
+        guard caps.hooks != .no, let exe = executable?.resolvingSymlinksInPath() else { return nil }
+        if exe.lastPathComponent == "duo2" { return exe.path }
+        let helper = exe.deletingLastPathComponent().deletingLastPathComponent().appending(path: "Helpers/duo2")
+        return FileManager.default.isExecutableFile(atPath: helper.path) ? helper.path : nil
     }
 
     /// Why a background start can't go ahead, or nil. A logged-out CLI starts a worker that dies on
@@ -115,10 +126,26 @@ public enum DirectorSkill {
     public static let format = 1
     /// Bump when the skill starts needing a `duo2 director` verb or behaviour an older Duo lacks
     /// (F-341): `status` compares the installed skill's revision with the running Duo's.
-    public static let revision = 6
+    public static let revision = 7   // 7: director report, check session:, reference files (DL-342, DL-343)
     public static func text(name: String = "director") -> String {
         let t = source.replacingOccurrences(of: "{{FORMAT}}", with: "\(format)").replacingOccurrences(of: "{{REVISION}}", with: "\(revision)")
         return name == "director" ? t : t.replacingOccurrences(of: "name: director\n", with: "name: \(name)\n")
+    }
+
+    /// The reference files with their relative paths (`reference/failures.md`), sorted by name.
+    public static var referenceFiles: [(name: String, text: String)] { references }
+
+    /// Names of the files the skill loads on demand, without folder or extension (`failures`).
+    public static var referenceNames: [String] {
+        references.map { $0.name.replacingOccurrences(of: "reference/", with: "").replacingOccurrences(of: ".md", with: "") }
+    }
+
+    /// One reference file's text: `failures`, `failures.md` or `reference/failures.md`; nil if there is none.
+    public static func reference(_ name: String) -> String? {
+        var n = name
+        if n.hasPrefix("reference/") { n.removeFirst("reference/".count) }
+        if !n.hasSuffix(".md") { n += ".md" }
+        return references.first { $0.name == "reference/" + n }?.text
     }
 
     /// The old name's stub (DL-222): points at the real skill, so `/duo-director` keeps working for a release.
@@ -152,6 +179,30 @@ public enum DirectorSkill {
         }
         if r < revision {
             return "The installed director skill is older (revision \(r)) than this Duo (\(revision)); Duo updates it at launch. If your own copy differs from `duo2 director guide`, re-read that."
+        }
+        return nil
+    }
+}
+
+/// The worker skill Duo installs as `~/.claude/skills/worker/SKILL.md`, beside the director skill.
+/// Its source is `skills/duo-worker/SKILL.md`, generated into `WorkerSkillText.swift`
+/// by `scripts/gen-director-skill.py`.
+public enum WorkerSkill {
+    /// Bump when the skill's shape changes in a way an older Duo shouldn't overwrite.
+    public static let format = 1
+    /// Bump when the skill starts needing a `duo2` verb or behaviour an older Duo lacks.
+    public static let revision = 1
+    public static func text() -> String {
+        source.replacingOccurrences(of: "{{FORMAT}}", with: "\(format)").replacingOccurrences(of: "{{REVISION}}", with: "\(revision)")
+    }
+
+    public static func versionNote(installed: String?) -> String? {
+        guard let installed, let r = DirectorSkill.revision(of: installed) else { return nil }
+        if r > revision {
+            return "The installed worker skill is newer (revision \(r)) than this Duo (\(revision)): this Duo lacks verbs it names. Tell the user to update Duo (Duo › Check for Updates…)."
+        }
+        if r < revision {
+            return "The installed worker skill is older (revision \(r)) than this Duo (\(revision)); Duo updates it at launch. If your copy differs from `duo2 worker guide`, re-read that."
         }
         return nil
     }
@@ -558,20 +609,26 @@ public enum DirectorTranscript {
         var lines = String(decoding: data, as: UTF8.self).split(separator: "\n", omittingEmptySubsequences: true)
         if from > 0, !lines.isEmpty { lines.removeFirst() }
         var askId: String?, ask: String?, textAfterUser: String?
+        // Report calls since the last turn began, by tool-use id: one whose result is an error (a permission
+        // denial, a failed write) doesn't count (F-711: Auto's classifier denied one in the live run).
+        var reports = Set<String>()
         for l in lines {
             guard l.contains("\"user\"") || l.contains("\"assistant\"") || l.contains("\"queued_command\""),
                   let e = (try? JSONSerialization.jsonObject(with: Data(l.utf8))) as? [String: Any], e["isSidechain"] as? Bool != true else { continue }
             let at = (e["timestamp"] as? String).flatMap(parseDate)
-            func userTurn() { out.lastUserTurn = at ?? .distantPast; out.reportedSince = false; textAfterUser = nil; ask = nil; askId = nil }
+            func userTurn() { out.lastUserTurn = at ?? .distantPast; reports = []; textAfterUser = nil; ask = nil; askId = nil }
+            defer { out.reportedSince = !reports.isEmpty }
             if MidTurnPrompt.text(e) != nil { userTurn(); continue }
             let content = (e["message"] as? [String: Any])?["content"]
             switch e["type"] as? String {
             case "user":
-                if let blocks = content as? [[String: Any]], let id = askId, blocks.contains(where: { $0["type"] as? String == "tool_result" && $0["tool_use_id"] as? String == id }) {
-                    ask = nil; askId = nil
+                for b in (content as? [[String: Any]]) ?? [] where b["type"] as? String == "tool_result" {
+                    let id = b["tool_use_id"] as? String
+                    if let id, id == askId { ask = nil; askId = nil }
+                    if let id, b["is_error"] as? Bool == true { reports.remove(id) }
                 }
                 switch turnKind(e, tag: tag) {
-                case .director?: out.lastUserTurn = nil; out.reportedSince = false; ask = nil; askId = nil; textAfterUser = nil
+                case .director?: out.lastUserTurn = nil; reports = []; ask = nil; askId = nil; textAfterUser = nil
                 case .user?: userTurn()
                 case nil: break
                 }
@@ -586,9 +643,9 @@ public enum DirectorTranscript {
                         let input = (b["input"] as? [String: Any]) ?? [:]
                         switch b["name"] as? String {
                         case "SendMessage":
-                            if let to = input["to"] as? String, to == director || to.hasPrefix(director + " ") { out.reportedSince = true }
+                            if let to = input["to"] as? String, to == director || to.hasPrefix(director + " ") { reports.insert((b["id"] as? String) ?? UUID().uuidString) }
                         case "Bash":
-                            if let cmd = input["command"] as? String, cmd.contains("duo2 director report") { out.reportedSince = true }
+                            if let cmd = input["command"] as? String, cmd.contains("duo2 director report") { reports.insert((b["id"] as? String) ?? UUID().uuidString) }
                         case "AskUserQuestion":
                             askId = b["id"] as? String
                             ask = ((input["questions"] as? [[String: Any]])?.first?["question"] as? String) ?? (input["question"] as? String) ?? "a question"

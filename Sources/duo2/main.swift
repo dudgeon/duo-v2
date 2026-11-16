@@ -100,6 +100,13 @@ case .hook where rest.first == "context":
     let out: [String: Any] = ["hookSpecificOutput": ["hookEventName": name, "additionalContext": r.output]]
     FileHandle.standardOutput.write((try? JSONSerialization.data(withJSONObject: out)) ?? Data())
     exit(0)
+case .hook where rest.first == "stop":
+    // Stop and StopFailure for directors and their workers (DL-342): one reminder per turn as additionalContext,
+    // never a block; a worker's API-error stop goes into its director's inbox. Anything else: no output, exit 0.
+    guard let hook = (try? JSONSerialization.jsonObject(with: FileHandle.standardInput.readDataToEndOfFile())) as? [String: Any] else { exit(0) }
+    if hook["hook_event_name"] as? String == "StopFailure" { DirectorStopHook.recordFailure(hook); exit(0) }
+    if let out = DirectorStopHook.output(hook) { FileHandle.standardOutput.write(Data(out.utf8)) }
+    exit(0)
 case .hook:
     // PreToolUse for Edit, MultiEdit and Write in Duo's sessions (DL-78). A document open in
     // Duo's editor gets the change through the editor (highlighted, merged with the user's
@@ -192,7 +199,16 @@ case .doctor:
         exit(1)
     }
 case .directorGuide:
-    print(DirectorSkill.text(), terminator: "")
+    if let topic = Invocation(rest)[0] {
+        guard let text = DirectorSkill.reference(topic) else {
+            fail("no director reference named \(topic). References: \(DirectorSkill.referenceNames.isEmpty ? "none" : DirectorSkill.referenceNames.joined(separator: ", ")). `duo2 director guide` prints the skill itself.", code: 64)
+        }
+        print(text, terminator: "")
+    } else {
+        print(DirectorSkill.text(), terminator: "")
+    }
+case .workerGuide:
+    print(WorkerSkill.text(), terminator: "")
 case .directorReport:
     // A worker's report into its director's inbox (DL-342): a file write, so it needs no Duo.
     let inv = Invocation(rest)
