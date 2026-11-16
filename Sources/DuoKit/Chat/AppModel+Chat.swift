@@ -32,6 +32,7 @@ extension AppModel {
             guard let chat = chats.existing(key) ?? fixtureChats[key] else { return done(.fail("\(consoleTitle(key)) has no chat yet: open it in Duo first")) }
             return done(.ok(chat.debugReport()))
         }
+        if inv.positional.first == "btw" { return chatSideVerb(inv, done) }
         var words = inv.positional
         let answering = words.first == "answer"
         if answering { words.removeFirst() }
@@ -81,6 +82,61 @@ extension AppModel {
         let mode: ChatViewMode = verb == "on" ? .chat : verb == "off" ? .terminal : (current == .chat ? .terminal : .chat)
         if let f = fixtureChats[key] { f.mode = mode; f.fallback = nil } else { setChatMode(mode, for: key) }
         done(.ok("\(name) shows as \(mode == .chat ? "chat" : "the terminal"). Nothing was sent to the session."))
+    }
+
+    /// `duo2 session chat btw [id] <question> | close | copy | clear | show | prev | next | list` (DL-344, DL-71): the side
+    /// card's verbs. A question is asked as `/btw` is (Claude Code answers at once, even mid-turn); the reply waits for
+    /// the answer and prints it.
+    func chatSideVerb(_ inv: Invocation, _ done: @escaping @MainActor (Reply) -> Void) {
+        let usage = "usage: duo2 session chat btw [id] <question> | close | copy | clear | show | prev | next | list"
+        var words = Array(inv.positional.dropFirst())
+        var key = visibleSessionId
+        if words.count > 1, let s = findSession(words[0], in: nil) { key = s.tabKey; words.removeFirst() }
+        guard let key else { return done(.fail("no Claude session is on screen; name one")) }
+        guard let chat = chats.existing(key) ?? fixtureChats[key] else { return done(.fail("\(consoleTitle(key)) has no chat yet: open it in Duo first")) }
+        let name = consoleTitle(key)
+        guard let first = words.first else { return done(.fail(usage)) }
+        let exchanges = chat.log.items.compactMap { item -> ChatSideExchange? in if case .side(let x) = item { x } else { nil } }
+        func state() -> [String: String] {
+            let c = chat.sideCard
+            return ["card": c == nil ? "none" : c!.live ? "live" : "reopened", "question": c?.question ?? "", "answering": c?.answering == true ? "yes" : "no", "answer": c?.answer ?? ""]
+        }
+        Task {
+            switch words.count == 1 ? first : "" {
+            case "list":
+                done(.ok(exchanges.isEmpty ? "\(name): no side questions yet." : exchanges.map { "• \($0.question)\n  \($0.answer.isEmpty ? "(no answer)" : $0.answer)" }.joined(separator: "\n"),
+                         ["count": String(exchanges.count)]))
+            case "show":
+                guard let x = exchanges.last else { return done(.fail("\(name) has no side question to show")) }
+                chat.reopenSide(x.id)
+                done(.ok("Showing the side question “\(x.question)” from Duo's memory.", state()))
+            case "close":
+                await chat.closeSide()
+                done(.ok("\(name): side card closed.", state()))
+            case "copy":
+                done(chat.copySide() ? .ok("Copied the side answer's Markdown.", state()) : .fail("no side answer is showing"))
+            case "clear":
+                let r = await chat.clearSideHistory()
+                done(r.ok ? .ok("Side-question history cleared.", state()) : .fail(r.why ?? "refused"))
+            case "prev", "next":
+                let r = await chat.browseSide(by: first == "prev" ? -1 : 1)
+                done(r.ok ? .ok("Moved through Claude Code's side questions.", state()) : .fail(r.why ?? "refused"))
+            default:
+                let q = words.joined(separator: " ")
+                guard chat.showsChat else { return done(.fail("\(name) shows the terminal; turn chat on first (duo2 session chat on)")) }
+                let r = await chat.askSide(q)
+                guard r.ok else { return done(.fail("Nothing sent: \(r.why ?? "refused").")) }
+                let until = Date().addingTimeInterval(90)
+                try? await Task.sleep(nanoseconds: 400_000_000)
+                while Date() < until {
+                    _ = chat.reread()
+                    if let c = chat.sideCard, !c.answering { break }
+                    try? await Task.sleep(nanoseconds: 300_000_000)
+                }
+                let c = chat.sideCard
+                done(c == nil || c!.answering ? .fail("No side answer came within 90 s.") : .ok(c!.answer, state()))
+            }
+        }
     }
 
     /// `duo2 session chat mode`: Claude Code's ⇧⇥, once (`next`) or until the footer shows the mode

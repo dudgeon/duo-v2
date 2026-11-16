@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="1640x1000">
+<meta name="design-kind" content="target">
+<meta name="design-surface" content="DL-344">
+<!--
+THE TARGET for the side card's states (answering, long, no answer, history, over an agent). Build the card as option A.
+Geoff, 2026-11-16 (DL-344). Exported from the Design canvas https://claude.ai/artifact/L2NaLSyuma4dDhExA9SH4G (board States.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and data are illustrative.
+-->
+<title>Duo · /btw in chat · The side card, state by state</title>
+<style>
+body{margin:0}
+.cap{font-size:12px;line-height:17px;color:#5B636D}
+.cap b{color:#1F2328;font-weight:600}
+.lab{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.mono{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:11px}
+
+
+body{margin:0}
+.ch{position:relative;box-sizing:border-box;display:flex;flex-direction:column;background:#F3F4F6;border:1px solid #C9CDD3;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;color:#1F2328;font-size:14px;line-height:22px;overflow:hidden}
+.ch .strip{height:32px;flex:none;box-sizing:border-box;background:#15171B;display:flex;align-items:center;gap:16px;padding:0 14px;font:400 12px/16px 'SF Mono',ui-monospace,Menlo,monospace;color:#9AA1AB;white-space:nowrap}
+.ch .strip .tb{display:flex;align-items:center;gap:6px}
+.ch .strip .on{color:#E6E8EB;font-weight:500}
+.ch .strip .sp{flex:1}
+.ch .tog{display:flex;border:1px solid #3A3F47;border-radius:6px;overflow:hidden}
+.ch .tog span{width:22px;height:18px;display:flex;align-items:center;justify-content:center}
+.ch .tog .act{background:#2B2F36}
+.ch .feed{flex:1;min-height:0;padding:16px 20px 8px;display:flex;flex-direction:column;justify-content:flex-end;gap:12px;overflow:hidden}
+.ch .who{font-size:12px;line-height:16px;color:#5B636D}
+.ch .yw{align-self:flex-end;display:flex;flex-direction:column;align-items:flex-end;gap:4px;max-width:400px}
+.ch .you{background:#DCE6F7;border-radius:14px 14px 3px 14px;padding:8px 14px;white-space:pre-line}
+.ch .you.q{opacity:.6}
+.ch .cw{margin-right:36px;display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+.ch .card{align-self:stretch;background:#FFFFFF;border-radius:14px 14px 14px 3px;padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+.ch .bar{height:9px;border-radius:2px;background:#D5D9DE}
+.ch .note{align-self:center;font-size:12px;line-height:16px;color:#5B636D;display:flex;gap:6px;align-items:center}
+.ch .note a{color:#5B636D;text-decoration:underline}
+.ch .wk{display:flex;align-items:center;gap:8px;color:#5B636D;font-size:12px;line-height:16px;padding-left:4px}
+.ch .aw{margin-right:36px;margin-left:24px;display:flex;flex-direction:column;gap:4px}
+.ch .aside{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}
+.ch .sl{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.ch .sq{font-weight:600;font-size:13px;line-height:20px}
+.ch .sa{font-size:14px;line-height:22px}
+.ch .sa b{font-weight:600}
+.ch .st{display:flex;align-items:center;gap:8px;color:#5B636D;font-size:12px;line-height:16px}
+.ch .err{color:#5B636D;font-size:13px;line-height:20px}
+.ch .dock{flex:none;margin:0 14px 10px;background:#FFFFFF;border:1px solid #8B939C;border-radius:12px;padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+.ch .dock .hd{display:flex;align-items:center;gap:8px}
+.ch .dock .hd .sp{flex:1}
+.ch .pager{display:flex;align-items:center;gap:6px;font-size:12px;line-height:16px;color:#5B636D}
+.ch .pager button{width:22px;height:22px;box-sizing:border-box;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;color:#5B636D;font-size:12px;line-height:16px;padding:0}
+.ch .btns{display:flex;align-items:center;gap:6px;margin-top:2px}
+.ch .btns .sp{flex:1}
+.ch .btns .why{font-size:12px;line-height:16px;color:#5B636D}
+.ch .b{display:inline-flex;align-items:center;gap:5px;height:26px;box-sizing:border-box;padding:0 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font:400 12px/16px -apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:#1F2328;white-space:nowrap}
+.ch .b .k{color:#5B636D}
+.ch .b.dim{color:#5B636D;border-color:#C9CDD3}
+.ch .pop{position:absolute;left:14px;right:14px;background:#FFFFFF;border-radius:10px;box-shadow:0px 12px 32px rgba(31,35,40,.22),0 0 0 1px rgba(31,35,40,.08);padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+.ch .menu{flex:none;margin:0 14px 6px;background:#FFFFFF;border-radius:10px;box-shadow:0px 12px 32px rgba(31,35,40,.22),0 0 0 1px rgba(31,35,40,.08);padding:5px}
+.ch .menu .r{display:flex;gap:12px;padding:3px 10px;border-radius:6px;font-size:13px;line-height:20px}
+.ch .menu .r.sel{background:#E9ECEF}
+.ch .menu .r .n{font:400 12px/20px 'SF Mono',ui-monospace,Menlo,monospace;width:122px;flex:none}
+.ch .menu .r .d{color:#5B636D}
+.ch .cr{flex:none;display:flex;gap:8px;align-items:center;margin:0 14px 6px}
+.ch .comp{flex:1;background:#FFFFFF;border:1px solid #8B939C;border-radius:12px;min-height:44px;box-sizing:border-box;padding:10px 14px;font-size:14px;line-height:22px;color:#5B636D}
+.ch .comp.full{color:#1F2328}
+.ch .comp .mono{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:13px}
+.ch .hint{flex:none;margin:0 18px 10px;font-size:12px;line-height:16px;color:#5B636D}
+.ch .fb{flex:none;background:#FFFFFF;border-bottom:1px solid #C9CDD3;padding:10px 16px;display:flex;gap:12px;align-items:center;font-size:13px;line-height:20px}
+.ch .fb .m{flex:1}
+.ch .fb .mono{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:12px}
+.ch .term{flex:1;background:#15171B;padding:12px 16px;font:400 12px/18px 'SF Mono',ui-monospace,Menlo,monospace;color:#E6E8EB;white-space:pre;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end}
+.ch .term .d{color:#9AA1AB}
+</style>
+</head>
+<body>
+<div style="width: 1640px; height: 1000px; box-sizing: border-box; background: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; color: #1F2328; padding: 40px; display: flex; flex-direction: column; gap: 22px">
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <div style="font-size: 18px; line-height: 24px; font-weight: 600">The side card (A), state by state [P]</div>
+    <div class="cap" style="font-size: 13px; line-height: 19px; max-width: 1500px">Each state is one Claude Code shows in its panel, read from the screen; the card never says more than the panel does. The answer’s words come from the hook when it has them, else from the screen.</div>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-start">
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">1 · Answering</div>
+      <div class="ch" style="width: 480px; height: 360px">
+<div class="strip">
+
+<span class="tb on"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="none" stroke="currentColor" stroke-width="1.4"></circle></svg>Refund flows</span>
+
+<span class="tb"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="none" stroke="currentColor" stroke-width="1.4"></circle></svg>Teardown research</span>
+
+<span class="sp"></span>
+<span class="tog" role="img" aria-label="Chat showing"><span class=""><svg width="12" height="10" viewBox="0 0 12 10" aria-hidden="true"><path d="M1.5 1.5 5 5 1.5 8.5M6.5 8.5h4" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class="act"><svg width="12" height="11" viewBox="0 0 12 11" aria-hidden="true"><path d="M1.5 2.2c0-.7.5-1.2 1.2-1.2h6.6c.7 0 1.2.5 1.2 1.2v4.2c0 .7-.5 1.2-1.2 1.2H5L2.6 9.6V7.6h0c-.6 0-1.1-.5-1.1-1.2z" fill="none" stroke="#9AA1AB" stroke-width="1.2" stroke-linejoin="round"></path></svg></span></span>
+</div>
+
+
+<div class="feed">
+
+
+
+<div class="yw">
+<div class="who">You · 9:52</div>
+<div class="you">Compare the two refund flows in a table, with a short recommendation.</div>
+
+</div>
+
+
+
+
+
+
+
+
+
+<div class="cw">
+<div class="who">Claude · 9:52</div>
+<div class="card"><div>Both flows are in docs/refunds/flows.md. The main difference is who confirms the refund.</div></div>
+</div>
+
+
+
+
+
+
+
+
+
+
+<div class="wk"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg>Writing · 32s</div>
+
+</div>
+
+
+
+<div class="dock" aria-label="Side question">
+<div class="hd"><span class="sl">Side question · not part of the conversation</span><span class="sp"></span></div>
+<div class="sq">What does “idempotent” mean for a refund?</div>
+<div class="st"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg>Answering · 3s</div>
+
+
+<div class="btns">
+<button type="button" class="b">Close <span class="k">esc</span></button>
+<span class="sp"></span><span class="why">Claude keeps working above</span>
+</div>
+</div>
+
+
+
+</div>
+      <div class="cap">The panel’s “Answering…” as the working glyph (a still ring, never a spinner) and “Answering · 3s”. Only Close: Copy and Fork wait for an answer, as Claude Code’s footer has only “Esc to close” here. Esc cancels the question.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">2 · Answered, a long answer</div>
+      <div class="ch" style="width: 480px; height: 360px">
+<div class="strip">
+
+<span class="tb on"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="none" stroke="currentColor" stroke-width="1.4"></circle></svg>Refund flows</span>
+
+<span class="tb"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="none" stroke="currentColor" stroke-width="1.4"></circle></svg>Teardown research</span>
+
+<span class="sp"></span>
+<span class="tog" role="img" aria-label="Chat showing"><span class=""><svg width="12" height="10" viewBox="0 0 12 10" aria-hidden="true"><path d="M1.5 1.5 5 5 1.5 8.5M6.5 8.5h4" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class="act"><svg width="12" height="11" viewBox="0 0 12 11" aria-hidden="true"><path d="M1.5 2.2c0-.7.5-1.2 1.2-1.2h6.6c.7 0 1.2.5 1.2 1.2v4.2c0 .7-.5 1.2-1.2 1.2H5L2.6 9.6V7.6h0c-.6 0-1.1-.5-1.1-1.2z" fill="none" stroke="#9AA1AB" stroke-width="1.2" stroke-linejoin="round"></path></svg></span></span>
+</div>
+
+
+<div class="feed">
+
+
+
+
+
+
+<div class="wk"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg>Writing · 32s</div>
+
+</div>
+
+
+
+<div class="dock" aria-label="Side question">
+<div class="hd"><span class="sl">Side question · not part of the conversation</span><span class="sp"></span></div>
+<div class="sq">Which of the two flows handles partial refunds?</div>
+
+
+<div class="sa">Only the assisted flow. Self-serve refunds the whole order:</div><div class="sa">• assisted: any amount, with a reason</div><div class="sa">• self-serve: whole orders, within 30 days</div><div class="sa">A partial self-serve refund would need a new screen.</div>
+<div class="btns">
+<button type="button" class="b">Copy <span class="k">c</span></button><button type="button" class="b">Fork… <span class="k">f</span></button><button type="button" class="b">Close <span class="k">esc</span></button>
+<span class="sp"></span><span class="why">Claude keeps working above</span>
+</div>
+</div>
+
+
+
+</div>
+      <div class="cap">Markdown as chat draws it (the hook’s text keeps it). Past half the pane the card scrolls inside; ↑/↓ scroll it with focus on the card, as in the panel.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">3 · No answer</div>
+      <div class="ch" style="width: 480px; height: 360px">
+<div class="strip">
+
+<span class="tb on"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="none" stroke="currentColor" stroke-width="1.4"></circle></svg>Refund flows</span>
+
+<span class="tb"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="none" stroke="currentColor" stroke-width="1.4"></circle></svg>Teardown research</span>
+
+<span class="sp"></span>
+<span class="tog" role="img" aria-label="Chat showing"><span class=""><svg width="12" height="10" viewBox="0 0 12 10" aria-hidden="true"><path d="M1.5 1.5 5 5 1.5 8.5M6.5 8.5h4" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class="act"><svg width="12" height="11" viewBox="0 0 12 11" aria-hidden="true"><path d="M1.5 2.2c0-.7.5-1.2 1.2-1.2h6.6c.7 0 1.2.5 1.2 1.2v4.2c0 .7-.5 1.2-1.2 1.2H5L2.6 9.6V7.6h0c-.6 0-1.1-.5-1.1-1.2z" fill="none" stroke="#9AA1AB" stroke-width="1.2" stroke-linejoin="round"></path></svg></span></span>
+</div>
+
+
+<div class="feed">
+
+
+
+<div class="yw">
+<div class="who">You · 9:52</div>
+<div class="you">Compare the two refund flows in a table, with a short recommendation.</div>
+
+</div>
+
+
+
+
+
+
+
+
+
+<div class="cw">
+<div class="who">Claude · 9:52</div>
+<div class="card"><div>Both flows are in docs/refunds/flows.md. The main difference is who confirms the refund.</div></div>
+</div>
+
+
+
+
+
+
+
+
+
+
+<div class="wk"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg>Writing · 32s</div>
+
+</div>
+
+
+
+<div class="dock" aria-label="Side question">
+<div class="hd"><span class="sl">Side question · not part of the conversation</span><span class="sp"></span></div>
+<div class="sq">What does “idempotent” mean for a refund?</div>
+
+<div class="err">No answer available for this side question. Try again, or ask in the main conversation.</div>
+
+<div class="btns">
+<button type="button" class="b">Close <span class="k">esc</span></button>
+<span class="sp"></span><span class="why">Claude keeps working above</span>
+</div>
+</div>
+
+
+
+</div>
+      <div class="cap">Claude Code’s own words when the side query fails or times out: “No answer available for this side question. Try again, or ask in the main conversation.” Plain <span class="mono">text2</span>, no alarm colour. Close only.</div>
+    </div>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-start">
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">4 · At the prompt, with earlier side questions</div>
+      <div class="ch" style="width: 480px; height: 360px">
+<div class="strip">
+
+<span class="tb on"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="none" stroke="currentColor" stroke-width="1.4"></circle></svg>Refund flows</span>
+
+<span class="tb"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="none" stroke="currentColor" stroke-width="1.4"></circle></svg>Teardown research</span>
+
+<span class="sp"></span>
+<span class="tog" role="img" aria-label="Chat showing"><span class=""><svg width="12" height="10" viewBox="0 0 12 10" aria-hidden="true"><path d="M1.5 1.5 5 5 1.5 8.5M6.5 8.5h4" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class="act"><svg width="12" height="11" viewBox="0 0 12 11" aria-hidden="true"><path d="M1.5 2.2c0-.7.5-1.2 1.2-1.2h6.6c.7 0 1.2.5 1.2 1.2v4.2c0 .7-.5 1.2-1.2 1.2H5L2.6 9.6V7.6h0c-.6 0-1.1-.5-1.1-1.2z" fill="none" stroke="#9AA1AB" stroke-width="1.2" stroke-linejoin="round"></path></svg></span></span>
+</div>
+
+
+<div class="feed">
+
+
+
+<div class="yw">
+<div class="who">You · 9:52</div>
+<div class="you">Compare the two refund flows in a table, with a short recommendation.</div>
+
+</div>
+
+
+
+
+
+
+
+
+
+<div class="cw">
+<div class="who">Claude · 9:54</div>
+<div class="card"><div>Keep self-serve as the default; route orders over $500 to assisted.</div></div>
+</div>
+
+
+
+
+
+</div>
+
+
+
+<div class="dock" aria-label="Side question">
+<div class="hd"><span class="sl">Side question · not part of the conversation</span><span class="sp"></span><span class="pager"><button type="button" aria-label="Previous side question">‹</button>2 of 2<button type="button" aria-label="Next side question">›</button></span></div>
+<div class="sq">And how long do refunds take to land?</div>
+
+
+<div class="sa">Three to five working days for cards; same day for wallet refunds.</div>
+<div class="btns">
+<button type="button" class="b">Copy <span class="k">c</span></button><button type="button" class="b">Fork… <span class="k">f</span></button><button type="button" class="b">Clear history <span class="k">x</span></button><button type="button" class="b">Close <span class="k">esc</span></button>
+<span class="sp"></span><span class="why"></span>
+</div>
+</div>
+
+
+
+</div>
+      <div class="cap">At the prompt the panel keeps this session’s earlier side questions: <span class="mono">⇧←/→ to browse · x to clear history</span>. The card shows “2 of 2” with ‹ › (⇧← ⇧→) and a Clear history <span class="mono">x</span> button. Asked while Claude works, the panel shows only the one question, and so does the card.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">5 · Over a running agent</div>
+      <div class="ch" style="width: 480px; height: 360px">
+<div class="strip">
+
+<span class="tb on"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="none" stroke="currentColor" stroke-width="1.4"></circle></svg>Refund flows</span>
+
+<span class="tb"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="none" stroke="currentColor" stroke-width="1.4"></circle></svg>Teardown research</span>
+
+<span class="sp"></span>
+<span class="tog" role="img" aria-label="Chat showing"><span class=""><svg width="12" height="10" viewBox="0 0 12 10" aria-hidden="true"><path d="M1.5 1.5 5 5 1.5 8.5M6.5 8.5h4" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class="act"><svg width="12" height="11" viewBox="0 0 12 11" aria-hidden="true"><path d="M1.5 2.2c0-.7.5-1.2 1.2-1.2h6.6c.7 0 1.2.5 1.2 1.2v4.2c0 .7-.5 1.2-1.2 1.2H5L2.6 9.6V7.6h0c-.6 0-1.1-.5-1.1-1.2z" fill="none" stroke="#9AA1AB" stroke-width="1.2" stroke-linejoin="round"></path></svg></span></span>
+</div>
+
+
+<div class="feed">
+
+
+
+<div class="yw">
+<div class="who">You · 9:52</div>
+<div class="you">Compare the two refund flows in a table, with a short recommendation.</div>
+
+</div>
+
+
+
+
+
+
+
+
+
+<div class="cw">
+<div class="who">Claude · 9:52</div>
+<div class="card"><div>Agent  Look around the refund docs</div></div>
+</div>
+
+
+
+
+
+
+
+
+
+
+<div class="wk"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg>Agent running · 12s</div>
+
+</div>
+
+
+
+<div class="dock" aria-label="Side question">
+<div class="hd"><span class="sl">Side question · not part of the conversation</span><span class="sp"></span></div>
+<div class="sq">Is the agent reading the old flows too?</div>
+
+
+<div class="sa">That can’t be checked from a side question; ask in the main conversation.</div>
+<div class="btns">
+<button type="button" class="b">Copy <span class="k">c</span></button><button type="button" class="b">Fork… <span class="k">f</span></button><button type="button" class="b">Close <span class="k">esc</span></button>
+<span class="sp"></span><span class="why">Claude keeps working above</span>
+</div>
+</div>
+
+
+
+</div>
+      <div class="cap">The Agent step keeps running and finishes with its own result. Today the side answer is filed as the agent’s result (F-689); the fix keeps a SubagentStop with an empty <span class="mono">agent_type</span> and no start out of the agent cards.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 12px; padding-top: 26px">
+      <div class="cap"><b>Copy</b> puts the answer’s Markdown on the clipboard (the hook’s text), not the wrapped screen text; the button turns to a check and “Copied” for 1.5 s, as chat’s other Copy does.</div>
+      <div class="cap"><b>Bare /btw</b> (no question) doesn’t open the card: Claude Code prints “Usage: /btw &lt;your question&gt;”, which chat shows as its quiet line under the command, the same as other one-line outputs (F-174).</div>
+      <div class="cap"><b>VoiceOver:</b> the card is announced “Side question”, then the question, then the answer when it lands; its buttons read their names and keys.</div>
+      <div class="cap"><b>Dark and Classic:</b> the card takes <span class="mono">pane</span>, <span class="mono">controlEdge</span>, <span class="mono">text</span> and <span class="mono">text2</span>, so both come free.</div>
+    </div>
+  </div>
+</div>
+</body></html>

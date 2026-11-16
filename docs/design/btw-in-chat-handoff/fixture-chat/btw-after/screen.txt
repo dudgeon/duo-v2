@@ -1,0 +1,15 @@
+❯ Compare the two refund flows in a table, with a short recommendation.
+
+⏺ Both flows are in docs/refunds/flows.md. The main difference is who confirms the refund.
+
+✻ Writing… (32s)
+
+
+▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔ ◐ medium · /effort ▔
+
+    /btw What does “idempotent” mean for a refund?
+
+      A refund request that can be sent again safely: a second copy refunds nothing more. The
+      flows keep one idempotency key per order for this.
+
+    ↑/↓ to scroll · c to copy · f to fork · Esc to close

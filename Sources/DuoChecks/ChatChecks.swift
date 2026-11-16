@@ -360,14 +360,14 @@ func spikeScreen(_ name: String) -> String {
         let left = ChatScreenReader.read(spikeScreen("preview-notes-2.1.219/05-esc-notes-kept.txt"), cols: 100)
         check(typed.kind == .question && typed.preview && typed.notes == "keep it short" && left.kind == .question && left.preview && left.notes == "keep it short"
               && left.cursor == typed.cursor && left.options[left.cursor].label == "Side by side", "2.1.219: after Esc the notes stay and the cursor is on the chosen option")
-        for f in ["help", "usage", "config", "permissions", "resume", "skills", "btw", "sandbox"] {
+        for f in ["help", "usage", "config", "permissions", "resume", "skills", "sandbox"] {
             check(ChatScreenReader.read(spikeScreen(dir + f + ".txt")).kind == .unknown, "/\(f)'s screen reads as unknown: the terminal")
         }
         let plan = ChatScreenReader.read(spikeScreen(dir + "plan-output.txt"))
         check(plan.kind == .idle && plan.mode == .plan, "/plan prints a line and stays at the prompt, in plan mode")
         check(ChatScreenReader.read(spikeScreen(dir + "rename-output.txt")).kind == .idle, "/rename's name in the input box's rule still reads")
         let marked = ChatSignatures.v2_1_291.terminalCommands
-        check(["/help", "/usage", "/btw", "/sandbox"].allSatisfy(marked.contains) && !["/doctor", "/agents", "/mcp", "/context", "/plan", "/model", "/effort"].contains(where: marked.contains),
+        check(["/help", "/usage", "/sandbox"].allSatisfy(marked.contains) && !marked.contains("/btw") && !["/doctor", "/agents", "/mcp", "/context", "/plan", "/model", "/effort"].contains(where: marked.contains),
               "the menu marks what opens in the terminal on 2.1.292")
 
         // A command that opens a screen while its keys are still going: judged once they've gone.

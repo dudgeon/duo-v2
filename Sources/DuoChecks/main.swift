@@ -2020,6 +2020,7 @@ func repoFixture() throws -> Fixture {
     check(FileSource.files(in: URL(fileURLWithPath: "/")).isEmpty && FileSource.files(in: home.deletingLastPathComponent()).isEmpty,
           "folders above home are never walked for files (a session started in / or /Users)")
     try midTurnChecks()  // MidTurnChecks.swift: messages typed mid-turn (C-173, F-638)
+    try btwChecks()  // BtwChecks.swift: /btw in chat, the side card (DL-344, F-688 to F-690)
     try rewindChecks()  // RewindChecks.swift: a rewound transcript's live branch (F-656)
     walkGuardChecks()  // WalkGuardChecks.swift: every walk goes through ProtectedFolders (F-302)
 

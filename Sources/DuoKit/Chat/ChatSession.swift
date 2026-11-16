@@ -188,6 +188,10 @@ public final class ChatSession {
     public var now: Date { fixedNow ?? Date() }
     /// Bumped to put the keyboard in the composer (Chat about this).
     public var focusComposer = 0
+    /// `/btw` (DL-344): the exchange Claude Code's panel is showing, the one reopened from Duo's memory, and Copy's "Copied" moment.
+    public var activeSide: String?
+    public var reopenedSide: String?
+    public var sideCopied = false
     /// A click on a row of the composer's `@` menu (DL-133): the field puts that match in.
     public var chooseMention = 0
     /// The plan Claude asks you to approve: the request's text, or its file before 2.1.285.
@@ -399,12 +403,20 @@ public final class ChatSession {
     public func apply(_ s: ChatScreen) {
         let before = screen
         var s = s
+        // `/btw`'s panel (DL-344): busy or idle stays what it was underneath, and the panel is held in `side`.
+        if s.kind == .side {
+            let side = s.side, effort = s.effort
+            s = [.idle, .busy].contains(before.kind) ? before : ChatScreen(kind: .idle, sig: "input")
+            s.side = side
+            if effort != nil { s.effort = effort }
+        }
         // 2.1.296's inline renderer draws the `/` menu where the footer was (F-284): the mode is the one before it opened.
         if s.mode == nil, !s.commands.isEmpty, s.kind == .idle { s.mode = before.mode }
         // With the menu up every renderer drops the busy row ("esc to interrupt"; 2.1.284 too, above the box): a turn
         // still running isn't over because `/` was typed during it (Q-329). It ends when the menu closes, or by Stop.
         if before.kind == .busy, s.kind == .idle, !s.commands.isEmpty { s.kind = .busy }
         if s != before { screen = s }
+        trackSide(screen.side)
         if s.kind != before.kind {
             screenTrail.append(ChatTransition(at: Date(), event: "screen", reason: "\(before.kind.rawValue) → \(s.kind.rawValue) (\(s.sig.prefix(60))\(s.why.map { ", " + $0 } ?? ""))"))
             if screenTrail.count > 20 { screenTrail.removeFirst(screenTrail.count - 20) }
@@ -493,7 +505,7 @@ public final class ChatSession {
                     fallBack(.automatic("Claude Code is asking about a folder that isn’t this session’s, so here’s the terminal."), rule: "trust-other-folder")
                 }
             }
-        case .starting:
+        case .starting, .side:
             break
         }
         if s.kind != .trust { trustAsked = nil }

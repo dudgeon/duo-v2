@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="1640x1060">
+<meta name="design-kind" content="target">
+<meta name="design-surface" content="DL-344">
+<!--
+THE TARGET for Q-550: A, a side card docked in the composer's place. B and C were drawn and not chosen; build A only. The 'Today' column is the fallback being removed.
+Geoff, 2026-11-16 (DL-344). Exported from the Design canvas https://claude.ai/artifact/L2NaLSyuma4dDhExA9SH4G (board Where.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and data are illustrative.
+-->
+<title>Duo · /btw in chat · Where the side answer shows (Q-550)</title>
+<style>
+body{margin:0}
+.cap{font-size:12px;line-height:17px;color:#5B636D}
+.cap b{color:#1F2328;font-weight:600}
+.lab{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.mono{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:11px}
+
+
+body{margin:0}
+.ch{position:relative;box-sizing:border-box;display:flex;flex-direction:column;background:#F3F4F6;border:1px solid #C9CDD3;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;color:#1F2328;font-size:14px;line-height:22px;overflow:hidden}
+.ch .strip{height:32px;flex:none;box-sizing:border-box;background:#15171B;display:flex;align-items:center;gap:16px;padding:0 14px;font:400 12px/16px 'SF Mono',ui-monospace,Menlo,monospace;color:#9AA1AB;white-space:nowrap}
+.ch .strip .tb{display:flex;align-items:center;gap:6px}
+.ch .strip .on{color:#E6E8EB;font-weight:500}
+.ch .strip .sp{flex:1}
+.ch .tog{display:flex;border:1px solid #3A3F47;border-radius:6px;overflow:hidden}
+.ch .tog span{width:22px;height:18px;display:flex;align-items:center;justify-content:center}
+.ch .tog .act{background:#2B2F36}
+.ch .feed{flex:1;min-height:0;padding:16px 20px 8px;display:flex;flex-direction:column;justify-content:flex-end;gap:12px;overflow:hidden}
+.ch .who{font-size:12px;line-height:16px;color:#5B636D}
+.ch .yw{align-self:flex-end;display:flex;flex-direction:column;align-items:flex-end;gap:4px;max-width:400px}
+.ch .you{background:#DCE6F7;border-radius:14px 14px 3px 14px;padding:8px 14px;white-space:pre-line}
+.ch .you.q{opacity:.6}
+.ch .cw{margin-right:36px;display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+.ch .card{align-self:stretch;background:#FFFFFF;border-radius:14px 14px 14px 3px;padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+.ch .bar{height:9px;border-radius:2px;background:#D5D9DE}
+.ch .note{align-self:center;font-size:12px;line-height:16px;color:#5B636D;display:flex;gap:6px;align-items:center}
+.ch .note a{color:#5B636D;text-decoration:underline}
+.ch .wk{display:flex;align-items:center;gap:8px;color:#5B636D;font-size:12px;line-height:16px;padding-left:4px}
+.ch .aw{margin-right:36px;margin-left:24px;display:flex;flex-direction:column;gap:4px}
+.ch .aside{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}
+.ch .sl{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.ch .sq{font-weight:600;font-size:13px;line-height:20px}
+.ch .sa{font-size:14px;line-height:22px}
+.ch .sa b{font-weight:600}
+.ch .st{display:flex;align-items:center;gap:8px;color:#5B636D;font-size:12px;line-height:16px}
+.ch .err{color:#5B636D;font-size:13px;line-height:20px}
+.ch .dock{flex:none;margin:0 14px 10px;background:#FFFFFF;border:1px solid #8B939C;border-radius:12px;padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+.ch .dock .hd{display:flex;align-items:center;gap:8px}
+.ch .dock .hd .sp{flex:1}
+.ch .pager{display:flex;align-items:center;gap:6px;font-size:12px;line-height:16px;color:#5B636D}
+.ch .pager button{width:22px;height:22px;box-sizing:border-box;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;color:#5B636D;font-size:12px;line-height:16px;padding:0}
+.ch .btns{display:flex;align-items:center;gap:6px;margin-top:2px}
+.ch .btns .sp{flex:1}
+.ch .btns .why{font-size:12px;line-height:16px;color:#5B636D}
+.ch .b{display:inline-flex;align-items:center;gap:5px;height:26px;box-sizing:border-box;padding:0 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font:400 12px/16px -apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:#1F2328;white-space:nowrap}
+.ch .b .k{color:#5B636D}
+.ch .b.dim{color:#5B636D;border-color:#C9CDD3}
+.ch .pop{position:absolute;left:14px;right:14px;background:#FFFFFF;border-radius:10px;box-shadow:0px 12px 32px rgba(31,35,40,.22),0 0 0 1px rgba(31,35,40,.08);padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+.ch .menu{flex:none;margin:0 14px 6px;background:#FFFFFF;border-radius:10px;box-shadow:0px 12px 32px rgba(31,35,40,.22),0 0 0 1px rgba(31,35,40,.08);padding:5px}
+.ch .menu .r{display:flex;gap:12px;padding:3px 10px;border-radius:6px;font-size:13px;line-height:20px}
+.ch .menu .r.sel{background:#E9ECEF}
+.ch .menu .r .n{font:400 12px/20px 'SF Mono',ui-monospace,Menlo,monospace;width:122px;flex:none}
+.ch .menu .r .d{color:#5B636D}
+.ch .cr{flex:none;display:flex;gap:8px;align-items:center;margin:0 14px 6px}
+.ch .comp{flex:1;background:#FFFFFF;border:1px solid #8B939C;border-radius:12px;min-height:44px;box-sizing:border-box;padding:10px 14px;font-size:14px;line-height:22px;color:#5B636D}
+.ch .comp.full{color:#1F2328}
+.ch .comp .mono{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:13px}
+.ch .hint{flex:none;margin:0 18px 10px;font-size:12px;line-height:16px;color:#5B636D}
+.ch .fb{flex:none;background:#FFFFFF;border-bottom:1px solid #C9CDD3;padding:10px 16px;display:flex;gap:12px;align-items:center;font-size:13px;line-height:20px}
+.ch .fb .m{flex:1}
+.ch .fb .mono{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:12px}
+.ch .term{flex:1;background:#15171B;padding:12px 16px;font:400 12px/18px 'SF Mono',ui-monospace,Menlo,monospace;color:#E6E8EB;white-space:pre;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end}
+.ch .term .d{color:#9AA1AB}
+</style>
+</head>
+<body>
+<div style="width: 1640px; height: 1060px; box-sizing: border-box; background: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; color: #1F2328; padding: 40px; display: flex; flex-direction: column; gap: 22px">
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <div style="font-size: 18px; line-height: 24px; font-weight: 600">Q-550 · Where the side answer shows, while Claude keeps working [P]</div>
+    <div class="cap" style="font-size: 13px; line-height: 19px; max-width: 1500px">The same moment in each: Claude is writing a reply, you typed <span class="mono">/btw What does “idempotent” mean for a refund?</span> and the answer is in. Nothing here uses the accent: a side question never needs you. Words are Claude Code’s own where it has them (“Answering”, its keys); the rest is Duo’s.</div>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-start">
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">Today · the terminal, with the named bar</div>
+      <div class="ch" style="width: 480px; height: 400px">
+<div class="strip">
+
+<span class="tb on"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="none" stroke="currentColor" stroke-width="1.4"></circle></svg>Refund flows</span>
+
+<span class="tb"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="none" stroke="currentColor" stroke-width="1.4"></circle></svg>Teardown research</span>
+
+<span class="sp"></span>
+<span class="tog" role="img" aria-label="Terminal showing"><span class="act"><svg width="12" height="10" viewBox="0 0 12 10" aria-hidden="true"><path d="M1.5 1.5 5 5 1.5 8.5M6.5 8.5h4" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class=""><svg width="12" height="11" viewBox="0 0 12 11" aria-hidden="true"><path d="M1.5 2.2c0-.7.5-1.2 1.2-1.2h6.6c.7 0 1.2.5 1.2 1.2v4.2c0 .7-.5 1.2-1.2 1.2H5L2.6 9.6V7.6h0c-.6 0-1.1-.5-1.1-1.2z" fill="none" stroke="#9AA1AB" stroke-width="1.2" stroke-linejoin="round"></path></svg></span></span>
+</div>
+
+<div class="fb"><span class="m"><span class="mono">/btw</span> opens in Claude Code’s own screen. Esc closes it and brings chat back.</span><button type="button" class="b">Back to Chat</button></div>
+<div class="term"><div class="d">  self-serve refunds confirm in the app;</div><div class="d">  assisted refunds go through support.</div><div class="d">▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔</div><div class="">    /btw What does “idempotent” mean for a refund?</div><div class="">      A refund request that can be sent again</div><div class="">      safely: a second copy refunds nothing more.</div><div class="d">    ↑/↓ to scroll · c to copy · f to fork · Esc to close</div></div>
+
+
+</div>
+      <div class="cap">Chat falls back after half a second, and a Queued bubble for <span class="mono">/btw …</span> is left in the feed. Esc brings chat back; the answer is gone with the panel.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">A (recommended) · a side card in the composer’s place</div>
+      <div class="ch" style="width: 480px; height: 400px">
+<div class="strip">
+
+<span class="tb on"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="none" stroke="currentColor" stroke-width="1.4"></circle></svg>Refund flows</span>
+
+<span class="tb"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="none" stroke="currentColor" stroke-width="1.4"></circle></svg>Teardown research</span>
+
+<span class="sp"></span>
+<span class="tog" role="img" aria-label="Chat showing"><span class=""><svg width="12" height="10" viewBox="0 0 12 10" aria-hidden="true"><path d="M1.5 1.5 5 5 1.5 8.5M6.5 8.5h4" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class="act"><svg width="12" height="11" viewBox="0 0 12 11" aria-hidden="true"><path d="M1.5 2.2c0-.7.5-1.2 1.2-1.2h6.6c.7 0 1.2.5 1.2 1.2v4.2c0 .7-.5 1.2-1.2 1.2H5L2.6 9.6V7.6h0c-.6 0-1.1-.5-1.1-1.2z" fill="none" stroke="#9AA1AB" stroke-width="1.2" stroke-linejoin="round"></path></svg></span></span>
+</div>
+
+
+<div class="feed">
+
+
+
+<div class="yw">
+<div class="who">You · 9:52</div>
+<div class="you">Compare the two refund flows in a table, with a short recommendation.</div>
+
+</div>
+
+
+
+
+
+
+
+
+
+<div class="cw">
+<div class="who">Claude · 9:52</div>
+<div class="card"><div>Both flows are in docs/refunds/flows.md. The main difference is who confirms the refund.</div></div>
+</div>
+
+
+
+
+
+
+
+
+
+
+<div class="wk"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg>Writing · 32s</div>
+
+</div>
+
+
+
+<div class="dock" aria-label="Side question">
+<div class="hd"><span class="sl">Side question · not part of the conversation</span><span class="sp"></span></div>
+<div class="sq">What does “idempotent” mean for a refund?</div>
+
+
+<div class="sa">A refund request that can be sent again safely: a second copy refunds nothing more.</div><div class="sa">The flows keep one idempotency key per order for this.</div>
+<div class="btns">
+<button type="button" class="b">Copy <span class="k">c</span></button><button type="button" class="b">Fork… <span class="k">f</span></button><button type="button" class="b">Close <span class="k">esc</span></button>
+<span class="sp"></span><span class="why">Claude keeps working above</span>
+</div>
+</div>
+
+
+
+</div>
+      <div class="cap"><b>Where Claude Code puts it, so it’s honest.</b> Claude’s panel takes its prompt’s place, and so does this card: there is no prompt to type into until it closes. Drawn like the review cards (DL-119: docks at the bottom, rises with <span class="mono">motionCardIn</span>), but on <span class="mono">pane</span> with a 1 <span class="mono">controlEdge</span> edge, never the needs-you border. The reply above keeps streaming.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 12px; padding-top: 26px">
+      <div class="cap"><b>The card, top to bottom:</b> the section label “Side question · not part of the conversation” (<span class="mono">sectionLabel</span>), your question (<span class="mono">bodyEmphasis</span>), the answer as Markdown in chat’s body face, then buttons in the review card’s style, each with its key: Copy <span class="mono">c</span>, Fork… <span class="mono">f</span>, Close <span class="mono">esc</span>. At the right, in <span class="mono">text2</span>: “Claude keeps working above”.</div>
+      <div class="cap"><b>Its keys are Claude Code’s</b> and act only while the card has focus, as the review cards’ number keys do. Chat sends the same key to the panel, so what you see and what Claude Code holds stay the same.</div>
+      <div class="cap"><b>Long answers</b> scroll inside the card up to half the pane’s height; ↑/↓ scroll it, as in the panel.</div>
+      <div class="cap"><b>The tab</b> shows no needs-you dot; it stays “working” while Claude works.</div>
+    </div>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-start">
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">B · an aside in the feed</div>
+      <div class="ch" style="width: 480px; height: 400px">
+<div class="strip">
+
+<span class="tb on"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="none" stroke="currentColor" stroke-width="1.4"></circle></svg>Refund flows</span>
+
+<span class="tb"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="none" stroke="currentColor" stroke-width="1.4"></circle></svg>Teardown research</span>
+
+<span class="sp"></span>
+<span class="tog" role="img" aria-label="Chat showing"><span class=""><svg width="12" height="10" viewBox="0 0 12 10" aria-hidden="true"><path d="M1.5 1.5 5 5 1.5 8.5M6.5 8.5h4" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class="act"><svg width="12" height="11" viewBox="0 0 12 11" aria-hidden="true"><path d="M1.5 2.2c0-.7.5-1.2 1.2-1.2h6.6c.7 0 1.2.5 1.2 1.2v4.2c0 .7-.5 1.2-1.2 1.2H5L2.6 9.6V7.6h0c-.6 0-1.1-.5-1.1-1.2z" fill="none" stroke="#9AA1AB" stroke-width="1.2" stroke-linejoin="round"></path></svg></span></span>
+</div>
+
+
+<div class="feed">
+
+
+
+<div class="yw">
+<div class="who">You · 9:52</div>
+<div class="you">Compare the two refund flows in a table, with a short recommendation.</div>
+
+</div>
+
+
+
+
+
+
+
+
+
+<div class="cw">
+<div class="who">Claude · 9:52</div>
+<div class="card"><div>Both flows are in docs/refunds/flows.md. The main difference is who confirms the refund.</div></div>
+</div>
+
+
+
+
+
+
+
+
+
+<div class="aw">
+<div class="who">Side question · 9:53</div>
+<div class="aside">
+<div class="sl">Side question · not part of the conversation</div>
+<div class="sq">What does “idempotent” mean for a refund?</div>
+<div class="sa">A refund request that can be sent again safely: a second copy refunds nothing more.</div><div class="sa">The flows keep one idempotency key per order for this.</div>
+
+</div>
+</div>
+
+
+
+
+
+
+
+
+
+<div class="wk"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg>Writing · 32s</div>
+
+</div>
+
+
+
+
+<div class="cr"><div class="comp">Reply to Claude</div><button type="button" class="b">Stop <span class="k">esc</span></button></div>
+<div class="hint">⏎ send · ⇧⏎ new line · / commands</div>
+
+
+</div>
+      <div class="cap">The question and answer drop into the feed as a framed aside, indented on both sides so it doesn’t read as Claude’s reply. Duo closes Claude’s panel as soon as the answer is captured (an Esc it sends itself), so the composer stays. <b>Against:</b> Duo pressing a key you didn’t, and the aside lands in the middle of a reply that is still streaming.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">C · a popover over the composer</div>
+      <div class="ch" style="width: 480px; height: 400px">
+<div class="strip">
+
+<span class="tb on"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="none" stroke="currentColor" stroke-width="1.4"></circle></svg>Refund flows</span>
+
+<span class="tb"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="none" stroke="currentColor" stroke-width="1.4"></circle></svg>Teardown research</span>
+
+<span class="sp"></span>
+<span class="tog" role="img" aria-label="Chat showing"><span class=""><svg width="12" height="10" viewBox="0 0 12 10" aria-hidden="true"><path d="M1.5 1.5 5 5 1.5 8.5M6.5 8.5h4" fill="none" stroke="#9AA1AB" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span class="act"><svg width="12" height="11" viewBox="0 0 12 11" aria-hidden="true"><path d="M1.5 2.2c0-.7.5-1.2 1.2-1.2h6.6c.7 0 1.2.5 1.2 1.2v4.2c0 .7-.5 1.2-1.2 1.2H5L2.6 9.6V7.6h0c-.6 0-1.1-.5-1.1-1.2z" fill="none" stroke="#9AA1AB" stroke-width="1.2" stroke-linejoin="round"></path></svg></span></span>
+</div>
+
+
+<div class="feed">
+
+
+
+<div class="yw">
+<div class="who">You · 9:52</div>
+<div class="you">Compare the two refund flows in a table, with a short recommendation.</div>
+
+</div>
+
+
+
+
+
+
+
+
+
+<div class="cw">
+<div class="who">Claude · 9:52</div>
+<div class="card"><div>Both flows are in docs/refunds/flows.md. The main difference is who confirms the refund.</div></div>
+</div>
+
+
+
+
+
+
+
+
+
+
+<div class="wk"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg>Writing · 32s</div>
+
+</div>
+
+<div class="pop" style="bottom: 92px">
+<div class="sl">Side question</div>
+<div class="sq">What does “idempotent” mean for a refund?</div>
+<div class="sa">A refund request that can be sent again safely: a second copy refunds nothing more.</div><div class="sa">The flows keep one idempotency key per order for this.</div>
+<div class="btns"><button type="button" class="b">Copy</button><button type="button" class="b">Fork…</button><span class="sp"></span><button type="button" class="b">Close <span class="k">esc</span></button></div>
+</div>
+
+
+
+
+<div class="cr"><div class="comp">Reply to Claude</div><button type="button" class="b">Stop <span class="k">esc</span></button></div>
+<div class="hint">⏎ send · ⇧⏎ new line · / commands</div>
+
+
+</div>
+      <div class="cap">Floats over the foot of the feed with <span class="mono">shadowPopover</span>; the composer shows under it. <b>Against:</b> the composer can’t take text while Claude’s panel is up, so it would be a composer that refuses, and the popover covers the reply you are reading.</div>
+    </div>
+    <div style="width: 480px; display: flex; flex-direction: column; gap: 12px; padding-top: 26px">
+      <div class="cap"><b>All three read the same things:</b> the panel on screen (question, “Answering…”, the answer, its footer), and the answer’s Markdown from the SubagentStop hook that comes with it, which keeps the bold, code and lists the screen drops.</div>
+      <div class="cap"><b>Not drawn:</b> a separate pane or tab for side questions (heavier than the thing it holds), and a Duo-run side query without Claude Code (DL-118: chat is an overlay on Claude Code, never a second client).</div>
+      <div class="cap"><b>Narrow chat:</b> the buttons drop to their keys’ labels (“Copy c”) under 420; the section label shortens to “Side question”.</div>
+    </div>
+  </div>
+</div>
+</body></html>

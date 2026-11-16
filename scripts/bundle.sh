@@ -52,6 +52,7 @@ cp -R "$root/docs/design/chat-slash-handoff/fixture-chat/." "$app/Contents/Resou
 cp -R "$root/docs/design/chat-paste-handoff/fixture-chat/." "$app/Contents/Resources/chat-fixtures"   # and chat paste's (paste-<board>, DL-161)
 cp -R "$root/docs/design/chat-markdown-handoff/fixture-chat/." "$app/Contents/Resources/chat-fixtures"   # and your Markdown's (md-<board>, DL-188)
 cp -R "$root/docs/design/voice-input-handoff/fixture-chat/." "$app/Contents/Resources/chat-fixtures"   # and voice input's (voice-<board>, DL-261)
+cp -R "$root/docs/design/btw-in-chat-handoff/fixture-chat/." "$app/Contents/Resources/chat-fixtures"   # and /btw's side card (btw-<board>, DL-344)
 cp -R "$root/Fixtures/rewind/fixture-chat/." "$app/Contents/Resources/chat-fixtures"   # and the rewound transcript's (rewind-<board>, F-656)
 # The document editor: vendored CodeMirror bundle and its page (F-34).
 rm -rf "$app/Contents/Resources/mods"; mkdir -p "$app/Contents/Resources/mods"

@@ -1,3 +1,4 @@
+import AppKit
 import DuoKit
 import Foundation
 
@@ -63,5 +64,52 @@ import Foundation
         let agent = log.steps.first { $0.agent != nil }?.agent
         check(agent?.finished == false && agent?.message.isEmpty == true,
               "a running Agent card isn't finished with the side answer (finished: \(agent?.finished ?? false), message: \(agent?.message.prefix(30) ?? ""))")
+    }
+
+    print("/btw's panel, read (DL-344)")
+    do {
+        let a = ChatScreenReader.read(screen("323", "03-panel-answer"), cols: 100)
+        check(a.kind == .side && a.side?.question == "what is two plus two" && a.side?.answering == false, "323: the answered panel: its question (\(a.side?.question ?? "-"))")
+        check(a.side?.answer.hasPrefix("BTW-ANSWER: the mock's side answer") == true && a.side?.answer.contains("second sentence") == true, "323: the answer's wrapped rows join into one paragraph (\(a.side?.answer ?? "-"))")
+        check(a.side?.canCopy == true && a.side?.canFork == true && a.side?.canScroll == true && a.side?.canClear == false, "323: the footer's keys are read")
+        let w = ChatScreenReader.read(screen("323", "02b-panel-answering"), cols: 100)
+        check(w.side?.answering == true && w.side?.answer.isEmpty == true && w.side?.canCopy == false, "323: Answering… has no answer and only Esc")
+        let h = ChatScreenReader.read(screen("323", "05-panel-idle-history"), cols: 100)
+        check(h.side?.history == 2 && h.side?.question == "and at idle?" && h.side?.canBrowse == true && h.side?.canClear == true, "323: at the prompt the history lists both questions, the last one answered (\(h.side?.history ?? 0))")
+        check(!ChatSignatures.v2_1_291.terminalCommands.contains("/btw"), "/btw is no longer on the terminal list: the / menu shows Claude Code's own description")
+    }
+
+    print("/btw's card: kept busy underneath, remembered, reopened, closed by typing (DL-344)")
+    do {
+        let tui = FakeTUI(screen("323", "01-busy"))
+        let chat = ChatSession(key: "btw-card", mode: .chat)
+        chat.attach(tui)
+        tui.show(screen("323", "02b-panel-answering"))
+        _ = chat.reread()
+        check(chat.screen.kind == .busy && chat.screen.side?.answering == true && chat.sideUp && chat.showsChat,
+              "while the panel answers the tab is still busy and the card is up (\(chat.screen.kind))")
+        check(chat.sideCard?.answering == true && chat.sideCard?.question == "what is two plus two", "the card shows the question, answering")
+        check(!chat.log.items.contains { if case .you = $0 { return true } else { return false } }, "no message bubble for /btw")
+        ChatIngest.hook(["hook_event_name": "SubagentStop", "agent_id": "a1", "agent_type": "",
+                         "last_assistant_message": "**Four.** And a second sentence.", "stop_hook_active": false], at: Date().timeIntervalSince1970, into: chat.log)
+        tui.show(screen("323", "03-panel-answer"))
+        _ = chat.reread()
+        check(chat.sideCard?.answer == "**Four.** And a second sentence.", "the answer is the hook's Markdown, not the screen's text (\(chat.sideCard?.answer ?? "-"))")
+        check(chat.copySide() && NSPasteboard.general.string(forType: .string) == "**Four.** And a second sentence.", "Copy puts the Markdown on the clipboard")
+        tui.react = { keys, t in if keys == "\u{1b}" { t.show(screen("323", "04-closed-busy")) } }
+        chat.sideTyped("a")
+        spin(0.8)
+        check(chat.sideCard == nil && chat.screen.side == nil && chat.screen.kind == .busy, "typing closes the card with Esc and the turn is still busy")
+        check(chat.ui.composer == "a" && chat.fallback == nil, "the typed key starts the message (\(chat.ui.composer))")
+        let kept = chat.log.items.compactMap { item -> ChatSideExchange? in if case .side(let x) = item { x } else { nil } }
+        check(kept.count == 1 && kept[0].closed && kept[0].answer == "**Four.** And a second sentence.", "the exchange stays as a quiet line (\(kept.count))")
+        if let first = kept.first {
+            chat.reopenSide(first.id)
+            check(chat.sideCard?.live == false && chat.sideCard?.answer == first.answer && chat.sideUp, "Show reopens the card from Duo's memory, no new query")
+        }
+        Task { await chat.closeSide() }
+        spin(0.1)
+        check(chat.sideCard == nil, "Close drops the reopened card")
+        check(tui.keys.filter { $0.contains("/btw") }.isEmpty, "nothing was sent to Claude Code for Show")
     }
 }
