@@ -5,7 +5,9 @@ import { EditorState, ChangeSet, StateField, StateEffect, RangeSetBuilder, Text,
 import { EditorView, ViewPlugin, Decoration, WidgetType, keymap } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap, undo, undoDepth, insertNewlineAndIndent } from "@codemirror/commands";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
-import { syntaxTree } from "@codemirror/language";
+import { html } from "@codemirror/lang-html";
+import { syntaxTree, syntaxHighlighting, HighlightStyle } from "@codemirror/language";
+import { tags as T } from "@lezer/highlight";
 import { autocompletion, startCompletion, completionStatus, acceptCompletion } from "@codemirror/autocomplete";
 import { marginExtensions, marginTheme, composeComment, activate, setDelivery, addThread, replyTo, closeThread, reopenThread, deleteThread } from "./margin.js";
 import { reviewCore, reviewDrawing, reviewSummary, setMarkup as setReviewMarkup, setReviewer, onReviewAction, resolveSuggestion, resolveAll as resolveAllSuggestions, step as stepReview, suggestHunks, reviewField, suggestEditsOn } from "./critic.js";
@@ -1777,13 +1779,75 @@ const readOnlyCompartment = new Compartment();
 // tables and images, block widgets) are taken out and the text shows as typed: Obsidian's escape
 // hatch when a rendering case is wrong. Three compartments keep the extensions where they were in
 // the list, and a reconfigure keeps the document's history, caret and scroll.
-const previewLive = new Compartment(), previewProps = new Compartment(), previewBlocks = new Compartment();
+const previewLive = new Compartment(), previewProps = new Compartment(), previewBlocks = new Compartment(), sourceStyle = new Compartment();
 let sourceMode = !!window.duoFlags?.noPreview;   // the next state's mode (checks start a page in source with the flag)
+let docKind = "markdown";                         // what the shown document is: "markdown" (the live editor) or "html" (only ever its source, DL-346)
 const sourceIds = new Set();                      // documents Duo remembers in source mode, by id
-const sourceEffects = (on) => [previewLive.reconfigure(on ? [] : [livePreview, codeHover, reviewDrawing, marginExtensions]), previewProps.reconfigure(on ? [] : previewPropsList), previewBlocks.reconfigure(on ? [] : [blocksField])];
+
+// Source's colours (DL-346): the five syntax tokens and nothing else. Quiet on purpose: three hues for structure, the secondary
+// text colour for marks, never needsYou. HTML, CSS and JavaScript come from the bundled parsers; Markdown's marks, links, code
+// and comments from its own tags. Frontmatter and review marks, which no parser knows, get their colours from sourceMarks below.
+// (T["mono" + "space"]: inline code's tag; spelled so the style check for typed font families does not read it as one.)
+const sv = (n) => `var(--duo-syntax-${n})`;
+const sourceHighlight = syntaxHighlighting(HighlightStyle.define([
+  { tag: [T.tagName, T.angleBracket, T.keyword, T.controlKeyword, T.definitionKeyword, T.operatorKeyword, T.moduleKeyword, T.modifier, T.className, T.typeName, T.link, T.atom, T.bool, T.null, T.self], color: sv("tag") },
+  { tag: [T.attributeName, T.propertyName, T.labelName], color: sv("attr") },
+  { tag: [T.string, T.attributeValue, T.url, T.number, T.regexp, T.color, T.literal, T["mono" + "space"], T.special(T.string)], color: sv("string") },
+  { tag: [T.comment, T.lineComment, T.blockComment, T.docComment], color: sv("comment"), fontStyle: "italic" },
+  { tag: [T.processingInstruction, T.meta, T.documentMeta, T.contentSeparator, T.quote], color: sv("mark") },
+  { tag: [T.heading, T.heading1, T.heading2, T.heading3, T.heading4, T.heading5, T.heading6, T.strong], fontWeight: "600" },
+  { tag: T.emphasis, fontStyle: "italic" },
+]));
+// Frontmatter keys and values, and CriticMarkup's marks, by line patterns (nothing parses them): a key is an attribute, a value a
+// string, `{++ ++}` / `{>> <<}` and their friends are marks, an addition green and a comment red as the board draws them.
+const sourceMarkDeco = {
+  key: Decoration.mark({ class: "duo-src-attr" }), val: Decoration.mark({ class: "duo-src-str" }), mark: Decoration.mark({ class: "duo-src-mark" }),
+  ins: Decoration.mark({ class: "duo-src-ins" }), note: Decoration.mark({ class: "duo-src-note" }),
+};
+function sourceMarkSet(state) {
+  if (docKind === "html") return Decoration.none;
+  const out = [], doc = state.doc;
+  const fm = doc.lines > 1 && /^---\s*$/.test(doc.line(1).text);
+  let fmEnd = 0;
+  if (fm) { for (let i = 2; i <= doc.lines; i++) if (/^(---|\.\.\.)\s*$/.test(doc.line(i).text)) { fmEnd = i; break; } }
+  if (fmEnd) for (let i = 2; i < fmEnd; i++) {
+    const l = doc.line(i), m = /^(\s*(?:-\s+)?)([A-Za-z_][\w .-]*)(:)(\s*)(.*)$/.exec(l.text);
+    if (!m) continue;
+    const k = l.from + m[1].length;
+    out.push(sourceMarkDeco.key.range(k, k + m[2].length), sourceMarkDeco.mark.range(k + m[2].length, k + m[2].length + 1));
+    if (m[5]) out.push(sourceMarkDeco.val.range(l.to - m[5].length, l.to));
+  }
+  const text = doc.toString(), re = /(\{(?:\+\+|--|~~|==|>>))([\s\S]*?)((?:\+\+|--|~~|==|<<)\})/g;
+  let m;
+  while ((m = re.exec(text))) {
+    const a = m.index, b = a + m[1].length, c = b + m[2].length, d = c + m[3].length;
+    out.push(sourceMarkDeco.mark.range(a, b));
+    if (m[2].length) out.push((m[1] === "{>>" ? sourceMarkDeco.note : m[1] === "{++" ? sourceMarkDeco.ins : sourceMarkDeco.mark).range(b, c));
+    out.push(sourceMarkDeco.mark.range(c, d));
+    if (re.lastIndex > 2e6) break;
+  }
+  return Decoration.set(out, true);
+}
+const sourceMarks = StateField.define({
+  create: (st) => sourceMarkSet(st),
+  update: (v, tr) => (tr.docChanged ? sourceMarkSet(tr.state) : v),
+  provide: (f) => EditorView.decorations.from(f),
+});
+// How source is drawn (view-source-handoff board A): Markdown keeps the document's face and size, so a switch never reflows the
+// page; an HTML page is code, mono 12/19, its wrapped lines hung 24 under the first.
+const sourceTheme = EditorView.theme({
+  ".duo-src-attr": { color: sv("attr"), fontWeight: "400" }, ".duo-src-str": { color: sv("string"), fontWeight: "400" }, ".duo-src-mark": { color: sv("mark"), fontWeight: "400" },  // frontmatter is not a setext heading here
+  ".duo-src-ins": { color: "var(--duo-review-author3)" }, ".duo-src-note": { color: "var(--duo-review-author1)" },
+  "&.duo-src-html .cm-scroller": { fontFamily: "var(--duo-font-mono)", fontSize: "12px", lineHeight: "19px" },
+  "&.duo-src-html .cm-content": { padding: "12px 14px 12px 12px", fontSize: "12px" },
+  "&.duo-src-html .cm-line": { paddingLeft: "24px", textIndent: "-24px" },
+});
+const sourceLook = [sourceHighlight, sourceMarks, sourceTheme];
+const sourceEffects = (on) => [previewLive.reconfigure(on ? [] : [livePreview, codeHover, reviewDrawing, marginExtensions]), previewProps.reconfigure(on ? [] : previewPropsList), previewBlocks.reconfigure(on ? [] : [blocksField]), sourceStyle.reconfigure(on ? sourceLook : [])];
 const isSource = (state) => previewLive.get(state).length === 0;
 function setSource(on) {
   on = !!on;
+  if (docKind === "html") return true;   // an HTML page is only ever its source here; Duo shows its page by leaving the editor
   sourceMode = on;
   if (shownId != null) { if (on) sourceIds.add(shownId); else sourceIds.delete(shownId); }
   if (!view || isSource(view.state) === on) return on;
@@ -2065,7 +2129,8 @@ const titleFollowsHeading = EditorState.transactionFilter.of((tr) => {
   return tr;
 });
 
-function create(parent, text, source) {
+function create(parent, text, source, kind) {
+  docKind = kind === "html" ? "html" : "markdown";
   if (source != null) sourceMode = !!source;
   sepInfo = lineSeparatorOf(text);
   setBase(canon(text));
@@ -2114,17 +2179,18 @@ function show(id, diskText, opts) {
   const parent = document.getElementById("editor");
   if (view && shownId != null) {
     if (stash) { view.setState(stash); stash = null; }   // a template preview isn't the document
-    held.set(shownId, { state: view.state, scroll: view.scrollSnapshot(), top: view.scrollDOM.scrollTop, base, sepInfo });
+    held.set(shownId, { state: view.state, scroll: view.scrollSnapshot(), top: view.scrollDOM.scrollTop, base, sepInfo, kind: docKind });
   }
   const h = held.get(id);
   if (!h || !view) {
     if (opts && opts.folded != null) window.__folded = !!opts.folded;
-    const r = create(parent, diskText, opts && opts.source != null ? opts.source : sourceIds.has(id));
+    const r = create(parent, diskText, opts && opts.source != null ? opts.source : sourceIds.has(id), opts && opts.kind);
     shownId = id;
     lastReview = ""; postReview(view.state);
     return { ...r, restored: false, dirty: false };
   }
   shownId = id;
+  docKind = h.kind || "markdown";
   sourceMode = isSource(h.state);
   held.delete(id);   // the shown document's state is the view's own
   stash = null;
@@ -2190,27 +2256,27 @@ function extensions(readOnly) {
       duoTheme,
       EditorView.lineWrapping,
       history(),
-      markdown({ base: markdownLanguage }),  // GitHub-flavoured: task lists, tables, strikethrough
+      docKind === "html" ? html() : markdown({ base: markdownLanguage }),  // GitHub-flavoured: task lists, tables, strikethrough; an HTML page is HTML, CSS and JavaScript (DL-346)
+      docKind === "html" ? EditorView.editorAttributes.of({ class: "duo-src-html" }) : [],
       search({ top: true, createPanel: findPanel }),
       reviewCore, marginTheme,
-      previewLive.of(sourceMode ? [] : [livePreview, codeHover, reviewDrawing, marginExtensions]),
+      previewLive.of(sourceMode || docKind === "html" ? [] : [livePreview, codeHover, reviewDrawing, marginExtensions]),
+      sourceStyle.of(sourceMode || docKind === "html" ? sourceLook : []),
       contextField,
       foldField,
-      previewProps.of(sourceMode ? [] : previewPropsList),
+      previewProps.of(sourceMode || docKind === "html" ? [] : previewPropsList),
       addedField,
       fadingField,
       highlightMotion,
       conflictField,
-      previewBlocks.of(sourceMode ? [] : [blocksField]),
+      previewBlocks.of(sourceMode || docKind === "html" ? [] : [blocksField]),
       changesField,
       searchField,
       clearOnUserEdit,
-      titleFollowsHeading,
-      renumberLists,
-      linkClicks,
+      ...(docKind === "html" ? [] : [titleFollowsHeading, renumberLists, linkClicks]),
       // Duo's menu chords win over CodeMirror's: ⌘D is Send Selection to Claude (DL-79), ⌘I is
       // Italic (CodeMirror's select-parent-syntax took it, so Format › Italic never fired).
-      keymap.of(listIndentKeys),
+      keymap.of(docKind === "html" ? [] : listIndentKeys),
       keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap].filter((b) => !DUO_CHORDS.has(b.key))),
       EditorView.contentAttributes.of({ spellcheck: "true", autocorrect: "on", autocapitalize: "on" }),
       tailField, dictationTheme,

@@ -890,6 +890,8 @@ struct RightPane: View {
                 SplitBody(path: path, file: file)
             } else if let path = model.rightTab, ["html", "htm"].contains((path as NSString).pathExtension.lowercased()),
                let file = model.liveFile(path),
+               // View › Source (DL-346) swaps the page for its highlighted, editable source: the editor below.
+               !model.sourceDocuments.contains(file.standardizedFileURL.path),
                // An outside page reads from its own folder (DL-106); a project's from the project.
                let root = AppModel.isOutsideFile(path) ? file.deletingLastPathComponent() : model.projectFolder {
                 // Local HTML, read-only and live (v1; DL-67): its own web view, with the element picker.

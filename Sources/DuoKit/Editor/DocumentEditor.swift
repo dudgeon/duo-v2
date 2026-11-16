@@ -301,7 +301,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
                 guard let self, self.generation == gen else { done?(false); return }
                 if case .success(let t) = r, let t = t as? String { FileHistory.snapshot(file, Data(t.utf8), source: "resolve-theirs") }
                 self.diskBytes = data
-                self.webView.callAsyncJavaScript("duo.close(id); const r = duo.show(id, t, {folded: f}); duo.markSaved(); return r", arguments: ["id": Self.docID(file), "t": text, "f": Self.folded(file)], in: nil, in: .page) { _ in
+                self.webView.callAsyncJavaScript("duo.close(id); const r = duo.show(id, t, {folded: f, kind: k}); duo.markSaved(); return r", arguments: ["id": Self.docID(file), "t": text, "f": Self.folded(file), "k": Self.kind(file)], in: nil, in: .page) { _ in
                     guard self.generation == gen else { done?(false); return }
                     self.phase = .open
                     self.dirty = false
@@ -334,7 +334,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
 
     /// Shows text that will never be saved (a file that isn't UTF-8, or can't be read).
     private func showReadOnly(_ text: String, _ file: URL) {
-        webView.callAsyncJavaScript("duo.close(id); const r = duo.show(id, t, {folded: false}); duo.markSaved(); duo.setReadOnly(true); return r", arguments: ["id": Self.docID(file), "t": text], in: nil, in: .page, completionHandler: nil)
+        webView.callAsyncJavaScript("duo.close(id); const r = duo.show(id, t, {folded: false, kind: k}); duo.markSaved(); duo.setReadOnly(true); return r", arguments: ["id": Self.docID(file), "t": text, "k": Self.kind(file)], in: nil, in: .page, completionHandler: nil)
     }
 
     /// Saves now if it safely can (quit, closing the window). Calls back when done.
@@ -368,7 +368,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         // One editor state per document (DL-167 step 3): the page sets back the state it holds for this
         // file (undo, caret, scroll, Claude's highlights, Source mode) or builds one from the disk text.
         let k = kept.removeValue(forKey: file)
-        webView.callAsyncJavaScript("return duo.show(id, t, {folded: f})", arguments: ["id": Self.docID(file), "t": text, "f": Self.folded(file)], in: nil, in: .page) { [weak self] result in
+        webView.callAsyncJavaScript("return duo.show(id, t, {folded: f, kind: k})", arguments: ["id": Self.docID(file), "t": text, "f": Self.folded(file), "k": Self.kind(file)], in: nil, in: .page) { [weak self] result in
             guard let self, self.generation == gen else { return }
             var info: [String: Any] = [:]
             if case .success(let v) = result, let d = v as? [String: Any] { info = d }
@@ -404,6 +404,9 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         webView.callAsyncJavaScript("if (!window.duo) return 0; for (const id of duo.heldIds()) if (id === a || id.startsWith(a + '/')) duo.rename(id, b + id.slice(a.length)); return 1",
                                     arguments: ["a": old, "b": new], in: nil, in: .page, completionHandler: nil)
     }
+
+    /// What the page draws the file as: HTML is only ever its highlighted source (DL-346), anything else the Markdown editor.
+    static func kind(_ file: URL) -> String { ["html", "htm"].contains(file.pathExtension.lowercased()) ? "html" : "markdown" }
 
     /// The id the page keeps a document's editor state under: the file's standardized path.
     static func docID(_ file: URL) -> String { plainPath(file.standardizedFileURL.path) }

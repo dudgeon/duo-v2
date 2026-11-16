@@ -11,7 +11,8 @@ public enum FormatBarLogic {
     public static func shows(editorHasKeyboard: Bool, isMarkdown: Bool, hidden: Bool, source: Bool, readOnly: Bool, templatePreview: Bool,
                       menuOpen: Bool, dictating: Bool, reviewPending: Bool = false) -> Bool {
         // DL-317: also whenever the document has suggestions or comments or is Suggesting, so pending review is never hidden.
-        isMarkdown && !hidden && !source && !readOnly && !templatePreview && (editorHasKeyboard || menuOpen || dictating || reviewPending)
+        // DL-346 (amends DL-266 3): it shows in Markdown's Source view too (`source` is kept for callers); never on HTML source (`isMarkdown` is false there).
+        isMarkdown && !hidden && !readOnly && !templatePreview && (editorHasKeyboard || menuOpen || dictating || reviewPending)
     }
 
     /// Style ⌄'s items, in order: the title and the `duo2 doc format` word.
