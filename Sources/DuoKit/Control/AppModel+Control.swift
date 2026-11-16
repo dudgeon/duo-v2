@@ -242,6 +242,14 @@ extension AppModel {
             done(.ok("Moved \(key) to place \((order.firstIndex(of: key) ?? 0) + 1) of \(order.count) in the \(pane.rawValue) pane.", ["pane": pane.rawValue, "tab": key, "order": order]))
         case .viewGroup:
             guard let g = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
+            if inv[1] == nil, let b = BoardGroup(rawValue: g) {   // DL-347: the Board's grouping
+                setBoardGroup(b)
+                return done(.ok("The Board is grouped by \(b.rawValue)."))
+            }
+            if g == "earlier", inv[1] == "expand" || inv[1] == "collapse", homeView == .board, boardGroup == .activity {
+                if inv[1] == "collapse" { expandedGroups.remove(Self.boardEarlierKey) } else { expandedGroups.insert(Self.boardEarlierKey) }
+                return done(.ok("\(inv[1] == "collapse" ? "Collapsed" : "Expanded") the Board's Earlier."))
+            }
             // Later and Earlier keep their fold per project (DL-217): the current project's, unless it's already there.
             let key = expandedGroups.first { $0.hasSuffix(g) } ?? (g == "later" || g == "earlier" ? currentProject.map { "\($0.name)/\(g)" } : nil)
                 ?? findSession(g, in: nil).flatMap { s in s.sessionId.map { threadFoldKey(project: s.project, original: $0) } } ?? g   // a thread, by its original's id (DL-228)
@@ -440,6 +448,19 @@ extension AppModel {
             guard isArchived(p.name) != on else { return done(.ok("\(p.name) is already \(on ? "archived" : "in its column").")) }
             setArchived(p.name, on)
             done(.ok(on ? "Archived \(p.name): it's in the Archived rollup under the map. Undo: duo2 undo" : "\(p.name) is back in its column."))
+        case .projectPin:
+            guard let name = inv[0], let p = project(named: name) else { return done(inv[0].map { noProject($0) } ?? .fail("usage: \(id.action.usage)")) }
+            let current = isPinned(p)
+            let on: Bool
+            switch inv[1] {
+            case "on": on = true
+            case "off": on = false
+            case nil: on = !current
+            default: return done(.fail("usage: \(id.action.usage)"))
+            }
+            guard current != on else { return done(.ok("\(p.name) is already \(on ? "pinned" : "unpinned").")) }
+            setPinned(p.name, on)
+            done(.ok(on ? "Pinned \(p.name): it's in the Board's first row. Undo: duo2 undo" : "Unpinned \(p.name). Undo: duo2 undo", ["pinned": on]))
         case .browserTabs, .browserRead, .browserClick, .browserFill, .browserWait, .browserScreenshot, .browserGo, .browserBack, .browserForward, .browserClose,
              .browserZoom, .browserPrint, .browserUpload, .browserDownloads, .browserScroll:
             browserVerb(id, inv, cwd: req.cwd, done)

@@ -7,7 +7,8 @@ import Foundation
 public enum HomeListTargets {
     nonisolated public static let screens = ["list-1440", "list-1280", "board-1440", "list-filter", "list-nothing",
                                              "list-1440-new-session", "list-new-session-hover", "list-new-session-pressed", "list-new-session-nohome", "list-new-session-none", "list-new-session-empty",
-                                             "L1-list-by-project", "list-by-project-rest", "list-by-project-selected"]
+                                             "L1-list-by-project", "list-by-project-rest", "list-by-project-selected",
+                                             "B1-activity", "B1-activity-folder", "B1-activity-none", "T-tile-focus", "T-tile-hover", "B1-activity-earlier"]
 
     public static func apply(_ screen: String, to model: AppModel) {
         TargetState.overview.apply(to: model)
@@ -15,6 +16,7 @@ public enum HomeListTargets {
         model.fixture = boardSessions(model.fixture, outsideFolder: screen != "board-1440")
         model.fixtureActive = Set(model.fixture.sessions.filter { open.contains($0.name) }.map(\.tabKey))
         model.homeView = screen == "board-1440" ? .board : .list
+        if screen == "board-1440" { model.boardGroup = .folder }   // home-evolution's Board is the folder bands
         // The boards' clock: late enough in the day that 5h ago is still Today.
         let cal = Calendar.current
         model.listClock = cal.date(bySettingHour: 18, minute: 0, second: 0, of: Date())
@@ -37,6 +39,15 @@ public enum HomeListTargets {
         }
         if screen == "list-new-session-empty" { model.fixture.sessions = [] }
         // DL-341, list-by-project-handoff L1 (the pointer on checkout-redesign's +), L2's rest and ⌘T states.
+        // DL-347, all-projects-board-handoff B1 (and B2 at WINDOW=1900x1060), T: the Board by activity.
+        if screen.hasPrefix("B1-activity") || screen.hasPrefix("T-tile") {
+            model.homeView = .board
+            model.boardGroup = screen == "B1-activity-folder" ? .folder : screen == "B1-activity-none" ? .none : .activity
+            model.fixturePinned = ["home", "checkout-redesign", "onboarding-v3"]
+            model.expandedGroups.formUnion(screen == "B1-activity-earlier" ? [AppModel.boardEarlierKey] : [])
+            if screen == "T-tile-focus" { model.focusedTile = "checkout-redesign" }
+            if screen == "T-tile-hover" { model.boardNewSessionHover = "checkout-redesign" }
+        }
         if screen.hasSuffix("list-by-project") || screen.hasPrefix("list-by-project") {
             model.listGroup = .project
             model.listPlusHover = screen == "L1-list-by-project" ? "checkout-redesign" : nil

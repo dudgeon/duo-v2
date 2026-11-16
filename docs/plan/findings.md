@@ -6446,3 +6446,11 @@ Hooks reference: `permissionDecision: "defer"` "requires non-interactive mode wi
 ## F-709 · Hooks can only be a backstop for the director (director-worker-skill addendum, 2026-11-15)
 
 `ClientCaps.probe` reads `disableAllHooks`, and the director harness's `hooks-off` and `pinned-219-strict` profiles model Macs where hooks are off. Every hook in §9 of `docs/research/director-worker-skill.md` therefore has a fallback: the worker skill's rule and `status`'s transcript-based red lines.
+
+## F-725 · The Board by activity is one layout function and a few views (DL-347, 2026-11-15)
+
+`ActivityLayout.build` (`AllProjects/ActivityLayout.swift`) is pure: Pinned (pins, ★ home first), Now (a session needs you, is to review or working, or a terminal is open), Today (activity since midnight), This week (7 days), Earlier (folded). Archived stays the rollup under the Board. A folder with no project file goes through the same rules. `ActivityBoard.swift` draws it: `AdaptiveColumns` with `mapPerRowMax` 8 across at `mapColumnMin` 220 for tiles, `BoardRow` for This week and Earlier. Home is a project like another. `BoardGroup` (Activity, Folder, None) is remembered in `DuoState.boardGroup`; pins in `pinnedProjects`/`unpinnedProjects` (by folder path). `duo2 view group activity|folder|none` shares the `view group` verb with the List's fold toggle (the first word tells them apart), `duo2 project pin`.
+
+## F-726 · A tile's New session row is on every tile in every grouping (DL-347, 2026-11-15)
+
+`TileNewSessionRow` sits under a hairline at the end of `ProjectTile` and `HomeTile` (not on a missing folder), in Folder grouping too, so the older Board captures (`board-1440`) gain that row. The tile's folder line shows only outside Folder grouping (the band names it there). ⌘T with a tile focused starts in its project (`boardFocusedProject`), else DL-262.

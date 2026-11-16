@@ -249,6 +249,13 @@ public enum DuoMetric {
     public static let mapFilterWidth: CGFloat = 200.0
     public static let mapOutsideRowWaitWidth: CGFloat = 34.0
     public static let mapColumnMin: CGFloat = 220.0
+    public static let mapWeekRowHeight: CGFloat = 28.0
+    public static let mapWeekRowNameWidth: CGFloat = 200.0
+    public static let mapWeekRowStatusWidth: CGFloat = 240.0
+    public static let mapWeekRowWhenWidth: CGFloat = 44.0
+    public static let mapNewSessionRowHeight: CGFloat = 24.0
+    public static let mapNewSessionRowGap: CGFloat = 6.0
+    public static let mapPerRowMax: CGFloat = 8.0
     public static let sessionListProjectWidth: CGFloat = 150.0
     public static let sessionListTaskWidth: CGFloat = 150.0
     public static let sessionListWaitWidth: CGFloat = 64.0
