@@ -73,7 +73,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     // Director (DL-193 to DL-206)
     case directorStatus = "director status", directorStart = "director start", directorSend = "director send"
     case directorRetire = "director retire", directorGuide = "director guide", directorWatch = "director watch"
-    case directorCheck = "director check"
+    case directorCheck = "director check", directorReport = "director report", workerGuide = "worker guide"
     // Files
     case files, filesBrowse = "files browse", fileNew = "file new", fileNewFolder = "file new-folder", fileTemplate = "file template", fileTemplates = "file templates"
     case fileRename = "file rename", fileDuplicate = "file duplicate", fileMove = "file move", fileTrash = "file trash"
@@ -575,6 +575,9 @@ extension DuoAction {
               "Record that you looked, with the evidence: a `Checked: <evidence>` line in the task's ## Progress (`Checked (routine):` with --routine), the note's check_by set to --next (30m, 2h, 3d, a date or time, or none) or a day on if you give none (cleared for a done or dropped task), and a `check` line in the log. That clears the red lines `director status` shows for the task: a stopped worker you read, a check_by that passed. `job:<id>` records a look at a scheduled job's run (nothing is written to a note); --routine says nothing new was found, so the user needn't hear of it. Works with Duo closed. Only the project's director, on a task it directs."),
         .init(.directorRetire, .director, "[--project <p>]", "Stand this director down: .duo/director.json moves it to the retired list, and if it wakes later it's told to stop. Its workers stay on their tasks until a new director takes over. Works with Duo closed."),
         .init(.directorGuide, .director, "", "Print the duo-director skill, for a Claude client where personal skills are blocked.", local: true),
+        .init(.directorReport, .director, "<task> | session <report: Asked / Decided / Waiting on, or what you did>",
+              "For a worker: report to the task's director through its inbox (DL-342): one line in the project's .duo/director-inbox.jsonl (the main checkout's, from a work tree too) and a `Reported:` line in the task's ## Progress. The inbox is the record; `director status` shows the report red until the director checks it. Then wake the director with SendMessage, as the output says (not needed when the report says \"Waiting on: no one\"). `session` reports from a session with no task, by its id. Works with Duo closed.", local: true),
+        .init(.workerGuide, .director, "", "Print the worker skill (what a director's worker follows: proof first, Progress, questions with links, reports), for a Claude client where personal skills are blocked.", local: true),
         .init(.directorWatch, .director, "[--project <p>] [--every <seconds>]", "One line per change to this director's workers (finished, needs you, working, stopped) or their task notes, until stopped: run it under Monitor to be woken (DL-199). It watches without Duo too (DL-231).", local: true),
 
         // Duo Decks (DL-267 to DL-290). All local: they read and write files, and run with Duo closed.

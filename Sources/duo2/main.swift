@@ -193,6 +193,16 @@ case .doctor:
     }
 case .directorGuide:
     print(DirectorSkill.text(), terminator: "")
+case .directorReport:
+    // A worker's report into its director's inbox (DL-342): a file write, so it needs no Duo.
+    let inv = Invocation(rest)
+    guard let target = inv[0] else { fail("usage: duo2 \(action.usage)", code: 64) }
+    do {
+        let done = try DirectorReport.record(target: target, text: inv.positional.dropFirst().joined(separator: " "),
+                                             cwd: URL(fileURLWithPath: FileManager.default.currentDirectoryPath),
+                                             session: env["CLAUDE_CODE_SESSION_ID"], name: ClientCaps.probe(env: env, cwd: FileManager.default.currentDirectoryPath).name)
+        print(done.output)
+    } catch { fail("\(error)") }
 case .directorWatch:
     exit(runDirectorWatch(rest))
 default:

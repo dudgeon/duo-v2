@@ -122,6 +122,11 @@ public enum DirectorCheck {
         target.hasPrefix("job:") ? String(target.dropFirst(4)).trimmingCharacters(in: .whitespaces) : nil
     }
 
+    /// `session:<id>`'s id (a session the registry doesn't know, Q-562), or nil.
+    public static func sessionID(_ target: String) -> String? {
+        target.hasPrefix("session:") ? String(target.dropFirst(8)).trimmingCharacters(in: .whitespaces) : nil
+    }
+
     /// The Progress line's text: `Checked: <evidence>`, or `Checked (routine): <evidence>`.
     public static func progressText(evidence: String, routine: Bool) -> String { (routine ? "Checked (routine): " : "Checked: ") + evidence }
 
@@ -214,10 +219,11 @@ public enum DirectorFactsReader {
     /// Whether the report applies to a caller: the project's director, a session that could become it
     /// (nobody directs), or the director resumed under a new session id. Not a director that was
     /// replaced, nor one working in another director's project.
-    public static func applies(role: DirectorRegistry.Role, callerName: String?) -> Bool {
+    /// `overseers` are the directors the user named to read this project's (DL-342, `DirectorInbox.overseers`).
+    public static func applies(role: DirectorRegistry.Role, callerName: String?, overseers: [String] = []) -> Bool {
         switch role {
         case .current, .none: return true
-        case .other(let c): return callerName != nil && c.name == callerName
+        case .other(let c): return callerName != nil && (c.name == callerName || overseers.contains(callerName!))
         case .replaced: return false
         }
     }
@@ -239,30 +245,87 @@ public enum DirectorFactsReader {
                              skillNote: String?, duo: DirectorFacts.DuoHealth?, claudeDir: URL = LegacyDuo.claudeDir,
                              appDir: URL? = ClaudeDesktop.directory(), now: Date = Date()) -> DirectorFacts {
         let events = DirectorLog.read(project: project, lastBytes: 4 * 1024 * 1024)
+        let inbox = DirectorInbox.read(project: project)
         var notes = DirectorOffline.tasks(project: project, director: director, reg: reg, beacons: beacons, claudeDir: claudeDir, now: now)
-            .map { note($0, project: project, reg: reg, claudeDir: claudeDir, now: now) }
+            .map { note($0, project: project, director: director, reg: reg, inbox: inbox, claudeDir: claudeDir, now: now) }
         notes += workTreeNotes(project: project, director: director)
         let (jobs, unreadable) = ScheduledRuns.read(appDir: appDir, project: project, events: events, now: now)
         var me = self.me(caps: caps, claudeDir: claudeDir)
         me.skillNote = skillNote
         me.duo = duo
-        return DirectorFacts(now: now, notes: notes, jobs: jobs, jobsUnreadable: unreadable, me: me, events: events)
+        let sessions = unregisteredSessions(project: project, director: director, reg: reg, beacons: beacons, inbox: inbox, events: events,
+                                            caller: caps.sessionId, claudeDir: claudeDir, now: now)
+        return DirectorFacts(now: now, notes: notes, jobs: jobs, jobsUnreadable: unreadable, me: me, events: events, inbox: inbox, sessions: sessions, director: director)
     }
 
     // MARK: Notes
 
-    static func note(_ t: DirectorOffline.Task, project: URL, reg: DirectorRegistry, claudeDir: URL, now: Date) -> DirectorFacts.Note {
+    static func note(_ t: DirectorOffline.Task, project: URL, director: String, reg: DirectorRegistry, inbox: [InboxItem], claudeDir: URL, now: Date) -> DirectorFacts.Note {
         let text = (try? String(contentsOf: project.appending(path: t.path), encoding: .utf8)) ?? ""
         let dates = DirectorProgress.parse(text)
         let w = reg.worker(task: t.path)
         let since = w.flatMap { DirectorTranscript.parseDate($0.since) }
-        let activity = t.session.flatMap { DirectorOffline.transcript(sessionId: $0, claudeDir: claudeDir) }
-            .flatMap { try? $0.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate }
+        let url = t.session.flatMap { DirectorOffline.transcript(sessionId: $0, claudeDir: claudeDir) }
+        let activity = url.flatMap { try? $0.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate }
+        var turn = url.flatMap { DirectorTranscript.turnEnd($0, director: director) } ?? .init()
+        if let typed = turn.lastUserTurn, inbox.contains(where: { $0.task == t.path && ($0.date ?? .distantPast) >= typed }) { turn.reportedSince = true }
         return DirectorFacts.Note(path: t.path, title: t.title, status: t.status, modified: Date(timeIntervalSince1970: t.noteModified),
                                   checkBy: CheckBy.parse(Director.frontmatter("check_by", in: text)), lastProgress: dates.lastProgress, lastChecked: dates.lastChecked,
                                   inWorkTree: false, workerState: t.state, hasWorkerRecord: w != nil,
                                   pendingExpired: w?.pending == true && since.map { now.timeIntervalSince($0) > Director.pendingLasts } == true,
-                                  workerName: t.workerName, question: t.question, workerSince: since, workerLastActivity: activity, userTyping: t.userTyping)
+                                  workerName: t.workerName, question: t.question, workerSince: since, workerLastActivity: activity, userTyping: t.userTyping,
+                                  turn: turn, session: t.session)
+    }
+
+    // MARK: Sessions the registry doesn't know (Q-562)
+
+    /// The project's Claude folders: its own, and each git work tree's (a worker that moved into one keeps writing there).
+    static func claudeFolders(project: URL, claudeDir: URL) -> [URL] {
+        var roots = [project.standardizedFileURL.path]
+        let admin = project.appending(path: ".git/worktrees")
+        for name in ((try? FileManager.default.contentsOfDirectory(atPath: admin.path)) ?? []).sorted() {
+            guard let g = (try? String(contentsOf: admin.appending(path: "\(name)/gitdir"), encoding: .utf8))?.trimmingCharacters(in: .whitespacesAndNewlines), g.hasPrefix("/") else { continue }
+            roots.append(URL(fileURLWithPath: g).deletingLastPathComponent().standardizedFileURL.path)
+        }
+        return roots.map { claudeDir.appending(path: "projects/" + encode($0)) }
+    }
+
+    /// Claude's folder name for a project path (the same rule as DuoKit's `ClaudeStorage.encode`).
+    static func encode(_ path: String) -> String {
+        let s = String(path.unicodeScalars.map { ($0.isASCII && CharacterSet.alphanumerics.contains($0)) ? Character($0) : "-" })
+        guard s.count > 200 else { return s }
+        var h: Int32 = 0
+        for u in path.utf16 { h = 31 &* h &+ Int32(u) }
+        return String(s.prefix(200)) + "-" + String(abs(Int64(h)), radix: 36)
+    }
+
+    /// Every session in the project's Claude folders that changed within `Limits.unregisteredWindow`, isn't a
+    /// worker the registry knows, a director's own, or the caller, and either starts with this director's tag
+    /// or ends on an offer or promise to it. Each transcript's first 16 KB and last 256 KB are read.
+    public static func unregisteredSessions(project: URL, director: String, reg: DirectorRegistry, beacons: [DirectorOffline.LiveSession], inbox: [InboxItem],
+                                            events: [DirectorEvent], caller: String?, claudeDir: URL, now: Date) -> [DirectorFacts.Session] {
+        let fm = FileManager.default
+        var known = Set(reg.workers.map(\.session) + reg.retired.map(\.sessionId))
+        if let c = reg.current?.sessionId { known.insert(c) }
+        if let caller { known.insert(caller) }
+        var out: [DirectorFacts.Session] = [], seen = Set<String>()
+        for dir in claudeFolders(project: project, claudeDir: claudeDir) {
+            let files = (try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.contentModificationDateKey])) ?? []
+            for url in files.sorted(by: { $0.path < $1.path }) where url.pathExtension == "jsonl" {
+                let id = url.deletingPathExtension().lastPathComponent
+                guard !id.isEmpty, !known.contains(id), seen.insert(id).inserted,
+                      let mod = try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate,
+                      now.timeIntervalSince(mod) <= DirectorRedLines.Limits.unregisteredWindow,
+                      var turn = DirectorTranscript.turnEnd(url, director: director, tailBytes: 256 * 1024), let typed = turn.lastUserTurn else { continue }
+                let promised = DirectorTranscript.promisesDirector(turn.lastText, director: director)
+                guard turn.tagged || promised else { continue }
+                if inbox.contains(where: { $0.session == id && ($0.date ?? .distantPast) >= typed }) { turn.reportedSince = true }
+                let beacon = beacons.first { $0.sessionId == id }
+                let check = events.filter { $0.event == "check" && $0.task == "session:\(id)" }.compactMap { DirectorTranscript.parseDate($0.at) }.max()
+                out.append(DirectorFacts.Session(id: id, name: beacon?.name, tagged: turn.tagged, promised: promised, working: beacon?.status == "busy", turn: turn, lastCheck: check))
+            }
+        }
+        return out
     }
 
     /// Notes this director directs that exist only in a git work tree of the project (a branch's own

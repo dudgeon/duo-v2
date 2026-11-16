@@ -50,6 +50,7 @@ private func stopped(_ path: String = "tasks/s.md", checked: Date? = nil, typing
 }
 
 @MainActor func directorDutyChecks() throws {
+    try missedTurnChecks()   // DL-343: joined the default run when the fix landed (F-698)
     print("director duties: the register's rules (DL-319)")
     check(lines(healthy()).isEmpty, "healthy facts give no red lines (\(lines(healthy()).map(\.line)))")
 
@@ -80,7 +81,8 @@ private func stopped(_ path: String = "tasks/s.md", checked: Date? = nil, typing
               "R1: a stopped worker with nothing checked since: the line says how long and what to do (\(l?.line ?? "none"))")
         check(lines(facts { $0.notes = [stopped(checked: ago(hour))] }).isEmpty, "R1: a Checked line after the report clears it")
         check(!lines(facts { $0.notes = [stopped(checked: ago(10 * hour))] }).isEmpty, "R1: a Checked line from before the report doesn't")
-        check(lines(facts { $0.notes = [stopped(typing: true)] }).isEmpty, "R1: a stopped worker the user typed in gives no line")
+        // Replaced by DL-343 (missedTurnChecks): "the user took it over" means read it, not skip it.
+        check(has(facts { $0.notes = [stopped(typing: true)] }, .R1), "R1: a stopped worker the user typed in is still red (paused is for sending, not reading)")
         var idle = stopped(); idle.workerState = "idle"
         check(has(facts { $0.notes = [idle] }, .R1), "R1: an idle worker is a stopped one")
         var waiting = stopped(); waiting.workerState = "needs-you"; waiting.question = "permission prompt"

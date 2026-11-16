@@ -213,7 +213,7 @@ extension AppModel {
         // gives with Duo closed. Polling (`watch`) asks for none.
         if !inv.has("no-red-lines") {
             var red: [RedLine] = []
-            if DirectorFactsReader.applies(role: role, callerName: caps.name) {
+            if DirectorFactsReader.applies(role: role, callerName: caps.name, overseers: DirectorInbox.overseers(project: folder, home: DirectorPlace.resolve(from: folder).home)) {
                 red = DirectorFactsReader.report(project: folder, director: reg.current?.name ?? director, reg: reg, beacons: DirectorOffline.beacons(), caps: caps,
                                                  skillNote: DirectorFactsReader.skillNote(), duo: DuoHealthReader.reachable(), all: inv.has("all"))
                 lines += DirectorRedLines.block(red)
@@ -254,7 +254,7 @@ extension AppModel {
             if let w = t.worker, let f = t.facts {
                 l += "\(t.stateWord), \(f.place.rawValue), session \(w.sessionId?.prefix(8) ?? "?")"
                 if let q = w.question { l += ": \(q)" }
-                if f.userTyping { l += " · the user took it over (typed there since your last message): you're paused there until they hand it back" }
+                if f.userTyping { l += " · " + DirectorRedLines.pausedWords }
                 if f.run != .stopped, let mine = caps.permissionClass, let theirs = f.permissionClass, mine != theirs {
                     l += " · your messages to it and its to you are held (\(theirs.rawValue) against your \(mine.rawValue)): switch this session to Auto, or ask the user to switch the worker"
                 }
@@ -263,7 +263,7 @@ extension AppModel {
             lines.append(l)
         }
         if listed.count < tasks.count { lines.append(DirectorRedLines.otherTasks(tasks.count - listed.count)) }
-        lines.append("Hearing back: SendMessage a live worker (notify_when_idle: true); its reply or the idle notice wakes you. Where messaging can't carry (a class mismatch above, or no messaging), run `duo2 director watch` under Monitor as the fallback.")
+        lines.append(DirectorRedLines.hearingBack)
         let pending = reg.pending   // retired by DL-257; an older file may still hold some
         j["workers"] = tasks.map { t -> [String: Any] in
             var w: [String: Any] = ["task": t.note.path, "title": t.note.title, "status": t.note.status ?? "open", "state": t.stateWord, "noteModified": t.modified]
@@ -325,6 +325,12 @@ extension AppModel {
             guard !job.isEmpty else { return .fail("usage: \(ActionID.directorCheck.action.usage)") }
             record("job:\(job)")
             return .ok(DirectorCheck.output("job:\(job)", nextLook: nil) + (next == nil ? "" : " (--next doesn't apply to a job: its schedule is its next look.)"), ["task": "job:\(job)"])
+        }
+        if let sid = DirectorCheck.sessionID(target) {
+            // A session the registry doesn't know (Q-562): no note, the log alone.
+            guard !sid.isEmpty, let full = DirectorOffline.fullId(sid, beacons: DirectorOffline.beacons()) else { return .fail("no session '\(sid)' in Claude's sessions") }
+            record("session:\(full)")
+            return .ok(DirectorCheck.output("session:\(full)", nextLook: nil), ["task": "session:\(full)"])
         }
         guard let hit = findTask(target, project: p.name) else { return .fail("no task '\(target)' in \(p.name)") }
         let text = (try? String(contentsOf: folder.appending(path: hit.path), encoding: .utf8)) ?? ""

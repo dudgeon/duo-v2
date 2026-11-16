@@ -507,7 +507,115 @@ public enum DirectorTranscript {
         guard let t = text?.trimmingCharacters(in: .whitespacesAndNewlines), !t.isEmpty else { return nil }
         if t.hasPrefix(tag.trimmingCharacters(in: .whitespaces)) { return .director }
         if let origin = (e["origin"] as? [String: Any])?["kind"] as? String { return origin == "human" ? .user : nil }
-        return t.hasPrefix("<") ? nil : .user
+        // With no origin: a `<…>` notice isn't the user, nor is an image the session read itself (the sweep's error, 2026-11-14).
+        return t.hasPrefix("<") || t.hasPrefix("[Image") ? nil : .user
+    }
+
+    /// How a session's last turn ended, for the missed-turns red lines (DL-343, F-698): the user's own
+    /// turn with no director turn after it, whether the session reported to the director after it (a
+    /// SendMessage to the director's name, or `duo2 director report`), and what it ended on.
+    public struct TurnEnd: Equatable, Sendable {
+        /// The user's latest turn, when no director turn came after it.
+        public var lastUserTurn: Date?
+        /// The session told the director after that turn.
+        public var reportedSince: Bool
+        /// A question still waiting (AskUserQuestion with no answer), else the end of the last reply after the user's turn.
+        public var endedOn: String?
+        /// The full text of the last reply (for an offer or promise to the director).
+        public var lastText: String?
+        /// The last assistant entry's time.
+        public var endedAt: Date?
+        /// Its first message carries the director's tag.
+        public var tagged: Bool
+
+        public init(lastUserTurn: Date? = nil, reportedSince: Bool = false, endedOn: String? = nil, lastText: String? = nil, endedAt: Date? = nil, tagged: Bool = false) {
+            self.lastUserTurn = lastUserTurn; self.reportedSince = reportedSince; self.endedOn = endedOn; self.lastText = lastText; self.endedAt = endedAt; self.tagged = tagged
+        }
+
+        /// The user drove the last turn and it never reached the director.
+        public var missed: Bool { lastUserTurn != nil && !reportedSince }
+    }
+
+    /// Reads a transcript's last `tailBytes` (and its first 16 KB, for the tag) for `TurnEnd`.
+    public static func turnEnd(_ url: URL, director: String, tailBytes: Int = 512 * 1024) -> TurnEnd? {
+        guard let h = try? FileHandle(forReadingFrom: url) else { return nil }
+        defer { try? h.close() }
+        let tag = Director.tag(director).trimmingCharacters(in: .whitespaces)
+        var out = TurnEnd()
+        let head = (try? h.read(upToCount: 16 * 1024)) ?? Data()
+        for l in String(decoding: head, as: UTF8.self).split(separator: "\n") where l.contains("\"user\"") {
+            guard let e = (try? JSONSerialization.jsonObject(with: Data(l.utf8))) as? [String: Any], e["type"] as? String == "user", e["isMeta"] as? Bool != true else { continue }
+            let c = (e["message"] as? [String: Any])?["content"]
+            let t = (c as? String) ?? ((c as? [[String: Any]])?.first { $0["type"] as? String == "text" }?["text"] as? String)
+            guard let t else { continue }
+            out.tagged = t.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix(tag)
+            break
+        }
+        let size = (try? h.seekToEnd()) ?? 0
+        let from = size > UInt64(tailBytes) ? size - UInt64(tailBytes) : 0
+        try? h.seek(toOffset: from)
+        guard let data = try? h.readToEnd() else { return nil }
+        var lines = String(decoding: data, as: UTF8.self).split(separator: "\n", omittingEmptySubsequences: true)
+        if from > 0, !lines.isEmpty { lines.removeFirst() }
+        var askId: String?, ask: String?, textAfterUser: String?
+        for l in lines {
+            guard l.contains("\"user\"") || l.contains("\"assistant\"") || l.contains("\"queued_command\""),
+                  let e = (try? JSONSerialization.jsonObject(with: Data(l.utf8))) as? [String: Any], e["isSidechain"] as? Bool != true else { continue }
+            let at = (e["timestamp"] as? String).flatMap(parseDate)
+            func userTurn() { out.lastUserTurn = at ?? .distantPast; out.reportedSince = false; textAfterUser = nil; ask = nil; askId = nil }
+            if MidTurnPrompt.text(e) != nil { userTurn(); continue }
+            let content = (e["message"] as? [String: Any])?["content"]
+            switch e["type"] as? String {
+            case "user":
+                if let blocks = content as? [[String: Any]], let id = askId, blocks.contains(where: { $0["type"] as? String == "tool_result" && $0["tool_use_id"] as? String == id }) {
+                    ask = nil; askId = nil
+                }
+                switch turnKind(e, tag: tag) {
+                case .director?: out.lastUserTurn = nil; out.reportedSince = false; ask = nil; askId = nil; textAfterUser = nil
+                case .user?: userTurn()
+                case nil: break
+                }
+            case "assistant":
+                out.endedAt = at ?? out.endedAt
+                if let s = content as? String, !s.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { out.lastText = s; textAfterUser = s }
+                for b in (content as? [[String: Any]]) ?? [] {
+                    switch b["type"] as? String {
+                    case "text":
+                        if let s = b["text"] as? String, !s.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { out.lastText = s; textAfterUser = s }
+                    case "tool_use":
+                        let input = (b["input"] as? [String: Any]) ?? [:]
+                        switch b["name"] as? String {
+                        case "SendMessage":
+                            if let to = input["to"] as? String, to == director || to.hasPrefix(director + " ") { out.reportedSince = true }
+                        case "Bash":
+                            if let cmd = input["command"] as? String, cmd.contains("duo2 director report") { out.reportedSince = true }
+                        case "AskUserQuestion":
+                            askId = b["id"] as? String
+                            ask = ((input["questions"] as? [[String: Any]])?.first?["question"] as? String) ?? (input["question"] as? String) ?? "a question"
+                        default: break
+                        }
+                    default: break
+                    }
+                }
+            default: break
+            }
+        }
+        if out.lastUserTurn != nil { out.endedOn = ask ?? textAfterUser.map { DirectorInbox.quote($0) } }
+        else { out.endedOn = ask ?? out.lastText.map { DirectorInbox.quote($0) } }
+        return out
+    }
+
+    /// The last reply offers or promises the director something: "I'll pass this to the director",
+    /// "shall I ask the director…", "the director will raise it". Narrow on purpose (Q-562): a session
+    /// that only talks about directors isn't one.
+    public static func promisesDirector(_ text: String?, director: String) -> Bool {
+        guard let text else { return false }
+        let who = "(?:the director|" + NSRegularExpression.escapedPattern(for: director) + ")"
+        let patterns = [
+            #"(?i)\b(?:i['’]ll|i will|i can|let me|shall i|should i|want me to|i['’]d)\b[^.?!\n]{0,80}\b"# + who,
+            "(?i)" + who + #"\s+(?:will|can|should)\s+(?:raise|start|pick|take|look|hear)"#,
+        ]
+        return patterns.contains { text.range(of: $0, options: .regularExpression) != nil }
     }
 
     static func parseDate(_ s: String) -> Date? {

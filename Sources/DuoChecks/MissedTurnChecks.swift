@@ -6,10 +6,10 @@ import Foundation
 // Geoff talks to workers directly about as often as to the director, and a turn he drives can end on a proposal,
 // a question or "I'll pass this to the director" that never reaches it. `duo2 director status` must show it.
 //
-// `DUO_CHECKS=missed-turns swift run DuoChecks`. Written to FAIL on main (2026-11-14): today a worker the user
-// typed in is skipped by R1 altogether (`DirectorDuties.swift`, `where n.hasWorkerRecord && !n.userTyping`), and
-// sessions the registry doesn't know are never read. Not in the default run until the fix lands; then it joins
-// `directorDutyChecks()` and the old "a stopped worker the user typed in gives no line" check is replaced.
+// `DUO_CHECKS=missed-turns swift run DuoChecks`. Written to FAIL on main (2026-11-14; 2 passed, 5 failed on
+// cd9096d8 too): a worker the user typed in was skipped by R1 altogether, and sessions the registry doesn't know
+// were never read. Fixed by DL-342/DL-343 (the inbox, the red lines); now part of `directorDutyChecks()`, and the
+// old "a stopped worker the user typed in gives no line" check is replaced.
 //
 // The words the fix must print are this check's contract: a line for the note (or, for an unregistered session,
 // the session) that says the user drove the turn and quotes how it ended.
@@ -40,7 +40,7 @@ private func tool(_ name: String, _ input: [String: Any], _ at: Date) -> String 
 let missedOffer = "If you agree, I'll pass this to the director as a change to steps 3 and 6."
 
 @MainActor func missedTurnChecks() throws {
-    print("missed turns: a turn the user drove in a worker reaches the director (F-698; fails on main until the fix)")
+    print("missed turns: a turn the user drove in a worker reaches the director (F-698, DL-342, DL-343)")
     let fm = FileManager.default
     let root = fm.temporaryDirectory.appending(path: "dmissed-\(UUID().uuidString.prefix(6))")
     defer { try? fm.removeItem(at: root) }
@@ -126,4 +126,59 @@ let missedOffer = "If you agree, I'll pass this to the director as a change to s
     check(evalNote(stoppedTyped("needs-you", since: 5 * day, last: 3 * day, question: "AskUserQuestion")).contains { $0.duty == .R1 && $0.what.contains("over a day") },
           "a worker blocked on a question for over a day is R1 red even when the user typed in it")
     check(evalNote(stoppedTyped("working", since: hour, last: 60)).isEmpty, "a worker the user is talking to right now gives no line (don't nag mid-conversation)")
+
+    // 5. The inbox (DL-342): `duo2 director report` writes it, status reads it, a check clears it.
+    let notePath = proj.appending(path: "tasks/article.md").path
+    let done = try DirectorReport.record(target: notePath, text: "The user drove a turn. Asked: a worker skill. Decided: nothing yet. Waiting on: the user, for yes to the split.",
+                                         cwd: root, session: "s-article", name: "article-worker", now: n.addingTimeInterval(-hour))
+    check(done.project.standardizedFileURL.path == proj.standardizedFileURL.path && done.item.director == director && done.item.task == "tasks/article.md",
+          "report files into the note's project, for the note's director (\(done.item))")
+    check(done.output.contains("SendMessage(to: \"\(director)\""), "…and says to ring the doorbell, by the director's name (\(done.output))")
+    check(((try? String(contentsOf: proj.appending(path: "tasks/article.md"), encoding: .utf8)) ?? "").contains("Reported to \(director): The user drove a turn."),
+          "…and writes a Reported line in the note's Progress")
+    let quiet = try DirectorReport.record(target: "reported", text: "Renamed the section. Waiting on: no one.", cwd: proj, session: "s-reported", name: nil, now: n.addingTimeInterval(-hour))
+    check(!quiet.output.contains("SendMessage("), "a report that waits on no one doesn't ask to wake the director (C-186)")
+    check((try? DirectorReport.record(target: "nope", text: "x", cwd: proj, session: nil, name: nil)) == nil, "a report on a note that isn't there is refused")
+    check((try? DirectorReport.record(target: "article", text: "  ", cwd: proj, session: nil, name: nil)) == nil, "an empty report is refused")
+    let facts2 = DirectorFactsReader.facts(project: proj, director: director, reg: reg, beacons: [], caps: caps, skillNote: nil, duo: nil, claudeDir: cfg, appDir: nil, now: n)
+    let red2 = DirectorRedLines.evaluate(facts2, all: true)
+    let inboxLine = red2.first { $0.subject == "tasks/article.md" }
+    check(inboxLine?.what.contains("reported") == true && inboxLine?.what.contains("Waiting on: the user") == true,
+          "an unread report is R1 red for its task, quoted (\(inboxLine?.line ?? "none"))")
+    check(red2.filter { $0.subject == "tasks/article.md" }.count == 1, "…one line per task, not one per report")
+    let later = ISO8601DateFormatter().string(from: n.addingTimeInterval(-60))
+    var withCheck = facts2
+    withCheck.events.append(DirectorEvent(at: later, director: director, event: "check", task: "tasks/article.md", detail: "read it"))
+    withCheck.events.append(DirectorEvent(at: later, director: director, event: "check", task: "tasks/reported.md", detail: "read it"))
+    withCheck.events.append(DirectorEvent(at: later, director: director, event: "check", task: "session:s-unregistered", detail: "read it"))
+    for nn in withCheck.notes.indices { withCheck.notes[nn].lastChecked = n.addingTimeInterval(-60) }
+    let cleared = DirectorRedLines.evaluate(withCheck, all: true)
+    check(!cleared.contains { $0.subject == "tasks/article.md" }, "a check after the report clears it (\(cleared.map(\.line)))")
+    check(!cleared.contains { $0.line.contains("s-unregistered") }, "duo2 director check session:<id> clears an unregistered session's line")
+    var other = facts2; other.director = "director-q"
+    check(!DirectorRedLines.evaluate(other, all: true).contains { $0.what.contains("Waiting on: the user") }, "a report for another director isn't this one's")
+
+    // 6. Overseer (Geoff's note on Q-569): a director the user names may read another project's red lines.
+    let otherEntry = DirectorRegistry.Entry(name: director, sessionId: "me-1", since: "t")
+    check(!DirectorFactsReader.applies(role: .other(otherEntry), callerName: "director-home"), "another project's director doesn't get its red lines")
+    check(DirectorFactsReader.applies(role: .other(otherEntry), callerName: "director-home", overseers: ["director-home"]), "…unless the user named it overseer")
+    try Data("---\ntitle: P\noverseer: director-home\n---\n".utf8).write(to: proj.appending(path: "_PROJECT.md"))
+    check(DirectorInbox.overseers(project: proj, home: nil) == ["director-home"], "overseer: in _PROJECT.md names it")
+
+    // 7. What counts as the user, a report and a promise.
+    check(DirectorTranscript.promisesDirector("If you agree, I’ll pass this to the director.", director: director), "an offer to pass something to the director is a promise (curly quote too)")
+    check(!DirectorTranscript.promisesDirector("The director skill is 205 lines; the trim comes later.", director: director), "talking about the director isn't a promise")
+    try transcript("s-image", [
+        directorTurn("You're the worker on tasks/x.md.", t0, director: director, cwd: proj.path),
+        jl(["type": "user", "timestamp": isoMs.string(from: t0.addingTimeInterval(60)), "message": ["role": "user", "content": "[Image: original 1200x800]"]]),
+        say("Looked at the capture.", t0.addingTimeInterval(90)),
+    ], lastWrite: t0.addingTimeInterval(90))
+    let img = DirectorTranscript.turnEnd(projFolder.appending(path: "s-image.jsonl"), director: director)
+    check(img?.lastUserTurn == nil && img?.tagged == true, "an image the session read itself isn't the user's turn (the sweep's error), and the tag is read")
+    try transcript("s-bash", [
+        human("go ahead", t0, cwd: proj.path),
+        tool("Bash", ["command": "duo2 director report tasks/x.md \"Asked: go. Waiting on: no one.\""], t0.addingTimeInterval(10)),
+        say("Done.", t0.addingTimeInterval(20)),
+    ], lastWrite: t0.addingTimeInterval(20))
+    check(DirectorTranscript.turnEnd(projFolder.appending(path: "s-bash.jsonl"), director: director)?.reportedSince == true, "a duo2 director report call after the user's turn is a report")
 }
