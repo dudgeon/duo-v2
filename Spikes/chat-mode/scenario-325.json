@@ -1,0 +1,20 @@
+[
+{"wait":"for agents|for shortcuts","timeout":150},
+{"sleep":800},
+{"dump":"00-idle"},
+{"type":"SCENARIO:bash"},
+{"key":"enter"},
+{"wait":"Do you want|Allow","timeout":120},
+{"sleep":600},
+{"dump":"01-bash"},
+{"key":"esc"},
+{"sleep":3000},
+{"type":"SCENARIO:otherrepo"},
+{"key":"enter"},
+{"wait":"Do you want|Allow","timeout":120},
+{"sleep":600},
+{"dump":"02-other-repo"},
+{"key":"esc"},
+{"sleep":3000},
+{"dump":"03-after-esc"}
+]

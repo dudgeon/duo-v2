@@ -44,6 +44,8 @@ const scenarios = {
   edit2real: () => [{ tool: 'Edit', input: { file_path: (process.env.MOCK_CWD || process.cwd()) + '/notes.md', old_string: 'First line.', new_string: 'First line, edited.\nSecond line.' } }],
   // Questions that follow a tool (F-245): the question comes on the reply to the tool's result.
   readask: () => [{ text: 'Reading a file first.' }, { tool: 'Read', input: { file_path: (process.env.MOCK_CWD || process.cwd()) + '/data.txt' } }],
+  // A read-only command in a repository that isn't the project's (2.1.325 asks first, F-731).
+  otherrepo: () => [{ text: 'Looking at the other repo.' }, { tool: 'Bash', input: { command: `git -C ${process.env.MOCK_OTHER || '/tmp/other'} status --short`, description: 'Status of the other repo' } }],
   permask: () => [{ text: 'Running a command first.' }, { tool: 'Bash', input: { command: 'echo hi', description: 'Say hi' } }],
   // Awkward but realistic content: markdown and backticks in labels, wide characters and emoji, a multi-line
   // question, numbered lines inside a description, a long wrapping description.

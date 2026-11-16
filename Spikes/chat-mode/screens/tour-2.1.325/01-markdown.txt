@@ -1,0 +1,34 @@
+  · to use profile: Unset the ANTHROPIC_API_KEY environment variable, or claude /logout then say 
+  "No" to the API key approval before login.
+  · to use ANTHROPIC_API_KEY: Run `ant auth logout`, or remove the active profile under 
+  ~/.config/anthropic/configs/.
+
+❯ SCENARIO:md                                                                                       
+ 
+⏺ Results
+
+  Here is bold, italic, code and a link (https://example.com).
+
+  ┌─────┬───────┐
+  │ Col │ Value │
+  ├─────┼───────┤
+  │ a   │ 1     │
+  ├─────┼───────┤
+  │ b   │ 2     │
+  └─────┴───────┘
+
+  let x = 1     
+  print(x)
+
+  - one
+  - two
+    - nested
+
+  See /tmp/example.txt:12 for more.
+   
+✻ Worked for 2s · done 9:13 AM
+                                                                                ◐ medium · /effort
+────────────────────────────────────────────────────────────────────────────────────────────────────
+❯  
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⏸ manual mode on · ? for shortcuts · ← for agents

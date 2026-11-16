@@ -143,7 +143,7 @@ public enum DuoSignal {
     /// How long a session started with the mod may stay silent before the canary says so.
     static let silentAfter: TimeInterval = 20
 
-    private static func lastLine(_ s: String) -> String {
+    static func lastLine(_ s: String) -> String {
         s.split(separator: "\n").map { $0.trimmingCharacters(in: .whitespaces) }.last { !$0.isEmpty } ?? "no answer"
     }
 
@@ -187,6 +187,13 @@ public enum DuoSignal {
         DispatchQueue.global(qos: .utility).async { validateNow(claude: claude, mod: mod, key: key) }
     }
 
+    /// The verdict is the report's last line, `✔ Validation passed` or `✘ Validation failed`, and the exit status. Earlier
+    /// lines may carry a `✘` of their own: since 2.1.311 the plugin directory's advisory ("✘ Found 2 problems the plugin
+    /// directory refuses a submission for", a missing README or LICENSE) is printed above a passing result (F-731).
+    public static func passed(_ out: String, status: Int32?) -> Bool {
+        status == 0 && lastLine(out).contains("Validation passed")
+    }
+
     /// `claude plugin validate`, now (off the main thread), remembered for this claude and version.
     @discardableResult
     private static func validateNow(claude: String, mod: String, key: String) -> (Bool?, String) {
@@ -197,7 +204,7 @@ public enum DuoSignal {
             return (nil, "")
         }
         let out = r.out
-        let ok = out.contains("Validation passed") && !out.contains("✘")
+        let ok = Self.passed(out, status: r.status)
         lock.lock(); validated[key] = ok; validating.remove(key); lock.unlock()
         var all = stored(mod); all[key] = ok
         if let data = try? JSONSerialization.data(withJSONObject: all) { try? data.write(to: storedURL(mod), options: .atomic) }
