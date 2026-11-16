@@ -60,6 +60,9 @@ public enum HookEvents {
             // The project's brief (ENH-16) and the task(s) the session is attributed to, at start and when they change (DL-116).
             let context: [String: Any] = ["type": "command", "command": q + " hook context", "timeout": 10]
             for e in ["SessionStart", "UserPromptSubmit"] { hooks[e] = [["hooks": [hook["hooks"] as! [[String: Any]], [context]].flatMap { $0 }]] }
+            // A director's (or its worker's) one reminder before it stops (DL-342 (2), (3)): nothing for any other session.
+            let stop: [String: Any] = ["type": "command", "command": q + " hook stop", "timeout": 15]
+            hooks["Stop"] = [["hooks": [hook["hooks"] as! [[String: Any]], [stop]].flatMap { $0 }]]
         }
         var settings: [String: Any] = ["hooks": hooks]
         // Lets duo2 reach Duo from inside Claude's sandbox: this one socket only (DL-43, F-29).

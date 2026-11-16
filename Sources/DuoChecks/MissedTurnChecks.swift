@@ -181,4 +181,49 @@ let missedOffer = "If you agree, I'll pass this to the director as a change to s
         say("Done.", t0.addingTimeInterval(20)),
     ], lastWrite: t0.addingTimeInterval(20))
     check(DirectorTranscript.turnEnd(projFolder.appending(path: "s-bash.jsonl"), director: director)?.reportedSince == true, "a duo2 director report call after the user's turn is a report")
+    try transcript("s-denied", [
+        human("go ahead", t0, cwd: proj.path),
+        jl(["type": "assistant", "timestamp": isoMs.string(from: t0.addingTimeInterval(10)), "message": ["role": "assistant", "content": [["type": "tool_use", "id": "rep1", "name": "Bash", "input": ["command": "duo2 director report tasks/x.md \"Asked: go.\""]]]]]),
+        jl(["type": "user", "timestamp": isoMs.string(from: t0.addingTimeInterval(11)), "message": ["role": "user", "content": [["type": "tool_result", "tool_use_id": "rep1", "is_error": true, "content": "Permission for this action was denied"]]]]),
+        say("The report was blocked.", t0.addingTimeInterval(20)),
+    ], lastWrite: t0.addingTimeInterval(20))
+    check(DirectorTranscript.turnEnd(projFolder.appending(path: "s-denied.jsonl"), director: director)?.missed == true, "a report call that was denied isn't a report (F-711, the live run)")
+
+    // 8. The Stop hooks (DL-342 (2), (3)): once per turn, additionalContext, never a block.
+    try reg.save(project: proj)
+    func stop(_ sid: String, active: Bool = false, last: String? = nil, crons: [Any] = [], tasks: [[String: Any]] = []) -> [String: Any] {
+        var p: [String: Any] = ["session_id": sid, "cwd": proj.path, "hook_event_name": "Stop", "stop_hook_active": active, "session_crons": crons, "background_tasks": tasks,
+                                "transcript_path": projFolder.appending(path: "\(sid).jsonl").path]
+        if let last { p["last_assistant_message"] = last }
+        return p
+    }
+    func context(_ out: String?) -> String? {
+        guard let out, let j = (try? JSONSerialization.jsonObject(with: Data(out.utf8))) as? [String: Any], j["decision"] == nil,
+              let h = j["hookSpecificOutput"] as? [String: Any], h["hookEventName"] as? String == "Stop" else { return nil }
+        return h["additionalContext"] as? String
+    }
+    let w = context(DirectorStopHook.output(stop("s-article", last: missedOffer), claudeDir: cfg, now: n))
+    check(w?.contains("duo2 director report") == true && w?.contains(proj.appending(path: "tasks/article.md").path) == true && w?.contains("The user drove this turn") == true,
+          "worker hook: a turn the user drove with no report asks for one, with the note's path, as additionalContext (\(w ?? "nothing"))")
+    check(DirectorStopHook.output(stop("s-article", active: true), claudeDir: cfg, now: n) == nil, "…once per turn: nothing when stop_hook_active")
+    check(DirectorStopHook.output(stop("s-reported"), claudeDir: cfg, now: n) == nil, "…and nothing for a worker that reported this turn")
+    try transcript("s-asks", [directorTurn("Carry on with the capture.", t0, director: director, cwd: proj.path), say("Captured. Shall I publish it?", t0.addingTimeInterval(9))], lastWrite: t0)
+    reg.setWorker(task: "tasks/reported.md", session: "s-asks", at: iso.string(from: t0), adopted: false); try reg.save(project: proj)
+    check(context(DirectorStopHook.output(stop("s-asks", last: "Captured. Shall I publish it?"), claudeDir: cfg, now: n))?.contains("ends on a question or an offer") == true,
+          "worker hook: a director-driven turn ending on a question asks for a report too")
+    check(DirectorStopHook.output(stop("s-unknown"), claudeDir: cfg, now: n) == nil, "any other session gets nothing")
+    let d = context(DirectorStopHook.output(stop("me-1"), claudeDir: cfg, now: n))
+    check(d?.contains("no wake is armed") == true && d?.contains("check_by") == true, "director hook: a check_by ahead and no wake armed is one reminder (\(d ?? "nothing"))")
+    check(DirectorStopHook.output(stop("me-1", crons: [["id": "c1", "schedule": "0 9 * * *", "recurring": false, "prompt": "look"]]), claudeDir: cfg, now: n) == nil, "…nothing when a wakeup is armed")
+    check(DirectorStopHook.output(stop("me-1", tasks: [["id": "m", "type": "monitor", "status": "running"]]), claudeDir: cfg, now: n) == nil, "…or a Monitor runs")
+    let failed = DirectorStopHook.recordFailure(["session_id": "s-article", "cwd": proj.path, "hook_event_name": "StopFailure", "error": "rate_limit"], now: n)
+    check(failed?.task == "tasks/article.md" && failed?.text.contains("rate_limit") == true, "StopFailure: a worker's API-error stop goes into the inbox")
+    let settings = (try? JSONSerialization.jsonObject(with: Data(DirectorStopHook.workerSettings(duo2: "/A B/duo2").utf8))) as? [String: Any]
+    check(((settings?["hooks"] as? [String: Any])?.keys.sorted()) == ["Stop", "StopFailure"], "the worker's --settings carries Stop and StopFailure")
+    check(((settings?["permissions"] as? [String: Any])?["allow"] as? [String]) == ["Bash(duo2 director report:*)"], "…and pre-approves only the report (F-711)")
+    check(Director.backgroundStart(folder: proj, task: "tasks/article.md", director: director, duo2: "/x/duo2").command.contains("--settings '{"),
+          "a background start with hooks passes --settings")
+    var off = ClientCaps(); off.hooks = .no
+    check(Director.hookCLI(caps: off) == nil && !Director.backgroundStart(folder: proj, task: "tasks/article.md", director: director).command.contains("--settings"),
+          "where hooks are off, no hook is passed (the skill rule and the red line remain, F-709)")
 }

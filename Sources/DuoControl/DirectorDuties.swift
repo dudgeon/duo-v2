@@ -301,7 +301,7 @@ public enum DirectorRedLines {
             guard let last = items.last, let at = last.date else { continue }
             if task.hasPrefix("tasks/"), let n = f.notes.first(where: { $0.path == task }), !Director.unfinished(status: n.status, archived: false) { continue }
             let count = items.count == 1 ? "Its worker reported" : "Its worker sent \(items.count) reports, the last"
-            add(.R1, task, "\(count) \(span(now.timeIntervalSince(at))) ago, and you haven't checked since: \"\(DirectorInbox.quote(last.text))\".",
+            add(.R1, task, "\(count) \(span(now.timeIntervalSince(at))) ago, and you haven't checked since: \"\(DirectorInbox.reportQuote(last.text))\".",
                 "Read it, take up what it asks of you, put anything waiting on the user to them, then duo2 director check \(task) \"what you found\".")
             taken.insert(task)
         }

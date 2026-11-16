@@ -447,7 +447,7 @@ extension AppModel {
             // recorded by a name unique to this start; Duo links it when a session with that name
             // appears, with no link step and no --adopt (F-318).
             if let why = Director.backgroundRefusal(caps) { log("refused", path, nil, nil, why); return .fail(why) }
-            let (name, cmd) = Director.backgroundStart(folder: folder, task: path, director: director, remoteControl: caps.remoteControl == .yes)
+            let (name, cmd) = Director.backgroundStart(folder: folder, task: path, director: director, remoteControl: caps.remoteControl == .yes, duo2: Director.hookCLI(caps: caps))
             var reg = DirectorRegistry.load(project: folder)
             reg.setWorker(task: path, session: "", at: Self.isoNow(), adopted: false, name: name)
             try? reg.save(project: folder)

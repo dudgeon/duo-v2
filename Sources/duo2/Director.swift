@@ -366,7 +366,7 @@ func directorStartOffline(_ rest: [String]) -> Int32 {
 
     // `claude --bg` picks its own session id (F-318), so the worker is recorded under the name the
     // command carries, and linked when a session with that name appears.
-    let (worker, cmd) = Director.backgroundStart(folder: d.project, task: path, director: d.name, remoteControl: d.caps.remoteControl == .yes)
+    let (worker, cmd) = Director.backgroundStart(folder: d.project, task: path, director: d.name, remoteControl: d.caps.remoteControl == .yes, duo2: Director.hookCLI(caps: d.caps))
     d.reg.setWorker(task: path, session: "", at: now, adopted: false, name: worker)
     do { try d.reg.save(project: d.project) } catch { return offlineFail("couldn't write \(DirectorRegistry.file(project: d.project).path): \(error.localizedDescription)") }
     let status = noteStatus()

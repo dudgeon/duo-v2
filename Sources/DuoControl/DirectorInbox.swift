@@ -90,6 +90,14 @@ public enum DirectorInbox {
         return one.count > limit ? "…" + one.suffix(limit).trimmingCharacters(in: .whitespaces) : one
     }
 
+    /// What a red line quotes of a report: from its "Waiting on:" when it has one (what the director must act
+    /// on), else its start, `quoted` characters at most.
+    public static func reportQuote(_ s: String, limit: Int = quoted) -> String {
+        let one = s.replacingOccurrences(of: "\r", with: " ").replacingOccurrences(of: "\n", with: " ").trimmingCharacters(in: .whitespaces)
+        let from = one.range(of: "Waiting on:", options: .caseInsensitive).map { String(one[$0.lowerBound...]) } ?? one
+        return from.count > limit ? from.prefix(limit).trimmingCharacters(in: .whitespaces) + "…" : from
+    }
+
     /// A report says nothing waits on anyone, so the director needn't be woken for it (C-186's volume).
     public static func waitsOnNoOne(_ text: String) -> Bool {
         text.range(of: #"(?i)waiting on:\s*(no one|nobody|none|nothing)"#, options: .regularExpression) != nil
