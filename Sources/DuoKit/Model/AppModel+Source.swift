@@ -28,14 +28,15 @@ extension AppModel {
     }
 
     /// Turns Source mode on or off for the document on screen, and remembers it.
-    public func setSourceMode(_ on: Bool) {
-        guard let path = sourceDocumentPath else { return }
+    public func setSourceMode(_ on: Bool, done: (@MainActor () -> Void)? = nil) {
+        guard let path = sourceDocumentPath else { done?(); return }
         let apply = { [self] in
             if on { sourceDocuments.insert(path) } else { sourceDocuments.remove(path) }
             let all = sourceDocuments.sorted()
             DuoState.update { $0.sourceDocuments = all }
             for x in loadedEditors { x.sourceModes = all; x.sendSourceModes() }
             editorIfLoaded?.showSource(on)
+            done?()
         }
         if htmlFileOnScreen != nil, !on, let e = editorIfLoaded, e.url?.standardizedFileURL.path == path {
             // Back to the page: it reads the file, so what was typed is saved first.
