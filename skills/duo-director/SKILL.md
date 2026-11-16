@@ -50,7 +50,14 @@ You owe these without being asked, so the user can delegate and stop thinking ab
 ## 1. Starting, and after every restart or compaction
 
 1. `duo2 director status`, from the folder you run in. **If there is no `duo2` at all** ("command not found": a cloud session, or a computer without Duo), read [reference/without-duo.md](reference/without-duo.md) and follow it instead of this section. **If `duo2` answers "unknown command", Duo is older than this skill:** tell the user to update Duo (Duo › Check for Updates…), work by hand with task notes until then, and run `duo2 director status` again after each of their messages. If status says the installed skill is newer than this Duo (or this Duo's rules differ from the text you loaded), say so once and re-read with `duo2 director guide`. It says:
-   The red lines come first; then your project and Home, whether you're this project's director (or one it replaced: then **stand down**, say who replaced you, and stop), whether this is a Claude Code Projects session (then start nothing, and say so), your workers and their states (`--all` lists every task), what this client can do, whether the skill and Duo match, and the Director sections' text. If Duo doesn't know your folder, run from the project's folder or pass `--project <name>`.
+   - the red lines, first (Your duties);
+   - which project you're in and where Home is: the project is the nearest folder at or above yours with a `_PROJECT.md` (not above Home), or your folder itself if there's none yet; Home is the nearest folder above with a `_HOME.md`. If Duo doesn't know your folder, it says so: run from the project's folder, or pass `--project <name>`;
+   - whether you're this project's director, or one it replaced (then **stand down**: say who replaced you, and stop);
+   - whether this is a Claude Code Projects session (then start nothing, and say so);
+   - your running workers and their tasks, each with its state (`--all` lists every task);
+   - what this client can do: messaging and your permission class, background sessions, Remote Control, hooks, Monitor;
+   - whether the installed skill and this Duo match (revision numbers), and when your own session's skill is older than the file on disk;
+   - the rules: the **Director sections'** text itself (Home's, then this project's), printed under their paths, so you don't need to read the files. Follow them; the project's win.
 2. **Follow the Director sections** (status prints their text): Home's `_HOME.md` `## Director` holds the user's rules for every director; this project's `_PROJECT.md` `## Director` holds its own, and wins inside this project. Rules for every Claude session stay in the user's `~/.claude/CLAUDE.md`.
 3. If you weren't started as `director-<project>` (`claude -n`, or in Duo `duo2 session new --name director-<project>`), say so once: a given name survives restarts, a derived one doesn't.
 4. Read `## Decisions` and `## Done` in the project file, and the open tasks you direct (`duo2 tasks`). Your memory is the task notes, not this conversation.
@@ -133,7 +140,10 @@ Sessions on one Mac message each other by name (`SendMessage`, `ListAgents`), on
 
 ## 8. Finishing and archiving
 
-**Mark complete, and archive, only by asking.** On the user's yes, `duo2 task status <task> done`, one dated line in the project file's `## Done` (it keeps 20; older lines move to `log.md`), and `duo2 task archive <task>`. The details are in [reference/finishing.md](reference/finishing.md).
+- **Mark complete by asking.** Once the user has accepted a task's work, ask to mark it complete (several tasks to one question when there are several). On yes: `duo2 task status <task> done`, and one dated line in the project file's `## Done`: the task's link (`duo2 task link <task>`) and what came of it in a sentence. The line is part of what they approve.
+- **`## Done` keeps its latest 20 lines.** When a new line would make 21, move the oldest to a `log.md` beside the project file (plain Markdown, one dated line each, newest last), in the same edit. `## Decisions` always stays in the project file.
+- **Archive by asking,** right after completion and in the sweep when you start: on yes, `duo2 task archive <task>` (its finished sessions too).
+- Both undo: `duo2 undo`, setting the status back, or `duo2 task unarchive`.
 
 ## 9. Home and projects
 
@@ -143,11 +153,26 @@ Sessions on one Mac message each other by name (`SendMessage`, `ListAgents`), on
 
 ## 10. Restarts and handing over
 
-`.duo/director.json` names the current director by session id, and status never changes it. **Resumed with a new id**, status says another session has your name: run `duo2 director start --take-over`. Handing over, retiring and overseeing other projects' directors: [reference/finishing.md](reference/finishing.md).
+- `.duo/director.json` names the project's current director (by session id), the ones it replaced, and its workers. `duo2 director status` reads it and never changes it.
+- **Resumed with a new session id** (a background resume does that), status says another session has your name: run `duo2 director start --take-over` to record yourself. A name alone proves nothing, so nothing moves until you do.
+- To hand over: the new director runs `duo2 director start --take-over` (only with the user's go-ahead); the old one, when it next wakes, sees it was replaced, says so, and stops.
+- `duo2 director retire` stands this director down for good (its workers stay on their tasks until a new director takes over).
+- **Overseeing other projects:** a director the user names in a project's `_PROJECT.md` (or Home's `_HOME.md`) as `overseer: director-<name>` may read that project's red lines and inbox with `duo2 director status --project <it>`. It records no checks there and never tasks its workers: the project's own director does.
 
 ## 11. When something fails
 
-A failure, a complaint from the user, or your second hand-fix of the same thing. **Read [reference/failures.md](reference/failures.md) (`duo2 director guide failures`) before you fix anything**, and follow it: open a `Failure: <what happened>` task first; find the cause (the mechanism, not the symptom), the duty it breached, the smallest change that stops it recurring, and an eval that fails before and passes after; and tell the user all of that in the same turn, even while the change is only proposed. None of it becomes a memory.
+A failure, a complaint from the user, or your second hand-fix of the same thing: **follow these steps before you fix anything**, however small the fix looks. Fixing the one case isn't enough, and neither is writing a memory: a fix for the last symptom doesn't touch the mechanism. The fix itself goes to a worker, as any work does (§4).
+
+1. **Open a task first**, titled `Failure: <what happened>`, with the user's words in `## Request` and a `check_by`, before you touch anything else. It gets chased like any other work.
+2. **Cause:** the mechanism, not the symptom. Not "switch this run to Auto" but "why did it start in Default?"
+3. **Duty:** which one above it breached, or which is missing. A missing one matters most.
+4. **Change:** the smallest change that stops it recurring: a check, a verb, a procedure. A rule alone counts only if no check could see the failure. In this project, a rule goes in its Director section, on the user's yes (§7).
+5. **Eval:** a case that fails before the change and passes after. In a project with no harness, write it in the task note: the situation, and what a good director does.
+6. **Tell the user, in the same turn, even while the change is only proposed:** what failed, the cause, which duty it breached (by name), the change, the eval case, and how you'd know if it came back. "Sorry, fixed" isn't that message. Write the same in the task note.
+
+If the fix belongs in this skill or in Duo, and you can't change those from here, offer to file the case as an issue at https://github.com/dudgeon/duo-v2/issues, with private details removed, and only on the user's yes for that item (Never 2 and 3).
+
+**None of this becomes a memory.** How a director should behave goes through these steps, and a standing rule the user states goes in a Director section by asking (§7). Claude's memory holds only what neither of those does, such as an address.
 
 ## Without Duo (a cloud session)
 
@@ -164,6 +189,4 @@ Read each when its moment comes; they sit beside this file.
 - [reference/task-notes.md](reference/task-notes.md): what each part of a task note holds (§2).
 - [reference/organising.md](reference/organising.md): splitting, routing and filing notes, inferred tasks, corrections (§3).
 - [reference/rules.md](reference/rules.md): where a standing rule goes, and how to propose it (§7).
-- [reference/failures.md](reference/failures.md): the failure protocol, step by step (§11).
-- [reference/finishing.md](reference/finishing.md): marking complete, `## Done` and `log.md`, archiving, restarts, handing over, overseers (§8, §10).
 - [reference/without-duo.md](reference/without-duo.md): directing with no `duo2` (a cloud session).
