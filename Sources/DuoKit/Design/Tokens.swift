@@ -23,6 +23,16 @@ public enum DuoColor {
     public static let text = Color(nsColor: NSColor.duoDynamic(light: 0x1F2328, dark: 0xE6E8EB, classic: 0x1A1410, name: "text"))
     /// Secondary text; idle and resolved glyphs; chevrons
     public static let text2 = Color(nsColor: NSColor.duoDynamic(light: 0x5B636D, dark: 0x9AA1AB, classic: 0x7B6F58, name: "text2"))
+    /// A tag name or keyword in Source view (HTML tags, CSS selectors, JS keywords, a link's text); DL-346, view-source-handoff
+    public static let syntaxTag = Color(nsColor: NSColor.duoDynamic(light: 0x1D5FA8, dark: 0x7FB0EE, classic: 0x2A5A8C, name: "syntaxTag"))
+    /// An attribute or property name in Source view (HTML attributes, CSS properties, YAML keys); DL-346
+    public static let syntaxAttr = Color(nsColor: NSColor.duoDynamic(light: 0x7B3FB5, dark: 0xC3A0EC, classic: 0x6E3A9E, name: "syntaxAttr"))
+    /// A string or value in Source view (quoted values, link targets, code spans); DL-346
+    public static let syntaxString = Color(nsColor: NSColor.duoDynamic(light: 0x2F7D32, dark: 0x7CC48A, classic: 0x3D6B2A, name: "syntaxString"))
+    /// A comment in Source view, drawn italic; DL-346
+    public static let syntaxComment = Color(nsColor: NSColor.duoDynamic(light: 0x5B636D, dark: 0x9AA1AB, classic: 0x7B6F58, name: "syntaxComment"))
+    /// Punctuation and Markdown marks in Source view (#, **, brackets, fences): the secondary text colour; DL-346
+    public static let syntaxMark = Color(nsColor: NSColor.duoDynamic(light: 0x5B636D, dark: 0x9AA1AB, classic: 0x7B6F58, name: "syntaxMark"))
     /// The one accent: needs-you glyph, label, chip, question box
     public static let needsYou = Color(nsColor: NSColor.duoDynamic(light: 0xC2410C, dark: 0xF97316, classic: 0xB91C1C, name: "needsYou"))
     /// The 2 pt rule over the active pane's top edge (DL-165). Today the text colour; a scheme may give it a colour of its own (Classic: orange).
@@ -103,6 +113,11 @@ public enum DuoNSColor {
     public static let controlEdge = NSColor.duoDynamic(light: 0x8B939C, dark: 0x6E7681, classic: 0xB8AB8E, name: "controlEdge")
     public static let text = NSColor.duoDynamic(light: 0x1F2328, dark: 0xE6E8EB, classic: 0x1A1410, name: "text")
     public static let text2 = NSColor.duoDynamic(light: 0x5B636D, dark: 0x9AA1AB, classic: 0x7B6F58, name: "text2")
+    public static let syntaxTag = NSColor.duoDynamic(light: 0x1D5FA8, dark: 0x7FB0EE, classic: 0x2A5A8C, name: "syntaxTag")
+    public static let syntaxAttr = NSColor.duoDynamic(light: 0x7B3FB5, dark: 0xC3A0EC, classic: 0x6E3A9E, name: "syntaxAttr")
+    public static let syntaxString = NSColor.duoDynamic(light: 0x2F7D32, dark: 0x7CC48A, classic: 0x3D6B2A, name: "syntaxString")
+    public static let syntaxComment = NSColor.duoDynamic(light: 0x5B636D, dark: 0x9AA1AB, classic: 0x7B6F58, name: "syntaxComment")
+    public static let syntaxMark = NSColor.duoDynamic(light: 0x5B636D, dark: 0x9AA1AB, classic: 0x7B6F58, name: "syntaxMark")
     public static let needsYou = NSColor.duoDynamic(light: 0xC2410C, dark: 0xF97316, classic: 0xB91C1C, name: "needsYou")
     public static let paneFocus = NSColor.duoDynamic(light: 0x1F2328, dark: 0xE6E8EB, classic: 0xC66A2E, name: "paneFocus")
     public static let onNeedsYou = NSColor.duoDynamic(light: 0xFFFFFF, dark: 0x0C0D10, classic: 0xFFFFFF, name: "onNeedsYou")
@@ -610,6 +625,11 @@ public enum DuoWebTokens {
         ("control-edge", DuoNSColor.controlEdge),
         ("text", DuoNSColor.text),
         ("text2", DuoNSColor.text2),
+        ("syntax-tag", DuoNSColor.syntaxTag),
+        ("syntax-attr", DuoNSColor.syntaxAttr),
+        ("syntax-string", DuoNSColor.syntaxString),
+        ("syntax-comment", DuoNSColor.syntaxComment),
+        ("syntax-mark", DuoNSColor.syntaxMark),
         ("needs-you", DuoNSColor.needsYou),
         ("pane-focus", DuoNSColor.paneFocus),
         ("on-needs-you", DuoNSColor.onNeedsYou),

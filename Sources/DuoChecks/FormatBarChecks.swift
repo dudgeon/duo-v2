@@ -16,11 +16,11 @@ import Foundation
     check(shows(), "the bar shows while a Markdown document has the keyboard")
     check(!shows(keys: false), "…and not when the keyboard is elsewhere (the console, the sidebar, another tab)")
     check(shows(keys: false, menu: true) && shows(keys: false, dict: true), "…but stays while one of its menus is open and while a dictation runs")
-    check(!shows(md: false) && !shows(ro: true) && !shows(preview: true) && !shows(source: true), "…never on another kind of file, a read-only file, a template's preview or in Source mode")
+    check(!shows(md: false) && !shows(ro: true) && !shows(preview: true) && shows(source: true), "…never on another kind of file (HTML source included), a read-only file or a template's preview, and in Markdown's Source view it shows (DL-346)")
     check(!shows(hidden: true) && !shows(hidden: true, menu: true, dict: true, review: true), "View › Hide Formatting Bar turns it off")
     // DL-317: pending review keeps the bar without the keyboard, but only on a Markdown document it can show on.
     check(shows(keys: false, review: true), "the bar shows without the keyboard while the document has suggestions, comments or is Suggesting (DL-317)")
-    check(!shows(keys: false, review: false) && !shows(keys: false, md: false, review: true) && !shows(keys: false, ro: true, review: true) && !shows(keys: false, source: true, review: true) && !shows(keys: false, preview: true, review: true), "…and not with nothing to review, nor on another kind of file, read-only, Source or a template's preview")
+    check(!shows(keys: false, review: false) && !shows(keys: false, md: false, review: true) && !shows(keys: false, ro: true, review: true) && shows(keys: false, source: true, review: true) && !shows(keys: false, preview: true, review: true), "…and not with nothing to review, nor on another kind of file, read-only or a template's preview; in Markdown source it shows for review (DL-346)")
 
     // The table swap: Style's place goes to + Row, + Column, Align and Delete; they fold into ⋯ under 450 (DL-317).
     check(L.controls(inTable: false, width: 460) == ["style", "bold", "italic", "link", "table", "more", "comment"], "out of a table: Style, B, I, Link, Table, ⋯, then Comment (DL-317)")

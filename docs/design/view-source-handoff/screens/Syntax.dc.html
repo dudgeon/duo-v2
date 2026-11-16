@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Source highlighting</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.bd{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;color:#1f2328;background:#eceef1;box-sizing:border-box}
+h1.t{font-size:28px;line-height:36px;font-weight:600;margin:0}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.66px;text-transform:uppercase;color:#5b636d;display:flex;gap:8px;align-items:center}
+.P{font:10px/14px ui-monospace,'SF Mono',Menlo,monospace;color:#5b636d;border:1px dashed #8b939c;border-radius:3px;padding:0 3px;letter-spacing:0;text-transform:none;font-weight:400;white-space:nowrap}
+.light{--ground:#f3f4f6;--pane:#ffffff;--sel:#e9ecef;--text:#1f2328;--text2:#5b636d;--rule:#c9cdd3;--edge:#8b939c;--doc:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;--ds:13px;--dl:20px;--tag:#1d5fa8;--attr:#7b3fb5;--str:#2f7d32;--cm:#5b636d;--r1:#b0244f;--r3:#2e7a3a}
+.dark{--ground:#131518;--pane:#181a1e;--sel:#262a30;--text:#e6e8eb;--text2:#9aa1ab;--rule:#2b2f36;--edge:#6e7681;--doc:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;--ds:13px;--dl:20px;--tag:#7fb0ee;--attr:#c3a0ec;--str:#7cc48a;--cm:#9aa1ab;--r1:#f08aa8;--r3:#7cc48a}
+.classic{--ground:#f0e9d6;--pane:#fbf8ee;--sel:#f2d9b8;--text:#1a1410;--text2:#7b6f58;--rule:#d4c8a6;--edge:#b8ab8e;--doc:'New York',ui-serif,Georgia,serif;--ds:16px;--dl:27px;--tag:#2a5a8c;--attr:#6e3a9e;--str:#3d6b2a;--cm:#7b6f58;--r1:#a3213f;--r3:#2e6b33}
+.pane{box-sizing:border-box;background:var(--pane);color:var(--text);border:1px solid var(--rule);display:flex;flex-direction:column;overflow:hidden;font-size:13px;line-height:20px}
+.tabs{flex:none;height:36px;box-sizing:border-box;display:flex;align-items:center;gap:20px;padding:0 10px 0 16px;border-bottom:1px solid var(--rule);color:var(--text2);font-size:12px;white-space:nowrap}
+.tabs b{color:var(--text);font-weight:600}
+.sp{flex:1}
+.src{flex:1;padding:12px 14px 12px 12px;overflow:hidden;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;line-height:19px;white-space:pre-wrap}
+.msrc{flex:1;padding:14px 20px;overflow:hidden;font-family:var(--doc);font-size:var(--ds);line-height:var(--dl);white-space:pre-wrap}
+.ln{display:block;padding-left:24px;text-indent:-24px}
+.t{color:var(--tag)}.a{color:var(--attr)}.s{color:var(--str)}.c{color:var(--cm);font-style:italic}.m{color:var(--text2)}.hb{font-weight:600}
+.ri{color:var(--r3)}.rc{color:var(--r1)}
+.seg{flex:none;display:flex;height:22px;box-sizing:border-box;border:1px solid var(--edge);border-radius:6px;overflow:hidden;font-size:11px;line-height:20px}
+.seg span{padding:0 8px;color:var(--text2)}
+.seg span.on{background:var(--sel);color:var(--text);font-weight:600}
+.seg span+span{border-left:1px solid var(--edge)}
+table.tk{border-collapse:collapse;font-size:12px;line-height:18px;background:#fff;border:1px solid #c9cdd3}
+table.tk th,table.tk td{padding:5px 10px;border-bottom:1px solid #e3e5e8;text-align:left;white-space:nowrap}
+table.tk th{font-weight:600;color:#5b636d;font-size:11px}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:-1px;margin-right:6px;border:1px solid rgba(0,0,0,.15)}
+.mono{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11.5px}
+.spec{font-size:12.5px;line-height:19px;color:#1f2328}
+.spec p{margin:0 0 8px}
+</style>
+</helmet>
+<div class="bd" style="width: 1560px; height: 1060px; padding: 44px 56px; display: flex; flex-direction: column; gap: 20px;">
+  <div style="display: flex; flex-direction: column; gap: 4px;">
+    <h1 class="t">Highlighting, in Light, Dark and Classic <span class="P">[P]</span></h1>
+    <div style="font-size: 14px; line-height: 21px; color: #5b636d;">Nothing in Duo highlights code today (F-515). Every option needs this. Quiet on purpose: three hues for structure, <span class="mono">text2</span> for punctuation, never <span class="mono">needsYou</span>.</div>
+  </div>
+  <div style="display: flex; gap: 24px;">
+    <div class="light" style="width: 464px; display: flex; flex-direction: column; gap: 10px;">
+      <div class="lbl">Light</div>
+      <div class="pane" style="height: 290px;">
+        <div class="tabs"><b>q3-refunds.html</b><span class="sp"></span><span class="seg"><span>Page</span><span class="on">Source</span></span></div>
+        <div class="src"><span class="ln"><span class="t">&lt;style&gt;</span></span><span class="ln">  <span class="t">.up</span> { <span class="a">color</span>: <span class="s">#2f7d32</span>; }</span><span class="ln"><span class="t">&lt;/style&gt;</span></span><span class="ln"><span class="t">&lt;h1&gt;</span>Refunds, Q3<span class="t">&lt;/h1&gt;</span></span><span class="ln"><span class="t">&lt;p</span> <span class="a">class</span>=<span class="s">"lede"</span><span class="t">&gt;</span>Down <span class="t">&lt;span</span> <span class="a">class</span>=<span class="s">"up"</span><span class="t">&gt;</span>12%<span class="t">&lt;/span&gt;</span> since July.<span class="t">&lt;/p&gt;</span></span><span class="ln"><span class="c">&lt;!-- by reason --&gt;</span></span><span class="ln"><span class="t">&lt;script&gt;</span></span><span class="ln">  <span class="t">const</span> rows = <span class="s">"41,28,17"</span>.split(<span class="s">","</span>);</span><span class="ln"><span class="t">&lt;/script&gt;</span></span></div>
+      </div>
+      <div class="pane" style="height: 230px;">
+        <div class="tabs"><b>refunds-review.md</b><span class="sp"></span><span class="seg"><span>Live</span><span class="on">Source</span></span></div>
+        <div class="msrc"><span class="m">---</span>
+<span class="a">status</span><span class="m">:</span> <span class="s">draft</span>
+<span class="m">---</span>
+<span class="m"># </span><span class="hb">Refunds review</span>
+Fell <span class="m">**</span><b>12%</b><span class="m">**</span> <span class="m">{++</span><span class="ri">in Q3</span><span class="m">++}</span>, see <span class="m">[</span><span class="t">export</span><span class="m">](</span><span class="s">q3.csv</span><span class="m">)</span>
+<span class="m">-</span> <span class="m">`</span><span class="s">refunds.sql</span><span class="m">`</span> <span class="m">{&gt;&gt;</span><span class="rc">@geoff #c2:</span> rerun <span class="m">&lt;&lt;}</span></div>
+      </div>
+    </div>
+    <div class="dark" style="width: 464px; display: flex; flex-direction: column; gap: 10px;">
+      <div class="lbl">Dark (Ink)</div>
+      <div class="pane" style="height: 290px;">
+        <div class="tabs"><b>q3-refunds.html</b><span class="sp"></span><span class="seg"><span>Page</span><span class="on">Source</span></span></div>
+        <div class="src"><span class="ln"><span class="t">&lt;style&gt;</span></span><span class="ln">  <span class="t">.up</span> { <span class="a">color</span>: <span class="s">#2f7d32</span>; }</span><span class="ln"><span class="t">&lt;/style&gt;</span></span><span class="ln"><span class="t">&lt;h1&gt;</span>Refunds, Q3<span class="t">&lt;/h1&gt;</span></span><span class="ln"><span class="t">&lt;p</span> <span class="a">class</span>=<span class="s">"lede"</span><span class="t">&gt;</span>Down <span class="t">&lt;span</span> <span class="a">class</span>=<span class="s">"up"</span><span class="t">&gt;</span>12%<span class="t">&lt;/span&gt;</span> since July.<span class="t">&lt;/p&gt;</span></span><span class="ln"><span class="c">&lt;!-- by reason --&gt;</span></span><span class="ln"><span class="t">&lt;script&gt;</span></span><span class="ln">  <span class="t">const</span> rows = <span class="s">"41,28,17"</span>.split(<span class="s">","</span>);</span><span class="ln"><span class="t">&lt;/script&gt;</span></span></div>
+      </div>
+      <div class="pane" style="height: 230px;">
+        <div class="tabs"><b>refunds-review.md</b><span class="sp"></span><span class="seg"><span>Live</span><span class="on">Source</span></span></div>
+        <div class="msrc"><span class="m">---</span>
+<span class="a">status</span><span class="m">:</span> <span class="s">draft</span>
+<span class="m">---</span>
+<span class="m"># </span><span class="hb">Refunds review</span>
+Fell <span class="m">**</span><b>12%</b><span class="m">**</span> <span class="m">{++</span><span class="ri">in Q3</span><span class="m">++}</span>, see <span class="m">[</span><span class="t">export</span><span class="m">](</span><span class="s">q3.csv</span><span class="m">)</span>
+<span class="m">-</span> <span class="m">`</span><span class="s">refunds.sql</span><span class="m">`</span> <span class="m">{&gt;&gt;</span><span class="rc">@geoff #c2:</span> rerun <span class="m">&lt;&lt;}</span></div>
+      </div>
+    </div>
+    <div class="classic" style="width: 464px; display: flex; flex-direction: column; gap: 10px;">
+      <div class="lbl">Classic</div>
+      <div class="pane" style="height: 290px;">
+        <div class="tabs"><b>q3-refunds.html</b><span class="sp"></span><span class="seg"><span>Page</span><span class="on">Source</span></span></div>
+        <div class="src"><span class="ln"><span class="t">&lt;style&gt;</span></span><span class="ln">  <span class="t">.up</span> { <span class="a">color</span>: <span class="s">#2f7d32</span>; }</span><span class="ln"><span class="t">&lt;/style&gt;</span></span><span class="ln"><span class="t">&lt;h1&gt;</span>Refunds, Q3<span class="t">&lt;/h1&gt;</span></span><span class="ln"><span class="t">&lt;p</span> <span class="a">class</span>=<span class="s">"lede"</span><span class="t">&gt;</span>Down <span class="t">&lt;span</span> <span class="a">class</span>=<span class="s">"up"</span><span class="t">&gt;</span>12%<span class="t">&lt;/span&gt;</span> since July.<span class="t">&lt;/p&gt;</span></span><span class="ln"><span class="c">&lt;!-- by reason --&gt;</span></span><span class="ln"><span class="t">&lt;script&gt;</span></span><span class="ln">  <span class="t">const</span> rows = <span class="s">"41,28,17"</span>.split(<span class="s">","</span>);</span><span class="ln"><span class="t">&lt;/script&gt;</span></span></div>
+      </div>
+      <div class="pane" style="height: 230px;">
+        <div class="tabs"><b>refunds-review.md</b><span class="sp"></span><span class="seg"><span>Live</span><span class="on">Source</span></span></div>
+        <div class="msrc"><span class="m">---</span>
+<span class="a">status</span><span class="m">:</span> <span class="s">draft</span>
+<span class="m">---</span>
+<span class="m"># </span><span class="hb">Refunds review</span>
+Fell <span class="m">**</span><b>12%</b><span class="m">**</span> <span class="m">{++</span><span class="ri">in Q3</span><span class="m">++}</span>, see <span class="m">[</span><span class="t">export</span><span class="m">](</span><span class="s">q3.csv</span><span class="m">)</span></div>
+      </div>
+    </div>
+  </div>
+  <div style="display: flex; gap: 32px; align-items: flex-start;">
+    <table class="tk">
+      <tr><th>Token <span class="P">[P]</span></th><th>Used for</th><th>Light</th><th>Dark</th><th>Classic</th></tr>
+      <tr><td class="mono">syntaxTag</td><td>HTML tags, CSS selectors, JS keywords, Markdown link text</td><td><span class="sw" style="background:#1d5fa8"></span>#1D5FA8 · 6.4</td><td><span class="sw" style="background:#7fb0ee"></span>#7FB0EE · 8.0</td><td><span class="sw" style="background:#2a5a8c"></span>#2A5A8C · 6.6</td></tr>
+      <tr><td class="mono">syntaxAttr</td><td>Attributes, CSS properties, YAML keys</td><td><span class="sw" style="background:#7b3fb5"></span>#7B3FB5 · 6.6</td><td><span class="sw" style="background:#c3a0ec"></span>#C3A0EC · 8.4</td><td><span class="sw" style="background:#6e3a9e"></span>#6E3A9E · 7.2</td></tr>
+      <tr><td class="mono">syntaxString</td><td>Strings, values, URLs, inline code</td><td><span class="sw" style="background:#2f7d32"></span>#2F7D32 · 5.1</td><td><span class="sw" style="background:#7cc48a"></span>#7CC48A · 8.6</td><td><span class="sw" style="background:#3d6b2a"></span>#3D6B2A · 6.0</td></tr>
+      <tr><td class="mono">syntaxComment</td><td>Comments, italic</td><td colspan="3"><span class="mono">text2</span> in each scheme</td></tr>
+      <tr><td class="mono">syntaxMark</td><td>Punctuation and Markdown marks (# ** - | ---), review braces</td><td colspan="3"><span class="mono">text2</span> in each scheme</td></tr>
+      <tr><td class="mono">review marks</td><td>Text and signature inside {++ ++} {-- --} {~~ ~~} {&gt;&gt; &lt;&lt;}</td><td colspan="3">the author’s review colour (<span class="mono">reviewAuthor1…5</span>; Claude always green, DL-237)</td></tr>
+    </table>
+    <div class="spec" style="width: 420px;">
+      <p>Contrast is on <span class="mono">pane</span> (estimated; a DuoCheck would hold 4.5:1). Light reuses existing hues: <span class="mono">reviewAuthor2</span> blue, <span class="mono">reviewAuthor4</span> purple, <span class="mono">diffAddText</span> green, so Duo gains no new colour families.</p>
+      <p>HTML source is SF Mono 12/19 in every scheme. Markdown source keeps the document face, SF Pro 13/20 or Classic’s New York 16/27, so it lines up with Live.</p>
+      <p>The page itself keeps its own colours (DL-224); only its source follows Duo’s appearance.</p>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1560,"height":1060}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -69,6 +69,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     // All projects' middle (DL-142): no chords until Q-100 is decided
     case showBoard, showList
     case previewInSplitView // ⌥⌘P: View › Show Preview in Split View / Close Split View for the showing file (DL-277, amends DL-34)
+    case toggleSource       // ⌥⌘U: View › Source: the Markdown or HTML document on screen as its highlighted source, and back (DL-346, amends DL-34)
     case previousSplitSide, nextSplitSide   // ⇧⌘[ and ⇧⌘]: View › Previous / Next Side of Split View (DL-277)
     case voiceInput         // ⇧⌘D: Edit › Start / Stop Voice Input (DL-261, amends DL-34): tap toggles, held past 0.3 s is hold-to-talk
 
@@ -148,6 +149,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .showList: "Show List"
         case .voiceInput: "Voice Input"
         case .previewInSplitView: "Show Preview in Split View"
+        case .toggleSource: "Source"
         case .previousSplitSide: "Previous Side of Split View"
         case .nextSplitSide: "Next Side of Split View"
         }
@@ -163,6 +165,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .toggleSidebar: KeyboardShortcut("s", modifiers: [.command, .control])
         case .toggleRightPane: KeyboardShortcut("0", modifiers: [.command, .option])
         case .previewInSplitView: KeyboardShortcut("p", modifiers: [.command, .option])
+        case .toggleSource: KeyboardShortcut("u", modifiers: [.command, .option])  // DL-346: Safari's and Chrome's View Source key; clear of 1Password 7, Rectangle and Raycast defaults (F-721)
         case .previousSplitSide: KeyboardShortcut("[", modifiers: [.command, .shift])
         case .nextSplitSide: KeyboardShortcut("]", modifiers: [.command, .shift])
         case .nextTab: KeyboardShortcut(.tab, modifiers: .control)
@@ -225,6 +228,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .goHome, .closeWindow: true
         case .closeSession: model.keyboardInRightPane ? model.closableRightTab != nil : model.visibleTerminal != nil
         case .previewInSplitView: model.canTogglePreviewInSplitView
+        case .toggleSource: model.canToggleSource
         case .previousSplitSide, .nextSplitSide: model.showingSplit != nil
         case .newDeck: DeckFeature.enabled && model.terminalsMode == .live && model.projectFolder != nil
         case .newMarkdown, .newFolder: model.terminalsMode == .live && model.projectFolder != nil
@@ -306,6 +310,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .jumpToPeekSelection: model.jumpToPeekSelection()
         case .toggleSidebar: model.toggleSidebarOrPeek()
         case .previewInSplitView: model.togglePreviewInSplitView()
+        case .toggleSource: model.toggleSourceMode()
         case .previousSplitSide, .nextSplitSide: model.stepSplitSide()
         case .closeSession:
             // In a split, ⌘W closes the active side (model state), never the console's session (F-479, F-495).
@@ -505,8 +510,10 @@ public struct DuoCommands: Commands {
             // The document's own mode (DL-167): its text as typed, the live preview off. Remembered per document.
             // The Markdown formatting bar over the editor (DL-266).
             Button(model.formatBarHidden ? "Show Formatting Bar" : "Hide Formatting Bar") { DuoCommand.toggleFormatBar.perform(in: model) }  // action: view format-bar
-            Toggle("Source Mode", isOn: Binding(get: { model.showingSourceMode }, set: { model.setSourceMode($0) }))
-                .disabled(model.terminalsMode != .live || model.editorIfLoaded?.url == nil)
+            // View › Source (⌥⌘U, DL-346): the one way in; the document shows no button or switch for it.
+            Toggle(DuoCommand.toggleSource.title, isOn: Binding(get: { model.showingSourceMode }, set: { model.setSourceMode($0) }))  // action: doc mode
+                .keyboardShortcut(DuoCommand.toggleSource.shortcut)
+                .disabled(!DuoCommand.toggleSource.isEnabled(in: model))
             // The Board's grouping (DL-347), the same choice as its Group popup.
             Picker("Group Projects By", selection: Binding(get: { model.boardGroup }, set: { model.setBoardGroup($0) })) {  // action: view group
                 Text("Activity").tag(BoardGroup.activity)

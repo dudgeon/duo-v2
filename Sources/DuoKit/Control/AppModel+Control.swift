@@ -848,15 +848,17 @@ extension AppModel {
             guard !inv.text.isEmpty, editorIfLoaded?.url != nil else { return done(.fail("usage: \(id.action.usage) (with a document showing)")) }
             editor.run("return duo.find(q)", ["q": inv.text]) { v in done(.ok("Selected the next match at offset \(v as? Int ?? -1).")) }
         case .docMode:
-            guard editorIfLoaded?.url != nil, terminalsMode == .live else { return done(.fail("no document is showing in the editor")) }
+            guard canToggleSource else { return done(.fail("no Markdown or HTML document is showing")) }
+            let want: Bool?
             switch inv[0] {
-            case "source": setSourceMode(true)
-            case "preview": setSourceMode(false)
-            case "toggle": setSourceMode(!showingSourceMode)
-            case nil: break
+            case "source": want = true
+            case "preview", "page": want = false
+            case "toggle": want = !showingSourceMode
+            case nil: want = nil
             default: return done(.fail("usage: \(id.action.usage)"))
             }
-            done(.ok(showingSourceMode ? "Source mode." : "Preview.", ["mode": showingSourceMode ? "source" : "preview"]))
+            let say: @MainActor () -> Void = { [self] in done(.ok(showingSourceMode ? "Source." : "Page.", ["mode": showingSourceMode ? "source" : "preview"])) }
+            if let want { setSourceMode(want, done: say) } else { say() }   // back to an HTML page answers once its source is saved
         case .docProp:
             guard let e = editorIfLoaded, e.url != nil, let sub = inv[0] else { return done(.fail("usage: \(id.action.usage) (with a document showing)")) }
             let name = inv[1], value = inv.positional.dropFirst(2).joined(separator: " ")

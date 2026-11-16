@@ -6454,6 +6454,17 @@ Hooks reference: `permissionDecision: "defer"` "requires non-interactive mode wi
 ## F-726 · A tile's New session row is on every tile in every grouping (DL-347, 2026-11-15)
 
 `TileNewSessionRow` sits under a hairline at the end of `ProjectTile` and `HomeTile` (not on a missing folder), in Folder grouping too, so the older Board captures (`board-1440`) gain that row. The tile's folder line shows only outside Folder grouping (the band names it there). ⌘T with a tile focused starts in its project (`boardFocusedProject`), else DL-262.
+## F-721 · ⌥⌘U is clear on this Mac (view-source build, 2026-11-15)
+
+Checked for DL-346: 1Password 7 is the only one of the three installed (its documented chords are ⌘\ and ⌥⌘\); Raycast and Rectangle aren't installed here, and Rectangle's defaults use ⌃⌥. No symbolic hotkey takes ⌥⌘U. Not tried on the work Mac.
+
+## F-722 · Source highlighting costs 28 KB and two stand-in patterns (view-source build, 2026-11-15)
+
+`dist/cm6.js` grew 690,427 to 718,301 bytes: `@codemirror/lang-html` is now a direct pin (6.4.12, as the lockfile already had it) and `@lezer/highlight`'s tags and a `HighlightStyle` are used. Markdown's parser sees frontmatter as a thematic break and a setext heading, so source colours the YAML and CriticMarkup marks by line patterns (`sourceMarks` in `duo-editor.js`), with weight 400 so `status: draft` isn't bold. An HTML page is `kind: "html"` to `duo.show`: always source, mono 12/19, no live-preview, list, title or deck-free extensions.
+
+## F-723 · The HTML page and its source are two views of one file, swapped by the right pane (view-source build, 2026-11-15)
+
+View › Source on an HTML tab puts the file in `sourceDocuments` and `ProjectPanes` shows `DocumentStack` instead of `HTMLViewer` (which sleeps, so it doesn't reload under a dirty buffer). Turning it off flushes the editor first, then the viewer reads the file. In a split tab the HTML side is always source, so the item is disabled there. Nothing keeps the scroll place across the swap (Q-580).
 ## F-717 · The side panel reads as its own screen kind, and busy stays underneath it (build/btw-in-chat, 2026-11-15)
 
 `ChatScreenReader` reads Claude Code's `/btw` panel as `ChatScreen.Kind.side` (`ChatSide`: question, answering, the answer's wrapped rows joined into paragraphs, and which keys the footer offers) from a `▔` rule, one or more indented `/btw …` rows (one per earlier question), and a footer ending `Esc to close`. Two details the research screens show and its prose doesn't: **a blank row sits between the rule and the question**, and the at-the-prompt screen lists every earlier question as consecutive `/btw` rows with the newest answered last (the history count is the number of those rows). `ChatSession.apply` maps `.side` back to the busy or idle kind underneath it and holds the panel in `screen.side`, so every `screen.kind == .busy` test in chat (the working line, Stop, the chips) is unchanged, and no screen kind reaches the unknown timer: no fallback. Checks: `DUO_CHECKS=btw` (36 pass, in the default run now) on the 2.1.284 and 2.1.323 screens. Not checked: 60 columns and 2.1.219 (the research's "before the build" list), where the footer may be cut short.
