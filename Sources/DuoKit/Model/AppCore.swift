@@ -341,6 +341,10 @@ public final class AppCore {
     @ObservationIgnored var restoreApplied = false
     @ObservationIgnored var lastRestoreSave = Date.distantPast
     @ObservationIgnored var lastRestoreData: Data?
+    /// Set by the save at quit (DL-351): nothing replaces it as the windows close on the way out.
+    @ObservationIgnored public internal(set) var restoreFrozen = false
+    /// Whether this run has looked for a v1 restore file to keep before writing v2 (DL-351).
+    @ObservationIgnored var restoreBackupChecked = false
     @ObservationIgnored public var liveFolders: [String: URL] = [:]
     /// Live sessions whose process Duo doesn't own (Terminal, the Desktop app, another Duo).
     public var liveElsewhere: Set<String> = []

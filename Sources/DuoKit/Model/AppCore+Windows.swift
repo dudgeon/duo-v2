@@ -61,6 +61,20 @@ extension AppCore {
         return m
     }
 
+    /// A window from the restore file (DL-351): under its saved number, in its colour (None included, never the
+    /// next free one) and frame; `setUp` opens its project and sets its panes before the app makes the window.
+    @discardableResult
+    func openRestoredWindow(number: Int, colour: String?, frame: CGRect?, setUp: (AppModel) -> Void) -> AppModel {
+        let m = AppModel(core: self, number: number)
+        opened.append(m)
+        m.windowColourID = colour
+        m.restoreFrame = frame
+        setUp(m)
+        count("openWindow")
+        windowMaker?(m)
+        return m
+    }
+
     /// Brings a window forward (DL-308): the app shows it, makes it key and records which.
     public func bringForward(_ m: AppModel) {
         focusLog.append(m.windowNumber)

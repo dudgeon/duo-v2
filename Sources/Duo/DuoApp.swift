@@ -127,6 +127,8 @@ struct DuoApp: App {
             model.walkSetup(id) { r in FileHandle.standardError.write(Data("walk-setup \(id): \(r.text)\n".utf8)) }
         }
         AppDelegate.flush = { done in
+            // The window set as it is now, before AppKit closes the windows on the way out (DL-351).
+            (core.primary ?? model).saveRestoreStateForQuit()
             let all = core.models.flatMap { $0.loadedEditors }   // every window's editors (DL-311)
             guard !all.isEmpty else { return done() }
             let once = Once()
@@ -175,7 +177,7 @@ struct DuoApp: App {
         AppDelegate.termSource = term
         // End sessions cleanly on quit. Hiding or collapsing never does this (LR-13).
         NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { _ in
-            MainActor.assumeIsolated { model.saveRestoreState(force: true); model.terminals.terminateAll(); server.stop() }
+            MainActor.assumeIsolated { (core.primary ?? model).saveRestoreStateForQuit(); model.terminals.terminateAll(); server.stop() }
         }
     }
 
@@ -295,6 +297,8 @@ final class MainWindow {
             }
             w.setFrameAutosaveName("window-\(model.windowNumber)")
         }
+        model.window = w
+        model.placeRestoredFrame()   // a window from the restore file opens where it was, on a screen (DL-351)
         window = w
         model.window = w   // the model's own window: lookups go by identity, never by title (multi-window slice 0)
         // Menus act on the key window's model (AppCore.keyModel).
