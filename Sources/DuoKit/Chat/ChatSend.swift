@@ -36,9 +36,14 @@ extension ChatSession {
         let plan = ChatPaste.sendPlan(held: ui.heldTokens, kept: ui.attachedTokens, text: text)
         guard !plan.message.isEmpty else { return .refused("nothing to send") }
         guard terminal != nil else { return finish(.refused("the terminal isn't running")) }
+        // A side card in the way closes first (Q-552): its Esc, then the prompt.
+        if reread().kind == .side { await closeSide() }
         let s = reread()
         guard s.kind == .idle || s.kind == .busy else { return finish(.refused("the terminal is showing \(s.kind == .unknown ? "a screen chat mode can’t show" : "a dialog")")) }
         let wasBusy = s.kind == .busy
+        // `/btw` is a command, not a message (DL-344): it runs at once, even mid-turn, and Claude's turn never reads it, so
+        // there is no bubble, no Queued line and no turn timer; the side card shows the answer.
+        let isSide = text == "/btw" || text.hasPrefix("/btw ")
         sending = true
         defer { sending = false; composing = false }
         let placed = await place(plan, on: s)
@@ -46,7 +51,7 @@ extension ChatSession {
         let shown = placed.shown
         // Shown before Return: the prompt's hook can arrive within the pause after it, and must
         // find this bubble to match.
-        log.sent(shown, images: plan.keep.compactMap { ui.images[$0].flatMap(ChatImage.init) }, time: now, queued: wasBusy, planMode: s.mode == .plan)
+        if !isSide { log.sent(shown, images: plan.keep.compactMap { ui.images[$0].flatMap(ChatImage.init) }, time: now, queued: wasBusy, planMode: s.mode == .plan) }
         lastCommand = text.hasPrefix("/") ? (String(text.prefix { !$0.isWhitespace }), Date()) : nil
         _ = await press(.enter)
         // A dictation still open in the field ends with the send, so the field clears (DL-263).

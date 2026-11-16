@@ -34,13 +34,15 @@ public enum ChatTargets {
                                             "voice-rest", "voice-hover", "voice-listening", "voice-holding", "voice-finishing", "voice-done", "voice-download",
                                             "voice-denied", "voice-restricted", "voice-nomic", "voice-nolang", "voice-stopped", "voice-lost",
                                             // F-656: a transcript after /rewind (Fixtures/rewind): chat shows the live branch. No design: a capture to look at.
-                                            "rewind-after"]
+                                            "rewind-after",
+                                            // btw-in-chat-handoff (DL-344): the side card over a running turn, and the quiet line once it closed.
+                                            "btw-answered", "btw-after"]
     nonisolated public static let screens = boards.map { "chat-" + $0 }
 
     public static func folder(_ board: String) -> URL? {
         if let r = Bundle.main.url(forResource: "chat-fixtures", withExtension: nil) { return r.appending(path: board) }
         var dir = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-        let handoff = board.hasPrefix("polish-") ? "chat-polish-handoff" : board.hasPrefix("slash-") ? "chat-slash-handoff" : board.hasPrefix("paste-") ? "chat-paste-handoff" : board.hasPrefix("chip-") ? "chat-model-chip-handoff" : board.hasPrefix("md-") ? "chat-markdown-handoff" : board.hasPrefix("voice-") ? "voice-input-handoff" : "chat-mode-handoff"
+        let handoff = board.hasPrefix("polish-") ? "chat-polish-handoff" : board.hasPrefix("slash-") ? "chat-slash-handoff" : board.hasPrefix("paste-") ? "chat-paste-handoff" : board.hasPrefix("chip-") ? "chat-model-chip-handoff" : board.hasPrefix("md-") ? "chat-markdown-handoff" : board.hasPrefix("voice-") ? "voice-input-handoff" : board.hasPrefix("btw-") ? "btw-in-chat-handoff" : "chat-mode-handoff"
         for _ in 0..<6 {
             let c = board.hasPrefix("rewind-") ? dir.appending(path: "Fixtures/rewind/fixture-chat/\(board)") : dir.appending(path: "docs/design/\(handoff)/fixture-chat/\(board)")
             if FileManager.default.fileExists(atPath: c.path) { return c }
@@ -156,7 +158,15 @@ public enum ChatRecording {
             if x.hook, let p = x.obj["e"] as? ChatJSON { ChatIngest.hook(p, at: x.at, into: chat.log, chat: chat) }
             else if !x.hook { ChatIngest.record(x.obj, into: chat.log, chat: chat) }
         }
+        // `screen-before.txt` (the turn running before a panel opens) and `screen-after.txt` (the panel closed again) play around it.
+        if let text = try? String(contentsOf: dir.appending(path: "screen-before.txt"), encoding: .utf8) {
+            chat.apply(ChatScreenReader.read(text, table: chat.signatures))
+        }
         if let text = try? String(contentsOf: dir.appending(path: "screen.txt"), encoding: .utf8) {
+            chat.fixtureScreenText = text
+            chat.apply(ChatScreenReader.read(text, table: chat.signatures))
+        }
+        if let text = try? String(contentsOf: dir.appending(path: "screen-after.txt"), encoding: .utf8) {
             chat.fixtureScreenText = text
             chat.apply(ChatScreenReader.read(text, table: chat.signatures))
         }

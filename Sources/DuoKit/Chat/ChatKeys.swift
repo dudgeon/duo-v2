@@ -107,6 +107,13 @@ extension ChatSession {
     /// A key pressed with the chat in front: a digit answers the card, Esc cancels it.
     public func key(_ chars: String, escape: Bool) -> Bool {
         if pickerUp, let p = screen.picker { return pickerKey(p, chars, escape: escape) }
+        // The side card (DL-344, Q-552): Esc closes it; a printable key closes it and starts your message with that key.
+        if sideUp {
+            if escape { Task { await closeSide() }; return true }
+            guard chars.count == 1, let u = chars.unicodeScalars.first, u.value >= 0x20, u.value != 0x7f, !(0xF700...0xF8FF).contains(u.value) else { return false }
+            sideTyped(chars)
+            return true
+        }
         guard cardUp else {
             if escape, screen.kind == .busy { Task { await interrupt() }; return true }
             return false

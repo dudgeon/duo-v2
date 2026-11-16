@@ -1,0 +1,10 @@
+❯ Compare the two refund flows in a table, with a short recommendation.
+
+⏺ Both flows are in docs/refunds/flows.md. The main difference is who confirms the refund.
+
+✻ Writing… (41s)
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+❯
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⏵⏵ accept edits on (shift+tab to cycle) · esc to interrupt · ← for agents

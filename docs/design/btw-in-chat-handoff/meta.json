@@ -1,0 +1,7 @@
+{
+ "Main": {"name":"00-what-and-why","size":[1400,1100],"kind":"board","title":"What /btw does, why chat falls back","note":"CONTEXT ONLY: what /btw does and why chat falls back today. Nothing to build from this board."},
+ "Where": {"name":"01-where","size":[1640,1060],"kind":"target","title":"Where the side answer shows (Q-550)","note":"THE TARGET for Q-550: A, a side card docked in the composer's place. B and C were drawn and not chosen; build A only. The 'Today' column is the fallback being removed."},
+ "States": {"name":"02-states","size":[1640,1000],"kind":"target","title":"The side card, state by state","note":"THE TARGET for the side card's states (answering, long, no answer, history, over an agent). Build the card as option A."},
+ "After": {"name":"03-after","size":[1640,1000],"kind":"target","title":"After it closes, and the composer (Q-551, Q-552)","note":"THE TARGET for Q-551 A (the quiet line 'Side question: ... Show') and Q-552 A (typing closes the card and starts your message). B and C not chosen."},
+ "Entry": {"name":"04-entry","size":[1640,1000],"kind":"target","title":"Asking, fork, keys and duo2 (Q-553, Q-554)","note":"THE TARGET for Q-554 A (the /btw menu row reads Claude Code's description). Fork... (Q-553 A) only if a mock run shows what f does. B of Q-554 not chosen."}
+}
