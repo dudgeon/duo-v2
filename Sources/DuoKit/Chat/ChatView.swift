@@ -134,7 +134,7 @@ struct ChatPane: View {
                     if old == 0 || chat.followsBottom { proxy.scrollTo(ChatPane.bottom, anchor: .bottom) }
                 }
                 // A card rising in the composer's place (DL-130): the feed gives way, still at its end.
-                .onChange(of: chat.cardUp || chat.pickerUp) { if chat.followsBottom { follow(proxy) } }
+                .onChange(of: chat.cardUp || chat.pickerUp || chat.sideUp) { if chat.followsBottom { follow(proxy) } }
                 .onChange(of: chat.revealRequest) { if let id = chat.revealRequest { withAnimation { proxy.scrollTo(id, anchor: .top) } } }
                 // A link's target under the pointer, as Safari shows one (DL-132 g, q57-link-status).
                 .background(ChatLinkHover { chat.ui.hoverLink = $0 })
@@ -157,6 +157,12 @@ struct ChatPane: View {
                     .padding(EdgeInsets(top: 0, leading: DuoSpace.chatColumnInset, bottom: 14, trailing: DuoSpace.chatColumnInset))
                     .zIndex(1)
                     .transition(.move(edge: .bottom))
+            } else if chat.sideUp, let card = chat.sideCard {
+                // `/btw` (DL-344): the side card in the composer's place, as Claude Code's panel takes its prompt's.
+                ChatSideCard(chat: chat, card: card)
+                    .padding(EdgeInsets(top: 0, leading: DuoSpace.chatColumnInset, bottom: 14, trailing: DuoSpace.chatColumnInset))
+                    .zIndex(1)
+                    .transition(.move(edge: .bottom))
             } else {
                 TrustBar(key: chat.key, inChat: true)
                 ChatComposerArea(chat: chat)
@@ -166,6 +172,7 @@ struct ChatPane: View {
         }
         .animation((chat.cardUp ? DuoMotionToken.cardIn : .cardOut).animation, value: chat.cardUp)
         .animation((chat.pickerUp ? DuoMotionToken.cardIn : .cardOut).animation, value: chat.pickerUp)
+        .animation((chat.sideUp ? DuoMotionToken.cardIn : .cardOut).animation, value: chat.sideUp)
         .background(WindowTint.chatGround)
         .tint(DuoColor.text)
         .onAppear { model.installChatKeys() }
@@ -257,6 +264,7 @@ struct ChatItemView: View {
         case .divider(let n): ChatDivider(text: n.text)
         case .interrupted(let n): ChatInterruptedLine(text: n.text)
         case .result(let r): ChatResultView(result: r, chat: chat)
+        case .side(let x): ChatSideLine(exchange: x, chat: chat)
         }
     }
 }

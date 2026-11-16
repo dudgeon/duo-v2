@@ -27,9 +27,12 @@ public enum ChatItem: Identifiable, Equatable, Sendable {
     case interrupted(ChatNote)
     /// What a slash command printed, under your bubble (chat-slash-handoff `output`, DL-143).
     case result(ChatResult)
+    /// A `/btw` side question and its answer, kept by Duo (Claude Code writes none): a quiet line that reopens the card (DL-344).
+    case side(ChatSideExchange)
 
     public var id: String {
         switch self {
+        case .side(let x): x.id
         case .you(let y): y.id
         case .claude(let t): t.id
         case .answer(let n), .note(let n), .divider(let n), .interrupted(let n): n.id
@@ -532,6 +535,7 @@ public final class ChatLog: @unchecked Sendable {
         guard let agentId, agentsStarted[agentId] != nil else {
             sideStops.append(SideStop(agentId: agentId, agentType: agentType, message: message, time: time))
             if sideStops.count > 20 { sideStops.removeFirst(sideStops.count - 20) }
+            if (agentType ?? "").isEmpty { sideAnswerArrived(message, time: time) }
             return
         }
         if steps.last(where: { $0.agent != nil && $0.agent?.finished == false }) == nil, let name = agentsStarted[agentId] {

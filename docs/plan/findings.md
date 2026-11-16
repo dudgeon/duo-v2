@@ -6446,3 +6446,19 @@ Hooks reference: `permissionDecision: "defer"` "requires non-interactive mode wi
 ## F-709 · Hooks can only be a backstop for the director (director-worker-skill addendum, 2026-11-15)
 
 `ClientCaps.probe` reads `disableAllHooks`, and the director harness's `hooks-off` and `pinned-219-strict` profiles model Macs where hooks are off. Every hook in §9 of `docs/research/director-worker-skill.md` therefore has a fallback: the worker skill's rule and `status`'s transcript-based red lines.
+
+## F-717 · The side panel reads as its own screen kind, and busy stays underneath it (build/btw-in-chat, 2026-11-15)
+
+`ChatScreenReader` reads Claude Code's `/btw` panel as `ChatScreen.Kind.side` (`ChatSide`: question, answering, the answer's wrapped rows joined into paragraphs, and which keys the footer offers) from a `▔` rule, one or more indented `/btw …` rows (one per earlier question), and a footer ending `Esc to close`. Two details the research screens show and its prose doesn't: **a blank row sits between the rule and the question**, and the at-the-prompt screen lists every earlier question as consecutive `/btw` rows with the newest answered last (the history count is the number of those rows). `ChatSession.apply` maps `.side` back to the busy or idle kind underneath it and holds the panel in `screen.side`, so every `screen.kind == .busy` test in chat (the working line, Stop, the chips) is unchanged, and no screen kind reaches the unknown timer: no fallback. Checks: `DUO_CHECKS=btw` (36 pass, in the default run now) on the 2.1.284 and 2.1.323 screens. Not checked: 60 columns and 2.1.219 (the research's "before the build" list), where the footer may be cut short.
+
+## F-718 · Duo keeps the side exchange itself: the hook's Markdown is the answer, the quiet line is Duo's memory (build/btw-in-chat, 2026-11-15)
+
+Claude Code writes nothing of a side question to the transcript, so `ChatLog` holds a `ChatItem.side(ChatSideExchange)` the moment the panel first reads (question, screen answer, opened, closed) and gives it the SubagentStop's `last_assistant_message` (empty `agent_type`, no start) as its Markdown when the hook comes; a stop with no exchange waiting is kept in `sideStops` only (F-691). The card draws the Markdown and Copy puts it on Duo's clipboard (Claude Code's `c` copies plain text; Duo does not send `c`). The quiet line "Side question: … · Show" appears once the card isn't showing the exchange and reopens it from memory without a query (`reopenedSide`; Copy and Close only, since Claude Code's panel is gone). A reload of the transcript drops the lines, as Q-551 A says. The same question asked again, or browsed back to, reuses its exchange.
+
+## F-719 · Fork… is left out: `f` was not run (build/btw-in-chat, 2026-11-15)
+
+Q-553 A built Fork… only after one mock run per CLI version shows what Claude Code's `f` does (a background fork that prints "forked ‹name›", or a branch of this session with the side exchange added; the research could not tell which flag decides). That run was not made in this build, so the card has no Fork… button and no `fork` verb, and the panel's `canFork` is read and kept for when it is. Q-577.
+
+## F-720 · Keys with the card up: Esc closes, every printable key starts your message, so Claude Code's `c`, `f` and `x` are buttons only (build/btw-in-chat, 2026-11-15)
+
+Q-552 A says typing closes the card and starts your message, which collides with the keycaps the board draws (Copy `c`, Fork… `f`, Clear history `x`): a typed `c` must be a `c`. So the keycaps are labels and the buttons are clicks; the card never sends those keys unasked. `ChatSession.key` sends Esc to Claude Code on Esc, and on any other printable key sends Esc, waits for the prompt to come back, and puts the key in the composer (`sideTyped`). ↑/↓ scroll the answer inside the card (it scrolls with the pointer; Claude Code's own scroll keys are not forwarded). Q-578.
