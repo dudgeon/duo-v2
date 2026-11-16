@@ -142,7 +142,7 @@ struct ChatFeedRowView: View, Equatable {
                         .padding(.bottom, last ? 0 : -1)
                 }
             }
-            .turnRow(id: row.id.split(separator: "|").first.map(String.init) ?? row.id, chat: chat, trailing: false, showRow: last)
+            .turnRow(id: row.id.split(separator: "|").first.map(String.init) ?? row.id, chat: chat, trailing: false, showRow: last, key: row.id)
             .turnAccessibility(id: row.id.split(separator: "|").first.map(String.init) ?? row.id, chat: chat, showRow: last)
             .padding(.trailing, DuoSpace.chatCardTrailing)
         }

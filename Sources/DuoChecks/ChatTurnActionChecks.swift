@@ -41,3 +41,31 @@ import Foundation
     check(chat.menuTurnID == "y0" && chat.menuReplyID == "t0", "and on the selected one, whose reply follows it")
     check(chat.copyTurn("t0") && chat.ui.copiedTurn == "t0" && !chat.copyTurn("n0"), "Copy marks the turn copied for 1.5 s; a note has nothing to copy")
 }
+
+// F-738: the pointer goes from a turn to its row's buttons without the row going. Fails with no band (the row outside the
+// turn's frame, as `onHover` had it): the hover ends in the 4 pt between the turn and its row.
+@MainActor func chatTurnHoverChecks() {
+    print("chat mode: the pointer can go from a turn onto its row's buttons and click them (F-738)")
+    let f = ChatTurnFrames()
+    // Claude's reply A in two pieces (the last carries the row), the 16 pt gap, then your message B. A's row hangs 4 to 26 under A,
+    // so its lower 10 pt lie over B's top.
+    f.set("A|0", turn: "A", frame: CGRect(x: 0, y: 0, width: 400, height: 30), row: false)
+    f.set("A|1", turn: "A", frame: CGRect(x: 0, y: 30, width: 400, height: 30), row: true)
+    f.set("B", turn: "B", frame: CGRect(x: 0, y: 76, width: 400, height: 80), row: true)
+    let rows: (String) -> Bool = { _ in true }
+    var hover: String?
+    var path: [String] = []
+    for y in stride(from: 10.0, through: 85, by: 1) {   // down from A's first piece to Copy's foot (Copy: x 0 to 62, y 64 to 86)
+        hover = f.turn(at: CGPoint(x: 30, y: y), current: hover, hasRow: rows)
+        path.append(hover ?? "-")
+    }
+    check(path.allSatisfy { $0 == "A" }, "down from Claude's reply to its Copy, the reply stays hovered, so its row stays (\(path.joined()))")
+    check(f.turn(at: CGPoint(x: 30, y: 90), current: hover, hasRow: rows) == "B", "past the row's foot, the next message is hovered")
+    check(f.turn(at: CGPoint(x: 30, y: 80), current: "B", hasRow: rows) == "B", "up from the next message into the row's band over it, the message keeps the hover")
+    check(f.turn(at: CGPoint(x: 30, y: 80), current: nil, hasRow: rows) == "B", "arriving on that band from outside, the message under it wins")
+    check(f.turn(at: CGPoint(x: 30, y: 70), current: nil, hasRow: rows) == "A", "the gap under a turn is its own")
+    check(f.turn(at: CGPoint(x: 30, y: 70), current: nil, hasRow: { $0 != "A" }) == nil, "a turn with no row (still being written) owns no band")
+    check(f.turn(at: CGPoint(x: 30, y: 15), current: "B", hasRow: rows) == "A", "a turn's earlier piece is that turn")
+    f.remove("A|1")
+    check(f.turn(at: CGPoint(x: 30, y: 45), current: nil, hasRow: rows) == nil, "a piece gone from the feed is forgotten")
+}

@@ -80,6 +80,28 @@ public enum Anchors {
         try data.write(to: url)
     }
 
+    /// The buttons under a point of the window (top-left window points), as the accessibility tree has them, innermost last:
+    /// what a click there would reach (`ax-press:`, F-738).
+    public static func buttons(window: NSWindow, at p: CGPoint) -> [(label: String, frame: CGRect, node: NSObject)] {
+        guard let content = window.contentView else { return [] }
+        for attr in ["AXEnhancedUserInterface", "AXManualAccessibility"] {
+            NSApp.accessibilitySetValue(true as NSNumber, forAttribute: NSAccessibility.Attribute(rawValue: attr))
+        }
+        let wf = window.frame
+        var out: [(label: String, frame: CGRect, node: NSObject)] = []
+        func walk(_ node: Any, _ depth: Int) {
+            guard depth <= maxDepth, let obj = node as? NSObject, let el = node as? NSAccessibilityElementProtocol else { return }
+            let r = el.accessibilityFrame()
+            let f = CGRect(x: r.minX - wf.minX, y: wf.maxY - r.maxY, width: r.width, height: r.height)
+            if (get(obj, "accessibilityRole") as? String) == NSAccessibility.Role.button.rawValue, f.contains(p) {
+                out.append((clip(get(obj, "accessibilityLabel") as? String), f, obj))
+            }
+            for k in (get(obj, "accessibilityChildren") as? [Any]) ?? [] { walk(k, depth + 1) }
+        }
+        walk(content.superview ?? content, 0)
+        return out
+    }
+
     private static func findSplit(_ v: NSView) -> DuoSplitView? {
         if let s = v as? DuoSplitView, s.cover != nil { return s }
         for c in v.subviews { if let s = findSplit(c) { return s } }

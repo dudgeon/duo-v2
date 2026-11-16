@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import DuoControl
 
 /// File verbs for the file tree and document tabs (DL-61). Plain filesystem operations on the
 /// project folder; nothing is ever deleted outright (the Trash only). Names never clobber: a
@@ -97,8 +98,14 @@ public enum FileActions {
     // MARK: Copy, reveal, open
 
     public static func copy(_ text: String) {
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(text, forType: .string)
+        pasteboard.clearContents()
+        pasteboard.setString(text, forType: .string)
+    }
+
+    /// Where Duo's Copy goes: the clipboard, or, in an isolated run, a pasteboard of its own, so a scripted
+    /// click on Copy never replaces what the user copied (F-739).
+    public static var pasteboard: NSPasteboard {
+        SupportFolder.isIsolated ? NSPasteboard(name: .init("com.dudgeon.duo.isolated.\(ProcessInfo.processInfo.processIdentifier)")) : .general
     }
 
     /// `[name](relative/path.md)`: a Markdown link, Obsidian-compatible (DL-17). Spaces are

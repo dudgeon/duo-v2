@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 // Actions on a chat turn (DL-338): a quiet row under the turn on hover. This file is the turn
@@ -130,23 +131,106 @@ struct CheckMark: Shape {
 }
 
 extension View {
-    /// Shows the turn's row under it while the pointer is on the turn or the row (the row hangs
-    /// below the turn, into the gap to the next one, so it moves nothing).
-    func turnRow(id: String, chat: ChatSession, trailing: Bool, showRow: Bool = true) -> some View {
+    /// Shows the turn's row under it while the pointer is on the turn or the row (the row hangs below the turn, into the gap
+    /// to the next one, so it moves nothing). The pointer is followed by the feed's `ChatTurnHover`, not by `onHover`: the row
+    /// hangs outside the turn's frame, so `onHover` ended the hover in the 4 pt between turn and row and the row went before
+    /// the pointer reached it (F-738). Each turn tells the feed its frame; a turn with a row owns the band under it too.
+    func turnRow(id: String, chat: ChatSession, trailing: Bool, showRow: Bool = true, key: String? = nil) -> some View {
         let on = chat.ui.hoverTurn == id || chat.ui.selectedTurn == id
         let actions = showRow && on ? chat.turnActions(for: id) : []
         let show = !actions.isEmpty && chat.turnIsFinished(id)
+        let key = key ?? id
         return self
             .overlay(alignment: trailing ? .bottomTrailing : .bottomLeading) {
-                if show { ChatTurnRow(turnId: id, actions: actions, chat: chat).offset(y: 26) }
+                if show { ChatTurnRow(turnId: id, actions: actions, chat: chat).offset(y: ChatTurnHover.band) }
             }
-            .onHover { inside in
-                if inside {
-                    chat.ui.hoverTurn = id
-                    if chat.ui.selectedTurn != id { chat.ui.selectedTurn = nil }
-                } else if chat.ui.hoverTurn == id { chat.ui.hoverTurn = nil }
+            .onGeometryChange(for: CGRect.self, of: { $0.frame(in: .named(ChatTurnHover.space)) }) { frame in
+                chat.turnFrames.set(key, turn: id, frame: frame, row: showRow)
             }
+            .onDisappear { chat.turnFrames.remove(key) }
             .zIndex(show ? 1 : 0)
+    }
+}
+
+/// Where each turn of the feed is, in the feed's own space (it doesn't change as you scroll), and whether it carries the row.
+@MainActor
+final class ChatTurnFrames {
+    struct Entry { var turn: String; var frame: CGRect; var row: Bool }
+    private(set) var entries: [String: Entry] = [:]
+    func set(_ key: String, turn: String, frame: CGRect, row: Bool) { entries[key] = Entry(turn: turn, frame: frame, row: row) }
+    func remove(_ key: String) { entries[key] = nil }
+
+    /// The turn under a point of the feed (F-738). A turn whose row can show owns the band under it down to the row's foot,
+    /// so the pointer can go from the message to its buttons; where that band lies over the next turn, the turn already
+    /// hovered keeps it (the row stays put while you're on it, and the next turn keeps its own top when you come up to it).
+    func turn(at p: CGPoint, current: String?, hasRow: (String) -> Bool) -> String? {
+        var hits: [String] = []
+        for e in entries.values {
+            var r = e.frame
+            if e.row, hasRow(e.turn) { r.size.height += ChatTurnHover.band }
+            if r.contains(p) { hits.append(e.turn) }
+        }
+        if let c = current, hits.contains(c) { return c }
+        // Off the band, the turn's own frame wins over a band that reaches into it.
+        return entries.values.first { $0.frame.contains(p) }?.turn ?? hits.first
+    }
+}
+
+/// Follows the pointer over the feed and sets the turn under it (`hoverTurn`), from the frames the turns report: a mouse-moved
+/// monitor, as `ChatLinkHover` does, so it works on the feed whatever is drawn over a turn (its row) and a scripted pointer can
+/// drive it (`pointer:` in the harness).
+struct ChatTurnHover: NSViewRepresentable {
+    /// The row's foot under the turn: 4 pt of gap and the 22 pt row (board 1).
+    static let band: CGFloat = 26
+    static let space = "chat.feed"
+    let chat: ChatSession
+
+    func makeNSView(context: Context) -> Probe { let v = Probe(); v.chat = chat; return v }
+    func updateNSView(_ v: Probe, context: Context) { v.chat = chat }
+    static func dismantleNSView(_ v: Probe, coordinator: ()) { v.stop() }
+
+    final class Probe: NSView {
+        weak var chat: ChatSession?
+        private var monitor: Any?
+
+        override var isFlipped: Bool { true }
+        override func hitTest(_ point: NSPoint) -> NSView? { nil }
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            stop()
+            guard let window else { return }
+            window.acceptsMouseMovedEvents = true
+            monitor = NSEvent.addLocalMonitorForEvents(matching: [.mouseMoved, .mouseExited, .scrollWheel, .leftMouseUp]) { [weak self] e in
+                MainActor.assumeIsolated {
+                    guard let self, let w = self.window, e.window === w else { return }
+                    if e.type == .scrollWheel {
+                        // The feed moves under a still pointer: look again once it has.
+                        DispatchQueue.main.async { MainActor.assumeIsolated { self.look(w.mouseLocationOutsideOfEventStream) } }
+                    } else if e.type == .mouseExited, e.trackingArea == nil {
+                        self.set(nil)
+                    } else {
+                        self.look(e.locationInWindow)
+                    }
+                }
+                return e
+            }
+        }
+
+        func stop() { if let m = monitor { NSEvent.removeMonitor(m) }; monitor = nil }
+
+        private func look(_ p: NSPoint) {
+            guard let chat, !isHiddenOrHasHiddenAncestor else { return }
+            let q = convert(p, from: nil)
+            guard visibleRect.contains(q) else { return set(nil) }
+            set(chat.turnFrames.turn(at: q, current: chat.ui.hoverTurn) { !chat.turnActions(for: $0).isEmpty && chat.turnIsFinished($0) })
+        }
+
+        private func set(_ id: String?) {
+            guard let chat, chat.ui.hoverTurn != id else { return }
+            chat.ui.hoverTurn = id
+            if let id, chat.ui.selectedTurn != id { chat.ui.selectedTurn = nil }
+        }
     }
 }
 
