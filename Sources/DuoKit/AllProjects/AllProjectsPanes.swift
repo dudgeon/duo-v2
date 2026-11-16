@@ -540,7 +540,7 @@ struct ProjectTile: View {
             // shrinks them (the target wins over handoff §8's truncation proposal).
             FlexShrinkRow {
                 Text(project.name).duoText(.bodyEmphasis)
-                if focused {
+                if focused && model.boardGroup == .folder {   // T draws the focused tile without the hint; the row says ⌘T (DL-347)
                     // Non-breaking space: SwiftUI avoids a one-word last line ("Enter" / "to open");
                     // the target breaks "Enter to" / "open" (findings F-13).
                     Text("Enter\u{00A0}to open").duoText(.body).foregroundStyle(DuoColor.text2)
