@@ -58,6 +58,7 @@ func repoFixture() throws -> Fixture {
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "rewind" { return try rewindChecks() }
     // `DUO_CHECKS=btw`: /btw from chat (BtwChecks.swift, F-688 to F-690). Fails until fixed; not in the default run.
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "btw" { return try btwChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "cli325" { return try cli325Checks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "office-comments" { try officeCommentChecks(); try officeMarginChecks(); return }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "pdf" { return try pdfChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "chat-live" { return try chatLiveChecks() }
@@ -2021,6 +2022,7 @@ func repoFixture() throws -> Fixture {
     check(FileSource.files(in: URL(fileURLWithPath: "/")).isEmpty && FileSource.files(in: home.deletingLastPathComponent()).isEmpty,
           "folders above home are never walked for files (a session started in / or /Users)")
     try midTurnChecks()  // MidTurnChecks.swift: messages typed mid-turn (C-173, F-638)
+    try cli325Checks()  // Cli325Checks.swift: Claude Code 2.1.323 to 2.1.325 (F-731 to F-734)
     try btwChecks()  // BtwChecks.swift: /btw in chat, the side card (DL-344, F-688 to F-690)
     try rewindChecks()  // RewindChecks.swift: a rewound transcript's live branch (F-656)
     walkGuardChecks()  // WalkGuardChecks.swift: every walk goes through ProtectedFolders (F-302)

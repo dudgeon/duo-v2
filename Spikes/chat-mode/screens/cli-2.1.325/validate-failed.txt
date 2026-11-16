@@ -1,0 +1,16 @@
+Validating plugin manifest: /tmp/m/duo-signal/.claude-plugin/plugin.json
+
+✘ Found 1 error:
+
+  ❯ json: Invalid JSON syntax: JSON Parse error: Expected '}'
+
+Validating hooks: /tmp/m/duo-signal/hooks/hooks.json
+
+  ❯ ./register.js hooks: session.start, turn.start, turn.complete, tool.check, tool.call, ui.render{component=PromptHint}
+  ❯ ./register.js gating hook with .catch: tool.check
+  ❯ ./register.js gating hook with .catch: tool.call
+  ❯ ./register.js calls: $.clock.every, $.clock.now, $.env.get, $.fs.write, $.session.version
+  ❯ ./register.js env writes: nothing
+  ❯ ./register.js env reads: DUO_SIGNAL_FILE
+
+✘ Validation failed
