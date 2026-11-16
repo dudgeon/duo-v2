@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Option A, one Source toggle</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.bd{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;color:#1f2328;background:#eceef1;box-sizing:border-box}
+h1.t{font-size:28px;line-height:36px;font-weight:600;margin:0}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.66px;text-transform:uppercase;color:#5b636d;display:flex;gap:8px;align-items:center}
+.P{font:10px/14px ui-monospace,'SF Mono',Menlo,monospace;color:#5b636d;border:1px dashed #8b939c;border-radius:3px;padding:0 3px;letter-spacing:0;text-transform:none;font-weight:400;white-space:nowrap}
+.light{--ground:#f3f4f6;--pane:#ffffff;--sel:#e9ecef;--text:#1f2328;--text2:#5b636d;--rule:#c9cdd3;--edge:#8b939c;--doc:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;--tag:#1d5fa8;--attr:#7b3fb5;--str:#2f7d32;--cm:#5b636d;--r1:#b0244f;--r3:#2e7a3a;--edit:#d6eddc}
+.pane{box-sizing:border-box;background:var(--pane);color:var(--text);border:1px solid var(--rule);display:flex;flex-direction:column;overflow:hidden;font-size:13px;line-height:20px;position:relative}
+.tabs{flex:none;height:36px;box-sizing:border-box;display:flex;align-items:center;gap:20px;padding:0 10px 0 16px;border-bottom:1px solid var(--rule);color:var(--text2);font-size:12px;white-space:nowrap}
+.tabs b{color:var(--text);font-weight:600}
+.sp{flex:1}
+.doc{flex:1;padding:22px 28px;font-family:var(--doc);font-size:13px;line-height:20px;overflow:hidden}
+.doc h3{font-size:18px;line-height:24px;font-weight:600;margin:0 0 10px}
+.doc h4{font-size:14px;line-height:20px;font-weight:600;margin:10px 0 0}
+.doc p{margin:0 0 10px}
+.doc table{border-collapse:collapse;margin:0}
+.doc th,.doc td{padding:3px 8px;border:1px solid var(--rule);text-align:left;white-space:nowrap}
+.doc th{background:var(--ground);font-weight:600}
+.props{border:1px solid var(--rule);border-radius:6px;padding:6px 10px;margin:0 0 14px;font-size:12px;line-height:20px;color:var(--text2)}
+.props b{color:var(--text);font-weight:400;margin-left:8px}
+.src{flex:1;padding:14px 14px 14px 12px;overflow:hidden;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;line-height:19px;white-space:pre-wrap}
+.msrc{flex:1;padding:22px 28px;overflow:hidden;font-family:var(--doc);font-size:13px;line-height:20px;white-space:pre-wrap}
+.ln{display:block;padding-left:24px;text-indent:-24px}
+.t{color:var(--tag)}.a{color:var(--attr)}.s{color:var(--str)}.c{color:var(--cm);font-style:italic}.m{color:var(--text2)}.hb{font-weight:600}
+.ri{color:var(--r3)}.rc{color:var(--r1)}
+.caret{display:inline-block;width:1.5px;height:1.05em;background:var(--text);vertical-align:-0.15em;margin:0 -0.75px}
+.seg{flex:none;display:flex;height:22px;box-sizing:border-box;border:1px solid var(--edge);border-radius:6px;overflow:hidden;font-size:11px;line-height:20px}
+.seg span{padding:0 8px;color:var(--text2)}
+.seg span.on{background:var(--sel);color:var(--text);font-weight:600}
+.seg span+span{border-left:1px solid var(--edge)}
+.menu{box-sizing:border-box;background:#fff;border:1px solid #c9cdd3;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.18);padding:5px;font-size:13px;line-height:22px;color:#1f2328;width:290px}
+.menu div{display:flex;padding:0 10px;border-radius:5px;gap:6px}
+.menu div.hi{background:#1d5fa8;color:#fff}
+.menu div.hi i{color:#fff}
+.menu i{font-style:normal;color:#5b636d;margin-left:auto}
+.menu hr{border:0;border-top:1px solid #e3e5e8;margin:4px 6px}
+.spec{font-size:12.5px;line-height:19px;color:#1f2328}
+.spec p{margin:0 0 9px}
+.spec b{font-weight:600}
+.mono{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11.5px}
+.cap{font-size:12px;line-height:17px;color:#5b636d;margin-top:8px}
+.page{flex:1;padding:22px 26px;font-family:-apple-system,system-ui,sans-serif;background:#fff;color:#1b1b1b;overflow:hidden;font-size:13px;line-height:20px}
+.page h3{font-size:22px;line-height:28px;font-weight:600;margin:0 0 8px}
+.page .up{color:#2f7d32}
+.page ul{margin:6px 0 12px;padding-left:20px}
+.page .chart{height:70px;border-radius:6px;background:#f1f5f9;display:flex;align-items:flex-end;gap:8px;padding:8px 10px;box-sizing:border-box}
+.page .chart i{display:block;width:22px;background:#94a3b8;border-radius:2px}
+.fbar{flex:none;height:24px;display:flex;align-items:center;gap:2px;padding:0 10px 0 20px;border-bottom:1px solid var(--rule);font-size:12px;color:var(--text2)}
+.fbar span{min-width:20px;text-align:center;padding:0 3px}
+.rbar{flex:none;height:44px;box-sizing:border-box;display:flex;align-items:center;gap:6px;padding:0 12px 0 16px;border-bottom:1px solid var(--rule);font-size:12px}
+.btn{flex:none;height:26px;box-sizing:border-box;display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--edge);border-radius:6px;background:var(--pane);font-size:12px;line-height:16px;color:var(--text)}
+.flash{background:var(--sel);border-radius:2px}
+.rail{flex:none;width:16px;background:var(--ground);border-left:1px solid var(--rule)}
+.arrow{font-size:22px;color:#5b636d;align-self:center}
+</style>
+</helmet>
+<div class="bd light" style="width: 1560px; height: 1720px; padding: 44px 56px; display: flex; flex-direction: column; gap: 22px;">
+  <div style="display: flex; flex-direction: column; gap: 4px;">
+    <h1 class="t">A · One Source toggle, for every document</h1>
+    <div style="font-size: 14px; line-height: 21px; color: #5b636d;">Today’s Source Mode, grown up: the same switch for Markdown and HTML, in place, per document and remembered, highlighted and editable. Recommended.</div>
+  </div>
+
+  <div class="lbl">1 · Markdown: Live ⇄ Source</div>
+  <div style="display: flex; gap: 20px; align-items: flex-start;">
+    <div style="width: 460px;">
+      <div class="pane" style="height: 400px;">
+        <div class="tabs"><b>refunds-review.md</b><span>notes.md</span><span class="sp"></span><span class="seg"><span class="on">Live</span><span>Source</span></span></div>
+        <div class="doc">
+          <div class="props">title<b>Refunds review</b><br>suggest-edits<b>on</b></div>
+          <h3>Refunds review</h3>
+          <p>Refunds fell <b>12%</b> in Q3 <span style="border-bottom: 1.5px solid var(--r3);">since July</span>.</p>
+          <h4>Next</h4>
+          <p style="margin: 4px 0 10px;">☐ Check the <s style="color: var(--r1);">July</s> <u style="color: var(--r1);">June</u> baseline</p>
+          <table><tr><th>Reason</th><th>Count</th></tr><tr><td>Card disputes</td><td>41</td></tr><tr><td>Late delivery</td><td>28</td></tr></table>
+        </div>
+      </div>
+      <div class="cap">Live (today): the properties block, the margin’s comment cards (here folded at 460), suggestions drawn inline.</div>
+    </div>
+    <div class="arrow">⇄</div>
+    <div style="width: 460px;">
+      <div class="pane" style="height: 400px;">
+        <div class="tabs"><b>refunds-review.md</b><span>notes.md</span><span class="sp"></span><span class="seg"><span>Live</span><span class="on">Source</span></span><span class="P">[P]</span></div>
+        <div class="msrc"><span class="m">---</span>
+<span class="a">title</span><span class="m">:</span> Refunds review
+<span class="a">suggest-edits</span><span class="m">:</span> <span class="s">true</span>
+<span class="m">---</span>
+<span class="m"># </span><span class="hb">Refunds review</span>
+Refunds fell <span class="m">**</span><b>12%</b><span class="m">**</span> in Q3 <span class="m">{==</span><span style="border-bottom: 1.5px solid var(--r3);">since July</span><span class="m">==}{&gt;&gt;</span><span class="ri">@claude 2026-11-01 #c4:</span> source? <span class="m">&lt;&lt;}</span>.
+<span class="m">## </span><span class="hb">Next</span>
+<span class="m">- [ ]</span> Check the <span class="m">{~~</span><span class="rc">July</span><span class="m">~&gt;</span><span class="rc">June</span><span class="m">~~}</span><span class="caret"></span> baseline
+<span class="m">| </span>Reason <span class="m">| </span>Count <span class="m">|</span>
+<span class="m">|---|---|</span>
+<span class="m">| </span>Card disputes <span class="m">| </span>41 <span class="m">|</span></div>
+      </div>
+      <div class="cap">Source <span class="P">[P]</span>: the same document font and line heights, so nothing reflows on the switch; marks in <span class="mono">text2</span>, YAML keys and values coloured, each review mark in its author’s colour.</div>
+    </div>
+    <div class="spec" style="width: 440px;">
+      <p><b>Changes from today’s Source Mode</b></p>
+      <p>· <b>Highlighted</b> <span class="P">[P]</span>: marks (#, **, -, |, ---) in <span class="mono">text2</span>; headings semibold; YAML keys and values in the syntax tokens (board “Highlighting”). Still the document font, one height per line (DL-167 Q1).</p>
+      <p>· <b>Review marks in source</b> <span class="P">[P]</span>: braces in <span class="mono">text2</span>, the author’s text and signature in their review colour (Claude green, DL-237). The margin is hidden; the review bar stays, and Next / Previous select the raw mark. Suggest Edits still signs your typing, now visibly.</p>
+      <p>· <b>Frontmatter</b> as YAML, editable; the properties block comes back on Live.</p>
+      <p>· <b>Kept as is:</b> per document and remembered (<span class="mono">sourceDocuments</span>); undo, caret and scroll survive (compartments); saving and disk merges unchanged (DL-77).</p>
+      <p>· <b>Renamed</b> <span class="P">[P]</span>: View › Source Mode becomes <b>View › Source</b>, so one item serves Markdown and HTML.</p>
+    </div>
+  </div>
+
+  <div class="lbl">2 · HTML: Page ⇄ Source</div>
+  <div style="display: flex; gap: 20px; align-items: flex-start;">
+    <div style="width: 460px;">
+      <div class="pane" style="height: 400px;">
+        <div class="tabs"><b>q3-refunds.html</b><span>refunds-review.md</span><span class="sp"></span><span class="seg"><span class="on">Page</span><span>Source</span></span><span class="P">[P]</span></div>
+        <div class="page">
+          <h3>Refunds, Q3</h3>
+          <div>Down <span class="up">12%</span> since July.</div>
+          <ul><li>Card disputes: 41</li><li>Late delivery: 28</li><li>Wrong size: 17</li></ul>
+          <div class="chart"><i style="height:50px"></i><i style="height:40px"></i><i style="height:30px"></i><i style="height:34px"></i><i style="height:22px"></i></div>
+        </div>
+      </div>
+      <div class="cap">Page: today’s viewer, picker and all. The switch is new.</div>
+    </div>
+    <div class="arrow">⇄</div>
+    <div style="width: 460px;">
+      <div class="pane" style="height: 400px;">
+        <div class="tabs"><b>q3-refunds.html</b><span>refunds-review.md</span><span class="sp"></span><span class="seg"><span>Page</span><span class="on">Source</span></span><span class="P">[P]</span></div>
+        <div class="src"><span class="ln"><span class="t">&lt;!doctype html&gt;</span></span><span class="ln"><span class="t">&lt;html</span> <span class="a">lang</span>=<span class="s">"en"</span><span class="t">&gt;</span></span><span class="ln"><span class="t">&lt;head&gt;</span></span><span class="ln">  <span class="t">&lt;title&gt;</span>Q3 refunds<span class="t">&lt;/title&gt;</span></span><span class="ln">  <span class="t">&lt;style&gt;</span></span><span class="ln">    <span class="t">h1</span> { <span class="a">font</span>: <span class="s">600 22px system-ui</span>; }</span><span class="ln">    <span class="t">.up</span> { <span class="a">color</span>: <span class="s">#2f7d32</span>; }</span><span class="ln">  <span class="t">&lt;/style&gt;</span></span><span class="ln"><span class="t">&lt;/head&gt;</span></span><span class="ln"><span class="t">&lt;body&gt;</span></span><span class="ln flash">  <span class="t">&lt;h1&gt;</span>Refunds, Q3<span class="caret"></span><span class="t">&lt;/h1&gt;</span></span><span class="ln">  <span class="t">&lt;p</span> <span class="a">class</span>=<span class="s">"lede"</span><span class="t">&gt;</span>Down <span class="t">&lt;span</span> <span class="a">class</span>=<span class="s">"up"</span><span class="t">&gt;</span>12%<span class="t">&lt;/span&gt;</span> since July.<span class="t">&lt;/p&gt;</span></span><span class="ln">  <span class="c">&lt;!-- by reason, from the export --&gt;</span></span><span class="ln">  <span class="t">&lt;ul&gt;</span></span><span class="ln">    <span class="t">&lt;li&gt;</span>Card disputes: 41<span class="t">&lt;/li&gt;</span></span><span class="ln">    <span class="t">&lt;li&gt;</span>Late delivery: 28<span class="t">&lt;/li&gt;</span></span><span class="ln">  <span class="t">&lt;script</span> <span class="a">src</span>=<span class="s">"chart.js"</span><span class="t">&gt;&lt;/script&gt;</span></span></div>
+      </div>
+      <div class="cap">Source <span class="P">[P]</span>: SF Mono 12/19, tags, attributes, strings, comments, CSS and script highlighted; long lines wrap, indented under their start. It opens at the element that was at the top of the page (here the <span class="mono">&lt;h1&gt;</span>, its line shown in <span class="mono">selected</span> for a moment).</div>
+    </div>
+    <div class="spec" style="width: 440px;">
+      <p><b>Editing and saving</b> <span class="P">[P]</span></p>
+      <p>· Source is the ordinary editor with the HTML language: typing, undo, find, ⌘D to Claude. It autosaves 1 s after typing and merges with the disk before writing (DL-77); a real overlap with Claude’s rewrite shows today’s conflict bar, Keep Mine / Use Theirs (C-142).</p>
+      <p>· The Markdown-only parts stay off: the properties block, tables, lists, review marks, title-follows-heading.</p>
+      <p><b>Keeping your place</b> <span class="P">[P]</span></p>
+      <p>· Page → Source: the editor scrolls to the tag of the element at the top of the viewport (elements matched to the parse tree in document order).</p>
+      <p>· Source → Page: the page reloads <b>from the buffer</b>, so unsaved text shows, and scrolls to the element whose tag holds the caret.</p>
+      <p>· While Source shows, the viewer doesn’t reload from disk; Claude’s changes arrive in the editor as for Markdown.</p>
+      <p><b>Copying</b>: from Source, exact text; from Page, as today.</p>
+    </div>
+  </div>
+
+  <div class="lbl">3 · Getting in and out, review and the bar</div>
+  <div style="display: flex; gap: 28px; align-items: flex-start;">
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <div class="menu">
+        <div>Show Hidden Files</div>
+        <div>Hide Formatting Bar</div>
+        <hr>
+        <div class="hi">✓ Source <i>⌥⌘U</i></div>
+        <div>Show Preview in Split View <i>⌥⌘P</i></div>
+        <hr>
+        <div>Previous Side of Split View <i>⇧⌘[</i></div>
+        <div>Next Side of Split View <i>⇧⌘]</i></div>
+      </div>
+      <div class="cap" style="width: 290px;">View › Source <span class="P">[P]</span>, checked while it shows. <b>⌥⌘U</b> <span class="P">[P]</span> is View Source in Safari and Chrome; free in Duo (DL-34 needs DL-300). Also on the tab’s right-click menu as Show Source / Show Page.</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px; width: 330px;">
+      <div class="pane" style="height: 128px;">
+        <div class="tabs"><b>q3-refunds.html</b><span class="sp"></span><span class="seg"><span>Page</span><span class="on">Source</span></span></div>
+        <div class="spec" style="padding: 12px 16px; color: #5b636d;">The switch sits at the tab strip’s trailing end, on the showing document only. Its names say what the other view is: <b>Page</b> for HTML, <b>Live</b> for Markdown.</div>
+      </div>
+      <div class="cap">The switch <span class="P">[P]</span>: 22 high, 11 pt, <span class="mono">controlEdge</span> border, <span class="mono">selected</span> behind the current side. A click toggles; so does ⌥⌘U.</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px; width: 400px;">
+      <div class="pane" style="height: 128px;">
+        <div class="tabs"><b>refunds-review.md</b><span class="sp"></span><span class="seg"><span>Live</span><span class="on">Source</span></span></div>
+        <div class="fbar"><span>Body ⌄</span><span><b>B</b></span><span><i>I</i></span><span>🔗︎</span><span>⊞</span><span>⋯</span><span class="sp"></span><span>◉</span></div>
+        <div class="msrc" style="padding: 8px 20px;">Refunds fell <span class="m">**</span><b>12%</b><span class="m">**</span><span class="caret"></span> in Q3</div>
+      </div>
+      <div class="cap"><b>The formatting bar in Markdown source</b> <span class="P">[P]</span>: shown, as in Live (DL-266’s bar), because every command is a text rewrite: Bold writes the <span class="mono">**</span> you can now see. Amends DL-266 (3). Not shown on HTML source (its commands are Markdown).</div>
+    </div>
+    <div class="spec" style="width: 330px;">
+      <p><b>duo2</b> (DL-71) <span class="P">[P]</span></p>
+      <p class="mono">duo2 doc mode source|preview|toggle</p>
+      <p>· now works on an HTML file too (preview = Page). With no argument it says which.</p>
+      <p class="mono">duo2 doc read · doc edit</p>
+      <p>· unchanged: exact bytes and edits for both kinds.</p>
+      <p class="mono">duo2 html source [selector]</p>
+      <p>· new: shows Source, at the element if one is named (ENH-66).</p>
+    </div>
+  </div>
+
+  <div class="lbl">4 · Narrow, the split’s pair, and decks</div>
+  <div style="display: flex; gap: 24px; align-items: flex-start;">
+    <div style="width: 360px;">
+      <div class="pane" style="height: 300px;">
+        <div class="tabs" style="gap: 12px;"><b>q3-refunds.html</b><span class="sp"></span><span class="seg"><span>Page</span><span class="on">Source</span></span></div>
+        <div class="src"><span class="ln"><span class="t">&lt;p</span> <span class="a">class</span>=<span class="s">"lede"</span><span class="t">&gt;</span>Down <span class="t">&lt;span</span> <span class="a">class</span>=<span class="s">"up"</span><span class="t">&gt;</span>12%<span class="t">&lt;/span&gt;</span> since July.<span class="t">&lt;/p&gt;</span></span><span class="ln"><span class="t">&lt;ul&gt;</span></span><span class="ln">  <span class="t">&lt;li&gt;</span>Card disputes: 41<span class="t">&lt;/li&gt;</span></span><span class="ln">  <span class="t">&lt;li&gt;</span>Late delivery: 28<span class="t">&lt;/li&gt;</span></span></div>
+      </div>
+      <div class="cap"><b>At 360</b> (DL-129): nothing folds. The switch stays; other tabs truncate first. Under about 300 of tab strip the switch drops to the menu and ⌥⌘U <span class="P">[P]</span>.</div>
+    </div>
+    <div style="width: 560px;">
+      <div class="pane" style="height: 300px;">
+        <div class="tabs"><b>q3-refunds.html ⫼ Page</b></div>
+        <div style="flex: 1; display: flex; min-height: 0;">
+          <div class="src" style="border-right: 1px solid var(--rule);"><span class="ln"><span class="t">&lt;body&gt;</span></span><span class="ln flash">  <span class="t">&lt;h1&gt;</span>Refunds, Q3<span class="caret"></span><span class="t">&lt;/h1&gt;</span></span><span class="ln">  <span class="t">&lt;p</span> <span class="a">class</span>=<span class="s">"lede"</span><span class="t">&gt;</span>Down <span class="t">&lt;span</span> <span class="a">class</span>=<span class="s">"up"</span><span class="t">&gt;</span>12%<span class="t">&lt;/span&gt;</span>…</span><span class="ln">  <span class="t">&lt;ul&gt;</span></span></div>
+          <div class="page" style="padding: 16px;"><h3 style="font-size: 18px; line-height: 24px; outline: 1.5px solid #1d5fa8; outline-offset: 2px; border-radius: 2px;">Refunds, Q3</h3><div>Down <span class="up">12%</span> since July.</div><ul><li>Card disputes: 41</li><li>Late delivery: 28</li></ul></div>
+        </div>
+      </div>
+      <div class="cap"><b>The split’s pair</b> (⌥⌘P, DL-275): its source side is A’s Source, highlighted <span class="P">[P]</span>. Caret-follow outlines the element at the caret on the page for a moment (needs the caret line, Q-399); scroll-follow stays off (DL-275). The Markdown pair is gone; a Markdown file’s pair is offered no more.</div>
+    </div>
+    <div style="width: 480px;">
+      <div class="pane" style="height: 300px;">
+        <div class="tabs"><b>field-trial.md ⫼ Slides</b><span class="sp"></span><span class="seg"><span>Live</span><span class="on">Source</span></span></div>
+        <div style="flex: 1; display: flex; min-height: 0;">
+          <div class="msrc" style="padding: 14px 16px; font-size: 12px; line-height: 19px; border-right: 1px solid var(--rule);"><span class="c">&lt;!-- slide: kpi --&gt;</span>
+<span class="m"># </span><span class="hb">Refunds down 12%</span>
+<span class="m">## </span><span class="hb">value</span>
+12%
+<span class="m">&gt; [!note]</span>
+<span class="m">&gt;</span> Since July.</div>
+          <div style="flex: 1; background: #f3f4f6; display: flex; align-items: center; justify-content: center;"><div style="width: 200px; height: 112px; background: #fff; border: 1px solid #c9cdd3; box-sizing: border-box; padding: 12px; font-size: 12px; line-height: 16px;"><b>Refunds down 12%</b><div style="font-size: 30px; line-height: 40px; font-weight: 600;">12%</div></div></div>
+        </div>
+      </div>
+      <div class="cap"><b>Decks</b> (DL-269): the deck’s source side takes A’s switch. Source shows the slide marker as typed instead of its chip (DL-296), and the slides still follow. Nothing in Duo Decks changes.</div>
+    </div>
+  </div>
+  <div class="spec" style="color: #5b636d;"><b style="color: #1f2328;">Cost, about a week:</b> the HTML language and a highlight style (parsers already bundled, F-514), HTML opening in the editor, the viewer’s reload rules, keeping your place both ways, the switch, the verbs. <b style="color: #1f2328;">Light, Dark, Classic:</b> board “Highlighting”; an HTML page keeps its own colours (DL-224), its source takes Duo’s.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1560,"height":1720}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
