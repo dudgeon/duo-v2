@@ -6446,3 +6446,15 @@ Hooks reference: `permissionDecision: "defer"` "requires non-interactive mode wi
 ## F-709 · Hooks can only be a backstop for the director (director-worker-skill addendum, 2026-11-15)
 
 `ClientCaps.probe` reads `disableAllHooks`, and the director harness's `hooks-off` and `pinned-219-strict` profiles model Macs where hooks are off. Every hook in §9 of `docs/research/director-worker-skill.md` therefore has a fallback: the worker skill's rule and `status`'s transcript-based red lines.
+
+## F-721 · ⌥⌘U is clear on this Mac (view-source build, 2026-11-15)
+
+Checked for DL-346: 1Password 7 is the only one of the three installed (its documented chords are ⌘\ and ⌥⌘\); Raycast and Rectangle aren't installed here, and Rectangle's defaults use ⌃⌥. No symbolic hotkey takes ⌥⌘U. Not tried on the work Mac.
+
+## F-722 · Source highlighting costs 28 KB and two stand-in patterns (view-source build, 2026-11-15)
+
+`dist/cm6.js` grew 690,427 to 718,301 bytes: `@codemirror/lang-html` is now a direct pin (6.4.12, as the lockfile already had it) and `@lezer/highlight`'s tags and a `HighlightStyle` are used. Markdown's parser sees frontmatter as a thematic break and a setext heading, so source colours the YAML and CriticMarkup marks by line patterns (`sourceMarks` in `duo-editor.js`), with weight 400 so `status: draft` isn't bold. An HTML page is `kind: "html"` to `duo.show`: always source, mono 12/19, no live-preview, list, title or deck-free extensions.
+
+## F-723 · The HTML page and its source are two views of one file, swapped by the right pane (view-source build, 2026-11-15)
+
+View › Source on an HTML tab puts the file in `sourceDocuments` and `ProjectPanes` shows `DocumentStack` instead of `HTMLViewer` (which sleeps, so it doesn't reload under a dirty buffer). Turning it off flushes the editor first, then the viewer reads the file. In a split tab the HTML side is always source, so the item is disabled there. Nothing keeps the scroll place across the swap (Q-580).
