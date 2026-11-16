@@ -49,8 +49,8 @@ for b in "${boards[@]}"; do
     md-composer-wrap|md-composer-fence) box=(300 0 680 860); target="chat-markdown-handoff/composer" ;;
     md-*) box=(300 0 680 860); target="chat-mode-handoff/text" ;;
     # btw-in-chat-handoff (DL-344): the boards stack several 480-wide panes; the compare is for the record and the numbers come from the cropped card (docs/design/btw-in-chat-handoff/proof/).
-    btw-answered) box=(300 0 680 860); target="btw-in-chat-handoff/states" ;;
-    btw-after) box=(300 0 680 860); target="btw-in-chat-handoff/after" ;;
+    btw-answered) box=(300 0 680 860); target="btw-in-chat-handoff/02-states" ;;
+    btw-after) box=(300 0 680 860); target="btw-in-chat-handoff/03-after" ;;
     *) box=(300 0 680 860) ;;
   esac
   python3 scripts/chat-crop.py "build/ui/chat-$b.png" "build/ui/chat-$b-board.png" "${box[@]}" >/dev/null
