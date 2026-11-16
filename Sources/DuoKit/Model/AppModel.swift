@@ -40,6 +40,8 @@ public final class AppModel {
     public internal(set) var windowNumber = 1
     /// The window's base colour (DL-312, DL-313), a `DuoWindowColour` id; nil is None.
     public var windowColourID: String?
+    /// The frame a restored window opens at (DL-351), until its window is made; nil: as AppKit places it.
+    @ObservationIgnored public var restoreFrame: CGRect?
     public var altitude: Altitude = .allProjects {
         // The idle list belongs to All projects: leaving closes it, so its keys go with it (F-178).
         didSet { if altitude != .allProjects, idleOpen { idleOpen = false; IdleKeys.remove() } }

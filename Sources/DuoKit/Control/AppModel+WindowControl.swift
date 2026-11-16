@@ -1,3 +1,4 @@
+import AppKit
 import DuoControl
 import Foundation
 
@@ -69,6 +70,7 @@ extension AppModel {
         var j: [String: Any] = ["number": windowNumber, "title": windowTitle, "colour": windowColourID ?? "none",
                                 "primary": core.primary === self]
         if let p = currentProject?.name { j["project"] = p }
+        if let f = window?.frame { j["frame"] = [f.minX, f.minY, f.width, f.height].map { Double($0) } }
         return j
     }
 }
