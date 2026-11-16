@@ -835,6 +835,41 @@ public enum FixtureHarness {
                     }
                 }
             }
+        case "pointer":   // pointer:<x> <y>: a real mouse move to that point of the window, from its top left (hover, F-738)
+            if parts.count > 1, let w = FixtureHarness.window() {
+                let xy = parts[1].split(separator: " ").compactMap { Double($0) }
+                if xy.count == 2, let content = w.contentView {
+                    w.acceptsMouseMovedEvents = true
+                    let p = NSPoint(x: xy[0], y: content.bounds.height - xy[1])
+                    if let e = NSEvent.mouseEvent(with: .mouseMoved, location: p, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                                                  windowNumber: w.windowNumber, context: nil, eventNumber: 0, clickCount: 0, pressure: 0) { NSApp.postEvent(e, atStart: false) }
+                }
+            }
+        case "pointer-click":   // pointer-click:<x> <y>: a mouse down and up there, through the app's event queue as a real click comes (F-738)
+            if parts.count > 1, let w = FixtureHarness.window() {
+                let xy = parts[1].split(separator: " ").compactMap { Double($0) }
+                if xy.count == 2, let content = w.contentView {
+                    let p = NSPoint(x: xy[0], y: content.bounds.height - xy[1])
+                    for (i, type) in [NSEvent.EventType.leftMouseDown, .leftMouseUp].enumerated() {
+                        if let e = NSEvent.mouseEvent(with: type, location: p, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime + Double(i) * 0.05,
+                                                      windowNumber: w.windowNumber, context: nil, eventNumber: i, clickCount: 1, pressure: 1) { NSApp.postEvent(e, atStart: false) }
+                    }
+                }
+            }
+        case "ax-press":   // ax-press:<x> <y>: the button under that point of the window (top-left points), found in the accessibility tree and pressed (F-738)
+            if parts.count > 1, let w = FixtureHarness.window() {
+                let xy = parts[1].split(separator: " ").compactMap { Double($0) }
+                guard xy.count == 2 else { break }
+                let hits = Anchors.buttons(window: w, at: CGPoint(x: xy[0], y: xy[1]))
+                FileHandle.standardError.write(Data("ax-press: \(hits.map { "\($0.label)@\(Int($0.frame.minX)),\(Int($0.frame.minY)) \(Int($0.frame.width))x\(Int($0.frame.height))" })\n".utf8))
+                if let b = hits.last, let el = b.node as? NSAccessibilityElementProtocol { _ = (el as AnyObject).accessibilityPerformPress?() }
+            }
+        case "turn-state":   // turn-state[:<label>]: one line on stderr: the turn under the pointer, the row's turn, Copy's turn, the clipboard (F-738)
+            if let c = model.visibleSessionId.flatMap(model.chat(for:)) {
+                let n = { (id: String?) in id.flatMap { id in c.turnList.first { $0.id == id }.map { String($0.n) } } ?? "-" }
+                let clip = FileActions.pasteboard.string(forType: .string).map { String($0.prefix(40)).debugDescription } ?? "-"
+                FileHandle.standardError.write(Data("turn-state\(parts.count > 1 ? " " + parts[1] : ""): hover=\(n(c.ui.hoverTurn)) selected=\(n(c.ui.selectedTurn)) copied=\(n(c.ui.copiedTurn)) clip=\(clip)\n".utf8))
+            }
         case "where":
             FileHandle.standardError.write(Data("where: \(model.altitude.isAllProjects ? "all" : model.currentProject?.name ?? "?") console=\(model.consoleTab ?? "-")\n".utf8))
         case "fork":   // fork:<session id prefix>: Resume as a Fork (DB-3)

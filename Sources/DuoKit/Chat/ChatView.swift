@@ -98,6 +98,9 @@ struct ChatPane: View {
                         }
                     }
                     .duoAnimation(.messageIn, value: chat.log.items.count)
+                    // The turn under the pointer, from the turns' frames in this space (F-738).
+                    .coordinateSpace(.named(ChatTurnHover.space))
+                    .background { ChatTurnHover(chat: chat) }
                     .padding(EdgeInsets(top: 18, leading: DuoSpace.chatColumnInset, bottom: 12, trailing: DuoSpace.chatColumnInset))
                     .frame(maxWidth: .infinity, alignment: .leading)
                     Color.clear.frame(height: 1).id(ChatPane.bottom)
@@ -310,9 +313,10 @@ struct ChatYouBubble: View {
             if you.queued { Text("Queued · Claude reads it when it’s ready").duoText(.chatMeta).foregroundStyle(DuoColor.text2) }
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
-        .turnRow(id: you.id, chat: chat, trailing: true)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("You: \(you.text)\(you.images.isEmpty ? "" : ", \(you.images.count) picture\(you.images.count == 1 ? "" : "s")")")
+        // After the message is one element, so the row's buttons stay buttons of their own, as under Claude's (F-738).
+        .turnRow(id: you.id, chat: chat, trailing: true)
         .turnAccessibility(id: you.id, chat: chat)
     }
 }

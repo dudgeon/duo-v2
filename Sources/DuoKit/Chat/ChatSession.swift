@@ -181,6 +181,8 @@ public final class ChatSession {
     public let log: ChatLog = { let l = ChatLog(); l.drawn = true; return l }()
     /// Folds and long outputs the reader opened.
     public let ui = ChatUIState()
+    /// Where the feed's turns are, for the pointer (F-738): not observed, so a frame changing redraws nothing.
+    @ObservationIgnored let turnFrames = ChatTurnFrames()
     /// The lazy feed's rows for each turn, kept until the turn changes (ChatRows.swift).
     @ObservationIgnored var feedRows: [String: ChatFeedRows.Kept] = [:]
     /// Fixture targets: the clock the Writing line counts from.
