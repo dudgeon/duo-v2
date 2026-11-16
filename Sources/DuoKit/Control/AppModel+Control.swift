@@ -246,6 +246,10 @@ extension AppModel {
                 setBoardGroup(b)
                 return done(.ok("The Board is grouped by \(b.rawValue)."))
             }
+            // Anything else is a group to expand or collapse; without one of those, say what's valid.
+            guard inv[1] == "expand" || inv[1] == "collapse" else {
+                return done(.fail("'\(g)\(inv[1].map { " \($0)" } ?? "")': use `view group activity|folder|none` for the Board, or `view group <group|original id> expand|collapse`."))
+            }
             if g == "earlier", inv[1] == "expand" || inv[1] == "collapse", homeView == .board, boardGroup == .activity {
                 if inv[1] == "collapse" { expandedGroups.remove(Self.boardEarlierKey) } else { expandedGroups.insert(Self.boardEarlierKey) }
                 return done(.ok("\(inv[1] == "collapse" ? "Collapsed" : "Expanded") the Board's Earlier."))
