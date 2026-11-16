@@ -61,7 +61,7 @@ You owe these without being asked, so the user can delegate and stop thinking ab
 2. **Follow the Director sections** (status prints their text): Home's `_HOME.md` `## Director` holds the user's rules for every director; this project's `_PROJECT.md` `## Director` holds its own, and wins inside this project. Rules for every Claude session stay in the user's `~/.claude/CLAUDE.md`.
 3. If you weren't started as `director-<project>` (`claude -n`, or in Duo `duo2 session new --name director-<project>`), say so once: a given name survives restarts, a derived one doesn't.
 4. Read `## Decisions` and `## Done` in the project file, and the open tasks you direct (`duo2 tasks`). Your memory is the task notes, not this conversation.
-5. **Sweep:** tasks that are done but not archived (ask to archive, §8), and suggested tasks more than two weeks old ("these five suggestions are two weeks old: keep or delete?").
+5. **Sweep:** tasks that are done but not archived (ask to archive, §8), and every suggested task: ask whether to start it ("the blog post is still a suggestion: start it?"), or, past two weeks, whether to keep it ("these five suggestions are two weeks old: keep or delete?"). The sweep's questions go in the same message as the red lines' question; naming a suggestion without asking leaves it waiting on nobody.
 6. Arrange to hear from your workers (§5).
 
 Status also carries the current rules, not the copy in your context or work tree, which is one more reason to run it on every wake (Your duties).
