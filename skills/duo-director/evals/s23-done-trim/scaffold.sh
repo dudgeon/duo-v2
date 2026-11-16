@@ -1,9 +1,9 @@
 #!/bin/sh
 # S23 (DL-209)
-lib=$(dirname "$0")/../_lib; . "$lib/setup.sh"
+lib=$(dirname "$0")/../_lib; . "$lib/setup.sh"; . "$lib/fixtures.sh"
 mkdir -p tasks notes
-{ printf -- '---\ntitle: Launch\n---\n# Launch\n\n## Decisions\n\n- 2026-09-01 Beta first.\n\n## Done\n\n'; i=1; while [ $i -le 20 ]; do printf -- '- 2026-09-%02d Finished old task %d.\n' $i $i; i=$((i+1)); done; } > PROJECT.md
-cat > tasks/press-kit.md <<'EOF'
+{ printf -- '---\ntitle: Launch\n---\n# Launch\n\n## Decisions\n\n- %s Beta first.\n\n## Done\n\n' "$(ago $((43 * D)) '%Y-%m-%d')"; i=1; while [ $i -le 20 ]; do printf -- '- %s Finished old task %d.\n' "$(ago $(((44 - i) * D)) '%Y-%m-%d')" $i; i=$((i+1)); done; } > PROJECT.md
+cat > tasks/press-kit.md <<EOF
 ---
 title: Press kit
 status: review
@@ -19,5 +19,5 @@ Assemble the press kit.
 
 ## Progress
 
-- 2026-10-14 Checked: all six assets present.
+- $(ago 0 '%Y-%m-%d') Checked: all six assets present.
 EOF

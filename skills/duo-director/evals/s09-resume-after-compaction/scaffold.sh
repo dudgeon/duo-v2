@@ -1,9 +1,9 @@
 #!/bin/sh
 # S09
-lib=$(dirname "$0")/../_lib; . "$lib/setup.sh"
-printf -- '---\ntitle: Launch\ngoal: launch the beta on 1 Nov\n---\n# Launch\n' > PROJECT.md
+lib=$(dirname "$0")/../_lib; . "$lib/setup.sh"; . "$lib/fixtures.sh"
+printf -- '---\ntitle: Launch\ngoal: launch the beta on %s\n---\n# Launch\n' "$(dmon $((-18 * D)))" > PROJECT.md
 mkdir -p tasks notes
-cat > tasks/press-kit.md <<'EOF'
+cat > tasks/press-kit.md <<EOF
 ---
 title: Press kit
 status: in-progress
@@ -19,9 +19,9 @@ Assemble the press kit.
 
 ## Progress
 
-- 2026-10-14 09:00 Worker started.
+- $(ago $((2 * H)) '%Y-%m-%d %H:%M') Worker started.
 EOF
-cat > tasks/landing-copy.md <<'EOF'
+cat > tasks/landing-copy.md <<EOF
 ---
 title: Landing copy
 status: review
@@ -37,10 +37,10 @@ Rewrite the landing page copy.
 
 ## Progress
 
-- 2026-10-14 08:00 Worker started.
-- 2026-10-14 10:00 Worker reported done; to check.
+- $(ago $((3 * H)) '%Y-%m-%d %H:%M') Worker started.
+- $(ago $((1 * H)) '%Y-%m-%d %H:%M') Worker reported done; to check.
 EOF
-cat > tasks/blog-post.md <<'EOF'
+cat > tasks/blog-post.md <<EOF
 ---
 title: Blog post
 status: suggested
@@ -54,5 +54,5 @@ A launch blog post.
 
 ## Progress
 
-- 2026-10-14 Filed as suggested.
+- $(ago 0 '%Y-%m-%d') Filed as suggested.
 EOF

@@ -1,11 +1,11 @@
 #!/bin/sh
 # S10
-lib=$(dirname "$0")/../_lib; . "$lib/setup.sh"
-printf -- '---\ntitle: Launch\ngoal: launch the beta on 1 Nov\n---\n# Launch\n' > PROJECT.md
+lib=$(dirname "$0")/../_lib; . "$lib/setup.sh"; . "$lib/fixtures.sh"
+printf -- '---\ntitle: Launch\ngoal: launch the beta on %s\n---\n# Launch\n' "$(dmon $((-18 * D)))" > PROJECT.md
 mkdir -p tasks notes
 mkdir -p .duo
-printf '{"schema":1,"current":{"name":"director-launch-2","sessionId":"99999999-9999-4999-8999-999999999999","since":"2026-10-14T08:00:00-04:00"},"retired":[],"pending":[]}' > .duo/director.json
-cat > tasks/press-kit.md <<'EOF'
+printf '{"schema":1,"current":{"name":"director-launch-2","sessionId":"99999999-9999-4999-8999-999999999999","since":"%s"},"retired":[],"pending":[]}' "$(agoz $((2 * H)) '%Y-%m-%dT%H:%M:%SZ')" > .duo/director.json
+cat > tasks/press-kit.md <<EOF
 ---
 title: Press kit
 status: in-progress
