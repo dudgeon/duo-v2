@@ -28,6 +28,7 @@ For each branch:
    - after the merge, republish the design system if `docs/design/system/` changed.
 7. **Push,** then remove the work tree and branch (local and origin), message the session ("merged, you're done").
 8. **Never push a merge you haven't checked.** If you find a problem, `git reset --hard origin/main` (only for an unpushed local merge) and send it back with specifics.
+9. **Push only on the gate's own exit status.** Write its output to a file and test `$?` of `merge-gate.sh` itself: `merge-gate.sh <sha> > log; rc=$?; [ $rc = 0 ] && git push …`. Piping it into `tail` (or anything) before `&&` tests the pipe's last command, and a failed gate pushes (2026-11-16: a duplicated Q-586 reached main that way, fixed in 46dcbae2).
 
 ## 3. Records
 
