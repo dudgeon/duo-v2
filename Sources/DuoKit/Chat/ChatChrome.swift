@@ -127,21 +127,20 @@ extension AppModel {
         c.backToChat()
     }
 
-    /// The bar's Debug button: the report in a Duo sheet, to copy (DL-234). Nothing is sent anywhere.
+    /// The bar's Debug button: the report in a window sized to the screen, to photograph, copy or save into the
+    /// project (DL-234, F-749). Nothing is sent anywhere.
     public func showFallbackReport(_ key: String) {
         guard let c = chat(for: key) else { return }
         let report = c.debugReport()
-        SheetCenter.shared.ask(DuoQuestion(
-            title: "Why chat mode showed the terminal",
-            paragraphs: ["This report can include what was on your screen. It stays on this Mac until you copy it; nothing is sent anywhere."],
-            report: report,
-            choices: [
-                .init(label: "Close", isCancel: true, action: {}),
-                .init(label: "Copy Report", isDefault: true, action: {
-                    NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString(report, forType: .string)
-                }),
-            ]))
+        let folder = reportFolder(key)
+        FallbackReportWindow.show(report: report, save: folder.map { f in { try ChatFallbackReport.save(report, folder: f) } })
+    }
+
+    /// Where a session's saved report goes: its folder, where Claude can read it (F-749).
+    func reportFolder(_ key: String) -> URL? {
+        if let t = terminals.existing(key) { return URL(fileURLWithPath: t.cwd) }
+        if let s = session(tabKey: key), let f = liveFolders[s.project] { return f }
+        return nil
     }
 
     /// A chat on screen (ENH-45): the console's tab in a project that isn't showing its task board (DL-148: the board

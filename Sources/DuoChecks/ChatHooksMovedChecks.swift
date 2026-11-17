@@ -101,6 +101,7 @@ import Foundation
         let sid = "silent-\(UUID().uuidString.prefix(8))"
         let c = chatOnScreen(sid)
         let r = c.debugReport()
+        try fallbackReportWindowChecks(r, folder: cwdDir)
         check(c.lastFallback?.rule == "hooks-silent" && (c.fallback?.message ?? "").contains("hasn’t sent Duo anything") && r.contains("no event read yet (no events file)"),
               "no hook ever read: rule hooks-silent, and the report says there is no events file (\(c.lastFallback?.rule ?? "none"))")
         c.feedStop()

@@ -30,6 +30,12 @@ extension AppModel {
             }
             guard let key else { return done(.fail("no Claude session is on screen; name one")) }
             guard let chat = chats.existing(key) ?? fixtureChats[key] else { return done(.fail("\(consoleTitle(key)) has no chat yet: open it in Duo first")) }
+            // --save: the window's Save to Project (F-749): the report into the session's folder, for Claude to read.
+            if inv.has("save") {
+                guard let folder = reportFolder(key) else { return done(.fail("\(consoleTitle(key)) has no folder to save into")) }
+                do { return done(.ok("Saved to \(try ChatFallbackReport.save(chat.debugReport(), folder: folder).path)")) }
+                catch { return done(.fail("couldn't save: \(error.localizedDescription)")) }
+            }
             return done(.ok(chat.debugReport()))
         }
         if inv.positional.first == "btw" { return chatSideVerb(inv, done) }
