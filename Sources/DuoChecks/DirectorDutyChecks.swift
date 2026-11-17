@@ -618,6 +618,52 @@ private func stopped(_ path: String = "tasks/s.md", checked: Date? = nil, typing
         check(skill.contains("| **\(duty.rawValue) "), "the skill's register has a row for \(duty.rawValue) (`| **\(duty.rawValue) `)")
         check(cases.contains { $0.1.contains("duty-\(duty.rawValue)") }, "some eval is tagged duty-\(duty.rawValue)")
     }
+    let aging = evalFixedDates(evals)
+    check(aging.isEmpty, "no eval carries a fixed date that ages out; dates come from _lib/fixtures.sh at run time (Q-586): \(aging.prefix(5).joined(separator: "; "))")
+    let probe = evalFixedDates(in: ["- 2026-10-14 09:00 Worker started.", "goal: launch the beta on 1 Nov", "on November 3", "{\"since\":\"2026-10-14T08:00:00-04:00\"}", "# written 2026-11-14",
+                                    "until 2099-01-01.", "\"$(ago $((2 * D)) '%Y-%m-%d %H:%M')\" Worker started.", "Release notes 1.2"], file: "x")
+    let cost = Process()
+    let pipe = Pipe()
+    cost.executableURL = URL(fileURLWithPath: "/usr/bin/python3")
+    cost.arguments = [repoRoot().appending(path: "scripts/director-harness/eval-cost.py").path, "--self-test"]
+    cost.standardOutput = pipe
+    cost.standardError = pipe
+    try cost.run()
+    let said = String(decoding: pipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+    cost.waitUntilExit()
+    check(cost.terminationStatus == 0 && said.contains("total includes judgeCostUsd"),
+          "eval spend adds each run's judgeCostUsd to costUsd (eval-cost.py --self-test, F-740): \(said.prefix(120))")
+    let harness = (try? String(contentsOf: repoRoot().appending(path: "scripts/director-harness/run-evals.sh"), encoding: .utf8)) ?? ""
+    check(harness.contains("eval-cost.py $out/result.json"), "run-evals.sh prints each round's cost with the judges (eval-cost.py)")
+    check(probe.count == 4, "the fixed-date scan finds an ISO date, a timestamp, \"1 Nov\" and \"November 3\", and passes comments, 2099 and ago() (\(probe))")
+}
+
+/// Every fixed calendar date in the evals' case files, as "path:line: text" (Q-586). A fixture dated on the day it was
+/// written means something else a month later (s09's R6, F-729), so dates come from `_lib/fixtures.sh` at run time.
+/// Exempt: shell and YAML comments, results/, and years from 2090 on (a deliberate "until 2099-01-01").
+private func evalFixedDates(_ evals: URL) -> [String] {
+    let fm = FileManager.default
+    guard let walk = fm.enumerator(at: evals, includingPropertiesForKeys: nil) else { return ["\(evals.path): not readable"] }
+    var found: [String] = []
+    for case let url as URL in walk {
+        let rel = String(url.path.dropFirst(evals.path.count + 1))
+        if rel == "results" || rel.hasPrefix("results/") { walk.skipDescendants(); continue }
+        guard let text = try? String(contentsOf: url, encoding: .utf8) else { continue }
+        found += evalFixedDates(in: text.components(separatedBy: "\n"), file: rel)
+    }
+    return found.sorted()
+}
+
+private func evalFixedDates(in lines: [String], file: String) -> [String] {
+    let month = "(Jan(uary)?|Feb(ruary)?|Mar(ch)?|Apr(il)?|May|June?|July?|Aug(ust)?|Sept?(ember)?|Oct(ober)?|Nov(ember)?|Dec(ember)?)"
+    let patterns = [#"(?<![0-9])20[0-8][0-9]-[01][0-9]-[0-3][0-9](?![0-9])"#, #"\b[0-3]?[0-9] "# + month + #"\b"#, #"\b"# + month + #" [0-3]?[0-9]\b"#]
+        .compactMap { try? NSRegularExpression(pattern: $0) }
+    var found: [String] = []
+    for (i, line) in lines.enumerated() where !line.trimmingCharacters(in: .whitespaces).hasPrefix("#") || file.hasSuffix(".md") {
+        let r = NSRange(line.startIndex..., in: line)
+        if patterns.contains(where: { $0.firstMatch(in: line, range: r) != nil }) { found.append("\(file):\(i + 1): \(line.prefix(80))") }
+    }
+    return found
 }
 
 // MARK: - The verbs, end to end (called from directorEndToEnd, which owns the model and its helpers)

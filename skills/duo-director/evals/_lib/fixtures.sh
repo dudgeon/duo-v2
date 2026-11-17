@@ -1,6 +1,6 @@
 #!/bin/sh
-# Sourced by the duty cases' scaffolds (s25 to s33) after setup.sh, in the same sandboxed folder. Plain sh,
-# and dates are epoch arithmetic, so the fixtures stay relative to now with BSD or GNU date.
+# Sourced by the scaffolds after setup.sh, in the same sandboxed folder. Plain sh, and dates are epoch
+# arithmetic, so the fixtures stay relative to now with BSD or GNU date (Q-586: no case carries a fixed date).
 
 # ago <seconds> <format>: now minus <seconds> in local time, as `date +<format>` writes it.
 ago() { _t=$(( $(date +%s) - $1 )); date -r "$_t" "+$2" 2>/dev/null || date -d "@$_t" "+$2"; }
@@ -76,3 +76,6 @@ log_event() {
   mkdir -p .duo
   printf '{"at":"%s","director":"director-cwd","event":"%s","task":"%s","detail":"x"%s}\n' "$(agoz "$1" '%Y-%m-%dT%H:%M:%SZ')" "$2" "$3" "${4:+,\"routine\":true}" >> .duo/director-log.jsonl
 }
+
+# dmon <seconds ago> [%b|%B]: that day as "1 Nov" (or "1 November"); a negative count is ahead of now.
+dmon() { ago "$1" "%e ${2:-%b}" | sed 's/^ *//'; }

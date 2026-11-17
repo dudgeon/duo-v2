@@ -28,4 +28,6 @@ cd $skill
 $lock $claude plugin ev""al $skill --trust-plugin --scaffold --ablation none --model ${DIRECTOR_EVAL_MODEL:-claude-haiku-5-5} \
   --allow-tools Write Edit "Bash(duo2:*)" "Bash(ls:*)" "Bash(mkdir:*)" "Bash(git:*)" "Bash(python3:*)" \
   --max-cost-usd ${DIRECTOR_EVAL_MAX_USD:-5} --json $out/result.json --report $out/report.html "$@"
+# The real cost: costUsd is the agent's runs only; the judges are billed apart (F-740).
+[[ -f $out/result.json ]] && python3 $here/eval-cost.py $out/result.json
 echo "Results: $out/result.json, $out/report.html"

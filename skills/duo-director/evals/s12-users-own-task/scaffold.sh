@@ -1,7 +1,7 @@
 #!/bin/sh
 # S12
-lib=$(dirname "$0")/../_lib; . "$lib/setup.sh"
-printf -- '---\ntitle: Launch\ngoal: launch the beta on 1 Nov\n---\n# Launch\n' > PROJECT.md
+lib=$(dirname "$0")/../_lib; . "$lib/setup.sh"; . "$lib/fixtures.sh"
+printf -- '---\ntitle: Launch\ngoal: launch the beta on %s\n---\n# Launch\n' "$(dmon $((-18 * D)))" > PROJECT.md
 mkdir -p tasks notes
 cat > tasks/copy-edit.md <<'EOF'
 ---

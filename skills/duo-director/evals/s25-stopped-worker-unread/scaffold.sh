@@ -4,7 +4,7 @@
 lib=$(dirname "$0")/../_lib; . "$lib/setup.sh"; . "$lib/fixtures.sh"
 printf -- '---\ntitle: Team notes\ngoal: keep the team notes tidy\n---\n# Team notes\n' > PROJECT.md
 mkdir -p tasks notes
-printf '# Standup 4 Nov\n\n- Ana: finished the intake form\n- Ben: waiting on the logo files\n- Cho: out Thursday\n- Dee: drafting the Q4 plan\n- Eli: fixing the export bug\n- Fay: no blockers\n- Gus: interviews all week\n' > notes/standup.md
+printf '# Standup %s\n\n- Ana: finished the intake form\n- Ben: waiting on the logo files\n- Cho: out Thursday\n- Dee: drafting the Q4 plan\n- Eli: fixing the export bug\n- Fay: no blockers\n- Gus: interviews all week\n' "$(dmon $((4 * D)))" > notes/standup.md
 task_note summarise-notes "Summarise the standup" in-progress 'sessions:
   - "[worker](duo2://session/11111111-1111-4111-8111-111111111111)"
 done_when: summary.md exists with five bullets' \

@@ -1,11 +1,11 @@
 #!/bin/sh
 # S18
-lib=$(dirname "$0")/../_lib; . "$lib/setup.sh"
-printf -- '---\ntitle: Launch\ngoal: launch the beta on 1 Nov\n---\n# Launch\n' > PROJECT.md
+lib=$(dirname "$0")/../_lib; . "$lib/setup.sh"; . "$lib/fixtures.sh"
+printf -- '---\ntitle: Launch\ngoal: launch the beta on %s\n---\n# Launch\n' "$(dmon $((-18 * D)))" > PROJECT.md
 mkdir -p tasks notes
 mkdir -p build
 printf 'x' > build/out.bin
-cat > tasks/cleanup.md <<'EOF'
+cat > tasks/cleanup.md <<EOF
 ---
 title: Cleanup
 status: in-progress
@@ -21,5 +21,5 @@ Tidy the repo before launch.
 
 ## Progress
 
-- 2026-10-14 Worker started.
+- $(ago 0 '%Y-%m-%d') Worker started.
 EOF
