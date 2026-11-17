@@ -67,10 +67,13 @@ struct ModesExplainerPicture: View {
     var body: some View {
         PictureGround {
             HStack(spacing: 8) {
-                Text("> Outline the Q4…\n⏺ Saved an outline\n  to plan-outline.md")
-                    .font(.system(size: PictureType.tiny, design: .monospaced)).lineSpacing(1.5).foregroundStyle(DuoColor.consoleText2)
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(["> Outline the Q4…", "⏺ Saved an outline", "  to plan-outline.md"], id: \.self) { Text($0).fixedSize().frame(height: 12, alignment: .leading) }
+                }
+                    .font(.system(size: PictureType.tiny, design: .monospaced)).foregroundStyle(DuoColor.consoleText2)
                     .padding(.horizontal, 8).padding(.vertical, 7)
                     .frame(maxWidth: .infinity, maxHeight: 72, alignment: .topLeading)
+                    .clipShape(RoundedRectangle(cornerRadius: 5))
                     .background(RoundedRectangle(cornerRadius: 5).fill(DuoColor.console))
                     .overlay(alignment: .topTrailing) { ExplainerMark(number: 2).scaleEffect(0.875).padding(4) }
                 Text("⇄").font(.system(size: DuoTextStyle.control.spec.size)).foregroundStyle(DuoColor.text2)

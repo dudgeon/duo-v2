@@ -1,6 +1,6 @@
 # Duo: the first-run welcome — design handoff
 
-Status: approved by Geoff, 2026-11-16 (DL-348), by buttons on Q-532 to Q-536, after the study `docs/design/first-run-welcome-study/` (its README lists every board; A and C were not chosen). Canvas: https://claude.ai/artifact/1a6Lfh9dNwco7X5ksruKhJ. Target; building on `build/first-run-welcome`.
+Status: approved by Geoff, 2026-11-16 (DL-348), by buttons on Q-532 to Q-536, after the study `docs/design/first-run-welcome-study/` (its README lists every board; A and C were not chosen). Canvas: https://claude.ai/artifact/1a6Lfh9dNwco7X5ksruKhJ. Target; built on `build/first-run-welcome` (F-741 to F-745).
 
 `screens/` are copies of the chosen boards (HTML, and `png/` at 1x and 2x). They are presentation boards: the window or card drawn inside each is the target. The yellow notes, `P` marks and board labels belong to the boards, not the app. Names and data are sample data.
 

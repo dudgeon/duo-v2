@@ -6543,3 +6543,26 @@ Geoff, 2026-11-16: "when you hover on the agent message, the buttons appear; whe
 ## F-729 · s09's regression was the calendar, not revision 7; the resume sweep now asks about every suggestion (fix/director-s09, 2026-11-16)
 
 F-714 put s09-resume-after-compaction at 1/3 on the branch against 3/3 on main and blamed revision 7. Main before the merge (3722fd97^1, its own duo2) scored **1/3 too** on 2026-11-16, with the same transcripts: every director accounted for the three tasks and named the suggested blog post, and most asked only about the landing copy and press kit. The cause is two things together. The case's fixtures are dated 2026-10-14, so a month on, `status` raises R5 (landing copy at review) and R6 (press kit live with nothing for seven days), each saying "one sweep and one question to the user", and the director's one question covers the red lines. §1's sweep asked about suggestions only past two weeks, and as keep-or-delete, so the blog post got a mention and no question. Main's 3/3 in F-714 was luck at roughly a one-in-three pass rate. Fix (SKILL.md §1 step 5): the sweep asks about every suggested task, whether to start it (or, past two weeks, keep it), in the same message as the red lines' question. Haiku 5.5, `run-evals.sh`: s09 **3/3**, all nine judge votes PASS. Every case once: 24/32, the same count as F-714's round 1, with s01 and s13 now passing. The four new misses, rerun against main 3722fd97: s02 2/3 (main 2/3), s05 4/7 (main 4/6), s24 5/7 (main 3/3; its misses are Bash denied in the eval sandbox, then the push asked about), s31 2/3 (main 0/3). The rest missed on main too (s16, s27, s29, s33; F-714). Spent: $1.24 (Geoff's eval budget: about $0.37 left of $5). Fixed-date fixtures will drift other cases the same way: Q-586.
+
+## F-741 · A new install gets the Getting started card at launch, not in ChatPrefs (build-first-run-welcome, 2026-11-16)
+
+- **Fact:** `GettingStarted.seedIfNewInstall` runs in `DuoApp.init`, before anything else touches the support folder, for a live launch only. If neither `chat.json` nor `state.json` exists it writes `chat.json` first (through `ChatPrefs.load`, so F-673's chat default still sees a new install), then `state.json` with the card showing. `ChatStore` is `lazy` (`AppCore.chats`), so seeding there could run after other code had already written `state.json` and the card would never appear.
+- **Also:** fixture and capture runs never seed (so every existing target stays as drawn); a scripted live run asks with `DUO_FIRST_RUN=1`. `state.json` holds `gettingStarted` (phase showing, hidden or done, and a line per ticked step); nil means an install that never had it.
+- **Run:** DuoChecks `getting started (DL-348)`: empty folder seeded once; either file present means never; ticks kept over a relaunch. **Not run:** a real first launch on an empty support folder (needs a visible window, Geoff's OK).
+
+## F-742 · The card's ticks come from Duo's own funnels (build-first-run-welcome, 2026-11-16)
+
+- **Fact:** step 1 ticks in `AppModel.open(project:)` and `makeProject(folder:)` (never for Home or a plain folder); step 2 in `newSession(in:)` and `startFolderSession`, except the interview session Make a Project starts (that is Duo's start, `countsForGettingStarted: false`); step 3 in `makeTask`. Buttons, ⌘T, `duo2` and the menus all pass through them. What Claude writes to disk itself (a `_PROJECT.md`, a task note) isn't seen: ENH-358.
+- **Also:** a ticked step never un-ticks; a done card records nothing; Help › Getting Started on an install that never had the card ticks what Duo can already see.
+
+## F-743 · The poster needs a measured width, not ViewThatFits (build-first-run-welcome, 2026-11-16)
+
+- **Fact:** `ViewThatFits` picked the poster-less layout at 1440 because the left column's ideal width (every line unwrapped) is wider than the card. The card reports its drawn width (`GettingStarted.cardWidth`) and shows the poster from 640 up (a stand-in for narrow windows, Q-593).
+
+## F-744 · A capture follows the Mac's appearance unless told (build-first-run-welcome, 2026-11-16)
+
+- **Fact:** `scripts/check-ui.sh` doesn't set `DUO_APPEARANCE`, so on a Mac in Dark a capture is dark and a comparison with a light target is meaningless. Run with `DUO_APPEARANCE=light` (the script passes it through).
+
+## F-745 · Boards B1 and B2's notes disagree about step 3's button with no project (build-first-run-welcome, 2026-11-16)
+
+- **Fact:** B1 (no project) draws step 3 with only Show me; B2's note says Make a task… reads "Make a project first, greyed" with no project. Built to B1, the screen (CLAUDE.md precedence 2): Make a task… shows once a project exists. Q-592.

@@ -84,6 +84,7 @@ extension AppModel {
             self.fixture.sessions.append(Fixture.Session(name: LiveSnapshot.untitled(Date()), project: home ?? Self.tilde(folder.path), state: .working, wait: "now",
                                                          question: nil, options: nil, summary: nil, forkOf: nil, document: nil, sessionId: id, remoteControl: nil))
             if self.altitude.isAllProjects, let home { self.open(project: home); self.consoleTab = self.fixture.sessions.last?.tabKey }   // Home's page (DL-336)
+            self.tickGettingStarted(session: id, name: nil)   // DL-348: step 2, a session in a plain folder too
         }
         return id
     }
