@@ -1,0 +1,12 @@
+{
+  "$note": "Duo's first-run welcome, approved 2026-11-16 (DL-348), by buttons on Q-532 to Q-536. kind=board: drawn on the Design canvas and exported as static HTML (scripts/dc-render.py), with 1x and 2x renders in png/. A1 (a Welcome sheet), C1 and C2 (explainers opening themselves, a director hint) were drawn and not chosen; they stay on the canvas and in ../first-run-welcome-study/.",
+  "source": "https://claude.ai/artifact/1a6Lfh9dNwco7X5ksruKhJ",
+  "screens": [
+    {"file": "screens/00-the-ask.html", "board": "Main.dc.html", "kind": "board", "width": 1440, "height": 900, "decision": "DL-348", "shows": "00: the ask, the three directions, the decisions and what they reuse. Context, not a target."},
+    {"file": "screens/B1-allprojects-fresh.html", "board": "b1-allprojects-fresh.dc.html", "kind": "board", "width": 1440, "height": 900, "decision": "DL-348", "shows": "B1: All projects, List, on a new install, the Getting started with Duo card at the top of the middle: three steps (box, name, line, buttons), the director line, the intro film's poster, Hide."},
+    {"file": "screens/B2-card-progress.html", "board": "b2-card-progress.dc.html", "kind": "board", "width": 1440, "height": 900, "decision": "DL-348", "shows": "B2: the card at 2 of 3 (ticked steps struck through and saying what was done), all done (That's the basics: Open the guide, Done), and the hidden notice with Undo."},
+    {"file": "screens/B3-showme-chat.html", "board": "b3-showme-chat.dc.html", "kind": "board", "width": 1440, "height": 900, "decision": "DL-348", "shows": "B3: Show me on step 2: the project, its Claude tab, the Chat and Terminal explainer open on the Terminal | Chat pill with its picture."},
+    {"file": "screens/X1-help-menu.html", "board": "x1-help-menu.dc.html", "kind": "board", "width": 760, "height": 620, "decision": "DL-348", "shows": "X1: the Help menu today and proposed: Getting Started first, Explain with Projects, Chat and Terminal, Tasks, Home, Director."},
+    {"file": "screens/X2-explainers.html", "board": "x2-explainers.dc.html", "kind": "board", "width": 1440, "height": 900, "decision": "DL-348", "shows": "X2: the pictures and anchors for the Chat and Terminal (the pill), Director (the director's slot) and Home (star home) explainers; the built words unchanged."}
+  ]
+}
