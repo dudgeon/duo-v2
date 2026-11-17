@@ -57,7 +57,11 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case whatsNew           // Help: this version's release notes
     case reportIssue        // Help: a new GitHub issue with the version and macOS filled in
     case explainTasks       // Help: Explain Tasks, the Explainer at its trigger (DL-172)
-    case explainModes       // Help: Explain Chat and Terminal, the Explainer on the mode pill (DL-339)
+    case explainModes       // Help: Explain › Chat and Terminal, the Explainer on the mode pill (DL-339)
+    case explainProjects    // Help: Explain › Projects (DL-348, X1)
+    case explainHome        // Help: Explain › Home (DL-348, X1)
+    case explainDirector    // Help: Explain › Director (DL-348, X1)
+    case gettingStarted     // Help: Getting Started, the card at All projects (DL-348, X1)
     case duoGuide           // Help: the user guide on GitHub (DL-339, ENH-345)
     case watchIntroFilm     // Help: the intro film (DL-339)
     case watchDirectorFilm  // Help: the director film (DL-339)
@@ -136,8 +140,12 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .duo2Reference: "duo2 Reference"
         case .whatsNew: "What’s New in This Version"
         case .reportIssue: "Report an Issue…"
-        case .explainTasks: "Explain Tasks"
-        case .explainModes: "Explain Chat and Terminal"
+        case .explainTasks: "Tasks"
+        case .explainModes: "Chat and Terminal"
+        case .explainProjects: "Projects"
+        case .explainHome: "Home"
+        case .explainDirector: "Director"
+        case .gettingStarted: "Getting Started"
         case .duoGuide: "Duo Guide"
         case .watchIntroFilm: "Watch the Intro Film"
         case .watchDirectorFilm: "Watch the Director Film"
@@ -185,7 +193,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .link: KeyboardShortcut("k", modifiers: .command)  // DL-108
         case .newSlide: KeyboardShortcut("n", modifiers: [.command, .control])  // DL-295: adds to DL-34's map; only in a deck
         case .revertChange, .revertAllChanges, .chooseHome, .newTask, .newDeck, .newProject, .newProjectFromGitHub, .code, .heading1, .heading2, .heading3,
-             .task, .body, .quote, .bullet, .numbered, .codeBlock, .toggleFormatBar, .addProperties, .duo2Reference, .whatsNew, .reportIssue, .explainTasks, .explainModes, .duoGuide, .watchIntroFilm, .watchDirectorFilm, .tableInsert, .tableRowAbove, .tableRowBelow,
+             .task, .body, .quote, .bullet, .numbered, .codeBlock, .toggleFormatBar, .addProperties, .duo2Reference, .whatsNew, .reportIssue, .explainTasks, .explainModes, .explainProjects, .explainHome, .explainDirector, .gettingStarted, .duoGuide, .watchIntroFilm, .watchDirectorFilm, .tableInsert, .tableRowAbove, .tableRowBelow,
              .tableColumnBefore, .tableColumnAfter, .tableDeleteRow, .tableDeleteColumn, .tableAlignLeft, .tableAlignCenter,
              .tableAlignRight, .showBoard, .showList: nil  // Show Board / Show List: Q-100
         case .nextPane, .previousPane: nil  // ⌥⌘→ / ⌥⌘← freed (DL-289)
@@ -241,8 +249,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .newTask: model.terminalsMode == .live && model.currentProject.map { !$0.isFolderOnly } == true
         case .newProject, .newProjectFromGitHub: model.terminalsMode == .live && model.liveRoot != nil
         case .duo2Reference, .whatsNew, .reportIssue, .duoGuide, .watchIntroFilm, .watchDirectorFilm: true
-        case .explainModes: model.terminalsMode == .live && model.explainer.frames["modes.pill"] != nil
-        case .explainTasks: model.terminalsMode == .live && model.currentProject.map { !$0.isFolderOnly } == true
+        case .gettingStarted, .explainModes, .explainTasks, .explainProjects, .explainHome, .explainDirector: true   // X1: each opens on its control, else at the window's top centre
         case .sendSelection: model.canSendSelection
         case .newClaudeSession, .newShell: model.terminalsMode == .live
         case .chooseHome: model.terminalsMode == .live
@@ -333,8 +340,12 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .duo2Reference: NSWorkspace.shared.open(DuoLinks.duo2Reference)
         case .whatsNew: NSWorkspace.shared.open(DuoLinks.releaseNotes)
         case .reportIssue: NSWorkspace.shared.open(DuoLinks.newIssue)
-        case .explainTasks: model.explainTasks()
-        case .explainModes: model.explainModes()
+        case .explainTasks: model.explainOpen(.tasks)
+        case .explainModes: model.explainOpen(.modes)
+        case .explainProjects: model.explainOpen(.projects)
+        case .explainHome: model.explainOpen(.home)
+        case .explainDirector: model.explainOpen(.director)
+        case .gettingStarted: model.showGettingStarted()
         case .duoGuide: NSWorkspace.shared.open(DuoLinks.guide)
         case .watchIntroFilm: NSWorkspace.shared.open(DuoLinks.introFilm)
         case .watchDirectorFilm: NSWorkspace.shared.open(DuoLinks.directorFilm)
@@ -566,14 +577,22 @@ public struct DuoCommands: Commands {
         }
         // Help (DL-108, m4); the system adds its search field.
         CommandGroup(replacing: .help) {
+            // X1 (DL-348): Getting Started first, the five explainers gathered under Explain, in the order the card teaches them.
+            item(.gettingStarted)
             item(.duoGuide)
             item(.watchIntroFilm)
             item(.watchDirectorFilm)
             Divider()
+            Menu("Explain") {
+                item(.explainProjects)
+                item(.explainModes)
+                item(.explainTasks)
+                item(.explainHome)
+                item(.explainDirector)
+            }
+            Divider()
             item(.duo2Reference)
             item(.whatsNew)
-            item(.explainTasks)
-            item(.explainModes)
             Divider()
             item(.reportIssue)
         }

@@ -63,6 +63,7 @@ extension AppModel {
         }
         refreshLive()
         let path = "tasks/\(slug).md"
+        GettingStarted.shared.tick(.task, detail: "\(title) · \(project)")   // DL-348: step 3
         if opens {
             if currentProject?.name != project { open(project: project) }
             openDocument(path)

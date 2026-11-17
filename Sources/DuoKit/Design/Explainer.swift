@@ -31,6 +31,8 @@ import SwiftUI
     @ObservationIgnored var closeTask: Task<Void, Never>?
     @ObservationIgnored var monitors: [Any] = []
     @ObservationIgnored var observers: [NSObjectProtocol] = []
+    /// Show me (DL-348 B3): what Esc does besides closing, once, to go back to where the user was.
+    @ObservationIgnored var onEscape: (() -> Void)?
     /// Whether something else is on screen that an Explainer must not cover (a sheet, search, a menu).
     @ObservationIgnored var blocked: () -> Bool = { false }
 
@@ -97,6 +99,7 @@ import SwiftUI
         overCard = false
         if pinned, let r = previousResponder { NSApp.keyWindow?.makeFirstResponder(r) }
         pinned = false; previousResponder = nil
+        onEscape = nil
         removeMonitors()
     }
 
@@ -124,8 +127,11 @@ import SwiftUI
             case .keyDown:
                 // Return, Space and Tab belong to the focused Don't show again (a keyboard-opened Explainer).
                 if self.pinned, [36, 49, 76, 48].contains(event.keyCode) { return event }
+                let escape = event.keyCode == 53
+                let back = escape ? self.onEscape : nil
                 self.close()
-                return event.keyCode == 53 ? nil : event   // Esc is ours; typing goes on
+                back?()
+                return escape ? nil : event   // Esc is ours; typing goes on
             case .leftMouseDown, .rightMouseDown:
                 if !self.overCard { self.close() }   // a click on the popover's own button does its action first
             default:
@@ -148,9 +154,9 @@ import SwiftUI
     }
 }
 
-/// Which feature an Explainer is for. Tasks first (DL-172 (4)); modes, director and home are DL-339's (ENH-345),
-/// words only: their pictures aren't drawn, so they show none (Q-523).
-public enum ExplainerID: String, Sendable { case tasks, modes, director, home }
+/// Which feature an Explainer is for. Tasks first (DL-172 (4)); modes, director and home are DL-339's (ENH-345), with
+/// the pictures X2 draws (DL-348). Projects is the left-nav round's (ENH-347): words from the card's own, no picture (Q-591).
+public enum ExplainerID: String, Sendable, CaseIterable { case tasks, modes, director, home, projects }
 
 /// What an Explainer is made of: the feature's noun, a line, a picture, two or three points.
 struct ExplainerContent {
@@ -193,8 +199,17 @@ struct ExplainerContent {
                  .init(lead: "Duo lists every session", rest: "either way, in Home or not.")],
         learnMore: DuoLinks.guidePage("home"))
 
+    // Q-591: the Projects explainer is the left-nav round's (ENH-347); a stand-in from words already approved
+    // (B1's step 1, Home's third point), no picture, until that round draws it.
+    static let projects = ExplainerContent(
+        title: "Projects", line: "Folders Claude works in, kept together.",
+        points: [.init(lead: "A project", rest: "is a folder with a _PROJECT.md."),
+                 .init(lead: "Sessions started in it", rest: "belong to it."),
+                 .init(lead: "Duo lists every session", rest: "either way, in a project or not.")],
+        learnMore: DuoLinks.guidePage("projects"))
+
     static func content(_ id: ExplainerID) -> ExplainerContent {
-        switch id { case .tasks: tasks; case .modes: modes; case .director: director; case .home: home }
+        switch id { case .tasks: tasks; case .modes: modes; case .director: director; case .home: home; case .projects: projects }
     }
 }
 
@@ -254,7 +269,7 @@ struct ExplainerOverlay: View {
                 let content = ExplainerContent.content(id)
                 GeometryReader { root in
                     placed(state: state, root: root.size) {
-                        ExplainerCard(content: content, picture: { if id == .tasks { TaskExplainerPicture() } },
+                        ExplainerCard(content: content, picture: { ExplainerPicture(id: id) },
                                       onDismissForGood: { state.dismissForGood(id) }, takesFocus: state.pinned)
                     }
                 }
@@ -308,6 +323,20 @@ struct ExplainerArrow: View {
         .frame(width: a, height: a / 2)
         .padding(pointsDown ? .top : .bottom, -DuoMetric.borderHairline)   // sits over the frame's own edge
         .accessibilityHidden(true)
+    }
+}
+
+/// The picture for an Explainer, when one is drawn (Tasks, DL-172; the others, X2).
+struct ExplainerPicture: View {
+    let id: ExplainerID
+    var body: some View {
+        switch id {
+        case .tasks: TaskExplainerPicture()
+        case .modes: ModesExplainerPicture()
+        case .director: DirectorExplainerPicture()
+        case .home: HomeExplainerPicture()
+        case .projects: EmptyView()
+        }
     }
 }
 

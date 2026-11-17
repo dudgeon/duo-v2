@@ -159,6 +159,28 @@ extension AppModel {
             mapFilter = text
             let m = mapLayout
             done(.ok(mapFilter.isEmpty ? "Filter cleared." : "\(m.shown) of \(m.total) match '\(mapFilter)'."))
+        case .gettingStarted:
+            // The card (DL-348): shared by every window, kept in Duo's state.
+            let g = GettingStarted.shared
+            switch inv[0] ?? "state" {
+            case "show": showGettingStarted()
+            case "hide":
+                guard g.visible else { return done(.fail("the Getting started card isn't showing")) }
+                g.hide()
+            case "undo":
+                guard g.state?.phase == .hidden else { return done(.fail("nothing was hidden")) }
+                g.undoHide()
+            case "done":
+                guard g.allDone else { return done(.fail("Done comes after all three steps are ticked (\(g.count) of 3)")) }
+                g.done()
+            case "state": break
+            default: return done(.fail("usage: \(id.action.usage)"))
+            }
+            done(.ok(gettingStartedReport))
+        case .explain:
+            guard let word = inv[0], let which = ExplainerID(rawValue: word == "chat" || word == "terminal" ? "modes" : word) else { return done(.fail("usage: \(id.action.usage)")) }
+            explainOpen(which)
+            done(.ok("Explaining \(ExplainerContent.content(which).title)."))
         case .viewHome:
             switch inv[0] {
             case "board": setHomeView(.board)

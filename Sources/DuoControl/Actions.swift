@@ -41,6 +41,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     // Duo
     case update
     case compose
+    case gettingStarted = "getting-started", explain
     case ping, status, needsYou = "needs-you", undo, help, doctor, legacy, install, uninstall, hook, walkSetup = "walk setup", settings, updateProbe = "update probe", hangs
     // What's on screen
     case goAll = "go all", goHome = "go home", open, peek, peekJump = "peek jump"
@@ -165,6 +166,12 @@ extension DuoAction {
               ui: ["Check for Updates…", "Open Releases Page"], timeout: 30),
         .init(.updateProbe, .app, "", "Whether in-app updates can work on this Mac, without Duo running: the update feed and the DMG reachable from here, and Duo installed where it can be replaced.", local: true),
         .init(.hangs, .app, "[--since <hours>] [--stacks] [--clear]", "Times Duo froze: each stall of its main thread of 250 ms or more (2 s shows a beach ball), when, how long and what was on screen; --stacks adds where Duo was stuck, for stalls of half a second or more. Kept on this Mac only (Duo/logs/hangs.jsonl, DL-139). --clear empties it.", local: true),
+        .init(.gettingStarted, .app, "[show|hide|undo|done|state]",
+              "The Getting started with Duo card at the top of All projects (DL-348): `show` brings it back (Help › Getting Started), `hide` hides it (with Undo for 8 s), `undo` puts a hidden one back, `done` folds it away once all three steps are ticked, `state` (the default) says where it is and what is ticked. A new install has it from the start; the steps tick when the action happens, however it is done.",
+              ui: ["Getting Started", "Hide", "Done"]),
+        .init(.explain, .view, "<projects|modes|tasks|home|director>",
+              "Open an explanation on its control (Help › Explain, DL-348): the picture and the three points for Projects, Chat and Terminal, Tasks, Home or the Director, where the control is on screen, else at the window's top centre. It stays until Esc, a click or typing.",
+              ui: ["Explain", "Projects", "Chat and Terminal", "Tasks", "Director", "Show me"]),
         .init(.status, .app, "", "What Duo is showing: the view, the open project, session and document, and counts.", everyday: true),
         .init(.needsYou, .app, "", "Sessions waiting for the user, with their questions.", ui: ["Needs You Elsewhere"]),
         .init(.undo, .app, "", "Undo Duo's last move, merge or Make a Project (Edit › Undo).", ui: ["Undo", "Undo Conversion"]),
@@ -253,7 +260,7 @@ extension DuoAction {
         .init(.projectForget, .projects, "<folder>", "Remove a missing folder's tile from Duo (DB-8); its sessions stay in Claude's storage and in search. Undo with `duo2 undo`.",
               ui: ["Remove from Duo"]),
         .init(.projectNew, .projects, "<name> [--goal <text>] [--into <folder in Home>] [--use-folder] [--session] | --from-github <link|owner/repo> [<name>] [--new-branch <b> [--from <base>] | --branch <existing>] [--sheet]", "Make a new project in Home: a folder with a starter _PROJECT.md holding the goal. --into puts it in a folder in Home, by name or by its path in Home (DL-211); with --use-folder that folder itself becomes the project instead, keeping its name, with <name> (optional) as the project's title. --session starts a Claude session in it that interviews you and fills _PROJECT.md in (DL-223). --from-github copies a repository into it instead, on a new branch of its own (or --branch) (DL-149), where Duo's files are ordinary files (DL-259); nothing changes on GitHub. --sheet opens New project from GitHub filled in, for the user. Undo with `duo2 undo`.",
-              ui: ["+ New project", "Create Project", "New Project…", "New Project from GitHub…", "Choose Folder…", "Make this folder the project"]),
+              ui: ["+ New project", "Create Project", "New Project…", "New Project from GitHub…", "Choose Folder…", "Make this folder the project", "Make a project…"]),
         .init(.inventory, .projects, "", "Claude's session storage, read only: each folder's sessions, size, missing folders, collisions, duplicate ids, and what Claude's cleanup takes within 7 days (CONS FR-7.1).", timeout: 180),
         .init(.evidence, .projects, "<project|folder>", "For a catch-all folder, read only: the files each session edited, its candidate home, and date clusters (CONS FR-7.10).", timeout: 300),
         .init(.migrations, .projects, "", "Storage migrations Duo planned or ran, newest first, with their state (CONS §6.3)."),
@@ -268,7 +275,7 @@ extension DuoAction {
         .init(.sessions, .sessions, "[--project <p>]", "Sessions with id, state, kind (terminal or chat), title and project. Text marks the project's director and the pinned (Keep Running) ones; --json adds \"director\": true, \"pinned\" and the row's \"section\" in the project pane: pinned, needs-you, open, tasks, later or other (DL-217, DL-218). A fork (a /branch or /fork) adds \"forkOf\" (its parent's id) and \"fork\": \"branch\" or \"fork\" (DL-228).", everyday: true),
         .init(.sessionShow, .sessions, "<id>", "A session's title, project, state, note, next step, transcript path and recent turns.", everyday: true),
         .init(.sessionNew, .sessions, "[--project <p> | --folder <path>] [--prompt <text>] [--name <name>] [--remote-control [name]]", "Start a Claude session in a project (the current one by default) or, with --folder, in a plain folder (Claude Code asks its own folder-trust question there, answered in Duo; Duo never writes trust). At All projects with neither, it starts where the New session row does: Home, else ~/Documents; with no such default it refuses and asks for --project or --folder. --name gives it a fixed name (claude -n), which survives restarts: a director's is director-<project> (DL-200). --remote-control makes it reachable from the Claude app, named <name> or its project and a short id, and keeps it on when the session resumes; a claude without the flag starts without it and the reply says so.",
-              ui: ["+ New session", "+ New Claude Code session", "New Session", "console +", "New Claude Session", "New session pill, robot half", "Start Claude here", "Start Claude in Home", "Start in", "New session row", "New session row popup", "Choose Another Folder…", "List project header +", "Board tile New session row", "Board row +", "Board tile New Session"]),
+              ui: ["+ New session", "New session", "+ New Claude Code session", "New Session", "console +", "New Claude Session", "New session pill, robot half", "Start Claude here", "Start Claude in Home", "Start in", "New session row", "New session row popup", "Choose Another Folder…", "List project header +", "Board tile New session row", "Board row +", "Board tile New Session"]),
         .init(.sessionOpen, .sessions, "<id>", "Show a session's terminal, resuming it if needed.", ui: ["session row", "console tab", "Home tab", "Resume", "Open Session"]),
         .init(.sessionClose, .sessions, "[id] [--force]", "End a session's process and close its tab (it stays listed and resumable). Refuses while Claude is working there, unless --force.", ui: ["Close Tab", "End Session", "Close"]),
         .init(.sessionPark, .sessions, "<id>… | --background", "Park a session (several ids park each that can; the rest say why): end its Claude process, keep its tab, and resume it when the tab is shown (it picks up where it left off). Refuses, saying why, while Claude is working or waiting on the user, is running something in the background or has a subagent running, or the session is set to Keep Running; a tab on screen first gives its pane to the next tab. --background parks every idle tab that isn't on screen and says what it kept and why.",
@@ -309,7 +316,7 @@ extension DuoAction {
         .init(.tasks, .sessions, "[--project <p>]", "Task notes (tasks/*.md in each project) with their status and how many sessions their `sessions:` frontmatter links (DL-93). --json adds \"later\" (the pane lists it under Later: nothing in it for 3 days) and \"lastActivity\", when the note last changed (DL-217).", everyday: true),
         .init(.taskMake, .sessions, "<session>… | <group> [--title <t>]", "Make a Task: writes tasks/<slug>.md whose `sessions:` links the session (several sessions of one project make one task; or a group's sessions, and the group becomes the task) and opens it. Undo with `duo2 undo`.",
               ui: ["Make a Task"]),
-        .init(.taskNew, .sessions, "[title] [--project <p>] [--status <s>] [--no-open]", "+ New task: a task note in tasks/ with no sessions yet, opened to write; use this, not a TASKS.md file. --no-open leaves the note closed (for making several); --status starts it at open, in-progress, waiting, review, done or dropped. Undo with `duo2 undo`.", ui: ["+ New task", "New Task"], everyday: true),
+        .init(.taskNew, .sessions, "[title] [--project <p>] [--status <s>] [--no-open]", "+ New task: a task note in tasks/ with no sessions yet, opened to write; use this, not a TASKS.md file. --no-open leaves the note closed (for making several); --status starts it at open, in-progress, waiting, review, done or dropped. Undo with `duo2 undo`.", ui: ["+ New task", "New Task", "Make a task…"], everyday: true),
         .init(.taskSession, .sessions, "<task> [--project <p>]", "New Session in Task: starts a Claude session in the task's project with its link already in the note's `sessions:` list, and shows it when that project is open. Once Claude's prompt is up, Duo types `@tasks/<note>.md` into it and doesn't send it (DL-112): no turn is spent until someone adds a word and presses Return. Also the + on a task row's hover.",
               ui: ["New Session in Task"]),
         .init(.taskStatus, .sessions, "<task> <open|in-progress|waiting|review|done|dropped> [--project <p>]", "Set a task's status: rewrites only `status:` (and `completed:` when done or dropped). Done and dropped tasks leave the lists. Undo with `duo2 undo`.",
@@ -688,7 +695,9 @@ extension DuoAction {
 /// accepts these labels; everything else in the UI must name an action.
 public enum Parity {
     public static let uiOnly: [String: String] = [
-        "Explain Tasks": "Help › Explain Tasks shows an explanation to a person at the screen (DL-172); `duo2 task new` is the action it explains",
+        "Watch the intro film (Getting started card)": "a link on the card's poster to the intro film on GitHub, as Help › Watch the Intro Film (DL-339, DL-348)",
+        "Watch the director film": "a link on the card's director line to the director film on GitHub, as Help › Watch the Director Film (DL-339, DL-348)",
+        "Open the guide": "a link on the finished card to the user guide on GitHub, as Help › Duo Guide (DL-339, DL-348)",
         "Template picker's typing": "the New Slide list (⌃⌘N) and the slide chip's list filter their templates as you type, like the editor's autocomplete (DL-295); `duo2 deck templates` lists them and `deck insert` / `deck change` take the name",
         "Slide chip's look": "the editor draws each `<!-- slide: … -->` line as a chip (DL-296); the file is unchanged, `duo2 deck` reads the same lines",
         "Slide anchor mark": "a 2 pt mark in the editor's margin over the caret's slide (split view's R4); view state, `duo2 deck go` and `duo2 deck` report the current slide",
@@ -716,7 +725,6 @@ public enum Parity {
         "Duo Guide": "opens the user guide on GitHub for a person at the screen (DL-339); the guide is `docs/guide/`, and `duo2 help` is the same material for Claude",
         "Watch the Intro Film": "opens the intro film for a person to watch (DL-339); a film has no action to take",
         "Watch the Director Film": "opens the director film for a person to watch (DL-339); `duo2 director guide` prints the skill it shows",
-        "Explain Chat and Terminal": "Help › Explain Chat and Terminal shows an explanation to a person at the screen (DL-172, DL-339); `duo2 session chat` is the action it explains",
         "Report an Issue…": "opens GitHub's new-issue form, filled in, for the user to edit and submit",
         "No templates yet: add .md files to a templates folder": "a disabled hint",
         "No other sessions in": "a disabled hint on + Add",

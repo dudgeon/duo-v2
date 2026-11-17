@@ -710,7 +710,8 @@ public final class AppModel {
 
     @discardableResult
     public func newSession(in project: String, prompt: String? = nil, provenance: String = "created-by-duo",
-                           id: String = UUID().uuidString.lowercased(), remoteControl: String? = nil, name: String? = nil) -> String? {
+                           id: String = UUID().uuidString.lowercased(), remoteControl: String? = nil, name: String? = nil,
+                           countsForGettingStarted: Bool = true) -> String? {
         guard terminalsMode == .live, let folder = liveFolders[project] else { return nil }
         var index = SessionIndex.load(project: folder)
         var entry = SessionIndex.Entry(sessionId: id, provenance: provenance)
@@ -721,6 +722,7 @@ public final class AppModel {
         fixture.sessions.append(Fixture.Session(name: name ?? LiveSnapshot.untitled(Date()), project: project, state: .working, wait: "now",
                                                 question: nil, options: nil, summary: nil, forkOf: nil, document: nil,
                                                 sessionId: id, remoteControl: remoteControl))
+        if countsForGettingStarted { tickGettingStarted(session: id, name: name) }   // DL-348: step 2
         return id
     }
 
@@ -818,6 +820,7 @@ public final class AppModel {
             rightTab = "Project"
             selectedFile = nil
         }
+        tickGettingStarted(project: name)   // DL-348: step 1, opening a project
         return self
     }
 

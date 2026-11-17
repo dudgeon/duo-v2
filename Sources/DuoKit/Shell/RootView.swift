@@ -29,6 +29,8 @@ public struct RootView: View {
         .overlay { SheetOverlay() }
         // The Explainer (DL-172): above the panes, under nothing but the sheets' own scrim.
         .overlay(alignment: .topLeading) { ExplainerOverlay() }
+        // Where an Explainer opens when its control isn't on screen: the window's top centre (X1, DL-348).
+        .overlay(alignment: .top) { Color.clear.frame(width: 1, height: 1).explainerFrame("window.top").allowsHitTesting(false) }
         .animation((model.search.isOpen ? DuoMotionToken.scrimIn : .scrimOut).animation, value: model.search.isOpen)
         // Altitude change: cross-fade, 150 ms, ease-out; none with Reduce Motion (handoff §9).
         // Keyed on the altitude alone: a jump between projects fades the project up (projectShown)

@@ -34,6 +34,7 @@ struct ProjectMapPane: View {
                 let firstRun = model.mapFilter.isEmpty ? model.firstRunFolders : nil
                 VStack(alignment: .leading, spacing: DuoSpace.gapMapColumns) {
                     MapHeader(layout: map)
+                    GettingStartedSlot()   // DL-348 (B1): the same card above the map
                     if model.boardGroup != .folder {
                         // DL-347: sections by activity (or one flat run of tiles); the first-run card keeps the top (DL-348 builds there).
                         if let firstRun { HomeFoldersSection(folders: firstRun) }
@@ -353,6 +354,7 @@ struct HomeTile: View {
         let shown = Array(all.prefix(5))
         VStack(alignment: .leading, spacing: DuoSpace.gapTileRows) {
             Text("★ \(home.name)").duoText(.bodyEmphasis).lineLimit(1)
+                .explainerTrigger(.home, key: "home.tile")   // X2: Home's explainer anchors on ★ home
             if model.boardGroup != .folder {
                 Text(BoardText.folder(home)).duoText(.monoPath).foregroundStyle(DuoColor.text2).lineLimit(1).truncationMode(.middle)
             }
