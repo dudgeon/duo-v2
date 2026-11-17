@@ -178,6 +178,69 @@ final class ChatFeed {
         }
     }
 
+    /// The events file's state, for the report when no hook was read (F-749): missing, or how big and how fresh.
+    var eventsFileState: String {
+        guard let a = try? FileManager.default.attributesOfItem(atPath: eventsURL.path) else { return "no events file" }
+        let size = (a[.size] as? NSNumber)?.intValue ?? 0
+        let age = (a[.modificationDate] as? Date).map { String(format: "%.0f s", Date().timeIntervalSince($0)) } ?? "?"
+        return "events file \(size) bytes, written \(age) ago"
+    }
+
+    /// The question on screen, asked in another session's events (F-749). `/clear`, `/resume` and plan approval's
+    /// "clear context" start another session in the same process, and its hooks write under the new id from then on;
+    /// until Duo's refresh sees the beacon move (F-29), or if it never does, this feed reads a file nothing writes.
+    /// So when a question has no request here, the events files written in the last two minutes are searched for an
+    /// unanswered AskUserQuestion, asked in this session's folder, whose questions include the one on screen. The
+    /// match is by the question's text, the same test `questionIndex` makes, so the request found agrees with the
+    /// screen or isn't taken.
+    @discardableResult
+    func adoptMovedQuestion(shown: String) -> String? {
+        guard let chat else { return nil }
+        let want = shown.chatNorm
+        guard !want.isEmpty else { return nil }
+        // Only a session in this folder: the same question asked elsewhere at the same time is someone else's.
+        let here = URL(fileURLWithPath: cwd).resolvingSymlinksInPath().path
+        let dir = eventsURL.deletingLastPathComponent()
+        let recent = ((try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.contentModificationDateKey])) ?? [])
+            .filter { $0.pathExtension == "jsonl" && $0.lastPathComponent != eventsURL.lastPathComponent }
+            .compactMap { u -> (URL, Date)? in
+                guard let d = (try? u.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate,
+                      Date().timeIntervalSince(d) < 120 else { return nil }
+                return (u, d)
+            }
+            .sorted { $0.1 > $1.1 }
+        for (url, _) in recent.prefix(16) {
+            guard let h = try? FileHandle(forReadingFrom: url) else { continue }
+            let size = (try? h.seekToEnd()) ?? 0
+            try? h.seek(toOffset: size > 512 * 1024 ? size - 512 * 1024 : 0)
+            let data = (try? h.readToEnd()) ?? Data()
+            try? h.close()
+            var open: (input: ChatJSON, at: Double?)?
+            for e in ChatIngest.lines(data) {
+                guard let p = e["e"] as? ChatJSON, let name = p["hook_event_name"] as? String else { continue }
+                let tool = p["tool_name"] as? String
+                if (name == "PermissionRequest" || name == "PreToolUse"), tool == "AskUserQuestion", let input = p["tool_input"] as? ChatJSON,
+                   (p["cwd"] as? String).map({ URL(fileURLWithPath: $0).resolvingSymlinksInPath().path }) == here {
+                    open = (input, (e["at"] as? NSNumber)?.doubleValue)
+                } else if name == "Stop" || name == "SessionStart" || ((name == "PostToolUse" || name == "PostToolUseFailure") && tool == "AskUserQuestion") {
+                    open = nil
+                }
+            }
+            guard let o = open else { continue }
+            let qs = (o.input["questions"] as? [ChatJSON]) ?? []
+            let hits = qs.filter { q in
+                let asked = (q["question"] as? String ?? "").chatNorm
+                return asked == want || (want.count >= 20 && asked.hasSuffix(want))
+            }
+            guard hits.count == 1 else { continue }
+            let id = url.deletingPathExtension().lastPathComponent
+            chat.pendingRequest = ChatRequest(tool: "AskUserQuestion", input: o.input, at: o.at.map { Date(timeIntervalSince1970: $0) } ?? Date(),
+                                              source: "events of \(id.prefix(8))")
+            return id
+        }
+        return nil
+    }
+
     /// When the feed last read a hook event, and which: the Debug report's evidence (F-419).
     private(set) var lastEvent: (name: String, at: Date)?
     var isLoading: Bool { loading }

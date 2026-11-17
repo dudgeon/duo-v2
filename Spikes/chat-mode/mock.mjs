@@ -29,6 +29,13 @@ const scenarios = {
     Q('Which sections should it have?', 'Sections', true, ['General', 'Accounts', 'Advanced']),
     Q('Where should settings be stored?', 'Storage', false, ['UserDefaults', 'A JSON file', 'Keychain']),
     Q('Which platforms need it first?', 'Platforms', true, ['macOS', 'iOS'])] } }],
+  // The work Mac's tabbed question (F-749): four questions with the field report's headers; the first question is the
+  // report's, the rest and every option are invented.
+  askvision: () => [{ text: 'Reading the notes first, then four questions.' }, { tool: 'AskUserQuestion', input: { questions: [
+    Q('Who is the primary audience for this vision, i.e. who must read it and feel pulled toward it?', 'Audience', false, ['The leadership team', 'The engineers building it', 'Customers']),
+    Q('What form should the options take?', 'Form', false, ['A short memo each', 'One page with a table', 'Slides']),
+    Q('Which subject should the vision centre on?', 'Subject', false, ['The product', 'The platform', 'The team']),
+    Q('How far ahead should it look?', 'Scope', false, ['One year', 'Three years', 'Five years'])] } }],
   asklong: () => [{ tool: 'AskUserQuestion', input: { questions: [{ question: 'This question is deliberately long so that it wraps across more than one line of the terminal at its usual width: which migration strategy should we use for the existing sessions folder?', header: 'Migration', multiSelect: false, options: [
     { label: 'Move everything in one pass with a journal so it can be undone (Recommended)', description: 'Fast and atomic per folder; needs free disk space equal to the largest folder, and a journal file so an interrupted run can be repaired on the next launch.' },
     { label: 'Copy, verify, then delete', description: 'Slower and needs double the space, but the originals stay until every copy is checked byte for byte.' },

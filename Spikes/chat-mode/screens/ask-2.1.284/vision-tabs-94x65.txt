@@ -1,0 +1,65 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+❯ please ask me questions until you have enough context to write a few options for the
+  roadmap, then put them in a markdown file in duo
+
+⏺ I'll read the project notes first so the questions are informed, then interview you.
+
+
+  Listed 1 directory, ran 1 shell command
+
+⏺ The overview you wrote earlier is a useful starting point; reading it plus the draft
+  brief and the README.
+
+  Ran 1 shell command
+──────────────────────────────────────────────────────────────────────────────────────────────
+←  ☐ Audience  ☐ Form  ☐ Subject  ☐ Scope  ✔ Submit  →
+│ Who is the primary audience for this vision, i.e. who must read it and feel pulled toward 
+│ it?
+
+❯ 1. The leadership team
+     The people who fund it and decide what comes first
+  2. The engineers building it
+     The team that turns the vision into the next two quarters of work, and has to explain it
+     to everyone else
+  3. Customers
+     The people who will use it
+  4. Everyone in the company
+     A shared story for the whole organisation
+  5. Type something.
+──────────────────────────────────────────────────────────────────────────────────────────────
+  6. Chat about this
+
+Enter to select · Tab/Arrow keys to navigate · Esc to cancel
+
+
+
+
+
+
+
+
+

@@ -105,9 +105,19 @@ struct AskCase {
         try? FileManager.default.removeItem(atPath: dir)
         _ = run("/bin/zsh", [spike.appending(path: "scratch.sh").path, dir])
         // DUO_CHAT_LIVE_TUI=default|fullscreen: Claude Code's renderer (2.1.296); they draw the `/` menu in different places (F-284).
+        var userSettings: [String: Any] = [:]
         if let tui = ProcessInfo.processInfo.environment["DUO_CHAT_LIVE_TUI"], !tui.isEmpty {
-            try? "{\"tui\": \"\(tui)\"}\n".write(toFile: dir + "/cfg/settings.json", atomically: true, encoding: .utf8)
+            userSettings["tui"] = tui
             print("    tui: \(tui)")
+        }
+        // DUO_CHAT_LIVE_HOOKS=off: Duo's hooks silenced, as on the work Mac's 2026-11-17 report (F-749): every request
+        // must then come from the transcript.
+        if ProcessInfo.processInfo.environment["DUO_CHAT_LIVE_HOOKS"] == "off" {
+            userSettings["disableAllHooks"] = true
+            print("    hooks: off (disableAllHooks)")
+        }
+        if !userSettings.isEmpty, let data = try? JSONSerialization.data(withJSONObject: userSettings) {
+            try? data.write(to: URL(fileURLWithPath: dir + "/cfg/settings.json"))
         }
         // A free port of its own: other sessions run the spike's mock on 8765 (seen while testing).
         let port = freePort() ?? (18765 + i)
@@ -190,6 +200,45 @@ struct AskCase {
         chat.fallback = nil
         if chat.reread().kind != .idle { tui.sendKeys("\u{1b}"); _ = idle() }
     }
+    // F-749: `/clear` starts another session in the same process, and its hooks write under the new id. This chat
+    // is never rekeyed (the app's refresh does that from the beacon, F-29; here nothing does), so it reads a file
+    // nothing writes, as a Duo that missed the move does. The four tabbed questions must still show their card.
+    func afterClear() {
+        chat.fallback = nil
+        tui.sendKeys("/clear"); spin(0.4); tui.sendKeys("\r")
+        _ = until(10) { chat.reread().kind == .idle }; spin(1.5)
+        tui.sendKeys("\u{1b}[200~SCENARIO:askvision go\u{1b}[201~"); spin(0.2); tui.sendKeys("\r")
+        let shown = until(20) { chat.reread().kind == .question }
+        for _ in 0..<12 { spin(0.5); _ = chat.reread() }   // past the request grace, the screen read as the app reads it
+        let up = shown && chat.cardUp && chat.fallback == nil
+        check(up, "after /clear: the four tabbed questions' card is up, no fallback (pending \(chat.pendingRequest.map { "\($0.tool) from \($0.source)" } ?? "none"), fallback \(chat.lastFallback?.rule ?? "none"))")
+        if !up { try? (tui.screenLines().joined(separator: "\n") + "\n---\n" + chat.debugReport()).write(toFile: "\(dir)/after-clear.txt", atomically: true, encoding: .utf8); return }
+        var picked = 0
+        for label in ["Customers", "One page with a table", "The platform", "Three years"] {
+            var r: ChatAnswerResult?
+            let sig = chat.reread().sig
+            Task { r = await chat.ask(.pick(label), sig: sig) }
+            _ = until(20) { r != nil }
+            if r?.ok == true { picked += 1 } else {
+                try? (tui.screenLines().joined(separator: "\n") + "\n---\n\(chat.screen)\n---\n" + chat.debugReport()).write(toFile: "\(dir)/after-clear-\(picked).txt", atomically: true, encoding: .utf8)
+                check(false, "after /clear: \(label) sent (\(r?.why ?? "no reply"))"); return
+            }
+            spin(0.35)
+        }
+        var r: ChatAnswerResult?
+        let sig = chat.reread().sig
+        Task { r = await chat.ask(.submit, sig: sig) }
+        _ = until(20) { r != nil }
+        _ = idle(); spin(1.0)
+        // The answer is in the new session's transcript: the newest in the folder.
+        let projects = URL(fileURLWithPath: dir + "/cfg/projects")
+        let all = (FileManager.default.enumerator(at: projects, includingPropertiesForKeys: [.contentModificationDateKey])?.allObjects as? [URL] ?? [])
+        func modified(_ u: URL) -> Date { (try? u.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast }
+        let newest = all.filter { $0.pathExtension == "jsonl" && !$0.path.contains("/subagents/") }.max { modified($0) < modified($1) }
+        let got = lastAnswer(newest, after: 0)
+        check(r?.ok == true && picked == 4 && got?.answers["How far ahead should it look?"] == "Three years" && got?.answers.count == 4,
+              "after /clear: Claude got all four answers (\(String(describing: got?.answers)))")
+    }
     let cases: [AskCase] = [
         AskCase(name: "single: pick", prompt: "ask1", steps: [(.pick("SQLite"), false)], answers: ["Which database should we use?": "SQLite"]),
         AskCase(name: "single: Other text", prompt: "ask1", steps: [(.other("DuckDB"), false)], answers: ["Which database should we use?": "DuckDB"]),
@@ -204,6 +253,11 @@ struct AskCase {
             (.tab(0), false), (.pick("SwiftUI (Recommended)"), false), (.tab(3), false), (.toggle("macOS"), false), (.other("watchOS"), false), (.next, false), (.submit, false)],
             answers: ["Which framework should the settings page use?": "SwiftUI (Recommended)", "Which sections should it have?": "General, Advanced",
                       "Where should settings be stored?": "Keychain", "Which platforms need it first?": "macOS, watchOS"]),
+        AskCase(name: "four tabbed questions (F-749)", prompt: "askvision", steps: [
+            (.pick("Customers"), false), (.pick("One page with a table"), false), (.pick("The platform"), false), (.pick("Three years"), false), (.submit, false)],
+            answers: ["Who is the primary audience for this vision, i.e. who must read it and feel pulled toward it?": "Customers",
+                      "What form should the options take?": "One page with a table", "Which subject should the vision centre on?": "The platform",
+                      "How far ahead should it look?": "Three years"]),
         AskCase(name: "long, wrapped labels", prompt: "asklong", steps: [(.pick("Copy, verify, then delete"), false)],
                 answers: ["This question is deliberately long so that it wraps across more than one line of the terminal at its usual width: which migration strategy should we use for the existing sessions folder?": "Copy, verify, then delete"]),
         AskCase(name: "preview: pick", prompt: "askpreview", steps: [(.pick("Compact"), false)], answers: ["Which layout should the card use?": "Compact"]),
@@ -219,9 +273,14 @@ struct AskCase {
         let before = transcript.flatMap { try? Data(contentsOf: $0) }?.count ?? 0
         tui.sendKeys("\u{1b}[200~SCENARIO:\(c.prompt)\u{1b}[201~"); spin(0.2); tui.sendKeys("\r")
         guard until(20, { chat.reread().kind == .question && chat.pendingRequest?.tool == "AskUserQuestion" }) else {
-            check(false, "\(c.name): the question appears (\(chat.screen.kind))"); tui.sendKeys("\u{1b}"); _ = idle(); continue
+            if let t = ClaudeStorage.transcript(sessionId: id, cwd: ws) { try? FileManager.default.copyItem(atPath: t.path, toPath: "\(dir)/at-fail-\(c.prompt).jsonl") }
+            try? (tui.screenLines().joined(separator: "\n") + "\n---\n" + chat.debugReport()).write(toFile: "\(dir)/at-fail-\(c.prompt).txt", atomically: true, encoding: .utf8)
+            check(false, "\(c.name): the question appears (\(chat.screen.kind), pending \(chat.pendingRequest?.tool ?? "none"))"); tui.sendKeys("\u{1b}"); _ = idle(); continue
         }
         spin(0.3)
+        // The first screen of each case, kept: DuoChecks' fixtures are built from them (F-749).
+        try? tui.screenLines().joined(separator: "\n").write(toFile: "\(dir)/screen-\(c.prompt).txt", atomically: true, encoding: .utf8)
+        try? "\(chat.pendingRequest?.source ?? "none")\n".write(toFile: "\(dir)/source-\(c.prompt).txt", atomically: true, encoding: .utf8)
         var refused = 0, error: String?
         for (intent, stale) in c.steps {
             var r: ChatAnswerResult?
@@ -250,6 +309,8 @@ struct AskCase {
         if chat.reread().kind != .idle { tui.sendKeys("\u{1b}"); _ = idle() }
     }
     if only.map({ "two questions".contains($0) }) ?? true { twoQuestions() }
+    // Last for this session: after it, its hooks write under another id.
+    if only.map({ "after /clear".contains($0) }) ?? (size.0 != 100) { afterClear() }
     guard only == nil || only == "none", size.0 == 100 else { return }
 
     // A streamed reply: MessageDisplay draws it as it comes; the transcript's block matches it.
@@ -547,6 +608,8 @@ struct AskCase {
               "option 3 from the card: Claude received the feedback")
         tui.sendKeys("\u{1b}"); _ = idle()
     } else { check(false, "the plan dialog appears (\(chat.screen.kind))") }
+    for _ in 0..<8 where chat.reread().mode == .plan { _ = await_ { await chat.cycleMode() }; spin(0.3) }
+    afterClear()
 }
 
 /// What Claude got back for the last AskUserQuestion after `offset` bytes of the transcript.

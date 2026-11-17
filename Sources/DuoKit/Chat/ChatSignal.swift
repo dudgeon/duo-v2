@@ -387,7 +387,7 @@ final class ChatSignalReader {
                     ChatSignalTrace.note("signal", "busy=\(s.busy) aborted=\(s.aborted) question=\(s.question ?? "-") lag=\(Int(Date().timeIntervalSince(s.at) * 1000))ms")
                 }
                 if let tool = s.question, chat.pendingRequest == nil, s.isFresh(at: Date()) {
-                    chat.pendingRequest = ChatRequest(tool: tool, input: s.questionInput, at: s.at)
+                    chat.pendingRequest = ChatRequest(tool: tool, input: s.questionInput, at: s.at, source: "signal")
                     ChatSignalTrace.note("request", "signal \(tool)")
                 }
             }

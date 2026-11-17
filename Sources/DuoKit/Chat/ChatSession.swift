@@ -285,7 +285,7 @@ public final class ChatSession {
     /// What the feed last read, for the Debug report: the request's absence means little without it.
     var hooksState: String {
         guard let f = feed else { return "no hook feed (not a live session)" }
-        let last = f.lastEvent.map { "last event \($0.name) \(String(format: "%.1f", now.timeIntervalSince($0.at))) s ago" } ?? "no event read yet"
+        let last = f.lastEvent.map { "last event \($0.name) \(String(format: "%.1f", now.timeIntervalSince($0.at))) s ago" } ?? "no event read yet (\(f.eventsFileState))"
         return last + (f.isLoading ? ", transcript still loading" : "") + (isShown() ? "" : ", off screen")
     }
     @ObservationIgnored private var disagreeSince: Date?
@@ -467,6 +467,10 @@ public final class ChatSession {
                     // The feed may simply not have read the hook yet: off screen it reads every 2 s, a long
                     // transcript holds it for seconds, and a stalled main thread can fire this timer first (F-419).
                     feed?.catchUp()
+                    // The process may have moved to another session's events (`/clear`, `/resume`): F-749.
+                    if !requestAgrees, s.kind == .question, let q = s.question, let id = feed?.adoptMovedQuestion(shown: q) {
+                        noteTransition("request found", "the question was asked under session \(id.prefix(8)), not \(key.prefix(8)): its hooks moved")
+                    }
                     if requestAgrees {
                         disagreeSince = nil
                     } else if feed?.isLoading == true, now.timeIntervalSince(disagreeSince!) < Self.loadingGrace {
@@ -474,6 +478,13 @@ public final class ChatSession {
                         unknownTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
                             MainActor.assumeIsolated { self?.evaluateFallback() }
                         }
+                    } else if let f = feed, f.lastEvent == nil, pendingRequest == nil {
+                        // Nothing from Claude Code's hooks since chat opened, though a dialog came up: the hooks aren't
+                        // reaching Duo for this session (F-749). Say so, and which setting turns them off if one does.
+                        let off = HookPolicy.blocker(cwd: feed?.cwd)
+                        fallBack(.automatic(off.map { "Claude Code’s settings turn off Duo’s hooks here (\($0)), so chat can’t answer this dialog. Here’s the terminal." }
+                                            ?? "Claude Code hasn’t sent Duo anything from this session, so chat can’t answer this dialog. Here’s the terminal."),
+                                 rule: off != nil ? "hooks-off" : "hooks-silent")
                     } else {
                         fallBack(.automatic("Chat mode can’t match this dialog to what Claude asked, so here’s the terminal."), rule: "dialog-request-mismatch")
                     }
@@ -561,7 +572,7 @@ public final class ChatSession {
         return ChatFallbackCapture(
             at: Date(), rule: rule, message: f.message, automatic: f.kind == .automatic, kind: screen.kind.rawValue, sig: screen.sig,
             why: screen.why, evidence: ChatFallbackReport.evidence(lines, table: signatures), lines: t, cols: terminal?.columns ?? (t.map(\.count).max() ?? 0),
-            cliVersion: cliVersion, trust: versionTrust.rawValue, pending: pendingRequest?.tool, hooks: hooksState,
+            cliVersion: cliVersion, trust: versionTrust.rawValue, pending: pendingRequest.map { $0.tool + ($0.source == "hook" ? "" : " (from the \($0.source))") }, hooks: hooksState,
             unknownFor: unknownSince.map { now.timeIntervalSince($0) }, trail: screenTrail, footer: screen.mode != nil,
             dialog: [.permission, .plan, .question, .questionReview, .picker].contains(screen.kind),
             mods: t.map { $0.chatTrim }.filter { $0.hasPrefix("⚠") }.map { String($0.prefix(80)) }, session: key)

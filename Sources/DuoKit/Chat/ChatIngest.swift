@@ -364,4 +364,9 @@ public struct ChatRequest: @unchecked Sendable {
     public var tool: String
     public var input: ChatJSON
     public var at: Date
+    /// Where it came from: `hook` (PermissionRequest, a question's PreToolUse), `transcript` (F-749) or `signal`.
+    public var source = "hook"
+    public init(tool: String, input: ChatJSON, at: Date, source: String = "hook") {
+        self.tool = tool; self.input = input; self.at = at; self.source = source
+    }
 }

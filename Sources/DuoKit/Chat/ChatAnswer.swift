@@ -210,6 +210,11 @@ extension ChatSession {
                 if cur == target { return true }
                 if cur < 0 { return false }
                 await step(target > cur ? .down : .up)
+                // A slow repaint left the screen as it was: wait for the move before the next arrow, or the arrows
+                // pile up past the row (F-749: seen at 94×65 on 2.1.325 under load).
+                for _ in 0..<8 where s.cursor == cur && (s.kind == .question || s.kind == .questionReview) {
+                    await pause(); s = reread()
+                }
             }
             return false
         }
