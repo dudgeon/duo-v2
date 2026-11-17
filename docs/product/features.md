@@ -628,3 +628,18 @@ Releases named in **Status** are from the GitHub release notes (`gh release list
 - **Status:** Report an Issue… shipped in 0.1.8; hang log in 0.2.4, recording while still stalled in 0.2.6, `--stacks` in 0.2.7; `duo2 doctor`'s mod check in 0.2.18; Debug report in 0.2.20. The sensor mod is spiked, not shipped. Open questions: none found (Q-256 is answered).
 - **duo2:** `duo2 hangs`, `duo2 doctor`, `duo2 session chat`.
 - **Shown in:** —, —.
+
+## FEAT-36 · Getting started
+- **Intent:** a new user sees what Duo is for without being pushed. A card at the top of All projects offers three optional steps and a line about the director, and Help brings it back. Asked for after the first-use feedback (Q-511); approved by Geoff, 2026-11-16 (DL-348).
+- **How it works:**
+  - The **Getting started with Duo** card sits at the top of All projects, under the List | Board header (above the map on the Board), on a new install only: no `chat.json` and no `state.json` (F-673, F-741). It is kept in Duo's own state, never a file the user owns.
+  - Its three steps tick on the real action, wherever it happens (a Duo button, ⌘T, `duo2`): a project opened or made, a session started (chat or terminal), a task made. A tick says what was done and never un-ticks (F-742).
+  - **Show me** on a step opens its Explainer on the real control, or at the window's top centre when it isn't on screen; Esc goes back to where you were.
+  - **Hide** leaves a notice with Undo for 8 s. After three ticks it reads "That's the basics" and **Done** folds it away. **Help › Getting Started** brings it back for anyone (DL-348).
+  - The director is a ○ line to know about, never a step or a count (Q-534). The intro film's poster sits at the card's right.
+  - Help › Explain gathers the explainers: Projects, Chat and Terminal, Tasks, Home, Director, each with a picture (X1, X2).
+- **Not:** no welcome sheet, no explainers that open themselves, no director hint (boards A1, C1, C2, not chosen). It doesn't tick for things Claude writes to disk itself (ENH-358).
+- **Governed by:** DL-348, DL-172, DL-339, F-673, F-741, F-742.
+- **Status:** built on `build/first-run-welcome`, not yet released. Open: Q-591 to Q-594.
+- **duo2:** `duo2 getting-started`, `duo2 explain`.
+- **Shown in:** `docs/design/first-run-welcome-handoff/` (B1, B2, B3, X1, X2).
