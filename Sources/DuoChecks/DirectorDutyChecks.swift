@@ -635,6 +635,21 @@ private func stopped(_ path: String = "tasks/s.md", checked: Date? = nil, typing
           "eval spend adds each run's judgeCostUsd to costUsd (eval-cost.py --self-test, F-740): \(said.prefix(120))")
     let harness = (try? String(contentsOf: repoRoot().appending(path: "scripts/director-harness/run-evals.sh"), encoding: .utf8)) ?? ""
     check(harness.contains("eval-cost.py $out/result.json"), "run-evals.sh prints each round's cost with the judges (eval-cost.py)")
+    for (args, expect, what) in [(["--self-test"], "eval selection:", "selection skips what no edit touched and caches by what a case depends on (eval-select.py --self-test, DL-352)"),
+                                 (["check-map", "--root", repoRoot().path], "eval map ok", "every eval has a map entry or a retirement, and every part the map names exists (eval-map.json)")] {
+        let sel = Process()
+        let out = Pipe()
+        sel.executableURL = URL(fileURLWithPath: "/usr/bin/python3")
+        sel.arguments = [repoRoot().appending(path: "scripts/director-harness/eval-select.py").path] + args
+        sel.standardOutput = out
+        sel.standardError = out
+        try sel.run()
+        let text = String(decoding: out.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+        sel.waitUntilExit()
+        check(sel.terminationStatus == 0 && text.contains(expect), "\(what): \(text.prefix(160))")
+    }
+    check(harness.contains("--max-usd") && harness.contains("spent >= cap") && harness.contains("STOPPED at the cap"), "run-evals.sh stops at its spend cap, runs plus judges (DL-352)")
+    check(harness.contains("--changed") && harness.contains("--full") && harness.contains("--include-retired"), "run-evals.sh runs the changed cases by default, the full suite only by flag, retired cases only by flag (DL-352)")
     check(probe.count == 4, "the fixed-date scan finds an ISO date, a timestamp, \"1 Nov\" and \"November 3\", and passes comments, 2099 and ago() (\(probe))")
 }
 

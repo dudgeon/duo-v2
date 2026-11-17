@@ -77,3 +77,28 @@ so it runs on a Mac only.
 `wrap_duo2`, which makes `duo2` export a private location first (`DUO_CLAUDE_APP_DIR` for scheduled runs in s27,
 `CLAUDE_CONFIG_DIR` for the installed skill in s32) and then run the real one. Run them with `run-evals.sh --case 's2[5-9]*'`
 and `--case 's3[0-3]*'` (they spend real model turns; the check above doesn't).
+
+## What a Tier 2 run spends, and how it stays small (DL-352)
+
+`run-evals.sh` runs only where an edit could change the answer, under a hard cap. Geoff, 2026-11-16, after spend reached
+$6.45 against $5: "If we are not editing the skills I don't know why we'd repeatedly eval."
+
+- **Default: the changed cases.** `eval-map.json` lists, for each case, the SKILL.md sections (`1`..`11`, `never`,
+  `duties`), reference files, code groups (`status`, `verbs`) and the worker skill it exercises. A case's *key* is a hash
+  of those parts, its own files, `evals/_lib` and the model. `run-evals.sh` (or `--changed [REF]`, REF defaulting to the
+  merge base with main) runs the cases whose key differs from REF's and prints the rest as `unchanged`, at no cost. A
+  case missing from the map depends on everything; `check-map` (run by DuoChecks) fails on one.
+- **`--full`** runs every case with no cached result for this revision: the release gate for a release that ships skill
+  changes. `--case <glob>` names cases; `--include-retired` adds the retired ones (below); `--fresh` ignores the cache;
+  `--list` prints the plan and spends nothing.
+- **A cache is the baseline.** Every round's results are stored per key under
+  `<main checkout>/.build/director-eval-cache/` (`DIRECTOR_EVAL_CACHE`). A key already cached is not run again, and a
+  changed case is printed beside what it scored at REF when that was cached. Run the suite once from main to seed it.
+- **A hard cap.** `--max-usd N` (default 0.50, `DIRECTOR_EVAL_MAX_USD`) counts the agent's runs plus their judges
+  (`eval-cost.py`); the run stops before the next case once it is reached, lists what it skipped and exits 3. Default
+  is one run per case; a case that misses is rerun at three while the cap allows (DL-349).
+- **Retired cases** (`retired` in `eval-map.json`) failed on main too and are tied to the model, not the skill: s16, s27,
+  s29, s33. They neither block a merge nor trigger a rerun; run them on Sonnet (`DIRECTOR_EVAL_MODEL=claude-sonnet-5-5
+  run-evals.sh --include-retired --case 's16*'`) before a release, which is DL-330's bar.
+- **Mechanical checks first.** Where a pass is a fact in the transcript or a file (s10, s12, s23) the case uses a regex
+  grader and no LLM judge; the judge stays where the criterion is judgement.

@@ -7,6 +7,9 @@
   eval-cost.py <result.json>                    one round: a line per case, then the round's total
   eval-cost.py --history <file|folder>...       every round found (deduplicated: run-evals.sh writes each round
                                                 twice), oldest first, with the grand total
+  eval-cost.py --total <result.json>...         the summed spend (runs + judges) as a bare number, for run-evals.sh's cap
+  eval-cost.py --missed <result.json> | --rate <result.json> <case>   exit 0 on any miss | "k/n" for a case
+  eval-cost.py --merge <out.json> <in.json>...  one result.json from several (each case once, the last file's wins)
   eval-cost.py --self-test                      proves the total includes the judges (DuoChecks runs it)
 """
 import json, os, sys
@@ -94,6 +97,24 @@ def self_test():
 
 if __name__ == "__main__":
     a = sys.argv[1:]
+    if a and a[0] == "--total":
+        print(f"{sum(round_cost(json.load(open(f)))[2] for f in a[1:]):.4f}")
+        sys.exit(0)
+    if a and a[0] == "--missed":      # exit 0 if some run in the round did not pass
+        sys.exit(0 if any(not r.get("passed") for c in json.load(open(a[1]))["cases"] for r in runs_of(c)) else 1)
+    if a and a[0] == "--rate":        # k/n for one case
+        for c in json.load(open(a[1]))["cases"]:
+            if c["name"] == a[2]:
+                rs = list(runs_of(c))
+                print(f"{sum(1 for r in rs if r.get('passed'))}/{len(rs)}")
+        sys.exit(0)
+    if a and a[0] == "--merge":
+        ds = [json.load(open(f)) for f in a[2:]]
+        byname = {c["name"]: c for d in ds for c in d.get("cases", [])}
+        out = dict(ds[0]) if ds else {}
+        out["cases"] = [byname[k] for k in sorted(byname)]
+        json.dump(out, open(a[1], "w"))
+        sys.exit(0)
     if a == ["--self-test"]:
         sys.exit(self_test())
     if a and a[0] == "--history":

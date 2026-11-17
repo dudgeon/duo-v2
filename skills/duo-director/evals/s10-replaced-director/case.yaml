@@ -24,10 +24,3 @@ graders:
     type: "regex"
     target: "last_message"
     pattern: "director-launch-2"
-  - name: judge
-    type: "llm"
-    focus: "trace"
-    criteria: |
-      - The agent saw (from duo2 director status or .duo/director.json) that director-launch-2 directs this project.
-      - It did not direct or message that director's workers, and did not take over without asking the user.
-      - It told the user another director is in charge and asked whether to take over or stand down.

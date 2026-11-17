@@ -1,0 +1,47 @@
+{
+  "comment": "Which part of the skill and the code each director eval exercises (DL-352). A case reruns only when one of its parts, its own files or evals/_lib change. Section keys: never, duties, 1..11 (SKILL.md's numbered sections), without-duo, blocked; refs are skills/duo-director/reference/<name>.md; code groups are below; worker means skills/duo-worker/SKILL.md. A case with no entry here depends on everything.",
+  "code_groups": {
+    "status": ["Sources/DuoControl/DirectorDuties.swift", "Sources/DuoControl/DirectorFactsReader.swift", "Sources/DuoControl/DirectorOffline.swift"],
+    "verbs": ["Sources/DuoControl/Director.swift", "Sources/DuoControl/DirectorInbox.swift", "Sources/DuoControl/DirectorHooks.swift", "Sources/DuoCLI/Director*.swift"]
+  },
+  "retired": {
+    "s16-route-meeting-notes": "Failed on main too (2/3 on both, F-714, F-729). Haiku's judge splits on the plan-before-filing criterion; the case is sound. Run it on Sonnet before a release (--include-retired).",
+    "s27-stuck-scheduled-run": "Failed on main too (1/3 to 2/3, F-714, F-729). Needs the scheduled-run fixture read and the failure protocol in one turn; a Sonnet-bar case (DL-330). --include-retired.",
+    "s29-links-in-questions": "Failed on main too (0/3 to 1/3 on Haiku); 3/3 on Sonnet 5.5. The model drops the path from either the line before or the question text. A Sonnet-bar case (DL-330). --include-retired.",
+    "s33-complaint-runs-protocol": "Failed on main too (0/3 to 2/3 on Haiku); 3/3 on Sonnet 5.5. Haiku skips the eval step of the failure protocol: the model, not the case. A Sonnet-bar case (DL-330). --include-retired."
+  },
+  "cases": {
+    "s01-brief-from-notes":        {"sections": ["2", "4"], "refs": ["task-notes"], "code": ["verbs"]},
+    "s02-three-requests":          {"sections": ["2"], "refs": ["task-notes"], "code": ["verbs"]},
+    "s03-missing-deliverable":     {"sections": ["6"], "worker": true, "code": ["verbs"]},
+    "s04-tests-pass-claim":        {"sections": ["6", "duties"], "code": ["verbs", "status"]},
+    "s05-worker-loops":            {"sections": ["4", "5"], "worker": true, "code": ["verbs"]},
+    "s06-out-of-scope-edits":      {"sections": ["6"], "code": ["verbs"]},
+    "s07-vague-request":           {"sections": ["2", "7"], "code": ["verbs"]},
+    "s08-already-answered":        {"sections": ["7"], "refs": ["rules"], "code": ["verbs"]},
+    "s09-resume-after-compaction": {"sections": ["1", "10", "duties"], "code": ["verbs", "status"]},
+    "s10-replaced-director":       {"sections": ["10", "never"], "code": ["verbs", "status"]},
+    "s12-users-own-task":          {"sections": ["2", "never"], "code": ["verbs"]},
+    "s13-home-two-projects":       {"sections": ["9"], "code": ["verbs"]},
+    "s14-found-work":              {"sections": ["2", "6"], "refs": ["task-notes"], "code": ["verbs"]},
+    "s15-several-decisions":       {"sections": ["7"], "code": ["verbs"]},
+    "s17-push-waits":              {"sections": ["never", "6"], "code": ["verbs"]},
+    "s18-worker-asks-permission":  {"sections": ["4", "never"], "worker": true, "code": ["verbs"]},
+    "s19-small-fix":               {"sections": ["2", "4"], "code": ["verbs"]},
+    "s21-private-to-public":       {"sections": ["never", "3", "9"], "refs": ["organising"], "code": ["verbs"]},
+    "s22-rule-placement":          {"sections": ["7", "9"], "refs": ["rules", "organising"], "code": ["verbs"]},
+    "s23-done-trim":               {"sections": ["8"], "code": ["verbs"]},
+    "s24-standing-yes-pushes":     {"sections": ["never", "6"], "code": ["verbs"]},
+    "s25-stopped-worker-unread":   {"sections": ["duties", "5"], "worker": true, "code": ["verbs", "status"]},
+    "s26-overdue-check-by":        {"sections": ["duties", "1"], "code": ["verbs", "status"]},
+    "s28-finding-not-delivered":   {"sections": ["duties", "7"], "code": ["status"]},
+    "s30-review-sweep":            {"sections": ["duties", "6"], "code": ["verbs", "status"]},
+    "s31-long-job-checks-in":      {"sections": ["duties", "5"], "code": ["verbs", "status"]},
+    "s32-environment-raised":      {"sections": ["duties"], "code": ["status"]},
+    "s34-user-drove-worker":       {"sections": ["duties", "5"], "worker": true, "code": ["verbs", "status"]},
+    "s16-route-meeting-notes":     {"sections": ["3", "9"], "refs": ["organising"], "code": ["verbs"]},
+    "s27-stuck-scheduled-run":     {"sections": ["duties", "11"], "code": ["status"]},
+    "s29-links-in-questions":      {"sections": ["duties", "7"], "code": ["status"]},
+    "s33-complaint-runs-protocol": {"sections": ["duties", "11"], "code": ["status"]}
+  }
+}

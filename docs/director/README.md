@@ -32,7 +32,7 @@ How Duo's own director works, beyond the shared `duo-director` skill (source `sk
 | Found work | A record: ENH-n, C-n or Q-n |
 | Complete a task | Geoff's sign-off, never before |
 | Archive a session | Only after sign-off, and only after reading its transcript for his own messages |
-| A failure's change and its eval (§11) | A branch, and a case in `skills/duo-director/evals/` tagged `duty-Rn`. This repo is the upstream, so no issue is needed. A new duty also needs its row in the skill, a case in `DirectorRedLines` and a fixture in `DirectorDutyChecks`, which fails the build without them |
+| A failure's change and its eval (§11) | A branch, and a case in `skills/duo-director/evals/` tagged `duty-Rn`. This repo is the upstream, so no issue is needed. Evals run only for the cases an edit touches, under a spend cap (DL-352; `scripts/director-harness/README.md`); a new case needs an entry in `eval-map.json`. A new duty also needs its row in the skill, a case in `DirectorRedLines` and a fixture in `DirectorDutyChecks`, which fails the build without them |
 | Memory | Geoff's preferences and hard facts only |
 
 Run `duo2 director` from the main checkout, not a work tree.

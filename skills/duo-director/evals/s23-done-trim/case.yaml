@@ -26,10 +26,16 @@ graders:
     type: "regex"
     target: {"source": "file", "path": "PROJECT.md"}
     pattern: "## Decisions"
-  - name: judge
-    type: "llm"
-    focus: "trace"
-    criteria: |
-      - The task was marked done (duo2 task status … done, or status: done) and one dated line linking it was added to ## Done.
-      - ## Done in PROJECT.md now holds 20 lines: the oldest ("Finished old task 1.") moved to log.md beside PROJECT.md.
-      - ## Decisions stayed in PROJECT.md.
+  - name: marked-done
+    type: "regex"
+    target: {"source": "file", "path": "tasks/press-kit.md"}
+    pattern: "status: done"
+  - name: done-line-added
+    type: "regex"
+    target: {"source": "file", "path": "PROJECT.md"}
+    pattern: "press-kit"
+  - name: oldest-left-done
+    type: "regex"
+    target: {"source": "file", "path": "PROJECT.md"}
+    pattern: "Finished old task 1\\."
+    match: "not_contains"
