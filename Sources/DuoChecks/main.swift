@@ -134,6 +134,7 @@ func repoFixture() throws -> Fixture {
     homeListChecks(f)
     firstRunProjectChecks(f)
     teachingLayerChecks()
+    gettingStartedChecks(f)
     sessionRowChecks(f)
     sessionGlyphChecks(f)
     sidebarHierarchyChecks(f)

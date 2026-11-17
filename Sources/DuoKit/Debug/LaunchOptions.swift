@@ -66,7 +66,7 @@ public struct LaunchOptions: Sendable {
                     // Scene 14's second and third windows are smaller, so they cascade over the first on the desk.
                     windowSize = VideoTargets.mwScreens.contains(name) ? VideoTargets.mwWindowSize : CGSize(width: 1800, height: 1100)
                 }
-                if SearchTargets.screens.contains(name) || SurfaceTargets.screens.contains(name) || ChatTargets.screens.contains(name) || NarrowTargets.screens.contains(name) || HomeListTargets.screens.contains(name) || VideoTargets.screens.contains(name) || GlyphTargets.screens.contains(name) || SidebarTargets.screens.contains(name) || ForkTargets.screens.contains(name) || NewSessionTargets.screens.contains(name) { state = .overview; searchState = name; continue }
+                if SearchTargets.screens.contains(name) || SurfaceTargets.screens.contains(name) || ChatTargets.screens.contains(name) || NarrowTargets.screens.contains(name) || HomeListTargets.screens.contains(name) || GettingStartedTargets.screens.contains(name) || VideoTargets.screens.contains(name) || GlyphTargets.screens.contains(name) || SidebarTargets.screens.contains(name) || ForkTargets.screens.contains(name) || NewSessionTargets.screens.contains(name) { state = .overview; searchState = name; continue }
                 guard let s = TargetState(rawValue: name) else {
                     FileHandle.standardError.write(Data("Unknown state '\(name)'. Known: \(TargetState.allCases.map(\.rawValue).joined(separator: ", "))\n".utf8))
                     exit(64)

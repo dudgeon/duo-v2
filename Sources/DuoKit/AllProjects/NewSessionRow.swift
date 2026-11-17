@@ -46,6 +46,7 @@ struct NewSessionRow: View {
                 if place.kind == .home {
                     Text("★").duoText(.pill).foregroundStyle(DuoColor.text)
                     Text("home").duoText(.control, lineHeight: 16).foregroundStyle(DuoColor.text)
+                        .explainerFrame("home.tile")   // X2: Help › Explain › Home opens here in the List (no hover trigger on the row)
                 } else {
                     Text(place.label).duoText(.control, lineHeight: 16).foregroundStyle(DuoColor.text).lineLimit(1).truncationMode(.middle)
                 }

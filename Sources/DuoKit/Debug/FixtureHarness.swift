@@ -738,6 +738,9 @@ public enum FixtureHarness {
         case "template-preview": model.toggleTemplatePreview()   // the template bar's Preview (DL-146, board A2)
         case "new-task": if let p = model.currentProject?.name { model.newTask(in: p) }   // + New task in the open project
         case "explain-tasks": model.explainTasks()   // Help › Explain Tasks (DL-172)
+        case "explain": if parts.count > 1, let id = ExplainerID(rawValue: parts[1]) { model.explainOpen(id) }   // explain:<projects|modes|tasks|home|director> (DL-348)
+        case "show-me": if parts.count > 1, let step = GettingStartedStep(rawValue: parts[1]) { model.gettingStartedShowMe(step) }   // Show me on the card's step (DL-348, B3)
+        case "getting-started": if parts.count > 1 { GettingStartedTargets.hold(parts[1]) }   // getting-started:<0|1|2|3|hidden|notice|none>: the card's state, held in memory
         case "hover-new-task": if let p = model.currentProject?.name { model.hoveredTaskRow = "\(p)/new-task-row" }   // the pointer on + New task (DL-172)
         case "board": model.showBoard(parts.count < 2 || parts[1] != "off")   // board[:off]: Sessions | Tasks (DL-148)
         case "issue-link":   // issue-link:<path>=<n>:<open|closed>[:<labels>]: a task tracks an acme/checkout issue, its state as read (DL-226; no gh)

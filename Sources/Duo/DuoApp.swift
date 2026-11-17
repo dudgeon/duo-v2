@@ -26,6 +26,10 @@ struct DuoApp: App {
         DuoFocus.startBackground()
         let options = LaunchOptions()
         self.options = options
+        // A new install (neither chat.json nor state.json, F-673) gets the Getting started card, once, before anything
+        // else writes state.json (DL-348). Fixture and capture runs never do, so existing targets stay as drawn;
+        // a scripted live run asks with DUO_FIRST_RUN=1.
+        if !options.usesFixture || (options.workspace != nil && launchEnvironment["DUO_FIRST_RUN"] == "1") { GettingStarted.seedIfNewInstall() }
         // Match System, Light or Dark, as Settings › General › Appearance says (DL-224).
         AppearanceSetting.apply()
         NSWindow.allowsAutomaticWindowTabbing = false
@@ -61,6 +65,7 @@ struct DuoApp: App {
             else if ChatTargets.screens.contains(screen) { ChatTargets.apply(screen, to: model) }
             else if NarrowTargets.screens.contains(screen) { NarrowTargets.apply(screen, to: model) }
             else if HomeListTargets.screens.contains(screen) { HomeListTargets.apply(screen, to: model) }
+            else if GettingStartedTargets.screens.contains(screen) { GettingStartedTargets.apply(screen, to: model) }
             else if VideoTargets.screens.contains(screen) { VideoTargets.apply(screen, to: model) }
             else if GlyphTargets.screens.contains(screen) { GlyphTargets.apply(screen, to: model) }
             else if SidebarTargets.screens.contains(screen) { SidebarTargets.apply(screen, to: model) }

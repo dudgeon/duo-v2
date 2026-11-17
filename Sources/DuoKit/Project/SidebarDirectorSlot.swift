@@ -129,6 +129,7 @@ struct DirectorSlotRow: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel(spoken(open: open))
         .accessibilityIdentifier("video.session.\(row.name)")
+        .explainerTrigger(.director, key: "director.slot")   // X2: a long hover on the director's slot, once one exists
     }
 
     /// "Director · 2 workers", "Director · needs you · 2 workers", "Director · not open", "Replaced 2h ago".

@@ -20,6 +20,9 @@ struct SessionListPane: View {
             VStack(alignment: .leading, spacing: 0) {
                 MapHeader(layout: nil)
                     .padding(EdgeInsets(top: DuoSpace.panePadding, leading: DuoSpace.panePadding, bottom: 8, trailing: DuoSpace.panePadding))
+                // DL-348 (B1): the Getting started card, a new install's, under the header and above the New session row.
+                GettingStartedSlot()
+                    .padding(EdgeInsets(top: 0, leading: DuoSpace.panePadding, bottom: 8, trailing: DuoSpace.panePadding))
                 NewSessionRow()
                     .padding(.horizontal, DuoMetric.sessionListRowInset)
                     .padding(.top, 8)

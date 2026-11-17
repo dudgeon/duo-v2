@@ -183,7 +183,9 @@ extension AppModel {
         let projectName = folder.lastPathComponent
         if liveFolders[projectName] == nil { liveFolders[projectName] = folder }   // known now; the snapshot catches up on refresh
         let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        let started = interview ? newSession(in: projectName, prompt: ProjectInterview.prompt(title: t.isEmpty ? projectName : t)) : nil
+        // The interview is Duo's own start, not the user's: it ticks the project step, not the session step (DL-348).
+        let started = interview ? newSession(in: projectName, prompt: ProjectInterview.prompt(title: t.isEmpty ? projectName : t), countsForGettingStarted: false) : nil
+        tickGettingStarted(project: projectName, folder: folder)
         lastInterview = started
         refreshLive()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {

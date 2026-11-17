@@ -309,6 +309,8 @@ public struct DuoState: Codable, Sendable, Equatable {
     public var expandedFolders: [String: [String]] = [:]
     /// Projects whose Files section is folded away (DL-339, ENH-344).
     public var filesFolded: [String] = []
+    /// The Getting started with Duo card (DL-348): seeded once on a new install; nil on an install that never had it.
+    public var gettingStarted: GettingStartedState?
 
     public init() {}
     public init(from decoder: Decoder) throws {
@@ -349,6 +351,7 @@ public struct DuoState: Codable, Sendable, Equatable {
         sessionModel = try c.decodeIfPresent(String.self, forKey: .sessionModel)
         expandedFolders = try c.decodeIfPresent([String: [String]].self, forKey: .expandedFolders) ?? [:]
         filesFolded = try c.decodeIfPresent([String].self, forKey: .filesFolded) ?? []
+        gettingStarted = try? c.decodeIfPresent(GettingStartedState.self, forKey: .gettingStarted)
     }
 
     public static func load(_ url: URL = DuoPaths.state) -> DuoState {
