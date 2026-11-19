@@ -157,18 +157,53 @@ struct ChatInlineText: View {
     }
 }
 
-/// The copy icon on a code block (labelled Copy).
+/// Which code block was just copied (F-756): the button reads a check and "Copied" for 1.5 s (DL-220), then rests.
+/// One shared model keyed by the block's text, because a block has no identity of its own and a view has no `@State`.
+@MainActor @Observable final class CodeCopyFlash {
+    static let shared = CodeCopyFlash()
+    private(set) var copied: String?
+    private var stamp = Date.distantPast
+    var seconds = 1.5
+
+    func isCopied(_ text: String) -> Bool { copied == text }
+
+    /// Copy `text` and show Copied on its button.
+    func copy(_ text: String) {
+        FileActions.copy(text)
+        copied = text
+        let mine = Date()
+        stamp = mine
+        let wait = seconds
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(wait))
+            if let self, self.stamp == mine { self.copied = nil }
+        }
+    }
+}
+
+/// The copy button on a code block. At rest the icon; just clicked, DL-220's check and "Copied" (board `code-copied`: padding 0 8,
+/// the 12 icon, 4, the word in `text` 12/16, radius 6, 1 `controlEdge` on `pane`). Chat's block has no board of its own, so the
+/// icon-only resting button is a stand-in and the word widens it (Q-605).
 struct ChatCopyButton: View {
     let text: String
     var body: some View {
-        CopyMark().stroke(DuoColor.text2, style: StrokeStyle(lineWidth: 1.2, lineCap: .round)).frame(width: 12, height: 12)
-            .frame(width: 26, height: 24)
-            .background(RoundedRectangle(cornerRadius: DuoMetric.radiusChatStepBody).fill(DuoColor.pane))
-            .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusChatStepBody).strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
-            .contentShape(Rectangle())
-            .onActivate { FileActions.copy(text) }  // not an action: copies text already on screen
-            .help("Copy")
-            .accessibilityLabel("Copy")
+        let copied = CodeCopyFlash.shared.isCopied(text)
+        let radius = copied ? DuoMetric.radiusControl : DuoMetric.radiusChatStepBody
+        HStack(spacing: 4) {
+            Group {
+                if copied { CheckMark().stroke(DuoColor.text, style: StrokeStyle(lineWidth: 1.6, lineCap: .round, lineJoin: .round)) }
+                else { CopyMark().stroke(DuoColor.text2, style: StrokeStyle(lineWidth: 1.2, lineCap: .round)) }
+            }.frame(width: 12, height: 12)
+            if copied { Text("Copied").duoText(.chatMeta).foregroundStyle(DuoColor.text).fixedSize() }
+        }
+        .padding(.horizontal, copied ? 8 : 0)
+        .frame(minWidth: 26, minHeight: copied ? 22 : 24)  // the board's button is 22 high
+        .background(RoundedRectangle(cornerRadius: radius).fill(DuoColor.pane))
+        .overlay(RoundedRectangle(cornerRadius: radius).strokeBorder(copied ? DuoColor.controlEdge : DuoColor.rule, lineWidth: DuoMetric.borderHairline))
+        .contentShape(Rectangle())
+        .onActivate { CodeCopyFlash.shared.copy(text) }  // not an action: copies text already on screen
+        .help("Copy")
+        .accessibilityLabel(copied ? "Copied" : "Copy")
     }
 }
 

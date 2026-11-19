@@ -204,6 +204,27 @@ public enum FixtureHarness {
                     }
                 }
             }
+        case "render-codecopy":   // render-codecopy:<png>: a chat code block at rest, then just copied (F-756), drawn at 2x
+            if parts.count > 1 {
+                let code = "swift build --product duo2"
+                let flash = CodeCopyFlash.shared
+                func draw() -> NSImage? {
+                    let r = ImageRenderer(content: ChatBlockView(block: .code(language: nil, text: code)).frame(width: 420).padding(16).background(DuoColor.pane)
+                        .environment(\.colorScheme, NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? .dark : .light))
+                    r.scale = 2
+                    var image: NSImage?
+                    NSApp.effectiveAppearance.performAsCurrentDrawingAppearance { image = r.nsImage }
+                    return image
+                }
+                let rest = draw()
+                flash.copy(code)
+                let copied = draw()
+                if let a = rest, let b = copied {
+                    let out = NSImage(size: NSSize(width: a.size.width, height: a.size.height + b.size.height))
+                    out.lockFocus(); b.draw(at: .zero, from: .zero, operation: .copy, fraction: 1); a.draw(at: NSPoint(x: 0, y: b.size.height), from: .zero, operation: .copy, fraction: 1); out.unlockFocus()
+                    if let tiff = out.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff), let png = rep.representation(using: .png, properties: [:]) { try? png.write(to: URL(fileURLWithPath: parts[1])) }
+                }
+            }
         case "trust-notice":   // trust-notice:offer|run|trusted|failed|sheet|failed-sheet: the DL-229 bar on the open tab (a terminal showing a recorded screen, or a chat state's chat)
             model.showTrustNoticeFixture(parts.count > 1 ? parts[1] : "offer")
         case "trust-ask":   // trust-ask: Trust This Folder… on the visible terminal's bar, as the button does (the live proof, DL-229)

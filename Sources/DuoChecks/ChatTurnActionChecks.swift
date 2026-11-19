@@ -69,3 +69,19 @@ import Foundation
     f.remove("A|1")
     check(f.turn(at: CGPoint(x: 30, y: 45), current: nil, hasRow: rows) == nil, "a piece gone from the feed is forgotten")
 }
+
+// F-756: a chat code block's Copy showed nothing when clicked. It now reads Copied for 1.5 s, then clears.
+@MainActor func chatCodeCopyChecks() {
+    print("chat mode: a code block's Copy reads Copied, then clears (F-756, DL-220)")
+    func wait(_ s: Double) { RunLoop.main.run(until: Date().addingTimeInterval(s)) }
+    let flash = CodeCopyFlash()
+    flash.seconds = 0.15
+    check(!flash.isCopied("let x = 1"), "at rest the button reads Copy")
+    flash.copy("let x = 1")
+    check(flash.isCopied("let x = 1") && !flash.isCopied("other"), "just clicked: that block reads Copied, no other")
+    wait(0.5)
+    check(!flash.isCopied("let x = 1"), "and it goes back to Copy")
+    flash.copy("a"); wait(0.1); flash.copy("a"); wait(0.1)
+    check(flash.isCopied("a"), "a second click restarts the moment")
+    check(CodeCopyFlash.shared.seconds == 1.5, "the shipped moment is 1.5 s")
+}
