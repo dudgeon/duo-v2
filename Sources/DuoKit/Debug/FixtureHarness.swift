@@ -225,6 +225,30 @@ public enum FixtureHarness {
                     if let tiff = out.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff), let png = rep.representation(using: .png, properties: [:]) { try? png.write(to: URL(fileURLWithPath: parts[1])) }
                 }
             }
+        case "render-codecopy-board":   // render-codecopy-board:<png>: the chat button just copied, placed as DL-220's code-copied board has it (460 x 380, 2x), for compare.sh
+            if parts.count > 1 {
+                CodeCopyFlash.shared.copy("x")
+                let view = ZStack(alignment: .topLeading) {
+                    Color.white
+                    RoundedRectangle(cornerRadius: 6).fill(DuoColor.chatGround).frame(width: 411, height: 63).offset(x: 25, y: 117)
+                    HStack(spacing: 0) { Spacer(minLength: 0); ChatCopyButton(text: "x") }.frame(width: 405).offset(x: 25, y: 122)
+                }.frame(width: 460, height: 380, alignment: .topLeading)
+                    .environment(\.colorScheme, NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? .dark : .light)
+                let r = ImageRenderer(content: view)
+                r.scale = 2
+                var image: NSImage?
+                NSApp.effectiveAppearance.performAsCurrentDrawingAppearance { image = r.nsImage }
+                if let img = image, let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff), let png = rep.representation(using: .png, properties: [:]) { try? png.write(to: URL(fileURLWithPath: parts[1])) }
+            }
+        case "chat-code-reply":   // a finished reply from Claude with a fenced code block, at the end of the visible chat (F-756's capture)
+            if let c = model.visibleSessionId.flatMap(model.chat(for:)) {
+                c.log.items.append(.claude(ChatTurn(id: "t-code", uuid: "uuid-code", segments: [.text(ChatText(id: "x-code", markdown: "Build and check it from the work tree:\n\n```bash\nswift build --product duo2\nswift run DuoChecks\n```\n\nThen open the app.", streaming: false))])))
+            }
+        case "code-copy":   // code-copy: presses the Copy on the code block `chat-code-reply` added
+            let md = "Build and check it from the work tree:\n\n```bash\nswift build --product duo2\nswift run DuoChecks\n```\n\nThen open the app."
+            CodeCopyFlash.shared.seconds = 30   // held so the capture, which lands after the 1.5 s, still shows the moment
+            for case .code(_, let text) in ChatMarkdown.parse(md) { CodeCopyFlash.shared.copy(text) }
+            FileHandle.standardError.write(Data("code-copy: copied=\(CodeCopyFlash.shared.copied.map { $0.debugDescription } ?? "nil")\n".utf8))
         case "trust-notice":   // trust-notice:offer|run|trusted|failed|sheet|failed-sheet: the DL-229 bar on the open tab (a terminal showing a recorded screen, or a chat state's chat)
             model.showTrustNoticeFixture(parts.count > 1 ? parts[1] : "offer")
         case "trust-ask":   // trust-ask: Trust This Folder… on the visible terminal's bar, as the button does (the live proof, DL-229)
