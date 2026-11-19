@@ -130,6 +130,8 @@ The target to hold a release to: with hooks allowed, **no question reaches the t
 
 ## 7. Decisions for Geoff
 
+Recorded as Q-600 to Q-604 (in this order); the findings are F-753 to F-755; the tests are ENH-361 and ENH-362. Q-599 is folded into Q-604.
+
 1. **May a Duo hook carry your answer to a question?** That is approach A: the answer you click on Duo's card goes to Claude Code through the hook instead of as keystrokes. The terminal's dialog stays up and answerable. It amends DL-118 (2)'s "as keys" and the "hooks print nothing" rule, for AskUserQuestion only. **Recommended: yes.**
 2. **Dialog kept, or hidden?** Kept (PermissionRequest): the terminal and Remote Control still show the question; a failure costs nothing. Hidden (PreToolUse): the terminal shows only "running hook" while you answer in Duo. **Recommended: kept.**
 3. **The field ledger** (testing part 4): a local count of every question's outcome, shown in `duo2 doctor` and the report. **Recommended: yes, and first, since it also tells us what the work Mac's hooks do.**
