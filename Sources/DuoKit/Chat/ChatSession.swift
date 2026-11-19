@@ -285,7 +285,10 @@ public final class ChatSession {
     /// What the feed last read, for the Debug report: the request's absence means little without it.
     var hooksState: String {
         guard let f = feed else { return "no hook feed (not a live session)" }
-        let last = f.lastEvent.map { "last event \($0.name) \(String(format: "%.1f", now.timeIntervalSince($0.at))) s ago" } ?? "no event read yet (\(f.eventsFileState))"
+        // With nothing read, say which organization-managed settings this Mac has: they can turn hooks off (F-749).
+        let managed = f.lastEvent == nil ? HookPolicy.managedPresent() : []
+        let last = f.lastEvent.map { "last event \($0.name) \(String(format: "%.1f", now.timeIntervalSince($0.at))) s ago" }
+            ?? "no event read yet (\(f.eventsFileState); managed settings: \(managed.isEmpty ? "none" : managed.joined(separator: ", ")))"
         return last + (f.isLoading ? ", transcript still loading" : "") + (isShown() ? "" : ", off screen")
     }
     @ObservationIgnored private var disagreeSince: Date?
@@ -483,7 +486,9 @@ public final class ChatSession {
                         // reaching Duo for this session (F-749). Say so, and which setting turns them off if one does.
                         let off = HookPolicy.blocker(cwd: feed?.cwd)
                         fallBack(.automatic(off.map { "Claude Code’s settings turn off Duo’s hooks here (\($0)), so chat can’t answer this dialog. Here’s the terminal." }
-                                            ?? "Claude Code hasn’t sent Duo anything from this session, so chat can’t answer this dialog. Here’s the terminal."),
+                                            ?? (HookPolicy.managedPresent().isEmpty
+                                                ? "Claude Code hasn’t sent Duo anything from this session, so chat can’t answer this dialog. Here’s the terminal."
+                                                : "Claude Code hasn’t sent Duo anything from this session; settings your organization manages may turn its hooks off. Chat can’t answer this dialog, so here’s the terminal.")),
                                  rule: off != nil ? "hooks-off" : "hooks-silent")
                     } else {
                         fallBack(.automatic("Chat mode can’t match this dialog to what Claude asked, so here’s the terminal."), rule: "dialog-request-mismatch")

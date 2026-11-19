@@ -63,6 +63,10 @@ public final class FallbackReportView: NSView {
             tv.textContainer?.lineFragmentPadding = 0
             sv.documentView = tv
             sv.hasVerticalScroller = true
+            // Overlay scrollers, hidden until needed: a legacy scroller takes 15 pt of the column, and the text laid
+            // out under it was clipped at the edge (the director's review of F-752's capture).
+            sv.scrollerStyle = .overlay
+            sv.autohidesScrollers = true
             sv.drawsBackground = false
             sv.borderType = .noBorder
             addSubview(sv)
@@ -111,8 +115,11 @@ public final class FallbackReportView: NSView {
         let leftWidth = content.width - rightWidth - Self.gutter
         leftScroll.frame = NSRect(x: content.minX, y: content.minY, width: leftWidth, height: content.height)
         rightScroll.frame = NSRect(x: content.minX + leftWidth + Self.gutter, y: content.minY, width: rightWidth, height: content.height)
-        left.frame = NSRect(x: 0, y: 0, width: leftWidth, height: content.height)
-        left.textContainer?.containerSize = NSSize(width: leftWidth, height: .greatestFiniteMagnitude)
+        // Lay the summary out at the width the scroll view actually shows, so a long value wraps inside the column.
+        let shown = leftScroll.contentSize.width
+        left.frame = NSRect(x: 0, y: 0, width: shown, height: content.height)
+        left.textContainer?.widthTracksTextView = true
+        left.textContainer?.containerSize = NSSize(width: shown, height: .greatestFiniteMagnitude)
         left.textStorage?.setAttributedString(Self.styled(columns.summary, size: fit.size))
         right.textStorage?.setAttributedString(Self.styled(columns.screen, size: fit.size))
         right.sizeToFit()
@@ -124,12 +131,15 @@ public final class FallbackReportView: NSView {
         let out = NSMutableAttributedString()
         let regular = NSFont.monospacedSystemFont(ofSize: size, weight: .regular)
         let bold = NSFont.monospacedSystemFont(ofSize: size, weight: .semibold)
-        let para = NSMutableParagraphStyle()
-        para.lineHeightMultiple = 1.08
-        para.headIndent = 0
+        let cw = ("M" as NSString).size(withAttributes: [.font: regular]).width
         let key = ["rule:", "message:", "request pending:", "hooks:", "verdict:", "when:"]
         for (i, line) in s.components(separatedBy: "\n").enumerated() {
             let t = line.trimmingCharacters(in: .whitespaces)
+            // A wrapped line continues under its own text, two in from where it starts.
+            let para = NSMutableParagraphStyle()
+            para.lineHeightMultiple = 1.08
+            para.lineBreakMode = .byWordWrapping
+            para.headIndent = CGFloat(line.prefix { $0 == " " }.count + 2) * cw
             let heading = !line.hasPrefix(" ") && !t.isEmpty && !(line.count > 5 && line.dropFirst(3).hasPrefix(" | "))
             let isKey = key.contains { t.hasPrefix($0) }
             var attrs: [NSAttributedString.Key: Any] = [.font: heading || isKey ? bold : regular, .foregroundColor: DuoNSColor.text, .paragraphStyle: para]
@@ -170,6 +180,15 @@ public final class FallbackReportView: NSView {
         }
         let font = NSFont.monospacedSystemFont(ofSize: s, weight: .regular)
         return (s, CGFloat(widest) * ("M" as NSString).size(withAttributes: [.font: font]).width + 24)
+    }
+
+    /// How far the summary's widest laid-out line runs past the column the scroll view shows (0: none), for the checks.
+    public func summaryOverflow() -> CGFloat {
+        guard let lm = left.layoutManager, let tc = left.textContainer else { return .infinity }
+        lm.ensureLayout(for: tc)
+        var widest: CGFloat = 0
+        lm.enumerateLineFragments(forGlyphRange: lm.glyphRange(for: tc)) { _, used, _, _, _ in widest = max(widest, used.maxX) }
+        return max(0, widest - leftScroll.contentSize.width)
     }
 
     @objc func copyReport() {

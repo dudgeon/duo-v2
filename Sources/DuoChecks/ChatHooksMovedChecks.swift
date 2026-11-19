@@ -102,7 +102,7 @@ import Foundation
         let c = chatOnScreen(sid)
         let r = c.debugReport()
         try fallbackReportWindowChecks(r, folder: cwdDir)
-        check(c.lastFallback?.rule == "hooks-silent" && (c.fallback?.message ?? "").contains("hasn’t sent Duo anything") && r.contains("no event read yet (no events file)"),
+        check(c.lastFallback?.rule == "hooks-silent" && (c.fallback?.message ?? "").contains("hasn’t sent Duo anything") && r.contains("no event read yet (no events file; managed settings: "),
               "no hook ever read: rule hooks-silent, and the report says there is no events file (\(c.lastFallback?.rule ?? "none"))")
         c.feedStop()
     }
@@ -116,10 +116,26 @@ import Foundation
               "disableAllHooks: rule hooks-off, and the bar names the setting (\(c.fallback?.message ?? "none"))")
         c.feedStop()
         try? FileManager.default.removeItem(at: cfg.appending(path: "settings.json"))
-        let managed = cfg.appending(path: "managed.json")
-        try #"{"allowManagedHooksOnly": true}"#.write(to: managed, atomically: true, encoding: .utf8)
-        check(HookPolicy.blocker(cwd: nil, managed: managed.path, claudeDir: cfg)?.contains("allowManagedHooksOnly") == true
-              && HookPolicy.blocker(cwd: nil, managed: cfg.appending(path: "none.json").path, claudeDir: cfg) == nil,
-              "a managed allowManagedHooksOnly is named too; nothing set, nothing named")
+        // A managed Mac: the organization's settings in each place Claude Code reads them (F-749).
+        let md = cfg.appending(path: "managed").path, prefs = cfg.appending(path: "prefs").path
+        try FileManager.default.createDirectory(atPath: md + "/managed-settings.d", withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(atPath: prefs + "/someone", withIntermediateDirectories: true)
+        func blocker() -> String? { HookPolicy.blocker(cwd: nil, managedDir: md, preferences: prefs, claudeDir: cfg, user: "someone") }
+        let none = blocker() == nil && HookPolicy.managedPresent(managedDir: md, preferences: prefs, claudeDir: cfg, user: "someone").isEmpty
+        try #"{"allowManagedHooksOnly": true}"#.write(toFile: md + "/managed-settings.d/50-security.json", atomically: true, encoding: .utf8)
+        let dropIn = blocker()
+        try FileManager.default.removeItem(atPath: md + "/managed-settings.d/50-security.json")
+        let plist = try PropertyListSerialization.data(fromPropertyList: ["disableAllHooks": true], format: .xml, options: 0)
+        try plist.write(to: URL(fileURLWithPath: prefs + "/someone/com.anthropic.claudecode.plist"))
+        let mdm = blocker()
+        try FileManager.default.removeItem(atPath: prefs + "/someone/com.anthropic.claudecode.plist")
+        try #"{"allowManagedHooksOnly": true}"#.write(to: cfg.appending(path: "remote-settings.json"), atomically: true, encoding: .utf8)
+        let remote = blocker()
+        try #"{"model": "x"}"#.write(to: cfg.appending(path: "remote-settings.json"), atomically: true, encoding: .utf8)
+        let present = HookPolicy.managedPresent(managedDir: md, preferences: prefs, claudeDir: cfg, user: "someone")
+        try FileManager.default.removeItem(at: cfg.appending(path: "remote-settings.json"))
+        check(none && dropIn == "allowManagedHooksOnly, in managed-settings.d/50-security.json" && mdm == "disableAllHooks, in MDM profile (someone)"
+              && remote?.hasPrefix("allowManagedHooksOnly, in remote-settings.json") == true && present.count == 1 && blocker() == nil,
+              "managed hook settings are read from a drop-in, an MDM profile and the organization's remote settings; one with no hook setting is still listed (\(dropIn ?? "-"), \(mdm ?? "-"), \(remote ?? "-"), \(present))")
     }
 }

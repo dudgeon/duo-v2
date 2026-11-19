@@ -22,6 +22,7 @@ import Foundation
             NSAppearance(named: appearance)!.performAsCurrentDrawingAppearance { png = v.png(size: size) }
             let file = out.appending(path: "\(name)-\(appearance == .aqua ? "light" : "dark").png")
             try png?.write(to: file)
+            check(v.summaryOverflow() <= 0.5, "\(name) \(appearance == .aqua ? "light" : "dark"): every summary line wraps inside the visible column (overflow \(v.summaryOverflow()) pt)")
             check(png != nil && v.fontSize >= 11, "\(name) \(appearance == .aqua ? "light" : "dark"): the whole report fits at \(v.fontSize) pt (\(file.path))")
         }
     }
